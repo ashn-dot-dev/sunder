@@ -1,0 +1,3 @@
+const foo: ssize = syscall(123s, 456s);
+################################################################################
+# [error-const-expr-syscall.nova:1] error: constant expression contains system call

@@ -1,0 +1,8 @@
+func foo(
+    bar: ssize, # bar on line 2
+    bar: usize  # bar on line 3
+) ssize {
+    return 1s;
+}
+################################################################################
+# [error-duplicate-parameter-name.nova:3] error: redeclaration of `bar` previously declared at [error-duplicate-parameter-name.nova:2]

@@ -1,0 +1,13 @@
+func foo(a: usize, b: ssize, c: bool) ssize {
+    return 123s;
+}
+
+func main() void {
+    foo(
+        1u, # valid
+        2s, # valid
+        3s  # invalid (should be bool)
+    );
+}
+################################################################################
+# [error-call-invalid-argument-type.nova:9] error: expected argument of type `bool` (received `ssize`)

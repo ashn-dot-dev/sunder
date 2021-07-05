@@ -1,0 +1,35 @@
+func fibonacci(n: usize) usize {
+    if n == 0u {
+        return 0u;
+    }
+    if n == 1u {
+        return 1u;
+    }
+    return fibonacci(n-1u) + fibonacci(n-2u);
+}
+
+func main() void {
+    dump fibonacci(0u);
+    dump fibonacci(1u);
+    dump fibonacci(2u);
+    dump fibonacci(3u);
+    dump fibonacci(4u);
+    dump fibonacci(5u);
+    dump fibonacci(6u);
+    dump fibonacci(7u);
+    dump fibonacci(8u);
+    dump fibonacci(9u);
+    dump fibonacci(10u);
+}
+################################################################################
+# 00 00 00 00 00 00 00 00
+# 01 00 00 00 00 00 00 00
+# 01 00 00 00 00 00 00 00
+# 02 00 00 00 00 00 00 00
+# 03 00 00 00 00 00 00 00
+# 05 00 00 00 00 00 00 00
+# 08 00 00 00 00 00 00 00
+# 0D 00 00 00 00 00 00 00
+# 15 00 00 00 00 00 00 00
+# 22 00 00 00 00 00 00 00
+# 37 00 00 00 00 00 00 00

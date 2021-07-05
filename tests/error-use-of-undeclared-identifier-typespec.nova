@@ -1,0 +1,3 @@
+const foo: bar = 1s;
+################################################################################
+# [error-use-of-undeclared-identifier-typespec.nova:1] error: use of undeclared identifier `bar`

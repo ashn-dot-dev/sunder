@@ -1,0 +1,23 @@
+func foo() void {
+    # this function does nothing
+}
+
+func main() void {
+    dump true;
+    dump false;
+    dump 0xAAu;
+    dump 0xABCDu;
+    dump foo();
+    dump 0x76543210u;
+    dump 0xDEADBEEFu;
+    dump 0xBADCAFE01DC0FFEEu;
+}
+################################################################################
+# 01
+# 00
+# AA 00 00 00 00 00 00 00
+# CD AB 00 00 00 00 00 00
+#
+# 10 32 54 76 00 00 00 00
+# EF BE AD DE 00 00 00 00
+# EE FF C0 1D E0 AF DC BA

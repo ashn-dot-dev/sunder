@@ -1,0 +1,13 @@
+func main() void {
+    const not_t: bool = not true;
+    const not_f: bool = not false;
+    dump not_t;
+    dump not_f;
+    dump not true;
+    dump not false;
+}
+################################################################################
+# 00
+# 01
+# 00
+# 01

@@ -1,0 +1,79 @@
+# example.nova
+# Dumping ground for misc. features without standalone tests.
+
+var v_bool: bool = true;
+var v_usize: usize = +0xBADCAFE01DC0FFEEu;
+var v_ssize: ssize = -0xBADCAFE01DC0FFEEs;
+var v_ssize_neg: ssize = -123s;
+
+const bool_t: bool = true;
+const bool_f: bool = false;
+const usize_pos: usize = +123u;
+const ssize_pos: ssize = +123s;
+const ssize_neg: ssize = -123s;
+
+const baz: ssize = bar + 1s;
+const foo: ssize = 1s;
+const bar: ssize = foo + 1s;
+
+const expr_grouped: ssize = (123s);
+const expr_binary_add: ssize = 314s + 42s;
+const expr_binary_sub: ssize = 314s - 42s;
+const expr_binary_mul: ssize = 314s * 42s;
+const expr_binary_div: ssize = 314s / 42s;
+
+const multiple_expr_binary_neg_6: ssize = -1s + -2s + -3s;
+const multiple_expr_binary_pos_2: ssize = +1s + -2s + +3s;
+
+func exit(status: ssize) void {
+    syscall(60s, status);
+}
+
+func ident_bool(value: bool) bool {
+    return value;
+}
+
+func subtract(lhs: ssize, rhs: ssize) ssize {
+    return lhs - rhs;
+}
+
+func test_assignment(x: ssize) ssize {
+    x = 3s;
+    return x;
+}
+
+var g: ssize = 4s;
+func main() void {
+    true;
+    false;
+
+    ident_bool(true);
+    ident_bool(false);
+
+    123s;
+    456s;
+
+    +42s;
+    -42s;
+
+    1s + 2s;
+    1s - 1s;
+    1s + 2s - -3s + -6s;
+
+    5s * 2s;
+    5s / 2s;
+
+    test_assignment(5s);
+
+    const c: ssize = 3s;
+    var v: ssize = 2s;
+    v = v + g;
+
+    #syscall(60s, 1s + 2s * 2s - -3s + -16s / 2s);
+    #syscall(60s, 5s / 2s);
+    #syscall(60s, subtract(5s, 3s));
+    #exit(subtract(subtract(5s, 3s), 2s));
+    #syscall(60s, c);
+    #syscall(60s, test_assignment(5s));
+    syscall(60s, v);
+}

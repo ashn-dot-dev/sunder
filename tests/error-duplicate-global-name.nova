@@ -1,0 +1,5 @@
+const foo: ssize = bar;
+const bar: ssize = 1s;
+const foo: ssize = 0u;
+################################################################################
+# [error-duplicate-global-name.nova:3] error: redeclaration of `foo` previously declared at [error-duplicate-global-name.nova:1]

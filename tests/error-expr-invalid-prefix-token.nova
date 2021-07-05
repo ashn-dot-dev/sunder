@@ -1,0 +1,5 @@
+func main() void {
+    ,123s;
+}
+################################################################################
+[error-expr-invalid-prefix-token.nova:2] error: unrecognized prefix token `,` in expression

@@ -1,0 +1,5 @@
+func foo() void {
+    return 1s;
+}
+################################################################################
+# [error-return-expr-in-function-with-void-return.nova:2] error: illegal type conversion from `ssize` to `void`

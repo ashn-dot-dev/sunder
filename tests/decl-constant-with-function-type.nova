@@ -1,0 +1,25 @@
+const fn_one: func() ssize = one;
+const fn_sub: func(ssize, ssize) ssize = sub;
+const fn_exit: func(ssize) void = exit;
+
+func one() ssize {
+    return 1s;
+}
+
+func sub(lhs: ssize, rhs: ssize) ssize {
+    return lhs - rhs;
+}
+
+
+func exit(status: ssize) void {
+    syscall(60s, status);
+}
+
+func main() void {
+    exit(
+        fn_sub(
+            fn_sub(
+                2s,
+                fn_one()),
+            fn_one()));
+}

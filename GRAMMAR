@@ -1,0 +1,99 @@
+<module> ::= <decl>*
+
+<decl> ::= <decl-variable>
+         | <decl-constant>
+         | <decl-function>
+
+<decl-variable> ::= "var" <identifier> ":" <typespec> "=" <expr> ";"
+
+<decl-constant> ::= "const" <identifier> ":" <typespec> "=" <expr> ";"
+
+<decl-function> ::= "func" <identifier> "(" <parameter-list> ")" <typespec> <block>
+
+<stmt> ::= <stmt-decl>
+         | <stmt-if>
+         | <stmt-dump>
+         | <stmt-return>
+         | <stmt-assign>
+         | <stmt-expr>
+
+<stmt-decl> ::= <decl>
+
+<stmt-if> ::= "if" <expr> <block> ("elif" <expr> <block>)* ("else" <block>)?
+
+<stmt-dump> ::= "dump" <expr> ";"
+
+<stmt-return> ::= "return" <expr>? ";"
+
+<stmt-assign> ::= <expr> "=" <expr> ";"
+
+<stmt-expr> ::= <expr> ";"
+
+<expr> ::= <identifier>
+         | <boolean>
+         | <integer>
+         | <expr-grouped>
+         | <expr-syscall>
+         | <expr-call>
+         | <expr-unary>
+         | <expr-binary>
+
+<expr-grouped> ::= "(" <expr> ")"
+
+<expr-call> ::= <expr> "(" (<expr> ("," <expr>)*)? ")"
+
+<expr-syscall> ::= "syscall" "(" <expr> ("," <expr>)* ")"
+
+<expr-unary> ::= "not" <expr>
+               | "+" <expr>
+               | "-" <expr>
+
+<expr-binary> ::= <expr> "or" <expr>
+                | <expr> "and" <expr>
+                | <expr> "==" <expr>
+                | <expr> "!=" <expr>
+                | <expr> "<=" <expr>
+                | <expr> "<" <expr>
+                | <expr> ">=" <expr>
+                | <expr> ">" <expr>
+                | <expr> "+" <expr>
+                | <expr> "-" <expr>
+                | <expr> "*" <expr>
+                | <expr> "/" <expr>
+
+<block> ::= "{" <stmt>* "}"
+
+<parameter-list> ::= ( <parameter> ("," <parameter>)* )?
+
+<parameter> ::= <identifier> ":" <typespec>
+
+<typespec> ::= <typespec-identifier>
+             | <typespec-function>
+
+<typespec-identifier> ::= <identifier>
+
+<typespec-function> ::= func "(" ( <typespec> ("," <typespec> )* )? ")" <typespec>
+
+<identifier> ::= <letter> (<letter> | <digit-dec>)*
+
+<letter> ::= "A" .. "Z" | "a" .. "z" | "_"
+
+<integer> ::= <integer-number> <integer-suffix>?
+
+<integer-number> ::= <integer-bin>
+                   | <integer-oct>
+                   | <integer-dec>
+                   | <integer-hex>
+<integer-suffix> ::= "u" | "s"
+
+<integer-bin> ::= "0b" <digit-bin>+
+<integer-oct> ::= "0o" <digit-oct>+
+<integer-dec> ::=      <digit-dec>+
+<integer-hex> ::= "0x" <digit-hex>+
+
+<digit-bin> ::= "0" | "1"
+<digit-oct> ::= "0" .. "7"
+<digit-dec> ::= "0" .. "9"
+<digit-hex> ::= "0" .. "9" | "A" .. "F" | "a" .. "f"
+
+<boolean> ::= "true" | "false"

@@ -1,0 +1,6 @@
+func main() void {
+    if (1s) {
+    }
+}
+################################################################################
+# [error-stmt-if-non-boolean-condition.nova:2] error: illegal condition with non-boolean type `ssize`

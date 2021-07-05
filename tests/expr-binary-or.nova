@@ -1,0 +1,63 @@
+func nl() void {
+    # void-returning function that makes dump print a newline.
+}
+
+func FF_t() bool {
+    dump 0xFFu;
+    return true;
+}
+
+func EE_f() bool {
+    dump 0xEEu;
+    return false;
+}
+
+func main() void {
+    const t_or_t: bool = true or true;
+    const f_or_f: bool = false or false;
+    const t_or_f: bool = true or false;
+    const f_or_t: bool = false or true;
+    dump t_or_t;
+    dump f_or_f;
+    dump t_or_f;
+    dump f_or_t;
+    dump true or true;
+    dump false or false;
+    dump true or false;
+    dump false or true;
+    dump nl();
+
+    dump FF_t() or FF_t();
+    dump nl();
+
+    dump EE_f() or EE_f();
+    dump nl();
+
+    dump FF_t() or EE_f();
+    dump nl();
+
+    dump EE_f() or FF_t();
+}
+################################################################################
+# 01
+# 00
+# 01
+# 01
+# 01
+# 00
+# 01
+# 01
+#
+# FF 00 00 00 00 00 00 00
+# 01
+#
+# EE 00 00 00 00 00 00 00
+# EE 00 00 00 00 00 00 00
+# 00
+#
+# FF 00 00 00 00 00 00 00
+# 01
+#
+# EE 00 00 00 00 00 00 00
+# FF 00 00 00 00 00 00 00
+# 01

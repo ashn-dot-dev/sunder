@@ -1,0 +1,5 @@
+#!/bin/sh
+set -e
+set -x
+nasm -w+error=orphan-labels -f elf64 -g -F dwarf nasm-test.asm
+ld -o nasm-test.out nasm-test.o

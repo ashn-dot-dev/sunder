@@ -1,0 +1,3 @@
+const foo: ssize = 1s + 2u;
+################################################################################
+# [error-expr-binary-arithmetic-incompatible-types.nova:1] error: invalid arguments of types `ssize` and `usize` in binary `+` expression

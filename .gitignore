@@ -1,0 +1,4 @@
+nova-compile
+*.out
+*.o
+a.*

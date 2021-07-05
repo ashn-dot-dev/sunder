@@ -1,0 +1,100 @@
+func nl() void {
+    # void-returning function that makes dump print a newline.
+}
+
+func foo() ssize {
+    return +123s;
+}
+
+func bar() ssize {
+    return -123s;
+}
+
+func main() void {
+    const t_ge_t: bool = true >= true;
+    const f_ge_f: bool = false >= false;
+    const t_ge_f: bool = true >= false;
+    const f_ge_t: bool = false >= true;
+    dump t_ge_t;
+    dump f_ge_f;
+    dump t_ge_f;
+    dump f_ge_t;
+    dump true >= true;
+    dump false >= false;
+    dump true >= false;
+    dump false >= true;
+    dump nl();
+
+    const a: ssize = 123s;
+    const b: ssize = 456s;
+    const c: ssize = a;
+    const a_ge_a: bool = a >= a;
+    const b_ge_b: bool = b >= b;
+    const a_ge_b: bool = a >= b;
+    const b_ge_a: bool = b >= a;
+    const a_ge_c: bool = a >= c;
+    const b_ge_c: bool = b >= c;
+    dump a_ge_a;
+    dump b_ge_b;
+    dump a_ge_b;
+    dump b_ge_a;
+    dump a_ge_c;
+    dump b_ge_c;
+    dump nl();
+
+    const foo_ge_foo: bool = foo >= foo;
+    const bar_ge_bar: bool = bar >= bar;
+    const foo_ge_bar: bool = foo >= bar;
+    const bar_ge_foo: bool = bar >= foo;
+    dump foo_ge_foo;
+    dump bar_ge_bar;
+    dump foo_ge_bar;
+    dump bar_ge_foo;
+    dump foo >= foo;
+    dump bar >= bar;
+    dump foo >= bar;
+    dump bar >= foo;
+    dump nl();
+
+    dump 3u >= 3u;
+    dump 3u >= 5u;
+    dump 5u >= 3u;
+    dump nl();
+
+    var x: ssize = +1s;
+    var y: ssize = -1s;
+    dump x >= y;
+    dump y >= x;
+}
+################################################################################
+# 01
+# 01
+# 01
+# 00
+# 01
+# 01
+# 01
+# 00
+#
+# 01
+# 01
+# 00
+# 01
+# 01
+# 01
+#
+# 01
+# 01
+# 00
+# 00
+# 01
+# 01
+# 00
+# 00
+#
+# 01
+# 00
+# 01
+#
+# 01
+# 00
