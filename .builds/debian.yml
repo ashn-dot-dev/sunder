@@ -1,0 +1,24 @@
+image: debian/stable
+packages:
+  - build-essential
+  - clang
+  - nasm
+sources:
+  - https://git.sr.ht/~ashn/nova
+tasks:
+  - test-clang-debug: |
+      cd nova
+      make clean test CC=clang CFLAGS='$(GNU_DBG) $(SANITIZE)'
+  - test-clang-release: |
+      cd nova
+      make clean test CC=clang CFLAGS='$(GNU_REL)'
+  - test-gcc-debug: |
+      cd nova
+      make clean test CC=gcc CFLAGS='$(GNU_DBG) $(SANITIZE)'
+  - test-gcc-release: |
+      cd nova
+      make clean test CC=gcc CFLAGS='$(GNU_REL)'
+triggers:
+  - action: email
+    condition: failure
+    to: "<me@ashn.dev>"
