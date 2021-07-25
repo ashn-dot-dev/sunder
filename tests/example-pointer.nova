@@ -1,3 +1,6 @@
+var v: ssize = 0xCAFED00DCAFED00Ds;
+const w: ssize = 0xCAFEBABECAFEBABEs;
+
 func main() void {
     var x: ssize = 0xBADCAFE01DC0FFEEs;
     var addressof_x: *ssize = &x;
@@ -15,6 +18,21 @@ func main() void {
     ];
     dump y[1u][2u];
     dump *&y[1u][2u];
+
+    const z: ssize = 0xDEADBEEFDEADBEEFs;
+    var addressof_z: *ssize = &z;
+    var dereference_addressof_z: ssize = *addressof_z;
+    dump z;
+    dump *&z;
+    dump *&*&z;
+    dump *&*&*&*&z;
+    dump dereference_addressof_z;
+
+    dump v;
+    dump *&v;
+
+    dump w;
+    dump *&w;
 }
 ################################################################################
 # EE FF C0 1D E0 AF DC BA
@@ -24,3 +42,12 @@ func main() void {
 # EE FF C0 1D E0 AF DC BA
 # 06 00 00 00 00 00 00 00
 # 06 00 00 00 00 00 00 00
+# EF BE AD DE EF BE AD DE
+# EF BE AD DE EF BE AD DE
+# EF BE AD DE EF BE AD DE
+# EF BE AD DE EF BE AD DE
+# EF BE AD DE EF BE AD DE
+# 0D D0 FE CA 0D D0 FE CA
+# 0D D0 FE CA 0D D0 FE CA
+# BE BA FE CA BE BA FE CA
+# BE BA FE CA BE BA FE CA

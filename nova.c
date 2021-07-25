@@ -392,6 +392,10 @@ context_init(void)
     s_context.interned.s = INTERN_STR_LITERAL("s");
 #undef INTERN_STR_LITERAL
 
+    s_context.static_symbols = autil_map_new(
+        sizeof(CONTEXT_STATIC_SYMBOLS_MAP_KEY_TYPE),
+        sizeof(CONTEXT_STATIC_SYMBOLS_MAP_VAL_TYPE),
+        CONTEXT_STATIC_SYMBOLS_MAP_CMP_FUNC);
     s_context.global_symbol_table = symbol_table_new(NULL);
     s_context.module = NULL;
 
@@ -501,6 +505,7 @@ context_fini(void)
 
     autil_freezer_del(self->freezer);
 
+    autil_map_del(self->static_symbols);
     autil_sbuf_fini(s_context.global_symbol_table->symbols);
     autil_xalloc(s_context.global_symbol_table, AUTIL_XALLOC_FREE);
 

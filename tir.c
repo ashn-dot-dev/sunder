@@ -254,13 +254,13 @@ type_is_sinteger(struct type const* self)
 }
 
 struct address
-address_init_global(char const* name)
+address_init_static(char const* name)
 {
     assert(name != NULL);
 
     struct address self = {0};
-    self.kind = ADDRESS_GLOBAL;
-    self.data.global.name = name;
+    self.kind = ADDRESS_STATIC;
+    self.data.static_.name = name;
     return self;
 }
 
@@ -330,7 +330,7 @@ symbol_new_variable(
     assert(name != NULL);
     assert(type != NULL);
     assert(address != NULL);
-    assert(address->kind != ADDRESS_GLOBAL || value != NULL);
+    assert(address->kind != ADDRESS_STATIC || value != NULL);
 
     struct symbol* const self =
         symbol_new(SYMBOL_VARIABLE, location, name, type, address, value);
@@ -731,9 +731,9 @@ tir_expr_is_lvalue(struct tir_expr const* self)
         switch (self->data.identifier->kind) {
         case SYMBOL_TYPE:
             UNREACHABLE();
-        case SYMBOL_VARIABLE:
+        case SYMBOL_VARIABLE: /* fallthrough */
+        case SYMBOL_CONSTANT:
             return true;
-        case SYMBOL_CONSTANT: /* fallthrough */
         case SYMBOL_FUNCTION:
             return false;
         }

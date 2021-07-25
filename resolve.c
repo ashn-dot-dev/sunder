@@ -14,6 +14,7 @@ struct incomplete_function {
 
 struct resolver {
     struct module* module;
+    char const* current_namespace; // NULL if within the global namespace.
     struct tir_function* current_function; // NULL if not in a function.
     struct symbol_table* current_symbol_table;
     // Current offset of rbp for stack allocated data. Initialized to zero at
@@ -35,11 +36,31 @@ resolver_del(struct resolver* self);
 // Returns true if resolution being performed in the global scope.
 static bool
 resolver_is_global(struct resolver const* self);
-// Reserve global or local space for an object of the provided type.
-// Returns the address for the object.
-static struct address
-resolver_reserve_space(
-    struct resolver* self, char const* name, struct type const* type);
+// Reserve static storage space for an object with the provided nam.
+static struct address const*
+resolver_reserve_storage_static(struct resolver* self, char const* name);
+// Reserve local storage space space for an object of the provided type.
+static struct address const*
+resolver_reserve_storage_local(struct resolver* self, struct type const* type);
+
+// Normalize the provided name within the provided namespace.
+// Providing a NULL namespace parameter implies the global namespace.
+// Providing a zero unique_id parameter implies the symbol is the first and
+// potentially only symbol with the given name in the namespace and should not
+// have the unique identifier appended to the normalized symbol.
+// Returns the normalized name as an interned string.
+static char const*
+normalize(char const* namespace, char const* name, unsigned unique_id);
+// Returns the normalization of the provided name within the provided namespace
+// via the normalize function. Linearly increments unique IDs starting at zero
+// until a unique ID is found that does not cause a name collision in the flat
+// normalized namespace.
+static char const*
+normalize_unique(char const* namespace, char const* name);
+// Add the provided static symbol to the map of static symbols within the
+// compilation context.
+static void
+register_static_symbol(struct symbol const* symbol);
 
 static bool
 is_valid_implicit_cast(struct type const* from, struct type const* to);
@@ -179,6 +200,7 @@ resolver_new(struct module* module)
     struct resolver* const self = autil_xalloc(NULL, sizeof(*self));
     memset(self, 0x00, sizeof(*self));
     self->module = module;
+    self->current_namespace = NULL;
     self->current_function = NULL;
     self->current_symbol_table = context()->global_symbol_table;
     self->current_rbp_offset = 0x0;
@@ -204,23 +226,96 @@ resolver_is_global(struct resolver const* self)
     return self->current_function == NULL;
 }
 
-static struct address
-resolver_reserve_space(
-    struct resolver* self, char const* name, struct type const* type)
+static struct address const*
+resolver_reserve_storage_static(struct resolver* self, char const* name)
 {
     assert(self != NULL);
     assert(name != NULL);
-    assert(type != NULL);
 
-    if (resolver_is_global(self)) {
-        return address_init_global(name);
-    }
+    char const* const name_normalized =
+        normalize_unique(self->current_namespace, name);
+    struct address* const address =
+        address_new(address_init_static(name_normalized));
+    autil_freezer_register(context()->freezer, address);
+    return address;
+}
+
+static struct address const*
+resolver_reserve_storage_local(struct resolver* self, struct type const* type)
+{
+    assert(self != NULL);
+    assert(type != NULL);
 
     self->current_rbp_offset -= (int)ceil8z(type->size);
     if (self->current_rbp_offset < self->current_function->local_stack_offset) {
         self->current_function->local_stack_offset = self->current_rbp_offset;
     }
-    return address_init_local(self->current_rbp_offset);
+
+    struct address* const address =
+        address_new(address_init_local(self->current_rbp_offset));
+    autil_freezer_register(context()->freezer, address);
+    return address;
+}
+
+static char const*
+normalize(char const* namespace, char const* name, unsigned unique_id)
+{
+    assert(name != NULL);
+
+    struct autil_string* const s = autil_string_new(NULL, 0);
+
+    // <namespace>.
+    if (namespace != NULL) {
+        autil_string_append_fmt(s, "%s.", namespace);
+    }
+    // <namespace>.<name>
+    autil_string_append_cstr(s, name);
+    // <namespace>.<name>.<unique-id>
+    if (unique_id != 0) {
+        autil_string_append_fmt(s, ".%u", unique_id);
+    }
+
+    char const* const interned = autil_sipool_intern(
+        context()->sipool, autil_string_start(s), autil_string_count(s));
+
+    autil_string_del(s);
+    return interned;
+}
+
+static char const*
+normalize_unique(char const* namespace, char const* name)
+{
+    assert(name != NULL);
+
+    unsigned unique_id = 0u;
+    char const* normalized = normalize(namespace, name, unique_id);
+    while (autil_map_lookup(context()->static_symbols, &normalized) != NULL) {
+        normalized = normalize(namespace, name, ++unique_id);
+    }
+    return normalized;
+}
+
+static void
+register_static_symbol(struct symbol const* symbol)
+{
+    assert(symbol != NULL);
+    assert(symbol->address != NULL);
+    assert(symbol->address->kind == ADDRESS_STATIC);
+
+    int const exists = autil_map_insert(
+        context()->static_symbols,
+        &symbol->address->data.static_.name,
+        &symbol,
+        NULL,
+        NULL);
+    if (exists) {
+        fatal(
+            symbol->location->path,
+            symbol->location->line,
+            "[ICE %s] normalized symbol name `%s` already exists",
+            __func__,
+            symbol->address->data.static_.name);
+    }
 }
 
 static bool
@@ -331,15 +426,19 @@ resolve_decl_variable(
         resolve_typespec(resolver, decl->data.variable.typespec);
     check_implicit_cast(expr->location, expr->type, type);
 
-    struct address* const address =
-        address_new(resolver_reserve_space(resolver, decl->name, type));
-    autil_freezer_register(context()->freezer, address);
+    struct address const* const address = is_global
+        ? resolver_reserve_storage_static(resolver, decl->name)
+        : resolver_reserve_storage_local(resolver, type);
 
     struct symbol* const symbol =
         symbol_new_variable(decl->location, decl->name, type, address, value);
     autil_freezer_register(context()->freezer, symbol);
 
     symbol_table_insert(resolver->current_symbol_table, symbol);
+    if (is_global) {
+        register_static_symbol(symbol);
+    }
+
     if (lhs != NULL) {
         struct tir_expr* const identifier = tir_expr_new_identifier(
             decl->data.variable.identifier->location, symbol);
@@ -375,15 +474,15 @@ resolve_decl_constant(struct resolver* resolver, struct ast_decl const* decl)
         resolve_typespec(resolver, decl->data.constant.typespec);
     check_implicit_cast(expr->location, expr->type, type);
 
-    struct address* const address =
-        address_new(resolver_reserve_space(resolver, decl->name, type));
-    autil_freezer_register(context()->freezer, address);
+    struct address const* const address =
+        resolver_reserve_storage_static(resolver, decl->name);
 
     struct symbol* const symbol =
         symbol_new_constant(decl->location, decl->name, type, address, value);
     autil_freezer_register(context()->freezer, symbol);
 
     symbol_table_insert(resolver->current_symbol_table, symbol);
+    register_static_symbol(symbol);
     return symbol;
 }
 
@@ -422,15 +521,21 @@ resolve_decl_function(struct resolver* resolver, struct ast_decl const* decl)
     value_freeze(value, context()->freezer);
 
     struct address* const address =
-        address_new(address_init_global(decl->name));
+        address_new(address_init_static(decl->name));
     autil_freezer_register(context()->freezer, address);
 
     // Add the function/value to the symbol table now so that recursive
     // functions may reference themselves.
     struct symbol* const function_symbol = symbol_new_function(
-        decl->location, decl->name, function_type, address, value);
+        decl->location,
+        decl->name,
+
+        function_type,
+        address,
+        value);
     autil_freezer_register(context()->freezer, function_symbol);
     symbol_table_insert(resolver->current_symbol_table, function_symbol);
+    register_static_symbol(function_symbol);
 
     // Executing a call instruction pushes the return address (0x8 bytes) onto
     // the stack. Inside the function the prelude saves the previous value of
@@ -510,11 +615,13 @@ complete_function(
     assert(resolver->current_function == NULL);
     assert(resolver->current_symbol_table == context()->global_symbol_table);
     assert(resolver->current_rbp_offset == 0x0);
+    resolver->current_namespace = incomplete->function->name;
     resolver->current_function = incomplete->function;
     incomplete->function->body = resolve_block(
         resolver,
         incomplete->symbol_table,
         incomplete->decl->data.function.body);
+    resolver->current_namespace = NULL;
     resolver->current_function = NULL;
     assert(resolver->current_symbol_table == context()->global_symbol_table);
     assert(resolver->current_rbp_offset == 0x0);
@@ -686,9 +793,8 @@ resolve_stmt_for_range(struct resolver* resolver, struct ast_stmt const* stmt)
         stmt->data.for_range.identifier->location;
     char const* const loop_var_name = stmt->data.for_range.identifier->name;
     struct type const* const loop_var_type = context()->builtin.usize;
-    struct address* const loop_var_address = address_new(
-        resolver_reserve_space(resolver, loop_var_name, loop_var_type));
-    autil_freezer_register(context()->freezer, loop_var_address);
+    struct address const* const loop_var_address =
+        resolver_reserve_storage_local(resolver, loop_var_type);
     struct symbol* const loop_var_symbol = symbol_new_variable(
         loop_var_location,
         loop_var_name,

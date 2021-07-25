@@ -26,8 +26,6 @@ address_to_new_cstr(struct address const* address);
 static void
 push(size_t size);
 static void
-push_value(struct value const* value);
-static void
 push_address(struct address const* address);
 static void
 push_at_address(size_t size, struct address const* address);
@@ -106,8 +104,8 @@ address_to_new_cstr(struct address const* address)
     assert(address != NULL);
 
     switch (address->kind) {
-    case ADDRESS_GLOBAL:
-        return autil_cstr_new_cstr(address->data.global.name);
+    case ADDRESS_STATIC:
+        return autil_cstr_new_cstr(address->data.static_.name);
     case ADDRESS_LOCAL:
         return autil_cstr_new_fmt("rbp + %d", address->data.local.rbp_offset);
     }
@@ -126,26 +124,6 @@ push(size_t size)
 }
 
 static void
-push_value(struct value const* value)
-{
-    assert(value != NULL);
-
-    if (value->type->kind == TYPE_FUNCTION) {
-        struct address const address =
-            address_init_global(value->data.function->name);
-        push_address(&address);
-        return;
-    }
-
-    autil_sbuf(uint8_t) const bytes = value_to_new_bytes(value);
-    push(autil_sbuf_count(bytes));
-    for (size_t i = 0; i < autil_sbuf_count(bytes); ++i) {
-        appendli("mov byte [rsp + %#zx], %#x", i, (unsigned)bytes[i]);
-    }
-    autil_sbuf_fini(bytes);
-}
-
-static void
 push_address(struct address const* address)
 {
     assert(address != NULL);
@@ -157,8 +135,8 @@ push_address(struct address const* address)
     // so that address_to_new_cstr (or similar) could be used here. Or maybe
     // this is fine and really we should just handle it as we do now.
     switch (address->kind) {
-    case ADDRESS_GLOBAL: {
-        appendli("push %s", address->data.global.name);
+    case ADDRESS_STATIC: {
+        appendli("push %s", address->data.static_.name);
         break;
     }
     case ADDRESS_LOCAL: {
@@ -307,16 +285,18 @@ copy_rax_rsp_via_rcx(size_t size)
 }
 
 static void
-codegen_global_variables(void);
+codegen_static_constants(void);
 static void
-codegen_global_functions(void);
+codegen_static_variables(void);
+static void
+codegen_static_functions(void);
 static void
 codegen_core(void);
 
 static void
-codegen_global_variable(struct symbol const* symbol);
+codegen_static_object(struct symbol const* symbol);
 static void
-codegen_global_function(struct symbol const* symbol);
+codegen_static_function(struct symbol const* symbol);
 
 static void
 codegen_stmt(struct tir_stmt const* stmt);
@@ -361,29 +341,63 @@ static void
 codegen_lvalue_unary(struct tir_expr const* expr);
 
 static void
-codegen_global_variables(void)
+codegen_static_constants(void)
 {
     trace(NO_PATH, NO_LINE, "%s", __func__);
 
-    appendln("; GLOBAL VARIABLES");
-    appendln("section .data");
-    struct symbol const* const* const symbols =
-        context()->global_symbol_table->symbols;
-    for (size_t i = 0; i < autil_sbuf_count(symbols); ++i) {
-        struct symbol const* const symbol = symbols[i];
-        if (symbol->kind != SYMBOL_VARIABLE) {
+    appendln("; STATIC CONSTANTS");
+    appendln("section .rodata");
+
+    struct autil_vec const* const keys =
+        autil_map_keys(context()->static_symbols);
+    CONTEXT_STATIC_SYMBOLS_MAP_KEY_TYPE const* iter =
+        autil_vec_next_const(keys, NULL);
+    for (; iter != NULL; iter = autil_vec_next_const(keys, iter)) {
+        CONTEXT_STATIC_SYMBOLS_MAP_VAL_TYPE const* const psymbol =
+            autil_map_lookup_const(context()->static_symbols, iter);
+        struct symbol const* const symbol = *psymbol;
+        assert(symbol != NULL);
+        assert(symbol->address != NULL);
+        assert(symbol->address->kind == ADDRESS_STATIC);
+        if (symbol->kind != SYMBOL_CONSTANT) {
             continue;
         }
-        codegen_global_variable(symbol);
+        codegen_static_object(symbol);
     }
 }
 
 static void
-codegen_global_functions(void)
+codegen_static_variables(void)
 {
     trace(NO_PATH, NO_LINE, "%s", __func__);
 
-    appendln("; GLOBAL FUNCTIONS");
+    appendln("; STATIC VARIABLES");
+    appendln("section .data");
+
+    struct autil_vec const* const keys =
+        autil_map_keys(context()->static_symbols);
+    CONTEXT_STATIC_SYMBOLS_MAP_KEY_TYPE const* iter =
+        autil_vec_next_const(keys, NULL);
+    for (; iter != NULL; iter = autil_vec_next_const(keys, iter)) {
+        CONTEXT_STATIC_SYMBOLS_MAP_VAL_TYPE const* const psymbol =
+            autil_map_lookup_const(context()->static_symbols, iter);
+        struct symbol const* const symbol = *psymbol;
+        assert(symbol != NULL);
+        assert(symbol->address != NULL);
+        assert(symbol->address->kind == ADDRESS_STATIC);
+        if (symbol->kind != SYMBOL_VARIABLE) {
+            continue;
+        }
+        codegen_static_object(symbol);
+    }
+}
+
+static void
+codegen_static_functions(void)
+{
+    trace(NO_PATH, NO_LINE, "%s", __func__);
+
+    appendln("; STATIC (GLOBAL) FUNCTIONS");
     appendln("section .text");
     struct symbol const* const* const symbols =
         context()->global_symbol_table->symbols;
@@ -392,7 +406,7 @@ codegen_global_functions(void)
         if (symbol->kind != SYMBOL_FUNCTION) {
             continue;
         }
-        codegen_global_function(symbol);
+        codegen_static_function(symbol);
     }
 }
 
@@ -517,10 +531,11 @@ codegen_core(void)
 }
 
 static void
-codegen_global_variable(struct symbol const* symbol)
+codegen_static_object(struct symbol const* symbol)
 {
     assert(symbol != NULL);
-    assert(symbol->kind == SYMBOL_VARIABLE);
+    assert(symbol->kind == SYMBOL_VARIABLE || symbol->kind == SYMBOL_CONSTANT);
+    assert(symbol->address->kind == ADDRESS_STATIC);
     assert(symbol->value != NULL);
     trace(NO_PATH, NO_LINE, "%s (%s)", __func__, symbol->name);
 
@@ -529,13 +544,17 @@ codegen_global_variable(struct symbol const* symbol)
     if (type->size == 0) {
         return;
     }
+
     if (type->kind == TYPE_FUNCTION) {
-        appendln("%s: dq %s", symbol->name, symbol->value->data.function->name);
+        appendln(
+            "%s: dq %s",
+            symbol->address->data.static_.name,
+            symbol->value->data.function->name);
         return;
     }
 
     autil_sbuf(uint8_t) const bytes = value_to_new_bytes(value);
-    append("%s: db", symbol->name);
+    append("%s: db", symbol->address->data.static_.name);
     for (size_t i = 0; i < autil_sbuf_count(bytes); ++i) {
         if (i != 0) {
             appendch(',');
@@ -545,38 +564,10 @@ codegen_global_variable(struct symbol const* symbol)
     appendch('\n');
     autil_sbuf_fini(bytes);
     return;
-
-    switch (type->kind) {
-    case TYPE_VOID:
-        UNREACHABLE();
-    case TYPE_BOOL: {
-        assert(value->type->kind == TYPE_BOOL);
-        char const* const value_cstr = value->data.boolean ? "0x01" : "0x00";
-        appendln("%s: db %s", symbol->name, value_cstr);
-        break;
-    }
-    case TYPE_USIZE: /* fallthrough */
-    case TYPE_SSIZE: {
-        // TODO: Use a goto to jump to the correct label based on the ARCH's
-        // natural word size. Currently this is hard-coded for x64 as dq data.
-        assert(type_is_integer(value->type));
-        char* const value_cstr =
-            autil_bigint_to_new_cstr(value->data.integer, NULL);
-        appendln("%s: dq %s", symbol->name, value_cstr);
-        autil_xalloc(value_cstr, AUTIL_XALLOC_FREE);
-        break;
-    }
-    case TYPE_FUNCTION: {
-        appendln("%s: dq %s", symbol->name, symbol->value->data.function->name);
-        break;
-    }
-    default:
-        UNREACHABLE();
-    }
 }
 
 static void
-codegen_global_function(struct symbol const* symbol)
+codegen_static_function(struct symbol const* symbol)
 {
     assert(symbol != NULL);
     assert(symbol->kind == SYMBOL_FUNCTION);
@@ -783,7 +774,7 @@ codegen_stmt_dump(struct tir_stmt const* stmt)
     codegen_rvalue(stmt->data.expr);
     appendli("push %#zx", stmt->data.expr->type->size);
     appendli("call dump");
-    appendli("pop rax", stmt->data.expr->type->size);
+    appendli("pop rax");
     pop(stmt->data.expr->type->size);
 }
 
@@ -937,12 +928,9 @@ codegen_rvalue_identifier(struct tir_expr const* expr)
     case SYMBOL_TYPE: {
         UNREACHABLE();
     }
-    case SYMBOL_VARIABLE: {
-        push_at_address(symbol->type->size, symbol->address);
-        return;
-    }
+    case SYMBOL_VARIABLE: /* fallthrough */
     case SYMBOL_CONSTANT: {
-        push_value(symbol->value);
+        push_at_address(symbol->type->size, symbol->address);
         return;
     }
     case SYMBOL_FUNCTION: {
@@ -1237,7 +1225,7 @@ codegen_rvalue_binary(struct tir_expr const* expr)
         appendli("mov rbx, 0x00");
         appendli("cmp rax, rbx");
         appendli("jne .l%zu_binary_or_true", id);
-        appendli("jmp .l%zu_binary_or_end", id);
+        appendli("jmp .l%zu_binary_or_false", id);
 
         appendln(".l%zu_binary_or_true:", id);
         appendli("push 0x01");
@@ -1548,9 +1536,11 @@ codegen(void)
 
     out = autil_string_new(NULL, 0u);
 
-    codegen_global_variables();
+    codegen_static_constants();
     appendch('\n');
-    codegen_global_functions();
+    codegen_static_variables();
+    appendch('\n');
+    codegen_static_functions();
     appendch('\n');
     codegen_core();
 

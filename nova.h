@@ -150,6 +150,12 @@ struct context {
         struct type const* ssize;
     } builtin;
 
+    // Map containing all symbols with static storage duration.
+#define CONTEXT_STATIC_SYMBOLS_MAP_KEY_TYPE char const*
+#define CONTEXT_STATIC_SYMBOLS_MAP_VAL_TYPE struct symbol const*
+#define CONTEXT_STATIC_SYMBOLS_MAP_CMP_FUNC autil_cstr_vpcmp
+    struct autil_map* static_symbols;
+
     // Global symbol table and reference to the loaded module.
     struct symbol_table* global_symbol_table;
     struct module* module;
@@ -654,22 +660,26 @@ type_is_sinteger(struct type const* self);
 
 struct address {
     enum address_kind {
-        ADDRESS_GLOBAL,
+        ADDRESS_STATIC,
         ADDRESS_LOCAL,
     } kind;
     union {
         struct {
+            // Full normalized name of the static storage location used for this
+            // address, including nested namespace information, uniquely
+            // identifying the address in the context of an object file's flat
+            // symbol table namespace.
             char const* name; // interned
             // TODO: Make this name + offset in bytes once non-scalar values
             // are added.
-        } global;
+        } static_;
         struct {
             int rbp_offset;
         } local;
     } data;
 };
 struct address
-address_init_global(char const* name);
+address_init_static(char const* name);
 struct address
 address_init_local(int rbp_offset);
 struct address*
@@ -690,9 +700,9 @@ struct symbol {
     // SYMBOL_FUNCTION => The type of the function (always TYPE_FUNCTION).
     struct type const* type;
     // SYMBOL_TYPE     => NULL.
-    // SYMBOL_VARIABLE => ADDRESS_GLOBAL or ADDRESS_LOCAL.
-    // SYMBOL_CONSTANT => ADDRESS_GLOBAL or ADDRESS_LOCAL.
-    // SYMBOL_FUNCTION => ADDRESS_GLOBAL.
+    // SYMBOL_VARIABLE => ADDRESS_STATIC or ADDRESS_LOCAL.
+    // SYMBOL_CONSTANT => ADDRESS_STATIC or ADDRESS_LOCAL.
+    // SYMBOL_FUNCTION => ADDRESS_STATIC.
     struct address const* address;
     // SYMBOL_TYPE     => NULL.
     // SYMBOL_VARIABLE => Compile-type-value of the variable (globals only).
