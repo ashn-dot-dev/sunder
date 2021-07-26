@@ -209,6 +209,11 @@ order_expr(struct orderer* orderer, struct ast_expr const* expr)
         }
         return;
     }
+    case AST_EXPR_SLICE: {
+        order_expr(orderer, expr->data.slice.pointer);
+        order_expr(orderer, expr->data.slice.count);
+        return;
+    }
     case AST_EXPR_GROUPED: {
         order_expr(orderer, expr->data.grouped.expr);
         return;
@@ -285,6 +290,10 @@ order_typespec(struct orderer* orderer, struct ast_typespec const* typespec)
     case TYPESPEC_ARRAY: {
         order_expr(orderer, typespec->data.array.count);
         order_typespec(orderer, typespec->data.array.base);
+        return;
+    }
+    case TYPESPEC_SLICE: {
+        order_typespec(orderer, typespec->data.slice.base);
         return;
     }
     }

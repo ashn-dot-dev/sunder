@@ -1,0 +1,11 @@
+const array: [3u]ssize = (:[3u]ssize)[1s, 3s, 5s];
+func main() void {
+    var slice: []ssize = (:[]ssize){&array[0u], 3u};
+    dump slice[0u];
+    dump slice[1u];
+    dump slice[2u];
+}
+################################################################################
+# 01 00 00 00 00 00 00 00
+# 03 00 00 00 00 00 00 00
+# 05 00 00 00 00 00 00 00

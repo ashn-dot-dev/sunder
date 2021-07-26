@@ -251,9 +251,31 @@ ast_expr_new_array(
     struct ast_typespec const* typespec,
     struct ast_expr const* const* elements)
 {
+    assert(location != NULL);
+    assert(typespec != NULL);
+
     struct ast_expr* const self = ast_expr_new(location, AST_EXPR_ARRAY);
     self->data.array.typespec = typespec;
     self->data.array.elements = elements;
+    return self;
+}
+
+struct ast_expr*
+ast_expr_new_slice(
+    struct source_location const* location,
+    struct ast_typespec const* typespec,
+    struct ast_expr const* pointer,
+    struct ast_expr const* count)
+{
+    assert(location != NULL);
+    assert(typespec != NULL);
+    assert(pointer != NULL);
+    assert(count != NULL);
+
+    struct ast_expr* const self = ast_expr_new(location, AST_EXPR_SLICE);
+    self->data.slice.typespec = typespec;
+    self->data.slice.pointer = pointer;
+    self->data.slice.count = count;
     return self;
 }
 
@@ -448,6 +470,19 @@ ast_typespec_new_array(
         ast_typespec_new(location, TYPESPEC_ARRAY);
     self->data.array.count = count;
     self->data.array.base = base;
+    return self;
+}
+
+struct ast_typespec*
+ast_typespec_new_slice(
+    struct source_location const* location, struct ast_typespec const* base)
+{
+    assert(location != NULL);
+    assert(base != NULL);
+
+    struct ast_typespec* const self =
+        ast_typespec_new(location, TYPESPEC_SLICE);
+    self->data.pointer.base = base;
     return self;
 }
 

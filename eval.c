@@ -57,6 +57,12 @@ eval_expr(struct evaluator* evaluator, struct tir_expr const* expr)
         }
         return value_new_array(expr->type, evaled_elements);
     }
+    case TIR_EXPR_SLICE: {
+        fatal(
+            expr->location->path,
+            expr->location->line,
+            "constant expression contains slice literal");
+    }
     case TIR_EXPR_SYSCALL: {
         fatal(
             expr->location->path,

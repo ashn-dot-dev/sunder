@@ -326,11 +326,17 @@ codegen_rvalue_integer(struct tir_expr const* expr);
 static void
 codegen_rvalue_array(struct tir_expr const* expr);
 static void
+codegen_rvalue_slice(struct tir_expr const* expr);
+static void
 codegen_rvalue_syscall(struct tir_expr const* expr);
 static void
 codegen_rvalue_call(struct tir_expr const* expr);
 static void
 codegen_rvalue_index(struct tir_expr const* expr);
+static void
+codegen_rvalue_index_lhs_array(struct tir_expr const* expr);
+static void
+codegen_rvalue_index_lhs_slice(struct tir_expr const* expr);
 static void
 codegen_rvalue_unary(struct tir_expr const* expr);
 static void
@@ -891,6 +897,10 @@ codegen_rvalue(struct tir_expr const* expr)
         codegen_rvalue_array(expr);
         return;
     }
+    case TIR_EXPR_SLICE: {
+        codegen_rvalue_slice(expr);
+        return;
+    }
     case TIR_EXPR_SYSCALL: {
         codegen_rvalue_syscall(expr);
         return;
@@ -1012,6 +1022,23 @@ codegen_rvalue_array(struct tir_expr const* expr)
 }
 
 static void
+codegen_rvalue_slice(struct tir_expr const* expr)
+{
+    assert(expr != NULL);
+    assert(expr->kind == TIR_EXPR_SLICE);
+    assert(expr->type->kind == TYPE_SLICE);
+    trace(NO_PATH, NO_LINE, "%s", __func__);
+
+    // +---------+
+    // | count   |
+    // +---------+ <-- rsp + 0x8
+    // | pointer |
+    // +---------+ <-- rsp
+    codegen_rvalue(expr->data.slice.count);
+    codegen_rvalue(expr->data.slice.pointer);
+}
+
+static void
 codegen_rvalue_syscall(struct tir_expr const* expr)
 {
     assert(expr != NULL);
@@ -1088,6 +1115,26 @@ codegen_rvalue_index(struct tir_expr const* expr)
 {
     assert(expr != NULL);
     assert(expr->kind == TIR_EXPR_INDEX);
+    trace(NO_PATH, NO_LINE, "%s", __func__);
+
+    if (expr->data.index.lhs->type->kind == TYPE_ARRAY) {
+        codegen_rvalue_index_lhs_array(expr);
+        return;
+    }
+
+    if (expr->data.index.lhs->type->kind == TYPE_SLICE) {
+        codegen_rvalue_index_lhs_slice(expr);
+        return;
+    }
+
+    UNREACHABLE();
+}
+
+static void
+codegen_rvalue_index_lhs_array(struct tir_expr const* expr)
+{
+    assert(expr != NULL);
+    assert(expr->kind == TIR_EXPR_INDEX);
     assert(expr->data.index.lhs->type->kind == TYPE_ARRAY);
     assert(expr->data.index.idx->type->kind == TYPE_USIZE);
     trace(NO_PATH, NO_LINE, "%s", __func__);
@@ -1137,6 +1184,36 @@ codegen_rvalue_index(struct tir_expr const* expr)
 
     // Pop array rvalue.
     pop(lhs_type->size);
+}
+
+static void
+codegen_rvalue_index_lhs_slice(struct tir_expr const* expr)
+{
+    assert(expr != NULL);
+    assert(expr->kind == TIR_EXPR_INDEX);
+    assert(expr->data.index.lhs->type->kind == TYPE_SLICE);
+    assert(expr->data.index.idx->type->kind == TYPE_USIZE);
+    trace(NO_PATH, NO_LINE, "%s", __func__);
+
+    struct type const* const lhs_type = expr->data.index.lhs->type;
+    struct type const* const element_type = lhs_type->data.slice.base;
+
+    // Push space for result.
+    assert(expr->type == element_type);
+    push(expr->type->size);
+
+    codegen_rvalue(expr->data.index.lhs);
+    codegen_rvalue(expr->data.index.idx);
+    // rax := source
+    // rsp := destination
+    appendli("pop rax"); // index
+    appendli("mov rbx, %zu", element_type->size);
+    appendli("mul rbx"); // index * sizeof(element_type)
+    appendli("pop rbx ; slice start"); // start
+    appendli("add rax, rbx"); // start + index * sizeof(element_type)
+    pop(8u); // count
+    // copy
+    copy_rax_rsp_via_rcx(element_type->size);
 }
 
 static void
@@ -1495,6 +1572,7 @@ codegen_lvalue(struct tir_expr const* expr)
     case TIR_EXPR_BOOLEAN: /* fallthrough */
     case TIR_EXPR_INTEGER: /* fallthrough */
     case TIR_EXPR_ARRAY: /* fallthrough */
+    case TIR_EXPR_SLICE: /* fallthrough */
     case TIR_EXPR_SYSCALL: /* fallthrough */
     case TIR_EXPR_CALL: /* fallthrough */
     case TIR_EXPR_BINARY: {

@@ -38,6 +38,7 @@
          | <boolean>
          | <integer>
          | <expr-array>
+         | <expr-slice>
          | <expr-grouped>
          | <expr-syscall>
          | <expr-call>
@@ -46,6 +47,8 @@
          | <expr-binary>
 
 <expr-array> ::= "(" ":" <typespec> ")" "[" (<expr> ("," <expr>)*)? "]"
+
+<expr-array> ::= "(" ":" <typespec> ")" "{" <expr> "," <expr> "}"
 
 <expr-grouped> ::= "(" <expr> ")"
 
@@ -88,6 +91,7 @@
              | <typespec-function>
              | <typespec-pointer>
              | <typespec-array>
+             | <typespec-slice>
 
 <typespec-identifier> ::= <identifier>
 
@@ -96,6 +100,8 @@
 <typespec-pointer> ::= "*" <typespec>
 
 <typespec-array> ::= "[" <expr> "]" <typespec>
+
+<typespec-slice> ::= "[" "]" <typespec>
 
 <identifier> ::= <letter> (<letter> | <digit-dec>)*
 

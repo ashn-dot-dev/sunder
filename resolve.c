@@ -116,6 +116,8 @@ resolve_expr_integer(struct resolver* resolver, struct ast_expr const* expr);
 static struct tir_expr const*
 resolve_expr_array(struct resolver* resolver, struct ast_expr const* expr);
 static struct tir_expr const*
+resolve_expr_slice(struct resolver* resolver, struct ast_expr const* expr);
+static struct tir_expr const*
 resolve_expr_syscall(struct resolver* resolver, struct ast_expr const* expr);
 static struct tir_expr const*
 resolve_expr_call(struct resolver* resolver, struct ast_expr const* expr);
@@ -349,7 +351,8 @@ is_valid_implicit_cast(struct type const* from, struct type const* to)
     case TYPE_USIZE: /* fallthrough */
     case TYPE_SSIZE: /* fallthrough */
     case TYPE_FUNCTION: /* fallthrough */
-    case TYPE_ARRAY: {
+    case TYPE_ARRAY: /* fallthrough */
+    case TYPE_SLICE: {
         return from == to;
     }
     }
@@ -967,6 +970,9 @@ resolve_expr(struct resolver* resolver, struct ast_expr const* expr)
     case AST_EXPR_ARRAY: {
         return resolve_expr_array(resolver, expr);
     }
+    case AST_EXPR_SLICE: {
+        return resolve_expr_slice(resolver, expr);
+    }
     case AST_EXPR_GROUPED: {
         return resolve_expr(resolver, expr->data.grouped.expr);
     }
@@ -1156,6 +1162,42 @@ resolve_expr_array(struct resolver* resolver, struct ast_expr const* expr)
 }
 
 static struct tir_expr const*
+resolve_expr_slice(struct resolver* resolver, struct ast_expr const* expr)
+{
+    assert(resolver != NULL);
+    assert(expr != NULL);
+    assert(expr->kind == AST_EXPR_SLICE);
+    trace(resolver->module->path, NO_LINE, "%s", __func__);
+
+    struct type const* const type =
+        resolve_typespec(resolver, expr->data.slice.typespec);
+    assert(type->kind == TYPE_SLICE);
+
+    struct tir_expr const* const pointer =
+        resolve_expr(resolver, expr->data.slice.pointer);
+    if (pointer->type->kind != TYPE_POINTER) {
+        fatal(
+            pointer->location->path,
+            pointer->location->line,
+            "expression of type `%s` is not a pointer",
+            pointer->type->name);
+    }
+    struct type const* const slice_pointer_type =
+        type_unique_pointer(type->data.slice.base);
+    check_implicit_cast(pointer->location, pointer->type, slice_pointer_type);
+
+    struct tir_expr const* const count =
+        resolve_expr(resolver, expr->data.slice.count);
+    check_implicit_cast(count->location, count->type, context()->builtin.usize);
+
+    struct tir_expr* const resolved =
+        tir_expr_new_slice(expr->location, type, pointer, count);
+
+    autil_freezer_register(context()->freezer, resolved);
+    return resolved;
+}
+
+static struct tir_expr const*
 resolve_expr_syscall(struct resolver* resolver, struct ast_expr const* expr)
 {
     assert(resolver != NULL);
@@ -1261,7 +1303,7 @@ resolve_expr_index(struct resolver* resolver, struct ast_expr const* expr)
 
     struct tir_expr const* const lhs =
         resolve_expr(resolver, expr->data.index.lhs);
-    if (lhs->type->kind != TYPE_ARRAY) {
+    if (lhs->type->kind != TYPE_ARRAY && lhs->type->kind != TYPE_SLICE) {
         fatal(
             lhs->location->path,
             lhs->location->line,
@@ -1786,6 +1828,11 @@ resolve_typespec(struct resolver* resolver, struct ast_typespec const* typespec)
         struct type const* const base =
             resolve_typespec(resolver, typespec->data.array.base);
         return type_unique_array(count, base);
+    }
+    case TYPESPEC_SLICE: {
+        struct type const* const base =
+            resolve_typespec(resolver, typespec->data.slice.base);
+        return type_unique_slice(base);
     }
     }
 
