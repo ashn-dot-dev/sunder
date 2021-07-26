@@ -1209,13 +1209,10 @@ value_lt(struct value const* lhs, struct value const* rhs)
     case TYPE_SSIZE: {
         return autil_bigint_cmp(lhs->data.integer, rhs->data.integer) < 0;
     }
-    case TYPE_FUNCTION: {
-        // Functions have no meaningful order in non-equality comparisons.
-        return false;
-    }
     case TYPE_POINTER: {
         UNREACHABLE(); // illegal (see comment in value_eq)
     }
+    case TYPE_FUNCTION: /* fallthrough */
     case TYPE_ARRAY: /* fallthrough */
     case TYPE_SLICE: {
         UNREACHABLE(); // illegal
@@ -1256,13 +1253,10 @@ value_gt(struct value const* lhs, struct value const* rhs)
     case TYPE_SSIZE: {
         return autil_bigint_cmp(lhs->data.integer, rhs->data.integer) > 0;
     }
-    case TYPE_FUNCTION: {
-        // Functions have no meaningful order in non-equality comparisons.
-        return false;
-    }
     case TYPE_POINTER: {
         UNREACHABLE(); // illegal (see comment in value_eq)
     }
+    case TYPE_FUNCTION: /* fallthrough */
     case TYPE_ARRAY: /* fallthrough */
     case TYPE_SLICE: {
         UNREACHABLE(); // illegal

@@ -42,20 +42,6 @@ func main() void {
     dump b_ge_c;
     dump nl();
 
-    const foo_ge_foo: bool = foo >= foo;
-    const bar_ge_bar: bool = bar >= bar;
-    const foo_ge_bar: bool = foo >= bar;
-    const bar_ge_foo: bool = bar >= foo;
-    dump foo_ge_foo;
-    dump bar_ge_bar;
-    dump foo_ge_bar;
-    dump bar_ge_foo;
-    dump foo >= foo;
-    dump bar >= bar;
-    dump foo >= bar;
-    dump bar >= foo;
-    dump nl();
-
     dump 3u >= 3u;
     dump 3u >= 5u;
     dump 5u >= 3u;
@@ -82,15 +68,6 @@ func main() void {
 # 01
 # 01
 # 01
-#
-# 01
-# 01
-# 00
-# 00
-# 01
-# 01
-# 00
-# 00
 #
 # 01
 # 00

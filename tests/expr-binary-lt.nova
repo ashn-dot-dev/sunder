@@ -42,20 +42,6 @@ func main() void {
     dump b_lt_c;
     dump nl();
 
-    const foo_lt_foo: bool = foo < foo;
-    const bar_lt_bar: bool = bar < bar;
-    const foo_lt_bar: bool = foo < bar;
-    const bar_lt_foo: bool = bar < foo;
-    dump foo_lt_foo;
-    dump bar_lt_bar;
-    dump foo_lt_bar;
-    dump bar_lt_foo;
-    dump foo < foo;
-    dump bar < bar;
-    dump foo < bar;
-    dump bar < foo;
-    dump nl();
-
     dump 3u < 3u;
     dump 3u < 5u;
     dump 5u < 3u;
@@ -65,6 +51,7 @@ func main() void {
     var y: ssize = -1s;
     dump x < y;
     dump y < x;
+    dump nl();
 }
 ################################################################################
 # 00
@@ -79,15 +66,6 @@ func main() void {
 # 00
 # 00
 # 01
-# 00
-# 00
-# 00
-#
-# 00
-# 00
-# 00
-# 00
-# 00
 # 00
 # 00
 # 00

@@ -1,0 +1,12 @@
+func foo() void {
+    # nothing
+}
+func bar() void {
+    # nothing
+}
+
+func main() void {
+    foo >= bar;
+}
+################################################################################
+# [error-expr-binary-ge-function.nova:9] error: invalid arguments of types `func() void` and `func() void` in non-equality comparison expression

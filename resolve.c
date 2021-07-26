@@ -1616,8 +1616,7 @@ resolve_expr_binary_compare(
     assert(rhs != NULL);
     trace(resolver->module->path, NO_LINE, "%s", __func__);
 
-    bool const valid = lhs->type == rhs->type;
-    if (!valid) {
+    if (lhs->type != rhs->type) {
         fatal(
             op->location.path,
             op->location.line,
@@ -1627,9 +1626,21 @@ resolve_expr_binary_compare(
             token_kind_to_cstr(op->kind));
     }
 
+    struct type const* const xhs_type = lhs->type;
+    bool const is_equality_bop = (bop == BOP_EQ) || (bop == BOP_NE);
+    if (!is_equality_bop && xhs_type->kind == TYPE_FUNCTION) {
+        fatal(
+            op->location.path,
+            op->location.line,
+            "invalid arguments of types `%s` and `%s` in non-equality comparison expression",
+            lhs->type->name,
+            rhs->type->name,
+            token_kind_to_cstr(op->kind));
+    }
+
     struct type const* const type = context()->builtin.bool_;
-    struct tir_expr* const resolved =
-        tir_expr_new_binary(&op->location, type, bop, lhs, rhs);
+    struct tir_expr* const resolved = tir_expr_new_binary(
+        &op->location, type, bop, lhs, rhs);
 
     autil_freezer_register(context()->freezer, resolved);
     return resolved;
