@@ -1400,6 +1400,7 @@ codegen_rvalue_binary(struct tir_expr const* expr)
         assert(expr->data.binary.rhs->type->size >= 1u);
         assert(expr->data.binary.rhs->type->size <= 8u);
         assert(expr->data.binary.lhs->type == expr->data.binary.rhs->type);
+        struct type const* const xhs_type = expr->data.binary.lhs->type;
 
         codegen_rvalue(expr->data.binary.lhs);
         codegen_rvalue(expr->data.binary.rhs);
@@ -1409,7 +1410,7 @@ codegen_rvalue_binary(struct tir_expr const* expr)
         appendli("mov rcx, 0"); // result (default false)
         appendli("mov rdx, 1"); // register holding true
         appendli("cmp rax, rbx");
-        appendli("cmovle rcx, rdx");
+        appendli("%s rcx, rdx", type_is_sinteger(xhs_type) ? "cmovle" : "cmovbe");
         appendli("push rcx");
         return;
     }
@@ -1419,6 +1420,7 @@ codegen_rvalue_binary(struct tir_expr const* expr)
         assert(expr->data.binary.rhs->type->size >= 1u);
         assert(expr->data.binary.rhs->type->size <= 8u);
         assert(expr->data.binary.lhs->type == expr->data.binary.rhs->type);
+        struct type const* const xhs_type = expr->data.binary.lhs->type;
 
         codegen_rvalue(expr->data.binary.lhs);
         codegen_rvalue(expr->data.binary.rhs);
@@ -1428,7 +1430,7 @@ codegen_rvalue_binary(struct tir_expr const* expr)
         appendli("mov rcx, 0"); // result (default false)
         appendli("mov rdx, 1"); // register holding true
         appendli("cmp rax, rbx");
-        appendli("cmovl rcx, rdx");
+        appendli("%s rcx, rdx", type_is_sinteger(xhs_type) ? "cmovl" : "cmovb");
         appendli("push rcx");
         return;
     }
@@ -1438,6 +1440,7 @@ codegen_rvalue_binary(struct tir_expr const* expr)
         assert(expr->data.binary.rhs->type->size >= 1u);
         assert(expr->data.binary.rhs->type->size <= 8u);
         assert(expr->data.binary.lhs->type == expr->data.binary.rhs->type);
+        struct type const* const xhs_type = expr->data.binary.lhs->type;
 
         codegen_rvalue(expr->data.binary.lhs);
         codegen_rvalue(expr->data.binary.rhs);
@@ -1447,7 +1450,7 @@ codegen_rvalue_binary(struct tir_expr const* expr)
         appendli("mov rcx, 0"); // result (default false)
         appendli("mov rdx, 1"); // register holding true
         appendli("cmp rax, rbx");
-        appendli("cmovge rcx, rdx");
+        appendli("%s rcx, rdx", type_is_sinteger(xhs_type) ? "cmovge" : "cmovae");
         appendli("push rcx");
         return;
     }
@@ -1457,6 +1460,7 @@ codegen_rvalue_binary(struct tir_expr const* expr)
         assert(expr->data.binary.rhs->type->size >= 1u);
         assert(expr->data.binary.rhs->type->size <= 8u);
         assert(expr->data.binary.lhs->type == expr->data.binary.rhs->type);
+        struct type const* const xhs_type = expr->data.binary.lhs->type;
 
         codegen_rvalue(expr->data.binary.lhs);
         codegen_rvalue(expr->data.binary.rhs);
@@ -1466,7 +1470,7 @@ codegen_rvalue_binary(struct tir_expr const* expr)
         appendli("mov rcx, 0"); // result (default false)
         appendli("mov rdx, 1"); // register holding true
         appendli("cmp rax, rbx");
-        appendli("cmovg rcx, rdx");
+        appendli("%s rcx, rdx", type_is_sinteger(xhs_type) ? "cmovg" : "cmova");
         appendli("push rcx");
         return;
     }

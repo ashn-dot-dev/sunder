@@ -51,6 +51,12 @@ func main() void {
     var y: ssize = -1s;
     dump x > y;
     dump y > x;
+    dump nl();
+
+    dump 0x00u8 > 0xFFu8;
+    dump 0xFFu8 > 0x00u8;
+    dump 0x0000000000000000u64 > 0xFFFFFFFFFFFFFFFFu64;
+    dump 0xFFFFFFFFFFFFFFFFu64 > 0x0000000000000000u64;
 }
 ################################################################################
 # 00
@@ -75,3 +81,8 @@ func main() void {
 #
 # 01
 # 00
+#
+# 00
+# 01
+# 00
+# 01
