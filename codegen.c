@@ -1357,11 +1357,15 @@ codegen_rvalue_binary(struct tir_expr const* expr)
         return;
     }
     case BOP_EQ: {
-    bop_eq:
+        assert(expr->data.binary.lhs->type->size >= 1u);
         assert(expr->data.binary.lhs->type->size <= 8u);
+        assert(expr->data.binary.rhs->type->size >= 1u);
         assert(expr->data.binary.rhs->type->size <= 8u);
+        assert(expr->data.binary.lhs->type == expr->data.binary.rhs->type);
+
         codegen_rvalue(expr->data.binary.lhs);
         codegen_rvalue(expr->data.binary.rhs);
+
         appendli("pop rbx");
         appendli("pop rax");
         appendli("mov rcx, 0"); // result (default false)
@@ -1372,10 +1376,15 @@ codegen_rvalue_binary(struct tir_expr const* expr)
         return;
     }
     case BOP_NE: {
+        assert(expr->data.binary.lhs->type->size >= 1u);
         assert(expr->data.binary.lhs->type->size <= 8u);
+        assert(expr->data.binary.rhs->type->size >= 1u);
         assert(expr->data.binary.rhs->type->size <= 8u);
+        assert(expr->data.binary.lhs->type == expr->data.binary.rhs->type);
+
         codegen_rvalue(expr->data.binary.lhs);
         codegen_rvalue(expr->data.binary.rhs);
+
         appendli("pop rbx");
         appendli("pop rax");
         appendli("mov rcx, 0"); // result (default false)
@@ -1386,14 +1395,15 @@ codegen_rvalue_binary(struct tir_expr const* expr)
         return;
     }
     case BOP_LE: {
+        assert(expr->data.binary.lhs->type->size >= 1u);
         assert(expr->data.binary.lhs->type->size <= 8u);
+        assert(expr->data.binary.rhs->type->size >= 1u);
         assert(expr->data.binary.rhs->type->size <= 8u);
+        assert(expr->data.binary.lhs->type == expr->data.binary.rhs->type);
+
         codegen_rvalue(expr->data.binary.lhs);
         codegen_rvalue(expr->data.binary.rhs);
-        if (expr->data.binary.lhs->type->kind == TYPE_FUNCTION) {
-            assert(expr->data.binary.rhs->type->kind == TYPE_FUNCTION);
-            goto bop_eq;
-        }
+
         appendli("pop rbx");
         appendli("pop rax");
         appendli("mov rcx, 0"); // result (default false)
@@ -1404,10 +1414,11 @@ codegen_rvalue_binary(struct tir_expr const* expr)
         return;
     }
     case BOP_LT: {
+        assert(expr->data.binary.lhs->type->size >= 1u);
         assert(expr->data.binary.lhs->type->size <= 8u);
+        assert(expr->data.binary.rhs->type->size >= 1u);
         assert(expr->data.binary.rhs->type->size <= 8u);
         assert(expr->data.binary.lhs->type == expr->data.binary.rhs->type);
-        assert(expr->data.binary.lhs->type->kind != TYPE_FUNCTION);
 
         codegen_rvalue(expr->data.binary.lhs);
         codegen_rvalue(expr->data.binary.rhs);
@@ -1422,10 +1433,11 @@ codegen_rvalue_binary(struct tir_expr const* expr)
         return;
     }
     case BOP_GE: {
+        assert(expr->data.binary.lhs->type->size >= 1u);
         assert(expr->data.binary.lhs->type->size <= 8u);
+        assert(expr->data.binary.rhs->type->size >= 1u);
         assert(expr->data.binary.rhs->type->size <= 8u);
         assert(expr->data.binary.lhs->type == expr->data.binary.rhs->type);
-        assert(expr->data.binary.lhs->type->kind != TYPE_FUNCTION);
 
         codegen_rvalue(expr->data.binary.lhs);
         codegen_rvalue(expr->data.binary.rhs);
@@ -1440,10 +1452,11 @@ codegen_rvalue_binary(struct tir_expr const* expr)
         return;
     }
     case BOP_GT: {
+        assert(expr->data.binary.lhs->type->size >= 1u);
         assert(expr->data.binary.lhs->type->size <= 8u);
+        assert(expr->data.binary.rhs->type->size >= 1u);
         assert(expr->data.binary.rhs->type->size <= 8u);
         assert(expr->data.binary.lhs->type == expr->data.binary.rhs->type);
-        assert(expr->data.binary.lhs->type->kind != TYPE_FUNCTION);
 
         codegen_rvalue(expr->data.binary.lhs);
         codegen_rvalue(expr->data.binary.rhs);
@@ -1458,10 +1471,11 @@ codegen_rvalue_binary(struct tir_expr const* expr)
         return;
     }
     case BOP_ADD: {
+        assert(expr->data.binary.lhs->type->size >= 1u);
         assert(expr->data.binary.lhs->type->size <= 8u);
+        assert(expr->data.binary.rhs->type->size >= 1u);
         assert(expr->data.binary.rhs->type->size <= 8u);
         assert(expr->data.binary.lhs->type == expr->data.binary.rhs->type);
-        assert(expr->data.binary.lhs->type->kind != TYPE_FUNCTION);
 
         codegen_rvalue(expr->data.binary.lhs);
         codegen_rvalue(expr->data.binary.rhs);
@@ -1473,34 +1487,47 @@ codegen_rvalue_binary(struct tir_expr const* expr)
         return;
     }
     case BOP_SUB: {
+        assert(expr->data.binary.lhs->type->size >= 1u);
         assert(expr->data.binary.lhs->type->size <= 8u);
+        assert(expr->data.binary.rhs->type->size >= 1u);
         assert(expr->data.binary.rhs->type->size <= 8u);
+        assert(expr->data.binary.lhs->type == expr->data.binary.rhs->type);
+
         codegen_rvalue(expr->data.binary.lhs);
         codegen_rvalue(expr->data.binary.rhs);
+
         appendli("pop rbx");
         appendli("pop rax");
         appendli("sub rax, rbx");
         appendli("push rax");
         return;
     }
-    // TODO: Check mul vs imul. Does sign matter at all?
     case BOP_MUL: {
+        assert(expr->data.binary.lhs->type->size >= 1u);
         assert(expr->data.binary.lhs->type->size <= 8u);
+        assert(expr->data.binary.rhs->type->size >= 1u);
         assert(expr->data.binary.rhs->type->size <= 8u);
+        assert(expr->data.binary.lhs->type == expr->data.binary.rhs->type);
+
         codegen_rvalue(expr->data.binary.lhs);
         codegen_rvalue(expr->data.binary.rhs);
+
         appendli("pop rbx");
         appendli("pop rax");
         appendli("mul rbx");
         appendli("push rax");
         return;
     }
-    // TODO: Check div vs idiv. Does sign matter at all?
     case BOP_DIV: {
+        assert(expr->data.binary.lhs->type->size >= 1u);
         assert(expr->data.binary.lhs->type->size <= 8u);
+        assert(expr->data.binary.rhs->type->size >= 1u);
         assert(expr->data.binary.rhs->type->size <= 8u);
+        assert(expr->data.binary.lhs->type == expr->data.binary.rhs->type);
+
         codegen_rvalue(expr->data.binary.lhs);
         codegen_rvalue(expr->data.binary.rhs);
+
         appendli("pop rbx");
         appendli("pop rax");
         appendli("div rbx");
@@ -1508,10 +1535,15 @@ codegen_rvalue_binary(struct tir_expr const* expr)
         return;
     }
     case BOP_BITOR: {
+        assert(expr->data.binary.lhs->type->size >= 1u);
         assert(expr->data.binary.lhs->type->size <= 8u);
+        assert(expr->data.binary.rhs->type->size >= 1u);
         assert(expr->data.binary.rhs->type->size <= 8u);
+        assert(expr->data.binary.lhs->type == expr->data.binary.rhs->type);
+
         codegen_rvalue(expr->data.binary.lhs);
         codegen_rvalue(expr->data.binary.rhs);
+
         appendli("pop rbx");
         appendli("pop rax");
         appendli("or rax, rbx");
@@ -1519,10 +1551,15 @@ codegen_rvalue_binary(struct tir_expr const* expr)
         return;
     }
     case BOP_BITXOR: {
+        assert(expr->data.binary.lhs->type->size >= 1u);
         assert(expr->data.binary.lhs->type->size <= 8u);
+        assert(expr->data.binary.rhs->type->size >= 1u);
         assert(expr->data.binary.rhs->type->size <= 8u);
+        assert(expr->data.binary.lhs->type == expr->data.binary.rhs->type);
+
         codegen_rvalue(expr->data.binary.lhs);
         codegen_rvalue(expr->data.binary.rhs);
+
         appendli("pop rbx");
         appendli("pop rax");
         appendli("xor rax, rbx");
@@ -1530,10 +1567,15 @@ codegen_rvalue_binary(struct tir_expr const* expr)
         return;
     }
     case BOP_BITAND: {
+        assert(expr->data.binary.lhs->type->size >= 1u);
         assert(expr->data.binary.lhs->type->size <= 8u);
+        assert(expr->data.binary.rhs->type->size >= 1u);
         assert(expr->data.binary.rhs->type->size <= 8u);
+        assert(expr->data.binary.lhs->type == expr->data.binary.rhs->type);
+
         codegen_rvalue(expr->data.binary.lhs);
         codegen_rvalue(expr->data.binary.rhs);
+
         appendli("pop rbx");
         appendli("pop rax");
         appendli("and rax, rbx");
