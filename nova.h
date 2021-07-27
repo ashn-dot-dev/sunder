@@ -45,7 +45,7 @@ unreachable(char const* file, int line);
 int
 ceil8i(int x);
 size_t
-ceil8z(size_t x);
+ceil8zu(size_t x);
 
 // Convert a bigint to size_t.
 // Returns zero on success.
@@ -56,7 +56,7 @@ bigint_to_uz(size_t* res, struct autil_bigint const* bigint);
 // Convert a bigint into a two's complement bit array.
 // Returns zero on success.
 // Returns non-zero if the provided bigint is out-of-range would require more
-// than autil_bitarr_count(res) bits to express, in which res is left
+// than autil_bitarr_count(res) bits to express, in which case res is left
 // unmodified.
 int
 bigint_to_bitarr(struct autil_bitarr* res, struct autil_bigint const* bigint);

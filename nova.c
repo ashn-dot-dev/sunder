@@ -151,7 +151,7 @@ ceil8i(int x)
 }
 
 size_t
-ceil8z(size_t x)
+ceil8zu(size_t x)
 {
     while (x % 8u != 0u) {
         x += 1u;

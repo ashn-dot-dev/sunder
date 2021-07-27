@@ -120,7 +120,7 @@ push(size_t size)
         return;
     }
 
-    appendli("sub rsp, %#zx", ceil8z(size));
+    appendli("sub rsp, %#zx", ceil8zu(size));
 }
 
 static void
@@ -200,7 +200,7 @@ pop(size_t size)
         return;
     }
 
-    appendli("add rsp, %#zx", ceil8z(size));
+    appendli("add rsp, %#zx", ceil8zu(size));
 }
 
 static void
@@ -1019,7 +1019,7 @@ codegen_rvalue_array(struct tir_expr const* expr)
         codegen_rvalue(elements[i]);
 
         appendli("mov rbx, rsp");
-        appendli("add rbx, %zu", ceil8z(element_size)); // array start
+        appendli("add rbx, %zu", ceil8zu(element_size)); // array start
         appendli("add rbx, %zu", element_size * i); // array index
         copy_rsp_rbx_via_rcx(element_size);
 

@@ -255,7 +255,7 @@ resolver_reserve_storage_local(struct resolver* self, struct type const* type)
     assert(self != NULL);
     assert(type != NULL);
 
-    self->current_rbp_offset -= (int)ceil8z(type->size);
+    self->current_rbp_offset -= (int)ceil8zu(type->size);
     if (self->current_rbp_offset < self->current_function->local_stack_offset) {
         self->current_function->local_stack_offset = self->current_rbp_offset;
     }
@@ -568,7 +568,7 @@ resolve_decl_function(struct resolver* resolver, struct ast_decl const* decl)
             address_new(address_init_local(rbp_offset));
         autil_freezer_register(context()->freezer, address);
 
-        rbp_offset += (int)ceil8z(type->size);
+        rbp_offset += (int)ceil8zu(type->size);
         struct symbol* const symbol =
             symbol_new_variable(location, name, type, address, NULL);
         autil_freezer_register(context()->freezer, symbol);
