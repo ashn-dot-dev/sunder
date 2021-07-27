@@ -269,6 +269,8 @@ type_unique_slice(struct type const* base)
 bool
 type_is_integer(struct type const* self)
 {
+    assert(self != NULL);
+
     enum type_kind const kind = self->kind;
     return kind == TYPE_U8 || kind == TYPE_S8 || kind == TYPE_U16
         || kind == TYPE_S16 || kind == TYPE_U32 || kind == TYPE_S32
@@ -279,6 +281,8 @@ type_is_integer(struct type const* self)
 bool
 type_is_uinteger(struct type const* self)
 {
+    assert(self != NULL);
+
     enum type_kind const kind = self->kind;
     return kind == TYPE_U8 || kind == TYPE_U16 || kind == TYPE_U32
         || kind == TYPE_U64 || kind == TYPE_USIZE;
@@ -287,9 +291,31 @@ type_is_uinteger(struct type const* self)
 bool
 type_is_sinteger(struct type const* self)
 {
+    assert(self != NULL);
+
     enum type_kind const kind = self->kind;
     return kind == TYPE_S8 || kind == TYPE_S16 || kind == TYPE_S32
         || kind == TYPE_S64 || kind == TYPE_SSIZE;
+}
+
+bool
+type_can_compare_equality(struct type const* self)
+{
+    assert(self != NULL);
+
+    enum type_kind const kind = self->kind;
+    return kind == TYPE_BOOL || kind == TYPE_BYTE || type_is_integer(self)
+        || kind == TYPE_FUNCTION || kind == TYPE_POINTER;
+}
+
+bool
+type_can_compare_order(struct type const* self)
+{
+    assert(self != NULL);
+
+    enum type_kind const kind = self->kind;
+    return kind == TYPE_BOOL || kind == TYPE_BYTE || type_is_integer(self)
+        || kind == TYPE_POINTER;
 }
 
 struct address

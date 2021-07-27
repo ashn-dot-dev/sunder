@@ -1,0 +1,6 @@
+func main() void {
+    var array: [3u]ssize = (:[3u]ssize)[1s, 3s, 5s];
+    array <= array;
+}
+################################################################################
+# [error-expr-binary-le-array.nova:3] error: invalid arguments of type `[3]ssize` in binary `<=` expression

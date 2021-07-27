@@ -684,6 +684,13 @@ bool
 type_is_uinteger(struct type const* self);
 bool
 type_is_sinteger(struct type const* self);
+// Returns true if the type may be compared with the == or != operators.
+bool
+type_can_compare_equality(struct type const* self);
+// Returns true if the type may be compared with the ==, !=, <, <=, >, and >=
+// operators.
+bool
+type_can_compare_order(struct type const* self);
 
 struct address {
     enum address_kind {

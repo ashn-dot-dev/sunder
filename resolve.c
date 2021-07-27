@@ -163,7 +163,14 @@ resolve_expr_binary_logical(
     struct tir_expr const* lhs,
     struct tir_expr const* rhs);
 static struct tir_expr const*
-resolve_expr_binary_compare(
+resolve_expr_binary_compare_equality(
+    struct resolver* resolver,
+    struct token const* op,
+    enum bop_kind bop,
+    struct tir_expr const* lhs,
+    struct tir_expr const* rhs);
+static struct tir_expr const*
+resolve_expr_binary_compare_order(
     struct resolver* resolver,
     struct token const* op,
     enum bop_kind bop,
@@ -1521,22 +1528,28 @@ resolve_expr_binary(struct resolver* resolver, struct ast_expr const* expr)
         return resolve_expr_binary_logical(resolver, op, BOP_AND, lhs, rhs);
     }
     case TOKEN_EQ: {
-        return resolve_expr_binary_compare(resolver, op, BOP_EQ, lhs, rhs);
+        return resolve_expr_binary_compare_equality(
+            resolver, op, BOP_EQ, lhs, rhs);
     }
     case TOKEN_NE: {
-        return resolve_expr_binary_compare(resolver, op, BOP_NE, lhs, rhs);
+        return resolve_expr_binary_compare_equality(
+            resolver, op, BOP_NE, lhs, rhs);
     }
     case TOKEN_LE: {
-        return resolve_expr_binary_compare(resolver, op, BOP_LE, lhs, rhs);
+        return resolve_expr_binary_compare_order(
+            resolver, op, BOP_LE, lhs, rhs);
     }
     case TOKEN_LT: {
-        return resolve_expr_binary_compare(resolver, op, BOP_LT, lhs, rhs);
+        return resolve_expr_binary_compare_order(
+            resolver, op, BOP_LT, lhs, rhs);
     }
     case TOKEN_GE: {
-        return resolve_expr_binary_compare(resolver, op, BOP_GE, lhs, rhs);
+        return resolve_expr_binary_compare_order(
+            resolver, op, BOP_GE, lhs, rhs);
     }
     case TOKEN_GT: {
-        return resolve_expr_binary_compare(resolver, op, BOP_GT, lhs, rhs);
+        return resolve_expr_binary_compare_order(
+            resolver, op, BOP_GT, lhs, rhs);
     }
     case TOKEN_PLUS: {
         return resolve_expr_binary_arithmetic(resolver, op, BOP_ADD, lhs, rhs);
@@ -1603,7 +1616,47 @@ resolve_expr_binary_logical(
 }
 
 static struct tir_expr const*
-resolve_expr_binary_compare(
+resolve_expr_binary_compare_equality(
+    struct resolver* resolver,
+    struct token const* op,
+    enum bop_kind bop,
+    struct tir_expr const* lhs,
+    struct tir_expr const* rhs)
+{
+    assert(resolver != NULL);
+    assert(op != NULL);
+    assert(lhs != NULL);
+    assert(rhs != NULL);
+    trace(resolver->module->path, NO_LINE, "%s", __func__);
+
+    if (lhs->type != rhs->type) {
+        fatal(
+            op->location.path,
+            op->location.line,
+            "invalid arguments of types `%s` and `%s` in binary `%s` expression",
+            lhs->type->name,
+            rhs->type->name,
+            token_kind_to_cstr(op->kind));
+    }
+    struct type const* const xhs_type = lhs->type;
+    if (!type_can_compare_equality(xhs_type)) {
+        fatal(
+            op->location.path,
+            op->location.line,
+            "invalid arguments of type `%s` in binary `%s` expression",
+            xhs_type->name,
+            token_kind_to_cstr(op->kind));
+    }
+
+    struct tir_expr* const resolved = tir_expr_new_binary(
+        &op->location, context()->builtin.bool_, bop, lhs, rhs);
+
+    autil_freezer_register(context()->freezer, resolved);
+    return resolved;
+}
+
+static struct tir_expr const*
+resolve_expr_binary_compare_order(
     struct resolver* resolver,
     struct token const* op,
     enum bop_kind bop,
@@ -1627,20 +1680,17 @@ resolve_expr_binary_compare(
     }
 
     struct type const* const xhs_type = lhs->type;
-    bool const is_equality_bop = (bop == BOP_EQ) || (bop == BOP_NE);
-    if (!is_equality_bop && xhs_type->kind == TYPE_FUNCTION) {
+    if (!type_can_compare_order(xhs_type)) {
         fatal(
             op->location.path,
             op->location.line,
-            "invalid arguments of types `%s` and `%s` in non-equality comparison expression",
-            lhs->type->name,
-            rhs->type->name,
+            "invalid arguments of type `%s` in binary `%s` expression",
+            xhs_type->name,
             token_kind_to_cstr(op->kind));
     }
 
-    struct type const* const type = context()->builtin.bool_;
     struct tir_expr* const resolved = tir_expr_new_binary(
-        &op->location, type, bop, lhs, rhs);
+        &op->location, context()->builtin.bool_, bop, lhs, rhs);
 
     autil_freezer_register(context()->freezer, resolved);
     return resolved;

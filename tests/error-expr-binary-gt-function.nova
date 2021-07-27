@@ -9,4 +9,4 @@ func main() void {
     foo > bar;
 }
 ################################################################################
-# [error-expr-binary-gt-function.nova:9] error: invalid arguments of types `func() void` and `func() void` in non-equality comparison expression
+# [error-expr-binary-gt-function.nova:9] error: invalid arguments of type `func() void` in binary `>` expression
