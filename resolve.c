@@ -1066,6 +1066,9 @@ integer_literal_suffix_to_type(
             suffix);
     }
 
+    if (suffix == context()->interned.y) {
+        return context()->builtin.byte;
+    }
     if (suffix == context()->interned.u8) {
         return context()->builtin.u8;
     }

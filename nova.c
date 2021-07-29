@@ -197,8 +197,39 @@ spawnvpw(char const* path, char const* const* argv)
 }
 
 int
+bigint_to_u8(uint8_t* res, struct autil_bigint const* bigint)
+{
+    assert(res != NULL);
+    assert(bigint != NULL);
+
+    uintmax_t umax = 0;
+    if (bigint_to_umax(&umax, bigint) || (umax > UINT8_MAX)) {
+        return -1;
+    }
+
+    *res = (uint8_t)umax;
+    return 0;
+}
+
+int
 bigint_to_uz(size_t* res, struct autil_bigint const* bigint)
 {
+    assert(res != NULL);
+    assert(bigint != NULL);
+
+    uintmax_t umax = 0;
+    if (bigint_to_umax(&umax, bigint) || (umax > SIZE_MAX)) {
+        return -1;
+    }
+
+    *res = (size_t)umax;
+    return 0;
+}
+
+int
+bigint_to_umax(uintmax_t* res, struct autil_bigint const* bigint)
+{
+    assert(res != NULL);
     assert(bigint != NULL);
 
     if (autil_bigint_cmp(bigint, AUTIL_BIGINT_ZERO) < 0) {
@@ -215,10 +246,7 @@ bigint_to_uz(size_t* res, struct autil_bigint const* bigint)
         return -1;
     }
 
-    if (umax > SIZE_MAX) {
-        return -1;
-    }
-    *res = (size_t)umax;
+    *res = umax;
     return 0;
 }
 
@@ -264,7 +292,7 @@ bigint_to_bitarr(struct autil_bitarr* res, struct autil_bigint const* bigint)
     // Convert two's complement unsigned (magnitude) representation into
     // negative signed representation if necessary.
     if (autil_bigint_cmp(bigint, AUTIL_BIGINT_ZERO) < 0) {
-        // Two's complement positive<->negative conversion:
+        // Two's complement positive<->negative conversion.
         bitarr_twos_complement_neg(res);
     }
 
@@ -287,7 +315,7 @@ bitarr_to_bigint(
 
     bool const is_neg = is_signed && autil_bitarr_get(bitarr, bit_count - 1u);
     if (is_neg) {
-        // Two's complement negative<->positive conversion:
+        // Two's complement negative<->positive conversion.
         bitarr_twos_complement_neg(mag_bits);
     }
 
@@ -388,6 +416,7 @@ context_init(void)
     s_context.interned.s64 = INTERN_STR_LITERAL("s64");
     s_context.interned.usize = INTERN_STR_LITERAL("usize");
     s_context.interned.ssize = INTERN_STR_LITERAL("ssize");
+    s_context.interned.y = INTERN_STR_LITERAL("y");
     s_context.interned.u = INTERN_STR_LITERAL("u");
     s_context.interned.s = INTERN_STR_LITERAL("s");
 #undef INTERN_STR_LITERAL

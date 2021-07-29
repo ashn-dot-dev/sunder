@@ -978,7 +978,8 @@ codegen_rvalue_integer(struct tir_expr const* expr)
 
     char* const cstr = autil_bigint_to_new_cstr(expr->data.integer, NULL);
 
-    assert(expr->type->size <= 8);
+    assert(expr->type->size >= 1u);
+    assert(expr->type->size <= 8u);
     appendli("mov rax, %s", cstr);
     appendli("push rax");
 

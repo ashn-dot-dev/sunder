@@ -676,9 +676,10 @@ tir_expr_new_integer(
 {
     assert(location != NULL);
     assert(type != NULL);
-    assert(type_is_integer(type));
+    assert(type->kind == TYPE_BYTE || type_is_integer(type));
     assert(value != NULL);
 
+    // TODO: Verify that the integer is in range.
     struct tir_expr* const self =
         tir_expr_new(location, type, TIR_EXPR_INTEGER);
     self->data.integer = value;
@@ -936,7 +937,7 @@ struct value*
 value_new_integer(struct type const* type, struct autil_bigint* integer)
 {
     assert(type != NULL);
-    assert(type_is_integer(type));
+    assert(type->kind == TYPE_BYTE || type_is_integer(type));
     assert(integer != NULL);
 
     // TODO: Assert that the range of the integer is within the range of the

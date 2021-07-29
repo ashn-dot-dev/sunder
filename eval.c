@@ -46,6 +46,13 @@ eval_expr(struct evaluator* evaluator, struct tir_expr const* expr)
     }
     case TIR_EXPR_INTEGER: {
         struct autil_bigint const* const integer = expr->data.integer;
+        if (expr->type->kind == TYPE_BYTE) {
+            uint8_t byte = 0;
+            int const out_of_range = bigint_to_u8(&byte, integer);
+            assert(!out_of_range);
+            return value_new_byte(byte);
+        }
+        assert(type_is_integer(expr->type));
         return value_new_integer(expr->type, autil_bigint_new(integer));
     }
     case TIR_EXPR_ARRAY: {
