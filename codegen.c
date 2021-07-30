@@ -532,6 +532,30 @@ codegen_core(void)
     appendln("    'F8', 'F9', 'FA', 'FB', 'FC', 'FD', 'FE', 'FF'");
     appendch('\n');
 
+    appendln("; BUILTIN OUT-OF-RANGE INTEGER RESULT HANDLER");
+    appendln("section .text");
+    appendln("global dump");
+    appendln("__integer_oor_handler:");
+    appendln("    push rbp");
+    appendln("    mov rbp, rsp");
+    appendch('\n');
+    appendln("    mov rax, 1 ; SYS_WRITE");
+    appendln("    mov rdi, 2 ; STDERR_FILENO");
+    appendln("    mov rsi, __integer_oor_msg_start");
+    appendln("    mov rdx, __integer_oor_msg_count");
+    appendln("    syscall");
+    appendch('\n');
+    appendln("    mov rax, 60 ; exit");
+    appendli("    mov rdi, 1 ; EXIT_FAILURE");
+    appendln("    syscall");
+    appendch('\n');
+    appendln("section .rodata");
+    appendln("__integer_oor_msg_start: db\\");
+    appendln(
+        "    \"fatal: arithmetic operation produces out-of-range result\", 0x0A");
+    appendln("__integer_oor_msg_count: equ $ - __integer_oor_msg_start");
+    appendch('\n');
+
     appendln("; PROGRAM ENTRY POINT");
     appendln("section .text");
     appendln("global _start");
@@ -1411,7 +1435,8 @@ codegen_rvalue_binary(struct tir_expr const* expr)
         appendli("mov rcx, 0"); // result (default false)
         appendli("mov rdx, 1"); // register holding true
         appendli("cmp rax, rbx");
-        appendli("%s rcx, rdx", type_is_sinteger(xhs_type) ? "cmovle" : "cmovbe");
+        appendli(
+            "%s rcx, rdx", type_is_sinteger(xhs_type) ? "cmovle" : "cmovbe");
         appendli("push rcx");
         return;
     }
@@ -1451,7 +1476,8 @@ codegen_rvalue_binary(struct tir_expr const* expr)
         appendli("mov rcx, 0"); // result (default false)
         appendli("mov rdx, 1"); // register holding true
         appendli("cmp rax, rbx");
-        appendli("%s rcx, rdx", type_is_sinteger(xhs_type) ? "cmovge" : "cmovae");
+        appendli(
+            "%s rcx, rdx", type_is_sinteger(xhs_type) ? "cmovge" : "cmovae");
         appendli("push rcx");
         return;
     }
@@ -1481,14 +1507,50 @@ codegen_rvalue_binary(struct tir_expr const* expr)
         assert(expr->data.binary.rhs->type->size >= 1u);
         assert(expr->data.binary.rhs->type->size <= 8u);
         assert(expr->data.binary.lhs->type == expr->data.binary.rhs->type);
+        struct type const* const xhs_type = expr->data.binary.lhs->type;
+        size_t const expr_id = unique_id++;
 
+        char const* lhs_reg = NULL;
+        char const* rhs_reg = NULL;
+        switch (xhs_type->kind) {
+        case TYPE_U8: /* fallthrough */
+        case TYPE_S8:
+            lhs_reg = "al";
+            rhs_reg = "bl";
+            break;
+        case TYPE_U16: /* fallthrough */
+        case TYPE_S16:
+            lhs_reg = "ax";
+            rhs_reg = "bx";
+            break;
+        case TYPE_U32: /* fallthrough */
+        case TYPE_S32:
+            lhs_reg = "eax";
+            rhs_reg = "ebx";
+            break;
+        case TYPE_U64: /* fallthrough */
+        case TYPE_S64: /* fallthrough */
+        case TYPE_USIZE: /* fallthrough */
+        case TYPE_SSIZE:
+            lhs_reg = "rax";
+            rhs_reg = "rbx";
+            break;
+        default:
+            UNREACHABLE();
+        }
+        char const* const jmp_not_overflow =
+            type_is_sinteger(xhs_type) ? "jno" : "jnc";
+
+        appendln(".l%zu_expr_binary_add_bgn:", expr_id);
         codegen_rvalue(expr->data.binary.lhs);
         codegen_rvalue(expr->data.binary.rhs);
-
         appendli("pop rbx");
         appendli("pop rax");
-        appendli("add rax, rbx");
+        appendli("add %s, %s", lhs_reg, rhs_reg);
         appendli("push rax");
+        appendli("%s .l%zu_expr_binary_add_end", jmp_not_overflow, expr_id);
+        appendli("call __integer_oor_handler");
+        appendln(".l%zu_expr_binary_add_end:", expr_id);
         return;
     }
     case BOP_SUB: {
@@ -1497,14 +1559,50 @@ codegen_rvalue_binary(struct tir_expr const* expr)
         assert(expr->data.binary.rhs->type->size >= 1u);
         assert(expr->data.binary.rhs->type->size <= 8u);
         assert(expr->data.binary.lhs->type == expr->data.binary.rhs->type);
+        struct type const* const xhs_type = expr->data.binary.lhs->type;
+        size_t const expr_id = unique_id++;
 
+        char const* lhs_reg = NULL;
+        char const* rhs_reg = NULL;
+        switch (xhs_type->kind) {
+        case TYPE_U8: /* fallthrough */
+        case TYPE_S8:
+            lhs_reg = "al";
+            rhs_reg = "bl";
+            break;
+        case TYPE_U16: /* fallthrough */
+        case TYPE_S16:
+            lhs_reg = "ax";
+            rhs_reg = "bx";
+            break;
+        case TYPE_U32: /* fallthrough */
+        case TYPE_S32:
+            lhs_reg = "eax";
+            rhs_reg = "ebx";
+            break;
+        case TYPE_U64: /* fallthrough */
+        case TYPE_S64: /* fallthrough */
+        case TYPE_USIZE: /* fallthrough */
+        case TYPE_SSIZE:
+            lhs_reg = "rax";
+            rhs_reg = "rbx";
+            break;
+        default:
+            UNREACHABLE();
+        }
+        char const* const jmp_not_overflow =
+            type_is_sinteger(xhs_type) ? "jno" : "jnc";
+
+        appendln(".l%zu_expr_binary_add_bgn:", expr_id);
         codegen_rvalue(expr->data.binary.lhs);
         codegen_rvalue(expr->data.binary.rhs);
-
         appendli("pop rbx");
         appendli("pop rax");
-        appendli("sub rax, rbx");
+        appendli("sub %s, %s", lhs_reg, rhs_reg);
         appendli("push rax");
+        appendli("%s .l%zu_expr_binary_add_end", jmp_not_overflow, expr_id);
+        appendli("call __integer_oor_handler");
+        appendln(".l%zu_expr_binary_add_end:", expr_id);
         return;
     }
     case BOP_MUL: {

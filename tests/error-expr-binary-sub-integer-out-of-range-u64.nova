@@ -1,0 +1,6 @@
+func main() void {
+    0u64 - 1u64;
+}
+################################################################################
+# fatal: arithmetic operation produces out-of-range result
+

@@ -1,0 +1,5 @@
+func main() void {
+   -9223372036854775808s64 - 1s64;
+}
+################################################################################
+# fatal: arithmetic operation produces out-of-range result

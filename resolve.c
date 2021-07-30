@@ -1152,11 +1152,13 @@ resolve_expr_slice(struct resolver* resolver, struct ast_expr const* expr)
     }
     struct type const* const slice_pointer_type =
         type_unique_pointer(type->data.slice.base);
-    check_type_compatibility(pointer->location, pointer->type, slice_pointer_type);
+    check_type_compatibility(
+        pointer->location, pointer->type, slice_pointer_type);
 
     struct tir_expr const* const count =
         resolve_expr(resolver, expr->data.slice.count);
-    check_type_compatibility(count->location, count->type, context()->builtin.usize);
+    check_type_compatibility(
+        count->location, count->type, context()->builtin.usize);
 
     struct tir_expr* const resolved =
         tir_expr_new_slice(expr->location, type, pointer, count);
