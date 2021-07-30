@@ -1,0 +1,5 @@
+func main() void {
+    0xFFFFFFFFu32 * 2u32;
+}
+################################################################################
+# fatal: arithmetic operation produces out-of-range result

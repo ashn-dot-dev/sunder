@@ -1,0 +1,5 @@
+func main() void {
+    0xFFu8 * 2u8;
+}
+################################################################################
+# fatal: arithmetic operation produces out-of-range result

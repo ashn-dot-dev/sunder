@@ -1611,14 +1611,50 @@ codegen_rvalue_binary(struct tir_expr const* expr)
         assert(expr->data.binary.rhs->type->size >= 1u);
         assert(expr->data.binary.rhs->type->size <= 8u);
         assert(expr->data.binary.lhs->type == expr->data.binary.rhs->type);
+        struct type const* const xhs_type = expr->data.binary.lhs->type;
+        size_t const expr_id = unique_id++;
 
+        char const* lhs_reg = NULL;
+        char const* rhs_reg = NULL;
+        switch (xhs_type->kind) {
+        case TYPE_U8: /* fallthrough */
+        case TYPE_S8:
+            lhs_reg = "al";
+            rhs_reg = "bl";
+            break;
+        case TYPE_U16: /* fallthrough */
+        case TYPE_S16:
+            lhs_reg = "ax";
+            rhs_reg = "bx";
+            break;
+        case TYPE_U32: /* fallthrough */
+        case TYPE_S32:
+            lhs_reg = "eax";
+            rhs_reg = "ebx";
+            break;
+        case TYPE_U64: /* fallthrough */
+        case TYPE_S64: /* fallthrough */
+        case TYPE_USIZE: /* fallthrough */
+        case TYPE_SSIZE:
+            lhs_reg = "rax";
+            rhs_reg = "rbx";
+            break;
+        default:
+            UNREACHABLE();
+        }
+        char const* const mul =
+            type_is_sinteger(xhs_type) ? "imul" : "mul";
+
+        appendln(".l%zu_expr_binary_mul_bgn:", expr_id);
         codegen_rvalue(expr->data.binary.lhs);
         codegen_rvalue(expr->data.binary.rhs);
-
         appendli("pop rbx");
         appendli("pop rax");
-        appendli("mul rbx");
+        appendli("%s %s", mul, rhs_reg);
         appendli("push rax");
+        appendli("jno .l%zu_expr_binary_mul_end", expr_id);
+        appendli("call __integer_oor_handler");
+        appendln(".l%zu_expr_binary_mul_end:", expr_id);
         return;
     }
     case BOP_DIV: {
