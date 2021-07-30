@@ -4,4 +4,4 @@ func main() void {
     x = y;
 }
 ################################################################################
-# [error-illegal-type-conversion-in-assignment.nova:4] error: illegal implicit type conversion from `usize` to `ssize`
+# [error-illegal-type-conversion-in-assignment.nova:4] error: incompatible type `usize` (expected `ssize`)

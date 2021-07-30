@@ -19,11 +19,11 @@ func main() void {
     dump false | true;
     dump nl();
 
-    const byte_a: byte = 0xABu8;
-    const byte_b: byte = 0xFFu8;
-    const byte_c: byte = 0x00u8;
-    const byte_d: byte = 0b10101100u8;
-    const byte_e: byte = 0b11001010u8;
+    const byte_a: byte = 0xABy;
+    const byte_b: byte = 0xFFy;
+    const byte_c: byte = 0x00y;
+    const byte_d: byte = 0b10101100y;
+    const byte_e: byte = 0b11001010y;
     const byte_a_bitor_byte_a: byte = byte_a | byte_a;
     const byte_a_bitor_byte_b: byte = byte_a | byte_b;
     const byte_a_bitor_byte_c: byte = byte_a | byte_c;

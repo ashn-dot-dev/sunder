@@ -62,13 +62,11 @@ normalize_unique(char const* namespace, char const* name);
 static void
 register_static_symbol(struct symbol const* symbol);
 
-static bool
-is_valid_implicit_cast(struct type const* from, struct type const* to);
 static void
-check_implicit_cast(
+check_type_compatibility(
     struct source_location const* location,
-    struct type const* from,
-    struct type const* to);
+    struct type const* actual,
+    struct type const* expected);
 
 static struct symbol const*
 resolve_decl(struct resolver* resolver, struct ast_decl const* decl);
@@ -327,59 +325,19 @@ register_static_symbol(struct symbol const* symbol)
     }
 }
 
-static bool
-is_valid_implicit_cast(struct type const* from, struct type const* to)
-{
-    switch (to->kind) {
-    case TYPE_BYTE: {
-        // byte => byte
-        // u8   => byte
-        // s8   => byte
-        return from->kind == TYPE_BYTE || from->kind == TYPE_U8
-            || from->kind == TYPE_S8;
-    }
-    case TYPE_POINTER: {
-        // *T   => *T
-        // *any => *byte
-        return to == from
-            || (to->data.pointer.base->kind == TYPE_BYTE
-                && from->kind == TYPE_POINTER);
-    }
-    case TYPE_VOID: /* fallthrough */
-    case TYPE_BOOL: /* fallthrough */
-    case TYPE_U8: /* fallthrough */
-    case TYPE_S8: /* fallthrough */
-    case TYPE_U16: /* fallthrough */
-    case TYPE_S16: /* fallthrough */
-    case TYPE_U32: /* fallthrough */
-    case TYPE_S32: /* fallthrough */
-    case TYPE_U64: /* fallthrough */
-    case TYPE_S64: /* fallthrough */
-    case TYPE_USIZE: /* fallthrough */
-    case TYPE_SSIZE: /* fallthrough */
-    case TYPE_FUNCTION: /* fallthrough */
-    case TYPE_ARRAY: /* fallthrough */
-    case TYPE_SLICE: {
-        return from == to;
-    }
-    }
-
-    UNREACHABLE();
-}
-
 static void
-check_implicit_cast(
+check_type_compatibility(
     struct source_location const* location,
-    struct type const* from,
-    struct type const* to)
+    struct type const* actual,
+    struct type const* expected)
 {
-    if (!is_valid_implicit_cast(from, to)) {
+    if (actual != expected) {
         fatal(
             location->path,
             location->line,
-            "illegal implicit type conversion from `%s` to `%s`",
-            from->name,
-            to->name);
+            "incompatible type `%s` (expected `%s`)",
+            actual->name,
+            expected->name);
     }
 }
 
@@ -434,7 +392,7 @@ resolve_decl_variable(
 
     struct type const* const type =
         resolve_typespec(resolver, decl->data.variable.typespec);
-    check_implicit_cast(expr->location, expr->type, type);
+    check_type_compatibility(expr->location, expr->type, type);
 
     struct address const* const address = is_global
         ? resolver_reserve_storage_static(resolver, decl->name)
@@ -482,7 +440,7 @@ resolve_decl_constant(struct resolver* resolver, struct ast_decl const* decl)
 
     struct type const* const type =
         resolve_typespec(resolver, decl->data.constant.typespec);
-    check_implicit_cast(expr->location, expr->type, type);
+    check_type_compatibility(expr->location, expr->type, type);
 
     struct address const* const address =
         resolver_reserve_storage_static(resolver, decl->name);
@@ -893,7 +851,7 @@ resolve_stmt_return(struct resolver* resolver, struct ast_stmt const* stmt)
     struct tir_expr const* expr = NULL;
     if (stmt->data.return_.expr != NULL) {
         expr = resolve_expr(resolver, stmt->data.return_.expr);
-        check_implicit_cast(expr->location, expr->type, return_type);
+        check_type_compatibility(expr->location, expr->type, return_type);
     }
     else {
         if (context()->builtin.void_ != return_type) {
@@ -933,7 +891,7 @@ resolve_stmt_assign(struct resolver* resolver, struct ast_stmt const* stmt)
             lhs->location->line,
             "left hand side of assignment statement is not an lvalue");
     }
-    check_implicit_cast(stmt->location, rhs->type, lhs->type);
+    check_type_compatibility(stmt->location, rhs->type, lhs->type);
     struct tir_stmt* const resolved =
         tir_stmt_new_assign(stmt->location, lhs, rhs);
 
@@ -1146,7 +1104,7 @@ resolve_expr_array(struct resolver* resolver, struct ast_expr const* expr)
     for (size_t i = 0; i < autil_sbuf_count(elements); ++i) {
         struct tir_expr const* const resolved_element =
             resolve_expr(resolver, elements[i]);
-        check_implicit_cast(
+        check_type_compatibility(
             resolved_element->location,
             resolved_element->type,
             type->data.array.base);
@@ -1194,11 +1152,11 @@ resolve_expr_slice(struct resolver* resolver, struct ast_expr const* expr)
     }
     struct type const* const slice_pointer_type =
         type_unique_pointer(type->data.slice.base);
-    check_implicit_cast(pointer->location, pointer->type, slice_pointer_type);
+    check_type_compatibility(pointer->location, pointer->type, slice_pointer_type);
 
     struct tir_expr const* const count =
         resolve_expr(resolver, expr->data.slice.count);
-    check_implicit_cast(count->location, count->type, context()->builtin.usize);
+    check_type_compatibility(count->location, count->type, context()->builtin.usize);
 
     struct tir_expr* const resolved =
         tir_expr_new_slice(expr->location, type, pointer, count);
@@ -1285,15 +1243,14 @@ resolve_expr_call(struct resolver* resolver, struct ast_expr const* expr)
     for (size_t i = 0; i < autil_sbuf_count(parameter_types); ++i) {
         struct type const* const expected = parameter_types[i];
         struct type const* const received = arguments[i]->type;
-        if (is_valid_implicit_cast(received, expected)) {
-            continue;
+        if (received != expected) {
+            fatal(
+                arguments[i]->location->path,
+                arguments[i]->location->line,
+                "incompatible argument type `%s` (expected `%s`)",
+                received->name,
+                expected->name);
         }
-        fatal(
-            arguments[i]->location->path,
-            arguments[i]->location->line,
-            "expected argument of type `%s` (received `%s`)",
-            expected->name,
-            received->name);
     }
 
     struct tir_expr* const resolved =
