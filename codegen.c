@@ -1664,8 +1664,7 @@ codegen_rvalue_binary(struct tir_expr const* expr)
         default:
             UNREACHABLE();
         }
-        char const* const mul =
-            type_is_sinteger(xhs_type) ? "imul" : "mul";
+        char const* const mul = type_is_sinteger(xhs_type) ? "imul" : "mul";
 
         appendln(".l%zu_expr_binary_mul_bgn:", expr_id);
         codegen_rvalue(expr->data.binary.lhs);
@@ -1716,8 +1715,7 @@ codegen_rvalue_binary(struct tir_expr const* expr)
         default:
             UNREACHABLE();
         }
-        char const* const div =
-            type_is_sinteger(xhs_type) ? "idiv" : "div";
+        char const* const div = type_is_sinteger(xhs_type) ? "idiv" : "div";
 
         appendln(".l%zu_expr_binary_div_bgn:", expr_id);
         codegen_rvalue(expr->data.binary.lhs);
