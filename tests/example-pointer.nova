@@ -1,10 +1,10 @@
-var v: ssize = 0xCAFED00DCAFED00Ds;
-const w: ssize = 0xCAFEBABECAFEBABEs;
+var v: usize = 0xCAFED00DCAFED00Du;
+const w: usize = 0xCAFEBABECAFEBABEu;
 
 func main() void {
-    var x: ssize = 0xBADCAFE01DC0FFEEs;
-    var addressof_x: *ssize = &x;
-    var dereference_addressof_x: ssize = *addressof_x;
+    var x: usize = 0xBADCAFE01DC0FFEEu;
+    var addressof_x: *usize = &x;
+    var dereference_addressof_x: usize = *addressof_x;
 
     dump x;
     dump *&x;
@@ -19,9 +19,9 @@ func main() void {
     dump y[1u][2u];
     dump *&y[1u][2u];
 
-    const z: ssize = 0xDEADBEEFDEADBEEFs;
-    var addressof_z: *ssize = &z;
-    var dereference_addressof_z: ssize = *addressof_z;
+    const z: usize = 0xDEADBEEFDEADBEEFu;
+    var addressof_z: *usize = &z;
+    var dereference_addressof_z: usize = *addressof_z;
     dump z;
     dump *&z;
     dump *&*&z;

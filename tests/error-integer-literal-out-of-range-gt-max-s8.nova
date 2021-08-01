@@ -1,0 +1,5 @@
+func main() void {
+    +128s8;
+}
+################################################################################
+# [error-integer-literal-out-of-range-gt-max-s8.nova:2] error: out-of-range integer literal (128 > 127)

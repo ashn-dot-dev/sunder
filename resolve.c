@@ -1079,7 +1079,6 @@ resolve_expr_integer(struct resolver* resolver, struct ast_expr const* expr)
     struct type const* const type = integer_literal_suffix_to_type(
         ast_integer->location, ast_integer->suffix);
 
-    assert(type != NULL);
     struct tir_expr* const resolved =
         tir_expr_new_integer(expr->location, type, value);
 
@@ -1305,9 +1304,37 @@ resolve_expr_unary(struct resolver* resolver, struct ast_expr const* expr)
     assert(expr->kind == AST_EXPR_UNARY);
     trace(resolver->module->path, NO_LINE, "%s", __func__);
 
-    struct tir_expr const* const rhs =
-        resolve_expr(resolver, expr->data.unary.rhs);
+    // While a human would identify the integer expression -128s8 as the hex
+    // byte 0x80, the parser identifies the integer expression -128s8 as the
+    // unary negation (via the unary - operator) of the integer literal 128s8.
+    // Positive 128 is an out-of-range value for an integer of type s8 (the max
+    // being  positive 127) even though the intended value of -128 *is* within
+    // the range of an s8. Here we identify the special case where a + or -
+    // token is immediately followed by an integer token and combine the two
+    // into a single integer expression.
     struct token const* const op = expr->data.unary.op;
+    bool const is_sign = (op->kind == TOKEN_PLUS) || (op->kind == TOKEN_DASH);
+    struct ast_expr const* const ast_rhs = expr->data.unary.rhs;
+    if (is_sign && ast_rhs->kind == AST_EXPR_INTEGER) {
+        struct ast_integer const* const ast_integer = ast_rhs->data.integer;
+        struct autil_bigint const* value = ast_integer->value;
+        if (op->kind == TOKEN_DASH) {
+            struct autil_bigint* const tmp = autil_bigint_new(value);
+            autil_bigint_neg(tmp, value);
+            autil_bigint_freeze(tmp, context()->freezer);
+            value = tmp;
+        }
+        struct type const* const type = integer_literal_suffix_to_type(
+            ast_integer->location, ast_integer->suffix);
+
+        struct tir_expr* const resolved =
+            tir_expr_new_integer(&op->location, type, value);
+
+        autil_freezer_register(context()->freezer, resolved);
+        return resolved;
+    }
+
+    struct tir_expr const* const rhs = resolve_expr(resolver, ast_rhs);
     switch (op->kind) {
     case TOKEN_NOT: {
         return resolve_expr_unary_logical(resolver, op, UOP_NOT, rhs);

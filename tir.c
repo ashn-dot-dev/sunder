@@ -40,61 +40,93 @@ type_new_byte(void)
 struct type*
 type_new_u8(void)
 {
-    return type_new(context()->interned.u8, 1u, TYPE_U8);
+    struct type* const self = type_new(context()->interned.u8, 1u, TYPE_U8);
+    self->data.integer.min = context()->u8_min;
+    self->data.integer.max = context()->u8_max;
+    return self;
 }
 
 struct type*
 type_new_s8(void)
 {
-    return type_new(context()->interned.s8, 1u, TYPE_S8);
+    struct type* const self = type_new(context()->interned.s8, 1u, TYPE_S8);
+    self->data.integer.min = context()->s8_min;
+    self->data.integer.max = context()->s8_max;
+    return self;
 }
 
 struct type*
 type_new_u16(void)
 {
-    return type_new(context()->interned.u16, 2u, TYPE_U16);
+    struct type* const self = type_new(context()->interned.u16, 2u, TYPE_U16);
+    self->data.integer.min = context()->u16_min;
+    self->data.integer.max = context()->u16_max;
+    return self;
 }
 
 struct type*
 type_new_s16(void)
 {
-    return type_new(context()->interned.s16, 2u, TYPE_S16);
+    struct type* const self = type_new(context()->interned.s16, 2u, TYPE_S16);
+    self->data.integer.min = context()->s16_min;
+    self->data.integer.max = context()->s16_max;
+    return self;
 }
 
 struct type*
 type_new_u32(void)
 {
-    return type_new(context()->interned.u32, 4u, TYPE_U32);
+    struct type* const self = type_new(context()->interned.u32, 4u, TYPE_U32);
+    self->data.integer.min = context()->u32_min;
+    self->data.integer.max = context()->u32_max;
+    return self;
 }
 
 struct type*
 type_new_s32(void)
 {
-    return type_new(context()->interned.s32, 4u, TYPE_S32);
+    struct type* const self = type_new(context()->interned.s32, 4u, TYPE_S32);
+    self->data.integer.min = context()->s32_min;
+    self->data.integer.max = context()->s32_max;
+    return self;
 }
 
 struct type*
 type_new_u64(void)
 {
-    return type_new(context()->interned.u64, 8u, TYPE_U64);
+    struct type* const self = type_new(context()->interned.u64, 8u, TYPE_U64);
+    self->data.integer.min = context()->u64_min;
+    self->data.integer.max = context()->u64_max;
+    return self;
 }
 
 struct type*
 type_new_s64(void)
 {
-    return type_new(context()->interned.s64, 8u, TYPE_S64);
+    struct type* const self = type_new(context()->interned.s64, 8u, TYPE_S64);
+    self->data.integer.min = context()->s64_min;
+    self->data.integer.max = context()->s64_max;
+    return self;
 }
 
 struct type*
 type_new_usize(void)
 {
-    return type_new(context()->interned.usize, 8u, TYPE_USIZE);
+    struct type* const self =
+        type_new(context()->interned.usize, 8u, TYPE_USIZE);
+    self->data.integer.min = context()->usize_min;
+    self->data.integer.max = context()->usize_max;
+    return self;
 }
 
 struct type*
 type_new_ssize(void)
 {
-    return type_new(context()->interned.ssize, 8u, TYPE_SSIZE);
+    struct type* const self =
+        type_new(context()->interned.ssize, 8u, TYPE_SSIZE);
+    self->data.integer.min = context()->ssize_min;
+    self->data.integer.max = context()->ssize_max;
+    return self;
 }
 
 struct type*
@@ -679,7 +711,53 @@ tir_expr_new_integer(
     assert(type->kind == TYPE_BYTE || type_is_integer(type));
     assert(value != NULL);
 
-    // TODO: Verify that the integer is in range.
+    bool const is_byte = type->kind == TYPE_BYTE;
+    bool const is_integer = type_is_integer(type);
+
+    if (is_byte && autil_bigint_cmp(value, context()->u8_min) < 0) {
+        char* const lit_cstr = autil_bigint_to_new_cstr(value, NULL);
+        char* const min_cstr =
+            autil_bigint_to_new_cstr(context()->u8_min, NULL);
+        fatal(
+            location->path,
+            location->line,
+            "out-of-range byte literal (%s < %s)",
+            lit_cstr,
+            min_cstr);
+    }
+    if (is_byte && autil_bigint_cmp(value, context()->u8_max) > 0) {
+        char* const lit_cstr = autil_bigint_to_new_cstr(value, NULL);
+        char* const max_cstr =
+            autil_bigint_to_new_cstr(context()->u8_max, NULL);
+        fatal(
+            location->path,
+            location->line,
+            "out-of-range byte literal (%s > %s)",
+            lit_cstr,
+            max_cstr);
+    }
+    if (is_integer && autil_bigint_cmp(value, type->data.integer.min) < 0) {
+        char* const lit_cstr = autil_bigint_to_new_cstr(value, NULL);
+        char* const min_cstr =
+            autil_bigint_to_new_cstr(type->data.integer.min, NULL);
+        fatal(
+            location->path,
+            location->line,
+            "out-of-range integer literal (%s < %s)",
+            lit_cstr,
+            min_cstr);
+    }
+    if (is_integer && autil_bigint_cmp(value, type->data.integer.max) > 0) {
+        char* const lit_cstr = autil_bigint_to_new_cstr(value, NULL);
+        char* const max_cstr =
+            autil_bigint_to_new_cstr(type->data.integer.max, NULL);
+        fatal(
+            location->path,
+            location->line,
+            "out-of-range integer literal (%s > %s)",
+            lit_cstr,
+            max_cstr);
+    }
     struct tir_expr* const self =
         tir_expr_new(location, type, TIR_EXPR_INTEGER);
     self->data.integer = value;

@@ -1,0 +1,5 @@
+func main() void {
+    +256y;
+}
+################################################################################
+# [error-integer-literal-out-of-range-gt-max-byte.nova:2] error: out-of-range byte literal (256 > 255)

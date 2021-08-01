@@ -421,6 +421,32 @@ context_init(void)
     s_context.interned.s = INTERN_STR_LITERAL("s");
 #undef INTERN_STR_LITERAL
 
+#define INIT_BIGINT_CONSTANT(ident, str_literal)                               \
+    struct autil_bigint* const ident = autil_bigint_new_cstr(str_literal);     \
+    autil_bigint_freeze(ident, s_context.freezer);                             \
+    s_context.ident = ident;
+    INIT_BIGINT_CONSTANT(u8_min, "+0x00")
+    INIT_BIGINT_CONSTANT(u8_max, "+0xFF")
+    INIT_BIGINT_CONSTANT(s8_min, "-128")
+    INIT_BIGINT_CONSTANT(s8_max, "+127")
+    INIT_BIGINT_CONSTANT(u16_min, "+0x0000")
+    INIT_BIGINT_CONSTANT(u16_max, "+0xFFFF")
+    INIT_BIGINT_CONSTANT(s16_min, "-32768")
+    INIT_BIGINT_CONSTANT(s16_max, "+32767")
+    INIT_BIGINT_CONSTANT(u32_min, "+0x00000000")
+    INIT_BIGINT_CONSTANT(u32_max, "+0xFFFFFFFF")
+    INIT_BIGINT_CONSTANT(s32_min, "-2147483648")
+    INIT_BIGINT_CONSTANT(s32_max, "+2147483647")
+    INIT_BIGINT_CONSTANT(u64_min, "+0x0000000000000000")
+    INIT_BIGINT_CONSTANT(u64_max, "+0xFFFFFFFFFFFFFFFF")
+    INIT_BIGINT_CONSTANT(s64_min, "-9223372036854775808")
+    INIT_BIGINT_CONSTANT(s64_max, "+9223372036854775807")
+    s_context.usize_min = s_context.u64_min;
+    s_context.usize_max = s_context.u64_max;
+    s_context.ssize_min = s_context.s64_min;
+    s_context.ssize_max = s_context.s64_max;
+#undef INIT_BIGINT_CONSTANT
+
     s_context.static_symbols = autil_map_new(
         sizeof(CONTEXT_STATIC_SYMBOLS_MAP_KEY_TYPE),
         sizeof(CONTEXT_STATIC_SYMBOLS_MAP_VAL_TYPE),

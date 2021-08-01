@@ -145,6 +145,28 @@ struct context {
         // clang-format on
     } interned;
 
+    // Integer (bigint) constants.
+    struct autil_bigint const* u8_min;
+    struct autil_bigint const* u8_max;
+    struct autil_bigint const* s8_min;
+    struct autil_bigint const* s8_max;
+    struct autil_bigint const* u16_min;
+    struct autil_bigint const* u16_max;
+    struct autil_bigint const* s16_min;
+    struct autil_bigint const* s16_max;
+    struct autil_bigint const* u32_min;
+    struct autil_bigint const* u32_max;
+    struct autil_bigint const* s32_min;
+    struct autil_bigint const* s32_max;
+    struct autil_bigint const* u64_min;
+    struct autil_bigint const* u64_max;
+    struct autil_bigint const* s64_min;
+    struct autil_bigint const* s64_max;
+    struct autil_bigint const* usize_min;
+    struct autil_bigint const* usize_max;
+    struct autil_bigint const* ssize_min;
+    struct autil_bigint const* ssize_max;
+
     // Language builtins.
     struct {
         struct source_location location;
@@ -613,22 +635,26 @@ struct type {
         TYPE_VOID,
         TYPE_BOOL,
         TYPE_BYTE,
-        TYPE_U8,
-        TYPE_S8,
-        TYPE_U16,
-        TYPE_S16,
-        TYPE_U32,
-        TYPE_S32,
-        TYPE_U64,
-        TYPE_S64,
-        TYPE_USIZE,
-        TYPE_SSIZE,
+        TYPE_U8, /* integer */
+        TYPE_S8, /* integer */
+        TYPE_U16, /* integer */
+        TYPE_S16, /* integer */
+        TYPE_U32, /* integer */
+        TYPE_S32, /* integer */
+        TYPE_U64, /* integer */
+        TYPE_S64, /* integer */
+        TYPE_USIZE, /* integer */
+        TYPE_SSIZE, /* integer */
         TYPE_FUNCTION,
         TYPE_POINTER,
         TYPE_ARRAY,
         TYPE_SLICE,
     } kind;
     union {
+        struct {
+            struct autil_bigint const* min;
+            struct autil_bigint const* max;
+        } integer;
         struct {
             autil_sbuf(struct type const* const) parameter_types;
             struct type const* return_type;

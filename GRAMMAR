@@ -109,10 +109,10 @@
 
 <integer> ::= <integer-number> <integer-suffix>?
 
-<integer-number> ::= <integer-bin>
-                   | <integer-oct>
-                   | <integer-dec>
-                   | <integer-hex>
+<integer-number> ::= <integer-number-bin>
+                   | <integer-number-oct>
+                   | <integer-number-dec>
+                   | <integer-number-hex>
 
 <integer-suffix> ::= "u8"
                    | "s8"
@@ -125,10 +125,10 @@
                    | "u"
                    | "s"
 
-<integer-bin> ::= "0b" <digit-bin>+
-<integer-oct> ::= "0o" <digit-oct>+
-<integer-dec> ::=      <digit-dec>+
-<integer-hex> ::= "0x" <digit-hex>+
+<integer-number-bin> ::= "0b" <digit-bin>+
+<integer-number-oct> ::= "0o" <digit-oct>+
+<integer-number-dec> ::=      <digit-dec>+
+<integer-number-hex> ::= "0x" <digit-hex>+
 
 <digit-bin> ::= "0" | "1"
 <digit-oct> ::= "0" .. "7"
