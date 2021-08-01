@@ -3,7 +3,7 @@ set -e
 
 usage() {
     cat <<EOF
-Usage: $(basename $0) FILE"
+Usage: $(basename $0) FILE
 
 Options:
   -h --help     Print this help message and exit.
