@@ -1,0 +1,6 @@
+func main() void {
+    const x: s8 = -128s8;
+    const y: s8 = -x;
+}
+################################################################################
+# [error-expr-unary-neg-integer-out-of-range-const.nova:3] error: arithmetic operation produces out-of-range result (-(-128) == 128)

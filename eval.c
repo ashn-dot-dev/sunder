@@ -140,8 +140,18 @@ eval_expr(struct evaluator* evaluator, struct tir_expr const* expr)
         }
         case UOP_NEG: {
             assert(type_is_integer(rhs->type));
-            autil_bigint_neg(rhs->data.integer, rhs->data.integer);
-            return rhs;
+            struct autil_bigint* const r = autil_bigint_new(AUTIL_BIGINT_ZERO);
+            autil_bigint_neg(r, rhs->data.integer);
+            if (integer_is_out_of_range(expr->type, r)) {
+                fatal(
+                    expr->location->path,
+                    expr->location->line,
+                    "arithmetic operation produces out-of-range result (-(%s) == %s)",
+                    autil_bigint_to_new_cstr(rhs->data.integer, NULL),
+                    autil_bigint_to_new_cstr(r, NULL));
+            }
+            value_del(rhs);
+            return value_new_integer(expr->type, r);
         }
         case UOP_BITNOT: {
             assert(rhs->type->kind == TYPE_BYTE || type_is_integer(rhs->type));
