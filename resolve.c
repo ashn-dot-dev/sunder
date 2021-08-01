@@ -1343,6 +1343,14 @@ resolve_expr_unary(struct resolver* resolver, struct ast_expr const* expr)
         return resolve_expr_unary_arithmetic(resolver, op, UOP_POS, rhs);
     }
     case TOKEN_DASH: {
+        if (type_is_uinteger(rhs->type)) {
+            fatal(
+                op->location.path,
+                op->location.line,
+                "invalid argument of type `%s` in unary `%s` expression",
+                rhs->type->name,
+                token_kind_to_cstr(op->kind));
+        }
         return resolve_expr_unary_arithmetic(resolver, op, UOP_NEG, rhs);
     }
     case TOKEN_TILDE: {

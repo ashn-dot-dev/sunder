@@ -1,0 +1,6 @@
+func main() void {
+    var x: usize = 123u;
+    dump -x;
+}
+################################################################################
+# [error-expr-unary-neg-uinteger.nova:3] error: invalid argument of type `usize` in unary `-` expression
