@@ -30,6 +30,17 @@ evaluator_del(struct evaluator* self)
     autil_xalloc(self, AUTIL_XALLOC_FREE);
 }
 
+static bool
+integer_is_out_of_range(struct type const* type, struct autil_bigint const* res)
+{
+    assert(type != NULL);
+    assert(type_is_integer(type));
+    assert(res != NULL);
+
+    return autil_bigint_cmp(res, type->data.integer.min) < 0
+        || autil_bigint_cmp(res, type->data.integer.max) > 0;
+}
+
 struct value*
 eval_expr(struct evaluator* evaluator, struct tir_expr const* expr)
 {
@@ -225,6 +236,15 @@ eval_expr(struct evaluator* evaluator, struct tir_expr const* expr)
             assert(type_is_integer(rhs->type));
             struct autil_bigint* const r = autil_bigint_new(AUTIL_BIGINT_ZERO);
             autil_bigint_add(r, lhs->data.integer, rhs->data.integer);
+            if (integer_is_out_of_range(expr->type, r)) {
+                fatal(
+                    expr->location->path,
+                    expr->location->line,
+                    "arithmetic operation produces out-of-range result (%s + %s == %s)",
+                    autil_bigint_to_new_cstr(lhs->data.integer, NULL),
+                    autil_bigint_to_new_cstr(rhs->data.integer, NULL),
+                    autil_bigint_to_new_cstr(r, NULL));
+            }
             res = value_new_integer(expr->type, r);
             break;
         }
@@ -233,6 +253,15 @@ eval_expr(struct evaluator* evaluator, struct tir_expr const* expr)
             assert(type_is_integer(rhs->type));
             struct autil_bigint* const r = autil_bigint_new(AUTIL_BIGINT_ZERO);
             autil_bigint_sub(r, lhs->data.integer, rhs->data.integer);
+            if (integer_is_out_of_range(expr->type, r)) {
+                fatal(
+                    expr->location->path,
+                    expr->location->line,
+                    "arithmetic operation produces out-of-range result (%s - %s == %s)",
+                    autil_bigint_to_new_cstr(lhs->data.integer, NULL),
+                    autil_bigint_to_new_cstr(rhs->data.integer, NULL),
+                    autil_bigint_to_new_cstr(r, NULL));
+            }
             res = value_new_integer(expr->type, r);
             break;
         }
@@ -241,6 +270,15 @@ eval_expr(struct evaluator* evaluator, struct tir_expr const* expr)
             assert(type_is_integer(rhs->type));
             struct autil_bigint* const r = autil_bigint_new(AUTIL_BIGINT_ZERO);
             autil_bigint_mul(r, lhs->data.integer, rhs->data.integer);
+            if (integer_is_out_of_range(expr->type, r)) {
+                fatal(
+                    expr->location->path,
+                    expr->location->line,
+                    "arithmetic operation produces out-of-range result (%s * %s == %s)",
+                    autil_bigint_to_new_cstr(lhs->data.integer, NULL),
+                    autil_bigint_to_new_cstr(rhs->data.integer, NULL),
+                    autil_bigint_to_new_cstr(r, NULL));
+            }
             res = value_new_integer(expr->type, r);
             break;
         }
