@@ -1292,11 +1292,26 @@ codegen_rvalue_unary(struct tir_expr const* expr)
         return;
     }
     case UOP_NEG: {
+        struct tir_expr const* const rhs = expr->data.unary.rhs;
+        size_t const expr_id = unique_id++;
+
+        assert(rhs->type->size <= 8u);
         codegen_rvalue(expr->data.unary.rhs);
-        assert(expr->data.unary.rhs->type->size <= 8u);
         appendli("pop rax");
+        appendln(".l%zu_expr_unary_neg_bgn:", expr_id);
+        if (type_is_sinteger(rhs->type)) {
+            char* const min_cstr =
+                autil_bigint_to_new_cstr(rhs->type->data.integer.min, NULL);
+            appendli("mov rbx, %s", min_cstr);
+            autil_xalloc(min_cstr, AUTIL_XALLOC_FREE);
+            appendli("cmp rax, rbx");
+            appendli("jne .l%zu_expr_unary_neg_op", expr_id);
+            appendli("call __integer_oor_handler");
+        }
+        appendln(".l%zu_expr_unary_neg_op:", expr_id);
         appendli("neg rax");
         appendli("push rax");
+        appendln(".l%zu_expr_unary_neg_end:", expr_id);
         return;
     }
     case UOP_BITNOT: {

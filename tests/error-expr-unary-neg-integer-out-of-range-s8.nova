@@ -1,0 +1,6 @@
+func main() void {
+    var x: s8 = -128s8;
+    dump -x;
+}
+################################################################################
+# fatal: arithmetic operation produces out-of-range result
