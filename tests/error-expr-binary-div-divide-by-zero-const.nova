@@ -1,0 +1,3 @@
+const x: ssize = 123s / 0s;
+################################################################################
+# [error-expr-binary-div-divide-by-zero-const.nova:1] error: divide by zero (123 / 0)

@@ -247,6 +247,14 @@ eval_expr(struct evaluator* evaluator, struct tir_expr const* expr)
         case BOP_DIV: {
             assert(type_is_integer(lhs->type));
             assert(type_is_integer(rhs->type));
+            if (autil_bigint_cmp(rhs->data.integer, AUTIL_BIGINT_ZERO) == 0) {
+                fatal(
+                    expr->location->path,
+                    expr->location->line,
+                    "divide by zero (%s / %s)",
+                    autil_bigint_to_new_cstr(lhs->data.integer, NULL),
+                    autil_bigint_to_new_cstr(rhs->data.integer, NULL));
+            }
             struct autil_bigint* const r = autil_bigint_new(AUTIL_BIGINT_ZERO);
             autil_bigint_divrem(r, NULL, lhs->data.integer, rhs->data.integer);
             res = value_new_integer(expr->type, r);
