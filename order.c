@@ -104,8 +104,7 @@ orderer_tldecl_insert(struct orderer* orderer, struct ast_decl const* decl)
         autil_map_lookup_const(orderer->tldecls.map, &decl->name);
     if (existing != NULL) {
         fatal(
-            decl->location->path,
-            decl->location->line,
+            decl->location,
             "redeclaration of `%s` previously declared at [%s:%zu]",
             existing->decl->name,
             existing->decl->location->path,
@@ -137,18 +136,11 @@ order_tldecl(struct orderer* orderer, struct tldecl* tldecl)
     if (tldecl->state == TLDECL_ORDERING) {
         // Top-level declaration is currently in the process of being ordered.
         fatal(
-            tldecl->decl->location->path,
-            tldecl->decl->location->line,
+            tldecl->decl->location,
             "circular dependency created by declaration of `%s`",
             tldecl->decl->name);
     }
 
-    debug(
-        orderer->module->path,
-        NO_LINE,
-        "[%s] ordering unordered top-level declaration `%s`",
-        __func__,
-        tldecl->decl->name);
     // Change the state from UNORDERED to ORDERING so that cyclic dependencies
     // will be detected if another attempt is made to order this declaration.
     assert(tldecl->state == TLDECL_UNORDERED);
@@ -322,12 +314,6 @@ order_name(struct orderer* orderer, char const* name)
         // Top-level declaration with the provided name does not exist. Assume
         // that it is a builtin and allow future stages of semantic analysis to
         // raise an unknown identifier error if necessary.
-        debug(
-            orderer->module->path,
-            NO_LINE,
-            "[%s] skipping unknown identifier `%s`",
-            __func__,
-            name);
         return;
     }
 
@@ -343,24 +329,14 @@ order(struct module* module)
     size_t const decl_count = autil_map_count(orderer->tldecls.map);
 
     assert(decl_count == autil_sbuf_count(orderer->tldecls.declaration_order));
-    debug(orderer->module->path, NO_LINE, "[%s] Declaration order:", __func__);
-    for (size_t i = 0; i < decl_count; ++i) {
-        char const* const name = orderer->tldecls.declaration_order[i];
-        debug(
-            orderer->module->path, NO_LINE, "[%s] (%zu) %s", __func__, i, name);
-    }
-
     for (size_t i = 0; i < decl_count; ++i) {
         char const* const name = orderer->tldecls.declaration_order[i];
         order_tldecl(orderer, orderer_tldecl_lookup(orderer, name));
     }
 
     assert(decl_count == autil_sbuf_count(orderer->tldecls.topological_order));
-    debug(orderer->module->path, NO_LINE, "[%s] Topological order:", __func__);
     for (size_t i = 0; i < decl_count; ++i) {
         char const* const name = orderer->tldecls.topological_order[i];
-        debug(
-            orderer->module->path, NO_LINE, "[%s] (%zu) %s", __func__, i, name);
         struct ast_decl const* const decl =
             orderer_tldecl_lookup(orderer, name)->decl;
         autil_sbuf_push(module->ordered, decl);

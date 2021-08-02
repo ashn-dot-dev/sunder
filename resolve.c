@@ -317,8 +317,7 @@ register_static_symbol(struct symbol const* symbol)
         NULL);
     if (exists) {
         fatal(
-            symbol->location->path,
-            symbol->location->line,
+            symbol->location,
             "[ICE %s] normalized symbol name `%s` already exists",
             __func__,
             symbol->address->data.static_.name);
@@ -333,8 +332,7 @@ check_type_compatibility(
 {
     if (actual != expected) {
         fatal(
-            location->path,
-            location->line,
+            location,
             "incompatible type `%s` (expected `%s`)",
             actual->name,
             expected->name);
@@ -661,10 +659,7 @@ resolve_stmt_decl(struct resolver* resolver, struct ast_stmt const* stmt)
         return NULL;
     }
     case AST_DECL_FUNCTION: {
-        fatal(
-            stmt->location->path,
-            stmt->location->line,
-            "nested function declaration");
+        fatal(stmt->location, "nested function declaration");
         return NULL;
     }
     }
@@ -695,8 +690,7 @@ resolve_stmt_if(struct resolver* resolver, struct ast_stmt const* stmt)
             condition = resolve_expr(resolver, conditionals[i]->condition);
             if (condition->type->kind != TYPE_BOOL) {
                 fatal(
-                    condition->location->path,
-                    condition->location->line,
+                    condition->location,
                     "illegal condition with non-boolean type `%s`",
                     condition->type->name);
             }
@@ -735,8 +729,7 @@ resolve_stmt_for_range(struct resolver* resolver, struct ast_stmt const* stmt)
         resolve_expr(resolver, stmt->data.for_range.begin);
     if (begin->type != context()->builtin.usize) {
         fatal(
-            begin->location->path,
-            begin->location->line,
+            begin->location,
             "illegal range-begin-expression with non-usize type `%s`",
             begin->type->name);
     }
@@ -745,8 +738,7 @@ resolve_stmt_for_range(struct resolver* resolver, struct ast_stmt const* stmt)
         resolve_expr(resolver, stmt->data.for_range.end);
     if (end->type != context()->builtin.usize) {
         fatal(
-            end->location->path,
-            end->location->line,
+            end->location,
             "illegal range-end-expression with non-usize type `%s`",
             end->type->name);
     }
@@ -794,8 +786,7 @@ resolve_stmt_for_expr(struct resolver* resolver, struct ast_stmt const* stmt)
         resolve_expr(resolver, stmt->data.for_expr.expr);
     if (expr->type->kind != TYPE_BOOL) {
         fatal(
-            expr->location->path,
-            expr->location->line,
+            expr->location,
             "illegal condition with non-boolean type `%s`",
             expr->type->name);
     }
@@ -848,8 +839,7 @@ resolve_stmt_return(struct resolver* resolver, struct ast_stmt const* stmt)
     else {
         if (context()->builtin.void_ != return_type) {
             fatal(
-                stmt->location->path,
-                stmt->location->line,
+                stmt->location,
                 "illegal return statement in function with non-void return type");
         }
     }
@@ -879,8 +869,7 @@ resolve_stmt_assign(struct resolver* resolver, struct ast_stmt const* stmt)
     // *why* lhs is not an lvalue, and better information could ease debugging.
     if (!tir_expr_is_lvalue(lhs)) {
         fatal(
-            lhs->location->path,
-            lhs->location->line,
+            lhs->location,
             "left hand side of assignment statement is not an lvalue");
     }
     check_type_compatibility(stmt->location, rhs->type, lhs->type);
@@ -963,18 +952,10 @@ resolve_expr_identifier(struct resolver* resolver, struct ast_expr const* expr)
     struct symbol const* const symbol =
         symbol_table_lookup(resolver->current_symbol_table, name);
     if (symbol == NULL) {
-        fatal(
-            expr->location->path,
-            expr->location->line,
-            "use of undeclared identifier `%s`",
-            name);
+        fatal(expr->location, "use of undeclared identifier `%s`", name);
     }
     if (symbol->kind == SYMBOL_TYPE) {
-        fatal(
-            expr->location->path,
-            expr->location->line,
-            "use of type `%s` as an expression",
-            name);
+        fatal(expr->location, "use of type `%s` as an expression", name);
     }
     struct tir_expr* const resolved =
         tir_expr_new_identifier(expr->location, symbol);
@@ -1005,11 +986,7 @@ integer_literal_suffix_to_type(
     assert(suffix != NULL);
 
     if (suffix == context()->interned.empty) {
-        fatal(
-            location->path,
-            location->line,
-            "integer literal has no suffix",
-            suffix);
+        fatal(location, "integer literal has no suffix", suffix);
     }
 
     if (suffix == context()->interned.y) {
@@ -1046,11 +1023,7 @@ integer_literal_suffix_to_type(
         return context()->builtin.ssize;
     }
 
-    fatal(
-        location->path,
-        location->line,
-        "unknown integer literal suffix `%s`",
-        suffix);
+    fatal(location, "unknown integer literal suffix `%s`", suffix);
     return NULL;
 }
 
@@ -1099,8 +1072,7 @@ resolve_expr_array(struct resolver* resolver, struct ast_expr const* expr)
 
     if (type->data.array.count != autil_sbuf_count(resolved_elements)) {
         fatal(
-            expr->location->path,
-            expr->location->line,
+            expr->location,
             "array of type `%s` created with %zu elements (expected %zu)",
             type->name,
             autil_sbuf_count(resolved_elements),
@@ -1129,8 +1101,7 @@ resolve_expr_slice(struct resolver* resolver, struct ast_expr const* expr)
         resolve_expr(resolver, expr->data.slice.pointer);
     if (pointer->type->kind != TYPE_POINTER) {
         fatal(
-            pointer->location->path,
-            pointer->location->line,
+            pointer->location,
             "expression of type `%s` is not a pointer",
             pointer->type->name);
     }
@@ -1168,8 +1139,7 @@ resolve_expr_syscall(struct resolver* resolver, struct ast_expr const* expr)
 
     if (arguments_count > SYSCALL_ARGUMENTS_MAX) {
         fatal(
-            expr->location->path,
-            expr->location->line,
+            expr->location,
             "%zu syscall arguments provided (maximum %zu allowed)",
             arguments_count,
             SYSCALL_ARGUMENTS_MAX);
@@ -1198,8 +1168,7 @@ resolve_expr_call(struct resolver* resolver, struct ast_expr const* expr)
         resolve_expr(resolver, expr->data.call.func);
     if (function->type->kind != TYPE_FUNCTION) {
         fatal(
-            expr->location->path,
-            expr->location->line,
+            expr->location,
             "non-callable type `%s` used in function call expression",
             function->type->name);
     }
@@ -1215,8 +1184,7 @@ resolve_expr_call(struct resolver* resolver, struct ast_expr const* expr)
         function->type->data.function.parameter_types;
     if (autil_sbuf_count(arguments) != autil_sbuf_count(parameter_types)) {
         fatal(
-            expr->location->path,
-            expr->location->line,
+            expr->location,
             "function with type `%s` expects %zu argument(s) (%zu provided)",
             function->type->name,
             autil_sbuf_count(parameter_types),
@@ -1229,8 +1197,7 @@ resolve_expr_call(struct resolver* resolver, struct ast_expr const* expr)
         struct type const* const received = arguments[i]->type;
         if (received != expected) {
             fatal(
-                arguments[i]->location->path,
-                arguments[i]->location->line,
+                arguments[i]->location,
                 "incompatible argument type `%s` (expected `%s`)",
                 received->name,
                 expected->name);
@@ -1255,8 +1222,7 @@ resolve_expr_index(struct resolver* resolver, struct ast_expr const* expr)
         resolve_expr(resolver, expr->data.index.lhs);
     if (lhs->type->kind != TYPE_ARRAY && lhs->type->kind != TYPE_SLICE) {
         fatal(
-            lhs->location->path,
-            lhs->location->line,
+            lhs->location,
             "illegal index operation with left-hand-side of type `%s`",
             lhs->type->name);
     }
@@ -1265,8 +1231,7 @@ resolve_expr_index(struct resolver* resolver, struct ast_expr const* expr)
         resolve_expr(resolver, expr->data.index.idx);
     if (idx->type->kind != TYPE_USIZE) {
         fatal(
-            idx->location->path,
-            idx->location->line,
+            idx->location,
             "illegal index operation with index of non-usize type `%s`",
             idx->type->name);
     }
@@ -1326,8 +1291,7 @@ resolve_expr_unary(struct resolver* resolver, struct ast_expr const* expr)
     case TOKEN_DASH: {
         if (type_is_uinteger(rhs->type)) {
             fatal(
-                op->location.path,
-                op->location.line,
+                &op->location,
                 "invalid argument of type `%s` in unary `%s` expression",
                 rhs->type->name,
                 token_kind_to_cstr(op->kind));
@@ -1365,8 +1329,7 @@ resolve_expr_unary_logical(
 
     if (rhs->type->kind != TYPE_BOOL) {
         fatal(
-            op->location.path,
-            op->location.line,
+            &op->location,
             "invalid argument of type `%s` in unary `%s` expression",
             rhs->type->name,
             token_kind_to_cstr(op->kind));
@@ -1392,8 +1355,7 @@ resolve_expr_unary_arithmetic(
 
     if (!type_is_integer(rhs->type)) {
         fatal(
-            op->location.path,
-            op->location.line,
+            &op->location,
             "invalid argument of type `%s` in unary `%s` expression",
             rhs->type->name,
             token_kind_to_cstr(op->kind));
@@ -1419,8 +1381,7 @@ resolve_expr_unary_bitwise(
 
     if (!(rhs->type->kind == TYPE_BYTE || type_is_integer(rhs->type))) {
         fatal(
-            rhs->location->path,
-            rhs->location->line,
+            rhs->location,
             "cannot apply bitwise NOT to type `%s`",
             rhs->type->name);
     }
@@ -1444,8 +1405,7 @@ resolve_expr_unary_dereference(
 
     if (rhs->type->kind != TYPE_POINTER) {
         fatal(
-            rhs->location->path,
-            rhs->location->line,
+            rhs->location,
             "cannot dereference non-pointer type `%s`",
             rhs->type->name);
     }
@@ -1468,10 +1428,7 @@ resolve_expr_unary_addressof(
     assert(rhs != NULL);
 
     if (!tir_expr_is_lvalue(rhs)) {
-        fatal(
-            rhs->location->path,
-            rhs->location->line,
-            "cannot take the address of a non-lvalue");
+        fatal(rhs->location, "cannot take the address of a non-lvalue");
     }
     struct tir_expr* const resolved = tir_expr_new_unary(
         &op->location, type_unique_pointer(rhs->type), UOP_ADDRESSOF, rhs);
@@ -1570,8 +1527,7 @@ resolve_expr_binary_logical(
         && rhs->type->kind == TYPE_BOOL;
     if (!valid) {
         fatal(
-            op->location.path,
-            op->location.line,
+            &op->location,
             "invalid arguments of types `%s` and `%s` in binary `%s` expression",
             lhs->type->name,
             rhs->type->name,
@@ -1601,8 +1557,7 @@ resolve_expr_binary_compare_equality(
 
     if (lhs->type != rhs->type) {
         fatal(
-            op->location.path,
-            op->location.line,
+            &op->location,
             "invalid arguments of types `%s` and `%s` in binary `%s` expression",
             lhs->type->name,
             rhs->type->name,
@@ -1611,8 +1566,7 @@ resolve_expr_binary_compare_equality(
     struct type const* const xhs_type = lhs->type;
     if (!type_can_compare_equality(xhs_type)) {
         fatal(
-            op->location.path,
-            op->location.line,
+            &op->location,
             "invalid arguments of type `%s` in binary `%s` expression",
             xhs_type->name,
             token_kind_to_cstr(op->kind));
@@ -1640,8 +1594,7 @@ resolve_expr_binary_compare_order(
 
     if (lhs->type != rhs->type) {
         fatal(
-            op->location.path,
-            op->location.line,
+            &op->location,
             "invalid arguments of types `%s` and `%s` in binary `%s` expression",
             lhs->type->name,
             rhs->type->name,
@@ -1651,8 +1604,7 @@ resolve_expr_binary_compare_order(
     struct type const* const xhs_type = lhs->type;
     if (!type_can_compare_order(xhs_type)) {
         fatal(
-            op->location.path,
-            op->location.line,
+            &op->location,
             "invalid arguments of type `%s` in binary `%s` expression",
             xhs_type->name,
             token_kind_to_cstr(op->kind));
@@ -1682,8 +1634,7 @@ resolve_expr_binary_arithmetic(
         && type_is_integer(rhs->type);
     if (!valid) {
         fatal(
-            op->location.path,
-            op->location.line,
+            &op->location,
             "invalid arguments of types `%s` and `%s` in binary `%s` expression",
             lhs->type->name,
             rhs->type->name,
@@ -1730,8 +1681,7 @@ resolve_expr_binary_bitwise(
 
 invalid_operand_types:
     fatal(
-        op->location.path,
-        op->location.line,
+        &op->location,
         "invalid arguments of types `%s` and `%s` in binary `%s` expression",
         lhs->type->name,
         rhs->type->name,
@@ -1785,17 +1735,10 @@ resolve_typespec(struct resolver* resolver, struct ast_typespec const* typespec)
 
         if (symbol == NULL) {
             fatal(
-                typespec->location->path,
-                typespec->location->line,
-                "use of undeclared identifier `%s`",
-                name);
+                typespec->location, "use of undeclared identifier `%s`", name);
         }
         if (symbol->kind != SYMBOL_TYPE) {
-            fatal(
-                typespec->location->path,
-                typespec->location->line,
-                "identifier `%s` is not a type",
-                name);
+            fatal(typespec->location, "identifier `%s` is not a type", name);
         }
 
         return symbol->type;
@@ -1828,8 +1771,7 @@ resolve_typespec(struct resolver* resolver, struct ast_typespec const* typespec)
             resolve_expr(resolver, typespec->data.array.count);
         if (count_expr->type != context()->builtin.usize) {
             fatal(
-                count_expr->location->path,
-                count_expr->location->line,
+                count_expr->location,
                 "illegal array count with non-usize type `%s`",
                 count_expr->type->name);
         }
@@ -1845,8 +1787,7 @@ resolve_typespec(struct resolver* resolver, struct ast_typespec const* typespec)
             char* const cstr =
                 autil_bigint_to_new_cstr(count_value->data.integer, NULL);
             fatal(
-                count_expr->location->path,
-                count_expr->location->line,
+                count_expr->location,
                 "array count too large (received %s)",
                 cstr);
         }

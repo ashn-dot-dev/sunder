@@ -76,22 +76,13 @@ eval_expr(struct evaluator* evaluator, struct tir_expr const* expr)
         return value_new_array(expr->type, evaled_elements);
     }
     case TIR_EXPR_SLICE: {
-        fatal(
-            expr->location->path,
-            expr->location->line,
-            "constant expression contains slice literal");
+        fatal(expr->location, "constant expression contains slice literal");
     }
     case TIR_EXPR_SYSCALL: {
-        fatal(
-            expr->location->path,
-            expr->location->line,
-            "constant expression contains system call");
+        fatal(expr->location, "constant expression contains system call");
     }
     case TIR_EXPR_CALL: {
-        fatal(
-            expr->location->path,
-            expr->location->line,
-            "constant expression contains function call");
+        fatal(expr->location, "constant expression contains function call");
     }
     case TIR_EXPR_INDEX: {
         struct value* const lhs = eval_expr(evaluator, expr->data.index.lhs);
@@ -104,8 +95,7 @@ eval_expr(struct evaluator* evaluator, struct tir_expr const* expr)
             char* const cstr =
                 autil_bigint_to_new_cstr(idx->data.integer, NULL);
             fatal(
-                expr->data.index.idx->location->path,
-                expr->data.index.idx->location->line,
+                expr->data.index.idx->location,
                 "index out-of-range (received %s)",
                 cstr);
         }
@@ -114,8 +104,7 @@ eval_expr(struct evaluator* evaluator, struct tir_expr const* expr)
             char* const cstr =
                 autil_bigint_to_new_cstr(idx->data.integer, NULL);
             fatal(
-                expr->data.index.idx->location->path,
-                expr->data.index.idx->location->line,
+                expr->data.index.idx->location,
                 "index out-of-bounds (array count is %zu, received %s)",
                 lhs->type->data.array.count,
                 cstr);
@@ -144,8 +133,7 @@ eval_expr(struct evaluator* evaluator, struct tir_expr const* expr)
             autil_bigint_neg(r, rhs->data.integer);
             if (integer_is_out_of_range(expr->type, r)) {
                 fatal(
-                    expr->location->path,
-                    expr->location->line,
+                    expr->location,
                     "arithmetic operation produces out-of-range result (-(%s) == %s)",
                     autil_bigint_to_new_cstr(rhs->data.integer, NULL),
                     autil_bigint_to_new_cstr(r, NULL));
@@ -186,14 +174,12 @@ eval_expr(struct evaluator* evaluator, struct tir_expr const* expr)
         }
         case UOP_DEREFERENCE: {
             fatal(
-                expr->location->path,
-                expr->location->line,
+                expr->location,
                 "dereference operator not-supported in compile-time expressions");
         }
         case UOP_ADDRESSOF: {
             fatal(
-                expr->location->path,
-                expr->location->line,
+                expr->location,
                 "addressof operator not-supported in compile-time expressions");
         }
         default:
@@ -248,8 +234,7 @@ eval_expr(struct evaluator* evaluator, struct tir_expr const* expr)
             autil_bigint_add(r, lhs->data.integer, rhs->data.integer);
             if (integer_is_out_of_range(expr->type, r)) {
                 fatal(
-                    expr->location->path,
-                    expr->location->line,
+                    expr->location,
                     "arithmetic operation produces out-of-range result (%s + %s == %s)",
                     autil_bigint_to_new_cstr(lhs->data.integer, NULL),
                     autil_bigint_to_new_cstr(rhs->data.integer, NULL),
@@ -265,8 +250,7 @@ eval_expr(struct evaluator* evaluator, struct tir_expr const* expr)
             autil_bigint_sub(r, lhs->data.integer, rhs->data.integer);
             if (integer_is_out_of_range(expr->type, r)) {
                 fatal(
-                    expr->location->path,
-                    expr->location->line,
+                    expr->location,
                     "arithmetic operation produces out-of-range result (%s - %s == %s)",
                     autil_bigint_to_new_cstr(lhs->data.integer, NULL),
                     autil_bigint_to_new_cstr(rhs->data.integer, NULL),
@@ -282,8 +266,7 @@ eval_expr(struct evaluator* evaluator, struct tir_expr const* expr)
             autil_bigint_mul(r, lhs->data.integer, rhs->data.integer);
             if (integer_is_out_of_range(expr->type, r)) {
                 fatal(
-                    expr->location->path,
-                    expr->location->line,
+                    expr->location,
                     "arithmetic operation produces out-of-range result (%s * %s == %s)",
                     autil_bigint_to_new_cstr(lhs->data.integer, NULL),
                     autil_bigint_to_new_cstr(rhs->data.integer, NULL),
@@ -297,8 +280,7 @@ eval_expr(struct evaluator* evaluator, struct tir_expr const* expr)
             assert(type_is_integer(rhs->type));
             if (autil_bigint_cmp(rhs->data.integer, AUTIL_BIGINT_ZERO) == 0) {
                 fatal(
-                    expr->location->path,
-                    expr->location->line,
+                    expr->location,
                     "divide by zero (%s / %s)",
                     autil_bigint_to_new_cstr(lhs->data.integer, NULL),
                     autil_bigint_to_new_cstr(rhs->data.integer, NULL));

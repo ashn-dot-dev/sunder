@@ -502,8 +502,7 @@ symbol_table_insert(struct symbol_table* self, struct symbol const* symbol)
         symbol_table_lookup_local(self, symbol->name);
     if (local != NULL) {
         fatal(
-            symbol->location->path,
-            symbol->location->line,
+            symbol->location,
             "redeclaration of `%s` previously declared at [%s:%zu]",
             local->name,
             local->location->path,
@@ -719,8 +718,7 @@ tir_expr_new_integer(
         char* const min_cstr =
             autil_bigint_to_new_cstr(context()->u8_min, NULL);
         fatal(
-            location->path,
-            location->line,
+            location,
             "out-of-range byte literal (%s < %s)",
             lit_cstr,
             min_cstr);
@@ -730,8 +728,7 @@ tir_expr_new_integer(
         char* const max_cstr =
             autil_bigint_to_new_cstr(context()->u8_max, NULL);
         fatal(
-            location->path,
-            location->line,
+            location,
             "out-of-range byte literal (%s > %s)",
             lit_cstr,
             max_cstr);
@@ -741,8 +738,7 @@ tir_expr_new_integer(
         char* const min_cstr =
             autil_bigint_to_new_cstr(type->data.integer.min, NULL);
         fatal(
-            location->path,
-            location->line,
+            location,
             "out-of-range integer literal (%s < %s)",
             lit_cstr,
             min_cstr);
@@ -752,8 +748,7 @@ tir_expr_new_integer(
         char* const max_cstr =
             autil_bigint_to_new_cstr(type->data.integer.max, NULL);
         fatal(
-            location->path,
-            location->line,
+            location,
             "out-of-range integer literal (%s > %s)",
             lit_cstr,
             max_cstr);

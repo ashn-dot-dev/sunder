@@ -259,10 +259,9 @@ lex_integer(struct lexer* self)
 
     // Digits
     if (!radix_isdigit(*self->current)) {
-        fatal(
-            self->module->path,
-            self->current_line,
-            "integer literal has no digits");
+        struct source_location const location = {self->module->path,
+                                                 self->current_line};
+        fatal(&location, "integer literal has no digits");
     }
     while (radix_isdigit(*self->current)) {
         self->current += 1;
@@ -310,12 +309,10 @@ lex_sigil(struct lexer* self)
     while (autil_ispunct(start[count]) && start[count] != '#') {
         count += 1;
     }
-    fatal(
-        self->module->path,
-        self->current_line,
-        "invalid token `%.*s`",
-        (int)count,
-        start);
+
+    struct source_location const location = {self->module->path,
+                                             self->current_line};
+    fatal(&location, "invalid token `%.*s`", (int)count, start);
     return NULL;
 }
 
@@ -345,6 +342,6 @@ lexer_next_token(struct lexer* self)
             self->current, 1u, self->next_token_location, TOKEN_EOF);
     }
 
-    fatal(self->module->path, self->current_line, "invalid token");
+    fatal(&self->next_token_location, "invalid token");
     return NULL;
 }

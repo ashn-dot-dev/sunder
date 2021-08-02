@@ -18,17 +18,26 @@
 #    define NORETURN /* nothing */
 #endif
 
-// Do not include path information.
+#ifndef ENABLE_DEBUG
+#    define ENABLE_DEBUG 0 /* set to a non-zero value to enable debug output */
+#endif
+
 #define NO_PATH ((char const*)NULL)
-// Do not include line information (requires NO_PATH).
 #define NO_LINE ((size_t)0u)
-#define ENABLE_DEBUG 0 /* set to a non-zero value to enable debug output */
+#define NO_LOCATION ((struct source_location const*)NULL)
+struct source_location {
+    // Optional (NULL indicates no value).
+    char const* path;
+    // Optional (zero indicates no value).
+    size_t line;
+};
+
 void
-debug(char const* path, size_t line, char const* fmt, ...);
+debug(struct source_location const* location, char const* fmt, ...);
 void
-error(char const* path, size_t line, char const* fmt, ...);
+error(struct source_location const* location, char const* fmt, ...);
 NORETURN void
-fatal(char const* path, size_t line, char const* fmt, ...);
+fatal(struct source_location const* location, char const* fmt, ...);
 
 NORETURN void
 todo(char const* file, int line, char const* fmt, ...);
@@ -84,16 +93,6 @@ spawnvpw(char const* path, char const* const* argv);
 // Fatally exits if the exit status of the spawned process is non-zero.
 void
 xspawnvpw(char const* path, char const* const* argv);
-
-struct source_location {
-    // Required for all source locations. Set to the module path for source
-    // locations within a module or "builtin" for builtins.
-    char const* path;
-    // Optional for source locations in which a line number is not applicable,
-    // in which case the line member is set to NO_LINE, such as for the source
-    // location of builtins.
-    size_t line;
-};
 
 struct module {
     char const* path;

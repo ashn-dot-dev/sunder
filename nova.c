@@ -27,31 +27,38 @@
 
 static void
 messagev_(
-    char const* path,
-    size_t line,
+    struct source_location const* location,
     char const* level_text,
     char const* level_ansi,
     char const* fmt,
     va_list args)
 {
-    assert(path != NO_PATH || line == NO_LINE);
     assert(level_text != NULL);
     assert(level_ansi != NULL);
     assert(fmt != NULL);
 
+    char const* const path = location != NULL ? location->path : NO_PATH;
+    size_t const line = location != NULL ? location->line : NO_LINE;
+
     bool const is_tty = isatty(STDERR_FILENO);
 
-    if (path != NO_PATH) {
+    if (path != NO_PATH || line != NO_LINE) {
         fprintf(stderr, "[");
 
-        char const* const path_ansi_beg = is_tty ? ANSI_ESC_CYAN : "";
-        char const* const path_ansi_end = is_tty ? ANSI_ESC_DEFAULT : "";
-        fprintf(stderr, "%s%s%s", path_ansi_beg, path, path_ansi_end);
+        if (path != NO_PATH) {
+            char const* const path_ansi_beg = is_tty ? ANSI_ESC_CYAN : "";
+            char const* const path_ansi_end = is_tty ? ANSI_ESC_DEFAULT : "";
+            fprintf(stderr, "%s%s%s", path_ansi_beg, path, path_ansi_end);
+        }
+
+        if (path != NO_PATH && line != NO_LINE) {
+            fputc(':', stderr);
+        }
 
         if (line != NO_LINE) {
             char const* const line_ansi_beg = is_tty ? ANSI_ESC_CYAN : "";
             char const* const line_ansi_end = is_tty ? ANSI_ESC_DEFAULT : "";
-            fprintf(stderr, ":%s%zu%s", line_ansi_beg, line, line_ansi_end);
+            fprintf(stderr, "%s%zu%s", line_ansi_beg, line, line_ansi_end);
         }
 
         fprintf(stderr, "] ");
@@ -66,36 +73,34 @@ messagev_(
 }
 
 void
-debug(char const* path, size_t line, char const* fmt, ...)
+debug(struct source_location const* location, char const* fmt, ...)
 {
 #if ENABLE_DEBUG != 0
     va_list args;
     va_start(args, fmt);
-    messagev_(path, line, "debug", ANSI_MSG_DEBUG, fmt, args);
+    messagev_(location, "debug", ANSI_MSG_DEBUG, fmt, args);
     va_end(args);
 #else
-    (void)path;
-    (void)line;
+    (void)location;
     (void)fmt;
-    (void)messagev_;
 #endif
 }
 
 void
-error(char const* path, size_t line, char const* fmt, ...)
+error(struct source_location const* location, char const* fmt, ...)
 {
     va_list args;
     va_start(args, fmt);
-    messagev_(path, line, "error", ANSI_MSG_ERROR, fmt, args);
+    messagev_(location, "error", ANSI_MSG_ERROR, fmt, args);
     va_end(args);
 }
 
-void
-fatal(char const* path, size_t line, char const* fmt, ...)
+NORETURN void
+fatal(struct source_location const* location, char const* fmt, ...)
 {
     va_list args;
     va_start(args, fmt);
-    messagev_(path, line, "error", ANSI_MSG_ERROR, fmt, args);
+    messagev_(location, "error", ANSI_MSG_ERROR, fmt, args);
     va_end(args);
 
     exit(EXIT_FAILURE);
@@ -150,11 +155,7 @@ spawnvpw(char const* path, char const* const* argv)
 
     pid_t const pid = fork();
     if (pid == -1) {
-        fatal(
-            NO_PATH,
-            NO_LINE,
-            "failed to fork with error '%s'",
-            strerror(errno));
+        fatal(NULL, "failed to fork with error '%s'", strerror(errno));
     }
 
     if (pid == 0) {
@@ -165,8 +166,7 @@ spawnvpw(char const* path, char const* const* argv)
         char* const* argv_ = (char* const*)argv;
         if (execvp(path, argv_) == -1) {
             fatal(
-                NO_PATH,
-                NO_LINE,
+                NULL,
                 "failed to execvp '%s' with error '%s'",
                 path,
                 strerror(errno));
@@ -332,9 +332,9 @@ read_source(char const* path)
     void* source = NULL;
     size_t source_size = 0;
     if (autil_file_read(path, &source, &source_size)) {
+        struct source_location const location = {path, NO_LINE};
         fatal(
-            path,
-            NO_LINE,
+            &location,
             "failed to read source with error '%s'",
             strerror(errno));
     }

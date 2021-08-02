@@ -58,20 +58,16 @@ argparse(int argc, char** argv)
             exit(EXIT_SUCCESS);
         }
         if (strncmp(argv[i], "-", 1) == 0 || strncmp(argv[i], "--", 2) == 0) {
-            fatal(
-                NO_PATH,
-                NO_LINE,
-                "unrecognized command line option '%s'",
-                argv[i]);
+            fatal(NULL, "unrecognized command line option '%s'", argv[i]);
         }
 
         if (path != NULL) {
-            fatal(NO_PATH, NO_LINE, "multiple input files");
+            fatal(NULL, "multiple input files");
         }
         path = argv[i];
     }
 
     if (path == NULL) {
-        fatal(NO_PATH, NO_LINE, "no input file");
+        fatal(NULL, "no input file");
     }
 }

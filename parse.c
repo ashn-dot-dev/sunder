@@ -194,8 +194,7 @@ expect_current(struct parser* parser, enum token_kind kind)
         char const* const expected = token_kind_to_cstr(kind);
         char* const found = token_to_new_cstr(parser->current_token);
         fatal(
-            parser->current_token->location.path,
-            parser->current_token->location.line,
+            &parser->current_token->location,
             "expected `%s`, found `%s`",
             expected,
             found);
@@ -238,8 +237,7 @@ parse_decl(struct parser* parser)
     }
 
     fatal(
-        parser->current_token->location.path,
-        parser->current_token->location.line,
+        &parser->current_token->location,
         "expected declaration, found `%s`",
         token_to_new_cstr(parser->current_token));
     return NULL;
@@ -596,8 +594,7 @@ parse_expr_precedence(struct parser* parser, enum precedence precedence)
     parse_nud_fn const parse_nud = token_kind_nud(nud_token->kind);
     if (parse_nud == NULL) {
         fatal(
-            nud_token->location.path,
-            nud_token->location.line,
+            &nud_token->location,
             "unrecognized prefix token `%s` in expression",
             token_kind_to_cstr(nud_token->kind));
     }
@@ -888,8 +885,7 @@ parse_typespec(struct parser* parser)
     }
 
     fatal(
-        parser->current_token->location.path,
-        parser->current_token->location.line,
+        &parser->current_token->location,
         "expected type specifier, found `%s`",
         token_to_new_cstr(parser->current_token));
     return NULL;
