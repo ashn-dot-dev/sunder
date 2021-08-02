@@ -346,7 +346,6 @@ resolve_decl(struct resolver* resolver, struct ast_decl const* decl)
 {
     assert(resolver != NULL);
     assert(decl != NULL);
-    trace(resolver->module->path, NO_LINE, "%s", __func__);
 
     switch (decl->kind) {
     case AST_DECL_VARIABLE: {
@@ -605,7 +604,6 @@ resolve_stmt(struct resolver* resolver, struct ast_stmt const* stmt)
     assert(resolver != NULL);
     assert(!resolver_is_global(resolver));
     assert(stmt != NULL);
-    trace(resolver->module->path, NO_LINE, "%s", __func__);
 
     switch (stmt->kind) {
     case AST_STMT_DECL: {
@@ -645,7 +643,6 @@ resolve_stmt_decl(struct resolver* resolver, struct ast_stmt const* stmt)
     assert(!resolver_is_global(resolver));
     assert(stmt != NULL);
     assert(stmt->kind == AST_STMT_DECL);
-    trace(resolver->module->path, NO_LINE, "%s", __func__);
 
     struct ast_decl const* const decl = stmt->data.decl;
     switch (decl->kind) {
@@ -683,7 +680,6 @@ resolve_stmt_if(struct resolver* resolver, struct ast_stmt const* stmt)
     assert(!resolver_is_global(resolver));
     assert(stmt != NULL);
     assert(stmt->kind == AST_STMT_IF);
-    trace(resolver->module->path, NO_LINE, "%s", __func__);
 
     autil_sbuf(struct ast_conditional const* const) const conditionals =
         stmt->data.if_.conditionals;
@@ -734,7 +730,6 @@ resolve_stmt_for_range(struct resolver* resolver, struct ast_stmt const* stmt)
     assert(!resolver_is_global(resolver));
     assert(stmt != NULL);
     assert(stmt->kind == AST_STMT_FOR_RANGE);
-    trace(resolver->module->path, NO_LINE, "%s", __func__);
 
     struct tir_expr const* const begin =
         resolve_expr(resolver, stmt->data.for_range.begin);
@@ -794,7 +789,6 @@ resolve_stmt_for_expr(struct resolver* resolver, struct ast_stmt const* stmt)
     assert(!resolver_is_global(resolver));
     assert(stmt != NULL);
     assert(stmt->kind == AST_STMT_FOR_EXPR);
-    trace(resolver->module->path, NO_LINE, "%s", __func__);
 
     struct tir_expr const* const expr =
         resolve_expr(resolver, stmt->data.for_expr.expr);
@@ -828,7 +822,6 @@ resolve_stmt_dump(struct resolver* resolver, struct ast_stmt const* stmt)
     assert(!resolver_is_global(resolver));
     assert(stmt != NULL);
     assert(stmt->kind == AST_STMT_DUMP);
-    trace(resolver->module->path, NO_LINE, "%s", __func__);
 
     struct tir_expr const* expr = resolve_expr(resolver, stmt->data.dump.expr);
     struct tir_stmt* const resolved = tir_stmt_new_dump(stmt->location, expr);
@@ -844,7 +837,6 @@ resolve_stmt_return(struct resolver* resolver, struct ast_stmt const* stmt)
     assert(!resolver_is_global(resolver));
     assert(stmt != NULL);
     assert(stmt->kind == AST_STMT_RETURN);
-    trace(resolver->module->path, NO_LINE, "%s", __func__);
 
     struct type const* const return_type =
         resolver->current_function->type->data.function.return_type;
@@ -906,7 +898,6 @@ resolve_stmt_expr(struct resolver* resolver, struct ast_stmt const* stmt)
     assert(!resolver_is_global(resolver));
     assert(stmt != NULL);
     assert(stmt->kind == AST_STMT_EXPR);
-    trace(resolver->module->path, NO_LINE, "%s", __func__);
 
     struct tir_expr const* const expr = resolve_expr(resolver, stmt->data.expr);
     struct tir_stmt* const resolved = tir_stmt_new_expr(stmt->location, expr);
@@ -920,7 +911,6 @@ resolve_expr(struct resolver* resolver, struct ast_expr const* expr)
 {
     assert(resolver != NULL);
     assert(expr != NULL);
-    trace(resolver->module->path, NO_LINE, "%s", __func__);
 
     switch (expr->kind) {
     case AST_EXPR_IDENTIFIER: {
@@ -968,7 +958,6 @@ resolve_expr_identifier(struct resolver* resolver, struct ast_expr const* expr)
     assert(resolver != NULL);
     assert(expr != NULL);
     assert(expr->kind == AST_EXPR_IDENTIFIER);
-    trace(resolver->module->path, NO_LINE, "%s", __func__);
 
     char const* const name = expr->data.identifier->name;
     struct symbol const* const symbol =
@@ -1000,7 +989,6 @@ resolve_expr_boolean(struct resolver* resolver, struct ast_expr const* expr)
     assert(resolver != NULL);
     assert(expr != NULL);
     assert(expr->kind == AST_EXPR_BOOLEAN);
-    trace(resolver->module->path, NO_LINE, "%s", __func__);
 
     bool const value = expr->data.boolean->value;
     struct tir_expr* const resolved =
@@ -1072,7 +1060,6 @@ resolve_expr_integer(struct resolver* resolver, struct ast_expr const* expr)
     assert(resolver != NULL);
     assert(expr != NULL);
     assert(expr->kind == AST_EXPR_INTEGER);
-    trace(resolver->module->path, NO_LINE, "%s", __func__);
 
     struct ast_integer const* const ast_integer = expr->data.integer;
     struct autil_bigint const* const value = ast_integer->value;
@@ -1092,7 +1079,6 @@ resolve_expr_array(struct resolver* resolver, struct ast_expr const* expr)
     assert(resolver != NULL);
     assert(expr != NULL);
     assert(expr->kind == AST_EXPR_ARRAY);
-    trace(resolver->module->path, NO_LINE, "%s", __func__);
 
     struct type const* const type =
         resolve_typespec(resolver, expr->data.array.typespec);
@@ -1134,7 +1120,6 @@ resolve_expr_slice(struct resolver* resolver, struct ast_expr const* expr)
     assert(resolver != NULL);
     assert(expr != NULL);
     assert(expr->kind == AST_EXPR_SLICE);
-    trace(resolver->module->path, NO_LINE, "%s", __func__);
 
     struct type const* const type =
         resolve_typespec(resolver, expr->data.slice.typespec);
@@ -1172,7 +1157,6 @@ resolve_expr_syscall(struct resolver* resolver, struct ast_expr const* expr)
     assert(resolver != NULL);
     assert(expr != NULL);
     assert(expr->kind == AST_EXPR_SYSCALL);
-    trace(resolver->module->path, NO_LINE, "%s", __func__);
 
     autil_sbuf(struct ast_expr const* const) arguments =
         expr->data.syscall.arguments;
@@ -1209,7 +1193,6 @@ resolve_expr_call(struct resolver* resolver, struct ast_expr const* expr)
     assert(resolver != NULL);
     assert(expr != NULL);
     assert(expr->kind == AST_EXPR_CALL);
-    trace(resolver->module->path, NO_LINE, "%s", __func__);
 
     struct tir_expr const* const function =
         resolve_expr(resolver, expr->data.call.func);
@@ -1267,7 +1250,6 @@ resolve_expr_index(struct resolver* resolver, struct ast_expr const* expr)
     assert(resolver != NULL);
     assert(expr != NULL);
     assert(expr->kind == AST_EXPR_INDEX);
-    trace(resolver->module->path, NO_LINE, "%s", __func__);
 
     struct tir_expr const* const lhs =
         resolve_expr(resolver, expr->data.index.lhs);
@@ -1302,7 +1284,6 @@ resolve_expr_unary(struct resolver* resolver, struct ast_expr const* expr)
     assert(resolver != NULL);
     assert(expr != NULL);
     assert(expr->kind == AST_EXPR_UNARY);
-    trace(resolver->module->path, NO_LINE, "%s", __func__);
 
     // While a human would identify the integer expression -128s8 as the hex
     // byte 0x80, the parser identifies the integer expression -128s8 as the
@@ -1381,7 +1362,6 @@ resolve_expr_unary_logical(
     assert(resolver != NULL);
     assert(op != NULL);
     assert(rhs != NULL);
-    trace(resolver->module->path, NO_LINE, "%s", __func__);
 
     if (rhs->type->kind != TYPE_BOOL) {
         fatal(
@@ -1409,7 +1389,6 @@ resolve_expr_unary_arithmetic(
     assert(resolver != NULL);
     assert(op != NULL);
     assert(rhs != NULL);
-    trace(resolver->module->path, NO_LINE, "%s", __func__);
 
     if (!type_is_integer(rhs->type)) {
         fatal(
@@ -1437,7 +1416,6 @@ resolve_expr_unary_bitwise(
     assert(resolver != NULL);
     assert(op != NULL);
     assert(rhs != NULL);
-    trace(resolver->module->path, NO_LINE, "%s", __func__);
 
     if (!(rhs->type->kind == TYPE_BYTE || type_is_integer(rhs->type))) {
         fatal(
@@ -1463,7 +1441,6 @@ resolve_expr_unary_dereference(
     assert(op != NULL);
     assert(op->kind == TOKEN_STAR);
     assert(rhs != NULL);
-    trace(resolver->module->path, NO_LINE, "%s", __func__);
 
     if (rhs->type->kind != TYPE_POINTER) {
         fatal(
@@ -1489,7 +1466,6 @@ resolve_expr_unary_addressof(
     assert(op != NULL);
     assert(op->kind == TOKEN_AMPERSAND);
     assert(rhs != NULL);
-    trace(resolver->module->path, NO_LINE, "%s", __func__);
 
     if (!tir_expr_is_lvalue(rhs)) {
         fatal(
@@ -1510,7 +1486,6 @@ resolve_expr_binary(struct resolver* resolver, struct ast_expr const* expr)
     assert(resolver != NULL);
     assert(expr != NULL);
     assert(expr->kind == AST_EXPR_BINARY);
-    trace(resolver->module->path, NO_LINE, "%s", __func__);
 
     struct tir_expr const* const lhs =
         resolve_expr(resolver, expr->data.binary.lhs);
@@ -1590,7 +1565,6 @@ resolve_expr_binary_logical(
     assert(op != NULL);
     assert(lhs != NULL);
     assert(rhs != NULL);
-    trace(resolver->module->path, NO_LINE, "%s", __func__);
 
     bool const valid = lhs->type == rhs->type && lhs->type->kind == TYPE_BOOL
         && rhs->type->kind == TYPE_BOOL;
@@ -1624,7 +1598,6 @@ resolve_expr_binary_compare_equality(
     assert(op != NULL);
     assert(lhs != NULL);
     assert(rhs != NULL);
-    trace(resolver->module->path, NO_LINE, "%s", __func__);
 
     if (lhs->type != rhs->type) {
         fatal(
@@ -1664,7 +1637,6 @@ resolve_expr_binary_compare_order(
     assert(op != NULL);
     assert(lhs != NULL);
     assert(rhs != NULL);
-    trace(resolver->module->path, NO_LINE, "%s", __func__);
 
     if (lhs->type != rhs->type) {
         fatal(
@@ -1705,7 +1677,6 @@ resolve_expr_binary_arithmetic(
     assert(op != NULL);
     assert(lhs != NULL);
     assert(rhs != NULL);
-    trace(resolver->module->path, NO_LINE, "%s", __func__);
 
     bool const valid = lhs->type == rhs->type && type_is_integer(lhs->type)
         && type_is_integer(rhs->type);
@@ -1739,7 +1710,6 @@ resolve_expr_binary_bitwise(
     assert(op != NULL);
     assert(lhs != NULL);
     assert(rhs != NULL);
-    trace(resolver->module->path, NO_LINE, "%s", __func__);
 
     if (lhs->type != rhs->type) {
         goto invalid_operand_types;
@@ -1806,7 +1776,6 @@ resolve_typespec(struct resolver* resolver, struct ast_typespec const* typespec)
 {
     assert(resolver != NULL);
     assert(typespec != NULL);
-    trace(resolver->module->path, NO_LINE, "%s", __func__);
 
     switch (typespec->kind) {
     case TYPESPEC_IDENTIFIER: {
@@ -1902,7 +1871,6 @@ void
 resolve(struct module* module)
 {
     assert(module != NULL);
-    trace(module->path, NO_LINE, "%s", __func__);
 
     struct resolver* const resolver = resolver_new(module);
 

@@ -143,7 +143,7 @@ order_tldecl(struct orderer* orderer, struct tldecl* tldecl)
             tldecl->decl->name);
     }
 
-    trace(
+    debug(
         orderer->module->path,
         NO_LINE,
         "[%s] ordering unordered top-level declaration `%s`",
@@ -322,7 +322,7 @@ order_name(struct orderer* orderer, char const* name)
         // Top-level declaration with the provided name does not exist. Assume
         // that it is a builtin and allow future stages of semantic analysis to
         // raise an unknown identifier error if necessary.
-        trace(
+        debug(
             orderer->module->path,
             NO_LINE,
             "[%s] skipping unknown identifier `%s`",

@@ -355,8 +355,6 @@ codegen_lvalue_unary(struct tir_expr const* expr);
 static void
 codegen_static_constants(void)
 {
-    trace(NO_PATH, NO_LINE, "%s", __func__);
-
     appendln("; STATIC CONSTANTS");
     appendln("section .rodata");
 
@@ -381,8 +379,6 @@ codegen_static_constants(void)
 static void
 codegen_static_variables(void)
 {
-    trace(NO_PATH, NO_LINE, "%s", __func__);
-
     appendln("; STATIC VARIABLES");
     appendln("section .data");
 
@@ -407,8 +403,6 @@ codegen_static_variables(void)
 static void
 codegen_static_functions(void)
 {
-    trace(NO_PATH, NO_LINE, "%s", __func__);
-
     appendln("; STATIC (GLOBAL) FUNCTIONS");
     appendln("section .text");
     struct symbol const* const* const symbols =
@@ -425,8 +419,6 @@ codegen_static_functions(void)
 static void
 codegen_core(void)
 {
-    trace(NO_PATH, NO_LINE, "%s", __func__);
-
     appendln("; BUILTIN DUMP SUBROUTINE");
     appendln("section .text");
     appendln("global dump");
@@ -613,7 +605,6 @@ codegen_static_object(struct symbol const* symbol)
     assert(symbol->kind == SYMBOL_VARIABLE || symbol->kind == SYMBOL_CONSTANT);
     assert(symbol->address->kind == ADDRESS_STATIC);
     assert(symbol->value != NULL);
-    trace(NO_PATH, NO_LINE, "%s (%s)", __func__, symbol->name);
 
     struct value const* const value = symbol->value;
     struct type const* const type = value->type;
@@ -648,7 +639,6 @@ codegen_static_function(struct symbol const* symbol)
     assert(symbol != NULL);
     assert(symbol->kind == SYMBOL_FUNCTION);
     assert(symbol->value != NULL);
-    trace(NO_PATH, NO_LINE, "%s (%s)", __func__, symbol->name);
 
     assert(symbol->value->type->kind == TYPE_FUNCTION);
     struct tir_function const* const function = symbol->value->data.function;
@@ -691,7 +681,6 @@ static void
 codegen_stmt(struct tir_stmt const* stmt)
 {
     assert(stmt != NULL);
-    trace(NO_PATH, NO_LINE, "%s", __func__);
 
     appendli(
         "; [%s:%zu] statement", stmt->location->path, stmt->location->line);
@@ -734,7 +723,6 @@ codegen_stmt_if(struct tir_stmt const* stmt)
 {
     assert(stmt != NULL);
     assert(stmt->kind == TIR_STMT_IF);
-    trace(NO_PATH, NO_LINE, "%s", __func__);
 
     size_t const stmt_id = unique_id++;
     autil_sbuf(struct tir_conditional const* const) const conditionals =
@@ -778,7 +766,6 @@ codegen_stmt_for_range(struct tir_stmt const* stmt)
 {
     assert(stmt != NULL);
     assert(stmt->kind == TIR_STMT_FOR_RANGE);
-    trace(NO_PATH, NO_LINE, "%s", __func__);
 
     assert(
         stmt->data.for_range.loop_variable->type == context()->builtin.usize);
@@ -819,7 +806,6 @@ codegen_stmt_for_expr(struct tir_stmt const* stmt)
 {
     assert(stmt != NULL);
     assert(stmt->kind == TIR_STMT_FOR_EXPR);
-    trace(NO_PATH, NO_LINE, "%s", __func__);
 
     size_t const stmt_id = unique_id++;
     appendln(".l%zu_stmt_for_expr_bgn:", stmt_id);
@@ -845,7 +831,6 @@ codegen_stmt_dump(struct tir_stmt const* stmt)
 {
     assert(stmt != NULL);
     assert(stmt->kind == TIR_STMT_DUMP);
-    trace(NO_PATH, NO_LINE, "%s", __func__);
 
     codegen_rvalue(stmt->data.expr);
     appendli("push %#zx", stmt->data.expr->type->size);
@@ -859,7 +844,6 @@ codegen_stmt_return(struct tir_stmt const* stmt)
 {
     assert(stmt != NULL);
     assert(stmt->kind == TIR_STMT_RETURN);
-    trace(NO_PATH, NO_LINE, "%s", __func__);
 
     if (stmt->data.return_.expr != NULL) {
         // Compute result.
@@ -889,7 +873,6 @@ codegen_stmt_assign(struct tir_stmt const* stmt)
 {
     assert(stmt != NULL);
     assert(stmt->kind == TIR_STMT_ASSIGN);
-    trace(NO_PATH, NO_LINE, "%s", __func__);
 
     codegen_rvalue(stmt->data.assign.rhs);
     codegen_lvalue(stmt->data.assign.lhs);
@@ -937,7 +920,6 @@ codegen_stmt_expr(struct tir_stmt const* stmt)
 {
     assert(stmt != NULL);
     assert(stmt->kind == TIR_STMT_EXPR);
-    trace(NO_PATH, NO_LINE, "%s", __func__);
 
     codegen_rvalue(stmt->data.expr);
     // Remove the (unused) result from the stack.
@@ -948,7 +930,6 @@ static void
 codegen_rvalue(struct tir_expr const* expr)
 {
     assert(expr != NULL);
-    trace(NO_PATH, NO_LINE, "%s", __func__);
 
     switch (expr->kind) {
     case TIR_EXPR_IDENTIFIER: {
@@ -1001,7 +982,6 @@ codegen_rvalue_identifier(struct tir_expr const* expr)
 {
     assert(expr != NULL);
     assert(expr->kind == TIR_EXPR_IDENTIFIER);
-    trace(NO_PATH, NO_LINE, "%s", __func__);
 
     struct symbol const* const symbol = expr->data.identifier;
     switch (symbol->kind) {
@@ -1027,7 +1007,6 @@ codegen_rvalue_boolean(struct tir_expr const* expr)
 {
     assert(expr != NULL);
     assert(expr->kind == TIR_EXPR_BOOLEAN);
-    trace(NO_PATH, NO_LINE, "%s", __func__);
 
     appendli("mov rax, %s", expr->data.boolean ? "0x01" : "0x00");
     appendli("push rax");
@@ -1038,7 +1017,6 @@ codegen_rvalue_integer(struct tir_expr const* expr)
 {
     assert(expr != NULL);
     assert(expr->kind == TIR_EXPR_INTEGER);
-    trace(NO_PATH, NO_LINE, "%s", __func__);
 
     char* const cstr = autil_bigint_to_new_cstr(expr->data.integer, NULL);
 
@@ -1056,7 +1034,6 @@ codegen_rvalue_array(struct tir_expr const* expr)
     assert(expr != NULL);
     assert(expr->kind == TIR_EXPR_ARRAY);
     assert(expr->type->kind == TYPE_ARRAY);
-    trace(NO_PATH, NO_LINE, "%s", __func__);
 
     // Make space for the array.
     push(expr->type->size);
@@ -1098,7 +1075,6 @@ codegen_rvalue_slice(struct tir_expr const* expr)
     assert(expr != NULL);
     assert(expr->kind == TIR_EXPR_SLICE);
     assert(expr->type->kind == TYPE_SLICE);
-    trace(NO_PATH, NO_LINE, "%s", __func__);
 
     // +---------+
     // | count   |
@@ -1114,7 +1090,6 @@ codegen_rvalue_syscall(struct tir_expr const* expr)
 {
     assert(expr != NULL);
     assert(expr->kind == TIR_EXPR_SYSCALL);
-    trace(NO_PATH, NO_LINE, "%s", __func__);
 
     struct tir_expr const* const* const arguments =
         expr->data.syscall.arguments;
@@ -1155,7 +1130,6 @@ codegen_rvalue_call(struct tir_expr const* expr)
 {
     assert(expr != NULL);
     assert(expr->kind == TIR_EXPR_CALL);
-    trace(NO_PATH, NO_LINE, "%s", __func__);
 
     // Push space for return value.
     struct type const* function_type = expr->data.call.function->type;
@@ -1186,7 +1160,6 @@ codegen_rvalue_index(struct tir_expr const* expr)
 {
     assert(expr != NULL);
     assert(expr->kind == TIR_EXPR_INDEX);
-    trace(NO_PATH, NO_LINE, "%s", __func__);
 
     if (expr->data.index.lhs->type->kind == TYPE_ARRAY) {
         codegen_rvalue_index_lhs_array(expr);
@@ -1208,7 +1181,6 @@ codegen_rvalue_index_lhs_array(struct tir_expr const* expr)
     assert(expr->kind == TIR_EXPR_INDEX);
     assert(expr->data.index.lhs->type->kind == TYPE_ARRAY);
     assert(expr->data.index.idx->type->kind == TYPE_USIZE);
-    trace(NO_PATH, NO_LINE, "%s", __func__);
     size_t const expr_id = unique_id++;
 
     struct type const* const lhs_type = expr->data.index.lhs->type;
@@ -1275,7 +1247,6 @@ codegen_rvalue_index_lhs_slice(struct tir_expr const* expr)
     assert(expr->kind == TIR_EXPR_INDEX);
     assert(expr->data.index.lhs->type->kind == TYPE_SLICE);
     assert(expr->data.index.idx->type->kind == TYPE_USIZE);
-    trace(NO_PATH, NO_LINE, "%s", __func__);
     size_t const expr_id = unique_id++;
 
     struct type const* const lhs_type = expr->data.index.lhs->type;
@@ -1309,7 +1280,6 @@ codegen_rvalue_unary(struct tir_expr const* expr)
 {
     assert(expr != NULL);
     assert(expr->kind == TIR_EXPR_UNARY);
-    trace(NO_PATH, NO_LINE, "%s", __func__);
 
     switch (expr->data.unary.op) {
     case UOP_NOT: {
@@ -1380,7 +1350,6 @@ codegen_rvalue_binary(struct tir_expr const* expr)
 {
     assert(expr != NULL);
     assert(expr->kind == TIR_EXPR_BINARY);
-    trace(NO_PATH, NO_LINE, "%s", __func__);
 
     switch (expr->data.binary.op) {
     case BOP_OR: {
@@ -1839,7 +1808,6 @@ static void
 codegen_lvalue(struct tir_expr const* expr)
 {
     assert(expr != NULL);
-    trace(NO_PATH, NO_LINE, "%s", __func__);
 
     switch (expr->kind) {
     case TIR_EXPR_IDENTIFIER: {
@@ -1872,7 +1840,6 @@ codegen_lvalue_index(struct tir_expr const* expr)
 {
     assert(expr != NULL);
     assert(expr->kind == TIR_EXPR_INDEX);
-    trace(NO_PATH, NO_LINE, "%s", __func__);
 
     if (expr->data.index.lhs->type->kind == TYPE_ARRAY) {
         codegen_lvalue_index_lhs_array(expr);
@@ -1894,7 +1861,6 @@ codegen_lvalue_index_lhs_array(struct tir_expr const* expr)
     assert(expr->kind == TIR_EXPR_INDEX);
     assert(expr->data.index.lhs->type->kind == TYPE_ARRAY);
     assert(expr->data.index.idx->type->kind == TYPE_USIZE);
-    trace(NO_PATH, NO_LINE, "%s", __func__);
     size_t const expr_id = unique_id++;
 
     codegen_lvalue(expr->data.index.lhs);
@@ -1921,7 +1887,6 @@ codegen_lvalue_index_lhs_slice(struct tir_expr const* expr)
     assert(expr->kind == TIR_EXPR_INDEX);
     assert(expr->data.index.lhs->type->kind == TYPE_SLICE);
     assert(expr->data.index.idx->type->kind == TYPE_USIZE);
-    trace(NO_PATH, NO_LINE, "%s", __func__);
     size_t const expr_id = unique_id++;
 
     codegen_rvalue(expr->data.index.lhs);
@@ -1946,7 +1911,6 @@ static void
 codegen_lvalue_unary(struct tir_expr const* expr)
 {
     assert(expr != NULL);
-    trace(NO_PATH, NO_LINE, "%s", __func__);
 
     switch (expr->data.unary.op) {
     case UOP_DEREFERENCE: {
@@ -1969,8 +1933,6 @@ codegen_lvalue_unary(struct tir_expr const* expr)
 void
 codegen(void)
 {
-    trace(NO_PATH, NO_LINE, "%s", __func__);
-
     out = autil_string_new(NULL, 0u);
 
     codegen_static_constants();

@@ -22,10 +22,7 @@
 #define NO_PATH ((char const*)NULL)
 // Do not include line information (requires NO_PATH).
 #define NO_LINE ((size_t)0u)
-#define ENABLE_TRACE 0 /* set to a non-zero value to enable trace output */
 #define ENABLE_DEBUG 0 /* set to a non-zero value to enable debug output */
-void
-trace(char const* path, size_t line, char const* fmt, ...);
 void
 debug(char const* path, size_t line, char const* fmt, ...);
 void

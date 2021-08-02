@@ -207,7 +207,6 @@ static struct ast_module const*
 parse_module(struct parser* parser)
 {
     assert(parser != NULL);
-    trace(parser->module->path, NO_LINE, "%s", __func__);
 
     autil_sbuf(struct ast_decl const*) decls = NULL;
     while (!check_current(parser, TOKEN_EOF)) {
@@ -225,7 +224,6 @@ static struct ast_decl const*
 parse_decl(struct parser* parser)
 {
     assert(parser != NULL);
-    trace(parser->module->path, NO_LINE, "%s", __func__);
 
     if (check_current(parser, TOKEN_VAR)) {
         return parse_decl_variable(parser);
@@ -251,7 +249,6 @@ static struct ast_decl const*
 parse_decl_variable(struct parser* parser)
 {
     assert(parser != NULL);
-    trace(parser->module->path, NO_LINE, "%s", __func__);
 
     struct source_location const* const location =
         &expect_current(parser, TOKEN_VAR)->location;
@@ -273,7 +270,6 @@ static struct ast_decl const*
 parse_decl_constant(struct parser* parser)
 {
     assert(parser != NULL);
-    trace(parser->module->path, NO_LINE, "%s", __func__);
 
     struct source_location const* const location =
         &expect_current(parser, TOKEN_CONST)->location;
@@ -295,7 +291,6 @@ static struct ast_decl const*
 parse_decl_function(struct parser* parser)
 {
     assert(parser != NULL);
-    trace(parser->module->path, NO_LINE, "%s", __func__);
 
     struct source_location const* const location =
         &expect_current(parser, TOKEN_FUNC)->location;
@@ -318,7 +313,6 @@ static struct ast_stmt const*
 parse_stmt(struct parser* parser)
 {
     assert(parser != NULL);
-    trace(parser->module->path, NO_LINE, "%s", __func__);
 
     if (check_current(parser, TOKEN_VAR) || check_current(parser, TOKEN_CONST)
         || check_current(parser, TOKEN_FUNC)) {
@@ -367,7 +361,6 @@ parse_stmt_if(struct parser* parser)
 {
     assert(parser != NULL);
     assert(check_current(parser, TOKEN_IF));
-    trace(parser->module->path, NO_LINE, "%s", __func__);
 
     autil_sbuf(struct ast_conditional const*) conditionals = NULL;
 
@@ -409,7 +402,6 @@ parse_stmt_for(struct parser* parser)
 {
     assert(parser != NULL);
     assert(check_current(parser, TOKEN_FOR));
-    trace(parser->module->path, NO_LINE, "%s", __func__);
 
     struct source_location const* location =
         &expect_current(parser, TOKEN_FOR)->location;
@@ -448,7 +440,6 @@ parse_stmt_dump(struct parser* parser)
 {
     assert(parser != NULL);
     assert(check_current(parser, TOKEN_DUMP));
-    trace(parser->module->path, NO_LINE, "%s", __func__);
 
     struct source_location const* const location =
         &expect_current(parser, TOKEN_DUMP)->location;
@@ -466,7 +457,6 @@ parse_stmt_return(struct parser* parser)
 {
     assert(parser != NULL);
     assert(check_current(parser, TOKEN_RETURN));
-    trace(parser->module->path, NO_LINE, "%s", __func__);
 
     struct source_location const* const location =
         &expect_current(parser, TOKEN_RETURN)->location;
@@ -487,7 +477,6 @@ static struct ast_stmt const*
 parse_stmt_decl(struct parser* parser)
 {
     assert(parser != NULL);
-    trace(parser->module->path, NO_LINE, "%s", __func__);
 
     struct ast_decl const* const decl = parse_decl(parser);
     struct ast_stmt* const product = ast_stmt_new_decl(decl);
@@ -570,7 +559,6 @@ token_kind_nud(enum token_kind kind)
 static parse_led_fn
 token_kind_led(enum token_kind kind)
 {
-    trace(NO_PATH, NO_LINE, "%s (token kind => %d)", __func__, (int)kind);
     switch (kind) {
     case TOKEN_LPAREN:
         return parse_expr_led_call;
@@ -603,12 +591,6 @@ static struct ast_expr const*
 parse_expr_precedence(struct parser* parser, enum precedence precedence)
 {
     assert(parser != NULL);
-    trace(
-        parser->module->path,
-        NO_LINE,
-        "%s (precedence => %d)",
-        __func__,
-        (int)precedence);
 
     struct token const* const nud_token = parser->current_token;
     parse_nud_fn const parse_nud = token_kind_nud(nud_token->kind);
@@ -637,7 +619,6 @@ static struct ast_expr const*
 parse_expr(struct parser* parser)
 {
     assert(parser != NULL);
-    trace(parser->module->path, NO_LINE, "%s", __func__);
 
     struct ast_expr const* const product =
         parse_expr_precedence(parser, PRECEDENCE_LOWEST);
@@ -649,7 +630,6 @@ static struct ast_expr const*
 parse_expr_identifier(struct parser* parser)
 {
     assert(parser != NULL);
-    trace(parser->module->path, NO_LINE, "%s", __func__);
 
     struct ast_identifier const* const identifier = parse_identifier(parser);
     struct ast_expr* const product = ast_expr_new_identifier(identifier);
@@ -662,7 +642,6 @@ static struct ast_expr const*
 parse_expr_boolean(struct parser* parser)
 {
     assert(parser != NULL);
-    trace(parser->module->path, NO_LINE, "%s", __func__);
 
     struct ast_boolean const* const boolean = parse_boolean(parser);
     struct ast_expr* const product = ast_expr_new_boolean(boolean);
@@ -675,7 +654,6 @@ static struct ast_expr const*
 parse_expr_integer(struct parser* parser)
 {
     assert(parser != NULL);
-    trace(parser->module->path, NO_LINE, "%s", __func__);
 
     struct ast_integer const* const integer = parse_integer(parser);
     struct ast_expr* const product = ast_expr_new_integer(integer);
@@ -688,7 +666,6 @@ static struct ast_expr const*
 parse_expr_lparen(struct parser* parser)
 {
     assert(parser != NULL);
-    trace(parser->module->path, NO_LINE, "%s", __func__);
 
     struct source_location const* const location =
         &expect_current(parser, TOKEN_LPAREN)->location;
@@ -746,7 +723,6 @@ static struct ast_expr const*
 parse_expr_syscall(struct parser* parser)
 {
     assert(parser != NULL);
-    trace(parser->module->path, NO_LINE, "%s", __func__);
 
     struct source_location const* const location =
         &expect_current(parser, TOKEN_SYSCALL)->location;
@@ -771,7 +747,6 @@ parse_expr_led_call(struct parser* parser, struct ast_expr const* lhs)
 {
     assert(parser != NULL);
     assert(lhs != NULL);
-    trace(parser->module->path, NO_LINE, "%s", __func__);
 
     expect_current(parser, TOKEN_LPAREN);
     autil_sbuf(struct ast_expr const*) args = NULL;
@@ -794,7 +769,6 @@ parse_expr_led_index(struct parser* parser, struct ast_expr const* lhs)
 {
     assert(parser != NULL);
     assert(lhs != NULL);
-    trace(parser->module->path, NO_LINE, "%s", __func__);
 
     struct source_location const* const location =
         &expect_current(parser, TOKEN_LBRACKET)->location;
@@ -810,7 +784,6 @@ static struct ast_expr const*
 parse_expr_nud_unary(struct parser* parser)
 {
     assert(parser != NULL);
-    trace(parser->module->path, NO_LINE, "%s", __func__);
 
     struct token const* const op = advance_token(parser);
     struct ast_expr const* const rhs =
@@ -826,7 +799,6 @@ parse_expr_led_binary(struct parser* parser, struct ast_expr const* lhs)
 {
     assert(parser != NULL);
     assert(lhs != NULL);
-    trace(parser->module->path, NO_LINE, "%s", __func__);
 
     struct token const* const op = advance_token(parser);
     struct ast_expr const* const rhs =
@@ -841,7 +813,6 @@ static struct ast_block const*
 parse_block(struct parser* parser)
 {
     assert(parser != NULL);
-    trace(parser->module->path, NO_LINE, "%s", __func__);
 
     struct source_location const* const location =
         &expect_current(parser, TOKEN_LBRACE)->location;
@@ -863,7 +834,6 @@ static struct ast_parameter const* const*
 parse_parameter_list(struct parser* parser)
 {
     assert(parser != NULL);
-    trace(parser->module->path, NO_LINE, "%s", __func__);
 
     autil_sbuf(struct ast_parameter const*) parameters = NULL;
     if (!check_current(parser, TOKEN_IDENTIFIER)) {
@@ -885,7 +855,6 @@ parse_parameter(struct parser* parser)
 {
     assert(parser != NULL);
     assert(check_current(parser, TOKEN_IDENTIFIER));
-    trace(parser->module->path, NO_LINE, "%s", __func__);
 
     struct ast_identifier const* identifier = parse_identifier(parser);
     expect_current(parser, TOKEN_COLON);
@@ -901,7 +870,6 @@ static struct ast_typespec const*
 parse_typespec(struct parser* parser)
 {
     assert(parser != NULL);
-    trace(parser->module->path, NO_LINE, "%s", __func__);
 
     if (check_current(parser, TOKEN_IDENTIFIER)) {
         return parse_typespec_identifier(parser);
@@ -932,7 +900,6 @@ parse_typespec_identifier(struct parser* parser)
 {
     assert(parser != NULL);
     assert(check_current(parser, TOKEN_IDENTIFIER));
-    trace(parser->module->path, NO_LINE, "%s", __func__);
 
     struct ast_identifier const* identifier = parse_identifier(parser);
     struct ast_typespec* const product =
@@ -947,7 +914,6 @@ parse_typespec_function(struct parser* parser)
 {
     assert(parser != NULL);
     assert(check_current(parser, TOKEN_FUNC));
-    trace(parser->module->path, NO_LINE, "%s", __func__);
 
     struct source_location const* const location =
         &expect_current(parser, TOKEN_FUNC)->location;
@@ -978,7 +944,6 @@ parse_typespec_pointer(struct parser* parser)
 {
     assert(parser != NULL);
     assert(check_current(parser, TOKEN_STAR));
-    trace(parser->module->path, NO_LINE, "%s", __func__);
 
     struct source_location const* const location =
         &expect_current(parser, TOKEN_STAR)->location;
@@ -997,7 +962,6 @@ parse_typespec_array_or_slice(struct parser* parser)
 {
     assert(parser != NULL);
     assert(check_current(parser, TOKEN_LBRACKET));
-    trace(parser->module->path, NO_LINE, "%s", __func__);
 
     struct source_location const* const location =
         &expect_current(parser, TOKEN_LBRACKET)->location;
@@ -1030,7 +994,6 @@ static struct ast_identifier const*
 parse_identifier(struct parser* parser)
 {
     assert(parser != NULL);
-    trace(parser->module->path, NO_LINE, "%s", __func__);
 
     struct token const* const token = expect_current(parser, TOKEN_IDENTIFIER);
     struct source_location const* location = &token->location;
@@ -1046,7 +1009,6 @@ static struct ast_boolean const*
 parse_boolean(struct parser* parser)
 {
     assert(parser != NULL);
-    trace(parser->module->path, NO_LINE, "%s", __func__);
 
     struct token const* const token = advance_token(parser);
     assert(token->kind == TOKEN_TRUE || token->kind == TOKEN_FALSE);
@@ -1062,7 +1024,6 @@ static struct ast_integer const*
 parse_integer(struct parser* parser)
 {
     assert(parser != NULL);
-    trace(parser->module->path, NO_LINE, "%s", __func__);
 
     struct token const* const token = expect_current(parser, TOKEN_INTEGER);
     struct source_location const* const location = &token->location;

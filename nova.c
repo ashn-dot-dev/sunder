@@ -19,10 +19,8 @@
 
 #define ANSI_ESC_RED     "\x1b[31m"
 #define ANSI_ESC_YELLOW  "\x1b[33m"
-#define ANSI_ESC_MAGENTA "\x1b[35m"
 #define ANSI_ESC_CYAN    "\x1b[36m"
 
-#define ANSI_MSG_TRACE ANSI_ESC_BOLD ANSI_ESC_MAGENTA
 #define ANSI_MSG_DEBUG ANSI_ESC_BOLD ANSI_ESC_YELLOW
 #define ANSI_MSG_ERROR ANSI_ESC_BOLD ANSI_ESC_RED
 // clang-format on
@@ -65,22 +63,6 @@ messagev_(
 
     vfprintf(stderr, fmt, args);
     fputs("\n", stderr);
-}
-
-void
-trace(char const* path, size_t line, char const* fmt, ...)
-{
-#if ENABLE_TRACE != 0
-    va_list args;
-    va_start(args, fmt);
-    messagev_(path, line, "trace", ANSI_MSG_TRACE, fmt, args);
-    va_end(args);
-#else
-    (void)path;
-    (void)line;
-    (void)fmt;
-    (void)messagev_;
-#endif
 }
 
 void
