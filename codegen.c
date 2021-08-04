@@ -110,12 +110,6 @@ push_address(struct address const* address)
 {
     assert(address != NULL);
 
-    // TODO: address_to_new_cstr generated the instruction:
-    //      mov rax, rbp + 16
-    // which results in an `invalid register size` error from NASM. Something
-    // should be done in order to unify the way addresses are handled / loaded
-    // so that address_to_new_cstr (or similar) could be used here. Or maybe
-    // this is fine and really we should just handle it as we do now.
     switch (address->kind) {
     case ADDRESS_STATIC: {
         appendli("push %s", address->data.static_.name);
