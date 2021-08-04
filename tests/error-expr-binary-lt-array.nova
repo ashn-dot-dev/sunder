@@ -4,3 +4,5 @@ func main() void {
 }
 ################################################################################
 # [error-expr-binary-lt-array.nova:3] error: invalid arguments of type `[3]ssize` in binary `<` expression
+#     array < array;
+#           ^

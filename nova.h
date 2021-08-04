@@ -24,12 +24,23 @@
 
 #define NO_PATH ((char const*)NULL)
 #define NO_LINE ((size_t)0u)
+#define NO_PSRC ((char const*)NULL)
 #define NO_LOCATION ((struct source_location const*)NULL)
 struct source_location {
     // Optional (NULL indicates no value).
     char const* path;
     // Optional (zero indicates no value).
     size_t line;
+    // Optional (NULL indicates no value) pointer to the source character within
+    // the module specified by path. If non-NULL then a log-messages will
+    // display the line in question with a caret pointing to this character as
+    // such:
+    // ```
+    // [file.nova:3] error: foo is not properly frobnicated
+    // var foo: usize = 123u;
+    //     ^
+    // ```
+    char const* psrc;
 };
 
 void

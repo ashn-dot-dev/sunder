@@ -7,3 +7,5 @@ func main() void {
 }
 ################################################################################
 # [error-call-invalid-argument-count.nova:6] error: function with type `func(usize, ssize, bool) ssize` expects 3 argument(s) (2 provided)
+#     foo(1u, 2s);
+#     ^

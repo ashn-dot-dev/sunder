@@ -3,3 +3,5 @@ func main() void {
 }
 ################################################################################
 # [error-illegal-type-conversion-of-array-element.nova:2] error: incompatible type `s64` (expected `u8`)
+#     dump (:[3u]u8)[1u8, 2s64, 3u8];
+#                         ^

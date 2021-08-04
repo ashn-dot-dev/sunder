@@ -3,3 +3,6 @@ func foo() ssize {
 }
 ################################################################################
 # [error-return-void-in-function-with-non-void-return.nova:2] error: illegal return statement in function with non-void return type
+#     return;
+#     ^
+

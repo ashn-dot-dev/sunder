@@ -5,3 +5,5 @@ func main() void {
 }
 ################################################################################
 # [error-illegal-type-conversion-in-assignment.nova:4] error: incompatible type `usize` (expected `ssize`)
+#     x = y;
+#         ^

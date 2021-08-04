@@ -175,7 +175,9 @@ skip_whitespace(struct lexer* self)
 
     size_t count = 0;
     while (autil_isspace(self->current[count])) {
-        self->current_line += self->current[count] == '\n';
+        if (self->current[count] == '\n') {
+            self->current_line += 1;
+        }
         count += 1;
     }
     self->current += count;
@@ -259,8 +261,8 @@ lex_integer(struct lexer* self)
 
     // Digits
     if (!radix_isdigit(*self->current)) {
-        struct source_location const location = {self->module->path,
-                                                 self->current_line};
+        struct source_location const location = {
+            self->module->path, self->current_line, self->current};
         fatal(&location, "integer literal has no digits");
     }
     while (radix_isdigit(*self->current)) {
@@ -310,9 +312,8 @@ lex_sigil(struct lexer* self)
         count += 1;
     }
 
-    struct source_location const location = {self->module->path,
-                                             self->current_line};
-    fatal(&location, "invalid token `%.*s`", (int)count, start);
+    fatal(
+        &self->next_token_location, "invalid token `%.*s`", (int)count, start);
     return NULL;
 }
 
@@ -325,6 +326,7 @@ lexer_next_token(struct lexer* self)
     self->next_token_location = (struct source_location){
         self->module->path,
         self->current_line,
+        self->current,
     };
 
     char const ch = *self->current;

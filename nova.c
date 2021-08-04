@@ -39,6 +39,7 @@ messagev_(
 
     char const* const path = location != NULL ? location->path : NO_PATH;
     size_t const line = location != NULL ? location->line : NO_LINE;
+    char const* const psrc = location != NULL ? location->psrc : NO_PSRC;
 
     bool const is_tty = isatty(STDERR_FILENO);
 
@@ -70,6 +71,28 @@ messagev_(
 
     vfprintf(stderr, fmt, args);
     fputs("\n", stderr);
+
+    if (psrc != NO_PSRC) {
+        // TODO: Once the compiler is able to support loading of multiple
+        // modules this logic should change so that the start of the module
+        // source is dynamically obtainted by performing a lookup on the module
+        // using the provided path.
+        assert(path == context()->module->path);
+        char const* const source = context()->module->source;
+
+        char const* line_start = psrc;
+        while (source < line_start && line_start[-1] != '\n') {
+            line_start -= 1;
+        }
+
+        char const* line_end = psrc;
+        while (*line_end != '\n' && *line_end != '\0') {
+            line_end += 1;
+        }
+
+        fprintf(stderr, "%.*s\n", (int)(line_end - line_start), line_start);
+        fprintf(stderr, "%*s^\n", (int)(psrc - line_start), "");
+    }
 }
 
 void
@@ -332,7 +355,7 @@ read_source(char const* path)
     void* source = NULL;
     size_t source_size = 0;
     if (autil_file_read(path, &source, &source_size)) {
-        struct source_location const location = {path, NO_LINE};
+        struct source_location const location = {path, NO_LINE, NO_PSRC};
         fatal(
             &location,
             "failed to read source with error '%s'",
@@ -439,6 +462,7 @@ context_init(void)
     s_context.builtin.location = (struct source_location){
         s_context.interned.builtin,
         NO_LINE,
+        NO_PSRC,
     };
     struct type* const type_void = type_new_void();
     struct type* const type_bool = type_new_bool();

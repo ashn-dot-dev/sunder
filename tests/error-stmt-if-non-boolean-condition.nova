@@ -4,3 +4,5 @@ func main() void {
 }
 ################################################################################
 # [error-stmt-if-non-boolean-condition.nova:2] error: illegal condition with non-boolean type `ssize`
+#     if (1s) {
+#         ^

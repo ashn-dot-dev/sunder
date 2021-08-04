@@ -6,3 +6,5 @@ func foo(
 }
 ################################################################################
 # [error-duplicate-parameter-name.nova:3] error: redeclaration of `bar` previously declared at [error-duplicate-parameter-name.nova:2]
+#     bar: usize  # bar on line 3
+#     ^

@@ -872,7 +872,7 @@ resolve_stmt_assign(struct resolver* resolver, struct ast_stmt const* stmt)
             lhs->location,
             "left hand side of assignment statement is not an lvalue");
     }
-    check_type_compatibility(stmt->location, rhs->type, lhs->type);
+    check_type_compatibility(rhs->location, rhs->type, lhs->type);
     struct tir_stmt* const resolved =
         tir_stmt_new_assign(stmt->location, lhs, rhs);
 

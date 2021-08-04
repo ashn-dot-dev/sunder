@@ -11,3 +11,5 @@ func main() void {
 }
 ################################################################################
 # [error-call-invalid-argument-type.nova:9] error: incompatible argument type `ssize` (expected `bool`)
+#         3s  # invalid (should be bool)
+#         ^

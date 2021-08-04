@@ -3,3 +3,5 @@ func main() void {
 }
 ################################################################################
 # [error-integer-literal-out-of-range-lt-min-byte.nova:2] error: out-of-range byte literal (-1 < 0)
+#     -1y;
+#     ^

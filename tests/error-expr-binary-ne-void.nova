@@ -7,3 +7,5 @@ func main() void {
 }
 ################################################################################
 # [error-expr-binary-ne-void.nova:6] error: invalid arguments of type `void` in binary `!=` expression
+#     v() != v();
+#         ^

@@ -4,3 +4,5 @@ func main() void {
 }
 ################################################################################
 # [error-expr-unary-neg-uinteger.nova:3] error: invalid argument of type `usize` in unary `-` expression
+#     dump -x;
+#          ^

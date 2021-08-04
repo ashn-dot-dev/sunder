@@ -3,3 +3,5 @@ func main() void {
 }
 ################################################################################
 # [error-expr-invalid-infix-token.nova:2] error: expected `;`, found `,`
+#     123s , 345s;
+#          ^

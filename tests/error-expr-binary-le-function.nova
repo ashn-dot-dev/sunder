@@ -10,3 +10,5 @@ func main() void {
 }
 ################################################################################
 # [error-expr-binary-le-function.nova:9] error: invalid arguments of type `func() void` in binary `<=` expression
+#     foo <= bar;
+#         ^

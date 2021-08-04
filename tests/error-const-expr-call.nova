@@ -4,3 +4,5 @@ func f() ssize {
 const foo: ssize = f();
 ################################################################################
 # [error-const-expr-call.nova:4] error: constant expression contains function call
+# const foo: ssize = f();
+#                    ^

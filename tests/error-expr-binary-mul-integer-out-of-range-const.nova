@@ -3,4 +3,5 @@ func main() void {
 }
 ################################################################################
 # [error-expr-binary-mul-integer-out-of-range-const.nova:2] error: arithmetic operation produces out-of-range result (127 * 2 == 254)
-
+#     const x: s8 = 127s8 * 2s8;
+#                         ^

@@ -4,3 +4,5 @@ func main() void {
 }
 ################################################################################
 # [error-nested-function-declaration.nova:2] error: nested function declaration
+#     func foo() void {
+#     ^

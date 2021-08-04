@@ -4,3 +4,5 @@ func main() void {
 }
 ################################################################################
 # [error-duplicate-local-name.nova:3] error: redeclaration of `foo` previously declared at [error-duplicate-local-name.nova:2]
+#     var foo: ssize = 2s;
+#     ^

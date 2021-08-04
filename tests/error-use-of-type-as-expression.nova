@@ -1,3 +1,5 @@
 const foo: ssize = usize;
 ################################################################################
 # [error-use-of-type-as-expression.nova:1] error: use of type `usize` as an expression
+# const foo: ssize = usize;
+#                    ^

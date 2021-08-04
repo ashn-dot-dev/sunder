@@ -35,7 +35,7 @@ RECEIVED=$("${NOVA_HOME}/bin/nova-run" "${TEST_FILE}" 2>&1)
 EXPECTED=$(\
     sed -n '/^########\(########\)*/,$p' "${TEST_FILE}" |\
     sed '1d' |\
-    sed 's/^#\s*//g')
+    sed 's/^# \?//g')
 if [ "${EXPECTED}" = "${RECEIVED}" ]; then
     echo '[= PASS =]' && exit 0
 else

@@ -4,3 +4,5 @@ func main() void {
 }
 ################################################################################
 # [error-call-non-function-type.nova:3] error: non-callable type `ssize` used in function call expression
+#     foo(3s, 5s);
+#     ^
