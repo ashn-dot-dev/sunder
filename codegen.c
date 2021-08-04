@@ -19,9 +19,6 @@ appendli(char const* fmt, ...);
 static void
 appendch(char ch);
 
-static char*
-address_to_new_cstr(struct address const* address);
-
 // All push_* functions align rsp to an 8-byte boundary.
 static void
 push(size_t size);
@@ -98,21 +95,6 @@ appendch(char ch)
     autil_string_append(out, &ch, 1u);
 }
 
-static char*
-address_to_new_cstr(struct address const* address)
-{
-    assert(address != NULL);
-
-    switch (address->kind) {
-    case ADDRESS_STATIC:
-        return autil_cstr_new_cstr(address->data.static_.name);
-    case ADDRESS_LOCAL:
-        return autil_cstr_new_fmt("rbp + %d", address->data.local.rbp_offset);
-    }
-
-    UNREACHABLE();
-}
-
 static void
 push(size_t size)
 {
@@ -155,7 +137,22 @@ push_at_address(size_t size, struct address const* address)
 
     push(size);
 
-    char* const addr = address_to_new_cstr(address);
+    // Usable for a memory indirection `[addr]`.
+    // ADDRESS_STATIC mode: number
+    // ADDRESS_LOCAL mode : reg + base*scale + offset
+    char* addr = NULL;
+    switch (address->kind) {
+    case ADDRESS_STATIC:
+        addr = autil_cstr_new_cstr(address->data.static_.name);
+        break;
+    case ADDRESS_LOCAL:
+        addr = autil_cstr_new_fmt("rbp + %d", address->data.local.rbp_offset);
+        break;
+    default:
+        UNREACHABLE();
+    }
+
+
     // TODO: Add unit tests for signed and unsigned integers with size 1, 2, 4,
     // 8, and >8 to make sure that this cascade of mov operations on 8, then 4,
     // then 2, then 1 byte objects behaves correctly for all cases.
