@@ -36,7 +36,7 @@ resolver_del(struct resolver* self);
 // Returns true if resolution being performed in the global scope.
 static bool
 resolver_is_global(struct resolver const* self);
-// Reserve static storage space for an object with the provided nam.
+// Reserve static storage space for an object with the provided name.
 static struct address const*
 resolver_reserve_storage_static(struct resolver* self, char const* name);
 // Reserve local storage space space for an object of the provided type.
