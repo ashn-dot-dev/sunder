@@ -1012,9 +1012,9 @@ value_new_integer(struct type const* type, struct autil_bigint* integer)
     assert(type != NULL);
     assert(type->kind == TYPE_BYTE || type_is_integer(type));
     assert(integer != NULL);
+    assert(autil_bigint_cmp(integer, type->data.integer.min) >= 0);
+    assert(autil_bigint_cmp(integer, type->data.integer.max) <= 0);
 
-    // TODO: Assert that the range of the integer is within the range of the
-    // provided type.
     struct value* self = value_new(type);
     self->data.integer = integer;
     return self;
