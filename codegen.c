@@ -1646,29 +1646,24 @@ codegen_rvalue_binary(struct tir_expr const* expr)
         struct type const* const xhs_type = expr->data.binary.lhs->type;
         size_t const expr_id = unique_id++;
 
-        char const* lhs_reg = NULL;
         char const* rhs_reg = NULL;
         switch (xhs_type->kind) {
         case TYPE_U8: /* fallthrough */
         case TYPE_S8:
-            lhs_reg = "al";
             rhs_reg = "bl";
             break;
         case TYPE_U16: /* fallthrough */
         case TYPE_S16:
-            lhs_reg = "ax";
             rhs_reg = "bx";
             break;
         case TYPE_U32: /* fallthrough */
         case TYPE_S32:
-            lhs_reg = "eax";
             rhs_reg = "ebx";
             break;
         case TYPE_U64: /* fallthrough */
         case TYPE_S64: /* fallthrough */
         case TYPE_USIZE: /* fallthrough */
         case TYPE_SSIZE:
-            lhs_reg = "rax";
             rhs_reg = "rbx";
             break;
         default:
@@ -1697,29 +1692,24 @@ codegen_rvalue_binary(struct tir_expr const* expr)
         struct type const* const xhs_type = expr->data.binary.lhs->type;
         size_t const expr_id = unique_id++;
 
-        char const* lhs_reg = NULL;
         char const* rhs_reg = NULL;
         switch (xhs_type->kind) {
         case TYPE_U8: /* fallthrough */
         case TYPE_S8:
-            lhs_reg = "al";
             rhs_reg = "bl";
             break;
         case TYPE_U16: /* fallthrough */
         case TYPE_S16:
-            lhs_reg = "ax";
             rhs_reg = "bx";
             break;
         case TYPE_U32: /* fallthrough */
         case TYPE_S32:
-            lhs_reg = "eax";
             rhs_reg = "ebx";
             break;
         case TYPE_U64: /* fallthrough */
         case TYPE_S64: /* fallthrough */
         case TYPE_USIZE: /* fallthrough */
         case TYPE_SSIZE:
-            lhs_reg = "rax";
             rhs_reg = "rbx";
             break;
         default:
