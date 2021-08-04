@@ -168,38 +168,31 @@ token_new_integer(
     return token;
 }
 
-static size_t
+static void
 skip_whitespace(struct lexer* self)
 {
     assert(self != NULL);
 
-    size_t count = 0;
-    while (autil_isspace(self->current[count])) {
-        if (self->current[count] == '\n') {
-            self->current_line += 1;
-        }
-        count += 1;
+    while (autil_isspace(*self->current)) {
+        self->current_line += *self->current == '\n';
+        self->current += 1;
     }
-    self->current += count;
-    return count;
 }
 
-static size_t
+static void
 skip_comment(struct lexer* self)
 {
     assert(self != NULL);
 
     if (*self->current != '#') {
-        return 0;
+        return;
     }
 
-    size_t count = 0;
-    while (self->current[count] != '\0' && self->current[count] != '\n') {
-        count += 1;
+    while (*self->current != '\0' && *self->current != '\n') {
+        self->current += 1;
     }
-    self->current += count + AUTIL_STR_LITERAL_COUNT("\n");
-    self->current_line += AUTIL_STR_LITERAL_COUNT("\n");
-    return count;
+    self->current += AUTIL_STR_LITERAL_COUNT("\n");
+    self->current_line += 1;
 }
 
 static void
