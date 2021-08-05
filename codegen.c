@@ -32,6 +32,13 @@ push_at_address(size_t size, struct address const* address);
 static void
 pop(size_t size);
 
+// Register al, ax, eax, or rax based on size.
+char const*
+reg_a(size_t size);
+// Register bl, bx, ebx, or rbx based on size.
+char const*
+reg_b(size_t size);
+
 // Copy size bytes from the address in rax to to the address in rbx using rcx
 // for intermediate storage. Roughly equivalent to memcpy(rbx, rax, size).
 static void
@@ -192,6 +199,38 @@ pop(size_t size)
     }
 
     appendli("add rsp, %#zx", ceil8zu(size));
+}
+
+char const*
+reg_a(size_t size)
+{
+    switch(size) {
+    case 1:
+        return "al";
+    case 2:
+        return "ax";
+    case 4:
+        return "eax";
+    case 8:
+        return "rax";
+    }
+    UNREACHABLE();
+}
+
+char const*
+reg_b(size_t size)
+{
+    switch(size) {
+    case 1:
+        return "bl";
+    case 2:
+        return "bx";
+    case 4:
+        return "ebx";
+    case 8:
+        return "rbx";
+    }
+    UNREACHABLE();
 }
 
 static void
@@ -1542,34 +1581,8 @@ codegen_rvalue_binary(struct tir_expr const* expr)
         struct type const* const xhs_type = expr->data.binary.lhs->type;
         size_t const expr_id = unique_id++;
 
-        char const* lhs_reg = NULL;
-        char const* rhs_reg = NULL;
-        switch (xhs_type->kind) {
-        case TYPE_U8: /* fallthrough */
-        case TYPE_S8:
-            lhs_reg = "al";
-            rhs_reg = "bl";
-            break;
-        case TYPE_U16: /* fallthrough */
-        case TYPE_S16:
-            lhs_reg = "ax";
-            rhs_reg = "bx";
-            break;
-        case TYPE_U32: /* fallthrough */
-        case TYPE_S32:
-            lhs_reg = "eax";
-            rhs_reg = "ebx";
-            break;
-        case TYPE_U64: /* fallthrough */
-        case TYPE_S64: /* fallthrough */
-        case TYPE_USIZE: /* fallthrough */
-        case TYPE_SSIZE:
-            lhs_reg = "rax";
-            rhs_reg = "rbx";
-            break;
-        default:
-            UNREACHABLE();
-        }
+        char const* const lhs_reg = reg_a(xhs_type->size);
+        char const* const rhs_reg = reg_b(xhs_type->size);
         char const* const jmp_not_overflow =
             type_is_sinteger(xhs_type) ? "jno" : "jnc";
 
@@ -1594,34 +1607,8 @@ codegen_rvalue_binary(struct tir_expr const* expr)
         struct type const* const xhs_type = expr->data.binary.lhs->type;
         size_t const expr_id = unique_id++;
 
-        char const* lhs_reg = NULL;
-        char const* rhs_reg = NULL;
-        switch (xhs_type->kind) {
-        case TYPE_U8: /* fallthrough */
-        case TYPE_S8:
-            lhs_reg = "al";
-            rhs_reg = "bl";
-            break;
-        case TYPE_U16: /* fallthrough */
-        case TYPE_S16:
-            lhs_reg = "ax";
-            rhs_reg = "bx";
-            break;
-        case TYPE_U32: /* fallthrough */
-        case TYPE_S32:
-            lhs_reg = "eax";
-            rhs_reg = "ebx";
-            break;
-        case TYPE_U64: /* fallthrough */
-        case TYPE_S64: /* fallthrough */
-        case TYPE_USIZE: /* fallthrough */
-        case TYPE_SSIZE:
-            lhs_reg = "rax";
-            rhs_reg = "rbx";
-            break;
-        default:
-            UNREACHABLE();
-        }
+        char const* const lhs_reg = reg_a(xhs_type->size);
+        char const* const rhs_reg = reg_b(xhs_type->size);
         char const* const jmp_not_overflow =
             type_is_sinteger(xhs_type) ? "jno" : "jnc";
 
@@ -1646,29 +1633,7 @@ codegen_rvalue_binary(struct tir_expr const* expr)
         struct type const* const xhs_type = expr->data.binary.lhs->type;
         size_t const expr_id = unique_id++;
 
-        char const* rhs_reg = NULL;
-        switch (xhs_type->kind) {
-        case TYPE_U8: /* fallthrough */
-        case TYPE_S8:
-            rhs_reg = "bl";
-            break;
-        case TYPE_U16: /* fallthrough */
-        case TYPE_S16:
-            rhs_reg = "bx";
-            break;
-        case TYPE_U32: /* fallthrough */
-        case TYPE_S32:
-            rhs_reg = "ebx";
-            break;
-        case TYPE_U64: /* fallthrough */
-        case TYPE_S64: /* fallthrough */
-        case TYPE_USIZE: /* fallthrough */
-        case TYPE_SSIZE:
-            rhs_reg = "rbx";
-            break;
-        default:
-            UNREACHABLE();
-        }
+        char const* const rhs_reg = reg_b(xhs_type->size);
         char const* const mul = type_is_sinteger(xhs_type) ? "imul" : "mul";
 
         appendln(".l%zu_expr_binary_mul_bgn:", expr_id);
@@ -1692,29 +1657,7 @@ codegen_rvalue_binary(struct tir_expr const* expr)
         struct type const* const xhs_type = expr->data.binary.lhs->type;
         size_t const expr_id = unique_id++;
 
-        char const* rhs_reg = NULL;
-        switch (xhs_type->kind) {
-        case TYPE_U8: /* fallthrough */
-        case TYPE_S8:
-            rhs_reg = "bl";
-            break;
-        case TYPE_U16: /* fallthrough */
-        case TYPE_S16:
-            rhs_reg = "bx";
-            break;
-        case TYPE_U32: /* fallthrough */
-        case TYPE_S32:
-            rhs_reg = "ebx";
-            break;
-        case TYPE_U64: /* fallthrough */
-        case TYPE_S64: /* fallthrough */
-        case TYPE_USIZE: /* fallthrough */
-        case TYPE_SSIZE:
-            rhs_reg = "rbx";
-            break;
-        default:
-            UNREACHABLE();
-        }
+        char const* const rhs_reg = reg_b(xhs_type->size);
         char const* const div = type_is_sinteger(xhs_type) ? "idiv" : "div";
 
         appendln(".l%zu_expr_binary_div_bgn:", expr_id);
