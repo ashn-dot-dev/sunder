@@ -25,6 +25,32 @@
 #define ANSI_MSG_ERROR ANSI_ESC_BOLD ANSI_ESC_RED
 // clang-format on
 
+char const*
+source_line_start(char const* source, char const* ptr)
+{
+    assert(source != NULL);
+    assert(ptr != NULL);
+
+    while (source < ptr && ptr[-1] != '\n') {
+        ptr -= 1;
+    }
+
+    return ptr;
+}
+
+char const*
+source_line_end(char const* source, char const* ptr)
+{
+    assert(source != NULL);
+    assert(ptr != NULL);
+
+    while (*ptr != '\n' && *ptr != '\0') {
+        ptr += 1;
+    }
+
+    return ptr;
+}
+
 static void
 messagev_(
     struct source_location const* location,
@@ -79,16 +105,8 @@ messagev_(
         // using the provided path.
         assert(path == context()->module->path);
         char const* const source = context()->module->source;
-
-        char const* line_start = psrc;
-        while (source < line_start && line_start[-1] != '\n') {
-            line_start -= 1;
-        }
-
-        char const* line_end = psrc;
-        while (*line_end != '\n' && *line_end != '\0') {
-            line_end += 1;
-        }
+        char const* const line_start = source_line_start(source, psrc);
+        char const* const line_end = source_line_end(source, psrc);
 
         fprintf(stderr, "%.*s\n", (int)(line_end - line_start), line_start);
         fprintf(stderr, "%*s^\n", (int)(psrc - line_start), "");

@@ -18,10 +18,18 @@
 #    define NORETURN /* nothing */
 #endif
 
+// Returns a pointer to the first character of the line containing ptr in the
+// NUL-terminated source.
+char const*
+source_line_start(char const* source, char const* ptr);
+// Returns a pointer to the end-of-line newline or NUL of the line containing
+// ptr in the NUL-terminated source.
+char const*
+source_line_end(char const* source, char const* ptr);
+
 #ifndef ENABLE_DEBUG
 #    define ENABLE_DEBUG 0 /* set to a non-zero value to enable debug output */
 #endif
-
 #define NO_PATH ((char const*)NULL)
 #define NO_LINE ((size_t)0u)
 #define NO_PSRC ((char const*)NULL)
