@@ -153,7 +153,6 @@ push_at_address(size_t size, struct address const* address)
         UNREACHABLE();
     }
 
-
     // TODO: Add unit tests for signed and unsigned integers with size 1, 2, 4,
     // 8, and >8 to make sure that this cascade of mov operations on 8, then 4,
     // then 2, then 1 byte objects behaves correctly for all cases.
@@ -204,7 +203,7 @@ pop(size_t size)
 char const*
 reg_a(size_t size)
 {
-    switch(size) {
+    switch (size) {
     case 1:
         return "al";
     case 2:
@@ -220,7 +219,7 @@ reg_a(size_t size)
 char const*
 reg_b(size_t size)
 {
-    switch(size) {
+    switch (size) {
     case 1:
         return "bl";
     case 2:
