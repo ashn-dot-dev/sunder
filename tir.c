@@ -351,13 +351,14 @@ type_can_compare_order(struct type const* self)
 }
 
 struct address
-address_init_static(char const* name)
+address_init_static(char const* name, size_t offset)
 {
     assert(name != NULL);
 
     struct address self = {0};
     self.kind = ADDRESS_STATIC;
     self.data.static_.name = name;
+    self.data.static_.offset = offset;
     return self;
 }
 

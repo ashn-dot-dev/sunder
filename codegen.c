@@ -151,7 +151,10 @@ push_address(struct address const* address)
 
     switch (address->kind) {
     case ADDRESS_STATIC: {
-        appendli("push %s", address->data.static_.name);
+        appendli(
+            "push %s + %zu",
+            address->data.static_.name,
+            address->data.static_.offset);
         break;
     }
     case ADDRESS_LOCAL: {
@@ -176,7 +179,10 @@ push_at_address(size_t size, struct address const* address)
     char* addr = NULL;
     switch (address->kind) {
     case ADDRESS_STATIC:
-        addr = autil_cstr_new_cstr(address->data.static_.name);
+        addr = autil_cstr_new_fmt(
+            "%s + %zu",
+            address->data.static_.name,
+            address->data.static_.offset);
         break;
     case ADDRESS_LOCAL:
         addr = autil_cstr_new_fmt("rbp + %d", address->data.local.rbp_offset);

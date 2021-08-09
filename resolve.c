@@ -242,7 +242,7 @@ resolver_reserve_storage_static(struct resolver* self, char const* name)
     char const* const name_normalized =
         normalize_unique(self->current_namespace, name);
     struct address* const address =
-        address_new(address_init_static(name_normalized));
+        address_new(address_init_static(name_normalized, 0u));
     autil_freezer_register(context()->freezer, address);
     return address;
 }
@@ -486,7 +486,7 @@ resolve_decl_function(struct resolver* resolver, struct ast_decl const* decl)
     value_freeze(value, context()->freezer);
 
     struct address* const address =
-        address_new(address_init_static(decl->name));
+        address_new(address_init_static(decl->name, 0u));
     autil_freezer_register(context()->freezer, address);
 
     // Add the function/value to the symbol table now so that recursive

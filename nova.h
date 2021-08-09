@@ -753,13 +753,12 @@ struct address {
     } kind;
     union {
         struct {
-            // Full normalized name of the static storage location used for this
-            // address, including nested namespace information, uniquely
-            // identifying the address in the context of an object file's flat
-            // symbol table namespace.
+            // Full normalized name, including nested namespace information,
+            // uniquely identifying the base region of the static storage
+            // location in which this address resides.
             char const* name; // interned
-            // TODO: Make this name + offset in bytes once non-scalar values
-            // are added.
+            // Offset (in bytes) from the base region.
+            size_t offset;
         } static_;
         struct {
             int rbp_offset;
@@ -767,7 +766,7 @@ struct address {
     } data;
 };
 struct address
-address_init_static(char const* name);
+address_init_static(char const* name, size_t offset);
 struct address
 address_init_local(int rbp_offset);
 struct address*
