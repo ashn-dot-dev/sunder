@@ -12,6 +12,7 @@
 
 <stmt> ::= <stmt-decl>
          | <stmt-if>
+         | <stmt-for-range>
          | <stmt-for-expr>
          | <stmt-dump>
          | <stmt-return>

@@ -17,6 +17,8 @@ appendln(char const* fmt, ...);
 static void
 appendli(char const* fmt, ...);
 static void
+appendli_location(struct source_location const* location, char const* fmt, ...);
+static void
 appendch(char ch);
 
 // All push_* functions align rsp to an 8-byte boundary.
@@ -92,6 +94,36 @@ appendli(char const* fmt, ...)
     va_end(args);
 
     autil_string_append_cstr(out, "\n");
+}
+
+static void
+appendli_location(struct source_location const* location, char const* fmt, ...)
+{
+    assert(out != NULL);
+    assert(location != NULL);
+    assert(location->path != NO_PATH);
+    assert(location->line != NO_LINE);
+    assert(location->psrc != NO_PSRC);
+
+    autil_string_append_fmt(
+        out, "    ; [%s:%zu] ", location->path, location->line);
+
+    va_list args;
+    va_start(args, fmt);
+    autil_string_append_vfmt(out, fmt, args);
+    va_end(args);
+
+    autil_string_append_cstr(out, "\n");
+
+    assert(location->path == context()->module->path);
+    char const* const source = context()->module->source;
+    char const* const line_start = source_line_start(source, location->psrc);
+    char const* const line_end = source_line_end(source, location->psrc);
+
+    autil_string_append_fmt(
+        out, "    ;%.*s\n", (int)(line_end - line_start), line_start);
+    autil_string_append_fmt(
+        out, "    ;%*s^\n", (int)(location->psrc - line_start), "");
 }
 
 static void
@@ -711,34 +743,39 @@ codegen_stmt(struct tir_stmt const* stmt)
 {
     assert(stmt != NULL);
 
-    appendli(
-        "; [%s:%zu] statement", stmt->location->path, stmt->location->line);
     switch (stmt->kind) {
     case TIR_STMT_IF: {
+        appendli_location(stmt->location, "<stmt-if>");
         codegen_stmt_if(stmt);
         return;
     }
     case TIR_STMT_FOR_RANGE: {
+        appendli_location(stmt->location, "<stmt-for-range>");
         codegen_stmt_for_range(stmt);
         return;
     }
     case TIR_STMT_FOR_EXPR: {
+        appendli_location(stmt->location, "<stmt-for-expr>");
         codegen_stmt_for_expr(stmt);
         return;
     }
     case TIR_STMT_DUMP: {
+        appendli_location(stmt->location, "<stmt-dump>");
         codegen_stmt_dump(stmt);
         return;
     }
     case TIR_STMT_RETURN: {
+        appendli_location(stmt->location, "<stmt-return>");
         codegen_stmt_return(stmt);
         return;
     }
     case TIR_STMT_ASSIGN: {
+        appendli_location(stmt->location, "<stmt-assign>");
         codegen_stmt_assign(stmt);
         return;
     }
     case TIR_STMT_EXPR: {
+        appendli_location(stmt->location, "<stmt-expr>");
         codegen_stmt_expr(stmt);
         return;
     }
