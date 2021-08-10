@@ -1,5 +1,10 @@
 var v: usize = 0xCAFED00DCAFED00Du;
 const w: usize = 0xCAFEBABECAFEBABEu;
+const addressof_v: *usize = &v;
+const addressof_w: *usize = &w;
+
+const a: [3u]byte = (:[3u]byte)[0xAAy, 0xBBy, 0xCCy];
+const addressof_a1: *byte = &a[1u];
 
 func main() void {
     var x: usize = 0xBADCAFE01DC0FFEEu;
@@ -33,6 +38,11 @@ func main() void {
 
     dump w;
     dump *&w;
+
+    dump *addressof_v;
+    dump *addressof_w;
+
+    dump *addressof_a1;
 }
 ################################################################################
 # EE FF C0 1D E0 AF DC BA
@@ -51,3 +61,6 @@ func main() void {
 # 0D D0 FE CA 0D D0 FE CA
 # BE BA FE CA BE BA FE CA
 # BE BA FE CA BE BA FE CA
+# 0D D0 FE CA 0D D0 FE CA
+# BE BA FE CA BE BA FE CA
+# BB

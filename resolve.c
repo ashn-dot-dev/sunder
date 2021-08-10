@@ -382,7 +382,7 @@ resolve_decl_variable(
     if (is_global) {
         struct evaluator* const evaluator =
             evaluator_new(resolver->current_symbol_table);
-        value = eval_expr(evaluator, expr);
+        value = eval_rvalue(evaluator, expr);
         value_freeze(value, context()->freezer);
         evaluator_del(evaluator);
     }
@@ -431,7 +431,7 @@ resolve_decl_constant(struct resolver* resolver, struct ast_decl const* decl)
     // value.
     struct evaluator* const evaluator =
         evaluator_new(resolver->current_symbol_table);
-    struct value* const value = eval_expr(evaluator, expr);
+    struct value* const value = eval_rvalue(evaluator, expr);
     value_freeze(value, context()->freezer);
     evaluator_del(evaluator);
 
@@ -492,12 +492,7 @@ resolve_decl_function(struct resolver* resolver, struct ast_decl const* decl)
     // Add the function/value to the symbol table now so that recursive
     // functions may reference themselves.
     struct symbol* const function_symbol = symbol_new_function(
-        decl->location,
-        decl->name,
-
-        function_type,
-        address,
-        value);
+        decl->location, decl->name, function_type, address, value);
     autil_freezer_register(context()->freezer, function_symbol);
     symbol_table_insert(resolver->current_symbol_table, function_symbol);
     register_static_symbol(function_symbol);
@@ -1430,6 +1425,7 @@ resolve_expr_unary_addressof(
     if (!tir_expr_is_lvalue(rhs)) {
         fatal(rhs->location, "cannot take the address of a non-lvalue");
     }
+
     struct tir_expr* const resolved = tir_expr_new_unary(
         &op->location, type_unique_pointer(rhs->type), UOP_ADDRESSOF, rhs);
 
@@ -1778,7 +1774,7 @@ resolve_typespec(struct resolver* resolver, struct ast_typespec const* typespec)
 
         struct evaluator* const evaluator =
             evaluator_new(resolver->current_symbol_table);
-        struct value* const count_value = eval_expr(evaluator, count_expr);
+        struct value* const count_value = eval_rvalue(evaluator, count_expr);
         evaluator_del(evaluator);
 
         assert(count_value->type == context()->builtin.usize);

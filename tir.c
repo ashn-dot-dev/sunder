@@ -1104,6 +1104,9 @@ value_del(struct value* self)
     case TYPE_FUNCTION: {
         break;
     }
+    case TYPE_POINTER: {
+        break;
+    }
     case TYPE_ARRAY: {
         autil_sbuf(struct value*) const elements = self->data.array.elements;
         for (size_t i = 0; i < autil_sbuf_count(elements); ++i) {
@@ -1112,8 +1115,10 @@ value_del(struct value* self)
         autil_sbuf_fini(elements);
         break;
     }
-    default: {
-        UNREACHABLE();
+    case TYPE_SLICE: {
+        value_del(self->data.slice.pointer);
+        value_del(self->data.slice.count);
+        break;
     }
     }
 

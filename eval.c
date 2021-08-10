@@ -42,7 +42,7 @@ integer_is_out_of_range(struct type const* type, struct autil_bigint const* res)
 }
 
 struct value*
-eval_expr(struct evaluator* evaluator, struct tir_expr const* expr)
+eval_rvalue(struct evaluator* evaluator, struct tir_expr const* expr)
 {
     assert(evaluator != NULL);
     assert(expr != NULL);
@@ -71,7 +71,8 @@ eval_expr(struct evaluator* evaluator, struct tir_expr const* expr)
             expr->data.array.elements;
         autil_sbuf(struct value*) evaled_elements = NULL;
         for (size_t i = 0; i < autil_sbuf_count(elements); ++i) {
-            autil_sbuf_push(evaled_elements, eval_expr(evaluator, elements[i]));
+            autil_sbuf_push(
+                evaled_elements, eval_rvalue(evaluator, elements[i]));
         }
         return value_new_array(expr->type, evaled_elements);
     }
@@ -85,8 +86,8 @@ eval_expr(struct evaluator* evaluator, struct tir_expr const* expr)
         fatal(expr->location, "constant expression contains function call");
     }
     case TIR_EXPR_INDEX: {
-        struct value* const lhs = eval_expr(evaluator, expr->data.index.lhs);
-        struct value* const idx = eval_expr(evaluator, expr->data.index.idx);
+        struct value* const lhs = eval_rvalue(evaluator, expr->data.index.lhs);
+        struct value* const idx = eval_rvalue(evaluator, expr->data.index.idx);
         assert(lhs->type->kind == TYPE_ARRAY);
         assert(idx->type->kind == TYPE_USIZE);
 
@@ -116,18 +117,23 @@ eval_expr(struct evaluator* evaluator, struct tir_expr const* expr)
         return res;
     }
     case TIR_EXPR_UNARY: {
-        struct value* const rhs = eval_expr(evaluator, expr->data.unary.rhs);
         switch (expr->data.unary.op) {
         case UOP_NOT: {
+            struct value* const rhs =
+                eval_rvalue(evaluator, expr->data.unary.rhs);
             assert(rhs->type->kind == TYPE_BOOL);
             rhs->data.boolean = !rhs->data.boolean;
             return rhs;
         }
         case UOP_POS: {
+            struct value* const rhs =
+                eval_rvalue(evaluator, expr->data.unary.rhs);
             assert(type_is_integer(rhs->type));
             return rhs;
         }
         case UOP_NEG: {
+            struct value* const rhs =
+                eval_rvalue(evaluator, expr->data.unary.rhs);
             assert(type_is_integer(rhs->type));
             struct autil_bigint* const r = autil_bigint_new(AUTIL_BIGINT_ZERO);
             autil_bigint_neg(r, rhs->data.integer);
@@ -142,6 +148,8 @@ eval_expr(struct evaluator* evaluator, struct tir_expr const* expr)
             return value_new_integer(expr->type, r);
         }
         case UOP_BITNOT: {
+            struct value* const rhs =
+                eval_rvalue(evaluator, expr->data.unary.rhs);
             assert(rhs->type->kind == TYPE_BYTE || type_is_integer(rhs->type));
 
             if (rhs->type->kind == TYPE_BYTE) {
@@ -178,17 +186,14 @@ eval_expr(struct evaluator* evaluator, struct tir_expr const* expr)
                 "dereference operator not-supported in compile-time expressions");
         }
         case UOP_ADDRESSOF: {
-            fatal(
-                expr->location,
-                "addressof operator not-supported in compile-time expressions");
+            return eval_lvalue(evaluator, expr);
         }
-        default:
-            UNREACHABLE();
         }
+        UNREACHABLE();
     }
     case TIR_EXPR_BINARY: {
-        struct value* const lhs = eval_expr(evaluator, expr->data.binary.lhs);
-        struct value* const rhs = eval_expr(evaluator, expr->data.binary.rhs);
+        struct value* const lhs = eval_rvalue(evaluator, expr->data.binary.lhs);
+        struct value* const rhs = eval_rvalue(evaluator, expr->data.binary.rhs);
         struct value* res = NULL;
         switch (expr->data.binary.op) {
         case BOP_OR: {
@@ -444,6 +449,98 @@ eval_expr(struct evaluator* evaluator, struct tir_expr const* expr)
         value_del(rhs);
         assert(res != NULL);
         return res;
+    }
+    }
+
+    UNREACHABLE();
+    return NULL;
+}
+
+struct value*
+eval_lvalue(struct evaluator* evaluator, struct tir_expr const* expr)
+{
+    assert(evaluator != NULL);
+    assert(expr != NULL);
+
+    switch (expr->kind) {
+    case TIR_EXPR_IDENTIFIER: {
+        struct symbol const* const symbol = expr->data.identifier;
+        if (symbol->address->kind != ADDRESS_STATIC) {
+            fatal(
+                expr->location,
+                "addressof operator applied to non-static object in compile-time expression");
+        }
+        struct type const* const type = type_unique_pointer(symbol->type);
+        return value_new_pointer(type, *symbol->address);
+    }
+    case TIR_EXPR_INDEX: {
+        struct value* const lhs = eval_lvalue(evaluator, expr->data.index.lhs);
+        struct value* const idx = eval_rvalue(evaluator, expr->data.index.idx);
+        assert(lhs->type->kind == TYPE_POINTER);
+        assert(idx->type->kind == TYPE_USIZE);
+        struct type const* const array_type = lhs->type->data.pointer.base;
+        assert(array_type->kind == TYPE_ARRAY);
+        struct type const* const element_type = array_type->data.array.base;
+        struct type const* const type = type_unique_pointer(element_type);
+
+        size_t idx_uz = 0u;
+        if (bigint_to_uz(&idx_uz, idx->data.integer)) {
+            char* const cstr =
+                autil_bigint_to_new_cstr(idx->data.integer, NULL);
+            fatal(
+                expr->data.index.idx->location,
+                "index out-of-range (received %s)",
+                cstr);
+        }
+
+        assert(expr->data.index.lhs->type->kind == TYPE_ARRAY);
+        if (idx_uz >= expr->data.index.lhs->type->data.array.count) {
+            char* const cstr =
+                autil_bigint_to_new_cstr(idx->data.integer, NULL);
+            fatal(
+                expr->data.index.idx->location,
+                "index out-of-bounds (array count is %zu, received %s)",
+                lhs->type->data.array.count,
+                cstr);
+        }
+
+        assert(lhs->data.pointer.kind == ADDRESS_STATIC);
+        struct address const address = address_init_static(
+            lhs->data.pointer.data.static_.name,
+            lhs->data.pointer.data.static_.offset
+                + element_type->size * idx_uz);
+        value_del(lhs);
+        value_del(idx);
+        return value_new_pointer(type, address);
+    }
+    case TIR_EXPR_UNARY: {
+        switch (expr->data.unary.op) {
+        case UOP_DEREFERENCE: {
+            fatal(
+                expr->location,
+                "dereference operator not-supported in compile-time expressions");
+        }
+        case UOP_ADDRESSOF: {
+            return eval_lvalue(evaluator, expr->data.unary.rhs);
+        }
+        case UOP_NOT: /* fallthrough */
+        case UOP_POS: /* fallthrough */
+        case UOP_NEG: /* fallthrough */
+        case UOP_BITNOT: /* fallthrough */
+            assert(!tir_expr_is_lvalue(expr));
+            UNREACHABLE();
+        }
+        UNREACHABLE();
+    }
+    case TIR_EXPR_BOOLEAN: /* fallthrough */
+    case TIR_EXPR_INTEGER: /* fallthrough */
+    case TIR_EXPR_ARRAY: /* fallthrough */
+    case TIR_EXPR_SLICE: /* fallthrough */
+    case TIR_EXPR_SYSCALL: /* fallthrough */
+    case TIR_EXPR_CALL: /* fallthrough */
+    case TIR_EXPR_BINARY: {
+        assert(!tir_expr_is_lvalue(expr));
+        UNREACHABLE();
     }
     }
 

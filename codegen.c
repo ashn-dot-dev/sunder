@@ -174,13 +174,13 @@ push_at_address(size_t size, struct address const* address)
     push(size);
 
     // Usable for a memory indirection `[addr]`.
-    // ADDRESS_STATIC mode: number
+    // ADDRESS_STATIC mode: number + offset
     // ADDRESS_LOCAL mode : reg + base*scale + offset
     char* addr = NULL;
     switch (address->kind) {
     case ADDRESS_STATIC:
         addr = autil_cstr_new_fmt(
-            "%s + %zu",
+            "(%s + %zu)",
             address->data.static_.name,
             address->data.static_.offset);
         break;
@@ -680,10 +680,21 @@ codegen_static_object(struct symbol const* symbol)
     }
 
     if (type->kind == TYPE_FUNCTION) {
+        assert(symbol->address->data.static_.offset == 0);
         appendln(
             "%s: dq %s",
             symbol->address->data.static_.name,
             symbol->value->data.function->name);
+        return;
+    }
+    if (type->kind == TYPE_POINTER) {
+        assert(symbol->address->data.static_.offset == 0);
+        assert(symbol->value->data.pointer.kind == ADDRESS_STATIC);
+        appendln(
+            "%s: dq %s + %zu",
+            symbol->address->data.static_.name,
+            symbol->value->data.pointer.data.static_.name,
+            symbol->value->data.pointer.data.static_.offset);
         return;
     }
 
@@ -1795,6 +1806,7 @@ codegen_lvalue(struct tir_expr const* expr)
     case TIR_EXPR_SYSCALL: /* fallthrough */
     case TIR_EXPR_CALL: /* fallthrough */
     case TIR_EXPR_BINARY: {
+        assert(!tir_expr_is_lvalue(expr));
         UNREACHABLE();
     }
     }
@@ -1889,6 +1901,7 @@ codegen_lvalue_unary(struct tir_expr const* expr)
     case UOP_NEG: /* fallthrough */
     case UOP_BITNOT: /* fallthrough */
     case UOP_ADDRESSOF: {
+        assert(!tir_expr_is_lvalue(expr));
         UNREACHABLE();
     }
     }
@@ -1901,13 +1914,13 @@ codegen(void)
 {
     out = autil_string_new(NULL, 0u);
 
+    codegen_core();
+    appendch('\n');
     codegen_static_constants();
     appendch('\n');
     codegen_static_variables();
     appendch('\n');
     codegen_static_functions();
-    appendch('\n');
-    codegen_core();
 
     autil_file_write("a.asm", autil_string_start(out), autil_string_count(out));
     autil_string_del(out);

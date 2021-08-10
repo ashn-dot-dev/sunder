@@ -1151,7 +1151,9 @@ void
 evaluator_del(struct evaluator* self);
 
 struct value*
-eval_expr(struct evaluator* evaluator, struct tir_expr const* expr);
+eval_rvalue(struct evaluator* evaluator, struct tir_expr const* expr);
+struct value*
+eval_lvalue(struct evaluator* evaluator, struct tir_expr const* expr);
 
 ////////////////////////////////////////////////////////////////////////////////
 //////// codegen.c /////////////////////////////////////////////////////////////
