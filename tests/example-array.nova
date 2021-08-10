@@ -5,6 +5,22 @@ func dump_arr_of_3_ssize(arr: [3u]ssize) void {
     dump arr;
 }
 
+const x0: ssize = 123s;
+const x1: ssize = 456s;
+const x2: ssize = 789s;
+const array_of_pointers: [3u]*ssize = (:[3u]*ssize)[&x0, &x1, &x2];
+const array_of_array_of_pointers: [2u][3u]*ssize =
+    (:[2u][3u]*ssize)[
+        (:[3u]*ssize)[&x0, &x1, &x2],
+        (:[3u]*ssize)[&x2, &x1, &x0]
+    ];
+
+const array_of_zero_sized_objects: [2u][0u]void =
+    (:[2u][0u]void)[
+        (:[0u]void)[],
+        (:[0u]void)[]
+    ];
+
 func main() void {
     const arr2: [3u]ssize = (:[3u]ssize)[1s, 3s, 5s];
     var arr3: [3u]ssize = (:[3u]ssize)[1s, 3s, 5s];
@@ -65,6 +81,13 @@ func main() void {
     ];
     dump arr12;
     dump arr13;
+
+    dump *array_of_pointers[2u];
+    dump *array_of_array_of_pointers[0u][2u];
+
+    dump array_of_zero_sized_objects[0u];
+    dump array_of_zero_sized_objects[1u];
+    dump &array_of_zero_sized_objects[0u];
 }
 
 ################################################################################
@@ -86,3 +109,8 @@ func main() void {
 #
 # FF FF FF FF FF FF FF FF
 # FF FF FF FF FF FF FF FF
+# 15 03 00 00 00 00 00 00
+# 15 03 00 00 00 00 00 00
+#
+#
+# 00 00 00 00 00 00 00 00

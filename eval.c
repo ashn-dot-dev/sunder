@@ -77,7 +77,11 @@ eval_rvalue(struct evaluator* evaluator, struct tir_expr const* expr)
         return value_new_array(expr->type, evaled_elements);
     }
     case TIR_EXPR_SLICE: {
-        fatal(expr->location, "constant expression contains slice literal");
+        struct value* const pointer =
+            eval_rvalue(evaluator, expr->data.slice.pointer);
+        struct value* const count =
+            eval_rvalue(evaluator, expr->data.slice.count);
+        return value_new_slice(expr->type, pointer, count);
     }
     case TIR_EXPR_SYSCALL: {
         fatal(expr->location, "constant expression contains system call");
@@ -88,33 +92,44 @@ eval_rvalue(struct evaluator* evaluator, struct tir_expr const* expr)
     case TIR_EXPR_INDEX: {
         struct value* const lhs = eval_rvalue(evaluator, expr->data.index.lhs);
         struct value* const idx = eval_rvalue(evaluator, expr->data.index.idx);
-        assert(lhs->type->kind == TYPE_ARRAY);
-        assert(idx->type->kind == TYPE_USIZE);
 
+        assert(idx->type->kind == TYPE_USIZE);
+        struct autil_bigint const* const idx_bigint = idx->data.integer;
         size_t idx_uz = 0u;
-        if (bigint_to_uz(&idx_uz, idx->data.integer)) {
-            char* const cstr =
-                autil_bigint_to_new_cstr(idx->data.integer, NULL);
+        if (bigint_to_uz(&idx_uz, idx_bigint)) {
             fatal(
                 expr->data.index.idx->location,
                 "index out-of-range (received %s)",
-                cstr);
+                autil_bigint_to_new_cstr(idx_bigint, NULL));
         }
 
-        if (idx_uz >= lhs->type->data.array.count) {
-            char* const cstr =
-                autil_bigint_to_new_cstr(idx->data.integer, NULL);
+        if (lhs->type->kind == TYPE_ARRAY) {
+            if (idx_uz >= lhs->type->data.array.count) {
+                fatal(
+                    expr->data.index.idx->location,
+                    "index out-of-bounds (array count is %zu, received %zu)",
+                    lhs->type->data.array.count,
+                    idx_uz);
+            }
+            struct value* const res =
+                value_clone(lhs->data.array.elements[idx_uz]);
+            value_del(lhs);
+            value_del(idx);
+            return res;
+        }
+
+        if (lhs->type->kind == TYPE_SLICE) {
+            // Slices are constructed from a (pointer, count) pair which makes
+            // them more-or-less normal pointers with some extra fancy
+            // bookkeeping. Pointers may not be dereferenced in a constant
+            // expression, so similarly we do not allow indexing a slice (which
+            // is more-or-less pointer dereferencing) in a constant expression.
             fatal(
-                expr->data.index.idx->location,
-                "index out-of-bounds (array count is %zu, received %s)",
-                lhs->type->data.array.count,
-                cstr);
+                expr->location,
+                "slice element indexing not supported in compile-time expressions");
         }
 
-        struct value* const res = value_clone(lhs->data.array.elements[idx_uz]);
-        value_del(lhs);
-        value_del(idx);
-        return res;
+        UNREACHABLE();
     }
     case TIR_EXPR_UNARY: {
         switch (expr->data.unary.op) {
@@ -183,7 +198,7 @@ eval_rvalue(struct evaluator* evaluator, struct tir_expr const* expr)
         case UOP_DEREFERENCE: {
             fatal(
                 expr->location,
-                "dereference operator not-supported in compile-time expressions");
+                "dereference operator not supported in compile-time expressions");
         }
         case UOP_ADDRESSOF: {
             return eval_lvalue(evaluator, expr);
@@ -518,7 +533,7 @@ eval_lvalue(struct evaluator* evaluator, struct tir_expr const* expr)
         case UOP_DEREFERENCE: {
             fatal(
                 expr->location,
-                "dereference operator not-supported in compile-time expressions");
+                "dereference operator not supported in compile-time expressions");
         }
         case UOP_ADDRESSOF: {
             return eval_lvalue(evaluator, expr->data.unary.rhs);

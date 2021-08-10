@@ -20,6 +20,14 @@ static void
 appendli_location(struct source_location const* location, char const* fmt, ...);
 static void
 appendch(char ch);
+// NASM Dx data type (db, dw, dq, etc.).
+// https://nasm.us/doc/nasmdoc3.html#section-3.2.1
+static void
+append_dx_type(struct type const* type);
+// NASM Dx data elements forming a static initializer.
+// https://nasm.us/doc/nasmdoc3.html#section-3.2.1
+static void
+append_dx_data(struct value const* value);
 
 // All push_* functions align rsp to an 8-byte boundary.
 static void
@@ -132,6 +140,123 @@ appendch(char ch)
     assert(out != NULL);
 
     autil_string_append(out, &ch, 1u);
+}
+
+static void
+append_dx_type(struct type const* type)
+{
+    assert(out != NULL);
+    assert(type != NULL);
+    assert(type->size != 0);
+
+    switch (type->kind) {
+    case TYPE_VOID: {
+        UNREACHABLE();
+    }
+    case TYPE_BOOL: /* fallthrough */
+    case TYPE_BYTE: /* fallthrough */
+    case TYPE_U8: /* fallthrough */
+    case TYPE_S8: /* fallthrough */
+    case TYPE_U16: /* fallthrough */
+    case TYPE_S16: /* fallthrough */
+    case TYPE_U32: /* fallthrough */
+    case TYPE_S32: /* fallthrough */
+    case TYPE_U64: /* fallthrough */
+    case TYPE_S64: /* fallthrough */
+    case TYPE_USIZE: /* fallthrough */
+    case TYPE_SSIZE: {
+        append("db");
+        return;
+    }
+    case TYPE_FUNCTION: /* fallthrough */
+    case TYPE_POINTER: {
+        append("dq");
+        return;
+    }
+    case TYPE_ARRAY: {
+        append_dx_type(type->data.array.base);
+        return;
+    }
+    case TYPE_SLICE: {
+        // pointer => dq
+        // count   => dq
+        append("dq");
+        return;
+    }
+    }
+
+    UNREACHABLE();
+}
+
+static void
+append_dx_data(struct value const* value)
+{
+    assert(out != NULL);
+    assert(value != NULL);
+    assert(value->type->size != 0);
+
+    switch (value->type->kind) {
+    case TYPE_VOID: {
+        UNREACHABLE();
+    }
+    case TYPE_BOOL: /* fallthrough */
+    case TYPE_BYTE: /* fallthrough */
+    case TYPE_U8: /* fallthrough */
+    case TYPE_S8: /* fallthrough */
+    case TYPE_U16: /* fallthrough */
+    case TYPE_S16: /* fallthrough */
+    case TYPE_U32: /* fallthrough */
+    case TYPE_S32: /* fallthrough */
+    case TYPE_U64: /* fallthrough */
+    case TYPE_S64: /* fallthrough */
+    case TYPE_USIZE: /* fallthrough */
+    case TYPE_SSIZE: {
+        autil_sbuf(uint8_t) const bytes = value_to_new_bytes(value);
+        for (size_t i = 0; i < autil_sbuf_count(bytes); ++i) {
+            if (i != 0) {
+                append(", ");
+            }
+            append("%#x", (unsigned)bytes[i]);
+        }
+        autil_sbuf_fini(bytes);
+        return;
+    }
+    case TYPE_FUNCTION: {
+        append("%s", value->data.function->name);
+        return;
+    }
+    case TYPE_POINTER: {
+        struct address const* const address = &value->data.pointer;
+        if (value->type->data.pointer.base->size == 0) {
+            append("__nil");
+            return;
+        }
+        assert(address->kind == ADDRESS_STATIC);
+        append(
+            "(%s + %zu)",
+            address->data.static_.name,
+            address->data.static_.offset);
+        return;
+    }
+    case TYPE_ARRAY: {
+        autil_sbuf(struct value*) elements = value->data.array.elements;
+        for (size_t i = 0; i < autil_sbuf_count(elements); ++i) {
+            if (i != 0) {
+                append(", ");
+            }
+            append_dx_data(elements[i]);
+        }
+        return;
+    }
+    case TYPE_SLICE: {
+        append_dx_data(value->data.slice.pointer);
+        append(", ");
+        append_dx_data(value->data.slice.count);
+        return;
+    }
+    }
+
+    UNREACHABLE();
 }
 
 static void
@@ -486,6 +611,10 @@ codegen_static_functions(void)
 static void
 codegen_core(void)
 {
+    appendln("; BUILTIN NIL POINTER / VALUE");
+    appendln("__nil: equ 0");
+    appendch('\n');
+
     appendln("; BUILTIN DUMP SUBROUTINE");
     appendln("section .text");
     appendln("global dump");
@@ -679,35 +808,12 @@ codegen_static_object(struct symbol const* symbol)
         return;
     }
 
-    if (type->kind == TYPE_FUNCTION) {
-        assert(symbol->address->data.static_.offset == 0);
-        appendln(
-            "%s: dq %s",
-            symbol->address->data.static_.name,
-            symbol->value->data.function->name);
-        return;
-    }
-    if (type->kind == TYPE_POINTER) {
-        assert(symbol->address->data.static_.offset == 0);
-        assert(symbol->value->data.pointer.kind == ADDRESS_STATIC);
-        appendln(
-            "%s: dq %s + %zu",
-            symbol->address->data.static_.name,
-            symbol->value->data.pointer.data.static_.name,
-            symbol->value->data.pointer.data.static_.offset);
-        return;
-    }
-
-    autil_sbuf(uint8_t) const bytes = value_to_new_bytes(value);
-    append("%s: db", symbol->address->data.static_.name);
-    for (size_t i = 0; i < autil_sbuf_count(bytes); ++i) {
-        if (i != 0) {
-            appendch(',');
-        }
-        append(" %#x", (unsigned)bytes[i]);
-    }
+    assert(symbol->address->data.static_.offset == 0);
+    append("%s: ", symbol->address->data.static_.name);
+    append_dx_type(symbol->value->type);
+    appendch(' ');
+    append_dx_data(symbol->value);
     appendch('\n');
-    autil_sbuf_fini(bytes);
     return;
 }
 
@@ -1268,6 +1374,9 @@ codegen_rvalue_index_lhs_array(struct tir_expr const* expr)
 
     struct type const* const lhs_type = expr->data.index.lhs->type;
     struct type const* const element_type = lhs_type->data.array.base;
+    if (element_type->size == 0) {
+        return;
+    }
 
     // Push space for result.
     assert(expr->type == element_type);
@@ -1334,6 +1443,9 @@ codegen_rvalue_index_lhs_slice(struct tir_expr const* expr)
 
     struct type const* const lhs_type = expr->data.index.lhs->type;
     struct type const* const element_type = lhs_type->data.slice.base;
+    if (element_type->size == 0) {
+        return;
+    }
 
     // Push space for result.
     assert(expr->type == element_type);
@@ -1412,6 +1524,11 @@ codegen_rvalue_unary(struct tir_expr const* expr)
     }
     case UOP_DEREFERENCE: {
         assert(expr->data.unary.rhs->type->kind == TYPE_POINTER);
+        if (expr->data.unary.rhs->type->data.pointer.base->size == 0) {
+            // Dereferencing an object with zero size produces a result with
+            // no size (equivalent to no result).
+            return;
+        }
         codegen_rvalue(expr->data.unary.rhs);
         appendli("pop rax");
         size_t const size = expr->data.unary.rhs->type->size;
@@ -1839,12 +1956,17 @@ codegen_lvalue_index_lhs_array(struct tir_expr const* expr)
     assert(expr->kind == TIR_EXPR_INDEX);
     assert(expr->data.index.lhs->type->kind == TYPE_ARRAY);
     assert(expr->data.index.idx->type->kind == TYPE_USIZE);
-    size_t const expr_id = unique_id++;
 
-    codegen_lvalue(expr->data.index.lhs);
-    codegen_rvalue(expr->data.index.idx);
     struct type const* const lhs_type = expr->data.index.lhs->type;
     struct type const* const element_type = lhs_type->data.array.base;
+    if (element_type->size == 0) {
+        appendli("push __nil");
+        return;
+    }
+
+    size_t const expr_id = unique_id++;
+    codegen_lvalue(expr->data.index.lhs);
+    codegen_rvalue(expr->data.index.idx);
     appendli("pop rax"); // index
     appendli("mov rbx, %zu", lhs_type->data.array.count); // count
     appendli("cmp rax, rbx");
@@ -1865,12 +1987,17 @@ codegen_lvalue_index_lhs_slice(struct tir_expr const* expr)
     assert(expr->kind == TIR_EXPR_INDEX);
     assert(expr->data.index.lhs->type->kind == TYPE_SLICE);
     assert(expr->data.index.idx->type->kind == TYPE_USIZE);
-    size_t const expr_id = unique_id++;
 
-    codegen_rvalue(expr->data.index.lhs);
-    codegen_rvalue(expr->data.index.idx);
     struct type const* const lhs_type = expr->data.index.lhs->type;
     struct type const* const element_type = lhs_type->data.slice.base;
+    if (element_type->size == 0) {
+        appendli("push __nil");
+        return;
+    }
+
+    size_t const expr_id = unique_id++;
+    codegen_rvalue(expr->data.index.lhs);
+    codegen_rvalue(expr->data.index.idx);
     appendli("pop rax"); // index
     appendli("mov rbx, [rsp + 8]"); // slice count
     appendli("cmp rax, rbx");

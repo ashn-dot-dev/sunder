@@ -1,0 +1,7 @@
+const array: [3u]ssize = (:[3u]ssize)[1s, 3s, 5s];
+const slice: []ssize = (:[]ssize){&array[1u], 2u};
+const x: ssize = slice[1u];
+################################################################################
+# [error-expr-index-slice-in-const-expr.nova:3] error: slice element indexing not supported in compile-time expressions
+# const x: ssize = slice[1u];
+#                       ^

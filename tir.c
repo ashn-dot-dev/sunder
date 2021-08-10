@@ -1061,9 +1061,9 @@ value_new_slice(
     assert(type != NULL);
     assert(type->kind == TYPE_SLICE);
     assert(pointer != NULL);
-    assert(pointer->type->kind != TYPE_POINTER);
+    assert(pointer->type->kind == TYPE_POINTER);
     assert(count != NULL);
-    assert(count->type->kind != TYPE_USIZE);
+    assert(count->type->kind == TYPE_USIZE);
 
     assert(type->data.slice.base == pointer->type->data.pointer.base);
 

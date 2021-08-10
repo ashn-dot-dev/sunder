@@ -69,6 +69,10 @@ SYS_EXIT: equ 60
 hello_start: db "Hello, World!", 0x0A
 hello_count: equ $ - hello_start
 
+hello_slice_start: db "Hello, Slice!", 0x0A
+hello_slice_count: equ $ - hello_slice_start
+hello_slice: dq hello_slice_start, hello_slice_count
+
 section .data
 exit_status: dq EXIT_FAILURE
 
@@ -83,6 +87,13 @@ main:
     mov rdi, STDOUT_FILENO
     mov rsi, hello_start
     mov rdx, hello_count
+    syscall
+
+    ; write(STDOUT_FILENO, hello_start, hello_count);
+    mov rax, SYS_WRITE
+    mov rdi, STDOUT_FILENO
+    mov rsi, [hello_slice + 0] ; start
+    mov rdx, [hello_slice + 8] ; count
     syscall
 
     ; exit_status = EXIT_SUCCESS;
