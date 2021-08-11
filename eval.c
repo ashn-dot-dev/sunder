@@ -501,23 +501,19 @@ eval_lvalue(struct evaluator* evaluator, struct tir_expr const* expr)
 
         size_t idx_uz = 0u;
         if (bigint_to_uz(&idx_uz, idx->data.integer)) {
-            char* const cstr =
-                autil_bigint_to_new_cstr(idx->data.integer, NULL);
             fatal(
                 expr->data.index.idx->location,
                 "index out-of-range (received %s)",
-                cstr);
+                autil_bigint_to_new_cstr(idx->data.integer, NULL));
         }
 
         assert(expr->data.index.lhs->type->kind == TYPE_ARRAY);
         if (idx_uz >= expr->data.index.lhs->type->data.array.count) {
-            char* const cstr =
-                autil_bigint_to_new_cstr(idx->data.integer, NULL);
             fatal(
                 expr->data.index.idx->location,
                 "index out-of-bounds (array count is %zu, received %s)",
                 lhs->type->data.array.count,
-                cstr);
+                autil_bigint_to_new_cstr(idx->data.integer, NULL));
         }
 
         assert(lhs->data.pointer.kind == ADDRESS_STATIC);

@@ -1780,12 +1780,10 @@ resolve_typespec(struct resolver* resolver, struct ast_typespec const* typespec)
         assert(count_value->type == context()->builtin.usize);
         size_t count = 0u;
         if (bigint_to_uz(&count, count_value->data.integer)) {
-            char* const cstr =
-                autil_bigint_to_new_cstr(count_value->data.integer, NULL);
             fatal(
                 count_expr->location,
                 "array count too large (received %s)",
-                cstr);
+                autil_bigint_to_new_cstr(count_value->data.integer, NULL));
         }
         value_del(count_value);
 
