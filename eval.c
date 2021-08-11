@@ -201,7 +201,7 @@ eval_rvalue(struct evaluator* evaluator, struct tir_expr const* expr)
                 "dereference operator not supported in compile-time expressions");
         }
         case UOP_ADDRESSOF: {
-            return eval_lvalue(evaluator, expr);
+            return eval_lvalue(evaluator, expr->data.unary.rhs);
         }
         }
         UNREACHABLE();
@@ -476,6 +476,7 @@ eval_lvalue(struct evaluator* evaluator, struct tir_expr const* expr)
 {
     assert(evaluator != NULL);
     assert(expr != NULL);
+    assert(tir_expr_is_lvalue(expr));
 
     switch (expr->kind) {
     case TIR_EXPR_IDENTIFIER: {
@@ -535,14 +536,11 @@ eval_lvalue(struct evaluator* evaluator, struct tir_expr const* expr)
                 expr->location,
                 "dereference operator not supported in compile-time expressions");
         }
-        case UOP_ADDRESSOF: {
-            return eval_lvalue(evaluator, expr->data.unary.rhs);
-        }
+        case UOP_ADDRESSOF: /* fallthrough */
         case UOP_NOT: /* fallthrough */
         case UOP_POS: /* fallthrough */
         case UOP_NEG: /* fallthrough */
         case UOP_BITNOT: /* fallthrough */
-            assert(!tir_expr_is_lvalue(expr));
             UNREACHABLE();
         }
         UNREACHABLE();
@@ -554,7 +552,6 @@ eval_lvalue(struct evaluator* evaluator, struct tir_expr const* expr)
     case TIR_EXPR_SYSCALL: /* fallthrough */
     case TIR_EXPR_CALL: /* fallthrough */
     case TIR_EXPR_BINARY: {
-        assert(!tir_expr_is_lvalue(expr));
         UNREACHABLE();
     }
     }
