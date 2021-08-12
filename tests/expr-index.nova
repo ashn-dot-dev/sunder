@@ -5,15 +5,17 @@ const G2: [3u]ssize = (:[3u]ssize)[1s, 3s, 5s];
 const G3: ssize = G2[1u];
 var G4: ssize = G2[1u];
 
-var G5: [3u]ssize = (:[3u]ssize)[1s, 3s, 5s];
+const G5: [3u]ssize = (:[3u]ssize)[1s, 3s, 5s];
 var G6: ssize = G5[1u];
 
-var G7: [2u][3u]ssize = (:[2u][3u]ssize)[
+const G7: [2u][3u]ssize = (:[2u][3u]ssize)[
     (:[3u]ssize)[1s, 3s, 5s],
     (:[3u]ssize)[2s, 4s, 6s]
 ];
 var G8: [3u]ssize = G7[1u];
 var G9: ssize = G7[1u][2u];
+
+var G10: [3u]ssize = (:[3u]ssize)[1s, 3s, 5s];
 
 func main() void {
     dump G1;
@@ -45,12 +47,12 @@ func main() void {
     dump L2[1u];
     dump L2[2u];
 
-    G5[0u] = 2s;
-    G5[1u] = 4s;
-    G5[2u] = 6s;
-    dump G5[0u];
-    dump G5[1u];
-    dump G5[2u];
+    G10[0u] = 2s;
+    G10[1u] = 4s;
+    G10[2u] = 6s;
+    dump G10[0u];
+    dump G10[1u];
+    dump G10[2u];
 }
 ################################################################################
 # 03 00 00 00 00 00 00 00

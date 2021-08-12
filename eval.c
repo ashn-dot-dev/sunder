@@ -49,8 +49,14 @@ eval_rvalue(struct evaluator* evaluator, struct tir_expr const* expr)
 
     switch (expr->kind) {
     case TIR_EXPR_IDENTIFIER: {
-        assert(expr->data.identifier->value != NULL);
-        return value_clone(expr->data.identifier->value);
+        struct symbol const* const symbol = expr->data.identifier;
+        enum symbol_kind const kind = symbol->kind;
+        if (kind == SYMBOL_CONSTANT || kind == SYMBOL_FUNCTION) {
+            assert(expr->data.identifier->value != NULL);
+            return value_clone(symbol->value);
+        }
+        fatal(
+            expr->location, "identifier `%s` is not a constant", symbol->name);
     }
     case TIR_EXPR_BOOLEAN: {
         return value_new_boolean(expr->data.boolean);

@@ -2,14 +2,14 @@ const gc0: byte = 0xABy;
 const gc1: byte = gc0;
 
 var gv0: byte = 0xBCy;
-var gv1: byte = gv0;
 
 func main() void {
     dump gc0;
     dump gc1;
 
     dump gv0;
-    dump gv1;
+    var x: byte = gv0;
+    dump x;
 
     const lc0: byte = 0xCDy;
     const lc1: byte = lc0;
