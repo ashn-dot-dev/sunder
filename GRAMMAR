@@ -48,9 +48,9 @@
          | <expr-unary>
          | <expr-binary>
 
-<expr-array> ::= "(" ":" <typespec> ")" "[" (<expr> ("," <expr>)*)? "]"
+<expr-array> ::= "(" ":" <typespec-array> ")" "[" (<expr> ("," <expr>)*)? "]"
 
-<expr-array> ::= "(" ":" <typespec> ")" "{" <expr> "," <expr> "}"
+<expr-slice> ::= "(" ":" <typespec-slice> ")" "{" <expr> "," <expr> "}"
 
 <expr-grouped> ::= "(" <expr> ")"
 
@@ -60,7 +60,7 @@
 
 <expr-index> ::= <expr> "[" <expr> "]"
 
-<expr-index-slice> ::= <expr> "[" <expr> ":" <expr> "]"
+<expr-index> ::= <expr> "[" <expr> ":" <expr> "]"
 
 <expr-unary> ::= "not" <expr>
                | "+" <expr>
