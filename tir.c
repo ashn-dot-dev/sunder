@@ -858,6 +858,44 @@ tir_expr_new_index(
 }
 
 struct tir_expr*
+tir_expr_new_index_slice(
+    struct source_location const* location,
+    struct tir_expr const* lhs,
+    struct tir_expr const* begin,
+    struct tir_expr const* end)
+{
+    assert(location != NULL);
+    assert(lhs != NULL);
+    assert(lhs->type->kind == TYPE_ARRAY || lhs->type->kind == TYPE_SLICE);
+    assert(begin != NULL);
+    assert(end != NULL);
+
+    if (lhs->type->kind == TYPE_ARRAY) {
+        struct type const* const type =
+            type_unique_slice(lhs->type->data.array.base);
+        struct tir_expr* const self =
+            tir_expr_new(location, type, TIR_EXPR_INDEX_SLICE);
+        self->data.index_slice.lhs = lhs;
+        self->data.index_slice.begin = begin;
+        self->data.index_slice.end = end;
+        return self;
+    }
+
+    if (lhs->type->kind == TYPE_SLICE) {
+        struct type const* const type =
+            type_unique_slice(lhs->type->data.slice.base);
+        struct tir_expr* const self =
+            tir_expr_new(location, type, TIR_EXPR_INDEX_SLICE);
+        self->data.index_slice.lhs = lhs;
+        self->data.index_slice.begin = begin;
+        self->data.index_slice.end = end;
+        return self;
+    }
+
+    UNREACHABLE();
+}
+
+struct tir_expr*
 tir_expr_new_unary(
     struct source_location const* location,
     struct type const* type,
@@ -924,6 +962,7 @@ tir_expr_is_lvalue(struct tir_expr const* self)
     case TIR_EXPR_SLICE: /* fallthrough */
     case TIR_EXPR_SYSCALL: /* fallthrough */
     case TIR_EXPR_CALL: /* fallthrough */
+    case TIR_EXPR_INDEX_SLICE: /* fallthrough */
     case TIR_EXPR_BINARY: {
         return false;
     }
@@ -1064,6 +1103,7 @@ value_new_slice(
     assert(pointer->type->kind == TYPE_POINTER);
     assert(count != NULL);
     assert(count->type->kind == TYPE_USIZE);
+    assert(autil_bigint_cmp(count->data.integer, AUTIL_BIGINT_ZERO) >= 0);
 
     assert(type->data.slice.base == pointer->type->data.pointer.base);
 

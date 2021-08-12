@@ -231,6 +231,12 @@ order_expr(struct orderer* orderer, struct ast_expr const* expr)
         order_expr(orderer, expr->data.index.idx);
         return;
     }
+    case AST_EXPR_INDEX_SLICE: {
+        order_expr(orderer, expr->data.index_slice.lhs);
+        order_expr(orderer, expr->data.index_slice.begin);
+        order_expr(orderer, expr->data.index_slice.end);
+        return;
+    }
     case AST_EXPR_UNARY: {
         order_expr(orderer, expr->data.unary.rhs);
         return;

@@ -44,6 +44,7 @@
          | <expr-syscall>
          | <expr-call>
          | <expr-index>
+         | <expr-index-slice>
          | <expr-unary>
          | <expr-binary>
 
@@ -58,6 +59,8 @@
 <expr-call> ::= <expr> "(" (<expr> ("," <expr>)*)? ")"
 
 <expr-index> ::= <expr> "[" <expr> "]"
+
+<expr-index-slice> ::= <expr> "[" <expr> ":" <expr> "]"
 
 <expr-unary> ::= "not" <expr>
                | "+" <expr>

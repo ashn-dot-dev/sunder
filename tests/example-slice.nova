@@ -10,6 +10,10 @@ const slice_of_zero_sized_objects: [][0u]void =
     (:[][0u]void){&array_of_zero_sized_objects[0u], 2u};
 
 func main() void {
+    dump (:[]ssize){&g_array[0u], 3u}[0u];
+    dump (:[]ssize){&g_array[0u], 3u}[1u];
+    dump (:[]ssize){&g_array[0u], 3u}[2u];
+
     var slice: []ssize = (:[]ssize){&g_array[0u], 3u};
     dump slice[0u];
     dump slice[1u];
@@ -25,6 +29,9 @@ func main() void {
     dump &slice_of_zero_sized_objects[0u];
 }
 ################################################################################
+# 01 00 00 00 00 00 00 00
+# 03 00 00 00 00 00 00 00
+# 05 00 00 00 00 00 00 00
 # 01 00 00 00 00 00 00 00
 # 03 00 00 00 00 00 00 00
 # 05 00 00 00 00 00 00 00

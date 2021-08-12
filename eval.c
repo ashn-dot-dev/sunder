@@ -131,6 +131,84 @@ eval_rvalue(struct evaluator* evaluator, struct tir_expr const* expr)
 
         UNREACHABLE();
     }
+    case TIR_EXPR_INDEX_SLICE: {
+        struct value* const lhs =
+            eval_rvalue(evaluator, expr->data.index_slice.lhs);
+        struct value* const begin =
+            eval_rvalue(evaluator, expr->data.index_slice.begin);
+        struct value* const end =
+            eval_rvalue(evaluator, expr->data.index_slice.end);
+
+        assert(begin->type->kind == TYPE_USIZE);
+        struct autil_bigint const* const begin_bigint = begin->data.integer;
+        size_t begin_uz = 0u;
+        if (bigint_to_uz(&begin_uz, begin_bigint)) {
+            fatal(
+                expr->data.index_slice.begin->location,
+                "index out-of-range (received %s)",
+                autil_bigint_to_new_cstr(begin_bigint, NULL));
+        }
+        assert(end->type->kind == TYPE_USIZE);
+        struct autil_bigint const* const end_bigint = end->data.integer;
+        size_t end_uz = 0u;
+        if (bigint_to_uz(&end_uz, end_bigint)) {
+            fatal(
+                expr->data.index_slice.end->location,
+                "index out-of-range (received %s)",
+                autil_bigint_to_new_cstr(end_bigint, NULL));
+        }
+
+        if (lhs->type->kind == TYPE_ARRAY) {
+            if (begin_uz >= lhs->type->data.array.count) {
+                fatal(
+                    expr->data.index_slice.begin->location,
+                    "index out-of-bounds (array count is %zu, received %zu)",
+                    lhs->type->data.array.count,
+                    begin_uz);
+            }
+            if (end_uz >= lhs->type->data.array.count) {
+                fatal(
+                    expr->data.index_slice.begin->location,
+                    "index out-of-bounds (array count is %zu, received %zu)",
+                    lhs->type->data.array.count,
+                    end_uz);
+            }
+
+            struct value* const pointer =
+                eval_lvalue(evaluator, expr->data.index_slice.lhs);
+            assert(pointer->type->kind == TYPE_POINTER);
+            assert(pointer->data.pointer.kind == ADDRESS_STATIC);
+            pointer->type = type_unique_pointer(expr->type->data.slice.base);
+            pointer->data.pointer.data.static_.offset +=
+                begin_uz * expr->type->data.slice.base->size;
+
+            struct autil_bigint* const count_bigint =
+                autil_bigint_new(AUTIL_BIGINT_ZERO);
+            autil_bigint_sub(count_bigint, end_bigint, begin_bigint);
+
+            struct value* const count =
+                value_new_integer(context()->builtin.usize, count_bigint);
+            struct value* const res =
+                value_new_slice(expr->type, pointer, count);
+            value_del(lhs);
+            value_del(begin);
+            value_del(end);
+            return res;
+        }
+
+        if (lhs->type->kind == TYPE_SLICE) {
+            // Slices are constructed from a (pointer, count) pair which makes
+            // them more-or-less normal pointers with some extra fancy
+            // bookkeeping. Pointers may not be dereferenced in a constant
+            // expression, so similarly we do not allow indexing a slice (which
+            // is more-or-less pointer dereferencing) in a constant expression.
+            fatal(
+                expr->location,
+                "slice indexing not supported in compile-time expressions");
+        }
+
+        UNREACHABLE();
+    }
     case TIR_EXPR_UNARY: {
         switch (expr->data.unary.op) {
         case UOP_NOT: {
@@ -547,6 +625,7 @@ eval_lvalue(struct evaluator* evaluator, struct tir_expr const* expr)
     case TIR_EXPR_SLICE: /* fallthrough */
     case TIR_EXPR_SYSCALL: /* fallthrough */
     case TIR_EXPR_CALL: /* fallthrough */
+    case TIR_EXPR_INDEX_SLICE: /* fallthrough */
     case TIR_EXPR_BINARY: {
         UNREACHABLE();
     }

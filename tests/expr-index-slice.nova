@@ -1,0 +1,34 @@
+func main() void {
+    const array_c: [5u]u16 = (:[5u]u16)[
+        0xAAAAu16, 0xBBBBu16, 0xCCCCu16, 0xDDDDu16, 0xEEEEu16
+    ];
+    const slice_c: []u16 = array_c[1u:4u];
+    dump slice_c[0u];
+    dump slice_c[1u];
+    dump slice_c[2u];
+
+    var array_v: [5u]u16 = (:[5u]u16)[
+        0xAAAAu16, 0xBBBBu16, 0xCCCCu16, 0xDDDDu16, 0xEEEEu16
+    ];
+    var slice_v: []u16 = array_v[1u:4u];
+    dump slice_v[0u];
+    dump slice_v[1u];
+    dump slice_v[2u];
+    slice_v = slice_v[1u:3u];
+    dump slice_v[0u];
+    dump slice_v[1u];
+
+    dump (:[]u16){&array_v[0u], 4u}[0u:1u][0u];
+    dump (:[]u16){&array_v[0u], 4u}[1u:4u][0u];
+}
+################################################################################
+# BB BB
+# CC CC
+# DD DD
+# BB BB
+# CC CC
+# DD DD
+# CC CC
+# DD DD
+# AA AA
+# BB BB

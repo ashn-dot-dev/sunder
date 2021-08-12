@@ -439,6 +439,7 @@ struct ast_expr {
         AST_EXPR_SYSCALL,
         AST_EXPR_CALL,
         AST_EXPR_INDEX,
+        AST_EXPR_INDEX_SLICE,
         // Prefix Unary Operator Expressions
         AST_EXPR_UNARY,
         // Infix Binary Operator Expressions
@@ -471,6 +472,11 @@ struct ast_expr {
             struct ast_expr const* lhs;
             struct ast_expr const* idx;
         } index;
+        struct {
+            struct ast_expr const* lhs;
+            struct ast_expr const* begin;
+            struct ast_expr const* end;
+        } index_slice;
         struct {
             struct token const* op;
             struct ast_expr const* rhs;
@@ -514,6 +520,12 @@ ast_expr_new_index(
     struct source_location const* location,
     struct ast_expr const* lhs,
     struct ast_expr const* idx);
+struct ast_expr*
+ast_expr_new_index_slice(
+    struct source_location const* location,
+    struct ast_expr const* lhs,
+    struct ast_expr const* begin,
+    struct ast_expr const* end);
 struct ast_expr*
 ast_expr_new_unary(struct token const* op, struct ast_expr const* rhs);
 struct ast_expr*
@@ -924,6 +936,7 @@ struct tir_expr {
         TIR_EXPR_SYSCALL,
         TIR_EXPR_CALL,
         TIR_EXPR_INDEX,
+        TIR_EXPR_INDEX_SLICE,
         TIR_EXPR_UNARY,
         TIR_EXPR_BINARY,
     } kind;
@@ -951,6 +964,11 @@ struct tir_expr {
             struct tir_expr const* lhs;
             struct tir_expr const* idx;
         } index;
+        struct {
+            struct tir_expr const* lhs;
+            struct tir_expr const* begin;
+            struct tir_expr const* end;
+        } index_slice;
         struct {
             enum uop_kind {
                 UOP_NOT,
@@ -1020,6 +1038,12 @@ tir_expr_new_index(
     struct source_location const* location,
     struct tir_expr const* lhs,
     struct tir_expr const* idx);
+struct tir_expr*
+tir_expr_new_index_slice(
+    struct source_location const* location,
+    struct tir_expr const* lhs,
+    struct tir_expr const* begin,
+    struct tir_expr const* end);
 struct tir_expr*
 tir_expr_new_unary(
     struct source_location const* location,
