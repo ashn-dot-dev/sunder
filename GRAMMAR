@@ -60,7 +60,7 @@
 
 <expr-index> ::= <expr> "[" <expr> "]"
 
-<expr-index> ::= <expr> "[" <expr> ":" <expr> "]"
+<expr-slice> ::= <expr> "[" <expr> ":" <expr> "]"
 
 <expr-unary> ::= "not" <expr>
                | "+" <expr>

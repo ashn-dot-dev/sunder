@@ -860,7 +860,7 @@ tir_expr_new_index(
 }
 
 struct tir_expr*
-tir_expr_new_index_slice(
+tir_expr_new_slice(
     struct source_location const* location,
     struct tir_expr const* lhs,
     struct tir_expr const* begin,
@@ -876,10 +876,10 @@ tir_expr_new_index_slice(
         struct type const* const type =
             type_unique_slice(lhs->type->data.array.base);
         struct tir_expr* const self =
-            tir_expr_new(location, type, TIR_EXPR_INDEX_SLICE);
-        self->data.index_slice.lhs = lhs;
-        self->data.index_slice.begin = begin;
-        self->data.index_slice.end = end;
+            tir_expr_new(location, type, TIR_EXPR_SLICE);
+        self->data.slice.lhs = lhs;
+        self->data.slice.begin = begin;
+        self->data.slice.end = end;
         return self;
     }
 
@@ -887,10 +887,10 @@ tir_expr_new_index_slice(
         struct type const* const type =
             type_unique_slice(lhs->type->data.slice.base);
         struct tir_expr* const self =
-            tir_expr_new(location, type, TIR_EXPR_INDEX_SLICE);
-        self->data.index_slice.lhs = lhs;
-        self->data.index_slice.begin = begin;
-        self->data.index_slice.end = end;
+            tir_expr_new(location, type, TIR_EXPR_SLICE);
+        self->data.slice.lhs = lhs;
+        self->data.slice.begin = begin;
+        self->data.slice.end = end;
         return self;
     }
 
@@ -964,7 +964,7 @@ tir_expr_is_lvalue(struct tir_expr const* self)
     case TIR_EXPR_LITERAL_SLICE: /* fallthrough */
     case TIR_EXPR_SYSCALL: /* fallthrough */
     case TIR_EXPR_CALL: /* fallthrough */
-    case TIR_EXPR_INDEX_SLICE: /* fallthrough */
+    case TIR_EXPR_SLICE: /* fallthrough */
     case TIR_EXPR_BINARY: {
         return false;
     }

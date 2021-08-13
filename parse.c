@@ -772,13 +772,13 @@ parse_expr_led_index(struct parser* parser, struct ast_expr const* lhs)
     struct ast_expr const* const idx = parse_expr(parser);
 
     if (check_current(parser, TOKEN_COLON)) {
-        // <expr-index-slice>
+        // <expr-slice>
         expect_current(parser, TOKEN_COLON);
         struct ast_expr const* const end = parse_expr(parser);
         expect_current(parser, TOKEN_RBRACKET);
 
         struct ast_expr* const product =
-            ast_expr_new_index_slice(location, lhs, idx, end);
+            ast_expr_new_slice(location, lhs, idx, end);
 
         autil_freezer_register(context()->freezer, product);
         return product;

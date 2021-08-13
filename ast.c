@@ -331,7 +331,7 @@ ast_expr_new_index(
 }
 
 struct ast_expr*
-ast_expr_new_index_slice(
+ast_expr_new_slice(
     struct source_location const* location,
     struct ast_expr const* lhs,
     struct ast_expr const* begin,
@@ -342,10 +342,10 @@ ast_expr_new_index_slice(
     assert(begin != NULL);
     assert(end != NULL);
 
-    struct ast_expr* const self = ast_expr_new(location, AST_EXPR_INDEX_SLICE);
-    self->data.index_slice.lhs = lhs;
-    self->data.index_slice.begin = begin;
-    self->data.index_slice.end = end;
+    struct ast_expr* const self = ast_expr_new(location, AST_EXPR_SLICE);
+    self->data.slice.lhs = lhs;
+    self->data.slice.begin = begin;
+    self->data.slice.end = end;
     return self;
 }
 

@@ -124,8 +124,7 @@ resolve_expr_call(struct resolver* resolver, struct ast_expr const* expr);
 static struct tir_expr const*
 resolve_expr_index(struct resolver* resolver, struct ast_expr const* expr);
 static struct tir_expr const*
-resolve_expr_index_slice(
-    struct resolver* resolver, struct ast_expr const* expr);
+resolve_expr_slice(struct resolver* resolver, struct ast_expr const* expr);
 static struct tir_expr const*
 resolve_expr_unary(struct resolver* resolver, struct ast_expr const* expr);
 static struct tir_expr const*
@@ -929,8 +928,8 @@ resolve_expr(struct resolver* resolver, struct ast_expr const* expr)
     case AST_EXPR_INDEX: {
         return resolve_expr_index(resolver, expr);
     }
-    case AST_EXPR_INDEX_SLICE: {
-        return resolve_expr_index_slice(resolver, expr);
+    case AST_EXPR_SLICE: {
+        return resolve_expr_slice(resolver, expr);
     }
     case AST_EXPR_UNARY: {
         return resolve_expr_unary(resolver, expr);
@@ -1249,14 +1248,14 @@ resolve_expr_index(struct resolver* resolver, struct ast_expr const* expr)
 }
 
 static struct tir_expr const*
-resolve_expr_index_slice(struct resolver* resolver, struct ast_expr const* expr)
+resolve_expr_slice(struct resolver* resolver, struct ast_expr const* expr)
 {
     assert(resolver != NULL);
     assert(expr != NULL);
-    assert(expr->kind == AST_EXPR_INDEX_SLICE);
+    assert(expr->kind == AST_EXPR_SLICE);
 
     struct tir_expr const* const lhs =
-        resolve_expr(resolver, expr->data.index_slice.lhs);
+        resolve_expr(resolver, expr->data.slice.lhs);
     if (lhs->type->kind != TYPE_ARRAY && lhs->type->kind != TYPE_SLICE) {
         fatal(
             lhs->location,
@@ -1265,7 +1264,7 @@ resolve_expr_index_slice(struct resolver* resolver, struct ast_expr const* expr)
     }
 
     struct tir_expr const* const begin =
-        resolve_expr(resolver, expr->data.index_slice.begin);
+        resolve_expr(resolver, expr->data.slice.begin);
     if (begin->type->kind != TYPE_USIZE) {
         fatal(
             begin->location,
@@ -1274,7 +1273,7 @@ resolve_expr_index_slice(struct resolver* resolver, struct ast_expr const* expr)
     }
 
     struct tir_expr const* const end =
-        resolve_expr(resolver, expr->data.index_slice.end);
+        resolve_expr(resolver, expr->data.slice.end);
     if (end->type->kind != TYPE_USIZE) {
         fatal(
             end->location,
@@ -1283,7 +1282,7 @@ resolve_expr_index_slice(struct resolver* resolver, struct ast_expr const* expr)
     }
 
     struct tir_expr* const resolved =
-        tir_expr_new_index_slice(expr->location, lhs, begin, end);
+        tir_expr_new_slice(expr->location, lhs, begin, end);
 
     autil_freezer_register(context()->freezer, resolved);
     return resolved;

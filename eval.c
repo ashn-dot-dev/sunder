@@ -137,20 +137,18 @@ eval_rvalue(struct evaluator* evaluator, struct tir_expr const* expr)
 
         UNREACHABLE();
     }
-    case TIR_EXPR_INDEX_SLICE: {
-        struct value* const lhs =
-            eval_rvalue(evaluator, expr->data.index_slice.lhs);
+    case TIR_EXPR_SLICE: {
+        struct value* const lhs = eval_rvalue(evaluator, expr->data.slice.lhs);
         struct value* const begin =
-            eval_rvalue(evaluator, expr->data.index_slice.begin);
-        struct value* const end =
-            eval_rvalue(evaluator, expr->data.index_slice.end);
+            eval_rvalue(evaluator, expr->data.slice.begin);
+        struct value* const end = eval_rvalue(evaluator, expr->data.slice.end);
 
         assert(begin->type->kind == TYPE_USIZE);
         struct autil_bigint const* const begin_bigint = begin->data.integer;
         size_t begin_uz = 0u;
         if (bigint_to_uz(&begin_uz, begin_bigint)) {
             fatal(
-                expr->data.index_slice.begin->location,
+                expr->data.slice.begin->location,
                 "index out-of-range (received %s)",
                 autil_bigint_to_new_cstr(begin_bigint, NULL));
         }
@@ -159,7 +157,7 @@ eval_rvalue(struct evaluator* evaluator, struct tir_expr const* expr)
         size_t end_uz = 0u;
         if (bigint_to_uz(&end_uz, end_bigint)) {
             fatal(
-                expr->data.index_slice.end->location,
+                expr->data.slice.end->location,
                 "index out-of-range (received %s)",
                 autil_bigint_to_new_cstr(end_bigint, NULL));
         }
@@ -167,21 +165,21 @@ eval_rvalue(struct evaluator* evaluator, struct tir_expr const* expr)
         if (lhs->type->kind == TYPE_ARRAY) {
             if (begin_uz >= lhs->type->data.array.count) {
                 fatal(
-                    expr->data.index_slice.begin->location,
+                    expr->data.slice.begin->location,
                     "index out-of-bounds (array count is %zu, received %zu)",
                     lhs->type->data.array.count,
                     begin_uz);
             }
             if (end_uz >= lhs->type->data.array.count) {
                 fatal(
-                    expr->data.index_slice.begin->location,
+                    expr->data.slice.begin->location,
                     "index out-of-bounds (array count is %zu, received %zu)",
                     lhs->type->data.array.count,
                     end_uz);
             }
 
             struct value* const pointer =
-                eval_lvalue(evaluator, expr->data.index_slice.lhs);
+                eval_lvalue(evaluator, expr->data.slice.lhs);
             assert(pointer->type->kind == TYPE_POINTER);
             assert(pointer->data.pointer.kind == ADDRESS_STATIC);
             pointer->type = type_unique_pointer(expr->type->data.slice.base);
@@ -631,7 +629,7 @@ eval_lvalue(struct evaluator* evaluator, struct tir_expr const* expr)
     case TIR_EXPR_LITERAL_SLICE: /* fallthrough */
     case TIR_EXPR_SYSCALL: /* fallthrough */
     case TIR_EXPR_CALL: /* fallthrough */
-    case TIR_EXPR_INDEX_SLICE: /* fallthrough */
+    case TIR_EXPR_SLICE: /* fallthrough */
     case TIR_EXPR_BINARY: {
         UNREACHABLE();
     }

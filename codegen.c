@@ -530,11 +530,11 @@ codegen_rvalue_index_lhs_array(struct tir_expr const* expr);
 static void
 codegen_rvalue_index_lhs_slice(struct tir_expr const* expr);
 static void
-codegen_rvalue_index_slice(struct tir_expr const* expr);
+codegen_rvalue_slice(struct tir_expr const* expr);
 static void
-codegen_rvalue_index_slice_lhs_array(struct tir_expr const* expr);
+codegen_rvalue_slice_lhs_array(struct tir_expr const* expr);
 static void
-codegen_rvalue_index_slice_lhs_slice(struct tir_expr const* expr);
+codegen_rvalue_slice_lhs_slice(struct tir_expr const* expr);
 static void
 codegen_rvalue_unary(struct tir_expr const* expr);
 static void
@@ -1159,8 +1159,8 @@ codegen_rvalue(struct tir_expr const* expr)
         codegen_rvalue_index(expr);
         return;
     }
-    case TIR_EXPR_INDEX_SLICE: {
-        codegen_rvalue_index_slice(expr);
+    case TIR_EXPR_SLICE: {
+        codegen_rvalue_slice(expr);
         return;
     }
     case TIR_EXPR_UNARY: {
@@ -1468,9 +1468,9 @@ codegen_rvalue_index_lhs_slice(struct tir_expr const* expr)
     appendli("pop rax"); // index
     appendli("mov rbx, [rsp + 8]"); // slice count
     appendli("cmp rax, rbx");
-    appendli("jb .l%zu_index_slice_rvalue_calc", expr_id);
+    appendli("jb .l%zu_slice_rvalue_calc", expr_id);
     appendli("call __index_oob_handler");
-    appendln(".l%zu_index_slice_rvalue_calc:", expr_id);
+    appendln(".l%zu_slice_rvalue_calc:", expr_id);
     appendli("mov rbx, %zu", element_type->size); // sizeof(element_type)
     appendli("mul rbx"); // index * sizeof(element_type)
     appendli("pop rbx"); // start
@@ -1481,18 +1481,18 @@ codegen_rvalue_index_lhs_slice(struct tir_expr const* expr)
 }
 
 static void
-codegen_rvalue_index_slice(struct tir_expr const* expr)
+codegen_rvalue_slice(struct tir_expr const* expr)
 {
     assert(expr != NULL);
-    assert(expr->kind == TIR_EXPR_INDEX_SLICE);
+    assert(expr->kind == TIR_EXPR_SLICE);
 
-    if (expr->data.index_slice.lhs->type->kind == TYPE_ARRAY) {
-        codegen_rvalue_index_slice_lhs_array(expr);
+    if (expr->data.slice.lhs->type->kind == TYPE_ARRAY) {
+        codegen_rvalue_slice_lhs_array(expr);
         return;
     }
 
-    if (expr->data.index_slice.lhs->type->kind == TYPE_SLICE) {
-        codegen_rvalue_index_slice_lhs_slice(expr);
+    if (expr->data.slice.lhs->type->kind == TYPE_SLICE) {
+        codegen_rvalue_slice_lhs_slice(expr);
         return;
     }
 
@@ -1500,40 +1500,40 @@ codegen_rvalue_index_slice(struct tir_expr const* expr)
 }
 
 static void
-codegen_rvalue_index_slice_lhs_array(struct tir_expr const* expr)
+codegen_rvalue_slice_lhs_array(struct tir_expr const* expr)
 {
     assert(expr != NULL);
-    assert(expr->kind == TIR_EXPR_INDEX_SLICE);
-    assert(expr->data.index_slice.lhs->type->kind == TYPE_ARRAY);
-    assert(expr->data.index_slice.begin->type->kind == TYPE_USIZE);
-    assert(expr->data.index_slice.end->type->kind == TYPE_USIZE);
-    assert(tir_expr_is_lvalue(expr->data.index_slice.lhs));
+    assert(expr->kind == TIR_EXPR_SLICE);
+    assert(expr->data.slice.lhs->type->kind == TYPE_ARRAY);
+    assert(expr->data.slice.begin->type->kind == TYPE_USIZE);
+    assert(expr->data.slice.end->type->kind == TYPE_USIZE);
+    assert(tir_expr_is_lvalue(expr->data.slice.lhs));
     size_t const expr_id = unique_id++;
 
-    struct type const* const lhs_type = expr->data.index_slice.lhs->type;
+    struct type const* const lhs_type = expr->data.slice.lhs->type;
     struct type const* const element_type = lhs_type->data.array.base;
 
-    codegen_rvalue(expr->data.index_slice.end);
-    codegen_rvalue(expr->data.index_slice.begin);
+    codegen_rvalue(expr->data.slice.end);
+    codegen_rvalue(expr->data.slice.begin);
     appendli("pop rax"); // begin
     appendli("pop rbx"); // end
     appendli("mov rcx, %zu", lhs_type->data.array.count); // count
 
     appendli("cmp rax, rbx"); // cmp begin end
-    appendli("jb .l%zu_expr_index_slice_bgn_oob", expr_id); // jmp begin < end
+    appendli("jb .l%zu_expr_slice_bgn_oob", expr_id); // jmp begin < end
     appendli("call __index_oob_handler");
 
-    appendli(".l%zu_expr_index_slice_bgn_oob:", expr_id);
+    appendli(".l%zu_expr_slice_bgn_oob:", expr_id);
     appendli("cmp rax, rcx"); // cmp begin count
-    appendli("jb .l%zu_expr_index_slice_end_oob", expr_id); // jmp begin < count
+    appendli("jb .l%zu_expr_slice_end_oob", expr_id); // jmp begin < count
     appendli("call __index_oob_handler");
 
-    appendli(".l%zu_expr_index_slice_end_oob:", expr_id);
+    appendli(".l%zu_expr_slice_end_oob:", expr_id);
     appendli("cmp rbx, rcx"); // cmp end count
-    appendli("jbe .l%zu_expr_index_slice_calc", expr_id); // jmp end <= count
+    appendli("jbe .l%zu_expr_slice_calc", expr_id); // jmp end <= count
     appendli("call __index_oob_handler");
 
-    appendli(".l%zu_expr_index_slice_calc:", expr_id);
+    appendli(".l%zu_expr_slice_calc:", expr_id);
     appendli("sub rbx, rax"); // count = end - begin
     appendli("push rbx"); // push count
 
@@ -1543,7 +1543,7 @@ codegen_rvalue_index_slice_lhs_array(struct tir_expr const* expr)
 
     // NOTE: The call to codegen_lvalue will push __nil for slices with elements
     // of size zero, so we don't need a special case for that here.
-    codegen_lvalue(expr->data.index_slice.lhs);
+    codegen_lvalue(expr->data.slice.lhs);
     appendli("pop rax"); // start
     appendli("pop rbx"); // offset
     appendli("add rax, rbx"); // pointer = start + offset
@@ -1551,41 +1551,41 @@ codegen_rvalue_index_slice_lhs_array(struct tir_expr const* expr)
 }
 
 static void
-codegen_rvalue_index_slice_lhs_slice(struct tir_expr const* expr)
+codegen_rvalue_slice_lhs_slice(struct tir_expr const* expr)
 {
     assert(expr != NULL);
-    assert(expr->kind == TIR_EXPR_INDEX_SLICE);
-    assert(expr->data.index_slice.lhs->type->kind == TYPE_SLICE);
-    assert(expr->data.index_slice.begin->type->kind == TYPE_USIZE);
-    assert(expr->data.index_slice.end->type->kind == TYPE_USIZE);
+    assert(expr->kind == TIR_EXPR_SLICE);
+    assert(expr->data.slice.lhs->type->kind == TYPE_SLICE);
+    assert(expr->data.slice.begin->type->kind == TYPE_USIZE);
+    assert(expr->data.slice.end->type->kind == TYPE_USIZE);
     size_t const expr_id = unique_id++;
 
-    struct type const* const lhs_type = expr->data.index_slice.lhs->type;
+    struct type const* const lhs_type = expr->data.slice.lhs->type;
     struct type const* const element_type = lhs_type->data.slice.base;
 
-    codegen_rvalue(expr->data.index_slice.lhs);
-    codegen_rvalue(expr->data.index_slice.end);
-    codegen_rvalue(expr->data.index_slice.begin);
+    codegen_rvalue(expr->data.slice.lhs);
+    codegen_rvalue(expr->data.slice.end);
+    codegen_rvalue(expr->data.slice.begin);
     appendli("pop rax"); // begin
     appendli("pop rbx"); // end
     appendli("pop rsi"); // start (lhs slice's pointer)
     appendli("pop rcx"); // count
 
     appendli("cmp rax, rbx"); // cmp begin end
-    appendli("jb .l%zu_expr_index_slice_bgn_oob", expr_id); // jmp begin < end
+    appendli("jb .l%zu_expr_slice_bgn_oob", expr_id); // jmp begin < end
     appendli("call __index_oob_handler");
 
-    appendli(".l%zu_expr_index_slice_bgn_oob:", expr_id);
+    appendli(".l%zu_expr_slice_bgn_oob:", expr_id);
     appendli("cmp rax, rcx"); // cmp begin count
-    appendli("jb .l%zu_expr_index_slice_end_oob", expr_id); // jmp begin < count
+    appendli("jb .l%zu_expr_slice_end_oob", expr_id); // jmp begin < count
     appendli("call __index_oob_handler");
 
-    appendli(".l%zu_expr_index_slice_end_oob:", expr_id);
+    appendli(".l%zu_expr_slice_end_oob:", expr_id);
     appendli("cmp rbx, rcx"); // cmp end count
-    appendli("jbe .l%zu_expr_index_slice_calc", expr_id); // jmp end <= count
+    appendli("jbe .l%zu_expr_slice_calc", expr_id); // jmp end <= count
     appendli("call __index_oob_handler");
 
-    appendli(".l%zu_expr_index_slice_calc:", expr_id);
+    appendli(".l%zu_expr_slice_calc:", expr_id);
     appendli("sub rbx, rax"); // count = end - begin
     appendli("push rbx"); // push count
 
@@ -2047,7 +2047,7 @@ codegen_lvalue(struct tir_expr const* expr)
     case TIR_EXPR_LITERAL_SLICE: /* fallthrough */
     case TIR_EXPR_SYSCALL: /* fallthrough */
     case TIR_EXPR_CALL: /* fallthrough */
-    case TIR_EXPR_INDEX_SLICE: /* fallthrough */
+    case TIR_EXPR_SLICE: /* fallthrough */
     case TIR_EXPR_BINARY: {
         assert(!tir_expr_is_lvalue(expr));
         UNREACHABLE();
@@ -2127,9 +2127,9 @@ codegen_lvalue_index_lhs_slice(struct tir_expr const* expr)
     appendli("pop rax"); // index
     appendli("mov rbx, [rsp + 8]"); // slice count
     appendli("cmp rax, rbx");
-    appendli("jb .l%zu_index_slice_lvalue_calc", expr_id);
+    appendli("jb .l%zu_slice_lvalue_calc", expr_id);
     appendli("call __index_oob_handler");
-    appendln(".l%zu_index_slice_lvalue_calc:", expr_id);
+    appendln(".l%zu_slice_lvalue_calc:", expr_id);
     appendli("mov rbx, %zu", element_type->size); // sizeof(element_type)
     appendli("mul rbx"); // index * sizeof(element_type)
     appendli("pop rbx"); // start
