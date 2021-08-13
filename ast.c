@@ -262,7 +262,7 @@ ast_expr_new_literal_array(
 }
 
 struct ast_expr*
-ast_expr_new_slice(
+ast_expr_new_literal_slice(
     struct source_location const* location,
     struct ast_typespec const* typespec,
     struct ast_expr const* pointer,
@@ -273,10 +273,11 @@ ast_expr_new_slice(
     assert(pointer != NULL);
     assert(count != NULL);
 
-    struct ast_expr* const self = ast_expr_new(location, AST_EXPR_SLICE);
-    self->data.slice.typespec = typespec;
-    self->data.slice.pointer = pointer;
-    self->data.slice.count = count;
+    struct ast_expr* const self =
+        ast_expr_new(location, AST_EXPR_LITERAL_SLICE);
+    self->data.literal_slice.typespec = typespec;
+    self->data.literal_slice.pointer = pointer;
+    self->data.literal_slice.count = count;
     return self;
 }
 

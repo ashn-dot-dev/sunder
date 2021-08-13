@@ -112,9 +112,11 @@ resolve_expr_boolean(struct resolver* resolver, struct ast_expr const* expr);
 static struct tir_expr const*
 resolve_expr_integer(struct resolver* resolver, struct ast_expr const* expr);
 static struct tir_expr const*
-resolve_expr_array(struct resolver* resolver, struct ast_expr const* expr);
+resolve_expr_literal_array(
+    struct resolver* resolver, struct ast_expr const* expr);
 static struct tir_expr const*
-resolve_expr_slice(struct resolver* resolver, struct ast_expr const* expr);
+resolve_expr_literal_slice(
+    struct resolver* resolver, struct ast_expr const* expr);
 static struct tir_expr const*
 resolve_expr_syscall(struct resolver* resolver, struct ast_expr const* expr);
 static struct tir_expr const*
@@ -910,10 +912,10 @@ resolve_expr(struct resolver* resolver, struct ast_expr const* expr)
         return resolve_expr_integer(resolver, expr);
     }
     case AST_EXPR_LITERAL_ARRAY: {
-        return resolve_expr_array(resolver, expr);
+        return resolve_expr_literal_array(resolver, expr);
     }
-    case AST_EXPR_SLICE: {
-        return resolve_expr_slice(resolver, expr);
+    case AST_EXPR_LITERAL_SLICE: {
+        return resolve_expr_literal_slice(resolver, expr);
     }
     case AST_EXPR_GROUPED: {
         return resolve_expr(resolver, expr->data.grouped.expr);
@@ -1048,7 +1050,8 @@ resolve_expr_integer(struct resolver* resolver, struct ast_expr const* expr)
 }
 
 static struct tir_expr const*
-resolve_expr_array(struct resolver* resolver, struct ast_expr const* expr)
+resolve_expr_literal_array(
+    struct resolver* resolver, struct ast_expr const* expr)
 {
     assert(resolver != NULL);
     assert(expr != NULL);
@@ -1088,18 +1091,19 @@ resolve_expr_array(struct resolver* resolver, struct ast_expr const* expr)
 }
 
 static struct tir_expr const*
-resolve_expr_slice(struct resolver* resolver, struct ast_expr const* expr)
+resolve_expr_literal_slice(
+    struct resolver* resolver, struct ast_expr const* expr)
 {
     assert(resolver != NULL);
     assert(expr != NULL);
-    assert(expr->kind == AST_EXPR_SLICE);
+    assert(expr->kind == AST_EXPR_LITERAL_SLICE);
 
     struct type const* const type =
-        resolve_typespec(resolver, expr->data.slice.typespec);
+        resolve_typespec(resolver, expr->data.literal_slice.typespec);
     assert(type->kind == TYPE_SLICE);
 
     struct tir_expr const* const pointer =
-        resolve_expr(resolver, expr->data.slice.pointer);
+        resolve_expr(resolver, expr->data.literal_slice.pointer);
     if (pointer->type->kind != TYPE_POINTER) {
         fatal(
             pointer->location,
@@ -1112,12 +1116,12 @@ resolve_expr_slice(struct resolver* resolver, struct ast_expr const* expr)
         pointer->location, pointer->type, slice_pointer_type);
 
     struct tir_expr const* const count =
-        resolve_expr(resolver, expr->data.slice.count);
+        resolve_expr(resolver, expr->data.literal_slice.count);
     check_type_compatibility(
         count->location, count->type, context()->builtin.usize);
 
     struct tir_expr* const resolved =
-        tir_expr_new_slice(expr->location, type, pointer, count);
+        tir_expr_new_literal_slice(expr->location, type, pointer, count);
 
     autil_freezer_register(context()->freezer, resolved);
     return resolved;

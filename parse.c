@@ -701,7 +701,7 @@ parse_expr_lparen(struct parser* parser)
         expect_current(parser, TOKEN_RBRACE);
 
         struct ast_expr* const product =
-            ast_expr_new_slice(location, typespec, pointer, count);
+            ast_expr_new_literal_slice(location, typespec, pointer, count);
 
         autil_freezer_register(context()->freezer, product);
         return product;

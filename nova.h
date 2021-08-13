@@ -433,7 +433,7 @@ struct ast_expr {
         AST_EXPR_BOOLEAN,
         AST_EXPR_INTEGER,
         AST_EXPR_LITERAL_ARRAY,
-        AST_EXPR_SLICE,
+        AST_EXPR_LITERAL_SLICE,
         AST_EXPR_GROUPED,
         // Postfix Expressions
         AST_EXPR_SYSCALL,
@@ -457,7 +457,7 @@ struct ast_expr {
             struct ast_typespec const* typespec;
             struct ast_expr const* pointer;
             struct ast_expr const* count;
-        } slice;
+        } literal_slice;
         struct {
             struct ast_expr const* expr;
         } grouped;
@@ -500,7 +500,7 @@ ast_expr_new_literal_array(
     struct ast_typespec const* typespec,
     struct ast_expr const* const* elements);
 struct ast_expr*
-ast_expr_new_slice(
+ast_expr_new_literal_slice(
     struct source_location const* location,
     struct ast_typespec const* typespec,
     struct ast_expr const* pointer,
@@ -932,7 +932,7 @@ struct tir_expr {
         TIR_EXPR_BOOLEAN,
         TIR_EXPR_INTEGER,
         TIR_EXPR_LITERAL_ARRAY,
-        TIR_EXPR_SLICE,
+        TIR_EXPR_LITERAL_SLICE,
         TIR_EXPR_SYSCALL,
         TIR_EXPR_CALL,
         TIR_EXPR_INDEX,
@@ -950,7 +950,7 @@ struct tir_expr {
         struct {
             struct tir_expr const* pointer;
             struct tir_expr const* count;
-        } slice;
+        } literal_slice;
         struct {
             autil_sbuf(struct tir_expr const* const) arguments;
         } syscall;
@@ -1019,7 +1019,7 @@ tir_expr_new_literal_array(
     struct type const* type,
     struct tir_expr const* const* elements);
 struct tir_expr*
-tir_expr_new_slice(
+tir_expr_new_literal_slice(
     struct source_location const* location,
     struct type const* type,
     struct tir_expr const* pointer,

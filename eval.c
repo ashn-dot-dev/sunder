@@ -82,11 +82,11 @@ eval_rvalue(struct evaluator* evaluator, struct tir_expr const* expr)
         }
         return value_new_array(expr->type, evaled_elements);
     }
-    case TIR_EXPR_SLICE: {
+    case TIR_EXPR_LITERAL_SLICE: {
         struct value* const pointer =
-            eval_rvalue(evaluator, expr->data.slice.pointer);
+            eval_rvalue(evaluator, expr->data.literal_slice.pointer);
         struct value* const count =
-            eval_rvalue(evaluator, expr->data.slice.count);
+            eval_rvalue(evaluator, expr->data.literal_slice.count);
         return value_new_slice(expr->type, pointer, count);
     }
     case TIR_EXPR_SYSCALL: {
@@ -628,7 +628,7 @@ eval_lvalue(struct evaluator* evaluator, struct tir_expr const* expr)
     case TIR_EXPR_BOOLEAN: /* fallthrough */
     case TIR_EXPR_INTEGER: /* fallthrough */
     case TIR_EXPR_LITERAL_ARRAY: /* fallthrough */
-    case TIR_EXPR_SLICE: /* fallthrough */
+    case TIR_EXPR_LITERAL_SLICE: /* fallthrough */
     case TIR_EXPR_SYSCALL: /* fallthrough */
     case TIR_EXPR_CALL: /* fallthrough */
     case TIR_EXPR_INDEX_SLICE: /* fallthrough */

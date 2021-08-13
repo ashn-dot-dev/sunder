@@ -518,7 +518,7 @@ codegen_rvalue_integer(struct tir_expr const* expr);
 static void
 codegen_rvalue_literal_array(struct tir_expr const* expr);
 static void
-codegen_rvalue_slice(struct tir_expr const* expr);
+codegen_rvalue_literal_slice(struct tir_expr const* expr);
 static void
 codegen_rvalue_syscall(struct tir_expr const* expr);
 static void
@@ -1143,8 +1143,8 @@ codegen_rvalue(struct tir_expr const* expr)
         codegen_rvalue_literal_array(expr);
         return;
     }
-    case TIR_EXPR_SLICE: {
-        codegen_rvalue_slice(expr);
+    case TIR_EXPR_LITERAL_SLICE: {
+        codegen_rvalue_literal_slice(expr);
         return;
     }
     case TIR_EXPR_SYSCALL: {
@@ -1269,10 +1269,10 @@ codegen_rvalue_literal_array(struct tir_expr const* expr)
 }
 
 static void
-codegen_rvalue_slice(struct tir_expr const* expr)
+codegen_rvalue_literal_slice(struct tir_expr const* expr)
 {
     assert(expr != NULL);
-    assert(expr->kind == TIR_EXPR_SLICE);
+    assert(expr->kind == TIR_EXPR_LITERAL_SLICE);
     assert(expr->type->kind == TYPE_SLICE);
 
     // +---------+
@@ -1280,8 +1280,8 @@ codegen_rvalue_slice(struct tir_expr const* expr)
     // +---------+ <-- rsp + 0x8
     // | pointer |
     // +---------+ <-- rsp
-    codegen_rvalue(expr->data.slice.count);
-    codegen_rvalue(expr->data.slice.pointer);
+    codegen_rvalue(expr->data.literal_slice.count);
+    codegen_rvalue(expr->data.literal_slice.pointer);
 }
 
 static void
@@ -2044,7 +2044,7 @@ codegen_lvalue(struct tir_expr const* expr)
     case TIR_EXPR_BOOLEAN: /* fallthrough */
     case TIR_EXPR_INTEGER: /* fallthrough */
     case TIR_EXPR_LITERAL_ARRAY: /* fallthrough */
-    case TIR_EXPR_SLICE: /* fallthrough */
+    case TIR_EXPR_LITERAL_SLICE: /* fallthrough */
     case TIR_EXPR_SYSCALL: /* fallthrough */
     case TIR_EXPR_CALL: /* fallthrough */
     case TIR_EXPR_INDEX_SLICE: /* fallthrough */

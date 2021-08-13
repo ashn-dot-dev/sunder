@@ -50,7 +50,7 @@
 
 <expr-literal-array> ::= "(" ":" <typespec-array> ")" "[" (<expr> ("," <expr>)*)? "]"
 
-<expr-slice> ::= "(" ":" <typespec-slice> ")" "{" <expr> "," <expr> "}"
+<expr-literal-slice> ::= "(" ":" <typespec-slice> ")" "{" <expr> "," <expr> "}"
 
 <expr-grouped> ::= "(" <expr> ")"
 

@@ -201,9 +201,9 @@ order_expr(struct orderer* orderer, struct ast_expr const* expr)
         }
         return;
     }
-    case AST_EXPR_SLICE: {
-        order_expr(orderer, expr->data.slice.pointer);
-        order_expr(orderer, expr->data.slice.count);
+    case AST_EXPR_LITERAL_SLICE: {
+        order_expr(orderer, expr->data.literal_slice.pointer);
+        order_expr(orderer, expr->data.literal_slice.count);
         return;
     }
     case AST_EXPR_GROUPED: {

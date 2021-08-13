@@ -777,7 +777,7 @@ tir_expr_new_literal_array(
 }
 
 struct tir_expr*
-tir_expr_new_slice(
+tir_expr_new_literal_slice(
     struct source_location const* location,
     struct type const* type,
     struct tir_expr const* pointer,
@@ -789,9 +789,10 @@ tir_expr_new_slice(
     assert(pointer != NULL);
     assert(count != NULL);
 
-    struct tir_expr* const self = tir_expr_new(location, type, TIR_EXPR_SLICE);
-    self->data.slice.pointer = pointer;
-    self->data.slice.count = count;
+    struct tir_expr* const self =
+        tir_expr_new(location, type, TIR_EXPR_LITERAL_SLICE);
+    self->data.literal_slice.pointer = pointer;
+    self->data.literal_slice.count = count;
     return self;
 }
 
@@ -960,7 +961,7 @@ tir_expr_is_lvalue(struct tir_expr const* self)
     case TIR_EXPR_BOOLEAN: /* fallthrough */
     case TIR_EXPR_INTEGER: /* fallthrough */
     case TIR_EXPR_LITERAL_ARRAY: /* fallthrough */
-    case TIR_EXPR_SLICE: /* fallthrough */
+    case TIR_EXPR_LITERAL_SLICE: /* fallthrough */
     case TIR_EXPR_SYSCALL: /* fallthrough */
     case TIR_EXPR_CALL: /* fallthrough */
     case TIR_EXPR_INDEX_SLICE: /* fallthrough */
