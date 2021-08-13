@@ -246,7 +246,7 @@ ast_expr_new_integer(struct ast_integer const* integer)
 }
 
 struct ast_expr*
-ast_expr_new_array(
+ast_expr_new_literal_array(
     struct source_location const* location,
     struct ast_typespec const* typespec,
     struct ast_expr const* const* elements)
@@ -254,9 +254,10 @@ ast_expr_new_array(
     assert(location != NULL);
     assert(typespec != NULL);
 
-    struct ast_expr* const self = ast_expr_new(location, AST_EXPR_ARRAY);
-    self->data.array.typespec = typespec;
-    self->data.array.elements = elements;
+    struct ast_expr* const self =
+        ast_expr_new(location, AST_EXPR_LITERAL_ARRAY);
+    self->data.literal_array.typespec = typespec;
+    self->data.literal_array.elements = elements;
     return self;
 }
 

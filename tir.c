@@ -761,7 +761,7 @@ tir_expr_new_integer(
 }
 
 struct tir_expr*
-tir_expr_new_array(
+tir_expr_new_literal_array(
     struct source_location const* location,
     struct type const* type,
     struct tir_expr const* const* elements)
@@ -770,8 +770,9 @@ tir_expr_new_array(
     assert(type != NULL);
     assert(type->kind == TYPE_ARRAY);
 
-    struct tir_expr* const self = tir_expr_new(location, type, TIR_EXPR_ARRAY);
-    self->data.array.elements = elements;
+    struct tir_expr* const self =
+        tir_expr_new(location, type, TIR_EXPR_LITERAL_ARRAY);
+    self->data.literal_array.elements = elements;
     return self;
 }
 
@@ -958,7 +959,7 @@ tir_expr_is_lvalue(struct tir_expr const* self)
     }
     case TIR_EXPR_BOOLEAN: /* fallthrough */
     case TIR_EXPR_INTEGER: /* fallthrough */
-    case TIR_EXPR_ARRAY: /* fallthrough */
+    case TIR_EXPR_LITERAL_ARRAY: /* fallthrough */
     case TIR_EXPR_SLICE: /* fallthrough */
     case TIR_EXPR_SYSCALL: /* fallthrough */
     case TIR_EXPR_CALL: /* fallthrough */

@@ -72,9 +72,9 @@ eval_rvalue(struct evaluator* evaluator, struct tir_expr const* expr)
         assert(type_is_integer(expr->type));
         return value_new_integer(expr->type, autil_bigint_new(integer));
     }
-    case TIR_EXPR_ARRAY: {
+    case TIR_EXPR_LITERAL_ARRAY: {
         autil_sbuf(struct tir_expr const* const) elements =
-            expr->data.array.elements;
+            expr->data.literal_array.elements;
         autil_sbuf(struct value*) evaled_elements = NULL;
         for (size_t i = 0; i < autil_sbuf_count(elements); ++i) {
             autil_sbuf_push(
@@ -627,7 +627,7 @@ eval_lvalue(struct evaluator* evaluator, struct tir_expr const* expr)
     }
     case TIR_EXPR_BOOLEAN: /* fallthrough */
     case TIR_EXPR_INTEGER: /* fallthrough */
-    case TIR_EXPR_ARRAY: /* fallthrough */
+    case TIR_EXPR_LITERAL_ARRAY: /* fallthrough */
     case TIR_EXPR_SLICE: /* fallthrough */
     case TIR_EXPR_SYSCALL: /* fallthrough */
     case TIR_EXPR_CALL: /* fallthrough */

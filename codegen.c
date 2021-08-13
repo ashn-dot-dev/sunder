@@ -516,7 +516,7 @@ codegen_rvalue_boolean(struct tir_expr const* expr);
 static void
 codegen_rvalue_integer(struct tir_expr const* expr);
 static void
-codegen_rvalue_array(struct tir_expr const* expr);
+codegen_rvalue_literal_array(struct tir_expr const* expr);
 static void
 codegen_rvalue_slice(struct tir_expr const* expr);
 static void
@@ -1139,8 +1139,8 @@ codegen_rvalue(struct tir_expr const* expr)
         codegen_rvalue_integer(expr);
         return;
     }
-    case TIR_EXPR_ARRAY: {
-        codegen_rvalue_array(expr);
+    case TIR_EXPR_LITERAL_ARRAY: {
+        codegen_rvalue_literal_array(expr);
         return;
     }
     case TIR_EXPR_SLICE: {
@@ -1228,10 +1228,10 @@ codegen_rvalue_integer(struct tir_expr const* expr)
 }
 
 static void
-codegen_rvalue_array(struct tir_expr const* expr)
+codegen_rvalue_literal_array(struct tir_expr const* expr)
 {
     assert(expr != NULL);
-    assert(expr->kind == TIR_EXPR_ARRAY);
+    assert(expr->kind == TIR_EXPR_LITERAL_ARRAY);
     assert(expr->type->kind == TYPE_ARRAY);
 
     // Make space for the array.
@@ -1246,7 +1246,7 @@ codegen_rvalue_array(struct tir_expr const* expr)
     // 8-byte alignment, but arrays may have element alignment that does not
     // cleanly match the stack alignment (e.g. [count]bool).
     autil_sbuf(struct tir_expr const* const) const elements =
-        expr->data.array.elements;
+        expr->data.literal_array.elements;
     struct type const* const element_type = expr->type->data.array.base;
     size_t const element_size = element_type->size;
     // TODO: This loop is manually unrolled here, but should probably be turned
@@ -2043,7 +2043,7 @@ codegen_lvalue(struct tir_expr const* expr)
     }
     case TIR_EXPR_BOOLEAN: /* fallthrough */
     case TIR_EXPR_INTEGER: /* fallthrough */
-    case TIR_EXPR_ARRAY: /* fallthrough */
+    case TIR_EXPR_LITERAL_ARRAY: /* fallthrough */
     case TIR_EXPR_SLICE: /* fallthrough */
     case TIR_EXPR_SYSCALL: /* fallthrough */
     case TIR_EXPR_CALL: /* fallthrough */

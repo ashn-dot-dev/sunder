@@ -193,9 +193,9 @@ order_expr(struct orderer* orderer, struct ast_expr const* expr)
     case AST_EXPR_BOOLEAN: /* fallthrough */
     case AST_EXPR_INTEGER:
         return;
-    case AST_EXPR_ARRAY: {
+    case AST_EXPR_LITERAL_ARRAY: {
         autil_sbuf(struct ast_expr const* const) const elements =
-            expr->data.array.elements;
+            expr->data.literal_array.elements;
         for (size_t i = 0; i < autil_sbuf_count(elements); ++i) {
             order_expr(orderer, elements[i]);
         }

@@ -432,7 +432,7 @@ struct ast_expr {
         AST_EXPR_IDENTIFIER,
         AST_EXPR_BOOLEAN,
         AST_EXPR_INTEGER,
-        AST_EXPR_ARRAY,
+        AST_EXPR_LITERAL_ARRAY,
         AST_EXPR_SLICE,
         AST_EXPR_GROUPED,
         // Postfix Expressions
@@ -452,7 +452,7 @@ struct ast_expr {
         struct {
             struct ast_typespec const* typespec;
             autil_sbuf(struct ast_expr const* const) elements;
-        } array;
+        } literal_array;
         struct {
             struct ast_typespec const* typespec;
             struct ast_expr const* pointer;
@@ -495,7 +495,7 @@ ast_expr_new_boolean(struct ast_boolean const* boolean);
 struct ast_expr*
 ast_expr_new_integer(struct ast_integer const* integer);
 struct ast_expr*
-ast_expr_new_array(
+ast_expr_new_literal_array(
     struct source_location const* location,
     struct ast_typespec const* typespec,
     struct ast_expr const* const* elements);
@@ -931,7 +931,7 @@ struct tir_expr {
         TIR_EXPR_IDENTIFIER,
         TIR_EXPR_BOOLEAN,
         TIR_EXPR_INTEGER,
-        TIR_EXPR_ARRAY,
+        TIR_EXPR_LITERAL_ARRAY,
         TIR_EXPR_SLICE,
         TIR_EXPR_SYSCALL,
         TIR_EXPR_CALL,
@@ -946,7 +946,7 @@ struct tir_expr {
         struct autil_bigint const* integer;
         struct {
             autil_sbuf(struct tir_expr const* const) elements;
-        } array;
+        } literal_array;
         struct {
             struct tir_expr const* pointer;
             struct tir_expr const* count;
@@ -1014,7 +1014,7 @@ tir_expr_new_integer(
     struct type const* type,
     struct autil_bigint const* value);
 struct tir_expr*
-tir_expr_new_array(
+tir_expr_new_literal_array(
     struct source_location const* location,
     struct type const* type,
     struct tir_expr const* const* elements);

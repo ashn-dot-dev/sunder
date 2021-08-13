@@ -909,7 +909,7 @@ resolve_expr(struct resolver* resolver, struct ast_expr const* expr)
     case AST_EXPR_INTEGER: {
         return resolve_expr_integer(resolver, expr);
     }
-    case AST_EXPR_ARRAY: {
+    case AST_EXPR_LITERAL_ARRAY: {
         return resolve_expr_array(resolver, expr);
     }
     case AST_EXPR_SLICE: {
@@ -1052,13 +1052,13 @@ resolve_expr_array(struct resolver* resolver, struct ast_expr const* expr)
 {
     assert(resolver != NULL);
     assert(expr != NULL);
-    assert(expr->kind == AST_EXPR_ARRAY);
+    assert(expr->kind == AST_EXPR_LITERAL_ARRAY);
 
     struct type const* const type =
-        resolve_typespec(resolver, expr->data.array.typespec);
+        resolve_typespec(resolver, expr->data.literal_array.typespec);
 
     autil_sbuf(struct ast_expr const* const) elements =
-        expr->data.array.elements;
+        expr->data.literal_array.elements;
     autil_sbuf(struct tir_expr const*) resolved_elements = NULL;
     for (size_t i = 0; i < autil_sbuf_count(elements); ++i) {
         struct tir_expr const* const resolved_element =
@@ -1081,7 +1081,7 @@ resolve_expr_array(struct resolver* resolver, struct ast_expr const* expr)
     }
 
     struct tir_expr* const resolved =
-        tir_expr_new_array(expr->location, type, resolved_elements);
+        tir_expr_new_literal_array(expr->location, type, resolved_elements);
 
     autil_freezer_register(context()->freezer, resolved);
     return resolved;
