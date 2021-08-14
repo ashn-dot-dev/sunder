@@ -1262,6 +1262,11 @@ resolve_expr_slice(struct resolver* resolver, struct ast_expr const* expr)
             "illegal slice operation with left-hand-side of type `%s`",
             lhs->type->name);
     }
+    if (lhs->type->kind == TYPE_ARRAY && !tir_expr_is_lvalue(lhs)) {
+        fatal(
+            lhs->location,
+            "left hand side of slice operation is an rvalue array");
+    }
 
     struct tir_expr const* const begin =
         resolve_expr(resolver, expr->data.slice.begin);
