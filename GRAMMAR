@@ -38,8 +38,8 @@
 <expr> ::= <identifier>
          | <boolean>
          | <integer>
-         | <expr-array>
-         | <expr-slice>
+         | <expr-literal-array>
+         | <expr-literal-slice>
          | <expr-grouped>
          | <expr-syscall>
          | <expr-call>
