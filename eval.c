@@ -132,7 +132,8 @@ eval_rvalue(struct evaluator* evaluator, struct tir_expr const* expr)
             // is more-or-less pointer dereferencing) in a constant expression.
             fatal(
                 expr->location,
-                "slice element indexing not supported in compile-time expressions");
+                "indexing with left-hand-type `%s` not supported in compile-time expressions",
+                lhs->type->name);
         }
 
         UNREACHABLE();
@@ -208,7 +209,8 @@ eval_rvalue(struct evaluator* evaluator, struct tir_expr const* expr)
             // is more-or-less pointer dereferencing) in a constant expression.
             fatal(
                 expr->location,
-                "slice indexing not supported in compile-time expressions");
+                "slicing with left-hand-type `%s` not supported in compile-time expressions",
+                lhs->type->name);
         }
 
         UNREACHABLE();
