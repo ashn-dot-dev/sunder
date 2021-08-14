@@ -1433,8 +1433,14 @@ codegen_rvalue_index_lhs_array(struct tir_expr const* expr)
     appendli("mul rbx"); // index * sizeof(element_type)
     appendli("add rax, rsp"); // start + index * sizeof(element_type)
     // rbx := destination
-    appendli("mov rbx, %zu", lhs_type->size); // sizeof(array)
-    appendli("add rbx, rsp", lhs_type); // start  + sizeof(array)
+    // NOTE: The push and pop operations that manage the stack-allocated array
+    // align to an 8-byte boundry, but the array itself may or may not have a
+    // size cleanly divisible by 8 (as in the case of the type [3u]u16). The
+    // ceil8 of the sizeof the left hand side array is used to account for any
+    // extra padding at the end of the array required to bring the total push
+    // size to a modulo 8 value.
+    appendli("mov rbx, %zu", ceil8zu(lhs_type->size)); // aligned sizeof(array)
+    appendli("add rbx, rsp"); // start + aligned sizeof(array)
     // copy
     copy_rax_rbx_via_rcx(element_type->size);
 
