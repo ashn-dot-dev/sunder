@@ -118,7 +118,8 @@
                    | <integer-number-dec>
                    | <integer-number-hex>
 
-<integer-suffix> ::= "u8"
+<integer-suffix> ::= "y"
+                   | "u8"
                    | "s8"
                    | "u16"
                    | "s16"
