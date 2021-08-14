@@ -1,0 +1,8 @@
+func exit(status: ssize) void {
+    syscall(60s, status);
+}
+
+func main() void {
+    exit(123s);
+    dump 0xDEADBEEFu32;
+}
