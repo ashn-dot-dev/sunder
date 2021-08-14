@@ -45,6 +45,10 @@ func main() void {
     dump i[0u];
     dump i[1u];
     dump i[2u];
+
+    var j: []u16 = b[1u:3u];
+    dump j[0u];
+    dump j[1u];
 }
 ################################################################################
 # BB BB
@@ -64,5 +68,7 @@ func main() void {
 # EE EE
 # FF FF
 # AA AA
+# BB BB
+# CC CC
 # BB BB
 # CC CC

@@ -1259,7 +1259,7 @@ resolve_expr_slice(struct resolver* resolver, struct ast_expr const* expr)
     if (lhs->type->kind != TYPE_ARRAY && lhs->type->kind != TYPE_SLICE) {
         fatal(
             lhs->location,
-            "illegal index operation with left-hand-side of type `%s`",
+            "illegal slice operation with left-hand-side of type `%s`",
             lhs->type->name);
     }
 
@@ -1268,7 +1268,7 @@ resolve_expr_slice(struct resolver* resolver, struct ast_expr const* expr)
     if (begin->type->kind != TYPE_USIZE) {
         fatal(
             begin->location,
-            "illegal index operation with index of non-usize type `%s`",
+            "illegal slice operation with index of non-usize type `%s`",
             begin->type->name);
     }
 
@@ -1277,7 +1277,7 @@ resolve_expr_slice(struct resolver* resolver, struct ast_expr const* expr)
     if (end->type->kind != TYPE_USIZE) {
         fatal(
             end->location,
-            "illegal index operation with index of non-usize type `%s`",
+            "illegal slice operation with index of non-usize type `%s`",
             end->type->name);
     }
 
