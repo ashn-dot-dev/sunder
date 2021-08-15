@@ -969,7 +969,8 @@ tir_expr_is_lvalue(struct tir_expr const* self)
         UNREACHABLE();
     }
     case TIR_EXPR_INDEX: {
-        return tir_expr_is_lvalue(self->data.index.lhs);
+        return self->data.index.lhs->type->kind == TYPE_SLICE
+            || tir_expr_is_lvalue(self->data.index.lhs);
     }
     case TIR_EXPR_UNARY: {
         return self->data.unary.op == UOP_DEREFERENCE;

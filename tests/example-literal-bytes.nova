@@ -22,8 +22,7 @@ func main() void {
     print(&dquote[0u], 4u);
     print(&bslash[0u], 4u);
 
-    var a: []byte = "foobar\n"[3u:7u];
-    print(&a[0u], 4u);
+    print(&"foobar\n"[3u:7u][0u], 4u);
 
     var b: []byte = "lorem ipsum dolor sit amet";
     var c: []byte = "consectetur adipiscing elit";
