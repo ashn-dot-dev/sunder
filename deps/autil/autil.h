@@ -575,7 +575,7 @@ autil_bigint_new_text(char const* start, size_t count);
 // Does nothing if self == NULL.
 AUTIL_API void
 autil_bigint_del(struct autil_bigint* self);
-// Register resources within bigint with the provided freezer.
+// Register resources within the bigint with the provided freezer.
 AUTIL_API void
 autil_bigint_freeze(struct autil_bigint* self, struct autil_freezer* freezer);
 
@@ -711,6 +711,9 @@ autil_string_new_fmt(char const* fmt, ...);
 // Does nothing if self == NULL.
 AUTIL_API void
 autil_string_del(struct autil_string* self);
+// Register resources within the string with the provided freezer.
+AUTIL_API void
+autil_string_freeze(struct autil_string* self, struct autil_freezer* freezer);
 
 // Pointer to the start of the underlying char array of the string.
 // Returns a pointer to a NUL terminator when the count of the string is zero.
@@ -2918,6 +2921,16 @@ autil_string_del(struct autil_string* self)
     autil_xalloc(self->start, AUTIL_XALLOC_FREE);
     memset(self, 0x00, sizeof(*self)); // scrub
     autil_xalloc(self, AUTIL_XALLOC_FREE);
+}
+
+AUTIL_API void
+autil_string_freeze(struct autil_string* self, struct autil_freezer* freezer)
+{
+    assert(self != NULL);
+    assert(freezer != NULL);
+
+    autil_freezer_register(freezer, self);
+    autil_freezer_register(freezer, self->start);
 }
 
 AUTIL_API char const*

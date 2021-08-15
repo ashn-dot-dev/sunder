@@ -516,6 +516,8 @@ codegen_rvalue_boolean(struct tir_expr const* expr);
 static void
 codegen_rvalue_integer(struct tir_expr const* expr);
 static void
+codegen_rvalue_bytes(struct tir_expr const* expr);
+static void
 codegen_rvalue_literal_array(struct tir_expr const* expr);
 static void
 codegen_rvalue_literal_slice(struct tir_expr const* expr);
@@ -1139,6 +1141,10 @@ codegen_rvalue(struct tir_expr const* expr)
         codegen_rvalue_integer(expr);
         return;
     }
+    case TIR_EXPR_BYTES: {
+        codegen_rvalue_bytes(expr);
+        return;
+    }
     case TIR_EXPR_LITERAL_ARRAY: {
         codegen_rvalue_literal_array(expr);
         return;
@@ -1225,6 +1231,17 @@ codegen_rvalue_integer(struct tir_expr const* expr)
     appendli("push rax");
 
     autil_xalloc(cstr, AUTIL_XALLOC_FREE);
+}
+
+static void
+codegen_rvalue_bytes(struct tir_expr const* expr)
+{
+    assert(expr != NULL);
+    assert(expr->kind == TIR_EXPR_BYTES);
+    assert(expr->type->kind == TYPE_SLICE);
+
+    appendli("push %zu", expr->data.bytes.count); // count
+    push_address(expr->data.bytes.address); // pointer
 }
 
 static void
@@ -2049,6 +2066,7 @@ codegen_lvalue(struct tir_expr const* expr)
     }
     case TIR_EXPR_BOOLEAN: /* fallthrough */
     case TIR_EXPR_INTEGER: /* fallthrough */
+    case TIR_EXPR_BYTES: /* fallthrough */
     case TIR_EXPR_LITERAL_ARRAY: /* fallthrough */
     case TIR_EXPR_LITERAL_SLICE: /* fallthrough */
     case TIR_EXPR_SYSCALL: /* fallthrough */

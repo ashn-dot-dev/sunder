@@ -761,6 +761,22 @@ tir_expr_new_integer(
 }
 
 struct tir_expr*
+tir_expr_new_bytes(
+    struct source_location const* location,
+    struct address const* address,
+    size_t count)
+{
+    assert(location != NULL);
+    assert(address != NULL);
+
+    struct type const* const type = type_unique_slice(context()->builtin.byte);
+    struct tir_expr* const self = tir_expr_new(location, type, TIR_EXPR_BYTES);
+    self->data.bytes.address = address;
+    self->data.bytes.count = count;
+    return self;
+}
+
+struct tir_expr*
 tir_expr_new_literal_array(
     struct source_location const* location,
     struct type const* type,
@@ -960,6 +976,7 @@ tir_expr_is_lvalue(struct tir_expr const* self)
     }
     case TIR_EXPR_BOOLEAN: /* fallthrough */
     case TIR_EXPR_INTEGER: /* fallthrough */
+    case TIR_EXPR_BYTES: /* fallthrough */
     case TIR_EXPR_LITERAL_ARRAY: /* fallthrough */
     case TIR_EXPR_LITERAL_SLICE: /* fallthrough */
     case TIR_EXPR_SYSCALL: /* fallthrough */

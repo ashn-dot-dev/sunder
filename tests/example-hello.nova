@@ -1,22 +1,14 @@
-# $ python3 -q
-# >>> s = "Hello, world!\n"
-# >>> ["{:02x}".format(ord(b)) for b in s]
-# ['48', '65', '6c', '6c', '6f', '2c', '20', '77', '6f', '72', '6c', '64', '21', '0a']
-# >>> len(s)
-# 14
-var hello: [14u]byte = (:[14u]byte)[
-    0x48y, 0x65y, 0x6Cy, 0x6Cy, 0x6Fy, 0x2Cy, 0x20y, 0x77y,
-    0x6Fy, 0x72y, 0x6Cy, 0x64y, 0x21y, 0x0Ay
-];
-
-func write(fd: ssize, buf: *byte, count: usize) void {
+func print(str: []byte, count: usize) void {
+    if (count == 0u) {
+        return;
+    }
     const SYS_WRITE: ssize = 1s;
-    syscall(SYS_WRITE, fd, buf, 14u);
+    const STDOUT_FILENO: ssize = 1s;
+    syscall(SYS_WRITE, STDOUT_FILENO, &str[0u], count);
 }
 
 func main() void {
-    const STDOUT_FILENO: ssize = 1s;
-    write(STDOUT_FILENO, &hello[0u], 14u);
+    print("Hello, world!\n", 14u);
 }
 ################################################################################
 # Hello, world!

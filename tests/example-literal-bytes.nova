@@ -1,0 +1,41 @@
+const hello: []byte = "Hello, world!\n";
+const nul: []byte = ">\0<\n";
+const ht: []byte = ">\t<\n";
+const nl: []byte = ">\n<\n";
+const dquote: []byte = ">\"<\n";
+const bslash: []byte = ">\\<\n";
+
+func print(buf: *byte, count: usize) void {
+    const SYS_WRITE: ssize = 1s;
+    const STDOUT_FILENO: ssize = 1s;
+    syscall(SYS_WRITE, STDOUT_FILENO, buf, count);
+}
+
+func main() void {
+    print(&hello[0u], 14u);
+
+    # The NUL byte \0 is embedded in this source file as part of the expected
+    # output would create an invalid source encoding. Skip testing the NUL byte
+    # and assume that the global `nul` constant produced the correct bytes
+    # literal.
+    print(&ht[0u], 4u);
+    print(&nl[0u], 4u);
+    print(&dquote[0u], 4u);
+    print(&bslash[0u], 4u);
+
+    var a: []byte = "foobar\n"[3u:7u];
+    print(&a[0u], 4u);
+
+    var b: []byte = "lorem ipsum dolor sit amet";
+    var c: []byte = "consectetur adipiscing elit";
+    dump b[1u] == c[1u]; # o
+}
+################################################################################
+# Hello, world!
+# >	<
+# >
+# <
+# >"<
+# >\<
+# bar
+# 01

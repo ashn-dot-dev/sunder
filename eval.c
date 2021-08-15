@@ -72,6 +72,16 @@ eval_rvalue(struct evaluator* evaluator, struct tir_expr const* expr)
         assert(type_is_integer(expr->type));
         return value_new_integer(expr->type, autil_bigint_new(integer));
     }
+    case TIR_EXPR_BYTES: {
+        struct value* const pointer = value_new_pointer(
+            type_unique_pointer(context()->builtin.byte),
+            *expr->data.bytes.address);
+        char buf[256] = {0};
+        snprintf(buf, AUTIL_ARRAY_COUNT(buf), "%zu", expr->data.bytes.count);
+        struct value* const count = value_new_integer(
+            context()->builtin.usize, autil_bigint_new_cstr(buf));
+        return value_new_slice(expr->type, pointer, count);
+    }
     case TIR_EXPR_LITERAL_ARRAY: {
         autil_sbuf(struct tir_expr const* const) elements =
             expr->data.literal_array.elements;
@@ -627,6 +637,7 @@ eval_lvalue(struct evaluator* evaluator, struct tir_expr const* expr)
     }
     case TIR_EXPR_BOOLEAN: /* fallthrough */
     case TIR_EXPR_INTEGER: /* fallthrough */
+    case TIR_EXPR_BYTES: /* fallthrough */
     case TIR_EXPR_LITERAL_ARRAY: /* fallthrough */
     case TIR_EXPR_LITERAL_SLICE: /* fallthrough */
     case TIR_EXPR_SYSCALL: /* fallthrough */

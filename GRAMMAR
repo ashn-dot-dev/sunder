@@ -38,6 +38,7 @@
 <expr> ::= <identifier>
          | <boolean>
          | <integer>
+         | <expr-bytes>
          | <expr-literal-array>
          | <expr-literal-slice>
          | <expr-grouped>
@@ -47,6 +48,15 @@
          | <expr-index-slice>
          | <expr-unary>
          | <expr-binary>
+
+<expr-bytes> ::= '"' <literal-bytes-element>* '"'
+
+<bytes-element> ::= "\0"
+                  | "\t"
+                  | "\n"
+                  | '\"'
+                  | "\\"
+                  | ? printable ASCII character ?
 
 <expr-literal-array> ::= "(" ":" <typespec-array> ")" "[" (<expr> ("," <expr>)*)? "]"
 

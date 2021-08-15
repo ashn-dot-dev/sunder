@@ -246,6 +246,18 @@ ast_expr_new_integer(struct ast_integer const* integer)
 }
 
 struct ast_expr*
+ast_expr_new_bytes(
+    struct source_location const* location, struct autil_string const* bytes)
+{
+    assert(location != NULL);
+    assert(bytes != NULL);
+
+    struct ast_expr* const self = ast_expr_new(location, AST_EXPR_BYTES);
+    self->data.bytes = bytes;
+    return self;
+}
+
+struct ast_expr*
 ast_expr_new_literal_array(
     struct source_location const* location,
     struct ast_typespec const* typespec,

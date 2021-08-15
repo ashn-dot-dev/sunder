@@ -55,6 +55,7 @@ static struct autil_vstr token_kind_vstrs[TOKEN_EOF + 1u] = {
     // Identifiers and Non-Keyword Literals
     [TOKEN_IDENTIFIER] = AUTIL_VSTR_INIT_STR_LITERAL("identifier"),
     [TOKEN_INTEGER] = AUTIL_VSTR_INIT_STR_LITERAL("integer"),
+    [TOKEN_BYTES] = AUTIL_VSTR_INIT_STR_LITERAL("bytes"),
     // Meta
     [TOKEN_EOF] = AUTIL_VSTR_INIT_STR_LITERAL("end-of-file"),
 };
@@ -281,6 +282,85 @@ lex_integer(struct lexer* self)
 }
 
 static struct token*
+lex_bytes(struct lexer* self)
+{
+    assert(self != NULL);
+    assert(*self->current == '"');
+
+    char const* const start = self->current;
+    self->current += 1;
+    struct autil_string* bytes = autil_string_new(NULL, 0);
+    while (*self->current != '"') {
+        if (*self->current == '\n') {
+            struct source_location const location = {
+                self->module->path, self->current_line, self->current};
+            fatal(&location, "end-of-line encountered in bytes literal");
+        }
+        if (!autil_isprint(*self->current)) {
+            struct source_location const location = {
+                self->module->path, self->current_line, self->current};
+            fatal(
+                &location,
+                "non-printable byte %x in bytes literal",
+                (unsigned char)*self->current);
+        }
+
+        if (*self->current != '\\') {
+            autil_string_append_fmt(bytes, "%c", *self->current);
+            self->current += 1;
+            continue;
+        }
+
+        self->current += 1;
+        switch (*self->current) {
+        case '0': {
+            autil_string_append_fmt(bytes, "%c", '\0');
+            self->current += 1;
+            break;
+        }
+        case 't': {
+            autil_string_append_fmt(bytes, "%c", '\t');
+            self->current += 1;
+            break;
+        }
+        case 'n': {
+            autil_string_append_fmt(bytes, "%c", '\n');
+            self->current += 1;
+            break;
+        }
+        case '\"': {
+            autil_string_append_fmt(bytes, "%c", '\"');
+            self->current += 1;
+            break;
+        }
+        case '\\': {
+            autil_string_append_fmt(bytes, "%c", '\\');
+            self->current += 1;
+            break;
+        }
+        default: {
+            struct source_location const location = {
+                self->module->path, self->current_line, self->current};
+            fatal(&location, "unknown escape sequence");
+        }
+        }
+    }
+
+    assert(*self->current == '"');
+    self->current += 1;
+
+    autil_string_freeze(bytes, context()->freezer);
+    struct token* token = token_new(
+        start,
+        (size_t)(self->current - start),
+        self->next_token_location,
+        TOKEN_BYTES);
+    token->data.bytes = bytes;
+
+    return token;
+}
+
+static struct token*
 lex_sigil(struct lexer* self)
 {
     assert(self != NULL);
@@ -328,6 +408,9 @@ lexer_next_token(struct lexer* self)
     }
     if (autil_isdigit(ch)) {
         return lex_integer(self);
+    }
+    if (ch == '"') {
+        return lex_bytes(self);
     }
     if (autil_ispunct(ch)) {
         return lex_sigil(self);

@@ -269,6 +269,7 @@ enum token_kind {
     // Identifiers and Non-Keyword Literals
     TOKEN_IDENTIFIER,
     TOKEN_INTEGER,
+    TOKEN_BYTES,
     // Meta
     TOKEN_EOF,
 };
@@ -282,10 +283,14 @@ struct token {
 
     enum token_kind kind;
     union {
+        // TOKEN_INTEGER
         struct {
             struct autil_vstr number;
             struct autil_vstr suffix;
         } integer;
+        // TOKEN_LITERAL_BYTES
+        // Contains the unescaped bytes of literal.
+        struct autil_string const* bytes;
     } data;
 };
 char*
@@ -432,6 +437,7 @@ struct ast_expr {
         AST_EXPR_IDENTIFIER,
         AST_EXPR_BOOLEAN,
         AST_EXPR_INTEGER,
+        AST_EXPR_BYTES,
         AST_EXPR_LITERAL_ARRAY,
         AST_EXPR_LITERAL_SLICE,
         AST_EXPR_GROUPED,
@@ -449,6 +455,7 @@ struct ast_expr {
         struct ast_identifier const* identifier;
         struct ast_boolean const* boolean;
         struct ast_integer const* integer;
+        struct autil_string const* bytes;
         struct {
             struct ast_typespec const* typespec;
             autil_sbuf(struct ast_expr const* const) elements;
@@ -494,6 +501,9 @@ struct ast_expr*
 ast_expr_new_boolean(struct ast_boolean const* boolean);
 struct ast_expr*
 ast_expr_new_integer(struct ast_integer const* integer);
+struct ast_expr*
+ast_expr_new_bytes(
+    struct source_location const* location, struct autil_string const* bytes);
 struct ast_expr*
 ast_expr_new_literal_array(
     struct source_location const* location,
@@ -931,6 +941,7 @@ struct tir_expr {
         TIR_EXPR_IDENTIFIER,
         TIR_EXPR_BOOLEAN,
         TIR_EXPR_INTEGER,
+        TIR_EXPR_BYTES,
         TIR_EXPR_LITERAL_ARRAY,
         TIR_EXPR_LITERAL_SLICE,
         TIR_EXPR_SYSCALL,
@@ -944,6 +955,10 @@ struct tir_expr {
         struct symbol const* identifier;
         bool boolean;
         struct autil_bigint const* integer;
+        struct {
+            struct address const* address;
+            size_t count;
+        } bytes;
         struct {
             autil_sbuf(struct tir_expr const* const) elements;
         } literal_array;
@@ -1013,6 +1028,11 @@ tir_expr_new_integer(
     struct source_location const* location,
     struct type const* type,
     struct autil_bigint const* value);
+struct tir_expr*
+tir_expr_new_bytes(
+    struct source_location const* location,
+    struct address const* address,
+    size_t count);
 struct tir_expr*
 tir_expr_new_literal_array(
     struct source_location const* location,

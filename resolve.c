@@ -112,6 +112,8 @@ resolve_expr_boolean(struct resolver* resolver, struct ast_expr const* expr);
 static struct tir_expr const*
 resolve_expr_integer(struct resolver* resolver, struct ast_expr const* expr);
 static struct tir_expr const*
+resolve_expr_bytes(struct resolver* resolver, struct ast_expr const* expr);
+static struct tir_expr const*
 resolve_expr_literal_array(
     struct resolver* resolver, struct ast_expr const* expr);
 static struct tir_expr const*
@@ -910,6 +912,9 @@ resolve_expr(struct resolver* resolver, struct ast_expr const* expr)
     case AST_EXPR_INTEGER: {
         return resolve_expr_integer(resolver, expr);
     }
+    case AST_EXPR_BYTES: {
+        return resolve_expr_bytes(resolver, expr);
+    }
     case AST_EXPR_LITERAL_ARRAY: {
         return resolve_expr_literal_array(resolver, expr);
     }
@@ -1043,6 +1048,45 @@ resolve_expr_integer(struct resolver* resolver, struct ast_expr const* expr)
 
     struct tir_expr* const resolved =
         tir_expr_new_integer(expr->location, type, value);
+
+    autil_freezer_register(context()->freezer, resolved);
+    return resolved;
+}
+
+static struct tir_expr const*
+resolve_expr_bytes(struct resolver* resolver, struct ast_expr const* expr)
+{
+    assert(resolver != NULL);
+    assert(expr != NULL);
+    assert(expr->kind == AST_EXPR_BYTES);
+
+    struct address const* const address =
+        resolver_reserve_storage_static(resolver, "__bytes");
+
+    size_t const count = autil_string_count(expr->data.bytes);
+    struct type const* const type =
+        type_unique_array(count, context()->builtin.byte);
+    // TODO: Allocating a value for each and every byte in the bytes literal
+    // feels wasteful. It may be worth investigating some specific ascii or
+    // asciiz static object that would use the expr's autil_string directly and
+    // then generate a readable string in the output assembly during the codegen
+    // phase.
+    autil_sbuf(struct value*) elements = NULL;
+    for (size_t i = 0; i < count; ++i) {
+        uint8_t const byte =
+            (uint8_t)*autil_string_ref_const(expr->data.bytes, i);
+        autil_sbuf_push(elements, value_new_byte(byte));
+    }
+    struct value* const value = value_new_array(type, elements);
+    value_freeze(value, context()->freezer);
+
+    struct symbol* const symbol = symbol_new_constant(
+        expr->location, address->data.static_.name, type, address, value);
+    autil_freezer_register(context()->freezer, symbol);
+    register_static_symbol(symbol);
+
+    struct tir_expr* const resolved =
+        tir_expr_new_bytes(expr->location, address, count);
 
     autil_freezer_register(context()->freezer, resolved);
     return resolved;
