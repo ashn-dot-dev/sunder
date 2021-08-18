@@ -46,6 +46,7 @@
          | <expr-call>
          | <expr-index>
          | <expr-index-slice>
+         | <expr-countof>
          | <expr-unary>
          | <expr-binary>
 
@@ -78,6 +79,7 @@
                | "~" <expr>
                | "*" <expr>
                | "&" <expr>
+               | "countof" "(" <expr> ")"
 
 <expr-binary> ::= <expr> "or" <expr>
                 | <expr> "and" <expr>

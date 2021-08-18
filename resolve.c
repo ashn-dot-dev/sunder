@@ -158,6 +158,11 @@ resolve_expr_unary_addressof(
     struct token const* op,
     struct tir_expr const* rhs);
 static struct tir_expr const*
+resolve_expr_unary_countof(
+    struct resolver* resolver,
+    struct token const* op,
+    struct tir_expr const* rhs);
+static struct tir_expr const*
 resolve_expr_binary(struct resolver* resolver, struct ast_expr const* expr);
 static struct tir_expr const*
 resolve_expr_binary_logical(
@@ -1379,6 +1384,9 @@ resolve_expr_unary(struct resolver* resolver, struct ast_expr const* expr)
     case TOKEN_NOT: {
         return resolve_expr_unary_logical(resolver, op, UOP_NOT, rhs);
     }
+    case TOKEN_COUNTOF: {
+        return resolve_expr_unary_countof(resolver, op, rhs);
+    }
     case TOKEN_PLUS: {
         return resolve_expr_unary_arithmetic(resolver, op, UOP_POS, rhs);
     }
@@ -1527,6 +1535,31 @@ resolve_expr_unary_addressof(
 
     struct tir_expr* const resolved = tir_expr_new_unary(
         &op->location, type_unique_pointer(rhs->type), UOP_ADDRESSOF, rhs);
+
+    autil_freezer_register(context()->freezer, resolved);
+    return resolved;
+}
+
+static struct tir_expr const*
+resolve_expr_unary_countof(
+    struct resolver* resolver,
+    struct token const* op,
+    struct tir_expr const* rhs)
+{
+    assert(resolver != NULL);
+    assert(op != NULL);
+    assert(op->kind == TOKEN_COUNTOF);
+    assert(rhs != NULL);
+
+    if (rhs->type->kind != TYPE_ARRAY && rhs->type->kind != TYPE_SLICE) {
+        fatal(
+            rhs->location,
+            "expected array or slice type (received `%s`)",
+            rhs->type->name);
+    }
+
+    struct tir_expr* const resolved = tir_expr_new_unary(
+        &op->location, context()->builtin.usize, UOP_COUNTOF, rhs);
 
     autil_freezer_register(context()->freezer, resolved);
     return resolved;

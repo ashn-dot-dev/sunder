@@ -1284,7 +1284,9 @@ value_clone(struct value const* self)
     }
     case TYPE_SLICE: {
         return value_new_slice(
-            self->type, self->data.slice.pointer, self->data.slice.count);
+            self->type,
+            value_clone(self->data.slice.pointer),
+            value_clone(self->data.slice.count));
     }
     }
 

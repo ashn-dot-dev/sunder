@@ -1,0 +1,60 @@
+const a: usize = countof((:[3u]u16)[0xAAAAu16, 0xBBBBu16, 0xCCCCu16]);
+
+const b: [3u]u16 = (:[3u]u16)[0xAAAAu16, 0xBBBBu16, 0xCCCCu16];
+const c: usize = countof(b);
+const d: usize = countof(b[1u:3u]);
+
+const e: []u16 = b[1u:3u];
+const f: usize = countof(e);
+
+func ident(val: u16) u16 {
+    dump val;
+    return val;
+}
+
+var tmp: [3u]u16 = (:[3u]u16)[0u16, 0u16, 0u16];
+func foo() *[3u]u16 {
+    tmp = (:[3u]u16)[
+        ident(0xAAAAu16),
+        ident(0xBBBBu16),
+        ident(0xCCCCu16)
+    ];
+    return &tmp;
+}
+
+func main() void {
+    dump a;
+    dump c;
+    dump d;
+    dump f;
+
+    dump countof((:[3u]u16)[0xAAAAu16, 0xBBBBu16, 0xCCCCu16]);
+
+    var g: usize = countof((:[3u]u16)[0xAAAAu16, 0xBBBBu16, 0xCCCCu16]);
+    var h: usize = countof(b[1u:3u]);
+    dump g;
+    dump h;
+
+    dump countof((:[3u]u16)[
+        ident(0xAAAAu16),
+        ident(0xBBBBu16),
+        ident(0xCCCCu16)
+    ]);
+    dump countof(*foo());
+}
+################################################################################
+# 03 00 00 00 00 00 00 00
+# 03 00 00 00 00 00 00 00
+# 02 00 00 00 00 00 00 00
+# 02 00 00 00 00 00 00 00
+# 03 00 00 00 00 00 00 00
+# 03 00 00 00 00 00 00 00
+# 02 00 00 00 00 00 00 00
+# AA AA
+# BB BB
+# CC CC
+# 03 00 00 00 00 00 00 00
+# AA AA
+# BB BB
+# CC CC
+# 03 00 00 00 00 00 00 00

@@ -545,6 +545,7 @@ token_kind_nud(enum token_kind kind)
     case TOKEN_SYSCALL:
         return parse_expr_syscall;
     case TOKEN_NOT: /* fallthrough */
+    case TOKEN_COUNTOF: /* fallthrough */
     case TOKEN_PLUS: /* fallthrough */
     case TOKEN_DASH: /* fallthrough */
     case TOKEN_TILDE: /* fallthrough */
@@ -815,8 +816,17 @@ parse_expr_nud_unary(struct parser* parser)
     assert(parser != NULL);
 
     struct token const* const op = advance_token(parser);
+    bool const paren = op->kind == TOKEN_COUNTOF;
+
+    if (paren) {
+        expect_current(parser, TOKEN_LPAREN);
+    }
     struct ast_expr const* const rhs =
         parse_expr_precedence(parser, PRECEDENCE_PREFIX);
+    if (paren) {
+        expect_current(parser, TOKEN_RPAREN);
+    }
+
     struct ast_expr* const product = ast_expr_new_unary(op, rhs);
 
     autil_freezer_register(context()->freezer, product);

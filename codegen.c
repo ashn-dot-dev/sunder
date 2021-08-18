@@ -1688,6 +1688,42 @@ codegen_rvalue_unary(struct tir_expr const* expr)
         codegen_lvalue(expr->data.unary.rhs);
         return;
     }
+    case UOP_COUNTOF: {
+        // TODO: Currently the right-hand-side array or slice expression in a
+        // countof expression is always evaluated since the right-hand-side
+        // expression may exhibit side effects. In the future there is an
+        // optimization opportunity to skip evaluation of the right-hand-side
+        // expression if it can be determined that the expression does not
+        // contain side effects (e.g. it is an identifier).
+
+        if (expr->data.unary.rhs->type->kind == TYPE_ARRAY) {
+            // If possible evaluate the left hand side of the expression as an
+            // lvalue so that we do not push the entire contents of the array
+            // onto the stack.
+            if (tir_expr_is_lvalue(expr->data.unary.rhs)) {
+                codegen_lvalue(expr->data.unary.rhs);
+                appendli("pop rax ; discard array lvalue");
+            }
+            else {
+                codegen_rvalue(expr->data.unary.rhs);
+                pop(expr->data.unary.rhs->type->size);
+            }
+            appendli(
+                "mov rax, %zu; array count",
+                expr->data.unary.rhs->type->data.array.count);
+            appendli("push rax");
+            return;
+        }
+
+        if (expr->data.unary.rhs->type->kind == TYPE_SLICE) {
+            codegen_rvalue(expr->data.unary.rhs);
+            appendli("pop rax ; pop slice pointer word");
+            return;
+        }
+
+        UNREACHABLE();
+        return;
+    }
     }
 
     UNREACHABLE();
@@ -2177,7 +2213,8 @@ codegen_lvalue_unary(struct tir_expr const* expr)
     case UOP_POS: /* fallthrough */
     case UOP_NEG: /* fallthrough */
     case UOP_BITNOT: /* fallthrough */
-    case UOP_ADDRESSOF: {
+    case UOP_ADDRESSOF: /* fallthrough */
+    case UOP_COUNTOF: {
         assert(!tir_expr_is_lvalue(expr));
         UNREACHABLE();
     }

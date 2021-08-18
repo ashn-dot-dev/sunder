@@ -72,19 +72,19 @@ ceil8i(int x);
 size_t
 ceil8zu(size_t x);
 
-// Convert a bigint to uint8_t.
+// Convert a bigint to a uint8_t.
 // Returns zero on success.
 // Returns non-zero if the provided bigint is out-of-range, in which case *res
 // is left unmodified.
 int
 bigint_to_u8(uint8_t* res, struct autil_bigint const* bigint);
-// Convert a bigint to size_t.
+// Convert a bigint to a size_t.
 // Returns zero on success.
 // Returns non-zero if the provided bigint is out-of-range, in which case *res
 // is left unmodified.
 int
 bigint_to_uz(size_t* res, struct autil_bigint const* bigint);
-// Convert a bigint to uintmax_t.
+// Convert a bigint to a uintmax_t.
 // Returns zero on success.
 // Returns non-zero if the provided bigint is out-of-range, in which case *res
 // is left unmodified.
@@ -97,7 +97,13 @@ bigint_to_umax(uintmax_t* res, struct autil_bigint const* bigint);
 // unmodified.
 int
 bigint_to_bitarr(struct autil_bitarr* res, struct autil_bigint const* bigint);
+
+// Convert a size_t to a bigint.
+// The result bigint must be pre-initialized.
+void
+uz_to_bigint(struct autil_bigint* res, size_t uz);
 // Convert a two's complement bit array into a bigint.
+// The result bigint must be pre-initialized.
 void
 bitarr_to_bigint(
     struct autil_bigint* res,
@@ -241,6 +247,7 @@ enum token_kind {
     TOKEN_FOR,
     TOKEN_IN,
     TOKEN_SYSCALL,
+    TOKEN_COUNTOF,
     // Sigils
     TOKEN_EQ, // ==
     TOKEN_NE, // !=
@@ -992,6 +999,7 @@ struct tir_expr {
                 UOP_BITNOT,
                 UOP_DEREFERENCE,
                 UOP_ADDRESSOF,
+                UOP_COUNTOF,
             } op;
             struct tir_expr const* rhs;
         } unary;

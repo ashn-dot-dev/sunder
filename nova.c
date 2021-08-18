@@ -323,6 +323,19 @@ bigint_to_bitarr(struct autil_bitarr* res, struct autil_bigint const* bigint)
 }
 
 void
+uz_to_bigint(struct autil_bigint* res, size_t uz)
+{
+    assert(res != 0);
+
+    char buf[256] = {0};
+    snprintf(buf, AUTIL_ARRAY_COUNT(buf), "%zu", uz);
+
+    struct autil_bigint* const tmp = autil_bigint_new_cstr(buf);
+    autil_bigint_assign(res, tmp);
+    autil_bigint_del(tmp);
+}
+
+void
 bitarr_to_bigint(
     struct autil_bigint* res, struct autil_bitarr const* bitarr, bool is_signed)
 {

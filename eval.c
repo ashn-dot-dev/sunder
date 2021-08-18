@@ -76,10 +76,13 @@ eval_rvalue(struct evaluator* evaluator, struct tir_expr const* expr)
         struct value* const pointer = value_new_pointer(
             type_unique_pointer(context()->builtin.byte),
             *expr->data.bytes.address);
-        char buf[256] = {0};
-        snprintf(buf, AUTIL_ARRAY_COUNT(buf), "%zu", expr->data.bytes.count);
-        struct value* const count = value_new_integer(
-            context()->builtin.usize, autil_bigint_new_cstr(buf));
+
+        struct autil_bigint* const count_bigint =
+            autil_bigint_new(AUTIL_BIGINT_ZERO);
+        uz_to_bigint(count_bigint, expr->data.bytes.count);
+        struct value* const count =
+            value_new_integer(context()->builtin.usize, count_bigint);
+
         return value_new_slice(expr->type, pointer, count);
     }
     case TIR_EXPR_LITERAL_ARRAY: {
@@ -181,7 +184,7 @@ eval_rvalue(struct evaluator* evaluator, struct tir_expr const* expr)
                     lhs->type->data.array.count,
                     begin_uz);
             }
-            if (end_uz >= lhs->type->data.array.count) {
+            if (end_uz > lhs->type->data.array.count) {
                 fatal(
                     expr->data.slice.begin->location,
                     "index out-of-bounds (array count is %zu, received %zu)",
@@ -296,6 +299,34 @@ eval_rvalue(struct evaluator* evaluator, struct tir_expr const* expr)
         }
         case UOP_ADDRESSOF: {
             return eval_lvalue(evaluator, expr->data.unary.rhs);
+        }
+        case UOP_COUNTOF: {
+            assert(expr->type->kind == TYPE_USIZE);
+            struct value* const res = value_new_integer(
+                context()->builtin.usize, autil_bigint_new(AUTIL_BIGINT_ZERO));
+
+            struct value* const rhs =
+                eval_rvalue(evaluator, expr->data.unary.rhs);
+            switch (rhs->type->kind) {
+            case TYPE_ARRAY: {
+                size_t const count_uz = rhs->type->data.array.count;
+                assert(count_uz == autil_sbuf_count(rhs->data.array.elements));
+                uz_to_bigint(res->data.integer, count_uz);
+                break;
+            }
+            case TYPE_SLICE: {
+                assert(rhs->data.slice.count->type->kind == TYPE_USIZE);
+                struct autil_bigint const* const count_bigint =
+                    rhs->data.slice.count->data.integer;
+                autil_bigint_assign(res->data.integer, count_bigint);
+                break;
+            }
+            default:
+                UNREACHABLE();
+            }
+            value_del(rhs);
+
+            return res;
         }
         }
         UNREACHABLE();
@@ -626,11 +657,12 @@ eval_lvalue(struct evaluator* evaluator, struct tir_expr const* expr)
                 expr->location,
                 "dereference operator not supported in compile-time expressions");
         }
-        case UOP_ADDRESSOF: /* fallthrough */
         case UOP_NOT: /* fallthrough */
         case UOP_POS: /* fallthrough */
         case UOP_NEG: /* fallthrough */
         case UOP_BITNOT: /* fallthrough */
+        case UOP_ADDRESSOF: /* fallthrough */
+        case UOP_COUNTOF:
             UNREACHABLE();
         }
         UNREACHABLE();
