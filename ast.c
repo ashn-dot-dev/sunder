@@ -515,7 +515,20 @@ ast_typespec_new_slice(
 
     struct ast_typespec* const self =
         ast_typespec_new(location, TYPESPEC_SLICE);
-    self->data.pointer.base = base;
+    self->data.slice.base = base;
+    return self;
+}
+
+struct ast_typespec*
+ast_typespec_new_typeof(
+    struct source_location const* location, struct ast_expr const* expr)
+{
+    assert(location != NULL);
+    assert(expr != NULL);
+
+    struct ast_typespec* const self =
+        ast_typespec_new(location, TYPESPEC_TYPEOF);
+    self->data.typeof.expr = expr;
     return self;
 }
 

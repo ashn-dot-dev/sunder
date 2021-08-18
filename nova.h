@@ -248,6 +248,7 @@ enum token_kind {
     TOKEN_IN,
     TOKEN_SYSCALL,
     TOKEN_COUNTOF,
+    TOKEN_TYPEOF,
     // Sigils
     TOKEN_EQ, // ==
     TOKEN_NE, // !=
@@ -592,6 +593,7 @@ struct ast_typespec {
         TYPESPEC_POINTER,
         TYPESPEC_ARRAY,
         TYPESPEC_SLICE,
+        TYPESPEC_TYPEOF
     } kind;
     union {
         struct ast_identifier const* identifier;
@@ -609,6 +611,9 @@ struct ast_typespec {
         struct {
             struct ast_typespec const* base;
         } slice;
+        struct {
+            struct ast_expr const* expr;
+        } typeof;
     } data;
 };
 struct ast_typespec*
@@ -629,6 +634,9 @@ ast_typespec_new_array(
 struct ast_typespec*
 ast_typespec_new_slice(
     struct source_location const* location, struct ast_typespec const* base);
+struct ast_typespec*
+ast_typespec_new_typeof(
+    struct source_location const* location, struct ast_expr const* expr);
 
 struct ast_identifier {
     struct source_location const* location;

@@ -6,7 +6,7 @@
 #include "nova.h"
 
 static enum token_kind const KEYWORDS_FIRST = TOKEN_TRUE;
-static enum token_kind const KEYWORDS_LAST = TOKEN_COUNTOF;
+static enum token_kind const KEYWORDS_LAST = TOKEN_TYPEOF;
 static enum token_kind const SIGILS_FIRST = TOKEN_EQ;
 static enum token_kind const SIGILS_LAST = TOKEN_SEMICOLON;
 static struct autil_vstr token_kind_vstrs[TOKEN_EOF + 1u] = {
@@ -28,6 +28,7 @@ static struct autil_vstr token_kind_vstrs[TOKEN_EOF + 1u] = {
     [TOKEN_IN] = AUTIL_VSTR_INIT_STR_LITERAL("in"),
     [TOKEN_SYSCALL] = AUTIL_VSTR_INIT_STR_LITERAL("syscall"),
     [TOKEN_COUNTOF] = AUTIL_VSTR_INIT_STR_LITERAL("countof"),
+    [TOKEN_TYPEOF] = AUTIL_VSTR_INIT_STR_LITERAL("typeof"),
     // Sigils
     [TOKEN_EQ] = AUTIL_VSTR_INIT_STR_LITERAL("=="),
     [TOKEN_NE] = AUTIL_VSTR_INIT_STR_LITERAL("!="),

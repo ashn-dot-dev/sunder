@@ -123,6 +123,8 @@ static struct ast_typespec const*
 parse_typespec_pointer(struct parser* parser);
 static struct ast_typespec const*
 parse_typespec_array_or_slice(struct parser* parser);
+static struct ast_typespec const*
+parse_typespec_typeof(struct parser* parser);
 
 static struct ast_identifier const*
 parse_identifier(struct parser* parser);
@@ -926,6 +928,10 @@ parse_typespec(struct parser* parser)
         return parse_typespec_array_or_slice(parser);
     }
 
+    if (check_current(parser, TOKEN_TYPEOF)) {
+        return parse_typespec_typeof(parser);
+    }
+
     fatal(
         &parser->current_token->location,
         "expected type specifier, found `%s`",
@@ -1023,6 +1029,25 @@ parse_typespec_array_or_slice(struct parser* parser)
 
     struct ast_typespec* const product =
         ast_typespec_new_array(location, count, base);
+
+    autil_freezer_register(context()->freezer, product);
+    return product;
+}
+
+static struct ast_typespec const*
+parse_typespec_typeof(struct parser* parser)
+{
+    assert(parser != NULL);
+    assert(check_current(parser, TOKEN_TYPEOF));
+
+    struct source_location const* const location =
+        &expect_current(parser, TOKEN_TYPEOF)->location;
+    expect_current(parser, TOKEN_LPAREN);
+    struct ast_expr const* expr = parse_expr(parser);
+    expect_current(parser, TOKEN_RPAREN);
+
+    struct ast_typespec* const product =
+        ast_typespec_new_typeof(location, expr);
 
     autil_freezer_register(context()->freezer, product);
     return product;

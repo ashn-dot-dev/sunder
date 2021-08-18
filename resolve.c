@@ -1928,6 +1928,11 @@ resolve_typespec(struct resolver* resolver, struct ast_typespec const* typespec)
             resolve_typespec(resolver, typespec->data.slice.base);
         return type_unique_slice(base);
     }
+    case TYPESPEC_TYPEOF: {
+        struct tir_expr const* const expr =
+            resolve_expr(resolver, typespec->data.typeof.expr);
+        return expr->type;
+    }
     }
 
     UNREACHABLE();

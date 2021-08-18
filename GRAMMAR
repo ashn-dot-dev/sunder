@@ -108,6 +108,7 @@
              | <typespec-pointer>
              | <typespec-array>
              | <typespec-slice>
+             | <typespec-typeof>
 
 <typespec-identifier> ::= <identifier>
 
@@ -118,6 +119,8 @@
 <typespec-array> ::= "[" <expr> "]" <typespec>
 
 <typespec-slice> ::= "[" "]" <typespec>
+
+<typespec-typeof> ::= "typeof" "(" <expr> ")"
 
 <identifier> ::= <letter> (<letter> | <digit-dec>)*
 

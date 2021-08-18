@@ -296,6 +296,10 @@ order_typespec(struct orderer* orderer, struct ast_typespec const* typespec)
         order_typespec(orderer, typespec->data.slice.base);
         return;
     }
+    case TYPESPEC_TYPEOF: {
+        order_expr(orderer, typespec->data.typeof.expr);
+        return;
+    }
     }
 
     UNREACHABLE();
