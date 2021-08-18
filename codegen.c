@@ -1722,7 +1722,6 @@ codegen_rvalue_unary(struct tir_expr const* expr)
         }
 
         UNREACHABLE();
-        return;
     }
     }
 
