@@ -410,7 +410,8 @@ module_del(struct module* self)
     assert(self != NULL);
 
     autil_sbuf_fini(self->ordered);
-    autil_xalloc(memset(self, 0x00, sizeof(*self)), AUTIL_XALLOC_FREE);
+    memset(self, 0x00, sizeof(*self));
+    autil_xalloc(self, AUTIL_XALLOC_FREE);
 }
 
 static struct context s_context = {0};
