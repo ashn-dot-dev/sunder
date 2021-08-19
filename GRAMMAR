@@ -46,7 +46,6 @@
          | <expr-call>
          | <expr-index>
          | <expr-index-slice>
-         | <expr-countof>
          | <expr-unary>
          | <expr-binary>
 
