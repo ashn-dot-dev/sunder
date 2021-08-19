@@ -46,6 +46,7 @@
          | <expr-call>
          | <expr-index>
          | <expr-index-slice>
+         | <expr-sizeof>
          | <expr-unary>
          | <expr-binary>
 
@@ -71,6 +72,8 @@
 <expr-index> ::= <expr> "[" <expr> "]"
 
 <expr-slice> ::= <expr> "[" <expr> ":" <expr> "]"
+
+<expr-sizeof> ::= "sizeof" "(" ":" <typespec> ")"
 
 <expr-unary> ::= "not" <expr>
                | "+" <expr>

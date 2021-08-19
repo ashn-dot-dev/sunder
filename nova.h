@@ -248,6 +248,7 @@ enum token_kind {
     TOKEN_IN,
     TOKEN_SYSCALL,
     TOKEN_COUNTOF,
+    TOKEN_SIZEOF,
     TOKEN_TYPEOF,
     // Sigils
     TOKEN_EQ, // ==
@@ -455,6 +456,7 @@ struct ast_expr {
         AST_EXPR_INDEX,
         AST_EXPR_SLICE,
         // Prefix Unary Operator Expressions
+        AST_EXPR_SIZEOF,
         AST_EXPR_UNARY,
         // Infix Binary Operator Expressions
         AST_EXPR_BINARY,
@@ -492,6 +494,9 @@ struct ast_expr {
             struct ast_expr const* begin;
             struct ast_expr const* end;
         } slice;
+        struct {
+            struct ast_typespec const* rhs;
+        } sizeof_;
         struct {
             struct token const* op;
             struct ast_expr const* rhs;
@@ -544,6 +549,9 @@ ast_expr_new_slice(
     struct ast_expr const* lhs,
     struct ast_expr const* begin,
     struct ast_expr const* end);
+struct ast_expr*
+ast_expr_new_sizeof(
+    struct source_location const* location, struct ast_typespec const* rhs);
 struct ast_expr*
 ast_expr_new_unary(struct token const* op, struct ast_expr const* rhs);
 struct ast_expr*
@@ -963,6 +971,7 @@ struct tir_expr {
         TIR_EXPR_CALL,
         TIR_EXPR_INDEX,
         TIR_EXPR_SLICE,
+        TIR_EXPR_SIZEOF,
         TIR_EXPR_UNARY,
         TIR_EXPR_BINARY,
     } kind;
@@ -999,6 +1008,9 @@ struct tir_expr {
             struct tir_expr const* begin;
             struct tir_expr const* end;
         } slice;
+        struct {
+            struct type const* rhs;
+        } sizeof_;
         struct {
             enum uop_kind {
                 UOP_NOT,
@@ -1080,6 +1092,9 @@ tir_expr_new_slice(
     struct tir_expr const* lhs,
     struct tir_expr const* begin,
     struct tir_expr const* end);
+struct tir_expr*
+tir_expr_new_sizeof(
+    struct source_location const* location, struct type const* rhs);
 struct tir_expr*
 tir_expr_new_unary(
     struct source_location const* location,

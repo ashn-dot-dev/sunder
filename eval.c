@@ -228,6 +228,14 @@ eval_rvalue(struct evaluator* evaluator, struct tir_expr const* expr)
 
         UNREACHABLE();
     }
+    case TIR_EXPR_SIZEOF: {
+        struct autil_bigint* const size_bigint =
+            autil_bigint_new(AUTIL_BIGINT_ZERO);
+        uz_to_bigint(size_bigint, expr->data.sizeof_.rhs->size);
+
+        assert(expr->type->kind == TYPE_USIZE);
+        return value_new_integer(context()->builtin.usize, size_bigint);
+    }
     case TIR_EXPR_UNARY: {
         switch (expr->data.unary.op) {
         case UOP_NOT: {
@@ -675,6 +683,7 @@ eval_lvalue(struct evaluator* evaluator, struct tir_expr const* expr)
     case TIR_EXPR_SYSCALL: /* fallthrough */
     case TIR_EXPR_CALL: /* fallthrough */
     case TIR_EXPR_SLICE: /* fallthrough */
+    case TIR_EXPR_SIZEOF: /* fallthrough */
     case TIR_EXPR_BINARY: {
         UNREACHABLE();
     }

@@ -914,6 +914,19 @@ tir_expr_new_slice(
 }
 
 struct tir_expr*
+tir_expr_new_sizeof(
+    struct source_location const* location, struct type const* rhs)
+{
+    assert(location != NULL);
+    assert(rhs != NULL);
+
+    struct tir_expr* const self =
+        tir_expr_new(location, context()->builtin.usize, TIR_EXPR_SIZEOF);
+    self->data.sizeof_.rhs = rhs;
+    return self;
+}
+
+struct tir_expr*
 tir_expr_new_unary(
     struct source_location const* location,
     struct type const* type,
@@ -983,6 +996,7 @@ tir_expr_is_lvalue(struct tir_expr const* self)
     case TIR_EXPR_SYSCALL: /* fallthrough */
     case TIR_EXPR_CALL: /* fallthrough */
     case TIR_EXPR_SLICE: /* fallthrough */
+    case TIR_EXPR_SIZEOF: /* fallthrough */
     case TIR_EXPR_BINARY: {
         return false;
     }

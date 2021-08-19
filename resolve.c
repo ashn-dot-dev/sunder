@@ -128,6 +128,8 @@ resolve_expr_index(struct resolver* resolver, struct ast_expr const* expr);
 static struct tir_expr const*
 resolve_expr_slice(struct resolver* resolver, struct ast_expr const* expr);
 static struct tir_expr const*
+resolve_expr_sizeof(struct resolver* resolver, struct ast_expr const* expr);
+static struct tir_expr const*
 resolve_expr_unary(struct resolver* resolver, struct ast_expr const* expr);
 static struct tir_expr const*
 resolve_expr_unary_logical(
@@ -941,6 +943,9 @@ resolve_expr(struct resolver* resolver, struct ast_expr const* expr)
     case AST_EXPR_SLICE: {
         return resolve_expr_slice(resolver, expr);
     }
+    case AST_EXPR_SIZEOF: {
+        return resolve_expr_sizeof(resolver, expr);
+    }
     case AST_EXPR_UNARY: {
         return resolve_expr_unary(resolver, expr);
     }
@@ -1337,6 +1342,20 @@ resolve_expr_slice(struct resolver* resolver, struct ast_expr const* expr)
 
     struct tir_expr* const resolved =
         tir_expr_new_slice(expr->location, lhs, begin, end);
+
+    autil_freezer_register(context()->freezer, resolved);
+    return resolved;
+}
+
+static struct tir_expr const*
+resolve_expr_sizeof(struct resolver* resolver, struct ast_expr const* expr)
+{
+    assert(resolver != NULL);
+    assert(expr != NULL);
+
+    struct type const* const rhs =
+        resolve_typespec(resolver, expr->data.sizeof_.rhs);
+    struct tir_expr* const resolved = tir_expr_new_sizeof(expr->location, rhs);
 
     autil_freezer_register(context()->freezer, resolved);
     return resolved;

@@ -239,6 +239,10 @@ order_expr(struct orderer* orderer, struct ast_expr const* expr)
         order_expr(orderer, expr->data.slice.end);
         return;
     }
+    case AST_EXPR_SIZEOF: {
+        order_typespec(orderer, expr->data.sizeof_.rhs);
+        return;
+    }
     case AST_EXPR_UNARY: {
         order_expr(orderer, expr->data.unary.rhs);
         return;

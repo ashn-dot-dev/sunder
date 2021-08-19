@@ -538,6 +538,8 @@ codegen_rvalue_slice_lhs_array(struct tir_expr const* expr);
 static void
 codegen_rvalue_slice_lhs_slice(struct tir_expr const* expr);
 static void
+codegen_rvalue_sizeof(struct tir_expr const* expr);
+static void
 codegen_rvalue_unary(struct tir_expr const* expr);
 static void
 codegen_rvalue_binary(struct tir_expr const* expr);
@@ -1169,6 +1171,10 @@ codegen_rvalue(struct tir_expr const* expr)
         codegen_rvalue_slice(expr);
         return;
     }
+    case TIR_EXPR_SIZEOF: {
+        codegen_rvalue_sizeof(expr);
+        return;
+    }
     case TIR_EXPR_UNARY: {
         codegen_rvalue_unary(expr);
         return;
@@ -1616,6 +1622,17 @@ codegen_rvalue_slice_lhs_slice(struct tir_expr const* expr)
     appendli("mul rbx"); // offset = begin * sizeof(element_type)
     appendli("add rax, rsi"); // pointer = offset + start
     appendli("push rax"); // push pointer
+}
+
+static void
+codegen_rvalue_sizeof(struct tir_expr const* expr)
+{
+    assert(expr != NULL);
+    assert(expr->kind == TIR_EXPR_SIZEOF);
+
+    assert(expr->type->kind == TYPE_USIZE);
+    appendli("mov rax, %zu", expr->data.sizeof_.rhs->size);
+    appendli("push rax");
 }
 
 static void
@@ -2107,6 +2124,7 @@ codegen_lvalue(struct tir_expr const* expr)
     case TIR_EXPR_SYSCALL: /* fallthrough */
     case TIR_EXPR_CALL: /* fallthrough */
     case TIR_EXPR_SLICE: /* fallthrough */
+    case TIR_EXPR_SIZEOF: /* fallthrough */
     case TIR_EXPR_BINARY: {
         assert(!tir_expr_is_lvalue(expr));
         UNREACHABLE();

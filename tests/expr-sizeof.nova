@@ -1,0 +1,36 @@
+const a: usize = sizeof(:u8);
+const b: usize = sizeof(:u16);
+const c: usize = sizeof(:u32);
+const d: usize = sizeof(:u64);
+const e: usize = sizeof(:[5u]u8);
+const f: usize = sizeof(:[2u]u64);
+
+const g: u16 = 0xABCDu16;
+const h: usize = sizeof(:typeof(g));
+
+const i: usize = sizeof(:void);
+
+func main() void {
+    dump a;
+    dump b;
+    dump c;
+    dump d;
+    dump e;
+    dump f;
+    dump h;
+    dump i;
+
+    dump sizeof(:u16);
+    dump sizeof(:typeof(g));
+}
+################################################################################
+# 01 00 00 00 00 00 00 00
+# 02 00 00 00 00 00 00 00
+# 04 00 00 00 00 00 00 00
+# 08 00 00 00 00 00 00 00
+# 05 00 00 00 00 00 00 00
+# 10 00 00 00 00 00 00 00
+# 02 00 00 00 00 00 00 00
+# 00 00 00 00 00 00 00 00
+# 02 00 00 00 00 00 00 00
+# 02 00 00 00 00 00 00 00

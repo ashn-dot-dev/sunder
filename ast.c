@@ -362,6 +362,18 @@ ast_expr_new_slice(
 }
 
 struct ast_expr*
+ast_expr_new_sizeof(
+    struct source_location const* location, struct ast_typespec const* rhs)
+{
+    assert(location != NULL);
+    assert(rhs != NULL);
+
+    struct ast_expr* const self = ast_expr_new(location, AST_EXPR_SIZEOF);
+    self->data.sizeof_.rhs = rhs;
+    return self;
+}
+
+struct ast_expr*
 ast_expr_new_unary(struct token const* op, struct ast_expr const* rhs)
 {
     assert(op != NULL);
