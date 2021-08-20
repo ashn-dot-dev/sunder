@@ -1112,6 +1112,12 @@ resolve_expr_literal_array(
 
     struct type const* const type =
         resolve_typespec(resolver, expr->data.literal_array.typespec);
+    if (type->kind != TYPE_ARRAY) {
+        fatal(
+            expr->data.literal_array.typespec->location,
+            "expected array type (received `%s`)",
+            type->name);
+    }
 
     autil_sbuf(struct ast_expr const* const) elements =
         expr->data.literal_array.elements;
@@ -1153,7 +1159,12 @@ resolve_expr_literal_slice(
 
     struct type const* const type =
         resolve_typespec(resolver, expr->data.literal_slice.typespec);
-    assert(type->kind == TYPE_SLICE);
+    if (type->kind != TYPE_SLICE) {
+        fatal(
+            expr->data.literal_slice.typespec->location,
+            "expected slice type (received `%s`)",
+            type->name);
+    }
 
     struct tir_expr const* const pointer =
         resolve_expr(resolver, expr->data.literal_slice.pointer);

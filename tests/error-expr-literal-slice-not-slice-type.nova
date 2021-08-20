@@ -1,0 +1,6 @@
+const a: [3u]byte = (:[3u]byte)[0xAAy, 0xBBy, 0xCCy];
+const b: []byte = (:ssize){&a[0u], 3u};
+################################################################################
+# [error-expr-literal-slice-not-slice-type.nova:2] error: expected slice type (received `ssize`)
+# const b: []byte = (:ssize){&a[0u], 3u};
+#                     ^

@@ -59,9 +59,9 @@
                   | "\\"
                   | ? printable ASCII character ?
 
-<expr-literal-array> ::= "(" ":" <typespec-array> ")" "[" (<expr> ("," <expr>)*)? "]"
+<expr-literal-array> ::= "(" ":" <typespec> ")" "[" (<expr> ("," <expr>)*)? "]"
 
-<expr-literal-slice> ::= "(" ":" <typespec-slice> ")" "{" <expr> "," <expr> "}"
+<expr-literal-slice> ::= "(" ":" <typespec> ")" "{" <expr> "," <expr> "}"
 
 <expr-grouped> ::= "(" <expr> ")"
 
