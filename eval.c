@@ -102,6 +102,93 @@ eval_rvalue(struct evaluator* evaluator, struct tir_expr const* expr)
             eval_rvalue(evaluator, expr->data.literal_slice.count);
         return value_new_slice(expr->type, pointer, count);
     }
+    case TIR_EXPR_CAST: {
+        struct value* const from = eval_rvalue(evaluator, expr->data.cast.expr);
+        // The representation of a non-absolute address is chosen by the
+        // assembler/linker and has no meaningful representation at
+        // compile-time. Absolute addresses are *not* supported at the language
+        // level, so it is a hard error to cast to/from a pointer type.
+        //
+        // TODO: There is a case to be made for casting a pointer of type T1 to
+        // a pointer of type T2 in a compile time expression as long as the
+        // language continues to disallow pointer dereference in compile-time
+        // expressions. In the future check if this a valid/common enough use
+        // case to include at the language level.
+        if (from->type->kind == TYPE_POINTER) {
+            fatal(
+                expr->location,
+                "constant expression contains cast from pointer type");
+        }
+        if (expr->type->kind == TYPE_POINTER) {
+            fatal(
+                expr->location,
+                "constant expression contains cast to pointer type");
+        }
+
+        autil_sbuf(uint8_t) bytes = value_to_new_bytes(from);
+        struct value* res = NULL;
+        switch (expr->type->kind) {
+        case TYPE_BOOL: {
+            bool boolean = false;
+            for (size_t i = 0; i < autil_sbuf_count(bytes); ++i) {
+                boolean |= bytes[i] != 0;
+            }
+            res = value_new_boolean(boolean);
+            break;
+        }
+        case TYPE_BYTE: {
+            assert(autil_sbuf_count(bytes) >= 1);
+            res = value_new_byte(bytes[0]);
+            break;
+        }
+        case TYPE_U8: /* fallthrough */
+        case TYPE_S8: /* fallthrough */
+        case TYPE_U16: /* fallthrough */
+        case TYPE_S16: /* fallthrough */
+        case TYPE_U32: /* fallthrough */
+        case TYPE_S32: /* fallthrough */
+        case TYPE_U64: /* fallthrough */
+        case TYPE_S64: /* fallthrough */
+        case TYPE_USIZE: /* fallthrough */
+        case TYPE_SSIZE: {
+            // Zero-extension or sign-extension bit.
+            size_t bytes_count = autil_sbuf_count(bytes);
+            int const extend =
+                type_is_sinteger(from->type) && (bytes[bytes_count - 1] & 0x80);
+
+            size_t const bit_count = expr->type->size * 8u;
+            struct autil_bitarr* const bits = autil_bitarr_new(bit_count);
+            for (size_t i = 0; i < bit_count; ++i) {
+                if (i >= (bytes_count * 8u)) {
+                    autil_bitarr_set(bits, i, extend);
+                    continue;
+                }
+                unsigned const byte = bytes[i / 8u];
+                unsigned const mask = 1u << (i % 8u);
+                int const bit = (byte & mask) != 0;
+                autil_bitarr_set(bits, i, bit);
+            }
+
+            struct autil_bigint* const integer =
+                autil_bigint_new(AUTIL_BIGINT_ZERO);
+            bitarr_to_bigint(integer, bits, type_is_sinteger(expr->type));
+            autil_bitarr_del(bits);
+
+            res = value_new_integer(expr->type, integer);
+            break;
+        }
+        case TYPE_VOID: /* fallthrough */
+        case TYPE_FUNCTION: /* fallthrough */
+        case TYPE_POINTER: /* fallthrough */
+        case TYPE_ARRAY: /* fallthrough */
+        case TYPE_SLICE:
+            UNREACHABLE();
+        }
+
+        value_del(from);
+        autil_sbuf_fini(bytes);
+        return res;
+    }
     case TIR_EXPR_SYSCALL: {
         fatal(expr->location, "constant expression contains system call");
     }
@@ -680,6 +767,7 @@ eval_lvalue(struct evaluator* evaluator, struct tir_expr const* expr)
     case TIR_EXPR_BYTES: /* fallthrough */
     case TIR_EXPR_LITERAL_ARRAY: /* fallthrough */
     case TIR_EXPR_LITERAL_SLICE: /* fallthrough */
+    case TIR_EXPR_CAST: /* fallthrough */
     case TIR_EXPR_SYSCALL: /* fallthrough */
     case TIR_EXPR_CALL: /* fallthrough */
     case TIR_EXPR_SLICE: /* fallthrough */

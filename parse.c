@@ -691,32 +691,41 @@ parse_expr_lparen(struct parser* parser)
     struct source_location const* const location =
         &expect_current(parser, TOKEN_LPAREN)->location;
 
-    if (check_current(parser, TOKEN_COLON)) {
-        // <expr-array> | <expr-slice>
-        expect_current(parser, TOKEN_COLON);
-        struct ast_typespec const* const typespec = parse_typespec(parser);
+    if (!check_current(parser, TOKEN_COLON)) {
+        // <expr-grouped>
+        struct ast_expr const* const expr = parse_expr(parser);
         expect_current(parser, TOKEN_RPAREN);
+        struct ast_expr* const product = ast_expr_new_grouped(location, expr);
 
-        if (check_current(parser, TOKEN_LBRACKET)) {
-            // <expr-array>
-            expect_current(parser, TOKEN_LBRACKET);
-            autil_sbuf(struct ast_expr const*) elements = NULL;
-            while (!check_current(parser, TOKEN_RBRACKET)) {
-                if (autil_sbuf_count(elements) != 0u) {
-                    expect_current(parser, TOKEN_COMMA);
-                }
-                autil_sbuf_push(elements, parse_expr(parser));
+        autil_freezer_register(context()->freezer, product);
+        return product;
+    }
+
+    expect_current(parser, TOKEN_COLON);
+    struct ast_typespec const* const typespec = parse_typespec(parser);
+    expect_current(parser, TOKEN_RPAREN);
+
+    if (check_current(parser, TOKEN_LBRACKET)) {
+        // <expr-array>
+        expect_current(parser, TOKEN_LBRACKET);
+        autil_sbuf(struct ast_expr const*) elements = NULL;
+        while (!check_current(parser, TOKEN_RBRACKET)) {
+            if (autil_sbuf_count(elements) != 0u) {
+                expect_current(parser, TOKEN_COMMA);
             }
-            autil_sbuf_freeze(elements, context()->freezer);
-            expect_current(parser, TOKEN_RBRACKET);
-
-            struct ast_expr* const product =
-                ast_expr_new_literal_array(location, typespec, elements);
-
-            autil_freezer_register(context()->freezer, product);
-            return product;
+            autil_sbuf_push(elements, parse_expr(parser));
         }
+        autil_sbuf_freeze(elements, context()->freezer);
+        expect_current(parser, TOKEN_RBRACKET);
 
+        struct ast_expr* const product =
+            ast_expr_new_literal_array(location, typespec, elements);
+
+        autil_freezer_register(context()->freezer, product);
+        return product;
+    }
+
+    if (check_current(parser, TOKEN_LBRACE)) {
         // <expr-slice>
         expect_current(parser, TOKEN_LBRACE);
         struct ast_expr const* const pointer = parse_expr(parser);
@@ -731,10 +740,11 @@ parse_expr_lparen(struct parser* parser)
         return product;
     }
 
-    // <expr-grouped>
+    // <expr-cast>
     struct ast_expr const* const expr = parse_expr(parser);
-    expect_current(parser, TOKEN_RPAREN);
-    struct ast_expr* const product = ast_expr_new_grouped(location, expr);
+
+    struct ast_expr* const product =
+        ast_expr_new_cast(location, typespec, expr);
 
     autil_freezer_register(context()->freezer, product);
     return product;

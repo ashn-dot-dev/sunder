@@ -41,6 +41,7 @@
          | <expr-bytes>
          | <expr-literal-array>
          | <expr-literal-slice>
+         | <expr-cast>
          | <expr-grouped>
          | <expr-syscall>
          | <expr-call>
@@ -62,6 +63,8 @@
 <expr-literal-array> ::= "(" ":" <typespec> ")" "[" (<expr> ("," <expr>)*)? "]"
 
 <expr-literal-slice> ::= "(" ":" <typespec> ")" "{" <expr> "," <expr> "}"
+
+<expr-cast> ::= "(" ":" <typespec> ")" <expr>
 
 <expr-grouped> ::= "(" <expr> ")"
 

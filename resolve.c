@@ -120,6 +120,8 @@ static struct tir_expr const*
 resolve_expr_literal_slice(
     struct resolver* resolver, struct ast_expr const* expr);
 static struct tir_expr const*
+resolve_expr_cast(struct resolver* resolver, struct ast_expr const* expr);
+static struct tir_expr const*
 resolve_expr_syscall(struct resolver* resolver, struct ast_expr const* expr);
 static struct tir_expr const*
 resolve_expr_call(struct resolver* resolver, struct ast_expr const* expr);
@@ -928,6 +930,9 @@ resolve_expr(struct resolver* resolver, struct ast_expr const* expr)
     case AST_EXPR_LITERAL_SLICE: {
         return resolve_expr_literal_slice(resolver, expr);
     }
+    case AST_EXPR_CAST: {
+        return resolve_expr_cast(resolver, expr);
+    }
     case AST_EXPR_GROUPED: {
         return resolve_expr(resolver, expr->data.grouped.expr);
     }
@@ -1186,6 +1191,43 @@ resolve_expr_literal_slice(
 
     struct tir_expr* const resolved =
         tir_expr_new_literal_slice(expr->location, type, pointer, count);
+
+    autil_freezer_register(context()->freezer, resolved);
+    return resolved;
+}
+
+static struct tir_expr const*
+resolve_expr_cast(struct resolver* resolver, struct ast_expr const* expr)
+{
+    assert(resolver != NULL);
+    assert(expr != NULL);
+    assert(expr->kind == AST_EXPR_CAST);
+
+    struct type const* const type =
+        resolve_typespec(resolver, expr->data.cast.typespec);
+    struct tir_expr const* const rhs =
+        resolve_expr(resolver, expr->data.cast.expr);
+
+    bool const valid = (type_is_integer(type) && type_is_integer(rhs->type))
+        || (type->kind == TYPE_BOOL && rhs->type->kind == TYPE_BYTE)
+        || (type->kind == TYPE_BYTE && rhs->type->kind == TYPE_BOOL)
+        || (type->kind == TYPE_BOOL && type_is_integer(rhs->type))
+        || (type_is_integer(type) && rhs->type->kind == TYPE_BOOL)
+        || (type->kind == TYPE_BYTE && type_is_integer(rhs->type))
+        || (type_is_integer(type) && rhs->type->kind == TYPE_BYTE)
+        || (type->kind == TYPE_POINTER && rhs->type->kind == TYPE_USIZE)
+        || (type->kind == TYPE_USIZE && rhs->type->kind == TYPE_POINTER)
+        || (type->kind == TYPE_POINTER && rhs->type->kind == TYPE_POINTER);
+    if (!valid) {
+        fatal(
+            rhs->location,
+            "invalid cast from `%s` to `%s`",
+            rhs->type->name,
+            type->name);
+    }
+
+    struct tir_expr* const resolved =
+        tir_expr_new_cast(expr->location, type, rhs);
 
     autil_freezer_register(context()->freezer, resolved);
     return resolved;

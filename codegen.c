@@ -522,6 +522,8 @@ codegen_rvalue_literal_array(struct tir_expr const* expr);
 static void
 codegen_rvalue_literal_slice(struct tir_expr const* expr);
 static void
+codegen_rvalue_cast(struct tir_expr const* expr);
+static void
 codegen_rvalue_syscall(struct tir_expr const* expr);
 static void
 codegen_rvalue_call(struct tir_expr const* expr);
@@ -1155,6 +1157,10 @@ codegen_rvalue(struct tir_expr const* expr)
         codegen_rvalue_literal_slice(expr);
         return;
     }
+    case TIR_EXPR_CAST: {
+        codegen_rvalue_cast(expr);
+        return;
+    }
     case TIR_EXPR_SYSCALL: {
         codegen_rvalue_syscall(expr);
         return;
@@ -1305,6 +1311,66 @@ codegen_rvalue_literal_slice(struct tir_expr const* expr)
     // +---------+ <-- rsp
     codegen_rvalue(expr->data.literal_slice.count);
     codegen_rvalue(expr->data.literal_slice.pointer);
+}
+
+static void
+codegen_rvalue_cast(struct tir_expr const* expr)
+{
+    assert(expr != NULL);
+    assert(expr->kind == TIR_EXPR_CAST);
+    assert(expr->type->size >= 1u);
+    assert(expr->type->size <= 8u);
+
+    struct tir_expr const* const from = expr->data.cast.expr;
+    assert(from->type->size >= 1u);
+    assert(from->type->size <= 8u);
+    codegen_rvalue(from);
+
+    // Load casted-from data into an A register (al, ax, eax, or rax).
+    char const* const reg = reg_a(from->type->size);
+    appendli("mov %s, [rsp]", reg);
+
+    // Perform the operation zero-extend/sign-extend the casted-from data.
+    switch (from->type->kind) {
+    case TYPE_BOOL: /* fallthrough */
+    case TYPE_BYTE: /* fallthrough */
+    case TYPE_U8: /* fallthrough */
+    case TYPE_U16:
+        // Move with Zero-Extend
+        appendli("movzx rax, %s", reg);
+        break;
+    case TYPE_U32:
+        // The MOVZX instruction does not have an encoding with SRC of r/m32 or
+        // r/m64, but a MOV with SRC of r/m32 will zero out the upper 32 bits.
+        appendli("mov rax, %s", reg);
+        break;
+    case TYPE_S8: /* fallthrough */
+    case TYPE_S16: /* fallthrough */
+    case TYPE_S32:
+        // Move with Sign-Extension
+        appendli("movsx rax, %s", reg);
+        break;
+    case TYPE_U64: /* fallthrough */
+    case TYPE_S64: /* fallthrough */
+    case TYPE_USIZE: /* fallthrough */
+    case TYPE_SSIZE: /* fallthrough */
+    case TYPE_POINTER:
+        // A MOV with r/m64 has nothing to zero-extend/sign-extend.
+        break;
+    case TYPE_VOID: /* fallthrough */
+    case TYPE_FUNCTION: /* fallthrough */
+    case TYPE_ARRAY: /* fallthrough */
+    case TYPE_SLICE:
+        UNREACHABLE();
+    }
+
+    // Boolean values *must* be either zero or one.
+    if (expr->type->kind == TYPE_BOOL) {
+        appendli("and rax, 0x1");
+    }
+
+    // MOV the casted-to data back onto the stack.
+    appendli("mov [rsp], rax");
 }
 
 static void
@@ -2121,6 +2187,7 @@ codegen_lvalue(struct tir_expr const* expr)
     case TIR_EXPR_BYTES: /* fallthrough */
     case TIR_EXPR_LITERAL_ARRAY: /* fallthrough */
     case TIR_EXPR_LITERAL_SLICE: /* fallthrough */
+    case TIR_EXPR_CAST: /* fallthrough */
     case TIR_EXPR_SYSCALL: /* fallthrough */
     case TIR_EXPR_CALL: /* fallthrough */
     case TIR_EXPR_SLICE: /* fallthrough */

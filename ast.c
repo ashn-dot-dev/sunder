@@ -294,6 +294,22 @@ ast_expr_new_literal_slice(
 }
 
 struct ast_expr*
+ast_expr_new_cast(
+    struct source_location const* location,
+    struct ast_typespec const* typespec,
+    struct ast_expr const* expr)
+{
+    assert(location != NULL);
+    assert(typespec != NULL);
+    assert(expr != NULL);
+
+    struct ast_expr* const self = ast_expr_new(location, AST_EXPR_CAST);
+    self->data.cast.typespec = typespec;
+    self->data.cast.expr = expr;
+    return self;
+}
+
+struct ast_expr*
 ast_expr_new_grouped(
     struct source_location const* location, struct ast_expr const* expr)
 {

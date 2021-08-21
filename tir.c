@@ -813,6 +813,21 @@ tir_expr_new_literal_slice(
 }
 
 struct tir_expr*
+tir_expr_new_cast(
+    struct source_location const* location,
+    struct type const* type,
+    struct tir_expr const* expr)
+{
+    assert(location != NULL);
+    assert(type != NULL);
+    assert(expr != NULL);
+
+    struct tir_expr* const self = tir_expr_new(location, type, TIR_EXPR_CAST);
+    self->data.cast.expr = expr;
+    return self;
+}
+
+struct tir_expr*
 tir_expr_new_syscall(
     struct source_location const* location,
     struct tir_expr const* const* arguments)
@@ -993,6 +1008,7 @@ tir_expr_is_lvalue(struct tir_expr const* self)
     case TIR_EXPR_BYTES: /* fallthrough */
     case TIR_EXPR_LITERAL_ARRAY: /* fallthrough */
     case TIR_EXPR_LITERAL_SLICE: /* fallthrough */
+    case TIR_EXPR_CAST: /* fallthrough */
     case TIR_EXPR_SYSCALL: /* fallthrough */
     case TIR_EXPR_CALL: /* fallthrough */
     case TIR_EXPR_SLICE: /* fallthrough */

@@ -1,0 +1,5 @@
+const x: []byte = (:[]byte)0xABCDu16;
+################################################################################
+# [error-expr-cast-invalid-cast.nova:1] error: invalid cast from `u16` to `[]byte`
+# const x: []byte = (:[]byte)0xABCDu16;
+#                            ^

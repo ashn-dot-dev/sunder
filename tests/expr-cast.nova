@@ -1,0 +1,188 @@
+func nl() void {
+    # void-returning function that makes dump print a newline.
+}
+
+const a: u64 = (:u64)true;
+const b: u64 = (:u64)false;
+
+const c: u64 = (:u64)0xFFy;
+const d: s64 = (:s64)0xFFy;
+
+const e: bool = (:bool)0x00y;
+const f: bool = (:bool)0xFFy;
+
+const g: u64 = (:u64)0xFFFFu16;
+const h: u64 = (:u64)0x7777s16;
+const i: u64 = (:u64)-1s16;
+
+func main() void {
+    dump a;
+    dump b;
+    dump nl();
+
+    dump c;
+    dump d;
+    dump nl();
+
+    dump e;
+    dump f;
+    dump nl();
+
+    dump g;
+    dump h;
+    dump i;
+    dump nl();
+
+    dump (:byte)true;
+    dump (:u8)true;
+    dump (:s8)true;
+    dump (:u16)true;
+    dump (:s16)true;
+    dump (:u32)true;
+    dump (:s32)true;
+    dump (:u64)true;
+    dump (:s64)true;
+    dump nl();
+
+    dump (:byte)false;
+    dump (:u8)false;
+    dump (:s8)false;
+    dump (:u16)false;
+    dump (:s16)false;
+    dump (:u32)false;
+    dump (:s32)false;
+    dump (:u64)false;
+    dump (:s64)false;
+    dump nl();
+
+    dump (:bool)0x0000000000000000u64;
+    dump (:bool)0xFFFFFFFFFFFFFFFFu64;
+    dump (:bool)0x0000000000000000s64;
+    dump (:bool)-1s64;
+    dump nl();
+
+    dump (:u8)0xFFy;
+    dump (:s8)0xFFy;
+    dump (:u16)0xFFy;
+    dump (:s16)0xFFy;
+    dump (:u32)0xFFy;
+    dump (:s32)0xFFy;
+    dump (:u64)0xFFy;
+    dump (:s64)0xFFy;
+    dump nl();
+
+    dump (:byte)0x77u8;
+    dump (:byte)0x77s8;
+    dump (:byte)0xFFu8;
+    dump (:byte)-1s8;
+    dump (:byte)0xFFFFFFFFFFFFFFFFu64;
+    dump (:byte)-1s64;
+    dump nl();
+
+    dump (:u64)0x77u8;
+    dump (:s64)0x77u8;
+    dump (:u64)0x77s8;
+    dump (:s64)0x77s8;
+    dump nl();
+
+    dump (:u64)0xFFu8;
+    dump (:s64)0xFFu8;
+    dump (:u64)-1s8;
+    dump (:s64)-1s8;
+    dump nl();
+
+    dump (:ssize)0xFFFFFFFFFFFFFFFFu;
+    dump (:usize)-1s;
+    dump nl();
+
+    dump (:*byte)0xBBBBBBBBBBBBBBBBu;
+    dump (:usize)(:*byte)0xBBBBBBBBBBBBBBBBu;
+    dump nl();
+
+    # pointer to pointer
+    dump (:*u32)(:*byte)0xCCCCCCCCCCCCCCCCu;
+    dump nl();
+
+    # Check negatives are sign-extended correctly.
+    dump (:u64)-1s8;
+    dump (:u64)-1s16;
+    dump (:u64)-1s32;
+    dump (:u64)-1s64;
+}
+################################################################################
+# 01 00 00 00 00 00 00 00
+# 00 00 00 00 00 00 00 00
+#
+# FF 00 00 00 00 00 00 00
+# FF 00 00 00 00 00 00 00
+#
+# 00
+# 01
+#
+# FF FF 00 00 00 00 00 00
+# 77 77 00 00 00 00 00 00
+# FF FF FF FF FF FF FF FF
+#
+# 01
+# 01
+# 01
+# 01 00
+# 01 00
+# 01 00 00 00
+# 01 00 00 00
+# 01 00 00 00 00 00 00 00
+# 01 00 00 00 00 00 00 00
+#
+# 00
+# 00
+# 00
+# 00 00
+# 00 00
+# 00 00 00 00
+# 00 00 00 00
+# 00 00 00 00 00 00 00 00
+# 00 00 00 00 00 00 00 00
+#
+# 00
+# 01
+# 00
+# 01
+#
+# FF
+# FF
+# FF 00
+# FF 00
+# FF 00 00 00
+# FF 00 00 00
+# FF 00 00 00 00 00 00 00
+# FF 00 00 00 00 00 00 00
+#
+# 77
+# 77
+# FF
+# FF
+# FF
+# FF
+#
+# 77 00 00 00 00 00 00 00
+# 77 00 00 00 00 00 00 00
+# 77 00 00 00 00 00 00 00
+# 77 00 00 00 00 00 00 00
+#
+# FF 00 00 00 00 00 00 00
+# FF 00 00 00 00 00 00 00
+# FF FF FF FF FF FF FF FF
+# FF FF FF FF FF FF FF FF
+#
+# FF FF FF FF FF FF FF FF
+# FF FF FF FF FF FF FF FF
+#
+# BB BB BB BB BB BB BB BB
+# BB BB BB BB BB BB BB BB
+#
+# CC CC CC CC CC CC CC CC
+#
+# FF FF FF FF FF FF FF FF
+# FF FF FF FF FF FF FF FF
+# FF FF FF FF FF FF FF FF
+# FF FF FF FF FF FF FF FF

@@ -208,6 +208,11 @@ order_expr(struct orderer* orderer, struct ast_expr const* expr)
         order_expr(orderer, expr->data.literal_slice.count);
         return;
     }
+    case AST_EXPR_CAST: {
+        order_typespec(orderer, expr->data.cast.typespec);
+        order_expr(orderer, expr->data.cast.expr);
+        return;
+    }
     case AST_EXPR_GROUPED: {
         order_expr(orderer, expr->data.grouped.expr);
         return;
