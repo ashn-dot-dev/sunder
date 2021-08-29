@@ -367,8 +367,7 @@ resolve_import(struct resolver* resolver, struct ast_import const* import)
 
     struct autil_string* const path_string =
         autil_string_new_fmt("%s/%s", dir, import->path);
-    char const* const path = autil_sipool_intern_cstr(
-        context()->sipool, autil_string_start(path_string));
+    char const* const path = canonical_path(autil_string_start(path_string));
     autil_string_del(path_string);
 
     struct module const* module = lookup_module(path);
