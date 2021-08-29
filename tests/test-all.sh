@@ -29,7 +29,7 @@ fi
 
 TESTSRUN=0
 FAILURES=0
-for t in $(find . -type f -name  '*.nova' | xargs -L 1 basename | sort); do
+for t in $(echo *.nova | sort); do
     sh test.sh "${t}"
     RESULT="$?"
 
