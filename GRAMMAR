@@ -1,6 +1,6 @@
 <module> ::= <import>* <decl>*
 
-<import> ::= "import" <literal-bytes>
+<import> ::= "import" <literal-bytes> ";"
 
 <decl> ::= <decl-variable>
          | <decl-constant>

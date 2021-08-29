@@ -244,6 +244,7 @@ parse_import(struct parser* parser)
         expect_current(parser, TOKEN_BYTES)->data.bytes;
     char const* const path =
         autil_sipool_intern_cstr(context()->sipool, autil_string_start(bytes));
+    expect_current(parser, TOKEN_SEMICOLON);
 
     struct ast_import* const product = ast_import_new(location, path);
 

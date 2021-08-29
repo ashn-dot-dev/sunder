@@ -1,6 +1,6 @@
-import "import/a.nova"
-import "import/b.nova"
-import "import/c/c.nova"
+import "import/a.nova";
+import "import/b.nova";
+import "import/c/c.nova";
 
 func main() void {
     dump a;
