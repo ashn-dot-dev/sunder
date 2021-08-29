@@ -31,6 +31,9 @@ expect_current(struct parser* parser, enum token_kind kind);
 static struct ast_module const*
 parse_module(struct parser* parser);
 
+static struct ast_import const*
+parse_import(struct parser* parser);
+
 static struct ast_decl const*
 parse_decl(struct parser* parser);
 static struct ast_decl const*
@@ -213,13 +216,36 @@ parse_module(struct parser* parser)
 {
     assert(parser != NULL);
 
+    autil_sbuf(struct ast_import const*) imports = NULL;
+    while (check_current(parser, TOKEN_IMPORT)) {
+        autil_sbuf_push(imports, parse_import(parser));
+    }
+    autil_sbuf_freeze(imports, context()->freezer);
+
     autil_sbuf(struct ast_decl const*) decls = NULL;
     while (!check_current(parser, TOKEN_EOF)) {
         autil_sbuf_push(decls, parse_decl(parser));
     }
-
     autil_sbuf_freeze(decls, context()->freezer);
-    struct ast_module* const product = ast_module_new(decls);
+
+    struct ast_module* const product = ast_module_new(imports, decls);
+
+    autil_freezer_register(context()->freezer, product);
+    return product;
+}
+
+static struct ast_import const*
+parse_import(struct parser* parser)
+{
+    struct source_location const* const location =
+        &expect_current(parser, TOKEN_IMPORT)->location;
+
+    struct autil_string const* const bytes =
+        expect_current(parser, TOKEN_BYTES)->data.bytes;
+    char const* const path =
+        autil_sipool_intern_cstr(context()->sipool, autil_string_start(bytes));
+
+    struct ast_import* const product = ast_import_new(location, path);
 
     autil_freezer_register(context()->freezer, product);
     return product;

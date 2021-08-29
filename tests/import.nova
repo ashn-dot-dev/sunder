@@ -1,0 +1,14 @@
+import "import/a.nova"
+import "import/b.nova"
+import "import/c/c.nova"
+
+func main() void {
+    dump a;
+    dump b();
+    c = c + 1u16;
+    dump c;
+}
+################################################################################
+# AA AA
+# BB BB
+# CC CC

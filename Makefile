@@ -58,7 +58,6 @@ format:
 
 clean:
 	rm -f bin/nova-compile
-	rm -f $$(find . -type f -name 'a.*')
 	rm -f $$(find . -type f -name '*.out')
 	rm -f $$(find . -type f -name '*.o')
 

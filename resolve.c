@@ -68,6 +68,9 @@ check_type_compatibility(
     struct type const* actual,
     struct type const* expected);
 
+static void
+resolve_import(struct resolver* resolver, struct ast_import const* import);
+
 static struct symbol const*
 resolve_decl(struct resolver* resolver, struct ast_decl const* decl);
 static struct symbol const*
@@ -224,7 +227,7 @@ resolver_new(struct module* module)
     self->module = module;
     self->current_namespace = NULL;
     self->current_function = NULL;
-    self->current_symbol_table = context()->global_symbol_table;
+    self->current_symbol_table = module->symbols;
     self->current_rbp_offset = 0x0;
     return self;
 }
@@ -352,6 +355,34 @@ check_type_compatibility(
             actual->name,
             expected->name);
     }
+}
+
+static void
+resolve_import(struct resolver* resolver, struct ast_import const* import)
+{
+    assert(resolver != NULL);
+    assert(import != NULL);
+
+    char const* const dir = directory_path(resolver->module->path);
+
+    struct autil_string* const path_string =
+        autil_string_new_fmt("%s/%s", dir, import->path);
+    char const* const path = autil_sipool_intern_cstr(
+        context()->sipool, autil_string_start(path_string));
+    autil_string_del(path_string);
+
+    struct module const* module = lookup_module(path);
+    if (module == NULL) {
+        module = load_module(path);
+    }
+    if (!module->loaded) {
+        fatal(
+            import->location,
+            "circular dependency when importing `%s`",
+            import->path);
+    }
+
+    symbol_table_merge(resolver->module->symbols, module->exports);
 }
 
 static struct symbol const*
@@ -548,7 +579,7 @@ resolve_decl_function(struct resolver* resolver, struct ast_decl const* decl)
     // symbols will list the left-most symbol as the first of the two symbols
     // added to the table.
     struct symbol_table* const symbol_table =
-        symbol_table_new(context()->global_symbol_table);
+        symbol_table_new(resolver->module->symbols);
     // The function references, but does not own, its outermost symbol table.
     function->symbol_table = symbol_table;
     for (size_t i = 0; i < autil_sbuf_count(parameters); ++i) {
@@ -588,7 +619,7 @@ complete_function(
 
     // Complete the function.
     assert(resolver->current_function == NULL);
-    assert(resolver->current_symbol_table == context()->global_symbol_table);
+    assert(resolver->current_symbol_table == resolver->module->symbols);
     assert(resolver->current_rbp_offset == 0x0);
     resolver->current_namespace = incomplete->function->name;
     resolver->current_function = incomplete->function;
@@ -598,7 +629,7 @@ complete_function(
         incomplete->decl->data.function.body);
     resolver->current_namespace = NULL;
     resolver->current_function = NULL;
-    assert(resolver->current_symbol_table == context()->global_symbol_table);
+    assert(resolver->current_symbol_table == resolver->module->symbols);
     assert(resolver->current_rbp_offset == 0x0);
 
     // Freeze the symbol table now that the function has been completed and no
@@ -2018,9 +2049,16 @@ resolve(struct module* module)
 
     struct resolver* const resolver = resolver_new(module);
 
+    for (size_t i = 0; i < autil_sbuf_count(module->ast->imports); ++i) {
+        resolve_import(resolver, module->ast->imports[i]);
+    }
+
     autil_sbuf(struct ast_decl const* const) const ordered = module->ordered;
     for (size_t i = 0; i < autil_sbuf_count(ordered); ++i) {
-        resolve_decl(resolver, module->ordered[i]);
+        struct symbol const* const symbol =
+            resolve_decl(resolver, module->ordered[i]);
+        symbol_table_insert(module->exports, symbol);
+        symbol_table_insert(context()->global_symbol_table, symbol);
     }
 
     autil_sbuf(struct incomplete_function const) incomplete =

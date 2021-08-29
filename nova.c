@@ -1,12 +1,15 @@
 // Copyright 2021 The Nova Project Authors
 // SPDX-License-Identifier: Apache-2.0
+#define _XOPEN_SOURCE 700 /* realpath */
 #include <assert.h>
 #include <errno.h>
+#include <limits.h> /* PATH_MAX */
 #include <inttypes.h>
 #include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
 
+#include <libgen.h> /* dirname */
 #include <sys/types.h> /* pid_t */
 #include <sys/wait.h> /* wait* */
 #include <unistd.h> /* exec*, isatty, fork */
@@ -99,12 +102,8 @@ messagev_(
     fputs("\n", stderr);
 
     if (psrc != NO_PSRC) {
-        // TODO: Once the compiler is able to support loading of multiple
-        // modules this logic should change so that the start of the module
-        // source is dynamically obtainted by performing a lookup on the module
-        // using the provided path.
-        assert(path == context()->module->path);
-        char const* const source = context()->module->source;
+        assert(path != NULL);
+        char const* const source = lookup_module(path)->source;
         char const* const line_start = source_line_start(source, psrc);
         char const* const line_end = source_line_end(source, psrc);
 
@@ -380,6 +379,38 @@ xspawnvpw(char const* path, char const* const* argv)
     }
 }
 
+char const*
+canonical_path(char const* path)
+{
+    assert(path != NULL);
+
+    char resolved_path[PATH_MAX] = {0};
+    if (realpath(path, resolved_path) == NULL) {
+        fatal(
+            NULL,
+            "failed resolve path '%s' with error '%s'",
+            path,
+            strerror(errno));
+    }
+
+    return autil_sipool_intern_cstr(context()->sipool, resolved_path);
+}
+
+char const*
+directory_path(char const* path)
+{
+    assert(path != NULL);
+
+    char const* const canonical = canonical_path(path);
+
+    char* const tmp = autil_cstr_new_cstr(canonical);
+    char const* const interned =
+        autil_sipool_intern_cstr(context()->sipool, dirname(tmp));
+    autil_xalloc(tmp, AUTIL_XALLOC_FREE);
+
+    return interned;
+}
+
 static char*
 read_source(char const* path)
 {
@@ -389,7 +420,8 @@ read_source(char const* path)
         struct source_location const location = {path, NO_LINE, NO_PSRC};
         fatal(
             &location,
-            "failed to read source with error '%s'",
+            "failed to read '%s' with error '%s'",
+            path,
             strerror(errno));
     }
 
@@ -414,6 +446,62 @@ module_new(char const* path)
     autil_freezer_register(context()->freezer, source);
     self->source = source;
 
+    self->symbols = symbol_table_new(NULL);
+    symbol_table_insert(
+        self->symbols,
+        symbol_table_lookup(
+            context()->global_symbol_table, context()->interned.void_));
+    symbol_table_insert(
+        self->symbols,
+        symbol_table_lookup(
+            context()->global_symbol_table, context()->interned.bool_));
+    symbol_table_insert(
+        self->symbols,
+        symbol_table_lookup(
+            context()->global_symbol_table, context()->interned.byte));
+    symbol_table_insert(
+        self->symbols,
+        symbol_table_lookup(
+            context()->global_symbol_table, context()->interned.u8));
+    symbol_table_insert(
+        self->symbols,
+        symbol_table_lookup(
+            context()->global_symbol_table, context()->interned.s8));
+    symbol_table_insert(
+        self->symbols,
+        symbol_table_lookup(
+            context()->global_symbol_table, context()->interned.u16));
+    symbol_table_insert(
+        self->symbols,
+        symbol_table_lookup(
+            context()->global_symbol_table, context()->interned.s16));
+    symbol_table_insert(
+        self->symbols,
+        symbol_table_lookup(
+            context()->global_symbol_table, context()->interned.u32));
+    symbol_table_insert(
+        self->symbols,
+        symbol_table_lookup(
+            context()->global_symbol_table, context()->interned.s32));
+    symbol_table_insert(
+        self->symbols,
+        symbol_table_lookup(
+            context()->global_symbol_table, context()->interned.u64));
+    symbol_table_insert(
+        self->symbols,
+        symbol_table_lookup(
+            context()->global_symbol_table, context()->interned.s64));
+    symbol_table_insert(
+        self->symbols,
+        symbol_table_lookup(
+            context()->global_symbol_table, context()->interned.usize));
+    symbol_table_insert(
+        self->symbols,
+        symbol_table_lookup(
+            context()->global_symbol_table, context()->interned.ssize));
+
+    self->exports = symbol_table_new(NULL);
+
     return self;
 }
 
@@ -421,6 +509,9 @@ void
 module_del(struct module* self)
 {
     assert(self != NULL);
+
+    symbol_table_freeze(self->symbols, context()->freezer);
+    symbol_table_freeze(self->exports, context()->freezer);
 
     autil_sbuf_fini(self->ordered);
     memset(self, 0x00, sizeof(*self));
@@ -489,7 +580,7 @@ context_init(void)
         sizeof(CONTEXT_STATIC_SYMBOLS_MAP_VAL_TYPE),
         CONTEXT_STATIC_SYMBOLS_MAP_CMP_FUNC);
     s_context.global_symbol_table = symbol_table_new(NULL);
-    s_context.module = NULL;
+    s_context.modules = NULL;
 
     s_context.builtin.location = (struct source_location){
         s_context.interned.builtin,
@@ -594,6 +685,11 @@ context_fini(void)
 {
     struct context* const self = &s_context;
 
+    for (size_t i = 0; i < autil_sbuf_count(self->modules); ++i) {
+        module_del(self->modules[i]);
+    }
+    autil_sbuf_fini(self->modules);
+
     autil_sipool_del(self->sipool);
 
     autil_freezer_del(self->freezer);
@@ -601,8 +697,6 @@ context_fini(void)
     autil_map_del(self->static_symbols);
     autil_sbuf_fini(s_context.global_symbol_table->symbols);
     autil_xalloc(s_context.global_symbol_table, AUTIL_XALLOC_FREE);
-
-    module_del(self->module);
 
     memset(self, 0x00, sizeof(*self));
 }
@@ -613,16 +707,35 @@ context(void)
     return &s_context;
 }
 
-void
+struct module const*
 load_module(char const* path)
 {
-    assert(s_context.module == NULL);
+    assert(path != NULL);
+    assert(lookup_module(path) == NULL);
 
     struct module* const module = module_new(path);
-    s_context.module = module;
+    autil_sbuf_push(s_context.modules, module);
+
     parse(module);
     order(module);
     resolve(module);
+
+    module->loaded = true;
+    return module;
+}
+
+struct module const*
+lookup_module(char const* path)
+{
+    assert(path != NULL);
+
+    for (size_t i = 0; i < autil_sbuf_count(context()->modules); ++i) {
+        // TODO: Maybe lookup by realpath?
+        if (context()->modules[i]->path == path) {
+            return context()->modules[i];
+        }
+    }
+    return NULL;
 }
 
 #define AUTIL_IMPLEMENTATION

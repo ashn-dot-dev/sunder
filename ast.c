@@ -5,11 +5,27 @@
 #include "nova.h"
 
 struct ast_module*
-ast_module_new(struct ast_decl const* const* decls)
+ast_module_new(
+    struct ast_import const* const* imports,
+    struct ast_decl const* const* decls)
 {
     struct ast_module* const self = autil_xalloc(NULL, sizeof(*self));
     memset(self, 0x00, sizeof(*self));
+    self->imports = imports;
     self->decls = decls;
+    return self;
+}
+
+struct ast_import*
+ast_import_new(struct source_location const* location, char const* path)
+{
+    assert(location != NULL);
+    assert(path != NULL);
+
+    struct ast_import* const self = autil_xalloc(NULL, sizeof(*self));
+    memset(self, 0x00, sizeof(*self));
+    self->location = location;
+    self->path = path;
     return self;
 }
 

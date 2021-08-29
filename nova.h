@@ -119,9 +119,20 @@ spawnvpw(char const* path, char const* const* argv);
 void
 xspawnvpw(char const* path, char const* const* argv);
 
+char const* // interned
+canonical_path(char const* path);
+char const* // interned
+directory_path(char const* path);
+
 struct module {
-    char const* path;
+    bool loaded; // True if the module has been fully loaded / resolved.
+    char const* path; // interned
     char const* source;
+
+    // Global symbols.
+    struct symbol_table* symbols;
+    // Exported symbols declared in this module.
+    struct symbol_table* exports;
 
     // Abstract syntax tree for the module. Initialized to NULL and populated
     // during the parse phase.
@@ -212,9 +223,12 @@ struct context {
 #define CONTEXT_STATIC_SYMBOLS_MAP_CMP_FUNC autil_cstr_vpcmp
     struct autil_map* static_symbols;
 
-    // Global symbol table and reference to the loaded module.
+    // Global symbol table.
     struct symbol_table* global_symbol_table;
-    struct module* module;
+
+    // Currently loaded/loading modules.
+    // TODO: Maybe make this a map from realpath to module?
+    autil_sbuf(struct module*) modules;
 };
 void
 context_init(void);
@@ -223,8 +237,10 @@ context_fini(void);
 struct context const*
 context(void);
 
-void
+struct module const*
 load_module(char const* path);
+struct module const*
+lookup_module(char const* path);
 
 ////////////////////////////////////////////////////////////////////////////////
 //////// lex.c /////////////////////////////////////////////////////////////////
@@ -236,6 +252,7 @@ enum token_kind {
     TOKEN_NOT,
     TOKEN_OR,
     TOKEN_AND,
+    TOKEN_IMPORT,
     TOKEN_VAR,
     TOKEN_CONST,
     TOKEN_FUNC,
@@ -297,7 +314,7 @@ struct token {
             struct autil_vstr number;
             struct autil_vstr suffix;
         } integer;
-        // TOKEN_LITERAL_BYTES
+        // TOKEN_BYTES
         // Contains the unescaped bytes of literal.
         struct autil_string const* bytes;
     } data;
@@ -317,10 +334,20 @@ lexer_next_token(struct lexer* self);
 // Abstract syntax tree.
 
 struct ast_module {
+    autil_sbuf(struct ast_import const* const) imports;
     autil_sbuf(struct ast_decl const* const) decls;
 };
 struct ast_module*
-ast_module_new(struct ast_decl const* const* decls);
+ast_module_new(
+    struct ast_import const* const* imports,
+    struct ast_decl const* const* decls);
+
+struct ast_import {
+    struct source_location const* location;
+    char const* path; // interned
+};
+struct ast_import*
+ast_import_new(struct source_location const* location, char const* path);
 
 struct ast_decl {
     struct source_location const* location;
@@ -893,6 +920,9 @@ symbol_table_lookup(struct symbol_table const* self, char const* name);
 // Lookup in this symbol table only.
 struct symbol const*
 symbol_table_lookup_local(struct symbol_table const* self, char const* name);
+// Add the symbols of othr to self.
+void
+symbol_table_merge(struct symbol_table* self, struct symbol_table const* othr);
 
 struct tir_stmt {
     struct source_location const* location;

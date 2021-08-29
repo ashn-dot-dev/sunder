@@ -1,4 +1,6 @@
-<module> ::= <decl>*
+<module> ::= <import>* <decl>*
+
+<import> ::= "import" <literal-bytes>
 
 <decl> ::= <decl-variable>
          | <decl-constant>
@@ -51,14 +53,7 @@
          | <expr-unary>
          | <expr-binary>
 
-<expr-bytes> ::= '"' <literal-bytes-element>* '"'
-
-<bytes-element> ::= "\0"
-                  | "\t"
-                  | "\n"
-                  | '\"'
-                  | "\\"
-                  | ? printable ASCII character ?
+<expr-bytes> ::= <literal-bytes>
 
 <expr-literal-array> ::= "(" ":" <typespec> ")" "[" (<expr> ("," <expr>)*)? "]"
 
@@ -103,6 +98,15 @@
                 | <expr> "&" <expr>
 
 <block> ::= "{" <stmt>* "}"
+
+<literal-bytes> ::= '"' <literal-bytes-element>* '"'
+
+<literal-bytes-element> ::= "\0"
+                          | "\t"
+                          | "\n"
+                          | '\"'
+                          | "\\"
+                          | ? printable ASCII character ?
 
 <parameter-list> ::= ( <parameter> ("," <parameter>)* )?
 

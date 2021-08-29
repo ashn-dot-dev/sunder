@@ -513,6 +513,22 @@ symbol_table_insert(struct symbol_table* self, struct symbol const* symbol)
 }
 
 struct symbol const*
+symbol_table_lookup(struct symbol_table const* self, char const* name)
+{
+    assert(self != NULL);
+    assert(name != NULL);
+
+    struct symbol const* const local = symbol_table_lookup_local(self, name);
+    if (local != NULL) {
+        return local;
+    }
+    if (self->parent != NULL) {
+        return symbol_table_lookup(self->parent, name);
+    }
+    return NULL;
+}
+
+struct symbol const*
 symbol_table_lookup_local(struct symbol_table const* self, char const* name)
 {
     assert(self != NULL);
@@ -528,20 +544,16 @@ symbol_table_lookup_local(struct symbol_table const* self, char const* name)
     return NULL;
 }
 
-struct symbol const*
-symbol_table_lookup(struct symbol_table const* self, char const* name)
+void
+symbol_table_merge(struct symbol_table* self, struct symbol_table const* othr)
 {
     assert(self != NULL);
-    assert(name != NULL);
+    assert(othr != NULL);
 
-    struct symbol const* const local = symbol_table_lookup_local(self, name);
-    if (local != NULL) {
-        return local;
+    for (size_t i = 0; i < autil_sbuf_count(othr->symbols); ++i) {
+        struct symbol const* const symbol = othr->symbols[i];
+        symbol_table_insert(self, symbol);
     }
-    if (self->parent != NULL) {
-        return symbol_table_lookup(self->parent, name);
-    }
-    return NULL;
 }
 
 static struct tir_stmt*

@@ -16,6 +16,7 @@ static struct autil_vstr token_kind_vstrs[TOKEN_EOF + 1u] = {
     [TOKEN_NOT] = AUTIL_VSTR_INIT_STR_LITERAL("not"),
     [TOKEN_OR] = AUTIL_VSTR_INIT_STR_LITERAL("or"),
     [TOKEN_AND] = AUTIL_VSTR_INIT_STR_LITERAL("and"),
+    [TOKEN_IMPORT] = AUTIL_VSTR_INIT_STR_LITERAL("import"),
     [TOKEN_VAR] = AUTIL_VSTR_INIT_STR_LITERAL("var"),
     [TOKEN_CONST] = AUTIL_VSTR_INIT_STR_LITERAL("const"),
     [TOKEN_FUNC] = AUTIL_VSTR_INIT_STR_LITERAL("func"),
