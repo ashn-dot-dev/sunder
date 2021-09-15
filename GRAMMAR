@@ -1,4 +1,6 @@
-<module> ::= <import>* <decl>*
+<module> ::= <namespace>? <import>* <decl>*
+
+<namespace> := "namespace" <identifier> ("::" <identifier>)* ";"
 
 <import> ::= "import" <literal-bytes> ";"
 
@@ -38,6 +40,7 @@
 <stmt-expr> ::= <expr> ";"
 
 <expr> ::= <identifier>
+         | <qualified-identifier>
          | <boolean>
          | <integer>
          | <expr-bytes>
@@ -48,7 +51,7 @@
          | <expr-syscall>
          | <expr-call>
          | <expr-index>
-         | <expr-index-slice>
+         | <expr-slice>
          | <expr-sizeof>
          | <expr-unary>
          | <expr-binary>
@@ -130,6 +133,8 @@
 <typespec-slice> ::= "[" "]" <typespec>
 
 <typespec-typeof> ::= "typeof" "(" <expr> ")"
+
+<qualified-identifier> ::= <identifier> ("::" <identifier>)+
 
 <identifier> ::= <letter> (<letter> | <digit-dec>)*
 

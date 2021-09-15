@@ -229,7 +229,7 @@ type_unique_function(
 
     struct symbol* const symbol =
         symbol_new_type(&context()->builtin.location, type);
-    symbol_table_insert(context()->global_symbol_table, symbol);
+    symbol_table_insert(context()->global_symbol_table, symbol->name, symbol);
     autil_freezer_register(context()->freezer, type);
     autil_freezer_register(context()->freezer, symbol);
     return type;
@@ -250,7 +250,7 @@ type_unique_pointer(struct type const* base)
 
     struct symbol* const symbol =
         symbol_new_type(&context()->builtin.location, type);
-    symbol_table_insert(context()->global_symbol_table, symbol);
+    symbol_table_insert(context()->global_symbol_table, symbol->name, symbol);
     autil_freezer_register(context()->freezer, type);
     autil_freezer_register(context()->freezer, symbol);
     return type;
@@ -271,7 +271,7 @@ type_unique_array(size_t count, struct type const* base)
 
     struct symbol* const symbol =
         symbol_new_type(&context()->builtin.location, type);
-    symbol_table_insert(context()->global_symbol_table, symbol);
+    symbol_table_insert(context()->global_symbol_table, symbol->name, symbol);
     autil_freezer_register(context()->freezer, type);
     autil_freezer_register(context()->freezer, symbol);
     return type;
@@ -292,7 +292,7 @@ type_unique_slice(struct type const* base)
 
     struct symbol* const symbol =
         symbol_new_type(&context()->builtin.location, type);
-    symbol_table_insert(context()->global_symbol_table, symbol);
+    symbol_table_insert(context()->global_symbol_table, symbol->name, symbol);
     autil_freezer_register(context()->freezer, type);
     autil_freezer_register(context()->freezer, symbol);
     return type;
@@ -390,9 +390,9 @@ symbol_new(
 {
     assert(location != NULL);
     assert(name != NULL);
-    assert(type != NULL);
-    assert(kind != SYMBOL_TYPE || address == NULL);
-    assert(kind != SYMBOL_TYPE || value == NULL);
+    assert(kind == SYMBOL_NAMESPACE || type != NULL);
+    assert(kind != SYMBOL_TYPE || kind != SYMBOL_NAMESPACE || address == NULL);
+    assert(kind != SYMBOL_TYPE || kind != SYMBOL_NAMESPACE || value == NULL);
 
     struct symbol* const self = autil_xalloc(NULL, sizeof(*self));
     memset(self, 0x00, sizeof(*self));
@@ -473,13 +473,30 @@ symbol_new_function(
     return self;
 }
 
+struct symbol*
+symbol_new_namespace(
+    struct source_location const* location,
+    char const* name,
+    struct symbol_table* symbols)
+{
+    assert(location != NULL);
+
+    struct symbol* const self =
+        symbol_new(SYMBOL_NAMESPACE, location, name, NULL, NULL, NULL);
+    self->symbols = symbols;
+    return self;
+}
+
 struct symbol_table*
 symbol_table_new(struct symbol_table const* parent)
 {
     struct symbol_table* const self = autil_xalloc(NULL, sizeof(*self));
     memset(self, 0x00, sizeof(*self));
     self->parent = parent;
-    self->symbols = NULL;
+    self->symbols = autil_map_new(
+        sizeof(SYMBOL_MAP_KEY_TYPE),
+        sizeof(SYMBOL_MAP_VAL_TYPE),
+        SYMBOL_MAP_CMP_FUNC);
     return self;
 }
 
@@ -490,26 +507,28 @@ symbol_table_freeze(struct symbol_table* self, struct autil_freezer* freezer)
     assert(freezer != NULL);
 
     autil_freezer_register(freezer, self);
-    autil_sbuf_freeze(self->symbols, freezer);
+    autil_map_freeze(self->symbols, freezer);
 }
 
 void
-symbol_table_insert(struct symbol_table* self, struct symbol const* symbol)
+symbol_table_insert(
+    struct symbol_table* self, char const* name, struct symbol const* symbol)
 {
     assert(self != NULL);
     assert(symbol != NULL);
 
-    struct symbol const* const local =
-        symbol_table_lookup_local(self, symbol->name);
+    SYMBOL_MAP_KEY_TYPE const key = name;
+    struct symbol const* const local = symbol_table_lookup_local(self, key);
     if (local != NULL) {
         fatal(
             symbol->location,
             "redeclaration of `%s` previously declared at [%s:%zu]",
-            local->name,
+            key,
             local->location->path,
             local->location->line);
     }
-    autil_sbuf_push(self->symbols, symbol);
+    SYMBOL_MAP_VAL_TYPE const val = symbol;
+    autil_map_insert(self->symbols, &key, &val, NULL, NULL);
 }
 
 struct symbol const*
@@ -534,26 +553,9 @@ symbol_table_lookup_local(struct symbol_table const* self, char const* name)
     assert(self != NULL);
     assert(name != NULL);
 
-    for (size_t i = 0; i < autil_sbuf_count(self->symbols); ++i) {
-        struct symbol const* const symbol = self->symbols[i];
-        if (symbol->name == name) {
-            return symbol;
-        }
-    }
-
-    return NULL;
-}
-
-void
-symbol_table_merge(struct symbol_table* self, struct symbol_table const* othr)
-{
-    assert(self != NULL);
-    assert(othr != NULL);
-
-    for (size_t i = 0; i < autil_sbuf_count(othr->symbols); ++i) {
-        struct symbol const* const symbol = othr->symbols[i];
-        symbol_table_insert(self, symbol);
-    }
+    SYMBOL_MAP_VAL_TYPE const* const existing =
+        autil_map_lookup_const(self->symbols, &name);
+    return existing != NULL ? *existing : NULL;
 }
 
 static struct tir_stmt*
@@ -998,7 +1000,8 @@ tir_expr_is_lvalue(struct tir_expr const* self)
     switch (self->kind) {
     case TIR_EXPR_IDENTIFIER: {
         switch (self->data.identifier->kind) {
-        case SYMBOL_TYPE:
+        case SYMBOL_TYPE: /* fallthrough */
+        case SYMBOL_NAMESPACE:
             UNREACHABLE();
         case SYMBOL_VARIABLE: /* fallthrough */
         case SYMBOL_CONSTANT:

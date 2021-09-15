@@ -6,13 +6,29 @@
 
 struct ast_module*
 ast_module_new(
+    struct ast_namespace const* namespace,
     struct ast_import const* const* imports,
     struct ast_decl const* const* decls)
 {
     struct ast_module* const self = autil_xalloc(NULL, sizeof(*self));
     memset(self, 0x00, sizeof(*self));
+    self->namespace = namespace;
     self->imports = imports;
     self->decls = decls;
+    return self;
+}
+
+struct ast_namespace*
+ast_namespace_new(
+    struct source_location const* location,
+    struct ast_identifier const* const* identifiers)
+{
+    assert(location != NULL);
+
+    struct ast_namespace* const self = autil_xalloc(NULL, sizeof(*self));
+    memset(self, 0x00, sizeof(*self));
+    self->location = location;
+    self->identifiers = identifiers;
     return self;
 }
 
@@ -236,6 +252,19 @@ ast_expr_new_identifier(struct ast_identifier const* identifier)
     struct ast_expr* const self =
         ast_expr_new(identifier->location, AST_EXPR_IDENTIFIER);
     self->data.identifier = identifier;
+    return self;
+}
+
+struct ast_expr*
+ast_expr_new_qualified_identifier(
+    struct ast_identifier const* const* identifiers)
+{
+    assert(autil_sbuf_count(identifiers) > 1);
+
+    struct ast_expr* const self =
+        ast_expr_new(identifiers[0]->location, AST_EXPR_QUALIFIED_IDENTIFIER);
+
+    self->data.qualified_identifier.identifiers = identifiers;
     return self;
 }
 

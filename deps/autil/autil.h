@@ -828,6 +828,9 @@ autil_vec_new(size_t elemsize);
 // Does nothing if self == NULL.
 AUTIL_API void
 autil_vec_del(struct autil_vec* self);
+// Register resources within the vec with the provided freezer.
+AUTIL_API void
+autil_vec_freeze(struct autil_vec* self, struct autil_freezer* freezer);
 
 // Pointer to the start of the underlying array of the vec.
 // May return NULL when the count of the vec is zero.
@@ -922,6 +925,9 @@ autil_map_new(size_t keysize, size_t valsize, autil_vpcmp_fn keycmp);
 // Does nothing if self == NULL.
 AUTIL_API void
 autil_map_del(struct autil_map* self);
+// Register resources within the map with the provided freezer.
+AUTIL_API void
+autil_map_freeze(struct autil_map* self, struct autil_freezer* freezer);
 
 // The number of key-value pairs in the map.
 AUTIL_API size_t
@@ -3250,6 +3256,16 @@ autil_vec_del(struct autil_vec* self)
     autil_xalloc(self, AUTIL_XALLOC_FREE);
 }
 
+AUTIL_API void
+autil_vec_freeze(struct autil_vec* self, struct autil_freezer* freezer)
+{
+    assert(self != NULL);
+    assert(freezer != NULL);
+
+    autil_freezer_register(freezer, self);
+    autil_freezer_register(freezer, self->start);
+}
+
 AUTIL_API void const*
 autil_vec_start(struct autil_vec const* self)
 {
@@ -3483,6 +3499,16 @@ autil_map_del(struct autil_map* self)
     autil_vec_del(self->vals);
     memset(self, 0x00, sizeof(*self)); // scrub
     autil_xalloc(self, AUTIL_XALLOC_FREE);
+}
+AUTIL_API void
+autil_map_freeze(struct autil_map* self, struct autil_freezer* freezer)
+{
+    assert(self != NULL);
+    assert(freezer != NULL);
+
+    autil_freezer_register(freezer, self);
+    autil_vec_freeze(self->keys, freezer);
+    autil_vec_freeze(self->vals, freezer);
 }
 
 AUTIL_API size_t

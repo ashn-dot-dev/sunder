@@ -449,54 +449,67 @@ module_new(char const* path)
     self->symbols = symbol_table_new(NULL);
     symbol_table_insert(
         self->symbols,
+        context()->interned.void_,
         symbol_table_lookup(
             context()->global_symbol_table, context()->interned.void_));
     symbol_table_insert(
         self->symbols,
+        context()->interned.bool_,
         symbol_table_lookup(
             context()->global_symbol_table, context()->interned.bool_));
     symbol_table_insert(
         self->symbols,
+        context()->interned.byte,
         symbol_table_lookup(
             context()->global_symbol_table, context()->interned.byte));
     symbol_table_insert(
         self->symbols,
+        context()->interned.u8,
         symbol_table_lookup(
             context()->global_symbol_table, context()->interned.u8));
     symbol_table_insert(
         self->symbols,
+        context()->interned.s8,
         symbol_table_lookup(
             context()->global_symbol_table, context()->interned.s8));
     symbol_table_insert(
         self->symbols,
+        context()->interned.u16,
         symbol_table_lookup(
             context()->global_symbol_table, context()->interned.u16));
     symbol_table_insert(
         self->symbols,
+        context()->interned.s16,
         symbol_table_lookup(
             context()->global_symbol_table, context()->interned.s16));
     symbol_table_insert(
         self->symbols,
+        context()->interned.u32,
         symbol_table_lookup(
             context()->global_symbol_table, context()->interned.u32));
     symbol_table_insert(
         self->symbols,
+        context()->interned.s32,
         symbol_table_lookup(
             context()->global_symbol_table, context()->interned.s32));
     symbol_table_insert(
         self->symbols,
+        context()->interned.u64,
         symbol_table_lookup(
             context()->global_symbol_table, context()->interned.u64));
     symbol_table_insert(
         self->symbols,
+        context()->interned.s64,
         symbol_table_lookup(
             context()->global_symbol_table, context()->interned.s64));
     symbol_table_insert(
         self->symbols,
+        context()->interned.usize,
         symbol_table_lookup(
             context()->global_symbol_table, context()->interned.usize));
     symbol_table_insert(
         self->symbols,
+        context()->interned.ssize,
         symbol_table_lookup(
             context()->global_symbol_table, context()->interned.ssize));
 
@@ -652,19 +665,32 @@ context_init(void)
     autil_freezer_register(context()->freezer, symbol_s64);
     autil_freezer_register(context()->freezer, symbol_usize);
     autil_freezer_register(context()->freezer, symbol_ssize);
-    symbol_table_insert(s_context.global_symbol_table, symbol_void);
-    symbol_table_insert(s_context.global_symbol_table, symbol_bool);
-    symbol_table_insert(s_context.global_symbol_table, symbol_byte);
-    symbol_table_insert(s_context.global_symbol_table, symbol_u8);
-    symbol_table_insert(s_context.global_symbol_table, symbol_s8);
-    symbol_table_insert(s_context.global_symbol_table, symbol_u16);
-    symbol_table_insert(s_context.global_symbol_table, symbol_s16);
-    symbol_table_insert(s_context.global_symbol_table, symbol_u32);
-    symbol_table_insert(s_context.global_symbol_table, symbol_s32);
-    symbol_table_insert(s_context.global_symbol_table, symbol_u64);
-    symbol_table_insert(s_context.global_symbol_table, symbol_s64);
-    symbol_table_insert(s_context.global_symbol_table, symbol_usize);
-    symbol_table_insert(s_context.global_symbol_table, symbol_ssize);
+    symbol_table_insert(
+        s_context.global_symbol_table, symbol_void->name, symbol_void);
+    symbol_table_insert(
+        s_context.global_symbol_table, symbol_bool->name, symbol_bool);
+    symbol_table_insert(
+        s_context.global_symbol_table, symbol_byte->name, symbol_byte);
+    symbol_table_insert(
+        s_context.global_symbol_table, symbol_u8->name, symbol_u8);
+    symbol_table_insert(
+        s_context.global_symbol_table, symbol_s8->name, symbol_s8);
+    symbol_table_insert(
+        s_context.global_symbol_table, symbol_u16->name, symbol_u16);
+    symbol_table_insert(
+        s_context.global_symbol_table, symbol_s16->name, symbol_s16);
+    symbol_table_insert(
+        s_context.global_symbol_table, symbol_u32->name, symbol_u32);
+    symbol_table_insert(
+        s_context.global_symbol_table, symbol_s32->name, symbol_s32);
+    symbol_table_insert(
+        s_context.global_symbol_table, symbol_u64->name, symbol_u64);
+    symbol_table_insert(
+        s_context.global_symbol_table, symbol_s64->name, symbol_s64);
+    symbol_table_insert(
+        s_context.global_symbol_table, symbol_usize->name, symbol_usize);
+    symbol_table_insert(
+        s_context.global_symbol_table, symbol_ssize->name, symbol_ssize);
     s_context.builtin.void_ = type_void;
     s_context.builtin.bool_ = type_bool;
     s_context.builtin.byte = type_byte;
@@ -692,11 +718,10 @@ context_fini(void)
 
     autil_sipool_del(self->sipool);
 
-    autil_freezer_del(self->freezer);
-
     autil_map_del(self->static_symbols);
-    autil_sbuf_fini(s_context.global_symbol_table->symbols);
-    autil_xalloc(s_context.global_symbol_table, AUTIL_XALLOC_FREE);
+    symbol_table_freeze(self->global_symbol_table, self->freezer);
+
+    autil_freezer_del(self->freezer);
 
     memset(self, 0x00, sizeof(*self));
 }

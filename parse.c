@@ -31,6 +31,9 @@ expect_current(struct parser* parser, enum token_kind kind);
 static struct ast_module const*
 parse_module(struct parser* parser);
 
+static struct ast_namespace const*
+parse_namespace(struct parser* parser);
+
 static struct ast_import const*
 parse_import(struct parser* parser);
 
@@ -89,6 +92,9 @@ static struct ast_expr const*
 parse_expr(struct parser* parser);
 static struct ast_expr const*
 parse_expr_identifier(struct parser* parser);
+static struct ast_expr const*
+parse_expr_qualified_identifier(
+    struct parser* parser, struct ast_identifier const* first);
 static struct ast_expr const*
 parse_expr_boolean(struct parser* parser);
 static struct ast_expr const*
@@ -216,6 +222,11 @@ parse_module(struct parser* parser)
 {
     assert(parser != NULL);
 
+    struct ast_namespace const* namespace = NULL;
+    if (check_current(parser, TOKEN_NAMESPACE)) {
+        namespace = parse_namespace(parser);
+    }
+
     autil_sbuf(struct ast_import const*) imports = NULL;
     while (check_current(parser, TOKEN_IMPORT)) {
         autil_sbuf_push(imports, parse_import(parser));
@@ -228,7 +239,30 @@ parse_module(struct parser* parser)
     }
     autil_sbuf_freeze(decls, context()->freezer);
 
-    struct ast_module* const product = ast_module_new(imports, decls);
+    struct ast_module* const product =
+        ast_module_new(namespace, imports, decls);
+
+    autil_freezer_register(context()->freezer, product);
+    return product;
+}
+
+static struct ast_namespace const*
+parse_namespace(struct parser* parser)
+{
+    struct source_location const* const location =
+        &expect_current(parser, TOKEN_NAMESPACE)->location;
+
+    autil_sbuf(struct ast_identifier const*) identifiers = NULL;
+    autil_sbuf_push(identifiers, parse_identifier(parser));
+    while (!check_current(parser, TOKEN_SEMICOLON)) {
+        expect_current(parser, TOKEN_COLON_COLON);
+        autil_sbuf_push(identifiers, parse_identifier(parser));
+    }
+    expect_current(parser, TOKEN_SEMICOLON);
+
+    autil_sbuf_freeze(identifiers, context()->freezer);
+    struct ast_namespace* const product =
+        ast_namespace_new(location, identifiers);
 
     autil_freezer_register(context()->freezer, product);
     return product;
@@ -667,7 +701,34 @@ parse_expr_identifier(struct parser* parser)
     assert(parser != NULL);
 
     struct ast_identifier const* const identifier = parse_identifier(parser);
+    if (check_current(parser, TOKEN_COLON_COLON)) {
+        return parse_expr_qualified_identifier(parser, identifier);
+    }
+
     struct ast_expr* const product = ast_expr_new_identifier(identifier);
+
+    autil_freezer_register(context()->freezer, product);
+    return product;
+}
+
+static struct ast_expr const*
+parse_expr_qualified_identifier(
+    struct parser* parser, struct ast_identifier const* first)
+{
+    assert(parser != NULL);
+    assert(first != NULL);
+    assert(check_current(parser, TOKEN_COLON_COLON));
+
+    autil_sbuf(struct ast_identifier const*) identifiers = NULL;
+    autil_sbuf_push(identifiers, first);
+    while (check_current(parser, TOKEN_COLON_COLON)) {
+        expect_current(parser, TOKEN_COLON_COLON);
+        autil_sbuf_push(identifiers, parse_identifier(parser));
+    }
+
+    autil_sbuf_freeze(identifiers, context()->freezer);
+    struct ast_expr* const product =
+        ast_expr_new_qualified_identifier(identifiers);
 
     autil_freezer_register(context()->freezer, product);
     return product;

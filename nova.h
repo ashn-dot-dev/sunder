@@ -252,6 +252,7 @@ enum token_kind {
     TOKEN_NOT,
     TOKEN_OR,
     TOKEN_AND,
+    TOKEN_NAMESPACE,
     TOKEN_IMPORT,
     TOKEN_VAR,
     TOKEN_CONST,
@@ -290,6 +291,8 @@ enum token_kind {
     TOKEN_LBRACKET, // [
     TOKEN_RBRACKET, // ]
     TOKEN_COMMA, // ,
+    TOKEN_DOT, // .
+    TOKEN_COLON_COLON, // :
     TOKEN_COLON, // :
     TOKEN_SEMICOLON, // ;
     // Identifiers and Non-Keyword Literals
@@ -334,13 +337,24 @@ lexer_next_token(struct lexer* self);
 // Abstract syntax tree.
 
 struct ast_module {
+    struct ast_namespace const* namespace; // optional
     autil_sbuf(struct ast_import const* const) imports;
     autil_sbuf(struct ast_decl const* const) decls;
 };
 struct ast_module*
 ast_module_new(
+    struct ast_namespace const* namespace,
     struct ast_import const* const* imports,
     struct ast_decl const* const* decls);
+
+struct ast_namespace {
+    struct source_location const* location;
+    autil_sbuf(struct ast_identifier const* const) identifiers;
+};
+struct ast_namespace*
+ast_namespace_new(
+    struct source_location const* location,
+    struct ast_identifier const* const* identifiers);
 
 struct ast_import {
     struct source_location const* location;
@@ -471,6 +485,7 @@ struct ast_expr {
     enum ast_expr_kind {
         // Primary Expressions
         AST_EXPR_IDENTIFIER,
+        AST_EXPR_QUALIFIED_IDENTIFIER,
         AST_EXPR_BOOLEAN,
         AST_EXPR_INTEGER,
         AST_EXPR_BYTES,
@@ -491,6 +506,9 @@ struct ast_expr {
     } kind;
     union ast_expr_data {
         struct ast_identifier const* identifier;
+        struct {
+            autil_sbuf(struct ast_identifier const* const) identifiers;
+        } qualified_identifier;
         struct ast_boolean const* boolean;
         struct ast_integer const* integer;
         struct autil_string const* bytes;
@@ -542,6 +560,9 @@ struct ast_expr {
 };
 struct ast_expr*
 ast_expr_new_identifier(struct ast_identifier const* identifier);
+struct ast_expr*
+ast_expr_new_qualified_identifier(
+    struct ast_identifier const* const* identifiers);
 struct ast_expr*
 ast_expr_new_boolean(struct ast_boolean const* boolean);
 struct ast_expr*
@@ -860,24 +881,34 @@ struct symbol {
         SYMBOL_VARIABLE,
         SYMBOL_CONSTANT,
         SYMBOL_FUNCTION,
+        SYMBOL_NAMESPACE,
     } kind;
     struct source_location const* location;
     char const* name; // interned
-    // SYMBOL_TYPE     => The type itself.
-    // SYMBOL_VARIABLE => The type of the variable.
-    // SYMBOL_CONSTANT => The type of the constant.
-    // SYMBOL_FUNCTION => The type of the function (always TYPE_FUNCTION).
+    // SYMBOL_TYPE      => The type itself.
+    // SYMBOL_VARIABLE  => The type of the variable.
+    // SYMBOL_CONSTANT  => The type of the constant.
+    // SYMBOL_FUNCTION  => The type of the function (always TYPE_FUNCTION).
+    // SYMBOL_NAMESPACE => NULL.
     struct type const* type;
-    // SYMBOL_TYPE     => NULL.
-    // SYMBOL_VARIABLE => ADDRESS_STATIC or ADDRESS_LOCAL.
-    // SYMBOL_CONSTANT => ADDRESS_STATIC or ADDRESS_LOCAL.
-    // SYMBOL_FUNCTION => ADDRESS_STATIC.
+    // SYMBOL_TYPE      => NULL.
+    // SYMBOL_VARIABLE  => ADDRESS_STATIC or ADDRESS_LOCAL.
+    // SYMBOL_CONSTANT  => ADDRESS_STATIC or ADDRESS_LOCAL.
+    // SYMBOL_FUNCTION  => ADDRESS_STATIC.
+    // SYMBOL_NAMESPACE => NULL.
     struct address const* address;
-    // SYMBOL_TYPE     => NULL.
-    // SYMBOL_VARIABLE => Compile-type-value of the variable (globals only).
-    // SYMBOL_CONSTANT => Compile-time value of the constant.
-    // SYMBOL_FUNCTION => Compile-time value of the function.
+    // SYMBOL_TYPE      => NULL.
+    // SYMBOL_VARIABLE  => Compile-type-value of the variable (globals only).
+    // SYMBOL_CONSTANT  => Compile-time value of the constant.
+    // SYMBOL_FUNCTION  => Compile-time value of the function.
+    // SYMBOL_NAMESPACE => NULL.
     struct value const* value;
+    // SYMBOL_TYPE      => NULL.
+    // SYMBOL_VARIABLE  => NULL.
+    // SYMBOL_CONSTANT  => NULL.
+    // SYMBOL_FUNCTION  => NULL.
+    // SYMBOL_NAMESPACE => Symbols under the namespace.
+    struct symbol_table* symbols;
 };
 struct symbol*
 symbol_new_type(
@@ -903,26 +934,37 @@ symbol_new_function(
     struct type const* type,
     struct address const* address,
     struct value const* value);
+struct symbol*
+symbol_new_namespace(
+    struct source_location const* location,
+    char const* name,
+    struct symbol_table* symbols);
 
 struct symbol_table {
     struct symbol_table const* parent; // optional (NULL => global scope)
-    autil_sbuf(struct symbol const*) symbols;
+    // Mapping from cstring to symbol. The cstring key corresponding to the
+    // key-value pair (cstring, symbol) is not necessarily equal to the `name`
+    // member of the symbol, such as in the case of the symbol with name
+    // "foo.bar" with the mapping ("foo", symbol "foo.bar") in the namespace
+    // symbol table of `foo`.
+#define SYMBOL_MAP_KEY_TYPE char const*
+#define SYMBOL_MAP_VAL_TYPE struct symbol const*
+#define SYMBOL_MAP_CMP_FUNC autil_cstr_vpcmp
+    struct autil_map* symbols;
 };
 struct symbol_table*
 symbol_table_new(struct symbol_table const* parent);
 void
 symbol_table_freeze(struct symbol_table* self, struct autil_freezer* freezer);
 void
-symbol_table_insert(struct symbol_table* self, struct symbol const* symbol);
+symbol_table_insert(
+    struct symbol_table* self, char const* name, struct symbol const* symbol);
 // Lookup in this or any parent symbol table.
 struct symbol const*
 symbol_table_lookup(struct symbol_table const* self, char const* name);
 // Lookup in this symbol table only.
 struct symbol const*
 symbol_table_lookup_local(struct symbol_table const* self, char const* name);
-// Add the symbols of othr to self.
-void
-symbol_table_merge(struct symbol_table* self, struct symbol_table const* othr);
 
 struct tir_stmt {
     struct source_location const* location;

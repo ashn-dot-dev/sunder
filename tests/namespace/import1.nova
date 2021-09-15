@@ -1,0 +1,12 @@
+namespace foo::bar;
+
+var b2: byte = foo::bar::b;
+
+var a: byte = 0xAAy;
+
+const b: byte = 0xBBy;
+
+func c() byte {
+    const result: byte = 0xCCy;
+    return result;
+}

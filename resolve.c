@@ -17,6 +17,7 @@ struct resolver {
     char const* current_namespace; // NULL if within the global namespace.
     struct tir_function* current_function; // NULL if not in a function.
     struct symbol_table* current_symbol_table;
+    struct symbol_table* current_export_table;
     // Current offset of rbp for stack allocated data. Initialized to zero at
     // the start of function resolution.
     int current_rbp_offset;
@@ -28,6 +29,11 @@ struct resolver {
     // symbol table without requiring one function to be fully defined before
     // the other.
     autil_sbuf(struct incomplete_function) incomplete_functions;
+
+    // List of symbol tables that need to be frozen after the module has been
+    // fully resolved, used for namespaces that may have many symbols added to
+    // them over the course of the resolve phase.
+    autil_sbuf(struct symbol_table*) chilling_symbol_tables;
 };
 static struct resolver*
 resolver_new(struct module* module);
@@ -110,6 +116,9 @@ static struct tir_expr const*
 resolve_expr(struct resolver* resolver, struct ast_expr const* expr);
 static struct tir_expr const*
 resolve_expr_identifier(struct resolver* resolver, struct ast_expr const* expr);
+static struct tir_expr const*
+resolve_expr_qualified_identifier(
+    struct resolver* resolver, struct ast_expr const* expr);
 static struct tir_expr const*
 resolve_expr_boolean(struct resolver* resolver, struct ast_expr const* expr);
 static struct tir_expr const*
@@ -228,6 +237,7 @@ resolver_new(struct module* module)
     self->current_namespace = NULL;
     self->current_function = NULL;
     self->current_symbol_table = module->symbols;
+    self->current_export_table = module->exports;
     self->current_rbp_offset = 0x0;
     return self;
 }
@@ -269,6 +279,7 @@ static struct address const*
 resolver_reserve_storage_local(struct resolver* self, struct type const* type)
 {
     assert(self != NULL);
+    assert(self->current_function != NULL);
     assert(type != NULL);
 
     self->current_rbp_offset -= (int)ceil8zu(type->size);
@@ -358,6 +369,60 @@ check_type_compatibility(
 }
 
 static void
+merge_symbol_table(
+    struct resolver* resolver,
+    struct symbol_table* self,
+    struct symbol_table const* othr)
+{
+    assert(resolver != NULL);
+    assert(self != NULL);
+    assert(othr != NULL);
+
+    struct autil_vec const* const keys = autil_map_keys(othr->symbols);
+    SYMBOL_MAP_KEY_TYPE const* iter = autil_vec_next_const(keys, NULL);
+    for (; iter != NULL; iter = autil_vec_next_const(keys, iter)) {
+        SYMBOL_MAP_VAL_TYPE const* const psymbol =
+            autil_map_lookup_const(othr->symbols, iter);
+        assert(psymbol != NULL);
+
+        struct symbol const* const symbol = *psymbol;
+        assert(symbol != NULL);
+
+        if (symbol->kind == SYMBOL_NAMESPACE) {
+            // Add all symbols from the namespace in the other symbol table to
+            // the namespace in self's symbol table.
+            struct symbol const* existing =
+                symbol_table_lookup_local(self, *iter);
+            if (existing == NULL) {
+                // There is currently no symbol associated for the namespace in
+                // self. Create a new namespace symbol for this purpose and
+                // perform the merge.
+                struct symbol_table* const table = symbol_table_new(self);
+                autil_sbuf_push(resolver->chilling_symbol_tables, table);
+
+                struct symbol* const namespace =
+                    symbol_new_namespace(symbol->location, symbol->name, table);
+                autil_freezer_register(context()->freezer, namespace);
+                symbol_table_insert(self, *iter, namespace);
+                existing = namespace;
+            }
+
+            if (existing->kind != SYMBOL_NAMESPACE) {
+                // Actual name collision! Attempt to insert the symbol from the
+                // other symbol table into self so that a redeclaration error is
+                // generated.
+                symbol_table_insert(self, *iter, symbol);
+            }
+
+            merge_symbol_table(resolver, existing->symbols, symbol->symbols);
+            continue;
+        }
+
+        symbol_table_insert(self, *iter, symbol);
+    }
+}
+
+static void
 resolve_import(struct resolver* resolver, struct ast_import const* import)
 {
     assert(resolver != NULL);
@@ -381,7 +446,7 @@ resolve_import(struct resolver* resolver, struct ast_import const* import)
             import->path);
     }
 
-    symbol_table_merge(resolver->module->symbols, module->exports);
+    merge_symbol_table(resolver, resolver->module->symbols, module->exports);
 }
 
 static struct symbol const*
@@ -419,12 +484,12 @@ resolve_decl_variable(
     struct tir_expr const* const expr =
         resolve_expr(resolver, decl->data.variable.expr);
 
-    // Global variables have their initial values computed at compile-time, but
-    // local variables have their value calculated/assigned at runtime when the
-    // value is placed on the stack.
-    bool const is_global = resolver->current_symbol_table->parent == NULL;
+    // Global/static variables have their initial values computed at
+    // compile-time, but local/non-static variables have their value
+    // calculated/assigned at runtime when the value is placed on the stack.
+    bool is_static = resolver_is_global(resolver);
     struct value* value = NULL;
-    if (is_global) {
+    if (is_static) {
         struct evaluator* const evaluator =
             evaluator_new(resolver->current_symbol_table);
         value = eval_rvalue(evaluator, expr);
@@ -436,7 +501,7 @@ resolve_decl_variable(
         resolve_typespec(resolver, decl->data.variable.typespec);
     check_type_compatibility(expr->location, expr->type, type);
 
-    struct address const* const address = is_global
+    struct address const* const address = is_static
         ? resolver_reserve_storage_static(resolver, decl->name)
         : resolver_reserve_storage_local(resolver, type);
 
@@ -444,8 +509,8 @@ resolve_decl_variable(
         symbol_new_variable(decl->location, decl->name, type, address, value);
     autil_freezer_register(context()->freezer, symbol);
 
-    symbol_table_insert(resolver->current_symbol_table, symbol);
-    if (is_global) {
+    symbol_table_insert(resolver->current_symbol_table, symbol->name, symbol);
+    if (is_static) {
         register_static_symbol(symbol);
     }
 
@@ -491,7 +556,7 @@ resolve_decl_constant(struct resolver* resolver, struct ast_decl const* decl)
         symbol_new_constant(decl->location, decl->name, type, address, value);
     autil_freezer_register(context()->freezer, symbol);
 
-    symbol_table_insert(resolver->current_symbol_table, symbol);
+    symbol_table_insert(resolver->current_symbol_table, symbol->name, symbol);
     register_static_symbol(symbol);
     return symbol;
 }
@@ -539,7 +604,8 @@ resolve_decl_function(struct resolver* resolver, struct ast_decl const* decl)
     struct symbol* const function_symbol = symbol_new_function(
         decl->location, decl->name, function_type, address, value);
     autil_freezer_register(context()->freezer, function_symbol);
-    symbol_table_insert(resolver->current_symbol_table, function_symbol);
+    symbol_table_insert(
+        resolver->current_symbol_table, function_symbol->name, function_symbol);
     register_static_symbol(function_symbol);
 
     // Executing a call instruction pushes the return address (0x8 bytes) onto
@@ -582,7 +648,10 @@ resolve_decl_function(struct resolver* resolver, struct ast_decl const* decl)
     // The function references, but does not own, its outermost symbol table.
     function->symbol_table = symbol_table;
     for (size_t i = 0; i < autil_sbuf_count(parameters); ++i) {
-        symbol_table_insert(symbol_table, function->symbol_parameters[i]);
+        symbol_table_insert(
+            symbol_table,
+            function->symbol_parameters[i]->name,
+            function->symbol_parameters[i]);
     }
 
     // Add the function's return value to it's outermost symbol table.
@@ -596,7 +665,8 @@ resolve_decl_function(struct resolver* resolver, struct ast_decl const* decl)
         return_value_address,
         NULL);
     autil_freezer_register(context()->freezer, return_value_symbol);
-    symbol_table_insert(symbol_table, return_value_symbol);
+    symbol_table_insert(
+        symbol_table, return_value_symbol->name, return_value_symbol);
     function->symbol_return = return_value_symbol;
 
     struct incomplete_function const incomplete = {
@@ -618,7 +688,6 @@ complete_function(
 
     // Complete the function.
     assert(resolver->current_function == NULL);
-    assert(resolver->current_symbol_table == resolver->module->symbols);
     assert(resolver->current_rbp_offset == 0x0);
     resolver->current_namespace = incomplete->function->name;
     resolver->current_function = incomplete->function;
@@ -628,7 +697,6 @@ complete_function(
         incomplete->decl->data.function.body);
     resolver->current_namespace = NULL;
     resolver->current_function = NULL;
-    assert(resolver->current_symbol_table == resolver->module->symbols);
     assert(resolver->current_rbp_offset == 0x0);
 
     // Freeze the symbol table now that the function has been completed and no
@@ -800,7 +868,7 @@ resolve_stmt_for_range(struct resolver* resolver, struct ast_stmt const* stmt)
 
     struct symbol_table* const symbol_table =
         symbol_table_new(resolver->current_symbol_table);
-    symbol_table_insert(symbol_table, loop_var_symbol);
+    symbol_table_insert(symbol_table, loop_var_symbol->name, loop_var_symbol);
     struct tir_block const* const body =
         resolve_block(resolver, symbol_table, stmt->data.for_range.body);
     // Freeze the symbol table now that the block has been resolved and no new
@@ -945,6 +1013,9 @@ resolve_expr(struct resolver* resolver, struct ast_expr const* expr)
     case AST_EXPR_IDENTIFIER: {
         return resolve_expr_identifier(resolver, expr);
     }
+    case AST_EXPR_QUALIFIED_IDENTIFIER: {
+        return resolve_expr_qualified_identifier(resolver, expr);
+    }
     case AST_EXPR_BOOLEAN: {
         return resolve_expr_boolean(resolver, expr);
     }
@@ -1006,9 +1077,94 @@ resolve_expr_identifier(struct resolver* resolver, struct ast_expr const* expr)
     if (symbol == NULL) {
         fatal(expr->location, "use of undeclared identifier `%s`", name);
     }
-    if (symbol->kind == SYMBOL_TYPE) {
-        fatal(expr->location, "use of type `%s` as an expression", name);
+
+    switch (symbol->kind) {
+    case SYMBOL_TYPE: {
+        fatal(
+            expr->location, "use of type `%s` as an expression", symbol->name);
     }
+    case SYMBOL_NAMESPACE: {
+        fatal(
+            expr->location,
+            "use of namespace `%s` as an expression",
+            symbol->name);
+    }
+    case SYMBOL_VARIABLE: /* fallthrough */
+    case SYMBOL_CONSTANT: /* fallthrough */
+    case SYMBOL_FUNCTION: {
+        // Variables, constants, and functions may be used in an identifier
+        // expression.
+        break;
+    }
+    }
+
+    struct tir_expr* const resolved =
+        tir_expr_new_identifier(expr->location, symbol);
+
+    autil_freezer_register(context()->freezer, resolved);
+    return resolved;
+}
+
+static struct tir_expr const*
+resolve_expr_qualified_identifier(
+    struct resolver* resolver, struct ast_expr const* expr)
+{
+    assert(resolver != NULL);
+    assert(expr != NULL);
+    assert(expr->kind == AST_EXPR_QUALIFIED_IDENTIFIER);
+
+    autil_sbuf(struct ast_identifier const* const) const identifiers =
+        expr->data.qualified_identifier.identifiers;
+    // lhs::name
+    // ^---+---^
+    //     ^
+    //     symbol
+    char const* name = identifiers[0]->name;
+    struct symbol const* lhs =
+        symbol_table_lookup(resolver->current_symbol_table, name);
+    if (lhs == NULL) {
+        fatal(expr->location, "use of undeclared identifier `%s`", name);
+    }
+
+    struct symbol const* symbol = NULL;
+    for (size_t i = 1; i < autil_sbuf_count(identifiers); ++i) {
+        if (lhs->kind != SYMBOL_NAMESPACE) {
+            fatal(expr->location, "`%s` is not a namespace", lhs->name);
+        }
+
+        name = identifiers[i]->name;
+        symbol = symbol_table_lookup(lhs->symbols, name);
+        if (symbol == NULL) {
+            fatal(
+                expr->location,
+                "use of undeclared identifier `%s` within `%s`",
+                name,
+                lhs->name);
+        }
+
+        lhs = symbol;
+    }
+
+    switch (symbol->kind) {
+    case SYMBOL_TYPE: {
+        fatal(
+            expr->location, "use of type `%s` as an expression", symbol->name);
+    }
+    case SYMBOL_NAMESPACE: {
+        fatal(
+            expr->location,
+            "use of namespace `%s` as an expression",
+            symbol->name);
+    }
+    case SYMBOL_VARIABLE: /* fallthrough */
+    case SYMBOL_CONSTANT: /* fallthrough */
+    case SYMBOL_FUNCTION: {
+        // Variables, constants, and functions may be used in an identifier
+        // expression.
+        break;
+    }
+    }
+
     struct tir_expr* const resolved =
         tir_expr_new_identifier(expr->location, symbol);
 
@@ -2048,16 +2204,70 @@ resolve(struct module* module)
 
     struct resolver* const resolver = resolver_new(module);
 
+    // Module namespace.
+    if (module->ast->namespace != NULL) {
+        autil_sbuf(struct ast_identifier const* const) const identifiers =
+            module->ast->namespace->identifiers;
+
+        struct autil_string* const nsname_string = autil_string_new_cstr("");
+        struct autil_string* const nsaddr_string = autil_string_new_cstr("");
+
+        for (size_t i = 0; i < autil_sbuf_count(identifiers); ++i) {
+            char const* const name = identifiers[i]->name;
+            struct source_location const* const location =
+                identifiers[i]->location;
+
+            char const* const nsname_sep = i != 0 ? "::" : "";
+            char const* const nsaddr_sep = i != 0 ? "." : "";
+            autil_string_append_fmt(nsname_string, "%s%s", nsname_sep, name);
+            autil_string_append_fmt(nsaddr_string, "%s%s", nsaddr_sep, name);
+
+            struct symbol_table* const module_table =
+                symbol_table_new(resolver->current_symbol_table);
+            struct symbol_table* const export_table =
+                symbol_table_new(resolver->current_export_table);
+            autil_sbuf_push(resolver->chilling_symbol_tables, module_table);
+            autil_sbuf_push(resolver->chilling_symbol_tables, export_table);
+
+            struct symbol* const module_nssymbol = symbol_new_namespace(
+                location,
+                autil_sipool_intern_cstr(
+                    context()->sipool, autil_string_start(nsname_string)),
+                module_table);
+            struct symbol* const export_nssymbol = symbol_new_namespace(
+                location,
+                autil_sipool_intern_cstr(
+                    context()->sipool, autil_string_start(nsname_string)),
+                module_table);
+            autil_freezer_register(context()->freezer, module_nssymbol);
+            autil_freezer_register(context()->freezer, export_nssymbol);
+
+            symbol_table_insert(
+                resolver->current_symbol_table, name, module_nssymbol);
+            symbol_table_insert(
+                resolver->current_export_table, name, export_nssymbol);
+            resolver->current_symbol_table = module_table;
+            resolver->current_export_table = export_table;
+        }
+
+        autil_string_del(nsname_string);
+        autil_string_del(nsaddr_string);
+    }
+
+    // Imports.
     for (size_t i = 0; i < autil_sbuf_count(module->ast->imports); ++i) {
         resolve_import(resolver, module->ast->imports[i]);
     }
 
+    // Top-level declarations.
     autil_sbuf(struct ast_decl const* const) const ordered = module->ordered;
     for (size_t i = 0; i < autil_sbuf_count(ordered); ++i) {
         struct symbol const* const symbol =
             resolve_decl(resolver, module->ordered[i]);
-        symbol_table_insert(module->exports, symbol);
-        symbol_table_insert(context()->global_symbol_table, symbol);
+        symbol_table_insert(
+            resolver->current_export_table, symbol->name, symbol);
+        symbol_table_insert(
+            context()->global_symbol_table, symbol->name, symbol);
     }
 
     autil_sbuf(struct incomplete_function const) incomplete =
@@ -2065,6 +2275,14 @@ resolve(struct module* module)
     for (size_t i = 0; i < autil_sbuf_count(incomplete); ++i) {
         complete_function(resolver, &incomplete[i]);
     }
+
+    size_t const chilling_symbol_tables_count =
+        autil_sbuf_count(resolver->chilling_symbol_tables);
+    for (size_t i = 0; i < chilling_symbol_tables_count; ++i) {
+        symbol_table_freeze(
+            resolver->chilling_symbol_tables[i], context()->freezer);
+    }
+    autil_sbuf_fini(resolver->chilling_symbol_tables);
 
     resolver_del(resolver);
 }

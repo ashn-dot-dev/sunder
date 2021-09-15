@@ -190,6 +190,33 @@ order_expr(struct orderer* orderer, struct ast_expr const* expr)
         order_identifier(orderer, expr->data.identifier);
         return;
     }
+    case AST_EXPR_QUALIFIED_IDENTIFIER: {
+        // If the namespace prefix matches the module namespace then order the
+        // leaf identifier of the qualified identifier. The eventual call to
+        // order_name will silently ignore identifiers from other modules, but
+        // will correctly order any identifiers within *this* module.
+        struct ast_namespace const* const namespace =
+            orderer->module->ast->namespace;
+        if (namespace == NULL) {
+            // Module does not have a namespace.
+            return;
+        }
+        autil_sbuf(struct ast_identifier const* const) const identifiers =
+            expr->data.qualified_identifier.identifiers;
+        size_t const prefix_count = autil_sbuf_count(identifiers) - 1;
+        assert(prefix_count >= 1);
+        for (size_t i = 0; i < prefix_count; ++i) {
+            if (identifiers[i]->name != namespace->identifiers[i]->name) {
+                // Module namespace does not match qualified identifier
+                // namespace.
+                return;
+            }
+        }
+
+        // The actual identifier.
+        order_identifier(orderer, identifiers[prefix_count]);
+        return;
+    }
     case AST_EXPR_BOOLEAN: /* fallthrough */
     case AST_EXPR_INTEGER: /* fallthrough */
     case AST_EXPR_BYTES: {

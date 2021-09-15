@@ -608,10 +608,18 @@ codegen_static_functions(void)
 {
     appendln("; STATIC (GLOBAL) FUNCTIONS");
     appendln("section .text");
-    struct symbol const* const* const symbols =
-        context()->global_symbol_table->symbols;
-    for (size_t i = 0; i < autil_sbuf_count(symbols); ++i) {
-        struct symbol const* const symbol = symbols[i];
+
+    struct autil_vec const* const keys =
+        autil_map_keys(context()->static_symbols);
+    CONTEXT_STATIC_SYMBOLS_MAP_KEY_TYPE const* iter =
+        autil_vec_next_const(keys, NULL);
+    for (; iter != NULL; iter = autil_vec_next_const(keys, iter)) {
+        CONTEXT_STATIC_SYMBOLS_MAP_VAL_TYPE const* const psymbol =
+            autil_map_lookup_const(context()->static_symbols, iter);
+        struct symbol const* const symbol = *psymbol;
+        assert(symbol != NULL);
+        assert(symbol->address != NULL);
+        assert(symbol->address->kind == ADDRESS_STATIC);
         if (symbol->kind != SYMBOL_FUNCTION) {
             continue;
         }
@@ -1201,7 +1209,8 @@ codegen_rvalue_identifier(struct tir_expr const* expr)
 
     struct symbol const* const symbol = expr->data.identifier;
     switch (symbol->kind) {
-    case SYMBOL_TYPE: {
+    case SYMBOL_TYPE: /* fallthrough */
+    case SYMBOL_NAMESPACE: {
         UNREACHABLE();
     }
     case SYMBOL_VARIABLE: /* fallthrough */

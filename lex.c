@@ -16,6 +16,7 @@ static struct autil_vstr token_kind_vstrs[TOKEN_EOF + 1u] = {
     [TOKEN_NOT] = AUTIL_VSTR_INIT_STR_LITERAL("not"),
     [TOKEN_OR] = AUTIL_VSTR_INIT_STR_LITERAL("or"),
     [TOKEN_AND] = AUTIL_VSTR_INIT_STR_LITERAL("and"),
+    [TOKEN_NAMESPACE] = AUTIL_VSTR_INIT_STR_LITERAL("namespace"),
     [TOKEN_IMPORT] = AUTIL_VSTR_INIT_STR_LITERAL("import"),
     [TOKEN_VAR] = AUTIL_VSTR_INIT_STR_LITERAL("var"),
     [TOKEN_CONST] = AUTIL_VSTR_INIT_STR_LITERAL("const"),
@@ -54,6 +55,8 @@ static struct autil_vstr token_kind_vstrs[TOKEN_EOF + 1u] = {
     [TOKEN_LBRACKET] = AUTIL_VSTR_INIT_STR_LITERAL("["),
     [TOKEN_RBRACKET] = AUTIL_VSTR_INIT_STR_LITERAL("]"),
     [TOKEN_COMMA] = AUTIL_VSTR_INIT_STR_LITERAL(","),
+    [TOKEN_DOT] = AUTIL_VSTR_INIT_STR_LITERAL("."),
+    [TOKEN_COLON_COLON] = AUTIL_VSTR_INIT_STR_LITERAL("::"),
     [TOKEN_COLON] = AUTIL_VSTR_INIT_STR_LITERAL(":"),
     [TOKEN_SEMICOLON] = AUTIL_VSTR_INIT_STR_LITERAL(";"),
     // Identifiers and Non-Keyword Literals
