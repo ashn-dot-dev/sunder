@@ -784,6 +784,7 @@ codegen_core(void)
     appendch('\n');
 
     appendln("; BUILTIN INDEX OUT-OF-BOUNDS HANDLER");
+    appendln("section .text");
     appendln("__index_oob_handler:");
     appendln("    push rbp");
     appendln("    mov rbp, rsp");
