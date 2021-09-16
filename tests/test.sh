@@ -1,5 +1,5 @@
 #!/bin/sh
-NOVA_IMPORT_PATH="$(realpath $(pwd)/../lib)"
+export NOVA_IMPORT_PATH="$(realpath $(pwd)/../lib)"
 
 usage() {
     cat <<EOF
