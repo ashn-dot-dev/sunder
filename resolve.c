@@ -692,7 +692,7 @@ resolve_decl_function(struct resolver* resolver, struct ast_decl const* decl)
     // symbols will list the left-most symbol as the first of the two symbols
     // added to the table.
     struct symbol_table* const symbol_table =
-        symbol_table_new(resolver->module->symbols);
+        symbol_table_new(resolver->current_symbol_table);
     // The function references, but does not own, its outermost symbol table.
     function->symbol_table = symbol_table;
     for (size_t i = 0; i < autil_sbuf_count(parameters); ++i) {

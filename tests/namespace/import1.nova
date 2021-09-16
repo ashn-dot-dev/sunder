@@ -1,12 +1,25 @@
 namespace foo::bar;
 
+# Out-of-order dependecy on b.
+# References b using a fully qualified identifier.
 var b2: byte = foo::bar::b;
+
+# Out-of-order dependecy on b.
+# References b using an unqualified identifier.
+var b3: byte = b;
+
+# Make sure that the module symbol table was properly set to foo::bar. No name
+# collisions should occur for either the foo or bar identifiers (foo::bar::foo
+# and foo::bar::bar respectively).
+const foo: u16 = 0xBEEFu16;
+const bar: u16 = 0xBEEFu16;
 
 var a: byte = 0xAAy;
 
 const b: byte = 0xBBy;
 
 func c() byte {
-    const result: byte = 0xCCy;
-    return result;
+    var result: u8 = (:u8)b;
+    result = result + 0x11u8;
+    return (:byte)result;
 }

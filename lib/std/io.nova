@@ -11,6 +11,6 @@ func print(str: []byte) void {
 }
 
 func println(str: []byte) void {
-    std::print(str);
-    std::print("\n");
+    print(str);
+    print("\n");
 }
