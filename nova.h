@@ -119,6 +119,9 @@ spawnvpw(char const* path, char const* const* argv);
 void
 xspawnvpw(char const* path, char const* const* argv);
 
+bool
+file_exists(char const* path);
+
 char const* // interned
 canonical_path(char const* path);
 char const* // interned

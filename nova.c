@@ -411,6 +411,12 @@ directory_path(char const* path)
     return interned;
 }
 
+bool
+file_exists(char const* path)
+{
+    return access(path, F_OK) == 0;
+}
+
 static char*
 read_source(char const* path)
 {

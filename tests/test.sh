@@ -1,4 +1,5 @@
 #!/bin/sh
+NOVA_IMPORT_PATH="$(realpath $(pwd)/../lib)"
 
 usage() {
     cat <<EOF

@@ -1,3 +1,5 @@
+import "std/io.nova";
+
 import "import/a.nova";
 import "import/b.nova";
 import "import/c/c.nova";
@@ -7,8 +9,11 @@ func main() void {
     dump b();
     c = c + 1u16;
     dump c;
+
+    std::println("imported from the standard library");
 }
 ################################################################################
 # AA AA
 # BB BB
 # CC CC
+# imported from the standard library

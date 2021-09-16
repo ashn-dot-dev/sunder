@@ -1,0 +1,16 @@
+namespace std;
+
+func print(str: []byte) void {
+    if (countof(str) == 0u) {
+        return;
+    }
+
+    const SYS_WRITE: ssize = 1s;
+    const STDOUT_FILENO: ssize = 1s;
+    syscall(SYS_WRITE, STDOUT_FILENO, &str[0u], countof(str));
+}
+
+func println(str: []byte) void {
+    std::print(str);
+    std::print("\n");
+}

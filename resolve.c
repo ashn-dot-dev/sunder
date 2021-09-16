@@ -422,18 +422,66 @@ merge_symbol_table(
     }
 }
 
+// Returns the canonical representation of the provided import path or NULL.
+char const* // interned
+canonical_import_path(char const* module_path, char const* import_path)
+{
+    assert(module_path != NULL);
+    assert(import_path != NULL);
+
+    char const* result = NULL;
+
+    // Path relative to the current module.
+    char const* const module_dir = directory_path(module_path);
+    struct autil_string* const tmp =
+        autil_string_new_fmt("%s/%s", module_dir, import_path);
+    if (file_exists(autil_string_start(tmp))) {
+        result = canonical_path(autil_string_start(tmp));
+        autil_string_del(tmp);
+        return result;
+    }
+
+    // Path relative to environment-defined import path-list.
+    char const* NOVA_IMPORT_PATH = getenv("NOVA_IMPORT_PATH");
+    if (NOVA_IMPORT_PATH == NULL) {
+        autil_string_del(tmp);
+        return NULL;
+    }
+    autil_string_resize(tmp, 0u);
+    autil_string_append_cstr(tmp, NOVA_IMPORT_PATH);
+    struct autil_vec* const vec = autil_vec_of_string_new();
+    autil_string_split_to_vec_on_cstr(tmp, ":", vec);
+    for (size_t i = 0; i < autil_vec_count(vec); ++i) {
+        struct autil_string* const* const ps = autil_vec_ref_const(vec, i);
+
+        autil_string_resize(tmp, 0u);
+        autil_string_append_fmt(
+            tmp, "%s/%s", autil_string_start(*ps), import_path);
+
+        if (!file_exists(autil_string_start(tmp))) {
+            continue;
+        }
+
+        result = canonical_path(autil_string_start(tmp));
+        break; // Found the module.
+    }
+
+    autil_string_del(tmp);
+    autil_vec_of_string_del(vec);
+    return result;
+}
+
 static void
 resolve_import(struct resolver* resolver, struct ast_import const* import)
 {
     assert(resolver != NULL);
     assert(import != NULL);
 
-    char const* const dir = directory_path(resolver->module->path);
-
-    struct autil_string* const path_string =
-        autil_string_new_fmt("%s/%s", dir, import->path);
-    char const* const path = canonical_path(autil_string_start(path_string));
-    autil_string_del(path_string);
+    char const* const path =
+        canonical_import_path(resolver->module->path, import->path);
+    if (path == NULL) {
+        fatal(import->location, "failed to resolve import `%s`", import->path);
+    }
 
     struct module const* module = lookup_module(path);
     if (module == NULL) {
