@@ -52,8 +52,8 @@ $ make install
 ```sh
 # Add this to your .bashrc
 if [ -d "$HOME/.sunder" ]; then
-    export UNDER_HOME="$HOME/.sunder"
-    export UNDER_IMPORT_PATH="${SUNDER_HOME}/lib"
+    export SUNDER_HOME="$HOME/.sunder"
+    export SUNDER_IMPORT_PATH="${SUNDER_HOME}/lib"
     PATH="${SUNDER_HOME}/bin:$PATH"
 fi
 ```
