@@ -53,7 +53,8 @@ $ make install
 # Add this to your .bashrc
 if [ -d "$HOME/.sunder" ]; then
     SUNDER_HOME="$HOME/.sunder"
-    PATH="$SUNDER_HOME/bin:$PATH"
+    SUNDER_IMPORT_PATH="${SUNDER_HOME}/lib"
+    PATH="${SUNDER_HOME}/bin:$PATH"
 fi
 ```
 
