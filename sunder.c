@@ -606,110 +606,31 @@ context_init(void)
         NO_LINE,
         NO_PSRC,
     };
-    struct type* const type_void = type_new_void();
-    struct type* const type_bool = type_new_bool();
-    struct type* const type_byte = type_new_byte();
-    struct type* const type_u8 = type_new_u8();
-    struct type* const type_s8 = type_new_s8();
-    struct type* const type_u16 = type_new_u16();
-    struct type* const type_s16 = type_new_s16();
-    struct type* const type_u32 = type_new_u32();
-    struct type* const type_s32 = type_new_s32();
-    struct type* const type_u64 = type_new_u64();
-    struct type* const type_s64 = type_new_s64();
-    struct type* const type_usize = type_new_usize();
-    struct type* const type_ssize = type_new_ssize();
-    autil_freezer_register(context()->freezer, type_void);
-    autil_freezer_register(context()->freezer, type_bool);
-    autil_freezer_register(context()->freezer, type_byte);
-    autil_freezer_register(context()->freezer, type_u8);
-    autil_freezer_register(context()->freezer, type_s8);
-    autil_freezer_register(context()->freezer, type_u16);
-    autil_freezer_register(context()->freezer, type_s16);
-    autil_freezer_register(context()->freezer, type_u32);
-    autil_freezer_register(context()->freezer, type_s32);
-    autil_freezer_register(context()->freezer, type_u64);
-    autil_freezer_register(context()->freezer, type_s64);
-    autil_freezer_register(context()->freezer, type_usize);
-    autil_freezer_register(context()->freezer, type_ssize);
-    struct symbol* const symbol_void =
-        symbol_new_type(&s_context.builtin.location, type_void);
-    struct symbol* const symbol_bool =
-        symbol_new_type(&s_context.builtin.location, type_bool);
-    struct symbol* const symbol_byte =
-        symbol_new_type(&s_context.builtin.location, type_byte);
-    struct symbol* const symbol_u8 =
-        symbol_new_type(&s_context.builtin.location, type_u8);
-    struct symbol* const symbol_s8 =
-        symbol_new_type(&s_context.builtin.location, type_s8);
-    struct symbol* const symbol_u16 =
-        symbol_new_type(&s_context.builtin.location, type_u16);
-    struct symbol* const symbol_s16 =
-        symbol_new_type(&s_context.builtin.location, type_s16);
-    struct symbol* const symbol_u32 =
-        symbol_new_type(&s_context.builtin.location, type_u32);
-    struct symbol* const symbol_s32 =
-        symbol_new_type(&s_context.builtin.location, type_s32);
-    struct symbol* const symbol_u64 =
-        symbol_new_type(&s_context.builtin.location, type_u64);
-    struct symbol* const symbol_s64 =
-        symbol_new_type(&s_context.builtin.location, type_s64);
-    struct symbol* const symbol_usize =
-        symbol_new_type(&s_context.builtin.location, type_usize);
-    struct symbol* const symbol_ssize =
-        symbol_new_type(&s_context.builtin.location, type_ssize);
-    autil_freezer_register(context()->freezer, symbol_void);
-    autil_freezer_register(context()->freezer, symbol_bool);
-    autil_freezer_register(context()->freezer, symbol_byte);
-    autil_freezer_register(context()->freezer, symbol_u8);
-    autil_freezer_register(context()->freezer, symbol_s8);
-    autil_freezer_register(context()->freezer, symbol_u16);
-    autil_freezer_register(context()->freezer, symbol_s16);
-    autil_freezer_register(context()->freezer, symbol_u32);
-    autil_freezer_register(context()->freezer, symbol_s32);
-    autil_freezer_register(context()->freezer, symbol_u64);
-    autil_freezer_register(context()->freezer, symbol_s64);
-    autil_freezer_register(context()->freezer, symbol_usize);
-    autil_freezer_register(context()->freezer, symbol_ssize);
-    symbol_table_insert(
-        s_context.global_symbol_table, symbol_void->name, symbol_void);
-    symbol_table_insert(
-        s_context.global_symbol_table, symbol_bool->name, symbol_bool);
-    symbol_table_insert(
-        s_context.global_symbol_table, symbol_byte->name, symbol_byte);
-    symbol_table_insert(
-        s_context.global_symbol_table, symbol_u8->name, symbol_u8);
-    symbol_table_insert(
-        s_context.global_symbol_table, symbol_s8->name, symbol_s8);
-    symbol_table_insert(
-        s_context.global_symbol_table, symbol_u16->name, symbol_u16);
-    symbol_table_insert(
-        s_context.global_symbol_table, symbol_s16->name, symbol_s16);
-    symbol_table_insert(
-        s_context.global_symbol_table, symbol_u32->name, symbol_u32);
-    symbol_table_insert(
-        s_context.global_symbol_table, symbol_s32->name, symbol_s32);
-    symbol_table_insert(
-        s_context.global_symbol_table, symbol_u64->name, symbol_u64);
-    symbol_table_insert(
-        s_context.global_symbol_table, symbol_s64->name, symbol_s64);
-    symbol_table_insert(
-        s_context.global_symbol_table, symbol_usize->name, symbol_usize);
-    symbol_table_insert(
-        s_context.global_symbol_table, symbol_ssize->name, symbol_ssize);
-    s_context.builtin.void_ = type_void;
-    s_context.builtin.bool_ = type_bool;
-    s_context.builtin.byte = type_byte;
-    s_context.builtin.u8 = type_u8;
-    s_context.builtin.s8 = type_s8;
-    s_context.builtin.u16 = type_u16;
-    s_context.builtin.s16 = type_s16;
-    s_context.builtin.u32 = type_u32;
-    s_context.builtin.s32 = type_s32;
-    s_context.builtin.u64 = type_u64;
-    s_context.builtin.s64 = type_s64;
-    s_context.builtin.usize = type_usize;
-    s_context.builtin.ssize = type_ssize;
+#define INIT_BUILTIN_TYPE(builtin_lvalue, /* struct type* */ t)                \
+    {                                                                          \
+        struct type* const type = t;                                           \
+        autil_freezer_register(s_context.freezer, type);                       \
+        struct symbol* const symbol =                                          \
+            symbol_new_type(&s_context.builtin.location, type);                \
+        autil_freezer_register(s_context.freezer, symbol);                     \
+        symbol_table_insert(                                                   \
+            s_context.global_symbol_table, symbol->name, symbol);              \
+        builtin_lvalue = type;                                                 \
+    }
+    INIT_BUILTIN_TYPE(s_context.builtin.void_, type_new_void());
+    INIT_BUILTIN_TYPE(s_context.builtin.bool_, type_new_bool());
+    INIT_BUILTIN_TYPE(s_context.builtin.byte, type_new_byte());
+    INIT_BUILTIN_TYPE(s_context.builtin.u8, type_new_u8());
+    INIT_BUILTIN_TYPE(s_context.builtin.s8, type_new_s8());
+    INIT_BUILTIN_TYPE(s_context.builtin.u16, type_new_u16());
+    INIT_BUILTIN_TYPE(s_context.builtin.s16, type_new_s16());
+    INIT_BUILTIN_TYPE(s_context.builtin.u32, type_new_u32());
+    INIT_BUILTIN_TYPE(s_context.builtin.s32, type_new_s32());
+    INIT_BUILTIN_TYPE(s_context.builtin.u64, type_new_u64());
+    INIT_BUILTIN_TYPE(s_context.builtin.s64, type_new_s64());
+    INIT_BUILTIN_TYPE(s_context.builtin.usize, type_new_usize());
+    INIT_BUILTIN_TYPE(s_context.builtin.ssize, type_new_ssize());
+#undef INIT_BUILTIN_TYPE
 }
 
 void
