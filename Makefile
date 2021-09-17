@@ -52,6 +52,7 @@ test: bin/sunder-compile
 install: bin/sunder-compile
 	mkdir -p $(SUNDER_HOME)
 	cp -r bin/ $(SUNDER_HOME)
+	cp -r lib/ $(SUNDER_HOME)
 
 format:
 	clang-format -i *.h *.c
