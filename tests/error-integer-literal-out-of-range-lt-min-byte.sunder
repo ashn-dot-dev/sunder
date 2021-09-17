@@ -1,0 +1,7 @@
+func main() void {
+    -1y;
+}
+################################################################################
+# [error-integer-literal-out-of-range-lt-min-byte.sunder:2] error: out-of-range byte literal (-1 < 0)
+#     -1y;
+#     ^

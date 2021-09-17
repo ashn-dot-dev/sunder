@@ -1,0 +1,5 @@
+import "a.sunder";
+
+func b() u16 {
+    return a + 0x1111u16;
+}

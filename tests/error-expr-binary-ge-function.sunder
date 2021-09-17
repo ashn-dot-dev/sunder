@@ -1,0 +1,14 @@
+func foo() void {
+    # nothing
+}
+func bar() void {
+    # nothing
+}
+
+func main() void {
+    foo >= bar;
+}
+################################################################################
+# [error-expr-binary-ge-function.sunder:9] error: invalid arguments of type `func() void` in binary `>=` expression
+#     foo >= bar;
+#         ^

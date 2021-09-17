@@ -1,0 +1,5 @@
+const a: [3u]byte = (:ssize)[0xAAy, 0xBBy, 0xCCy];
+################################################################################
+# [error-expr-literal-array-not-array-type.sunder:1] error: expected array type (received `ssize`)
+# const a: [3u]byte = (:ssize)[0xAAy, 0xBBy, 0xCCy];
+#                       ^

@@ -1,10 +1,10 @@
-// Copyright 2021 The Nova Project Authors
+// Copyright 2021 The Sunder Project Authors
 // SPDX-License-Identifier: Apache-2.0
 #include <assert.h>
 #include <stdlib.h>
 #include <string.h>
 
-#include "nova.h"
+#include "sunder.h"
 
 struct incomplete_function {
     struct ast_decl const* decl;
@@ -442,13 +442,13 @@ canonical_import_path(char const* module_path, char const* import_path)
     }
 
     // Path relative to environment-defined import path-list.
-    char const* NOVA_IMPORT_PATH = getenv("NOVA_IMPORT_PATH");
-    if (NOVA_IMPORT_PATH == NULL) {
+    char const* SUNDER_IMPORT_PATH = getenv("SUNDER_IMPORT_PATH");
+    if (SUNDER_IMPORT_PATH == NULL) {
         autil_string_del(tmp);
         return NULL;
     }
     autil_string_resize(tmp, 0u);
-    autil_string_append_cstr(tmp, NOVA_IMPORT_PATH);
+    autil_string_append_cstr(tmp, SUNDER_IMPORT_PATH);
     struct autil_vec* const vec = autil_vec_of_string_new();
     autil_string_split_to_vec_on_cstr(tmp, ":", vec);
     for (size_t i = 0; i < autil_vec_count(vec); ++i) {

@@ -1,0 +1,5 @@
+const foo: ssize = 1s + 2u;
+################################################################################
+# [error-expr-binary-arithmetic-incompatible-types.sunder:1] error: invalid arguments of types `ssize` and `usize` in binary `+` expression
+# const foo: ssize = 1s + 2u;
+#                       ^

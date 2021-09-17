@@ -1,0 +1,7 @@
+func foo() ssize {
+    return 1u;
+}
+################################################################################
+# [error-return-invalid-type.sunder:2] error: incompatible type `usize` (expected `ssize`)
+#     return 1u;
+#            ^

@@ -1,8 +1,0 @@
-func main() void {
-    func foo() void {
-    }
-}
-################################################################################
-# [error-nested-function-declaration.nova:2] error: nested function declaration
-#     func foo() void {
-#     ^

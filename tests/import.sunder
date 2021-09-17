@@ -1,0 +1,19 @@
+import "std/io.sunder";
+
+import "import/a.sunder";
+import "import/b.sunder";
+import "import/c/c.sunder";
+
+func main() void {
+    dump a;
+    dump b();
+    c = c + 1u16;
+    dump c;
+
+    std::println("imported from the standard library");
+}
+################################################################################
+# AA AA
+# BB BB
+# CC CC
+# imported from the standard library

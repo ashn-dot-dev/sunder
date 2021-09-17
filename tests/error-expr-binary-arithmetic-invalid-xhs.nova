@@ -1,5 +1,0 @@
-const foo: ssize = 1s + true;
-################################################################################
-# [error-expr-binary-arithmetic-invalid-xhs.nova:1] error: invalid arguments of types `ssize` and `bool` in binary `+` expression
-# const foo: ssize = 1s + true;
-#                       ^

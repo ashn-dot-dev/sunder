@@ -1,4 +1,4 @@
-nova-compile
+sunder-compile
 *.out
 *.o
 a.asm

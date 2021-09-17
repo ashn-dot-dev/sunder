@@ -1,7 +1,0 @@
-import "std/io.nova";
-
-func main() void {
-    std::println("Hello, world!");
-}
-################################################################################
-# Hello, world!

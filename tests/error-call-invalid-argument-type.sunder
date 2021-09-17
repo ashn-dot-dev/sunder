@@ -1,0 +1,15 @@
+func foo(a: usize, b: ssize, c: bool) ssize {
+    return 123s;
+}
+
+func main() void {
+    foo(
+        1u, # valid
+        2s, # valid
+        3s  # invalid (should be bool)
+    );
+}
+################################################################################
+# [error-call-invalid-argument-type.sunder:9] error: incompatible argument type `ssize` (expected `bool`)
+#         3s  # invalid (should be bool)
+#         ^

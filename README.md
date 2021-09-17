@@ -1,10 +1,10 @@
-# The Nova Programming Language
-Nova is a work-in-progress C-like systems programming language designed for
+# The Sunder Programming Language
+Sunder is a work-in-progress C-like systems programming language designed for
 educational purposes.
 
-**The Nova Project is in an early stage of development and should be considered
-pre-alpha software. There is currently not much to see and the code is probably
-riddled with bugs.**
+**The Sunder Project is in an early stage of development and should be
+considered pre-alpha software. There is currently not much to see and the code
+is probably riddled with bugs.**
 
 ## Dependencies
 + POSIX-compatible `make`
@@ -41,23 +41,23 @@ $ make <targets> CC=clang CFLAGS='$(GNU_REL)'              # clang/gcc (release)
 ```
 
 ## Installing
-The `install` target will install the Nova toolchain into the directory
-specified by `$NOVA_HOME` (default `$HOME/.nova`). Run `make install` with
-`$NOVA_HOME` specified as the directory of your choice, add `$NOVA_HOME` to your
-`.bashrc` (or equivalent), and then finally add `$NOVA_HOME/bin` to your your
+The `install` target will install the Sunder toolchain into the directory
+specified by `$SUNDER_HOME` (default `$HOME/.sunder`). Run `make install` with
+`$SUNDER_HOME` specified as the directory of your choice, add `$SUNDER_HOME` to
+your `.bashrc` (or equivalent), and then finally add `$SUNDER_HOME/bin` to your
 `$PATH` if necessary.
 ```sh
 $ make install
 ```
 ```sh
 # Add this to your .bashrc
-if [ -d "$HOME/.nova" ]; then
-    NOVA_HOME="$HOME/.nova"
-    PATH="$NOVA_HOME/bin:$PATH"
+if [ -d "$HOME/.sunder" ]; then
+    SUNDER_HOME="$HOME/.sunder"
+    PATH="$SUNDER_HOME/bin:$PATH"
 fi
 ```
 
 ## License
-Nova is distributed under the terms of the Apache License (Version 2.0).
+Sunder is distributed under the terms of the Apache License (Version 2.0).
 
 See LICENSE for more information.

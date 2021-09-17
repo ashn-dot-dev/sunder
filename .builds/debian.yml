@@ -4,19 +4,19 @@ packages:
   - clang
   - nasm
 sources:
-  - https://git.sr.ht/~ashn/nova
+  - https://git.sr.ht/~ashn/sunder
 tasks:
   - test-clang-debug: |
-      cd nova
+      cd sunder
       make clean test CC=clang CFLAGS='$(GNU_DBG) $(SANITIZE)'
   - test-clang-release: |
-      cd nova
+      cd sunder
       make clean test CC=clang CFLAGS='$(GNU_REL)'
   - test-gcc-debug: |
-      cd nova
+      cd sunder
       make clean test CC=gcc CFLAGS='$(GNU_DBG) $(SANITIZE)'
   - test-gcc-release: |
-      cd nova
+      cd sunder
       make clean test CC=gcc CFLAGS='$(GNU_REL)'
 triggers:
   - action: email

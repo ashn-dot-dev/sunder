@@ -1,0 +1,25 @@
+#!/bin/sh
+set -e
+
+usage() {
+    cat <<EOF
+Usage: $(basename $0) FILE
+
+Options:
+  -h --help     Print this help message and exit.
+EOF
+}
+
+if [ "${#}" != '1' ]; then
+    echo 'error: invalid number of arguments'
+    usage
+    exit 1
+fi
+FILE="${1}"
+
+if [ -z "${SUNDER_HOME}" ]; then
+    SUNDER_HOME=$(pwd)
+fi
+
+"${SUNDER_HOME}/bin/sunder-compile" "${FILE}"
+./a.out

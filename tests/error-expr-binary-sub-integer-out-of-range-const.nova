@@ -1,7 +1,0 @@
-func main() void {
-    const x: s8 = -128s8 - 1s8;
-}
-################################################################################
-# [error-expr-binary-sub-integer-out-of-range-const.nova:2] error: arithmetic operation produces out-of-range result (-128 - 1 == -129)
-#     const x: s8 = -128s8 - 1s8;
-#                          ^

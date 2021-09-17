@@ -1,0 +1,8 @@
+func main() void {
+    var a: [3u]u16 = (:[3u]u16)[0xAAAAu16, 0xBBBBu16, 0xCCCCu16];
+    a[1u:3s];
+}
+################################################################################
+# [error-expr-slice-invalid-end-type.sunder:3] error: illegal slice operation with index of non-usize type `ssize`
+#     a[1u:3s];
+#          ^

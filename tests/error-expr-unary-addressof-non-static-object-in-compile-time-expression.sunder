@@ -1,0 +1,9 @@
+func main() void {
+    var x: u32 = 0xDEADBEEFu32;
+    const px: *u32 = &x;
+}
+################################################################################
+# [error-expr-unary-addressof-non-static-object-in-compile-time-expression.sunder:3] error: addressof operator applied to non-static object in compile-time expression
+#     const px: *u32 = &x;
+#                       ^
+

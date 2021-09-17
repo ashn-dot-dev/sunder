@@ -29,7 +29,7 @@ fi
 
 TESTSRUN=0
 FAILURES=0
-for t in $(echo *.nova | sort); do
+for t in $(echo *.sunder | sort); do
     sh test.sh "${t}"
     RESULT="$?"
 

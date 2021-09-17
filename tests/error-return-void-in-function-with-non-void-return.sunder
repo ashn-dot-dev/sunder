@@ -1,0 +1,8 @@
+func foo() ssize {
+    return;
+}
+################################################################################
+# [error-return-void-in-function-with-non-void-return.sunder:2] error: illegal return statement in function with non-void return type
+#     return;
+#     ^
+

@@ -1,8 +1,8 @@
-// Copyright 2021 The Nova Project Authors
+// Copyright 2021 The Sunder Project Authors
 // SPDX-License-Identifier: Apache-2.0
 #include <assert.h>
 #include <string.h>
-#include "nova.h"
+#include "sunder.h"
 
 struct ast_module*
 ast_module_new(

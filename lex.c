@@ -1,9 +1,9 @@
-// Copyright 2021 The Nova Project Authors
+// Copyright 2021 The Sunder Project Authors
 // SPDX-License-Identifier: Apache-2.0
 #include <assert.h>
 #include <string.h>
 
-#include "nova.h"
+#include "sunder.h"
 
 static enum token_kind const KEYWORDS_FIRST = TOKEN_TRUE;
 static enum token_kind const KEYWORDS_LAST = TOKEN_TYPEOF;

@@ -1,7 +1,0 @@
-func main() void {
-    -129s8;
-}
-################################################################################
-# [error-integer-literal-out-of-range-lt-min-s8.nova:2] error: out-of-range integer literal (-129 < -128)
-#     -129s8;
-#     ^

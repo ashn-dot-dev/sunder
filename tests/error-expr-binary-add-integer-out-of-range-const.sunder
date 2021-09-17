@@ -1,0 +1,8 @@
+func main() void {
+    const x: s8 = 127s8 + 1s8;
+}
+################################################################################
+# [error-expr-binary-add-integer-out-of-range-const.sunder:2] error: arithmetic operation produces out-of-range result (127 + 1 == 128)
+#     const x: s8 = 127s8 + 1s8;
+#                         ^
+

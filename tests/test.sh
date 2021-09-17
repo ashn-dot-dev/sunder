@@ -1,5 +1,6 @@
 #!/bin/sh
-export NOVA_IMPORT_PATH="$(realpath $(pwd)/../lib)"
+export SUNDER_HOME="$(realpath ..)"
+export SUNDER_IMPORT_PATH="${SUNDER_HOME}/lib"
 
 usage() {
     cat <<EOF
@@ -29,10 +30,9 @@ if [ "$#" -ne 1 ]; then
 fi
 TEST_FILE="$1"
 
-TEST_NAME=$(basename "${TEST_FILE}" .nova)
+TEST_NAME=$(basename "${TEST_FILE}" .sunder)
 echo "[= RUN ${TEST_NAME} =]"
-export NOVA_HOME="$(dirname $0)/.."
-RECEIVED=$("${NOVA_HOME}/bin/nova-run" "${TEST_FILE}" 2>&1)
+RECEIVED=$("${SUNDER_HOME}/bin/sunder-run" "${TEST_FILE}" 2>&1)
 EXPECTED=$(\
     sed -n '/^########\(########\)*/,$p' "${TEST_FILE}" |\
     sed '1d' |\

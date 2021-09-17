@@ -1,0 +1,5 @@
+const foo: ssize = 0x123;
+################################################################################
+# [error-integer-literal-no-suffix.sunder:1] error: integer literal has no suffix
+# const foo: ssize = 0x123;
+#                    ^

@@ -1,10 +1,10 @@
-// Copyright 2021 The Nova Project Authors
+// Copyright 2021 The Sunder Project Authors
 // SPDX-License-Identifier: Apache-2.0
 #include <assert.h>
 #include <stdlib.h>
 #include <string.h>
 
-#include "nova.h"
+#include "sunder.h"
 
 // Top-Level Declaration
 struct tldecl {

@@ -1,8 +1,0 @@
-func main() void {
-    var foo: ssize = 1s;
-    var foo: ssize = 2s;
-}
-################################################################################
-# [error-duplicate-local-name.nova:3] error: redeclaration of `foo` previously declared at [error-duplicate-local-name.nova:2]
-#     var foo: ssize = 2s;
-#     ^

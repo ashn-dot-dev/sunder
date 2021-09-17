@@ -1,0 +1,7 @@
+import "std/io.sunder";
+
+func main() void {
+    std::println("Hello, world!");
+}
+################################################################################
+# Hello, world!

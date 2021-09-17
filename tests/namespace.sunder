@@ -1,0 +1,17 @@
+import "namespace/import1.sunder";
+import "namespace/import2.sunder";
+import "namespace/import3.sunder";
+
+func main() void {
+    dump foo::bar::a;
+    dump foo::bar::b;
+    dump foo::bar::c();
+    dump foo::bar::d;
+    dump foo::baz;
+}
+################################################################################
+# AA
+# BB
+# CC
+# DD
+# EF BE

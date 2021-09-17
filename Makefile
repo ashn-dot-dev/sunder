@@ -28,13 +28,13 @@ CC = c99
 CFLAGS = $(C99_REL)
 INCS = -Ideps
 
-NOVA_HOME="$$HOME/.nova"
+SUNDER_HOME="$$HOME/.sunder"
 
-all: bin/nova-compile test
+all: bin/sunder-compile test
 
-NOVA_COMPILE_OBJS = \
-	nova-compile.o \
-	nova.o \
+SUNDER_COMPILE_OBJS = \
+	sunder-compile.o \
+	sunder.o \
 	lex.o \
 	ast.o \
 	parse.o \
@@ -43,21 +43,21 @@ NOVA_COMPILE_OBJS = \
 	resolve.o \
 	eval.o \
 	codegen.o
-bin/nova-compile: $(NOVA_COMPILE_OBJS)
-	$(CC) -o $@ $(INCS) $(CFLAGS) $(NOVA_COMPILE_OBJS)
+bin/sunder-compile: $(SUNDER_COMPILE_OBJS)
+	$(CC) -o $@ $(INCS) $(CFLAGS) $(SUNDER_COMPILE_OBJS)
 
-test: bin/nova-compile
+test: bin/sunder-compile
 	(cd tests/ && sh test-all.sh)
 
-install: bin/nova-compile
-	mkdir -p $(NOVA_HOME)
-	cp -r bin/ $(NOVA_HOME)
+install: bin/sunder-compile
+	mkdir -p $(SUNDER_HOME)
+	cp -r bin/ $(SUNDER_HOME)
 
 format:
 	clang-format -i *.h *.c
 
 clean:
-	rm -f bin/nova-compile
+	rm -f bin/sunder-compile
 	rm -f $$(find . -type f -name '*.out')
 	rm -f $$(find . -type f -name '*.o')
 
