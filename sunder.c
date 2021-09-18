@@ -379,6 +379,12 @@ xspawnvpw(char const* path, char const* const* argv)
     }
 }
 
+bool
+file_exists(char const* path)
+{
+    return access(path, F_OK) == 0;
+}
+
 char const*
 canonical_path(char const* path)
 {
@@ -409,12 +415,6 @@ directory_path(char const* path)
     autil_xalloc(tmp, AUTIL_XALLOC_FREE);
 
     return interned;
-}
-
-bool
-file_exists(char const* path)
-{
-    return access(path, F_OK) == 0;
 }
 
 static char*
