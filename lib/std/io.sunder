@@ -2,7 +2,7 @@ namespace std;
 import "sys/sys.sunder";
 
 func print(str: []byte) void {
-    if (countof(str) == 0u) {
+    if countof(str) == 0u {
         return;
     }
 
