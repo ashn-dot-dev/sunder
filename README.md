@@ -44,13 +44,13 @@ $ make <targets> CC=clang CFLAGS='$(GNU_REL)'              # clang/gcc (release)
 The `install` target will install the Sunder toolchain into the directory
 specified by `$SUNDER_HOME` (default `$HOME/.sunder`). Run `make install` with
 `$SUNDER_HOME` specified as the directory of your choice, add `$SUNDER_HOME` to
-your `.bashrc` (or equivalent), and then finally add `$SUNDER_HOME/bin` to your
+your `.profile` (or equivalent), and then finally add `$SUNDER_HOME/bin` to your
 `$PATH` if necessary.
 ```sh
 $ make install
 ```
 ```sh
-# Add this to your .bashrc
+# Add this to your .profile
 if [ -d "$HOME/.sunder" ]; then
     export SUNDER_HOME="$HOME/.sunder"
     export SUNDER_IMPORT_PATH="${SUNDER_HOME}/lib"
