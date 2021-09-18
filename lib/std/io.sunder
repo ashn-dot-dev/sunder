@@ -1,13 +1,12 @@
 namespace std;
+import "sys/sys.sunder";
 
 func print(str: []byte) void {
     if (countof(str) == 0u) {
         return;
     }
 
-    const SYS_WRITE: ssize = 1s;
-    const STDOUT_FILENO: ssize = 1s;
-    syscall(SYS_WRITE, STDOUT_FILENO, &str[0u], countof(str));
+    sys::write(sys::STDOUT_FILENO, &str[0u], countof(str));
 }
 
 func println(str: []byte) void {

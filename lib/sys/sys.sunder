@@ -1,0 +1,84 @@
+# Linux kernel x64 system interface.
+#
+# SystemV x64 (LP64) ABI:
+# C Type             | Size | Alignment | Sunder Type
+# -------------------+------+-----------+------------
+# char               | 1    | 1         | s8 or byte (preferred)
+# signed   char      | 1    | 1         | s8
+# unsigned char      | 1    | 1         | u8
+# signed   short     | 2    | 2         | s16
+# unsigned short     | 2    | 2         | u16
+# signed   int       | 4    | 4         | s32
+# unsigned int       | 4    | 4         | u32
+# signed   long      | 8    | 8         | s64 or usize
+# unsigned long      | 8    | 8         | u64 or ssize
+# signed   long long | 8    | 8         | s64
+# unsigned long long | 8    | 8         | u64
+#
+# linux/include/linux/types.h:
+# typedef unsigned short        umode_t;
+namespace sys;
+
+const SYS_READ:  ssize = 0s;
+const SYS_WRITE: ssize = 1s;
+const SYS_OPEN:  ssize = 2s;
+const SYS_CLOSE: ssize = 3s;
+
+const STDIN_FILENO:  u32 = 0u32;
+const STDOUT_FILENO: u32 = 1u32;
+const STDERR_FILENO: u32 = 2u32;
+
+const O_RDONLY:    s32 = 0x00000000s32;
+const O_WRONLY:    s32 = 0x00000001s32;
+const O_RDWR:      s32 = 0x00000002s32;
+const O_CREAT:     s32 = 0x00000040s32;
+const O_EXCL:      s32 = 0x00000080s32;
+const O_NOCTTY:    s32 = 0x00000100s32;
+const O_TRUNC:     s32 = 0x00000200s32;
+const O_APPEND:    s32 = 0x00000400s32;
+const O_CLOEXEC:   s32 = 0x00080000s32;
+const O_DIRECTORY: s32 = 0x00010000s32;
+const O_NOFOLLOW:  s32 = 0x00020000s32;
+const O_NONBLOCK:  s32 = 0x00000800s32;
+const O_DSYNC:     s32 = 0x00001000s32;
+const O_RSYNC:     s32 = 0x00101000s32;
+const O_SYNC:      s32 = 0x00101000s32;
+
+const S_IRWXU: u16 = 0o700u16;
+const S_IRUSR: u16 = 0o400u16;
+const S_IWUSR: u16 = 0o200u16;
+const S_IXUSR: u16 = 0o100u16;
+
+const S_IRWXG: u16 = 0o070u16;
+const S_IRGRP: u16 = 0o040u16;
+const S_IWGRP: u16 = 0o020u16;
+const S_IXGRP: u16 = 0o010u16;
+
+const S_IRWXO: u16 = 0o007u16;
+const S_IROTH: u16 = 0o004u16;
+const S_IWOTH: u16 = 0o002u16;
+const S_IXOTH: u16 = 0o001u16;
+
+# linux/fs/read_write.c:
+# SYSCALL_DEFINE3(read, unsigned int, fd, char __user *, buf, size_t, count)
+func read(fd: u32, buf: *byte, count: usize) ssize {
+    return syscall(SYS_READ, fd, buf, count);
+}
+
+# linux/fs/read_write.c:
+# SYSCALL_DEFINE3(write, unsigned int, fd, const char __user *, buf, size_t, count)
+func write(fd: u32, buf: *byte, count: usize) ssize {
+    return syscall(SYS_WRITE, fd, buf, count);
+}
+
+# linux/fs/open.c
+# SYSCALL_DEFINE3(open, const char __user *, filename, int, flags, umode_t, mode)
+func open(filename: *byte, flags: s32, mode: u16) ssize {
+    return syscall(SYS_OPEN, filename, flags, mode);
+}
+
+# linux/fs/open.c
+# SYSCALL_DEFINE1(close, unsigned int, fd)
+func close(fd: u32) ssize {
+    return syscall(SYS_CLOSE, fd);
+}
