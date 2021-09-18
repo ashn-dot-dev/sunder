@@ -1,5 +1,4 @@
 #!/bin/sh
-set -e
 
 usage() {
     cat <<EOF
@@ -10,16 +9,16 @@ Options:
 EOF
 }
 
-if [ "${#}" != '1' ]; then
-    echo 'error: invalid number of arguments'
-    usage
-    exit 1
-fi
 FILE="${1}"
 
 if [ -z "${SUNDER_HOME}" ]; then
     SUNDER_HOME=$(pwd)
 fi
 
-"${SUNDER_HOME}/bin/sunder-compile" "${FILE}"
-./a.out
+if ! "${SUNDER_HOME}/bin/sunder-compile" "${FILE}"; then
+    exit 1
+fi
+
+shift
+./a.out $@
+exit $?
