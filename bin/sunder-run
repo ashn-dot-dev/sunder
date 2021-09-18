@@ -5,10 +5,24 @@ usage() {
 Usage: $(basename $0) FILE ARGS...
 
 Options:
-  -h --help     Print this help message and exit.
+  -h, --help        Print this help message and exit.
 EOF
 }
 
+while test "$#" -eq 0; do
+    usage
+    exit 0
+done
+
+case "$1" in
+    -h|--help)
+        usage
+        exit 0
+        ;;
+    *)
+        break
+        ;;
+esac
 FILE="${1}"
 
 if [ -z "${SUNDER_HOME}" ]; then

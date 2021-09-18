@@ -43,7 +43,8 @@ usage(void)
     // '=' characters will make sure that the resulting usage text is at most
     // 72 characters wide.
     /*========================================================================*/
-     "Usage: sunder-compile [OPTION]... PATH",
+     "Usage: sunder-compile [OPTION]... FILE",
+     "",
      "Options:",
      "  -h, --help        Display usage information and exit.",
      "  -k, --keep        Keep intermediate files (.o and .asm).",
