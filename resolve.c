@@ -1492,7 +1492,16 @@ resolve_expr_syscall(struct resolver* resolver, struct ast_expr const* expr)
 
     autil_sbuf(struct tir_expr const*) exprs = NULL;
     for (size_t i = 0; i < autil_sbuf_count(arguments); ++i) {
-        autil_sbuf_push(exprs, resolve_expr(resolver, arguments[i]));
+        struct tir_expr const* const arg = resolve_expr(resolver, arguments[i]);
+        bool const valid_type =
+            type_is_integer(arg->type) || arg->type->kind == TYPE_POINTER;
+        if (!valid_type) {
+            fatal(
+                arg->location,
+                "expected integer or pointer type (received `%s`)",
+                arg->type->name);
+        }
+        autil_sbuf_push(exprs, arg);
     }
     autil_sbuf_freeze(exprs, context()->freezer);
     struct tir_expr* const resolved =

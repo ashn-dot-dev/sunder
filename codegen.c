@@ -1393,6 +1393,7 @@ codegen_rvalue_syscall(struct tir_expr const* expr)
         expr->data.syscall.arguments;
     size_t const count = autil_sbuf_count(arguments);
     for (size_t i = 0; i < count; ++i) {
+        assert(arguments[i]->type->size <= 8);
         codegen_rvalue(arguments[i]);
     }
 
