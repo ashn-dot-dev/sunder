@@ -3,6 +3,7 @@
 .PHONY: \
 	all \
 	test \
+	examples \
 	install \
 	format \
 	clean
@@ -30,7 +31,7 @@ INCS = -Ideps
 
 SUNDER_HOME="$$HOME/.sunder"
 
-all: bin/sunder-compile test
+all: bin/sunder-compile test examples
 
 SUNDER_COMPILE_OBJS = \
 	sunder-compile.o \
@@ -49,6 +50,9 @@ bin/sunder-compile: $(SUNDER_COMPILE_OBJS)
 test: bin/sunder-compile
 	(cd tests/ && sh test-all.sh)
 
+examples: bin/sunder-compile
+	(cd examples/ && sh build-examples.sh)
+
 install: bin/sunder-compile
 	mkdir -p $(SUNDER_HOME)
 	cp -r bin/ $(SUNDER_HOME)
@@ -61,6 +65,7 @@ clean:
 	rm -f bin/sunder-compile
 	rm -f $$(find . -type f -name '*.out')
 	rm -f $$(find . -type f -name '*.o')
+	(cd examples/ && sh clean-examples.sh)
 
 .SUFFIXES: .c .o
 .c.o:
