@@ -6,7 +6,11 @@
 
 #include "sunder.h"
 
+// clang-format off
 static char const* path = NULL;
+static bool        opt_k = false;
+static char const* opt_o = "a.out";
+// clang-format on
 
 static void
 usage(void);
@@ -22,7 +26,7 @@ main(int argc, char** argv)
     atexit(context_fini);
 
     load_module(path);
-    codegen();
+    codegen(opt_o, opt_k);
 
     return EXIT_SUCCESS;
 }
@@ -41,7 +45,9 @@ usage(void)
     /*========================================================================*/
      "Usage: sunder-compile [OPTION]... PATH",
      "Options:",
-     "  -h, --help       Display usage information and exit.",
+     "  -h, --help        Display usage information and exit.",
+     "  -k, --keep        Keep intermediate files (.o and .asm).",
+     "  -o FILE           Write output to FILE.",
     };
     // clang-format on
     for (size_t i = 0; i < AUTIL_ARRAY_COUNT(lines); ++i) {
@@ -57,8 +63,22 @@ argparse(int argc, char** argv)
             usage();
             exit(EXIT_SUCCESS);
         }
+        if (strcmp(argv[i], "-k") == 0 || strcmp(argv[i], "--keep") == 0) {
+            opt_k = true;
+            continue;
+        }
+        if (strcmp(argv[i], "-o") == 0) {
+            if (++i == argc) {
+                fatal(NULL, "-o FILE, FILE argument not specified");
+            }
+            if (autil_cstr_ends_with(argv[i], "/")) {
+                fatal(NULL, "-o FILE, invalid FILE path");
+            }
+            opt_o = argv[i];
+            continue;
+        }
         if (strncmp(argv[i], "-", 1) == 0 || strncmp(argv[i], "--", 2) == 0) {
-            fatal(NULL, "unrecognized command line option '%s'", argv[i]);
+            fatal(NULL, "unrecognized command line option `%s`", argv[i]);
         }
 
         if (path != NULL) {

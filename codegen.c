@@ -1,6 +1,7 @@
 // Copyright 2021 The Sunder Project Authors
 // SPDX-License-Identifier: Apache-2.0
 #include <assert.h>
+#include <errno.h>
 #include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
@@ -2317,9 +2318,13 @@ codegen_lvalue_unary(struct tir_expr const* expr)
 }
 
 void
-codegen(void)
+codegen(char const* const opt_o, bool opt_k)
 {
+    assert(opt_o != NULL);
+
     out = autil_string_new(NULL, 0u);
+    struct autil_string* const asm_path = autil_string_new_fmt("%s.asm", opt_o);
+    struct autil_string* const obj_path = autil_string_new_fmt("%s.o", opt_o);
 
     codegen_core();
     appendch('\n');
@@ -2329,17 +2334,45 @@ codegen(void)
     appendch('\n');
     codegen_static_functions();
 
-    autil_file_write("a.asm", autil_string_start(out), autil_string_count(out));
+    if (autil_file_write(
+            autil_string_start(asm_path),
+            autil_string_start(out),
+            autil_string_count(out))) {
+        fatal(
+            NULL,
+            "unable to write file `%s` with error '%s'",
+            autil_string_start(asm_path),
+            strerror(errno));
+    }
     autil_string_del(out);
 
     // clang-format off
     char const* const nasm_argv[] = {
         "nasm", "-w+error=all", "-f", "elf64", "-O0", "-g", "-F", "dwarf",
-        "a.asm", (char const*)NULL
+        autil_string_start(asm_path), (char const*)NULL
     };
     // clang-format on
     xspawnvpw("nasm", nasm_argv);
 
-    char const* const ld_argv[] = {"ld", "a.o", (char const*)NULL};
+    // clang-format off
+    char const* const ld_argv[] = {
+        "ld", "-o",  opt_o, autil_string_start(obj_path), (char const*)NULL
+    };
+    // clang-format on
     xspawnvpw("ld", ld_argv);
+
+    if (!opt_k) {
+        // clang-format off
+        char const* const rm_argv[] = {
+            "rm",
+            autil_string_start(asm_path),
+            autil_string_start(obj_path),
+            (char const*)NULL
+        };
+        // clang-format on
+        xspawnvpw("rm", rm_argv);
+    }
+
+    autil_string_del(asm_path);
+    autil_string_del(obj_path);
 }

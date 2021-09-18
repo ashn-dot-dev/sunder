@@ -21,4 +21,5 @@ fi
 
 shift
 ./a.out $@
+rm a.out
 exit $?

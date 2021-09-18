@@ -1328,6 +1328,6 @@ eval_lvalue(struct evaluator* evaluator, struct tir_expr const* expr);
 //////// codegen.c /////////////////////////////////////////////////////////////
 
 void
-codegen(void);
+codegen(char const* const opt_o, bool opt_k);
 
 #endif // SUNDER_H_INCLUDED
