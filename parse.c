@@ -855,7 +855,8 @@ parse_expr_lparen(struct parser* parser)
     }
 
     // <expr-cast>
-    struct ast_expr const* const expr = parse_expr(parser);
+    struct ast_expr const* const expr =
+        parse_expr_precedence(parser, PRECEDENCE_PREFIX);
 
     struct ast_expr* const product =
         ast_expr_new_cast(location, typespec, expr);

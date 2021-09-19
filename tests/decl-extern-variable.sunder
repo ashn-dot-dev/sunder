@@ -1,10 +1,10 @@
 import "std/io.sunder";
-import "sys/sys.sunder";
+import "sys/sys.sunder"; # Declares sys::argc and sys::argv as extern.
 
 func strlen(str: *byte) usize {
     var cur: *byte = str;
     for *cur != 0x00y {
-        cur = (:*byte)(((:usize)cur) + 1u);
+        cur = (:*byte)((:usize)cur + 1u);
     }
     return ((:usize)cur) - ((:usize)str);
 }

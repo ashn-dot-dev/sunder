@@ -1,0 +1,15 @@
+# This file is mostly for verifying fixes for whack-a-mole precesence bugs as
+# they come up rather than a full operator precedence test suite.
+
+func main() void {
+    # $ python3 -c "print(hex(0xAA + 0xBB * 0xCC - 0xDD))"
+    # 0x94d1
+    dump 0xAAs64 + 0xBBs64 * 0xCCs64 - 0xDDs64;
+
+    var str: []byte = "foobar";
+    var pb: *byte = (:*byte)((:usize)&str[0u] + 3u);
+    dump *pb;
+}
+################################################################################
+# D1 94 00 00 00 00 00 00
+# 62
