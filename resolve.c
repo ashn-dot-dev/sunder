@@ -89,6 +89,10 @@ static struct symbol const*
 resolve_decl_constant(struct resolver* resolver, struct ast_decl const* decl);
 static struct symbol const*
 resolve_decl_function(struct resolver* resolver, struct ast_decl const* decl);
+static struct symbol const*
+resolve_decl_extern_variable(
+    struct resolver* resolver, struct ast_decl const* decl);
+
 static void
 complete_function(
     struct resolver* resolver, struct incomplete_function const* incomplete);
@@ -513,6 +517,9 @@ resolve_decl(struct resolver* resolver, struct ast_decl const* decl)
     case AST_DECL_FUNCTION: {
         return resolve_decl_function(resolver, decl);
     }
+    case AST_DECL_EXTERN_VARIABLE: {
+        return resolve_decl_extern_variable(resolver, decl);
+    }
     }
 
     UNREACHABLE();
@@ -615,6 +622,7 @@ resolve_decl_function(struct resolver* resolver, struct ast_decl const* decl)
     assert(resolver != NULL);
     assert(decl != NULL);
     assert(decl->kind == AST_DECL_FUNCTION);
+    assert(resolver_is_global(resolver));
 
     autil_sbuf(struct ast_parameter const* const) const parameters =
         decl->data.function.parameters;
@@ -727,6 +735,32 @@ resolve_decl_function(struct resolver* resolver, struct ast_decl const* decl)
     return function_symbol;
 }
 
+static struct symbol const*
+resolve_decl_extern_variable(
+    struct resolver* resolver, struct ast_decl const* decl)
+{
+    assert(resolver != NULL);
+    assert(decl != NULL);
+    assert(decl->kind == AST_DECL_EXTERN_VARIABLE);
+    assert(resolver_is_global(resolver));
+
+    struct type const* const type =
+        resolve_typespec(resolver, decl->data.variable.typespec);
+
+    struct address const* const address =
+        resolver_reserve_storage_static(resolver, decl->name);
+
+    struct symbol* const symbol =
+        symbol_new_variable(decl->location, decl->name, type, address, NULL);
+    symbol->is_extern = true;
+    autil_freezer_register(context()->freezer, symbol);
+
+    symbol_table_insert(resolver->current_symbol_table, symbol->name, symbol);
+    register_static_symbol(symbol); // Extern variables are always static.
+
+    return symbol;
+}
+
 static void
 complete_function(
     struct resolver* resolver, struct incomplete_function const* incomplete)
@@ -816,6 +850,13 @@ resolve_stmt_decl(struct resolver* resolver, struct ast_stmt const* stmt)
     }
     case AST_DECL_FUNCTION: {
         fatal(stmt->location, "nested function declaration");
+        return NULL;
+    }
+    case AST_DECL_EXTERN_VARIABLE: {
+        fatal(
+            decl->location,
+            "local declaration of extern variable `%s`",
+            decl->name);
         return NULL;
     }
     }

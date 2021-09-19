@@ -260,6 +260,7 @@ enum token_kind {
     TOKEN_VAR,
     TOKEN_CONST,
     TOKEN_FUNC,
+    TOKEN_EXTERN,
     TOKEN_DUMP,
     TOKEN_RETURN,
     TOKEN_IF,
@@ -373,6 +374,7 @@ struct ast_decl {
         AST_DECL_VARIABLE,
         AST_DECL_CONSTANT,
         AST_DECL_FUNCTION,
+        AST_DECL_EXTERN_VARIABLE,
     } kind;
     union {
         struct {
@@ -391,6 +393,10 @@ struct ast_decl {
             struct ast_typespec const* return_typespec;
             struct ast_block const* body;
         } function;
+        struct {
+            struct ast_identifier const* identifier;
+            struct ast_typespec const* typespec;
+        } extern_variable;
     } data;
 };
 struct ast_decl*
@@ -412,6 +418,11 @@ ast_decl_new_func(
     struct ast_parameter const* const* paramseters,
     struct ast_typespec const* return_typespec,
     struct ast_block const* body);
+struct ast_decl*
+ast_decl_new_extern_variable(
+    struct source_location const* location,
+    struct ast_identifier const* identifier,
+    struct ast_typespec const* typespec);
 
 struct ast_stmt {
     struct source_location const* location;
@@ -888,6 +899,7 @@ struct symbol {
     } kind;
     struct source_location const* location;
     char const* name; // interned
+    bool is_extern;
     // SYMBOL_TYPE      => The type itself.
     // SYMBOL_VARIABLE  => The type of the variable.
     // SYMBOL_CONSTANT  => The type of the constant.
@@ -901,7 +913,8 @@ struct symbol {
     // SYMBOL_NAMESPACE => NULL.
     struct address const* address;
     // SYMBOL_TYPE      => NULL.
-    // SYMBOL_VARIABLE  => Compile-type-value of the variable (globals only).
+    // SYMBOL_VARIABLE  => Compile-type-value of the variable
+    //                     (non-extern globals only).
     // SYMBOL_CONSTANT  => Compile-time value of the constant.
     // SYMBOL_FUNCTION  => Compile-time value of the function.
     // SYMBOL_NAMESPACE => NULL.

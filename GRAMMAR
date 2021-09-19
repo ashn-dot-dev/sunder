@@ -7,12 +7,15 @@
 <decl> ::= <decl-variable>
          | <decl-constant>
          | <decl-function>
+         | <decl-extern-variable>
 
 <decl-variable> ::= "var" <identifier> ":" <typespec> "=" <expr> ";"
 
 <decl-constant> ::= "const" <identifier> ":" <typespec> "=" <expr> ";"
 
 <decl-function> ::= "func" <identifier> "(" <parameter-list> ")" <typespec> <block>
+
+<decl-extern-variable> ::= "extern" "var" <identifier> ":" <typespec> ";"
 
 <stmt> ::= <stmt-decl>
          | <stmt-if>

@@ -82,3 +82,6 @@ func open(filename: *byte, flags: s32, mode: u16) ssize {
 func close(fd: u32) ssize {
     return syscall(SYS_CLOSE, fd);
 }
+
+extern var argc: usize;
+extern var argv: **byte;

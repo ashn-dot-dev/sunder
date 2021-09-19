@@ -45,6 +45,8 @@ static struct ast_decl const*
 parse_decl_constant(struct parser* parser);
 static struct ast_decl const*
 parse_decl_function(struct parser* parser);
+static struct ast_decl const*
+parse_decl_extern_variable(struct parser* parser);
 
 static struct ast_stmt const*
 parse_stmt(struct parser* parser);
@@ -303,6 +305,10 @@ parse_decl(struct parser* parser)
         return parse_decl_function(parser);
     }
 
+    if (check_current(parser, TOKEN_EXTERN) && check_peek(parser, TOKEN_VAR)) {
+        return parse_decl_extern_variable(parser);
+    }
+
     fatal(
         &parser->current_token->location,
         "expected declaration, found `%s`",
@@ -369,6 +375,26 @@ parse_decl_function(struct parser* parser)
 
     struct ast_decl* const product = ast_decl_new_func(
         location, identifier, parameters, return_typespec, body);
+
+    autil_freezer_register(context()->freezer, product);
+    return product;
+}
+
+static struct ast_decl const*
+parse_decl_extern_variable(struct parser* parser)
+{
+    assert(parser != NULL);
+
+    struct source_location const* const location =
+        &expect_current(parser, TOKEN_EXTERN)->location;
+    expect_current(parser, TOKEN_VAR);
+    struct ast_identifier const* const identifier = parse_identifier(parser);
+    expect_current(parser, TOKEN_COLON);
+    struct ast_typespec const* const typespec = parse_typespec(parser);
+    expect_current(parser, TOKEN_SEMICOLON);
+
+    struct ast_decl* const product =
+        ast_decl_new_extern_variable(location, identifier, typespec);
 
     autil_freezer_register(context()->freezer, product);
     return product;

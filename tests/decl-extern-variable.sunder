@@ -1,0 +1,17 @@
+import "std/io.sunder";
+import "sys/sys.sunder";
+
+func strlen(str: *byte) usize {
+    var cur: *byte = str;
+    for *cur != 0x00y {
+        cur = (:*byte)(((:usize)cur) + 1u);
+    }
+    return ((:usize)cur) - ((:usize)str);
+}
+
+func main() void {
+    var bytes: []byte = (:[]byte){*sys::argv, strlen(*sys::argv)};
+    std::println(bytes);
+}
+################################################################################
+# ./a.out

@@ -116,6 +116,26 @@ ast_decl_new_func(
     return self;
 }
 
+struct ast_decl*
+ast_decl_new_extern_variable(
+    struct source_location const* location,
+    struct ast_identifier const* identifier,
+    struct ast_typespec const* typespec)
+{
+    assert(location != NULL);
+    assert(identifier != NULL);
+    assert(typespec != NULL);
+
+    struct ast_decl* const self = autil_xalloc(NULL, sizeof(*self));
+    memset(self, 0x00, sizeof(*self));
+    self->kind = AST_DECL_EXTERN_VARIABLE;
+    self->location = location;
+    self->name = identifier->name;
+    self->data.extern_variable.identifier = identifier;
+    self->data.extern_variable.typespec = typespec;
+    return self;
+}
+
 static struct ast_stmt*
 ast_stmt_new(struct source_location const* location, enum ast_stmt_kind kind)
 {

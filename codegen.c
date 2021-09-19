@@ -805,13 +805,25 @@ codegen_core(void)
     appendln("__index_oob_msg_count: equ $ - __index_oob_msg_start");
     appendch('\n');
 
+    appendln("; SYS DEFINITIONS");
+    appendln("section .data");
+    appendln("argc: dq 0 ; extern var argc: usize;");
+    appendln("argv: dq 0 ; extern var argv: **byte;");
+    appendch('\n');
+
     appendln("; PROGRAM ENTRY POINT");
     appendln("section .text");
     appendln("global _start");
     appendln("_start:");
+    appendli("xor rbp, rbp    ; [SysV ABI] deepest stack frame");
+    appendli("mov rax, [rsp]  ; [SysV ABI] argc @ rsp");
+    appendli("mov rbx, rsp    ; [SysV ABI] argv @ rsp + 8");
+    appendli("add rbx, 0x8    ; ...");
+    appendli("mov [argc], rax ; sys.argc = SysV ABI argc");
+    appendli("mov [argv], rbx ; sys.argv = SysV ABI argv");
     appendli("call main");
     appendli("mov rax, 60 ; exit");
-    appendli("mov rdi, 0 ; EXIT_SUCCESS");
+    appendli("mov rdi, 0  ; EXIT_SUCCESS");
     appendli("syscall");
 }
 
@@ -821,7 +833,11 @@ codegen_static_object(struct symbol const* symbol)
     assert(symbol != NULL);
     assert(symbol->kind == SYMBOL_VARIABLE || symbol->kind == SYMBOL_CONSTANT);
     assert(symbol->address->kind == ADDRESS_STATIC);
-    assert(symbol->value != NULL);
+
+    if (symbol->value == NULL) {
+        // Symbol is defined externally.
+        return;
+    }
 
     struct value const* const value = symbol->value;
     struct type const* const type = value->type;
@@ -1909,11 +1925,13 @@ codegen_rvalue_binary(struct tir_expr const* expr)
         codegen_rvalue(expr->data.binary.lhs);
         codegen_rvalue(expr->data.binary.rhs);
 
+        char const* lhs_reg = reg_a(expr->data.binary.lhs->type->size);
+        char const* rhs_reg = reg_b(expr->data.binary.rhs->type->size);
         appendli("pop rbx");
         appendli("pop rax");
         appendli("mov rcx, 0"); // result (default false)
         appendli("mov rdx, 1"); // register holding true
-        appendli("cmp rax, rbx");
+        appendli("cmp %s, %s", lhs_reg, rhs_reg);
         appendli("cmove rcx, rdx");
         appendli("push rcx");
         return;
@@ -1928,11 +1946,13 @@ codegen_rvalue_binary(struct tir_expr const* expr)
         codegen_rvalue(expr->data.binary.lhs);
         codegen_rvalue(expr->data.binary.rhs);
 
+        char const* lhs_reg = reg_a(expr->data.binary.lhs->type->size);
+        char const* rhs_reg = reg_b(expr->data.binary.rhs->type->size);
         appendli("pop rbx");
         appendli("pop rax");
         appendli("mov rcx, 0"); // result (default false)
         appendli("mov rdx, 1"); // register holding true
-        appendli("cmp rax, rbx");
+        appendli("cmp %s, %s", lhs_reg, rhs_reg);
         appendli("cmovne rcx, rdx");
         appendli("push rcx");
         return;

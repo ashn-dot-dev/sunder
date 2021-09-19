@@ -428,7 +428,10 @@ symbol_new_variable(
     assert(name != NULL);
     assert(type != NULL);
     assert(address != NULL);
-    assert(address->kind != ADDRESS_STATIC || value != NULL);
+    // TODO: Extern variables may now be static with a non-NULL value.
+    // We should either update this assert or maybe add an is_extern parameter
+    // to this factory function.
+    //assert(address->kind != ADDRESS_STATIC || value != NULL);
 
     struct symbol* const self =
         symbol_new(SYMBOL_VARIABLE, location, name, type, address, value);

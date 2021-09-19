@@ -174,6 +174,10 @@ order_decl(struct orderer* orderer, struct ast_decl const* decl)
         order_typespec(orderer, decl->data.function.return_typespec);
         return;
     }
+    case AST_DECL_EXTERN_VARIABLE: {
+        order_typespec(orderer, decl->data.extern_variable.typespec);
+        return;
+    }
     }
 
     UNREACHABLE();
