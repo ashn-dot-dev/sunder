@@ -807,8 +807,8 @@ codegen_core(void)
 
     appendln("; SYS DEFINITIONS");
     appendln("section .data");
-    appendln("argc: dq 0 ; extern var argc: usize;");
-    appendln("argv: dq 0 ; extern var argv: **byte;");
+    appendln("sys.argc: dq 0 ; extern var argc: usize;");
+    appendln("sys.argv: dq 0 ; extern var argv: **byte;");
     appendch('\n');
 
     appendln("; PROGRAM ENTRY POINT");
@@ -819,8 +819,8 @@ codegen_core(void)
     appendli("mov rax, [rsp]  ; [SysV ABI] argc @ rsp");
     appendli("mov rbx, rsp    ; [SysV ABI] argv @ rsp + 8");
     appendli("add rbx, 0x8    ; ...");
-    appendli("mov [argc], rax ; sys.argc = SysV ABI argc");
-    appendli("mov [argv], rbx ; sys.argv = SysV ABI argv");
+    appendli("mov [sys.argc], rax ; sys.argc = SysV ABI argc");
+    appendli("mov [sys.argv], rbx ; sys.argv = SysV ABI argv");
     appendli("call main");
     appendli("mov rax, 60 ; exit");
     appendli("mov rdi, 0  ; EXIT_SUCCESS");
@@ -864,8 +864,9 @@ codegen_static_function(struct symbol const* symbol)
     assert(symbol->value->type->kind == TYPE_FUNCTION);
     struct tir_function const* const function = symbol->value->data.function;
 
+    assert(symbol->address->data.static_.offset == 0);
     appendln("global %s", function->name);
-    appendln("%s:", function->name);
+    appendln("%s:", symbol->address->data.static_.name);
     appendli("; PROLOGUE");
     // Save previous frame pointer.
     // With this push, the stack should now be 16-byte aligned.

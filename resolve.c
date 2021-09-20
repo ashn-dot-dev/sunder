@@ -14,7 +14,11 @@ struct incomplete_function {
 
 struct resolver {
     struct module* module;
-    char const* current_namespace; // NULL if within the global namespace.
+    // TODO: Currently current_symbol_name_prefix is unused, but it *should* be
+    // used to produce the full name of symbols as they are contructed via the
+    // symbol factory functions.
+    char const* current_symbol_name_prefix; // Optional (NULL => no prefix).
+    char const* current_static_addr_prefix; // Optional (NULL => no prefix).
     struct tir_function* current_function; // NULL if not in a function.
     struct symbol_table* current_symbol_table;
     struct symbol_table* current_export_table;
@@ -49,20 +53,31 @@ resolver_reserve_storage_static(struct resolver* self, char const* name);
 static struct address const*
 resolver_reserve_storage_local(struct resolver* self, struct type const* type);
 
-// Normalize the provided name within the provided namespace.
-// Providing a NULL namespace parameter implies the global namespace.
+// Produce the fully qualified name (e.g. prefix::name).
+// Providing a NULL prefix parameter implies no prefix.
+// Returns the qualified name as an interned string.
+static char const* // interned
+qualified_name(char const* prefix, char const* name);
+// Produce the fully qualified address/elf-symbol (e.g. prefix.name).
+// Providing a NULL prefix parameter implies no prefix.
+// Returns the qualified address as an interned string.
+static char const* // interned
+qualified_addr(char const* prefix, char const* name);
+// Normalize the provided name with the provided prefix.
+// Providing a NULL prefix parameter implies no prefix.
 // Providing a zero unique_id parameter implies the symbol is the first and
-// potentially only symbol with the given name in the namespace and should not
-// have the unique identifier appended to the normalized symbol.
+// potentially only symbol with the given name and should not have the unique
+// identifier appended to the normalized symbol (matches gcc behavior for
+// multiple local static symbols defined with the same name within the same
+// function).
 // Returns the normalized name as an interned string.
-static char const*
-normalize(char const* namespace, char const* name, unsigned unique_id);
-// Returns the normalization of the provided name within the provided namespace
-// via the normalize function. Linearly increments unique IDs starting at zero
-// until a unique ID is found that does not cause a name collision in the flat
-// normalized namespace.
-static char const*
-normalize_unique(char const* namespace, char const* name);
+static char const* // interned
+normalize(char const* prefix, char const* name, unsigned unique_id);
+// Returns the normalization of the provided name within the provided prefix via
+// the normalize function. Linearly increments unique IDs starting at zero until
+// a unique ID is found that does not cause a name collision.
+static char const* // interned
+normalize_unique(char const* prefix, char const* name);
 // Add the provided static symbol to the map of static symbols within the
 // compilation context.
 static void
@@ -238,7 +253,7 @@ resolver_new(struct module* module)
     struct resolver* const self = autil_xalloc(NULL, sizeof(*self));
     memset(self, 0x00, sizeof(*self));
     self->module = module;
-    self->current_namespace = NULL;
+    self->current_static_addr_prefix = NULL;
     self->current_function = NULL;
     self->current_symbol_table = module->symbols;
     self->current_export_table = module->exports;
@@ -272,7 +287,7 @@ resolver_reserve_storage_static(struct resolver* self, char const* name)
     assert(name != NULL);
 
     char const* const name_normalized =
-        normalize_unique(self->current_namespace, name);
+        normalize_unique(self->current_static_addr_prefix, name);
     struct address* const address =
         address_new(address_init_static(name_normalized, 0u));
     autil_freezer_register(context()->freezer, address);
@@ -298,19 +313,61 @@ resolver_reserve_storage_local(struct resolver* self, struct type const* type)
 }
 
 static char const*
-normalize(char const* namespace, char const* name, unsigned unique_id)
+qualified_name(char const* prefix, char const* name)
 {
     assert(name != NULL);
 
     struct autil_string* const s = autil_string_new(NULL, 0);
 
-    // <namespace>.
-    if (namespace != NULL) {
-        autil_string_append_fmt(s, "%s.", namespace);
+    // <prefix>::
+    if (prefix != NULL) {
+        autil_string_append_fmt(s, "%s::", prefix);
     }
-    // <namespace>.<name>
+    // <prefix>::<name>
     autil_string_append_cstr(s, name);
-    // <namespace>.<name>.<unique-id>
+
+    char const* const interned = autil_sipool_intern(
+        context()->sipool, autil_string_start(s), autil_string_count(s));
+
+    autil_string_del(s);
+    return interned;
+}
+
+static char const*
+qualified_addr(char const* prefix, char const* name)
+{
+    assert(name != NULL);
+
+    struct autil_string* const s = autil_string_new(NULL, 0);
+
+    // <prefix>.
+    if (prefix != NULL) {
+        autil_string_append_fmt(s, "%s.", prefix);
+    }
+    // <prefix>.<name>
+    autil_string_append_cstr(s, name);
+
+    char const* const interned = autil_sipool_intern(
+        context()->sipool, autil_string_start(s), autil_string_count(s));
+
+    autil_string_del(s);
+    return interned;
+}
+
+static char const*
+normalize(char const* prefix, char const* name, unsigned unique_id)
+{
+    assert(name != NULL);
+
+    struct autil_string* const s = autil_string_new(NULL, 0);
+
+    // <prefix>.
+    if (prefix != NULL) {
+        autil_string_append_fmt(s, "%s.", prefix);
+    }
+    // <prefix>.<name>
+    autil_string_append_cstr(s, name);
+    // <prefix>.name>.<unique-id>
     if (unique_id != 0) {
         autil_string_append_fmt(s, ".%u", unique_id);
     }
@@ -323,14 +380,14 @@ normalize(char const* namespace, char const* name, unsigned unique_id)
 }
 
 static char const*
-normalize_unique(char const* namespace, char const* name)
+normalize_unique(char const* prefix, char const* name)
 {
     assert(name != NULL);
 
     unsigned unique_id = 0u;
-    char const* normalized = normalize(namespace, name, unique_id);
+    char const* normalized = normalize(prefix, name, unique_id);
     while (autil_map_lookup(context()->static_symbols, &normalized) != NULL) {
-        normalized = normalize(namespace, name, ++unique_id);
+        normalized = normalize(prefix, name, ++unique_id);
     }
     return normalized;
 }
@@ -651,9 +708,8 @@ resolve_decl_function(struct resolver* resolver, struct ast_decl const* decl)
     struct value* const value = value_new_function(function);
     value_freeze(value, context()->freezer);
 
-    struct address* const address =
-        address_new(address_init_static(decl->name, 0u));
-    autil_freezer_register(context()->freezer, address);
+    struct address const* const address =
+        resolver_reserve_storage_static(resolver, decl->name);
 
     // Add the function/value to the symbol table now so that recursive
     // functions may reference themselves.
@@ -771,13 +827,19 @@ complete_function(
     // Complete the function.
     assert(resolver->current_function == NULL);
     assert(resolver->current_rbp_offset == 0x0);
-    resolver->current_namespace = incomplete->function->name;
+    char const* const save_symbol_name_prefix =
+        resolver->current_symbol_name_prefix;
+    char const* const save_static_addr_prefix =
+        resolver->current_static_addr_prefix;
+    resolver->current_symbol_name_prefix = NULL; // local identifiers
+    resolver->current_static_addr_prefix = incomplete->function->name;
     resolver->current_function = incomplete->function;
     incomplete->function->body = resolve_block(
         resolver,
         incomplete->symbol_table,
         incomplete->decl->data.function.body);
-    resolver->current_namespace = NULL;
+    resolver->current_symbol_name_prefix = save_symbol_name_prefix;
+    resolver->current_static_addr_prefix = save_static_addr_prefix;
     resolver->current_function = NULL;
     assert(resolver->current_rbp_offset == 0x0);
 
@@ -2307,18 +2369,15 @@ resolve(struct module* module)
         autil_sbuf(struct ast_identifier const* const) const identifiers =
             module->ast->namespace->identifiers;
 
-        struct autil_string* const nsname_string = autil_string_new_cstr("");
-        struct autil_string* const nsaddr_string = autil_string_new_cstr("");
-
+        char const* nsname = NULL;
+        char const* nsaddr = NULL;
         for (size_t i = 0; i < autil_sbuf_count(identifiers); ++i) {
             char const* const name = identifiers[i]->name;
             struct source_location const* const location =
                 identifiers[i]->location;
 
-            char const* const nsname_sep = i != 0 ? "::" : "";
-            char const* const nsaddr_sep = i != 0 ? "." : "";
-            autil_string_append_fmt(nsname_string, "%s%s", nsname_sep, name);
-            autil_string_append_fmt(nsaddr_string, "%s%s", nsaddr_sep, name);
+            nsname = qualified_name(nsname, name);
+            nsaddr = qualified_addr(nsaddr, name);
 
             struct symbol_table* const module_table =
                 symbol_table_new(resolver->current_symbol_table);
@@ -2327,16 +2386,10 @@ resolve(struct module* module)
             autil_sbuf_push(resolver->chilling_symbol_tables, module_table);
             autil_sbuf_push(resolver->chilling_symbol_tables, export_table);
 
-            struct symbol* const module_nssymbol = symbol_new_namespace(
-                location,
-                autil_sipool_intern_cstr(
-                    context()->sipool, autil_string_start(nsname_string)),
-                module_table);
-            struct symbol* const export_nssymbol = symbol_new_namespace(
-                location,
-                autil_sipool_intern_cstr(
-                    context()->sipool, autil_string_start(nsname_string)),
-                module_table);
+            struct symbol* const module_nssymbol =
+                symbol_new_namespace(location, nsname, module_table);
+            struct symbol* const export_nssymbol =
+                symbol_new_namespace(location, nsname, module_table);
             autil_freezer_register(context()->freezer, module_nssymbol);
             autil_freezer_register(context()->freezer, export_nssymbol);
 
@@ -2348,8 +2401,8 @@ resolve(struct module* module)
             resolver->current_export_table = export_table;
         }
 
-        autil_string_del(nsname_string);
-        autil_string_del(nsaddr_string);
+        resolver->current_symbol_name_prefix = nsname;
+        resolver->current_static_addr_prefix = nsaddr;
     }
 
     // Imports.
