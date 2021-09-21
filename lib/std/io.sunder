@@ -9,7 +9,20 @@ func print(str: []byte) void {
     sys::write(sys::STDOUT_FILENO, &str[0u], countof(str));
 }
 
+func eprint(str: []byte) void {
+    if countof(str) == 0u {
+        return;
+    }
+
+    sys::write(sys::STDERR_FILENO, &str[0u], countof(str));
+}
+
 func println(str: []byte) void {
     print(str);
     print("\n");
+}
+
+func eprintln(str: []byte) void {
+    eprint(str);
+    eprint("\n");
 }

@@ -1,0 +1,14 @@
+# Routines for NUL-terminated byte sequences a.k.a cstrings.
+namespace std::cstr;
+
+func count(s: *byte) usize {
+    var cur: *byte = s;
+    for *cur != 0x00y {
+        cur = (:*byte)((:usize)cur + 1u);
+    }
+    return (:usize)cur - (:usize)s;
+}
+
+func to_bytes(s: *byte) []byte {
+    return (:[]byte){s, std::cstr::count(s)};
+}

@@ -1,0 +1,47 @@
+import "std/cptr.sunder";
+import "std/cstr.sunder";
+import "std/io.sunder";
+import "sys/sys.sunder";
+
+func cat(filename: *byte) void {
+    var sysret: ssize = sys::open(filename, sys::O_RDONLY, 0u16);
+    if sysret < 0s {
+        std::eprint(std::cstr::to_bytes(filename));
+        std::eprintln(": failed to open file");
+        sys::exit(1s32);
+    }
+    var fd: u32 = (:u32)sysret;
+
+    # TODO: Update this to 512 (or more) bytes once some language feature is put
+    # into place that doesn't require typing out N elements to zero initialize
+    # an N-element array.
+    var buf: [8u]byte = (:[8u]byte)[0y, 0y, 0y, 0y, 0y, 0y, 0y, 0y];
+
+    var finished: bool = false;
+    for not finished {
+        sysret = sys::read(fd, &buf[0u], countof(buf));
+        if sysret < 0s {
+            std::eprint(std::cstr::to_bytes(filename));
+            std::eprintln(": read error");
+            sys::exit(1s32);
+        }
+
+        finished = sysret == 0s;
+
+        sysret = sys::write(sys::STDOUT_FILENO, &buf[0u], (:usize)sysret);
+        if sysret < 0s {
+            std::eprint(std::cstr::to_bytes(filename));
+            std::eprintln(": write error");
+            dump sysret;
+            sys::exit(1s32);
+        }
+    }
+}
+
+func main() void {
+    for i in 1u:sys::argc {
+        var filename: typeof(*sys::argv) = *(:typeof(sys::argv))std::cptr::add(
+                (:usize)sys::argv, sizeof(:typeof(sys::argv)), i);
+        cat(filename);
+    }
+}
