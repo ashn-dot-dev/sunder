@@ -49,6 +49,9 @@ reg_a(size_t size);
 // Register bl, bx, ebx, or rbx based on size.
 char const*
 reg_b(size_t size);
+// Register dl, dx, edx, or rdx based on size.
+char const*
+reg_d(size_t size);
 
 // Copy size bytes from the address in rax to to the address in rbx using rcx
 // for intermediate storage. Roughly equivalent to memcpy(rbx, rax, size).
@@ -391,6 +394,22 @@ reg_b(size_t size)
         return "ebx";
     case 8:
         return "rbx";
+    }
+    UNREACHABLE();
+}
+
+char const*
+reg_d(size_t size)
+{
+    switch (size) {
+    case 1:
+        return "dl";
+    case 2:
+        return "dx";
+    case 4:
+        return "edx";
+    case 8:
+        return "rdx";
     }
     UNREACHABLE();
 }
@@ -964,7 +983,7 @@ codegen_stmt_if(struct tir_stmt const* stmt)
             codegen_rvalue(conditionals[i]->condition);
             appendli("pop rax");
             appendli("mov rbx, 0x00");
-            appendli("cmp rax, rbx");
+            appendli("cmp al, bl");
             if (is_last) {
                 appendli("je .l%zu_stmt_if_end", stmt_id);
             }
@@ -1041,7 +1060,7 @@ codegen_stmt_for_expr(struct tir_stmt const* stmt)
     codegen_rvalue(stmt->data.for_expr.expr);
     appendli("pop rax");
     appendli("mov rbx, 0x00");
-    appendli("cmp rax, rbx");
+    appendli("cmp al, bl");
     appendli("je .l%zu_stmt_for_expr_end", stmt_id);
     appendln(".l%zu_stmt_for_expr_body:", stmt_id);
     autil_sbuf(struct tir_stmt const* const) const stmts =
@@ -1737,11 +1756,15 @@ codegen_rvalue_unary(struct tir_expr const* expr)
 
     switch (expr->data.unary.op) {
     case UOP_NOT: {
-        codegen_rvalue(expr->data.unary.rhs);
         assert(expr->data.unary.rhs->type->size <= 8u);
+
+        codegen_rvalue(expr->data.unary.rhs);
+
+        char const* rhs_reg = reg_a(expr->data.unary.rhs->type->size);
         appendli("pop rax");
         appendli("mov rbx, 0");
-        appendli("cmp rax, rbx");
+        appendli(
+            "cmp %s, %s", rhs_reg, reg_b(expr->data.unary.rhs->type->size));
         appendli("setz al");
         appendli("push rax");
         return;
@@ -1756,6 +1779,8 @@ codegen_rvalue_unary(struct tir_expr const* expr)
 
         assert(rhs->type->size <= 8u);
         codegen_rvalue(expr->data.unary.rhs);
+
+        char const* rhs_reg = reg_a(expr->data.unary.rhs->type->size);
         appendli("pop rax");
         appendln(".l%zu_expr_unary_neg_bgn:", expr_id);
         if (type_is_sinteger(rhs->type)) {
@@ -1763,7 +1788,8 @@ codegen_rvalue_unary(struct tir_expr const* expr)
                 autil_bigint_to_new_cstr(rhs->type->data.integer.min, NULL);
             appendli("mov rbx, %s", min_cstr);
             autil_xalloc(min_cstr, AUTIL_XALLOC_FREE);
-            appendli("cmp rax, rbx");
+            appendli(
+                "cmp %s, %s", rhs_reg, reg_b(expr->data.unary.rhs->type->size));
             appendli("jne .l%zu_expr_unary_neg_op", expr_id);
             appendli("call __integer_oor_handler");
         }
@@ -1853,12 +1879,14 @@ codegen_rvalue_binary(struct tir_expr const* expr)
         assert(expr->data.binary.rhs->type->size == 1u);
         size_t const id = unique_id++;
 
+        char const* lhs_reg = reg_a(expr->data.binary.lhs->type->size);
+        char const* rhs_reg = reg_b(expr->data.binary.rhs->type->size);
         // TODO: Remove redundant jumps.
         appendln(".l%zu_binary_or_lhs:", id);
         codegen_rvalue(expr->data.binary.lhs);
         appendli("pop rax");
         appendli("mov rbx, 0x00");
-        appendli("cmp rax, rbx");
+        appendli("cmp %s, %s", lhs_reg, rhs_reg);
         appendli("jne .l%zu_binary_or_true", id);
         appendli("jmp .l%zu_binary_or_rhs", id);
 
@@ -1866,7 +1894,7 @@ codegen_rvalue_binary(struct tir_expr const* expr)
         codegen_rvalue(expr->data.binary.rhs);
         appendli("pop rax");
         appendli("mov rbx, 0x00");
-        appendli("cmp rax, rbx");
+        appendli("cmp %s, %s", lhs_reg, rhs_reg);
         appendli("jne .l%zu_binary_or_true", id);
         appendli("jmp .l%zu_binary_or_false", id);
 
@@ -1888,12 +1916,14 @@ codegen_rvalue_binary(struct tir_expr const* expr)
         assert(expr->data.binary.rhs->type->size == 1u);
         size_t const id = unique_id++;
 
+        char const* lhs_reg = reg_a(expr->data.binary.lhs->type->size);
+        char const* rhs_reg = reg_b(expr->data.binary.rhs->type->size);
         // TODO: Remove redundant jumps.
         appendln(".l%zu_binary_and_lhs:", id);
         codegen_rvalue(expr->data.binary.lhs);
         appendli("pop rax");
         appendli("mov rbx, 0x00");
-        appendli("cmp rax, rbx");
+        appendli("cmp %s, %s", lhs_reg, rhs_reg);
         appendli("jne .l%zu_binary_and_rhs", id);
         appendli("jmp .l%zu_binary_and_false", id);
 
@@ -1901,7 +1931,7 @@ codegen_rvalue_binary(struct tir_expr const* expr)
         codegen_rvalue(expr->data.binary.rhs);
         appendli("pop rax");
         appendli("mov rbx, 0x00");
-        appendli("cmp rax, rbx");
+        appendli("cmp %s, %s", lhs_reg, rhs_reg);
         appendli("jne .l%zu_binary_and_true", id);
         appendli("jmp .l%zu_binary_and_false", id);
 
@@ -1969,11 +1999,13 @@ codegen_rvalue_binary(struct tir_expr const* expr)
         codegen_rvalue(expr->data.binary.lhs);
         codegen_rvalue(expr->data.binary.rhs);
 
+        char const* lhs_reg = reg_a(expr->data.binary.lhs->type->size);
+        char const* rhs_reg = reg_b(expr->data.binary.rhs->type->size);
         appendli("pop rbx");
         appendli("pop rax");
         appendli("mov rcx, 0"); // result (default false)
         appendli("mov rdx, 1"); // register holding true
-        appendli("cmp rax, rbx");
+        appendli("cmp %s, %s", lhs_reg, rhs_reg);
         appendli(
             "%s rcx, rdx", type_is_sinteger(xhs_type) ? "cmovle" : "cmovbe");
         appendli("push rcx");
@@ -1990,11 +2022,13 @@ codegen_rvalue_binary(struct tir_expr const* expr)
         codegen_rvalue(expr->data.binary.lhs);
         codegen_rvalue(expr->data.binary.rhs);
 
+        char const* lhs_reg = reg_a(expr->data.binary.lhs->type->size);
+        char const* rhs_reg = reg_b(expr->data.binary.rhs->type->size);
         appendli("pop rbx");
         appendli("pop rax");
         appendli("mov rcx, 0"); // result (default false)
         appendli("mov rdx, 1"); // register holding true
-        appendli("cmp rax, rbx");
+        appendli("cmp %s, %s", lhs_reg, rhs_reg);
         appendli("%s rcx, rdx", type_is_sinteger(xhs_type) ? "cmovl" : "cmovb");
         appendli("push rcx");
         return;
@@ -2010,11 +2044,13 @@ codegen_rvalue_binary(struct tir_expr const* expr)
         codegen_rvalue(expr->data.binary.lhs);
         codegen_rvalue(expr->data.binary.rhs);
 
+        char const* lhs_reg = reg_a(expr->data.binary.lhs->type->size);
+        char const* rhs_reg = reg_b(expr->data.binary.rhs->type->size);
         appendli("pop rbx");
         appendli("pop rax");
         appendli("mov rcx, 0"); // result (default false)
         appendli("mov rdx, 1"); // register holding true
-        appendli("cmp rax, rbx");
+        appendli("cmp %s, %s", lhs_reg, rhs_reg);
         appendli(
             "%s rcx, rdx", type_is_sinteger(xhs_type) ? "cmovge" : "cmovae");
         appendli("push rcx");
@@ -2031,11 +2067,13 @@ codegen_rvalue_binary(struct tir_expr const* expr)
         codegen_rvalue(expr->data.binary.lhs);
         codegen_rvalue(expr->data.binary.rhs);
 
+        char const* lhs_reg = reg_a(expr->data.binary.lhs->type->size);
+        char const* rhs_reg = reg_b(expr->data.binary.rhs->type->size);
         appendli("pop rbx");
         appendli("pop rax");
         appendli("mov rcx, 0"); // result (default false)
         appendli("mov rdx, 1"); // register holding true
-        appendli("cmp rax, rbx");
+        appendli("cmp %s, %s", lhs_reg, rhs_reg);
         appendli("%s rcx, rdx", type_is_sinteger(xhs_type) ? "cmovg" : "cmova");
         appendli("push rcx");
         return;
@@ -2131,10 +2169,13 @@ codegen_rvalue_binary(struct tir_expr const* expr)
         appendln(".l%zu_expr_binary_div_bgn:", expr_id);
         codegen_rvalue(expr->data.binary.lhs);
         codegen_rvalue(expr->data.binary.rhs);
-        appendli("pop rbx");
-        appendli("pop rax");
+        appendli("pop rbx"); // rhs
+        appendli("pop rax"); // lhs
         appendli("mov rdx, 0");
-        appendli("cmp rbx, 0"); // divide-by-zero check
+        appendli(
+            "cmp %s, %s",
+            rhs_reg,
+            reg_d(xhs_type->size)); // divide-by-zero check
         appendli("jne .l%zu_expr_binary_div_op", expr_id);
         appendli("call __integer_divz_handler");
         appendli(".l%zu_expr_binary_div_op:", expr_id);

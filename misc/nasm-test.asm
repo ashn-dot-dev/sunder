@@ -82,6 +82,13 @@ main:
     push rbp
     mov rbp, rsp
 
+    ; Test operations on 8 and 16 bit data.
+    xor rax, rax
+    xor rbx, rbx
+    mov rax, 0xFFFFFFFFFFFFFFFF
+    mov rbx, 0xFFFFFFFFFFFFFFFF
+    cmp al, bl
+
     ; write(STDOUT_FILENO, hello_start, hello_count);
     mov rax, SYS_WRITE
     mov rdi, STDOUT_FILENO
