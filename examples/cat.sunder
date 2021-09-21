@@ -35,6 +35,8 @@ func cat(filename: *byte) void {
             sys::exit(1s32);
         }
     }
+
+    sys::close(fd);
 }
 
 func main() void {
