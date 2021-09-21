@@ -1,6 +1,7 @@
-# Linux kernel x64 system interface.
+# Linux Kernel x64 System Interface
+# =================================
 #
-# SystemV x64 (LP64) ABI:
+# System V x64 (LP64) ABI:
 # C Type             | Size | Alignment | Sunder Type
 # -------------------+------+-----------+------------
 # char               | 1    | 1         | byte
@@ -72,19 +73,19 @@ func write(fd: u32, buf: *byte, count: usize) ssize {
     return syscall(SYS_WRITE, fd, buf, count);
 }
 
-# linux/fs/open.c
+# linux/fs/open.c:
 # SYSCALL_DEFINE3(open, const char __user *, filename, int, flags, umode_t, mode)
 func open(filename: *byte, flags: s32, mode: u16) ssize {
     return syscall(SYS_OPEN, filename, flags, mode);
 }
 
-# linux/fs/open.c
+# linux/fs/open.c:
 # SYSCALL_DEFINE1(close, unsigned int, fd)
 func close(fd: u32) ssize {
     return syscall(SYS_CLOSE, fd);
 }
 
-# linux/kernel/exit.c
+# linux/kernel/exit.c:
 # SYSCALL_DEFINE1(exit, int, error_code)
 func exit(error_code: s32) void {
     syscall(SYS_EXIT, error_code);
