@@ -32,7 +32,6 @@ func cat(filename: *byte) void {
         if sysret < 0s {
             std::eprint(std::cstr::to_bytes(filename));
             std::eprintln(": write error");
-            dump sysret;
             sys::exit(1s32);
         }
     }
