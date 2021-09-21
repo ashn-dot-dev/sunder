@@ -8,16 +8,16 @@ sources:
 tasks:
   - test-clang-debug: |
       cd sunder
-      make clean test CC=clang CFLAGS='$(GNU_DBG) $(SANITIZE)'
+      make clean all CC=clang CFLAGS='$(GNU_DBG) $(SANITIZE)'
   - test-clang-release: |
       cd sunder
-      make clean test CC=clang CFLAGS='$(GNU_REL)'
+      make clean all CC=clang CFLAGS='$(GNU_REL)'
   - test-gcc-debug: |
       cd sunder
-      make clean test CC=gcc CFLAGS='$(GNU_DBG) $(SANITIZE)'
+      make clean all CC=gcc CFLAGS='$(GNU_DBG) $(SANITIZE)'
   - test-gcc-release: |
       cd sunder
-      make clean test CC=gcc CFLAGS='$(GNU_REL)'
+      make clean all CC=gcc CFLAGS='$(GNU_REL)'
 triggers:
   - action: email
     condition: failure
