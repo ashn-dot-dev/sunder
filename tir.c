@@ -625,6 +625,24 @@ tir_stmt_new_for_expr(
 }
 
 struct tir_stmt*
+tir_stmt_new_break(struct source_location const* location)
+{
+    assert(location != NULL);
+
+    struct tir_stmt* const self = tir_stmt_new(location, TIR_STMT_BREAK);
+    return self;
+}
+
+struct tir_stmt*
+tir_stmt_new_continue(struct source_location const* location)
+{
+    assert(location != NULL);
+
+    struct tir_stmt* const self = tir_stmt_new(location, TIR_STMT_CONTINUE);
+    return self;
+}
+
+struct tir_stmt*
 tir_stmt_new_dump(
     struct source_location const* location, struct tir_expr const* expr)
 {

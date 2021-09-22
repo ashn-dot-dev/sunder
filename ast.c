@@ -206,6 +206,24 @@ ast_stmt_new_decl(struct ast_decl const* decl)
 }
 
 struct ast_stmt*
+ast_stmt_new_break(struct source_location const* location)
+{
+    assert(location != NULL);
+
+    struct ast_stmt* const self = ast_stmt_new(location, AST_STMT_BREAK);
+    return self;
+}
+
+struct ast_stmt*
+ast_stmt_new_continue(struct source_location const* location)
+{
+    assert(location != NULL);
+
+    struct ast_stmt* const self = ast_stmt_new(location, AST_STMT_CONTINUE);
+    return self;
+}
+
+struct ast_stmt*
 ast_stmt_new_dump(
     struct source_location const* location, struct ast_expr const* expr)
 {

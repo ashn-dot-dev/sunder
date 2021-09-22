@@ -268,6 +268,8 @@ enum token_kind {
     TOKEN_ELSE,
     TOKEN_FOR,
     TOKEN_IN,
+    TOKEN_BREAK,
+    TOKEN_CONTINUE,
     TOKEN_SYSCALL,
     TOKEN_COUNTOF,
     TOKEN_SIZEOF,
@@ -431,6 +433,8 @@ struct ast_stmt {
         AST_STMT_IF,
         AST_STMT_FOR_RANGE,
         AST_STMT_FOR_EXPR,
+        AST_STMT_BREAK, /* no .data member */
+        AST_STMT_CONTINUE, /* no .data member */
         AST_STMT_DUMP,
         AST_STMT_RETURN,
         AST_STMT_ASSIGN,
@@ -480,6 +484,10 @@ ast_stmt_new_for_expr(
     struct source_location const* location,
     struct ast_expr const* expr,
     struct ast_block const* body);
+struct ast_stmt*
+ast_stmt_new_break(struct source_location const* location);
+struct ast_stmt*
+ast_stmt_new_continue(struct source_location const* location);
 struct ast_stmt*
 ast_stmt_new_dump(
     struct source_location const* location, struct ast_expr const* expr);
@@ -988,6 +996,8 @@ struct tir_stmt {
         TIR_STMT_IF,
         TIR_STMT_FOR_RANGE,
         TIR_STMT_FOR_EXPR,
+        TIR_STMT_BREAK, /* no .data member */
+        TIR_STMT_CONTINUE, /* no .data member */
         TIR_STMT_DUMP,
         TIR_STMT_RETURN,
         TIR_STMT_ASSIGN,
@@ -1034,6 +1044,10 @@ tir_stmt_new_for_expr(
     struct source_location const* location,
     struct tir_expr const* expr,
     struct tir_block const* body);
+struct tir_stmt*
+tir_stmt_new_break(struct source_location const* location);
+struct tir_stmt*
+tir_stmt_new_continue(struct source_location const* location);
 struct tir_stmt*
 tir_stmt_new_dump(
     struct source_location const* location, struct tir_expr const* expr);

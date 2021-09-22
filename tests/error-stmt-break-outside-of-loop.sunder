@@ -1,0 +1,7 @@
+func main() void {
+    break;
+}
+################################################################################
+# [error-stmt-break-outside-of-loop.sunder:2] error: break statement outside of loop
+#     break;
+#     ^

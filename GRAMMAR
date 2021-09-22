@@ -21,6 +21,8 @@
          | <stmt-if>
          | <stmt-for-range>
          | <stmt-for-expr>
+         | <stmt-break>
+         | <stmt-continue>
          | <stmt-dump>
          | <stmt-return>
          | <stmt-assign>
@@ -33,6 +35,10 @@
 <stmt-for-range> ::= "for" <identifier> "in" <expr> ":" <expr> <block>
 
 <stmt-for-expr> ::= "for" <expr> <block>
+
+<stmt-break> ::= "break" ";"
+
+<stmt-continue> ::= "continue" ";"
 
 <stmt-dump> ::= "dump" <expr> ";"
 

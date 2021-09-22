@@ -15,7 +15,7 @@ struct incomplete_function {
 struct resolver {
     struct module* module;
     // TODO: Currently current_symbol_name_prefix is unused, but it *should* be
-    // used to produce the full name of symbols as they are contructed via the
+    // used to produce the full name of symbols as they are constructed via the
     // symbol factory functions.
     char const* current_symbol_name_prefix; // Optional (NULL => no prefix).
     char const* current_static_addr_prefix; // Optional (NULL => no prefix).
@@ -23,8 +23,12 @@ struct resolver {
     struct symbol_table* current_symbol_table;
     struct symbol_table* current_export_table;
     // Current offset of rbp for stack allocated data. Initialized to zero at
-    // the start of function resolution.
+    // the start of function completion.
     int current_rbp_offset;
+    // True if the statements being processed are inside a loop. Se to true when
+    // a loop body is being resolved, and set to false once the loop body is
+    // finished resolving.
+    bool is_within_loop;
 
     // Functions to be completed at the end of the resolve phase after all
     // top-level declarations have been resolved. Incomplete functions defer
@@ -122,6 +126,10 @@ static struct tir_stmt const*
 resolve_stmt_for_range(struct resolver* resolver, struct ast_stmt const* stmt);
 static struct tir_stmt const*
 resolve_stmt_for_expr(struct resolver* resolver, struct ast_stmt const* stmt);
+static struct tir_stmt const*
+resolve_stmt_break(struct resolver* resolver, struct ast_stmt const* stmt);
+static struct tir_stmt const*
+resolve_stmt_continue(struct resolver* resolver, struct ast_stmt const* stmt);
 static struct tir_stmt const*
 resolve_stmt_dump(struct resolver* resolver, struct ast_stmt const* stmt);
 static struct tir_stmt const*
@@ -258,6 +266,7 @@ resolver_new(struct module* module)
     self->current_symbol_table = module->symbols;
     self->current_export_table = module->exports;
     self->current_rbp_offset = 0x0;
+    self->is_within_loop = false;
     return self;
 }
 
@@ -827,6 +836,7 @@ complete_function(
     // Complete the function.
     assert(resolver->current_function == NULL);
     assert(resolver->current_rbp_offset == 0x0);
+    assert(!resolver->is_within_loop);
     char const* const save_symbol_name_prefix =
         resolver->current_symbol_name_prefix;
     char const* const save_static_addr_prefix =
@@ -867,6 +877,12 @@ resolve_stmt(struct resolver* resolver, struct ast_stmt const* stmt)
     }
     case AST_STMT_FOR_EXPR: {
         return resolve_stmt_for_expr(resolver, stmt);
+    }
+    case AST_STMT_BREAK: {
+        return resolve_stmt_break(resolver, stmt);
+    }
+    case AST_STMT_CONTINUE: {
+        return resolve_stmt_continue(resolver, stmt);
     }
     case AST_STMT_DUMP: {
         return resolve_stmt_dump(resolver, stmt);
@@ -1020,12 +1036,17 @@ resolve_stmt_for_range(struct resolver* resolver, struct ast_stmt const* stmt)
     struct symbol_table* const symbol_table =
         symbol_table_new(resolver->current_symbol_table);
     symbol_table_insert(symbol_table, loop_var_symbol->name, loop_var_symbol);
+
+    bool const save_is_within_loop = resolver->is_within_loop;
+    resolver->is_within_loop = true;
     struct tir_block const* const body =
         resolve_block(resolver, symbol_table, stmt->data.for_range.body);
+    resolver->current_rbp_offset = save_rbp_offset;
+    resolver->is_within_loop = save_is_within_loop;
+
     // Freeze the symbol table now that the block has been resolved and no new
     // symbols will be added.
     symbol_table_freeze(symbol_table, context()->freezer);
-    resolver->current_rbp_offset = save_rbp_offset;
 
     struct tir_stmt* const resolved = tir_stmt_new_for_range(
         stmt->location, loop_var_symbol, begin, end, body);
@@ -1052,14 +1073,55 @@ resolve_stmt_for_expr(struct resolver* resolver, struct ast_stmt const* stmt)
 
     struct symbol_table* const symbol_table =
         symbol_table_new(resolver->current_symbol_table);
+
+    bool const save_is_within_loop = resolver->is_within_loop;
+    resolver->is_within_loop = true;
     struct tir_block const* const body =
         resolve_block(resolver, symbol_table, stmt->data.for_expr.body);
+    resolver->is_within_loop = save_is_within_loop;
+
     // Freeze the symbol table now that the block has been resolved and no new
     // symbols will be added.
     symbol_table_freeze(symbol_table, context()->freezer);
 
     struct tir_stmt* const resolved =
         tir_stmt_new_for_expr(stmt->location, expr, body);
+
+    autil_freezer_register(context()->freezer, resolved);
+    return resolved;
+}
+
+static struct tir_stmt const*
+resolve_stmt_break(struct resolver* resolver, struct ast_stmt const* stmt)
+{
+    assert(resolver != NULL);
+    assert(!resolver_is_global(resolver));
+    assert(stmt != NULL);
+    assert(stmt->kind == AST_STMT_BREAK);
+
+    if (!resolver->is_within_loop) {
+        fatal(stmt->location, "break statement outside of loop");
+    }
+
+    struct tir_stmt* const resolved = tir_stmt_new_break(stmt->location);
+
+    autil_freezer_register(context()->freezer, resolved);
+    return resolved;
+}
+
+static struct tir_stmt const*
+resolve_stmt_continue(struct resolver* resolver, struct ast_stmt const* stmt)
+{
+    assert(resolver != NULL);
+    assert(!resolver_is_global(resolver));
+    assert(stmt != NULL);
+    assert(stmt->kind == AST_STMT_CONTINUE);
+
+    if (!resolver->is_within_loop) {
+        fatal(stmt->location, "continue statement outside of loop");
+    }
+
+    struct tir_stmt* const resolved = tir_stmt_new_continue(stmt->location);
 
     autil_freezer_register(context()->freezer, resolved);
     return resolved;

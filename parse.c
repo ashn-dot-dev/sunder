@@ -55,6 +55,10 @@ parse_stmt_if(struct parser* parser);
 static struct ast_stmt const*
 parse_stmt_for(struct parser* parser);
 static struct ast_stmt const*
+parse_stmt_break(struct parser* parser);
+static struct ast_stmt const*
+parse_stmt_continue(struct parser* parser);
+static struct ast_stmt const*
 parse_stmt_dump(struct parser* parser);
 static struct ast_stmt const*
 parse_stmt_return(struct parser* parser);
@@ -418,6 +422,14 @@ parse_stmt(struct parser* parser)
         return parse_stmt_for(parser);
     }
 
+    if (check_current(parser, TOKEN_BREAK)) {
+        return parse_stmt_break(parser);
+    }
+
+    if (check_current(parser, TOKEN_CONTINUE)) {
+        return parse_stmt_continue(parser);
+    }
+
     if (check_current(parser, TOKEN_DUMP)) {
         return parse_stmt_dump(parser);
     }
@@ -521,6 +533,40 @@ parse_stmt_for(struct parser* parser)
 
     struct ast_stmt* const product =
         ast_stmt_new_for_expr(location, expr, body);
+
+    autil_freezer_register(context()->freezer, product);
+    return product;
+}
+
+static struct ast_stmt const*
+parse_stmt_break(struct parser* parser)
+{
+    assert(parser != NULL);
+    assert(check_current(parser, TOKEN_BREAK));
+
+    struct source_location const* const location =
+        &expect_current(parser, TOKEN_BREAK)->location;
+
+    expect_current(parser, TOKEN_SEMICOLON);
+
+    struct ast_stmt* const product = ast_stmt_new_break(location);
+
+    autil_freezer_register(context()->freezer, product);
+    return product;
+}
+
+static struct ast_stmt const*
+parse_stmt_continue(struct parser* parser)
+{
+    assert(parser != NULL);
+    assert(check_current(parser, TOKEN_CONTINUE));
+
+    struct source_location const* const location =
+        &expect_current(parser, TOKEN_CONTINUE)->location;
+
+    expect_current(parser, TOKEN_SEMICOLON);
+
+    struct ast_stmt* const product = ast_stmt_new_continue(location);
 
     autil_freezer_register(context()->freezer, product);
     return product;

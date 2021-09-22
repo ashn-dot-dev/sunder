@@ -9,6 +9,7 @@
 
 static struct autil_string* out = NULL;
 static struct tir_function const* current_function = NULL;
+static size_t current_loop_id; // Used for generating break & continue lables.
 static size_t unique_id = 0; // Used for generating unique names and labels.
 
 static void
@@ -518,6 +519,10 @@ codegen_stmt_for_range(struct tir_stmt const* stmt);
 static void
 codegen_stmt_for_expr(struct tir_stmt const* stmt);
 static void
+codegen_stmt_break(struct tir_stmt const* stmt);
+static void
+codegen_stmt_continue(struct tir_stmt const* stmt);
+static void
 codegen_stmt_dump(struct tir_stmt const* stmt);
 static void
 codegen_stmt_return(struct tir_stmt const* stmt);
@@ -939,6 +944,16 @@ codegen_stmt(struct tir_stmt const* stmt)
         codegen_stmt_for_expr(stmt);
         return;
     }
+    case TIR_STMT_BREAK: {
+        appendli_location(stmt->location, "<stmt-break>");
+        codegen_stmt_break(stmt);
+        return;
+    }
+    case TIR_STMT_CONTINUE: {
+        appendli_location(stmt->location, "<stmt-continue>");
+        codegen_stmt_continue(stmt);
+        return;
+    }
     case TIR_STMT_DUMP: {
         appendli_location(stmt->location, "<stmt-dump>");
         codegen_stmt_dump(stmt);
@@ -1018,14 +1033,18 @@ codegen_stmt_for_range(struct tir_stmt const* stmt)
     assert(stmt->data.for_range.begin->type == context()->builtin.usize);
     assert(stmt->data.for_range.end->type == context()->builtin.usize);
     assert(stmt->data.for_range.loop_variable->address->kind == ADDRESS_LOCAL);
+
     size_t const stmt_id = unique_id++;
-    appendln(".l%zu_stmt_for_range_bgn:", stmt_id);
+    size_t const save_current_loop_id = current_loop_id;
+    current_loop_id = stmt_id;
+
+    appendln(".l%zu_stmt_for_bgn:", stmt_id);
     push_address(stmt->data.for_range.loop_variable->address);
     codegen_rvalue(stmt->data.for_range.begin);
     appendli("pop rbx"); // begin
     appendli("pop rax"); // addr of loop variable
     appendli("mov [rax], rbx");
-    appendln(".l%zu_stmt_for_range_condition:", stmt_id);
+    appendln(".l%zu_stmt_for_condition:", stmt_id);
     push_at_address(
         stmt->data.for_range.loop_variable->type->size,
         stmt->data.for_range.loop_variable->address);
@@ -1033,18 +1052,21 @@ codegen_stmt_for_range(struct tir_stmt const* stmt)
     appendli("pop rbx"); // end
     appendli("pop rax"); // loop variable
     appendli("cmp rax, rbx");
-    appendli("je .l%zu_stmt_for_range_end", stmt_id);
-    appendln(".l%zu_stmt_for_range_body:", stmt_id);
+    appendli("je .l%zu_stmt_for_end", stmt_id);
+    appendln(".l%zu_stmt_for_body_bgn:", stmt_id);
     autil_sbuf(struct tir_stmt const* const) const stmts =
         stmt->data.for_range.body->stmts;
     for (size_t i = 0; i < autil_sbuf_count(stmts); ++i) {
         codegen_stmt(stmts[i]);
     }
+    appendln(".l%zu_stmt_for_body_end:", stmt_id);
     appendli(
         "inc qword [rbp + %d]",
         stmt->data.for_range.loop_variable->address->data.local.rbp_offset);
-    appendli("jmp .l%zu_stmt_for_range_condition", stmt_id);
-    appendln(".l%zu_stmt_for_range_end:", stmt_id);
+    appendli("jmp .l%zu_stmt_for_condition", stmt_id);
+    appendln(".l%zu_stmt_for_end:", stmt_id);
+
+    current_loop_id = save_current_loop_id;
 }
 
 static void
@@ -1054,22 +1076,46 @@ codegen_stmt_for_expr(struct tir_stmt const* stmt)
     assert(stmt->kind == TIR_STMT_FOR_EXPR);
 
     size_t const stmt_id = unique_id++;
-    appendln(".l%zu_stmt_for_expr_bgn:", stmt_id);
-    appendln(".l%zu_stmt_for_expr_condition:", stmt_id);
+    size_t const save_current_loop_id = current_loop_id;
+    current_loop_id = stmt_id;
+
+    appendln(".l%zu_stmt_for_bgn:", stmt_id);
+    appendln(".l%zu_stmt_for_condition:", stmt_id);
     assert(stmt->data.for_expr.expr->type->kind == TYPE_BOOL);
     codegen_rvalue(stmt->data.for_expr.expr);
     appendli("pop rax");
     appendli("mov rbx, 0x00");
     appendli("cmp al, bl");
-    appendli("je .l%zu_stmt_for_expr_end", stmt_id);
-    appendln(".l%zu_stmt_for_expr_body:", stmt_id);
+    appendli("je .l%zu_stmt_for_end", stmt_id);
+    appendln(".l%zu_stmt_for_body_bgn:", stmt_id);
     autil_sbuf(struct tir_stmt const* const) const stmts =
         stmt->data.for_expr.body->stmts;
     for (size_t i = 0; i < autil_sbuf_count(stmts); ++i) {
         codegen_stmt(stmts[i]);
     }
-    appendli("jmp .l%zu_stmt_for_expr_condition", stmt_id);
-    appendln(".l%zu_stmt_for_expr_end:", stmt_id);
+    appendln(".l%zu_stmt_for_body_end:", stmt_id);
+    appendli("jmp .l%zu_stmt_for_condition", stmt_id);
+    appendln(".l%zu_stmt_for_end:", stmt_id);
+
+    current_loop_id = save_current_loop_id;
+}
+
+static void
+codegen_stmt_break(struct tir_stmt const* stmt)
+{
+    assert(stmt != NULL);
+    assert(stmt->kind == TIR_STMT_BREAK);
+
+    appendli("jmp .l%zu_stmt_for_end", current_loop_id);
+}
+
+static void
+codegen_stmt_continue(struct tir_stmt const* stmt)
+{
+    assert(stmt != NULL);
+    assert(stmt->kind == TIR_STMT_CONTINUE);
+
+    appendli("jmp .l%zu_stmt_for_body_end", current_loop_id);
 }
 
 static void

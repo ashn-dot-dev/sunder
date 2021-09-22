@@ -17,8 +17,7 @@ func cat(filename: *byte) void {
     # an N-element array.
     var buf: [8u]byte = (:[8u]byte)[0y, 0y, 0y, 0y, 0y, 0y, 0y, 0y];
 
-    var finished: bool = false;
-    for not finished {
+    for true {
         sysret = sys::read(fd, &buf[0u], countof(buf));
         if sysret < 0s {
             std::eprint(std::cstr::to_bytes(filename));
@@ -26,7 +25,9 @@ func cat(filename: *byte) void {
             sys::exit(1s32);
         }
 
-        finished = sysret == 0s;
+        if sysret == 0s {
+            break;
+        }
 
         sysret = sys::write(sys::STDOUT_FILENO, &buf[0u], (:usize)sysret);
         if sysret < 0s {
