@@ -232,6 +232,9 @@ order_expr(struct orderer* orderer, struct ast_expr const* expr)
         for (size_t i = 0; i < autil_sbuf_count(elements); ++i) {
             order_expr(orderer, elements[i]);
         }
+        if (expr->data.literal_array.ellipsis != NULL) {
+            order_expr(orderer, expr->data.literal_array.ellipsis);
+        }
         return;
     }
     case AST_EXPR_LITERAL_SLICE: {

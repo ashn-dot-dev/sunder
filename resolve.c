@@ -1537,7 +1537,18 @@ resolve_expr_literal_array(
     }
     autil_sbuf_freeze(resolved_elements, context()->freezer);
 
-    if (type->data.array.count != autil_sbuf_count(resolved_elements)) {
+    struct tir_expr const* resolved_ellipsis = NULL;
+    if (expr->data.literal_array.ellipsis != NULL) {
+        resolved_ellipsis =
+            resolve_expr(resolver, expr->data.literal_array.ellipsis);
+        check_type_compatibility(
+            resolved_ellipsis->location,
+            resolved_ellipsis->type,
+            type->data.array.base);
+    }
+
+    if ((type->data.array.count != autil_sbuf_count(resolved_elements))
+        && resolved_ellipsis == NULL) {
         fatal(
             expr->location,
             "array of type `%s` created with %zu elements (expected %zu)",
@@ -1546,8 +1557,8 @@ resolve_expr_literal_array(
             type->data.array.count);
     }
 
-    struct tir_expr* const resolved =
-        tir_expr_new_literal_array(expr->location, type, resolved_elements);
+    struct tir_expr* const resolved = tir_expr_new_literal_array(
+        expr->location, type, resolved_elements, resolved_ellipsis);
 
     autil_freezer_register(context()->freezer, resolved);
     return resolved;

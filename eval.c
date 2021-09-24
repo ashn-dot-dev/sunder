@@ -93,6 +93,18 @@ eval_rvalue(struct evaluator* evaluator, struct tir_expr const* expr)
             autil_sbuf_push(
                 evaled_elements, eval_rvalue(evaluator, elements[i]));
         }
+
+        if (expr->data.literal_array.ellipsis != NULL) {
+            struct value* const evaled_ellipsis =
+                eval_rvalue(evaluator, expr->data.literal_array.ellipsis);
+            size_t const first = autil_sbuf_count(elements);
+            size_t const count = expr->type->data.array.count;
+            for (size_t i = first; i < count; ++i) {
+                autil_sbuf_push(evaled_elements, value_clone(evaled_ellipsis));
+            }
+            value_del(evaled_ellipsis);
+        }
+
         return value_new_array(expr->type, evaled_elements);
     }
     case TIR_EXPR_LITERAL_SLICE: {

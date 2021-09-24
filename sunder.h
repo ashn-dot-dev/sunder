@@ -297,6 +297,7 @@ enum token_kind {
     TOKEN_LBRACKET, // [
     TOKEN_RBRACKET, // ]
     TOKEN_COMMA, // ,
+    TOKEN_ELLIPSIS, // ...
     TOKEN_DOT, // .
     TOKEN_COLON_COLON, // :
     TOKEN_COLON, // :
@@ -537,6 +538,7 @@ struct ast_expr {
         struct {
             struct ast_typespec const* typespec;
             autil_sbuf(struct ast_expr const* const) elements;
+            struct ast_expr const* ellipsis; // optional
         } literal_array;
         struct {
             struct ast_typespec const* typespec;
@@ -596,7 +598,8 @@ struct ast_expr*
 ast_expr_new_literal_array(
     struct source_location const* location,
     struct ast_typespec const* typespec,
-    struct ast_expr const* const* elements);
+    struct ast_expr const* const* elements,
+    struct ast_expr const* ellipsis);
 struct ast_expr*
 ast_expr_new_literal_slice(
     struct source_location const* location,
@@ -1098,6 +1101,7 @@ struct tir_expr {
         } bytes;
         struct {
             autil_sbuf(struct tir_expr const* const) elements;
+            struct tir_expr const* ellipsis; // optional
         } literal_array;
         struct {
             struct tir_expr const* pointer;
@@ -1181,7 +1185,8 @@ struct tir_expr*
 tir_expr_new_literal_array(
     struct source_location const* location,
     struct type const* type,
-    struct tir_expr const* const* elements);
+    struct tir_expr const* const* elements,
+    struct tir_expr const* ellipsis);
 struct tir_expr*
 tir_expr_new_literal_slice(
     struct source_location const* location,
@@ -1292,6 +1297,9 @@ struct value {
         struct tir_function const* function;
         struct address pointer;
         struct {
+            // Ellipsis value(s) are cloned and pushed onto the elements
+            // stretchy buffer so that the count of the stretchy buffer matches
+            // the countof the array type.
             autil_sbuf(struct value*) elements;
         } array;
         struct {

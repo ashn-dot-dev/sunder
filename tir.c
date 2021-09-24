@@ -815,7 +815,8 @@ struct tir_expr*
 tir_expr_new_literal_array(
     struct source_location const* location,
     struct type const* type,
-    struct tir_expr const* const* elements)
+    struct tir_expr const* const* elements,
+    struct tir_expr const* ellipsis)
 {
     assert(location != NULL);
     assert(type != NULL);
@@ -824,6 +825,7 @@ tir_expr_new_literal_array(
     struct tir_expr* const self =
         tir_expr_new(location, type, TIR_EXPR_LITERAL_ARRAY);
     self->data.literal_array.elements = elements;
+    self->data.literal_array.ellipsis = ellipsis;
     return self;
 }
 

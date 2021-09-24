@@ -12,10 +12,7 @@ func cat(filename: *byte) void {
     }
     var fd: u32 = (:u32)sysret;
 
-    # TODO: Update this to 512 (or more) bytes once some language feature is put
-    # into place that doesn't require typing out N elements to zero initialize
-    # an N-element array.
-    var buf: [8u]byte = (:[8u]byte)[0y, 0y, 0y, 0y, 0y, 0y, 0y, 0y];
+    var buf: [512u]byte = (:[512u]byte)[0y...];
 
     for true {
         sysret = sys::read(fd, &buf[0u], countof(buf));

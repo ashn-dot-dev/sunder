@@ -1,0 +1,12 @@
+const a: [5u]u16 = (:[5u]u16)[0xAAAAu16, 0xBBBBu16, 0xCCCCu16, 0xDDDDu16, 0xEEEEu16];
+
+func main() void {
+    var b: [5u]u16 = (:[5u]u16)[0xAAAAu16, 0xBBBBu16, 0xCCCCu16, 0xDDDDu16, 0xEEEEu16];
+
+    dump a;
+    dump b;
+}
+################################################################################
+# AA AA BB BB CC CC DD DD EE EE
+# AA AA BB BB CC CC DD DD EE EE
+

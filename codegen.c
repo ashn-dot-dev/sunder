@@ -1382,10 +1382,40 @@ codegen_rvalue_literal_array(struct tir_expr const* expr)
 
         appendli("mov rbx, rsp");
         appendli("add rbx, %zu", ceil8zu(element_size)); // array start
-        appendli("add rbx, %zu", element_size * i); // array index
+        appendli("add rbx, %zu", element_size * i); // array offset
         copy_rsp_rbx_via_rcx(element_size);
 
         pop(element_size);
+    }
+
+    size_t const count = expr->type->data.array.count;
+    if (autil_sbuf_count(elements) < count) { // ellipsis
+        assert(expr->data.literal_array.ellipsis != NULL);
+        assert(expr->data.literal_array.ellipsis->type == element_type);
+
+        // Number of elements already filled in.
+        size_t const completed = autil_sbuf_count(elements);
+        // Number of elements remaining to be filled in with the ellipsis.
+        size_t const remaining = count - autil_sbuf_count(elements);
+        size_t const id = unique_id++;
+
+        appendln(".l%zu_ellipsis_bgn:", id);
+        codegen_rvalue(expr->data.literal_array.ellipsis);
+        appendli("mov rbx, rsp");
+        appendli("add rbx, %zu", ceil8zu(element_size)); // array start
+        appendli("add rbx, %zu", element_size * completed); // array offset
+        // rbx is now the destination register.
+        appendli("mov rax, %zu", remaining); // rax := counter down to zero
+        appendln(".l%zu_ellipsis_condition:", id);
+        appendli("cmp rax, 0");
+        appendli("je .l%zu_ellipsis_pop", id);
+        copy_rsp_rbx_via_rcx(element_size);
+        appendli("add rbx, %zu", element_size); // ptr = ptr + 1
+        appendli("dec rax");
+        appendli("jmp .l%zu_ellipsis_condition", id);
+        appendln(".l%zu_ellipsis_pop:", id);
+        pop(element_size);
+        appendln(".l%zu_ellipsis_end:", id);
     }
 }
 

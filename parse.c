@@ -869,17 +869,26 @@ parse_expr_lparen(struct parser* parser)
         // <expr-array>
         expect_current(parser, TOKEN_LBRACKET);
         autil_sbuf(struct ast_expr const*) elements = NULL;
+        struct ast_expr const* ellipsis = NULL;
         while (!check_current(parser, TOKEN_RBRACKET)) {
             if (autil_sbuf_count(elements) != 0u) {
                 expect_current(parser, TOKEN_COMMA);
             }
-            autil_sbuf_push(elements, parse_expr(parser));
+
+            struct ast_expr const* const expr = parse_expr(parser);
+            if (check_current(parser, TOKEN_ELLIPSIS)) {
+                expect_current(parser, TOKEN_ELLIPSIS);
+                ellipsis = expr;
+                break;
+            }
+
+            autil_sbuf_push(elements, expr);
         }
         autil_sbuf_freeze(elements, context()->freezer);
         expect_current(parser, TOKEN_RBRACKET);
 
         struct ast_expr* const product =
-            ast_expr_new_literal_array(location, typespec, elements);
+            ast_expr_new_literal_array(location, typespec, elements, ellipsis);
 
         autil_freezer_register(context()->freezer, product);
         return product;

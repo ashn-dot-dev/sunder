@@ -344,7 +344,8 @@ struct ast_expr*
 ast_expr_new_literal_array(
     struct source_location const* location,
     struct ast_typespec const* typespec,
-    struct ast_expr const* const* elements)
+    struct ast_expr const* const* elements,
+    struct ast_expr const* ellipsis)
 {
     assert(location != NULL);
     assert(typespec != NULL);
@@ -353,6 +354,7 @@ ast_expr_new_literal_array(
         ast_expr_new(location, AST_EXPR_LITERAL_ARRAY);
     self->data.literal_array.typespec = typespec;
     self->data.literal_array.elements = elements;
+    self->data.literal_array.ellipsis = ellipsis;
     return self;
 }
 

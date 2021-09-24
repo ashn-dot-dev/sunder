@@ -67,7 +67,9 @@
 
 <expr-bytes> ::= <literal-bytes>
 
-<expr-literal-array> ::= "(" ":" <typespec> ")" "[" (<expr> ("," <expr>)*)? "]"
+<expr-literal-array> ::= "(" ":" <typespec> ")" "[" "]"
+                       | "(" ":" <typespec> ")" "[" <expr> "..." "]"
+                       | "(" ":" <typespec> ")" "[" <expr> ("," <expr>)* ("," <expr> "...")? "]"
 
 <expr-literal-slice> ::= "(" ":" <typespec> ")" "{" <expr> "," <expr> "}"
 
