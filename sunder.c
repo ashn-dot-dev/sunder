@@ -518,6 +518,11 @@ module_new(char const* path)
         context()->interned.ssize,
         symbol_table_lookup(
             context()->global_symbol_table, context()->interned.ssize));
+    symbol_table_insert(
+        self->symbols,
+        context()->interned.integer,
+        symbol_table_lookup(
+            context()->global_symbol_table, context()->interned.integer));
 
     self->exports = symbol_table_new(NULL);
 
@@ -563,6 +568,7 @@ context_init(void)
     s_context.interned.s64 = INTERN_STR_LITERAL("s64");
     s_context.interned.usize = INTERN_STR_LITERAL("usize");
     s_context.interned.ssize = INTERN_STR_LITERAL("ssize");
+    s_context.interned.integer = INTERN_STR_LITERAL("integer");
     s_context.interned.y = INTERN_STR_LITERAL("y");
     s_context.interned.u = INTERN_STR_LITERAL("u");
     s_context.interned.s = INTERN_STR_LITERAL("s");
@@ -630,6 +636,7 @@ context_init(void)
     INIT_BUILTIN_TYPE(s_context.builtin.s64, type_new_s64());
     INIT_BUILTIN_TYPE(s_context.builtin.usize, type_new_usize());
     INIT_BUILTIN_TYPE(s_context.builtin.ssize, type_new_ssize());
+    INIT_BUILTIN_TYPE(s_context.builtin.integer, type_new_integer());
 #undef INIT_BUILTIN_TYPE
 }
 

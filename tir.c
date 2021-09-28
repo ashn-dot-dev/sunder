@@ -130,6 +130,16 @@ type_new_ssize(void)
 }
 
 struct type*
+type_new_integer(void)
+{
+    struct type* const self = type_new(
+        context()->interned.integer, SIZEOF_UNSIZED, TYPE_UNSIZED_INTEGER);
+    self->data.integer.min = NULL;
+    self->data.integer.max = NULL;
+    return self;
+}
+
+struct type*
 type_new_function(
     struct type const* const* parameter_types, struct type const* return_type)
 {
@@ -307,7 +317,7 @@ type_is_integer(struct type const* self)
     return kind == TYPE_U8 || kind == TYPE_S8 || kind == TYPE_U16
         || kind == TYPE_S16 || kind == TYPE_U32 || kind == TYPE_S32
         || kind == TYPE_U64 || kind == TYPE_S64 || kind == TYPE_USIZE
-        || kind == TYPE_SSIZE;
+        || kind == TYPE_SSIZE || kind == TYPE_UNSIZED_INTEGER;
 }
 
 bool
@@ -747,7 +757,8 @@ tir_expr_new_integer(
     assert(value != NULL);
 
     bool const is_byte = type->kind == TYPE_BYTE;
-    bool const is_integer = type_is_integer(type);
+    bool const is_sized_integer =
+        type_is_integer(type) && type->kind != TYPE_UNSIZED_INTEGER;
 
     if (is_byte && autil_bigint_cmp(value, context()->u8_min) < 0) {
         char* const lit_cstr = autil_bigint_to_new_cstr(value, NULL);
@@ -769,7 +780,8 @@ tir_expr_new_integer(
             lit_cstr,
             max_cstr);
     }
-    if (is_integer && autil_bigint_cmp(value, type->data.integer.min) < 0) {
+    if (is_sized_integer
+        && autil_bigint_cmp(value, type->data.integer.min) < 0) {
         char* const lit_cstr = autil_bigint_to_new_cstr(value, NULL);
         char* const min_cstr =
             autil_bigint_to_new_cstr(type->data.integer.min, NULL);
@@ -779,7 +791,8 @@ tir_expr_new_integer(
             lit_cstr,
             min_cstr);
     }
-    if (is_integer && autil_bigint_cmp(value, type->data.integer.max) > 0) {
+    if (is_sized_integer
+        && autil_bigint_cmp(value, type->data.integer.max) > 0) {
         char* const lit_cstr = autil_bigint_to_new_cstr(value, NULL);
         char* const max_cstr =
             autil_bigint_to_new_cstr(type->data.integer.max, NULL);
@@ -1140,8 +1153,12 @@ value_new_integer(struct type const* type, struct autil_bigint* integer)
     assert(type != NULL);
     assert(type->kind == TYPE_BYTE || type_is_integer(type));
     assert(integer != NULL);
-    assert(autil_bigint_cmp(integer, type->data.integer.min) >= 0);
-    assert(autil_bigint_cmp(integer, type->data.integer.max) <= 0);
+    assert(
+        type->kind == TYPE_UNSIZED_INTEGER
+        || autil_bigint_cmp(integer, type->data.integer.min) >= 0);
+    assert(
+        type->kind == TYPE_UNSIZED_INTEGER
+        || autil_bigint_cmp(integer, type->data.integer.max) <= 0);
 
     struct value* self = value_new(type);
     self->data.integer = integer;
@@ -1225,7 +1242,8 @@ value_del(struct value* self)
     case TYPE_U64: /* fallthrough */
     case TYPE_S64: /* fallthrough */
     case TYPE_USIZE: /* fallthrough */
-    case TYPE_SSIZE: {
+    case TYPE_SSIZE: /* fallthrough */
+    case TYPE_UNSIZED_INTEGER: {
         autil_bigint_del(self->data.integer);
         break;
     }
@@ -1280,7 +1298,8 @@ value_freeze(struct value* self, struct autil_freezer* freezer)
     case TYPE_U64: /* fallthrough */
     case TYPE_S64: /* fallthrough */
     case TYPE_USIZE: /* fallthrough */
-    case TYPE_SSIZE: {
+    case TYPE_SSIZE: /* fallthrough */
+    case TYPE_UNSIZED_INTEGER: {
         autil_bigint_freeze(self->data.integer, freezer);
         return;
     }
@@ -1332,7 +1351,8 @@ value_clone(struct value const* self)
     case TYPE_U64: /* fallthrough */
     case TYPE_S64: /* fallthrough */
     case TYPE_USIZE: /* fallthrough */
-    case TYPE_SSIZE: {
+    case TYPE_SSIZE: /* fallthrough */
+    case TYPE_UNSIZED_INTEGER: {
         return value_new_integer(
             self->type, autil_bigint_new(self->data.integer));
     }
@@ -1389,7 +1409,8 @@ value_eq(struct value const* lhs, struct value const* rhs)
     case TYPE_U64: /* fallthrough */
     case TYPE_S64: /* fallthrough */
     case TYPE_USIZE: /* fallthrough */
-    case TYPE_SSIZE: {
+    case TYPE_SSIZE: /* fallthrough */
+    case TYPE_UNSIZED_INTEGER: {
         return autil_bigint_cmp(lhs->data.integer, rhs->data.integer) == 0;
     }
     case TYPE_FUNCTION: {
@@ -1442,7 +1463,8 @@ value_lt(struct value const* lhs, struct value const* rhs)
     case TYPE_U64: /* fallthrough */
     case TYPE_S64: /* fallthrough */
     case TYPE_USIZE: /* fallthrough */
-    case TYPE_SSIZE: {
+    case TYPE_SSIZE: /* fallthrough */
+    case TYPE_UNSIZED_INTEGER: {
         return autil_bigint_cmp(lhs->data.integer, rhs->data.integer) < 0;
     }
     case TYPE_POINTER: {
@@ -1486,7 +1508,8 @@ value_gt(struct value const* lhs, struct value const* rhs)
     case TYPE_U64: /* fallthrough */
     case TYPE_S64: /* fallthrough */
     case TYPE_USIZE: /* fallthrough */
-    case TYPE_SSIZE: {
+    case TYPE_SSIZE: /* fallthrough */
+    case TYPE_UNSIZED_INTEGER: {
         return autil_bigint_cmp(lhs->data.integer, rhs->data.integer) > 0;
     }
     case TYPE_POINTER: {
@@ -1554,6 +1577,10 @@ value_to_new_bytes(struct value const* value)
 
         autil_bitarr_del(bits);
         return bytes;
+    }
+    case TYPE_UNSIZED_INTEGER: {
+        // Arbitrary precision integers have no meaningful byte representation.
+        UNREACHABLE();
     }
     case TYPE_FUNCTION: {
         // Functions are an abstract concept with an address that is chosen by

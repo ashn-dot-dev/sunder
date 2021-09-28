@@ -174,6 +174,7 @@ struct context {
         char const* byte;    // "byte"
         char const* usize;   // "usize"
         char const* ssize;   // "ssize"
+        char const* integer; // "integer"
         char const* y;       // "y"
         char const* u;       // "u"
         char const* s;       // "s"
@@ -218,6 +219,7 @@ struct context {
         struct type const* s64;
         struct type const* usize;
         struct type const* ssize;
+        struct type const* integer;
     } builtin;
 
     // Map containing all symbols with static storage duration.
@@ -770,6 +772,10 @@ order(struct module* module);
 //////// tir.c /////////////////////////////////////////////////////////////////
 // Tree-based intermediate representation.
 
+// SIZEOF_UNSIZED is given the largest possible value of a size_t so that checks
+// such as assert(type->size <= 8u) in the resolve and code generation phases
+// will fail for unsized types.
+#define SIZEOF_UNSIZED ((size_t)SIZE_MAX)
 struct type {
     char const* name; // Canonical human-readable type-name (interned)
     size_t size; // sizeof
@@ -788,6 +794,7 @@ struct type {
         TYPE_S64, /* integer */
         TYPE_USIZE, /* integer */
         TYPE_SSIZE, /* integer */
+        TYPE_UNSIZED_INTEGER, /* integer, untyped */
         TYPE_FUNCTION,
         TYPE_POINTER,
         TYPE_ARRAY,
@@ -795,8 +802,8 @@ struct type {
     } kind;
     union {
         struct {
-            struct autil_bigint const* min;
-            struct autil_bigint const* max;
+            struct autil_bigint const* min; // optional
+            struct autil_bigint const* max; // optional
         } integer;
         struct {
             autil_sbuf(struct type const* const) parameter_types;
@@ -840,6 +847,8 @@ struct type*
 type_new_usize(void);
 struct type*
 type_new_ssize(void);
+struct type*
+type_new_integer(void);
 struct type*
 type_new_function(
     struct type const* const* parameter_types, struct type const* return_type);

@@ -93,6 +93,9 @@ check_type_compatibility(
     struct type const* actual,
     struct type const* expected);
 
+static struct tir_expr const*
+convert_unsized_integer(struct type const* type, struct tir_expr const* expr);
+
 static void
 resolve_import(struct resolver* resolver, struct ast_import const* import);
 
@@ -438,6 +441,62 @@ check_type_compatibility(
     }
 }
 
+static struct tir_expr const*
+convert_unsized_integer(struct type const* type, struct tir_expr const* expr)
+{
+    assert(type != NULL);
+    assert(expr != NULL);
+    assert(expr->kind == TIR_EXPR_INTEGER);
+    assert(expr->type->kind == TYPE_UNSIZED_INTEGER);
+
+    if (type->kind == TYPE_UNSIZED_INTEGER) {
+        return expr;
+    }
+
+    if (type->kind != TYPE_BYTE && !type_is_integer(type)) {
+        fatal(
+            expr->location,
+            "cannot convert from `%s` to `%s`",
+            expr->type->name,
+            type->name);
+    }
+
+    assert(type->kind == TYPE_BYTE || type_is_integer(type));
+    // Default to byte min/max.
+    struct autil_bigint const* min = context()->u8_min;
+    struct autil_bigint const* max = context()->u8_max;
+    // Override with integer min/max if needed.
+    if (type_is_integer(type)) {
+        assert(type->data.integer.min != NULL);
+        assert(type->data.integer.max != NULL);
+        min = type->data.integer.min;
+        max = type->data.integer.max;
+    }
+
+    if (autil_bigint_cmp(expr->data.integer, min) < 0) {
+        fatal(
+            expr->location,
+            "out-of-range integer conversion to `%s` (%s < %s)",
+            type->name,
+            autil_bigint_to_new_cstr(expr->data.integer, NULL),
+            autil_bigint_to_new_cstr(min, NULL));
+    }
+    if (autil_bigint_cmp(expr->data.integer, max) > 0) {
+        fatal(
+            expr->location,
+            "out-of-range integer conversion to `%s` (%s > %s)",
+            type->name,
+            autil_bigint_to_new_cstr(expr->data.integer, NULL),
+            autil_bigint_to_new_cstr(max, NULL));
+    }
+
+    struct tir_expr* const result =
+        tir_expr_new_integer(expr->location, type, expr->data.integer);
+
+    autil_freezer_register(context()->freezer, result);
+    return result;
+}
+
 static void
 merge_symbol_table(
     struct resolver* resolver,
@@ -602,8 +661,21 @@ resolve_decl_variable(
     assert(decl != NULL);
     assert(decl->kind == AST_DECL_VARIABLE);
 
-    struct tir_expr const* const expr =
+    struct tir_expr const* expr =
         resolve_expr(resolver, decl->data.variable.expr);
+
+    struct type const* const type =
+        resolve_typespec(resolver, decl->data.variable.typespec);
+    if (type->size == SIZEOF_UNSIZED) {
+        fatal(
+            decl->data.variable.typespec->location,
+            "declaration of variable with unsized type `%s`",
+            type->name);
+    }
+    if (expr->type->kind == TYPE_UNSIZED_INTEGER) {
+        expr = convert_unsized_integer(type, expr);
+    }
+    check_type_compatibility(expr->location, expr->type, type);
 
     // Global/static variables have their initial values computed at
     // compile-time, but local/non-static variables have their value
@@ -617,10 +689,6 @@ resolve_decl_variable(
         value_freeze(value, context()->freezer);
         evaluator_del(evaluator);
     }
-
-    struct type const* const type =
-        resolve_typespec(resolver, decl->data.variable.typespec);
-    check_type_compatibility(expr->location, expr->type, type);
 
     struct address const* const address = is_static
         ? resolver_reserve_storage_static(resolver, decl->name)
@@ -654,8 +722,21 @@ resolve_decl_constant(struct resolver* resolver, struct ast_decl const* decl)
     assert(decl != NULL);
     assert(decl->kind == AST_DECL_CONSTANT);
 
-    struct tir_expr const* const expr =
+    struct tir_expr const* expr =
         resolve_expr(resolver, decl->data.constant.expr);
+
+    struct type const* const type =
+        resolve_typespec(resolver, decl->data.constant.typespec);
+    if (type->size == SIZEOF_UNSIZED) {
+        fatal(
+            decl->data.constant.typespec->location,
+            "declaration of constant with unsized type `%s`",
+            type->name);
+    }
+    if (expr->type->kind == TYPE_UNSIZED_INTEGER) {
+        expr = convert_unsized_integer(type, expr);
+    }
+    check_type_compatibility(expr->location, expr->type, type);
 
     // Constants (globals and locals) have their values computed at compile-time
     // and therefore must always be added to the symbol table with an evaluated
@@ -665,10 +746,6 @@ resolve_decl_constant(struct resolver* resolver, struct ast_decl const* decl)
     struct value* const value = eval_rvalue(evaluator, expr);
     value_freeze(value, context()->freezer);
     evaluator_del(evaluator);
-
-    struct type const* const type =
-        resolve_typespec(resolver, decl->data.constant.typespec);
-    check_type_compatibility(expr->location, expr->type, type);
 
     struct address const* const address =
         resolver_reserve_storage_static(resolver, decl->name);
@@ -699,11 +776,23 @@ resolve_decl_function(struct resolver* resolver, struct ast_decl const* decl)
     for (size_t i = 0; i < autil_sbuf_count(parameters); ++i) {
         parameter_types[i] =
             resolve_typespec(resolver, parameters[i]->typespec);
+        if (parameter_types[i]->size == SIZEOF_UNSIZED) {
+            fatal(
+                parameters[i]->typespec->location,
+                "declaration of function parameter with unsized type `%s`",
+                parameter_types[i]->name);
+        }
     }
     autil_sbuf_freeze(parameter_types, context()->freezer);
 
     struct type const* const return_type =
         resolve_typespec(resolver, decl->data.function.return_typespec);
+    if (return_type->size == SIZEOF_UNSIZED) {
+        fatal(
+            decl->data.function.return_typespec->location,
+            "declaration of function with unsized return type `%s`",
+            return_type->name);
+    }
 
     struct type const* function_type =
         type_unique_function(parameter_types, return_type);
@@ -811,6 +900,12 @@ resolve_decl_extern_variable(
 
     struct type const* const type =
         resolve_typespec(resolver, decl->data.variable.typespec);
+    if (type->size == SIZEOF_UNSIZED) {
+        fatal(
+            decl->data.variable.typespec->location,
+            "declaration of extern variable with unsized type `%s`",
+            type->name);
+    }
 
     struct address const* const address =
         resolver_reserve_storage_static(resolver, decl->name);
@@ -1000,8 +1095,11 @@ resolve_stmt_for_range(struct resolver* resolver, struct ast_stmt const* stmt)
     assert(stmt != NULL);
     assert(stmt->kind == AST_STMT_FOR_RANGE);
 
-    struct tir_expr const* const begin =
+    struct tir_expr const* begin =
         resolve_expr(resolver, stmt->data.for_range.begin);
+    if (begin->type->kind == TYPE_UNSIZED_INTEGER) {
+        begin = convert_unsized_integer(context()->builtin.usize, begin);
+    }
     if (begin->type != context()->builtin.usize) {
         fatal(
             begin->location,
@@ -1009,8 +1107,11 @@ resolve_stmt_for_range(struct resolver* resolver, struct ast_stmt const* stmt)
             begin->type->name);
     }
 
-    struct tir_expr const* const end =
+    struct tir_expr const* end =
         resolve_expr(resolver, stmt->data.for_range.end);
+    if (end->type->kind == TYPE_UNSIZED_INTEGER) {
+        end = convert_unsized_integer(context()->builtin.usize, end);
+    }
     if (end->type != context()->builtin.usize) {
         fatal(
             end->location,
@@ -1136,6 +1237,11 @@ resolve_stmt_dump(struct resolver* resolver, struct ast_stmt const* stmt)
     assert(stmt->kind == AST_STMT_DUMP);
 
     struct tir_expr const* expr = resolve_expr(resolver, stmt->data.dump.expr);
+    if (expr->type->size == SIZEOF_UNSIZED) {
+        fatal(
+            stmt->location, "type `%s` has no defined size", expr->type->name);
+    }
+
     struct tir_stmt* const resolved = tir_stmt_new_dump(stmt->location, expr);
 
     autil_freezer_register(context()->freezer, resolved);
@@ -1155,6 +1261,9 @@ resolve_stmt_return(struct resolver* resolver, struct ast_stmt const* stmt)
     struct tir_expr const* expr = NULL;
     if (stmt->data.return_.expr != NULL) {
         expr = resolve_expr(resolver, stmt->data.return_.expr);
+        if (expr->type->kind == TYPE_UNSIZED_INTEGER) {
+            expr = convert_unsized_integer(return_type, expr);
+        }
         check_type_compatibility(expr->location, expr->type, return_type);
     }
     else {
@@ -1181,8 +1290,8 @@ resolve_stmt_assign(struct resolver* resolver, struct ast_stmt const* stmt)
 
     struct tir_expr const* const lhs =
         resolve_expr(resolver, stmt->data.assign.lhs);
-    struct tir_expr const* const rhs =
-        resolve_expr(resolver, stmt->data.assign.rhs);
+    struct tir_expr const* rhs = resolve_expr(resolver, stmt->data.assign.rhs);
+
     // TODO: Rather than query if lhs is an lvalue, perhaps there could function
     // `validate_expr_is_lvalue` in resolve.c which traverses the expression
     // tree and emits an error with more context about *why* a specific
@@ -1193,7 +1302,12 @@ resolve_stmt_assign(struct resolver* resolver, struct ast_stmt const* stmt)
             lhs->location,
             "left hand side of assignment statement is not an lvalue");
     }
+
+    if (rhs->type->kind == TYPE_UNSIZED_INTEGER) {
+        rhs = convert_unsized_integer(lhs->type, rhs);
+    }
     check_type_compatibility(rhs->location, rhs->type, lhs->type);
+
     struct tir_stmt* const resolved =
         tir_stmt_new_assign(stmt->location, lhs, rhs);
 
@@ -1210,6 +1324,13 @@ resolve_stmt_expr(struct resolver* resolver, struct ast_stmt const* stmt)
     assert(stmt->kind == AST_STMT_EXPR);
 
     struct tir_expr const* const expr = resolve_expr(resolver, stmt->data.expr);
+
+    if (expr->type->size == SIZEOF_UNSIZED) {
+        fatal(
+            expr->location,
+            "statement-expression produces result of unsized type `%s`",
+            expr->type->name);
+    }
     struct tir_stmt* const resolved = tir_stmt_new_expr(stmt->location, expr);
 
     autil_freezer_register(context()->freezer, resolved);
@@ -1407,9 +1528,8 @@ integer_literal_suffix_to_type(
     assert(suffix != NULL);
 
     if (suffix == context()->interned.empty) {
-        fatal(location, "integer literal has no suffix", suffix);
+        return context()->builtin.integer;
     }
-
     if (suffix == context()->interned.y) {
         return context()->builtin.byte;
     }
@@ -1527,8 +1647,12 @@ resolve_expr_literal_array(
         expr->data.literal_array.elements;
     autil_sbuf(struct tir_expr const*) resolved_elements = NULL;
     for (size_t i = 0; i < autil_sbuf_count(elements); ++i) {
-        struct tir_expr const* const resolved_element =
+        struct tir_expr const* resolved_element =
             resolve_expr(resolver, elements[i]);
+        if (resolved_element->type->kind == TYPE_UNSIZED_INTEGER) {
+            resolved_element = convert_unsized_integer(
+                type->data.array.base, resolved_element);
+        }
         check_type_compatibility(
             resolved_element->location,
             resolved_element->type,
@@ -1541,6 +1665,10 @@ resolve_expr_literal_array(
     if (expr->data.literal_array.ellipsis != NULL) {
         resolved_ellipsis =
             resolve_expr(resolver, expr->data.literal_array.ellipsis);
+        if (resolved_ellipsis->type->kind == TYPE_UNSIZED_INTEGER) {
+            resolved_ellipsis = convert_unsized_integer(
+                type->data.array.base, resolved_ellipsis);
+        }
         check_type_compatibility(
             resolved_ellipsis->location,
             resolved_ellipsis->type,
@@ -1594,8 +1722,11 @@ resolve_expr_literal_slice(
     check_type_compatibility(
         pointer->location, pointer->type, slice_pointer_type);
 
-    struct tir_expr const* const count =
+    struct tir_expr const* count =
         resolve_expr(resolver, expr->data.literal_slice.count);
+    if (count->type->kind == TYPE_UNSIZED_INTEGER) {
+        count = convert_unsized_integer(context()->builtin.usize, count);
+    }
     check_type_compatibility(
         count->location, count->type, context()->builtin.usize);
 
@@ -1617,6 +1748,26 @@ resolve_expr_cast(struct resolver* resolver, struct ast_expr const* expr)
         resolve_typespec(resolver, expr->data.cast.typespec);
     struct tir_expr const* const rhs =
         resolve_expr(resolver, expr->data.cast.expr);
+
+    // TODO: Casts to and from unsized integers are not permitted because it is
+    // unclear how we should handle modulo operations when a casted-from value
+    // is narrowed by the cast. Investigate what the reasonable behavior should
+    // be in this situation before the operation is solidified in the language
+    // for this and other (future?) unsized types.
+    if (rhs->type->size == SIZEOF_UNSIZED) {
+        fatal(
+            rhs->location,
+            "invalid cast from unsized type `%s` to `%s`",
+            rhs->type->name,
+            type->name);
+    }
+    if (type->size == SIZEOF_UNSIZED) {
+        fatal(
+            rhs->location,
+            "invalid cast to unsized type `%s` from `%s`",
+            type->name,
+            rhs->type->name);
+    }
 
     bool const valid = (type_is_integer(type) && type_is_integer(rhs->type))
         || (type->kind == TYPE_BOOL && rhs->type->kind == TYPE_BYTE)
@@ -1669,6 +1820,13 @@ resolve_expr_syscall(struct resolver* resolver, struct ast_expr const* expr)
     autil_sbuf(struct tir_expr const*) exprs = NULL;
     for (size_t i = 0; i < autil_sbuf_count(arguments); ++i) {
         struct tir_expr const* const arg = resolve_expr(resolver, arguments[i]);
+        if (arg->type->size == SIZEOF_UNSIZED) {
+            fatal(
+                arg->location,
+                "unsized type `%s` in syscall expression",
+                arg->type->name);
+        }
+
         bool const valid_type =
             type_is_integer(arg->type) || arg->type->kind == TYPE_POINTER;
         if (!valid_type) {
@@ -1703,25 +1861,33 @@ resolve_expr_call(struct resolver* resolver, struct ast_expr const* expr)
             function->type->name);
     }
 
-    autil_sbuf(struct tir_expr const*) arguments = NULL;
-    for (size_t i = 0; i < autil_sbuf_count(expr->data.call.arguments); ++i) {
-        autil_sbuf_push(
-            arguments, resolve_expr(resolver, expr->data.call.arguments[i]));
-    }
-    autil_sbuf_freeze(arguments, context()->freezer);
-
-    autil_sbuf(struct type const* const) const parameter_types =
-        function->type->data.function.parameter_types;
-    if (autil_sbuf_count(arguments) != autil_sbuf_count(parameter_types)) {
+    if (autil_sbuf_count(expr->data.call.arguments)
+        != autil_sbuf_count(function->type->data.function.parameter_types)) {
         fatal(
             expr->location,
             "function with type `%s` expects %zu argument(s) (%zu provided)",
             function->type->name,
-            autil_sbuf_count(parameter_types),
-            autil_sbuf_count(arguments));
+            autil_sbuf_count(function->type->data.function.parameter_types),
+            autil_sbuf_count(expr->data.call.arguments));
     }
 
+    autil_sbuf(struct tir_expr const*) arguments = NULL;
+    for (size_t i = 0; i < autil_sbuf_count(expr->data.call.arguments); ++i) {
+        struct tir_expr const* arg =
+            resolve_expr(resolver, expr->data.call.arguments[i]);
+        autil_sbuf_push(arguments, arg);
+    }
+    autil_sbuf_freeze(arguments, context()->freezer);
+
     // Type-check function arguments.
+    autil_sbuf(struct type const* const) const parameter_types =
+        function->type->data.function.parameter_types;
+    for (size_t i = 0; i < autil_sbuf_count(arguments); ++i) {
+        if (arguments[i]->type->kind == TYPE_UNSIZED_INTEGER) {
+            arguments[i] =
+                convert_unsized_integer(parameter_types[i], arguments[i]);
+        }
+    }
     for (size_t i = 0; i < autil_sbuf_count(parameter_types); ++i) {
         struct type const* const expected = parameter_types[i];
         struct type const* const received = arguments[i]->type;
@@ -1757,8 +1923,10 @@ resolve_expr_index(struct resolver* resolver, struct ast_expr const* expr)
             lhs->type->name);
     }
 
-    struct tir_expr const* const idx =
-        resolve_expr(resolver, expr->data.index.idx);
+    struct tir_expr const* idx = resolve_expr(resolver, expr->data.index.idx);
+    if (idx->type->kind == TYPE_UNSIZED_INTEGER) {
+        idx = convert_unsized_integer(context()->builtin.usize, idx);
+    }
     if (idx->type->kind != TYPE_USIZE) {
         fatal(
             idx->location,
@@ -1794,8 +1962,11 @@ resolve_expr_slice(struct resolver* resolver, struct ast_expr const* expr)
             "left hand side of slice operation is an rvalue array");
     }
 
-    struct tir_expr const* const begin =
+    struct tir_expr const* begin =
         resolve_expr(resolver, expr->data.slice.begin);
+    if (begin->type->kind == TYPE_UNSIZED_INTEGER) {
+        begin = convert_unsized_integer(context()->builtin.usize, begin);
+    }
     if (begin->type->kind != TYPE_USIZE) {
         fatal(
             begin->location,
@@ -1803,8 +1974,10 @@ resolve_expr_slice(struct resolver* resolver, struct ast_expr const* expr)
             begin->type->name);
     }
 
-    struct tir_expr const* const end =
-        resolve_expr(resolver, expr->data.slice.end);
+    struct tir_expr const* end = resolve_expr(resolver, expr->data.slice.end);
+    if (end->type->kind == TYPE_UNSIZED_INTEGER) {
+        end = convert_unsized_integer(context()->builtin.usize, end);
+    }
     if (end->type->kind != TYPE_USIZE) {
         fatal(
             end->location,
@@ -1827,6 +2000,10 @@ resolve_expr_sizeof(struct resolver* resolver, struct ast_expr const* expr)
 
     struct type const* const rhs =
         resolve_typespec(resolver, expr->data.sizeof_.rhs);
+    if (rhs->size == SIZEOF_UNSIZED) {
+        fatal(expr->location, "type `%s` has no defined size", rhs->name);
+    }
+
     struct tir_expr* const resolved = tir_expr_new_sizeof(expr->location, rhs);
 
     autil_freezer_register(context()->freezer, resolved);
@@ -2174,6 +2351,13 @@ resolve_expr_binary_compare_equality(
     assert(lhs != NULL);
     assert(rhs != NULL);
 
+    if (lhs->type->kind == TYPE_UNSIZED_INTEGER) {
+        lhs = convert_unsized_integer(rhs->type, lhs);
+    }
+    if (rhs->type->kind == TYPE_UNSIZED_INTEGER) {
+        rhs = convert_unsized_integer(lhs->type, rhs);
+    }
+
     if (lhs->type != rhs->type) {
         fatal(
             &op->location,
@@ -2191,10 +2375,31 @@ resolve_expr_binary_compare_equality(
             token_kind_to_cstr(op->kind));
     }
 
-    struct tir_expr* const resolved = tir_expr_new_binary(
+    struct tir_expr* resolved = tir_expr_new_binary(
         &op->location, context()->builtin.bool_, bop, lhs, rhs);
-
     autil_freezer_register(context()->freezer, resolved);
+
+    // TODO: We constant fold untyped integer expressions so that chaining
+    // expressions (such as the binary arithmetic expression 1 + 2 + 123u8)
+    // will allow untyped integer sub expressions to be checked for out-of-range
+    // values when coerced into another integer type. Investigate maybe doing
+    // this for all integer constant sub-expressions and make constant folding
+    // a defined part of the language.
+    if (lhs->kind == TIR_EXPR_INTEGER && rhs->kind == TIR_EXPR_INTEGER
+        && lhs->type->kind == TYPE_UNSIZED_INTEGER
+        && rhs->type->kind == TYPE_UNSIZED_INTEGER) {
+        struct evaluator* const evaluator =
+            evaluator_new(resolver->current_symbol_table);
+        struct value* const value = eval_rvalue(evaluator, resolved);
+        value_freeze(value, context()->freezer);
+        evaluator_del(evaluator);
+
+        assert(value->type->kind == TYPE_BOOL);
+        resolved =
+            tir_expr_new_boolean(resolved->location, value->data.boolean);
+        autil_freezer_register(context()->freezer, resolved);
+    }
+
     return resolved;
 }
 
@@ -2210,6 +2415,13 @@ resolve_expr_binary_compare_order(
     assert(op != NULL);
     assert(lhs != NULL);
     assert(rhs != NULL);
+
+    if (lhs->type->kind == TYPE_UNSIZED_INTEGER) {
+        lhs = convert_unsized_integer(rhs->type, lhs);
+    }
+    if (rhs->type->kind == TYPE_UNSIZED_INTEGER) {
+        rhs = convert_unsized_integer(lhs->type, rhs);
+    }
 
     if (lhs->type != rhs->type) {
         fatal(
@@ -2229,10 +2441,31 @@ resolve_expr_binary_compare_order(
             token_kind_to_cstr(op->kind));
     }
 
-    struct tir_expr* const resolved = tir_expr_new_binary(
+    struct tir_expr* resolved = tir_expr_new_binary(
         &op->location, context()->builtin.bool_, bop, lhs, rhs);
-
     autil_freezer_register(context()->freezer, resolved);
+
+    // TODO: We constant fold untyped integer expressions so that chaining
+    // expressions (such as the binary arithmetic expression 1 + 2 + 123u8)
+    // will allow untyped integer sub expressions to be checked for out-of-range
+    // values when coerced into another integer type. Investigate maybe doing
+    // this for all integer constant sub-expressions and make constant folding
+    // a defined part of the language.
+    if (lhs->kind == TIR_EXPR_INTEGER && rhs->kind == TIR_EXPR_INTEGER
+        && lhs->type->kind == TYPE_UNSIZED_INTEGER
+        && rhs->type->kind == TYPE_UNSIZED_INTEGER) {
+        struct evaluator* const evaluator =
+            evaluator_new(resolver->current_symbol_table);
+        struct value* const value = eval_rvalue(evaluator, resolved);
+        value_freeze(value, context()->freezer);
+        evaluator_del(evaluator);
+
+        assert(value->type->kind == TYPE_BOOL);
+        resolved =
+            tir_expr_new_boolean(resolved->location, value->data.boolean);
+        autil_freezer_register(context()->freezer, resolved);
+    }
+
     return resolved;
 }
 
@@ -2249,6 +2482,13 @@ resolve_expr_binary_arithmetic(
     assert(lhs != NULL);
     assert(rhs != NULL);
 
+    if (lhs->type->kind == TYPE_UNSIZED_INTEGER) {
+        lhs = convert_unsized_integer(rhs->type, lhs);
+    }
+    if (rhs->type->kind == TYPE_UNSIZED_INTEGER) {
+        rhs = convert_unsized_integer(lhs->type, rhs);
+    }
+
     bool const valid = lhs->type == rhs->type && type_is_integer(lhs->type)
         && type_is_integer(rhs->type);
     if (!valid) {
@@ -2261,10 +2501,31 @@ resolve_expr_binary_arithmetic(
     }
 
     struct type const* const type = lhs->type; // Arbitrarily use lhs.
-    struct tir_expr* const resolved =
+    struct tir_expr* resolved =
         tir_expr_new_binary(&op->location, type, bop, lhs, rhs);
-
     autil_freezer_register(context()->freezer, resolved);
+
+    // TODO: We constant fold untyped integer expressions so that chaining
+    // expressions (such as the binary arithmetic expression 1 + 2 + 123u8)
+    // will allow untyped integer sub expressions to be checked for out-of-range
+    // values when coerced into another integer type. Investigate maybe doing
+    // this for all integer constant sub-expressions and make constant folding
+    // a defined part of the language.
+    if (lhs->kind == TIR_EXPR_INTEGER && rhs->kind == TIR_EXPR_INTEGER
+        && lhs->type->kind == TYPE_UNSIZED_INTEGER
+        && rhs->type->kind == TYPE_UNSIZED_INTEGER) {
+        struct evaluator* const evaluator =
+            evaluator_new(resolver->current_symbol_table);
+        struct value* const value = eval_rvalue(evaluator, resolved);
+        value_freeze(value, context()->freezer);
+        evaluator_del(evaluator);
+
+        assert(type_is_integer(value->type));
+        resolved = tir_expr_new_integer(
+            resolved->location, resolved->type, value->data.integer);
+        autil_freezer_register(context()->freezer, resolved);
+    }
+
     return resolved;
 }
 
@@ -2281,10 +2542,24 @@ resolve_expr_binary_bitwise(
     assert(lhs != NULL);
     assert(rhs != NULL);
 
+    if (lhs->type->kind == TYPE_UNSIZED_INTEGER) {
+        lhs = convert_unsized_integer(rhs->type, lhs);
+    }
+    if (rhs->type->kind == TYPE_UNSIZED_INTEGER) {
+        rhs = convert_unsized_integer(lhs->type, rhs);
+    }
+
     if (lhs->type != rhs->type) {
         goto invalid_operand_types;
     }
     struct type const* type = lhs->type; // Arbitrarily use lhs.
+    if (type->size == SIZEOF_UNSIZED) {
+        fatal(
+            &op->location,
+            "unsized types `%s` in binary `%s` expression have no bit-representation",
+            type->name,
+            token_kind_to_cstr(op->kind));
+    }
 
     bool const valid = type->kind == TYPE_BOOL || type->kind == TYPE_BYTE
         || type_is_integer(type);
@@ -2292,10 +2567,31 @@ resolve_expr_binary_bitwise(
         goto invalid_operand_types;
     }
 
-    struct tir_expr* const resolved =
+    struct tir_expr* resolved =
         tir_expr_new_binary(&op->location, type, bop, lhs, rhs);
-
     autil_freezer_register(context()->freezer, resolved);
+
+    // TODO: We constant fold untyped integer expressions so that chaining
+    // expressions (such as the binary arithmetic expression 1 + 2 + 123u8)
+    // will allow untyped integer sub expressions to be checked for out-of-range
+    // values when coerced into another integer type. Investigate maybe doing
+    // this for all integer constant sub-expressions and make constant folding
+    // a defined part of the language.
+    if (lhs->kind == TIR_EXPR_INTEGER && rhs->kind == TIR_EXPR_INTEGER
+        && lhs->type->kind == TYPE_UNSIZED_INTEGER
+        && rhs->type->kind == TYPE_UNSIZED_INTEGER) {
+        struct evaluator* const evaluator =
+            evaluator_new(resolver->current_symbol_table);
+        struct value* const value = eval_rvalue(evaluator, resolved);
+        value_freeze(value, context()->freezer);
+        evaluator_del(evaluator);
+
+        assert(type_is_integer(value->type));
+        resolved = tir_expr_new_integer(
+            resolved->location, resolved->type, value->data.integer);
+        autil_freezer_register(context()->freezer, resolved);
+    }
+
     return resolved;
 
 invalid_operand_types:
@@ -2386,8 +2682,13 @@ resolve_typespec(struct resolver* resolver, struct ast_typespec const* typespec)
         return type_unique_pointer(base);
     }
     case TYPESPEC_ARRAY: {
-        struct tir_expr const* const count_expr =
+        struct tir_expr const* count_expr =
             resolve_expr(resolver, typespec->data.array.count);
+        if (count_expr->type->kind == TYPE_UNSIZED_INTEGER) {
+            count_expr =
+                convert_unsized_integer(context()->builtin.usize, count_expr);
+        }
+
         if (count_expr->type != context()->builtin.usize) {
             fatal(
                 count_expr->location,

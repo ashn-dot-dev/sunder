@@ -37,6 +37,12 @@ integer_is_out_of_range(struct type const* type, struct autil_bigint const* res)
     assert(type_is_integer(type));
     assert(res != NULL);
 
+    if (type->kind == TYPE_UNSIZED_INTEGER) {
+        assert(type->data.integer.min == NULL);
+        assert(type->data.integer.max == NULL);
+        // Arbitrary precision integers do not have a defined min or max value.
+        return false;
+    }
     return autil_bigint_cmp(res, type->data.integer.min) < 0
         || autil_bigint_cmp(res, type->data.integer.max) > 0;
 }
@@ -116,6 +122,14 @@ eval_rvalue(struct evaluator* evaluator, struct tir_expr const* expr)
     }
     case TIR_EXPR_CAST: {
         struct value* const from = eval_rvalue(evaluator, expr->data.cast.expr);
+
+        // Check if the value casted from is already the correct type.
+        // Also allows us to assume to from->type != expr->type from this point
+        // forward.
+        if (from->type->kind == expr->type->kind) {
+            return from;
+        }
+
         // The representation of a non-absolute address is chosen by the
         // assembler/linker and has no meaningful representation at
         // compile-time. Absolute addresses are *not* supported at the language
@@ -190,6 +204,7 @@ eval_rvalue(struct evaluator* evaluator, struct tir_expr const* expr)
             break;
         }
         case TYPE_VOID: /* fallthrough */
+        case TYPE_UNSIZED_INTEGER: /* fallthrough */
         case TYPE_FUNCTION: /* fallthrough */
         case TYPE_POINTER: /* fallthrough */
         case TYPE_ARRAY: /* fallthrough */

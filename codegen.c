@@ -172,6 +172,9 @@ append_dx_type(struct type const* type)
         append("db");
         return;
     }
+    case TYPE_UNSIZED_INTEGER: {
+        UNREACHABLE();
+    }
     case TYPE_FUNCTION: /* fallthrough */
     case TYPE_POINTER: {
         append("dq");
@@ -224,6 +227,9 @@ append_dx_data(struct value const* value)
         }
         autil_sbuf_fini(bytes);
         return;
+    }
+    case TYPE_UNSIZED_INTEGER: {
+        UNREACHABLE();
     }
     case TYPE_FUNCTION: {
         append("%s", value->data.function->name);
@@ -1480,6 +1486,7 @@ codegen_rvalue_cast(struct tir_expr const* expr)
         // A MOV with r/m64 has nothing to zero-extend/sign-extend.
         break;
     case TYPE_VOID: /* fallthrough */
+    case TYPE_UNSIZED_INTEGER: /* fallthrough */
     case TYPE_FUNCTION: /* fallthrough */
     case TYPE_ARRAY: /* fallthrough */
     case TYPE_SLICE:

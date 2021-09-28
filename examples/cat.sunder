@@ -4,33 +4,33 @@ import "std/io.sunder";
 import "sys/sys.sunder";
 
 func cat(filename: *byte) void {
-    var sysret: ssize = sys::open(filename, sys::O_RDONLY, 0u16);
-    if sysret < 0s {
+    var sysret: ssize = sys::open(filename, sys::O_RDONLY, 0);
+    if sysret < 0 {
         std::eprint(std::cstr::to_bytes(filename));
         std::eprintln(": failed to open file");
-        sys::exit(1s32);
+        sys::exit(1);
     }
     var fd: u32 = (:u32)sysret;
 
-    var buf: [512u]byte = (:[512u]byte)[0y...];
+    var buf: [512]byte = (:[512]byte)[0...];
 
     for true {
-        sysret = sys::read(fd, &buf[0u], countof(buf));
-        if sysret < 0s {
+        sysret = sys::read(fd, &buf[0], countof(buf));
+        if sysret < 0 {
             std::eprint(std::cstr::to_bytes(filename));
             std::eprintln(": read error");
-            sys::exit(1s32);
+            sys::exit(1);
         }
 
-        if sysret == 0s {
+        if sysret == 0 {
             break;
         }
 
-        sysret = sys::write(sys::STDOUT_FILENO, &buf[0u], (:usize)sysret);
-        if sysret < 0s {
+        sysret = sys::write(sys::STDOUT_FILENO, &buf[0], (:usize)sysret);
+        if sysret < 0 {
             std::eprint(std::cstr::to_bytes(filename));
             std::eprintln(": write error");
-            sys::exit(1s32);
+            sys::exit(1);
         }
     }
 
@@ -38,7 +38,7 @@ func cat(filename: *byte) void {
 }
 
 func main() void {
-    for i in 1u:sys::argc {
+    for i in 1:sys::argc {
         var filename: typeof(*sys::argv) = *(:typeof(sys::argv))std::cptr::add(
                 (:usize)sys::argv, sizeof(:typeof(sys::argv)), i);
         cat(filename);

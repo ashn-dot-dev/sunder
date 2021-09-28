@@ -151,7 +151,7 @@
 
 <letter> ::= "A" .. "Z" | "a" .. "z" | "_"
 
-<integer> ::= ("+" | "-")? <integer-number> <integer-suffix>
+<integer> ::= ("+" | "-")? <integer-number> <integer-suffix>?
 
 <integer-number> ::= <integer-number-bin>
                    | <integer-number-oct>

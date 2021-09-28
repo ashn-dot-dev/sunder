@@ -1,0 +1,103 @@
+func main() void {
+    # Equality comparison.
+    var u8_eq_integer: bool = 1u8 == 1;
+    var integer_eq_u8: bool = 1 == 1u8;
+    dump u8_eq_integer;
+    dump integer_eq_u8;
+
+    # Order comparison.
+    var u8_lt_integer: bool = 1u8 < 1;
+    var integer_lt_u8: bool = 1 < 1u8;
+    dump u8_lt_integer;
+    dump integer_lt_u8;
+
+    # Unary arithmetic expression.
+    var pos: s32 = +123;
+    var neg: s32 = -123;
+    dump pos;
+    dump neg;
+
+    # Binary arithmetic expression.
+    var u8_add_integer: u8 = 0xFEu8 + 1;
+    var integer_add_u8: u8 = 1 + 0xFEu8;
+    dump u8_add_integer;
+    dump integer_add_u8;
+
+    # Make sure constants fold at compile-time.
+    var u8_add_integer_add_integer: u8 = 0xFCu8 + 1 + 2;
+    var integer_add_integer_add_u8: u8 = 1 + 2 + 0xFCu8;
+    dump u8_add_integer_add_integer;
+    dump integer_add_integer_add_u8;
+
+    # Array type, array literal, and index expression.
+    var array: [1 + 2]byte = (:[3]byte)[1, 3, 5];
+    dump array[0];
+    dump array[1];
+    dump array[1 + 1];
+    array = (:[3]byte)[0xAB...];
+    dump array;
+    array = (:[3]byte)[1, 3, 5];
+    dump array;
+
+    # Slice literal.
+    var slice: []byte = (:[]byte){&array[1], 2};
+    dump slice[0];
+    dump slice[1];
+
+    # Slice expression.
+    dump array[1:3][0];
+    dump array[1:3][1];
+
+    # For-range indices.
+    for i in 0xA:0xF {
+        dump i;
+    }
+
+    # Function parameters and return.
+    dump myfunc(0xAB, 0xF00F);
+
+    # Right hand side of assignment.
+    const x: s32 = 135;
+    dump x;
+    var y: s32 = 123;
+    dump y;
+    y = 456;
+    dump y;
+}
+
+func myfunc(a: byte, b: usize) s32 {
+    dump a;
+    dump b;
+    return 123;
+}
+################################################################################
+# 01
+# 01
+# 00
+# 00
+# 7B 00 00 00
+# 85 FF FF FF
+# FF
+# FF
+# FF
+# FF
+# 01
+# 03
+# 05
+# AB AB AB
+# 01 03 05
+# 03
+# 05
+# 03
+# 05
+# 0A 00 00 00 00 00 00 00
+# 0B 00 00 00 00 00 00 00
+# 0C 00 00 00 00 00 00 00
+# 0D 00 00 00 00 00 00 00
+# 0E 00 00 00 00 00 00 00
+# AB
+# 0F F0 00 00 00 00 00 00
+# 7B 00 00 00
+# 87 00 00 00
+# 7B 00 00 00
+# C8 01 00 00
