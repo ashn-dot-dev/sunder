@@ -2789,10 +2789,16 @@ resolve(struct module* module)
     for (size_t i = 0; i < autil_sbuf_count(ordered); ++i) {
         struct symbol const* const symbol =
             resolve_decl(resolver, module->ordered[i]);
-        symbol_table_insert(
-            resolver->current_export_table, symbol->name, symbol);
-        symbol_table_insert(
-            context()->global_symbol_table, symbol->name, symbol);
+        // If this module declares a namespace then top-level declarations will
+        // have been added under the (exported) module namespace and should
+        // *not* be added to the module export table or global symbol table
+        // using their unqualified names.
+        if (module->ast->namespace == NULL) {
+            symbol_table_insert(
+                resolver->current_export_table, symbol->name, symbol);
+            symbol_table_insert(
+                context()->global_symbol_table, symbol->name, symbol);
+        }
     }
 
     autil_sbuf(struct incomplete_function const) incomplete =
