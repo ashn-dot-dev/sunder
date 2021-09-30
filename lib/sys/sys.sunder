@@ -1,7 +1,7 @@
-# Linux Kernel x64 System Interface
-# =================================
+# Linux Kernel x86-64 System Interface
+# ====================================
 #
-# System V x64 (LP64) ABI:
+# System V x86-64 (LP64) ABI:
 # C Type             | Size | Alignment | Sunder Type
 # -------------------+------+-----------+------------
 # char               | 1    | 1         | byte
@@ -25,6 +25,138 @@ const SYS_WRITE: ssize = 1s;
 const SYS_OPEN:  ssize = 2s;
 const SYS_CLOSE: ssize = 3s;
 const SYS_EXIT:  ssize = 60s;
+
+const EPERM:           s32 = 1;
+const ENOENT:          s32 = 2;
+const ESRCH:           s32 = 3;
+const EINTR:           s32 = 4;
+const EIO:             s32 = 5;
+const ENXIO:           s32 = 6;
+const E2BIG:           s32 = 7;
+const ENOEXEC:         s32 = 8;
+const EBADF:           s32 = 9;
+const ECHILD:          s32 = 10;
+const EAGAIN:          s32 = 11;
+const ENOMEM:          s32 = 12;
+const EACCES:          s32 = 13;
+const EFAULT:          s32 = 14;
+const ENOTBLK:         s32 = 15;
+const EBUSY:           s32 = 16;
+const EEXIST:          s32 = 17;
+const EXDEV:           s32 = 18;
+const ENODEV:          s32 = 19;
+const ENOTDIR:         s32 = 20;
+const EISDIR:          s32 = 21;
+const EINVAL:          s32 = 22;
+const ENFILE:          s32 = 23;
+const EMFILE:          s32 = 24;
+const ENOTTY:          s32 = 25;
+const ETXTBSY:         s32 = 26;
+const EFBIG:           s32 = 27;
+const ENOSPC:          s32 = 28;
+const ESPIPE:          s32 = 29;
+const EROFS:           s32 = 30;
+const EMLINK:          s32 = 31;
+const EPIPE:           s32 = 32;
+const EDOM:            s32 = 33;
+const ERANGE:          s32 = 34;
+const EDEADLK:         s32 = 35;
+const ENAMETOOLONG:    s32 = 36;
+const ENOLCK:          s32 = 37;
+const ENOSYS:          s32 = 38;
+const ENOTEMPTY:       s32 = 39;
+const ELOOP:           s32 = 40;
+const ENOMSG:          s32 = 42;
+const EIDRM:           s32 = 43;
+const ECHRNG:          s32 = 44;
+const EL2NSYNC:        s32 = 45;
+const EL3HLT:          s32 = 46;
+const EL3RST:          s32 = 47;
+const ELNRNG:          s32 = 48;
+const EUNATCH:         s32 = 49;
+const ENOCSI:          s32 = 50;
+const EL2HLT:          s32 = 51;
+const EBADE:           s32 = 52;
+const EBADR:           s32 = 53;
+const EXFULL:          s32 = 54;
+const ENOANO:          s32 = 55;
+const EBADRQC:         s32 = 56;
+const EBADSLT:         s32 = 57;
+const EBFONT:          s32 = 59;
+const ENOSTR:          s32 = 60;
+const ENODATA:         s32 = 61;
+const ETIME:           s32 = 62;
+const ENOSR:           s32 = 63;
+const ENONET:          s32 = 64;
+const ENOPKG:          s32 = 65;
+const EREMOTE:         s32 = 66;
+const ENOLINK:         s32 = 67;
+const EADV:            s32 = 68;
+const ESRMNT:          s32 = 69;
+const ECOMM:           s32 = 70;
+const EPROTO:          s32 = 71;
+const EMULTIHOP:       s32 = 72;
+const EDOTDOT:         s32 = 73;
+const EBADMSG:         s32 = 74;
+const EOVERFLOW:       s32 = 75;
+const ENOTUNIQ:        s32 = 76;
+const EBADFD:          s32 = 77;
+const EREMCHG:         s32 = 78;
+const ELIBACC:         s32 = 79;
+const ELIBBAD:         s32 = 80;
+const ELIBSCN:         s32 = 81;
+const ELIBMAX:         s32 = 82;
+const ELIBEXEC:        s32 = 83;
+const EILSEQ:          s32 = 84;
+const ERESTART:        s32 = 85;
+const ESTRPIPE:        s32 = 86;
+const EUSERS:          s32 = 87;
+const ENOTSOCK:        s32 = 88;
+const EDESTADDRREQ:    s32 = 89;
+const EMSGSIZE:        s32 = 90;
+const EPROTOTYPE:      s32 = 91;
+const ENOPROTOOPT:     s32 = 92;
+const EPROTONOSUPPORT: s32 = 93;
+const ESOCKTNOSUPPORT: s32 = 94;
+const EOPNOTSUPP:      s32 = 95;
+const EPFNOSUPPORT:    s32 = 96;
+const EAFNOSUPPORT:    s32 = 97;
+const EADDRINUSE:      s32 = 98;
+const EADDRNOTAVAIL:   s32 = 99;
+const ENETDOWN:        s32 = 100;
+const ENETUNREACH:     s32 = 101;
+const ENETRESET:       s32 = 102;
+const ECONNABORTED:    s32 = 103;
+const ECONNRESET:      s32 = 104;
+const ENOBUFS:         s32 = 105;
+const EISCONN:         s32 = 106;
+const ENOTCONN:        s32 = 107;
+const ESHUTDOWN:       s32 = 108;
+const ETOOMANYREFS:    s32 = 109;
+const ETIMEDOUT:       s32 = 110;
+const ECONNREFUSED:    s32 = 111;
+const EHOSTDOWN:       s32 = 112;
+const EHOSTUNREACH:    s32 = 113;
+const EALREADY:        s32 = 114;
+const EINPROGRESS:     s32 = 115;
+const ESTALE:          s32 = 116;
+const EUCLEAN:         s32 = 117;
+const ENOTNAM:         s32 = 118;
+const ENAVAIL:         s32 = 119;
+const EISNAM:          s32 = 120;
+const EREMOTEIO:       s32 = 121;
+const EDQUOT:          s32 = 122;
+const ENOMEDIUM:       s32 = 123;
+const EMEDIUMTYPE:     s32 = 124;
+const ECANCELED:       s32 = 125;
+const ENOKEY:          s32 = 126;
+const EKEYEXPIRED:     s32 = 127;
+const EKEYREVOKED:     s32 = 128;
+const EKEYREJECTED:    s32 = 129;
+const EOWNERDEAD:      s32 = 130;
+const ENOTRECOVERABLE: s32 = 131;
+const ERFKILL:         s32 = 132;
+const EHWPOISON:       s32 = 133;
 
 const STDIN_FILENO:  u32 = 0u32;
 const STDOUT_FILENO: u32 = 1u32;
@@ -60,6 +192,19 @@ const S_IRWXO: u16 = 0o007u16;
 const S_IROTH: u16 = 0o004u16;
 const S_IWOTH: u16 = 0o002u16;
 const S_IXOTH: u16 = 0o001u16;
+
+# linux/include/uapi/linux/limits.h:
+const NGROUPS_MAX:    usize =  65536; # supplemental group IDs are available
+const ARG_MAX:        usize = 131072; # # bytes of args + environ for exec()
+const LINK_MAX:       usize =    127; # # links a file may have
+const MAX_CANON:      usize =    255; # size of the canonical input queue
+const MAX_INPUT:      usize =    255; # size of the type-ahead buffer
+const NAME_MAX:       usize =    255; # # chars in a file name
+const PATH_MAX:       usize =   4096; # # chars in a path name including nul
+const PIPE_BUF:       usize =   4096; # # bytes in atomic write to a pipe
+const XATTR_NAME_MAX: usize =    255; # # chars in an extended attribute name
+const XATTR_SIZE_MAX: usize =  65536; # size of an extended attribute value (64k)
+const XATTR_LIST_MAX: usize =  65536; # size of extended attribute namelist (64k)
 
 # linux/fs/read_write.c:
 # SYSCALL_DEFINE3(read, unsigned int, fd, char __user *, buf, size_t, count)

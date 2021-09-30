@@ -1,5 +1,5 @@
-// Syystem definitions & constants for x64 Linux.
-// Currently only tested (and ordered numerically) using x64 Linux w/ glibc.
+// System definitions & constants for x86-64 Linux.
+// Currently only tested (and ordered numerically) using x86-64 Linux w/ glibc.
 //
 // Definitions taken from:
 // https://pubs.opengroup.org/onlinepubs/9699919799.2018edition/functions/open.html
