@@ -3,7 +3,7 @@ namespace std::cstr;
 
 func count(s: *byte) usize {
     var cur: *byte = s;
-    for *cur != 0x00y {
+    for *cur != 0x00 {
         cur = (:*byte)((:usize)cur + 1u);
     }
     return (:usize)cur - (:usize)s;
