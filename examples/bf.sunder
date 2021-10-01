@@ -1,0 +1,118 @@
+import "std/cptr.sunder";
+import "std/cstr.sunder";
+import "std/io.sunder";
+import "sys/sys.sunder";
+
+# A buffer size of 0x10000 is large enough to fit both GitHub user rdebath's
+# bitwidth.b, Erik Bosman's mandelbrot.b, and Linus Akesson's life.b.
+var source: [0x10000]byte = (:[0x10000]byte)[0...];
+
+var cells: [30000]u8 = (:[30000]u8)[0...];
+var stack: [4096]usize = (:[4096]usize)[0...];
+
+var cells_index: usize = 0;
+var stack_index: usize = 0;
+
+const MOVE_R:      byte = 0x3E; # >
+const MOVE_L:      byte = 0x3C; # <
+const INCREMENT:   byte = 0x2B; # +
+const DECREMENT:   byte = 0x2D; # -
+const PUT_BYTE:    byte = 0x2E; # .
+const GET_BYTE:    byte = 0x2C; # ,
+const LOOP_LBRACE: byte = 0x5B; # [
+const LOOP_RBRACE: byte = 0x5D; # ]
+
+func main() void {
+    if sys::argc != 2 {
+        std::eprintln("invalid number of arguments");
+        sys::exit(1);
+    }
+
+    var path: *byte = *(:typeof(sys::argv))std::cptr::add(
+        (:usize)sys::argv,
+        sizeof(:typeof(sys::argv)),
+        1
+    );
+
+    var fd: ssize = sys::open(path, sys::O_RDONLY, 0);
+    if fd < 0 {
+        std::eprintln("failed to open file");
+        sys::exit(1);
+    }
+
+    # Assume the user-provided source will fit into countof(source) bytes.
+    var source_size: ssize = sys::read((:u32)fd, &source[0], countof(source));
+    if source_size < 0 {
+        std::eprintln("read error");
+        sys::exit(1);
+    }
+
+    var source_index: usize = 0;
+    for source_index < (:usize)source_size {
+        var cur: byte = source[source_index];
+
+        if cur == MOVE_R {
+            cells_index = cells_index + 1;
+            source_index = source_index + 1;
+        }
+        elif cur == MOVE_L {
+            cells_index = cells_index - 1;
+            source_index = source_index + 1;
+        }
+        elif cur == INCREMENT {
+            if cells[cells_index] == 0xFF {
+                cells[cells_index] = 0x00;
+            }
+            else {
+                cells[cells_index] = cells[cells_index] + 1;
+            }
+            source_index = source_index + 1;
+        }
+        elif cur == DECREMENT {
+            if cells[cells_index] == 0x00 {
+                cells[cells_index] = 0xFF;
+            }
+            else {
+                cells[cells_index] = cells[cells_index] - 1;
+            }
+            source_index = source_index + 1;
+        }
+        elif cur == PUT_BYTE {
+            sys::write(sys::STDOUT_FILENO, (:*byte)&cells[cells_index], 1);
+            source_index = source_index + 1;
+        }
+        elif cur == GET_BYTE {
+            var b: byte = 0;
+            if sys::read(sys::STDIN_FILENO, &b, 1) != 0 {
+               cells[cells_index] = (:u8)b;
+            }
+            source_index = source_index + 1;
+        }
+        elif cur == LOOP_LBRACE {
+            if cells[cells_index] == 0 {
+                var depth: usize = 1;
+                for depth > 0 {
+                    source_index = source_index + 1;
+                    if source[source_index] == LOOP_LBRACE {
+                        depth = depth + 1;
+                    }
+                    if source[source_index] == LOOP_RBRACE {
+                        depth = depth - 1;
+                    }
+                }
+                source_index = source_index + 1;
+            } else {
+                stack[stack_index] = source_index;
+                stack_index = stack_index + 1;
+                source_index = source_index + 1;
+            }
+        }
+        elif cur == LOOP_RBRACE {
+            stack_index = stack_index - 1;
+            source_index = stack[stack_index];
+        }
+        else {
+            source_index = source_index + 1;
+        }
+    }
+}
