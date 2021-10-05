@@ -46,6 +46,7 @@ func main() void {
         std::eprintln("read error");
         sys::exit(1);
     }
+    sys::close((:u32)fd);
 
     var source_index: usize = 0;
     for source_index < (:usize)source_size {
