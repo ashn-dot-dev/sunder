@@ -260,6 +260,7 @@ order_expr(struct orderer* orderer, struct ast_expr const* expr)
         return;
     }
     case AST_EXPR_CALL: {
+        order_expr(orderer, expr->data.call.func);
         autil_sbuf(struct ast_expr const* const) const arguments =
             expr->data.call.arguments;
         for (size_t i = 0; i < autil_sbuf_count(arguments); ++i) {

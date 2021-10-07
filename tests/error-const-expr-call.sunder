@@ -1,8 +1,9 @@
+const foo: ssize = f() + 1;
+
 func f() ssize {
     return 123s;
 }
-const foo: ssize = f();
 ################################################################################
-# [error-const-expr-call.sunder:4] error: constant expression contains function call
-# const foo: ssize = f();
+# [error-const-expr-call.sunder:1] error: constant expression contains function call
+# const foo: ssize = f() + 1;
 #                    ^
