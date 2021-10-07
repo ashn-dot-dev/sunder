@@ -797,17 +797,17 @@ resolve_decl_function(struct resolver* resolver, struct ast_decl const* decl)
     struct type const* function_type =
         type_unique_function(parameter_types, return_type);
 
+    struct address const* const address =
+        resolver_reserve_storage_static(resolver, decl->name);
+
     // Create a new incomplete function, a value that evaluates to that
     // function, and the address of that function/value.
-    struct tir_function* const function =
-        tir_function_new(decl->data.function.identifier->name, function_type);
+    struct tir_function* const function = tir_function_new(
+        decl->data.function.identifier->name, function_type, address);
     autil_freezer_register(context()->freezer, function);
 
     struct value* const value = value_new_function(function);
     value_freeze(value, context()->freezer);
-
-    struct address const* const address =
-        resolver_reserve_storage_static(resolver, decl->name);
 
     // Add the function/value to the symbol table now so that recursive
     // functions may reference themselves.

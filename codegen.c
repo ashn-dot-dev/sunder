@@ -232,7 +232,10 @@ append_dx_data(struct value const* value)
         UNREACHABLE();
     }
     case TYPE_FUNCTION: {
-        append("%s", value->data.function->name);
+        struct address const* const address = value->data.function->address;
+        assert(address->kind == ADDRESS_STATIC);
+        assert(address->data.static_.offset == 0);
+        append("%s", address->data.static_.name);
         return;
     }
     case TYPE_POINTER: {

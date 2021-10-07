@@ -1074,16 +1074,20 @@ tir_expr_is_lvalue(struct tir_expr const* self)
 }
 
 struct tir_function*
-tir_function_new(char const* name, struct type const* type)
+tir_function_new(
+    char const* name, struct type const* type, struct address const* address)
 {
     assert(name != NULL);
     assert(type != NULL);
     assert(type->kind == TYPE_FUNCTION);
+    assert(address != NULL);
+    assert(address->kind == ADDRESS_STATIC);
 
     struct tir_function* const self = autil_xalloc(NULL, sizeof(*self));
     memset(self, 0x00, sizeof(*self));
     self->name = name;
     self->type = type;
+    self->address = address;
     return self;
 }
 

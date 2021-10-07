@@ -1251,6 +1251,7 @@ tir_expr_is_lvalue(struct tir_expr const* self);
 struct tir_function {
     char const* name; // interned
     struct type const* type; // TYPE_FUNCTION
+    struct address const* address; // ADDRESS_STATIC
 
     // Outermost symbol table containing symbols for function parameters, local
     // variables, and local constants in the outermost scope (i.e. body) of the
@@ -1270,8 +1271,11 @@ struct tir_function {
     int local_stack_offset;
 };
 // Creates a new incomplete (empty) function.
+// The type of the function must be of kind TYPE_FUNCTION.
+// The address of the function must be of kind ADDRESS_STATIC.
 struct tir_function*
-tir_function_new(char const* name, struct type const* type);
+tir_function_new(
+    char const* name, struct type const* type, struct address const* address);
 void
 tir_function_del(struct tir_function* self);
 
