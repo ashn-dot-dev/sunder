@@ -100,18 +100,13 @@ eval_rvalue(struct evaluator* evaluator, struct tir_expr const* expr)
                 evaled_elements, eval_rvalue(evaluator, elements[i]));
         }
 
+        struct value* evaled_ellipsis = NULL;
         if (expr->data.literal_array.ellipsis != NULL) {
-            struct value* const evaled_ellipsis =
+            evaled_ellipsis =
                 eval_rvalue(evaluator, expr->data.literal_array.ellipsis);
-            size_t const first = autil_sbuf_count(elements);
-            size_t const count = expr->type->data.array.count;
-            for (size_t i = first; i < count; ++i) {
-                autil_sbuf_push(evaled_elements, value_clone(evaled_ellipsis));
-            }
-            value_del(evaled_ellipsis);
         }
 
-        return value_new_array(expr->type, evaled_elements);
+        return value_new_array(expr->type, evaled_elements, evaled_ellipsis);
     }
     case TIR_EXPR_LITERAL_SLICE: {
         struct value* const pointer =
@@ -244,8 +239,14 @@ eval_rvalue(struct evaluator* evaluator, struct tir_expr const* expr)
                     lhs->type->data.array.count,
                     idx_uz);
             }
-            struct value* const res =
-                value_clone(lhs->data.array.elements[idx_uz]);
+
+            autil_sbuf(struct value*) const elements =
+                lhs->data.array.elements;
+            struct value* const ellipsis = lhs->data.array.ellipsis;
+            assert(idx_uz < autil_sbuf_count(elements) || ellipsis != NULL);
+            struct value* const res = idx_uz < autil_sbuf_count(elements)
+                ? value_clone(elements[idx_uz])
+                : value_clone(ellipsis);
             value_del(lhs);
             value_del(idx);
             return res;
@@ -432,7 +433,6 @@ eval_rvalue(struct evaluator* evaluator, struct tir_expr const* expr)
             switch (rhs->type->kind) {
             case TYPE_ARRAY: {
                 size_t const count_uz = rhs->type->data.array.count;
-                assert(count_uz == autil_sbuf_count(rhs->data.array.elements));
                 uz_to_bigint(res->data.integer, count_uz);
                 break;
             }

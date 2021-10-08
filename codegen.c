@@ -252,12 +252,54 @@ append_dx_data(struct value const* value)
         return;
     }
     case TYPE_ARRAY: {
-        autil_sbuf(struct value*) elements = value->data.array.elements;
-        for (size_t i = 0; i < autil_sbuf_count(elements); ++i) {
-            if (i != 0) {
-                append(", ");
+        autil_sbuf(struct value*) const elements = value->data.array.elements;
+        struct value* const ellipsis = value->data.array.ellipsis;
+
+        // One dimensional arrays may use NASM's times prefix to repeat the
+        // ellipsis element. However if the array element is itself an array
+        // then it does not appear as if there is a way to nest times prefixes,
+        // so data for the entire array must be generated. Fortunately this is
+        // unlikely to be a case encountered by many users as ellipsis
+        // initialization is mainly used for zeroing one dimensional buffers.
+        if (value->type->data.array.base->kind == TYPE_ARRAY) {
+            size_t const count = value->type->data.array.count;
+            for (size_t i = 0; i < count; ++i) {
+                if (i != 0 && i < autil_sbuf_count(elements)) {
+                    append(", ");
+                }
+
+                if (i < autil_sbuf_count(elements)) {
+                    append_dx_data(elements[i]);
+                }
+                else {
+                    assert(ellipsis != NULL);
+                    append_dx_data(ellipsis);
+                }
             }
-            append_dx_data(elements[i]);
+            return;
+        }
+
+        if (autil_sbuf_count(elements) != 0) {
+            for (size_t i = 0; i < autil_sbuf_count(elements); ++i) {
+                if (i == 0) {
+                    append("\n    ");
+                    append_dx_type(value->type->data.array.base);
+                    appendch(' ');
+                }
+                else {
+                    append(", ");
+                }
+                append_dx_data(elements[i]);
+            }
+        }
+        if (ellipsis != NULL) {
+            size_t const times = value->type->data.array.count - autil_sbuf_count(elements);
+            append("\n    ");
+            append("times %zu", times);
+            appendch(' ');
+            append_dx_type(value->type->data.array.base);
+            appendch(' ');
+            append_dx_data(ellipsis);
         }
         return;
     }
@@ -879,9 +921,20 @@ codegen_static_object(struct symbol const* symbol)
     }
 
     assert(symbol->address->data.static_.offset == 0);
-    append("%s: ", symbol->address->data.static_.name);
-    append_dx_type(symbol->value->type);
-    appendch(' ');
+    append("%s:", symbol->address->data.static_.name);
+    if (value->type->kind != TYPE_ARRAY) {
+        // Only genreate the dx type for non-arrays as arrays have thir own
+        // special way of initializing data from a combination of explicitly
+        // specified elements and the ellipsis element.
+        //
+        // TODO: The fact that we need this special case here means that there
+        // is something not-quite-so-well thought out in the way that
+        // append_dx_type and append_dx_data were planned out. Look into
+        // alternative designs that provide a better abstraction.
+        appendch(' ');
+        append_dx_type(symbol->value->type);
+        appendch(' ');
+    }
     append_dx_data(symbol->value);
     appendch('\n');
     return;

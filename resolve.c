@@ -1611,7 +1611,7 @@ resolve_expr_bytes(struct resolver* resolver, struct ast_expr const* expr)
             (uint8_t)*autil_string_ref_const(expr->data.bytes, i);
         autil_sbuf_push(elements, value_new_byte(byte));
     }
-    struct value* const value = value_new_array(type, elements);
+    struct value* const value = value_new_array(type, elements, NULL);
     value_freeze(value, context()->freezer);
 
     struct symbol* const symbol = symbol_new_constant(

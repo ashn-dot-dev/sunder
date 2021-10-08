@@ -1310,10 +1310,17 @@ struct value {
         struct tir_function const* function;
         struct address pointer;
         struct {
-            // Ellipsis value(s) are cloned and pushed onto the elements
-            // stretchy buffer so that the count of the stretchy buffer matches
-            // the countof the array type.
+            // Concrete values specified for elements of the array value before
+            // the optional ellipsis element. The autil_sbuf_count of the
+            // elements member may be less than countof(array), in which case
+            // the ellipsis value represents the rest of the elements upto
+            // the countof(array)th element.
             autil_sbuf(struct value*) elements;
+            // Value representing elements from indices within the half-open
+            // range [autil_sbuf_count(elements), countof(array)) that are
+            // initialized via an ellipsis element. NULL if no ellipsis element
+            // was specified in the parse tree for the array value.
+            struct value* ellipsis; // optional
         } array;
         struct {
             struct value* pointer; // TYPE_POINTER
@@ -1332,7 +1339,8 @@ value_new_function(struct tir_function const* function);
 struct value*
 value_new_pointer(struct type const* type, struct address address);
 struct value*
-value_new_array(struct type const* type, struct value** elements);
+value_new_array(
+    struct type const* type, struct value** elements, struct value* ellipsis);
 struct value*
 value_new_slice(
     struct type const* type, struct value* pointer, struct value* count);

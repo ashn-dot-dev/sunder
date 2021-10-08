@@ -1,6 +1,14 @@
 const a: [5u]u16 = (:[5u]u16)[0xAAu16, 0xBBu16, 0xCCu16...];
 const b: [5u]u16 = (:[5u]u16)[0xAAu16...];
 
+const f: [3u][5u]u16 = (:[3u][5u]u16)[(:[5u]u16)[0xAA, 0xBB, 0xCC...]...];
+const g: [2u][2u][3u]u16 = (:[2u][2u][3u]u16)[
+    (:[2u][3u]u16)[
+        (:[3u]u16)[0xFF...],
+        (:[3u]u16)[0xAA, 0xBB, 0xCC...]...
+    ]...
+];
+
 func main() void {
     var c: [5u]u16 = (:[5u]u16)[0xAAu16, 0xBBu16, 0xCCu16...];
     var d: [5u]u16 = (:[5u]u16)[0xAAu16...];
@@ -11,6 +19,8 @@ func main() void {
     dump c;
     dump d;
     dump e;
+    dump f;
+    dump g;
 }
 ################################################################################
 # AA 00 BB 00 CC 00 CC 00 CC 00
@@ -18,3 +28,5 @@ func main() void {
 # AA 00 BB 00 CC 00 CC 00 CC 00
 # AA 00 AA 00 AA 00 AA 00 AA 00
 #
+# AA 00 BB 00 CC 00 CC 00 CC 00 AA 00 BB 00 CC 00 CC 00 CC 00 AA 00 BB 00 CC 00 CC 00 CC 00
+# FF 00 FF 00 FF 00 AA 00 BB 00 CC 00 FF 00 FF 00 FF 00 AA 00 BB 00 CC 00

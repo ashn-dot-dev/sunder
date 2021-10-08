@@ -1191,14 +1191,21 @@ value_new_pointer(struct type const* type, struct address address)
 }
 
 struct value*
-value_new_array(struct type const* type, struct value** elements)
+value_new_array(
+    struct type const* type, struct value** elements, struct value* ellipsis)
 {
     assert(type != NULL);
     assert(type->kind == TYPE_ARRAY);
-    assert(type->data.array.count == autil_sbuf_count(elements));
+    assert(
+        type->data.array.count == autil_sbuf_count(elements)
+        || ellipsis != NULL);
+    // TODO: Should we validate that each element of the array and the ellipsis
+    // are of the array element type? That might be expensive so maybe hide it
+    // behind `#ifndef NDEBUG`?
 
     struct value* self = value_new(type);
     self->data.array.elements = elements;
+    self->data.array.ellipsis = ellipsis;
     return self;
 }
 
@@ -1263,6 +1270,9 @@ value_del(struct value* self)
             value_del(elements[i]);
         }
         autil_sbuf_fini(elements);
+        if (self->data.array.ellipsis != NULL) {
+            value_del(self->data.array.ellipsis);
+        }
         break;
     }
     case TYPE_SLICE: {
@@ -1315,9 +1325,13 @@ value_freeze(struct value* self, struct autil_freezer* freezer)
     }
     case TYPE_ARRAY: {
         autil_sbuf(struct value*) const elements = self->data.array.elements;
+        struct value* const ellipsis = self->data.array.ellipsis;
         autil_sbuf_freeze(elements, freezer);
         for (size_t i = 0; i < autil_sbuf_count(elements); ++i) {
             value_freeze(elements[i], freezer);
+        }
+        if (ellipsis != NULL) {
+            value_freeze(ellipsis, freezer);
         }
         return;
     }
@@ -1368,11 +1382,12 @@ value_clone(struct value const* self)
     }
     case TYPE_ARRAY: {
         autil_sbuf(struct value*) const elements = self->data.array.elements;
+        struct value* const ellipsis = self->data.array.ellipsis;
         autil_sbuf(struct value*) cloned_elements = NULL;
         for (size_t i = 0; i < autil_sbuf_count(elements); ++i) {
             autil_sbuf_push(cloned_elements, value_clone(elements[i]));
         }
-        return value_new_array(self->type, cloned_elements);
+        return value_new_array(self->type, cloned_elements, ellipsis);
     }
     case TYPE_SLICE: {
         return value_new_slice(
