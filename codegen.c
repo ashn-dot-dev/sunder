@@ -555,7 +555,7 @@ codegen_static_variables(void);
 static void
 codegen_static_functions(void);
 static void
-codegen_core(void);
+codegen_sys(void);
 
 static void
 codegen_static_object(struct symbol const* symbol);
@@ -705,202 +705,28 @@ codegen_static_functions(void)
 }
 
 static void
-codegen_core(void)
+codegen_sys(void)
 {
-    appendln("; BUILTIN NIL POINTER / VALUE");
-    appendln("__nil: equ 0");
-    appendch('\n');
+    char const* SUNDER_HOME = getenv("SUNDER_HOME");
+    if (SUNDER_HOME == NULL) {
+        fatal(NULL, "missing environment variable SUNDER_HOME");
+    }
+    struct autil_string* const core =
+        autil_string_new_fmt("%s/lib/sys/sys.asm", SUNDER_HOME);
 
-    appendln("; BUILTIN DUMP SUBROUTINE");
-    appendln("section .text");
-    appendln("global dump");
-    appendln("dump:");
-    appendln("    push rbp");
-    appendln("    mov rbp, rsp");
-    appendch('\n');
-    appendln("    mov r15, [rbp + 0x10] ; r15 = size");
-    appendch('\n');
-    appendln("    cmp r15, 0");
-    appendln("    jne .setup");
-    appendln("    mov rax, 1 ; SYS_WRITE");
-    appendln("    mov rdi, 2 ; STDERR_FILENO");
-    appendln("    mov rsi, __dump_nl");
-    appendln("    mov rdx, 1");
-    appendln("    syscall");
-    appendln("    mov rsp, rbp");
-    appendln("    pop rbp");
-    appendln("    ret");
-    appendch('\n');
-    appendln(".setup:");
-    appendln("    mov r14, r15 ; r14 = size * 3");
-    appendln("    imul r14, 3");
-    appendln("    sub rsp, r14 ; buf = rsp = alloca(size * 3)");
-    appendch('\n');
-    appendln("    mov r11, rsp ; ptr = r11 = buf");
-    appendln("    mov r12, rbp ; cur = r12 = &obj");
-    appendln("    add r12, 0x18");
-    appendln("    mov r13, r12 ; end = r13 = &obj + size");
-    appendln("    add r13, r15");
-    appendch('\n');
-    appendln(".loop:");
-    appendln("    cmp r12, r13 ; while (cur != end)");
-    appendln("    je .write");
-    appendch('\n');
-    appendln("    mov rax, [r12] ; repr = rax = dump_lookup_table + *cur * 2");
-    appendln("    and rax, 0xFF");
-    appendln("    imul rax, 2");
-    appendln("    add rax, __dump_lookup_table");
-    appendch('\n');
-    appendln("    mov bl, [rax + 0] ; *ptr = repr[0]");
-    appendln("    mov [r11], bl");
-    appendln("    inc r11 ; ptr += 1");
-    appendln("    mov bl, [rax + 1] ; *ptr = repr[1]");
-    appendln("    mov [r11], bl");
-    appendln("    inc r11 ; ptr += 1");
-    appendln("    mov bl, 0x20 ; *ptr = ' '");
-    appendln("    mov byte [r11], bl");
-    appendln("    inc r11 ; ptr += 1");
-    appendch('\n');
-    appendln("    inc r12 ; cur += 1");
-    appendln("    jmp .loop");
-    appendch('\n');
-    appendln(".write:");
-    appendln("    dec r11 ; ptr -= 1");
-    appendln("    mov byte [r11], 0x0A ; *ptr = '\\n'");
-    appendch('\n');
-    appendln("    ; write(STDERR_FILENO, buf, size * 3)");
-    appendln("    mov rax, 1 ; SYS_WRITE");
-    appendln("    mov rdi, 2 ; STDERR_FILENO");
-    appendln("    mov rsi, rsp");
-    appendln("    mov rdx, r14");
-    appendln("    syscall");
-    appendch('\n');
-    appendln("    mov rsp, rbp");
-    appendln("    pop rbp");
-    appendln("    ret");
-    appendch('\n');
-    appendln("section .rodata");
-    appendln("__dump_nl: db 0x0A");
-    appendln("__dump_lookup_table: db \\");
-    appendln("    '00', '01', '02', '03', '04', '05', '06', '07', \\");
-    appendln("    '08', '09', '0A', '0B', '0C', '0D', '0E', '0F', \\");
-    appendln("    '10', '11', '12', '13', '14', '15', '16', '17', \\");
-    appendln("    '18', '19', '1A', '1B', '1C', '1D', '1E', '1F', \\");
-    appendln("    '20', '21', '22', '23', '24', '25', '26', '27', \\");
-    appendln("    '28', '29', '2A', '2B', '2C', '2D', '2E', '2F', \\");
-    appendln("    '30', '31', '32', '33', '34', '35', '36', '37', \\");
-    appendln("    '38', '39', '3A', '3B', '3C', '3D', '3E', '3F', \\");
-    appendln("    '40', '41', '42', '43', '44', '45', '46', '47', \\");
-    appendln("    '48', '49', '4A', '4B', '4C', '4D', '4E', '4F', \\");
-    appendln("    '50', '51', '52', '53', '54', '55', '56', '57', \\");
-    appendln("    '58', '59', '5A', '5B', '5C', '5D', '5E', '5F', \\");
-    appendln("    '60', '61', '62', '63', '64', '65', '66', '67', \\");
-    appendln("    '68', '69', '6A', '6B', '6C', '6D', '6E', '6F', \\");
-    appendln("    '70', '71', '72', '73', '74', '75', '76', '77', \\");
-    appendln("    '78', '79', '7A', '7B', '7C', '7D', '7E', '7F', \\");
-    appendln("    '80', '81', '82', '83', '84', '85', '86', '87', \\");
-    appendln("    '88', '89', '8A', '8B', '8C', '8D', '8E', '8F', \\");
-    appendln("    '90', '91', '92', '93', '94', '95', '96', '97', \\");
-    appendln("    '98', '99', '9A', '9B', '9C', '9D', '9E', '9F', \\");
-    appendln("    'A0', 'A1', 'A2', 'A3', 'A4', 'A5', 'A6', 'A7', \\");
-    appendln("    'A8', 'A9', 'AA', 'AB', 'AC', 'AD', 'AE', 'AF', \\");
-    appendln("    'B0', 'B1', 'B2', 'B3', 'B4', 'B5', 'B6', 'B7', \\");
-    appendln("    'B8', 'B9', 'BA', 'BB', 'BC', 'BD', 'BE', 'BF', \\");
-    appendln("    'C0', 'C1', 'C2', 'C3', 'C4', 'C5', 'C6', 'C7', \\");
-    appendln("    'C8', 'C9', 'CA', 'CB', 'CC', 'CD', 'CE', 'CF', \\");
-    appendln("    'D0', 'D1', 'D2', 'D3', 'D4', 'D5', 'D6', 'D7', \\");
-    appendln("    'D8', 'D9', 'DA', 'DB', 'DC', 'DD', 'DE', 'DF', \\");
-    appendln("    'E0', 'E1', 'E2', 'E3', 'E4', 'E5', 'E6', 'E7', \\");
-    appendln("    'E8', 'E9', 'EA', 'EB', 'EC', 'ED', 'EE', 'EF', \\");
-    appendln("    'F0', 'F1', 'F2', 'F3', 'F4', 'F5', 'F6', 'F7', \\");
-    appendln("    'F8', 'F9', 'FA', 'FB', 'FC', 'FD', 'FE', 'FF'");
-    appendch('\n');
+    void* buf = NULL;
+    size_t buf_size = 0;
+    if (autil_file_read(autil_string_start(core), &buf, &buf_size)) {
+        fatal(
+            NULL,
+            "failed to read '%s' with error '%s'",
+            autil_string_start(core),
+            strerror(errno));
+    }
+    append("%.*s", (int)buf_size, (char const*)buf);
 
-    appendln("; BUILTIN OUT-OF-RANGE INTEGER RESULT HANDLER");
-    appendln("section .text");
-    appendln("__integer_oor_handler:");
-    appendln("    push rbp");
-    appendln("    mov rbp, rsp");
-    appendch('\n');
-    appendln("    mov rax, 1 ; SYS_WRITE");
-    appendln("    mov rdi, 2 ; STDERR_FILENO");
-    appendln("    mov rsi, __integer_oor_msg_start");
-    appendln("    mov rdx, __integer_oor_msg_count");
-    appendln("    syscall");
-    appendch('\n');
-    appendln("    mov rax, 60 ; exit");
-    appendli("    mov rdi, 1 ; EXIT_FAILURE");
-    appendln("    syscall");
-    appendch('\n');
-    appendln("section .rodata");
-    appendln("__integer_oor_msg_start: db\\");
-    appendln(
-        "    \"fatal: arithmetic operation produces out-of-range result\", 0x0A");
-    appendln("__integer_oor_msg_count: equ $ - __integer_oor_msg_start");
-    appendch('\n');
-
-    appendln("; BUILTIN INTEGER DIVIDE BY ZERO HANDLER");
-    appendln("section .text");
-    appendln("__integer_divz_handler:");
-    appendln("    push rbp");
-    appendln("    mov rbp, rsp");
-    appendch('\n');
-    appendln("    mov rax, 1 ; SYS_WRITE");
-    appendln("    mov rdi, 2 ; STDERR_FILENO");
-    appendln("    mov rsi, __integer_divz_msg_start");
-    appendln("    mov rdx, __integer_divz_msg_count");
-    appendln("    syscall");
-    appendch('\n');
-    appendln("    mov rax, 60 ; exit");
-    appendli("    mov rdi, 1 ; EXIT_FAILURE");
-    appendln("    syscall");
-    appendch('\n');
-    appendln("section .rodata");
-    appendln("__integer_divz_msg_start: db \"fatal: divide by zero\", 0x0A");
-    appendln("__integer_divz_msg_count: equ $ - __integer_divz_msg_start");
-    appendch('\n');
-
-    appendln("; BUILTIN INDEX OUT-OF-BOUNDS HANDLER");
-    appendln("section .text");
-    appendln("__index_oob_handler:");
-    appendln("    push rbp");
-    appendln("    mov rbp, rsp");
-    appendch('\n');
-    appendln("    mov rax, 1 ; SYS_WRITE");
-    appendln("    mov rdi, 2 ; STDERR_FILENO");
-    appendln("    mov rsi, __index_oob_msg_start");
-    appendln("    mov rdx, __index_oob_msg_count");
-    appendln("    syscall");
-    appendch('\n');
-    appendln("    mov rax, 60 ; exit");
-    appendli("    mov rdi, 1 ; EXIT_FAILURE");
-    appendln("    syscall");
-    appendch('\n');
-    appendln("section .rodata");
-    appendln("__index_oob_msg_start: db \"fatal: index out-of-bounds\", 0x0A");
-    appendln("__index_oob_msg_count: equ $ - __index_oob_msg_start");
-    appendch('\n');
-
-    appendln("; SYS DEFINITIONS");
-    appendln("section .data");
-    appendln("sys.argc: dq 0 ; extern var argc: usize;");
-    appendln("sys.argv: dq 0 ; extern var argv: **byte;");
-    appendch('\n');
-
-    appendln("; PROGRAM ENTRY POINT");
-    appendln("section .text");
-    appendln("global _start");
-    appendln("_start:");
-    appendli("xor rbp, rbp    ; [SysV ABI] deepest stack frame");
-    appendli("mov rax, [rsp]  ; [SysV ABI] argc @ rsp");
-    appendli("mov rbx, rsp    ; [SysV ABI] argv @ rsp + 8");
-    appendli("add rbx, 0x8    ; ...");
-    appendli("mov [sys.argc], rax ; sys.argc = SysV ABI argc");
-    appendli("mov [sys.argv], rbx ; sys.argv = SysV ABI argv");
-    appendli("call main");
-    appendli("mov rax, 60 ; exit");
-    appendli("mov rdi, 0  ; EXIT_SUCCESS");
-    appendli("syscall");
+    autil_string_del(core);
+    autil_xalloc(buf, AUTIL_XALLOC_FREE);
 }
 
 static void
@@ -2529,7 +2355,7 @@ codegen(char const* const opt_o, bool opt_k)
     struct autil_string* const asm_path = autil_string_new_fmt("%s.asm", opt_o);
     struct autil_string* const obj_path = autil_string_new_fmt("%s.o", opt_o);
 
-    codegen_core();
+    codegen_sys();
     appendch('\n');
     codegen_static_constants();
     appendch('\n');

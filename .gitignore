@@ -3,3 +3,4 @@ sunder-compile
 *.o
 *.asm
 !nasm-test.asm
+!lib/sys/sys.asm
