@@ -293,7 +293,8 @@ append_dx_data(struct value const* value)
             }
         }
         if (ellipsis != NULL) {
-            size_t const times = value->type->data.array.count - autil_sbuf_count(elements);
+            size_t const times =
+                value->type->data.array.count - autil_sbuf_count(elements);
             append("\n    ");
             append("times %zu", times);
             appendch(' ');

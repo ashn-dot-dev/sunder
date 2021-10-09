@@ -71,14 +71,12 @@ eval_rvalue(struct tir_expr const* expr)
             expr->data.literal_array.elements;
         autil_sbuf(struct value*) evaled_elements = NULL;
         for (size_t i = 0; i < autil_sbuf_count(elements); ++i) {
-            autil_sbuf_push(
-                evaled_elements, eval_rvalue(elements[i]));
+            autil_sbuf_push(evaled_elements, eval_rvalue(elements[i]));
         }
 
         struct value* evaled_ellipsis = NULL;
         if (expr->data.literal_array.ellipsis != NULL) {
-            evaled_ellipsis =
-                eval_rvalue(expr->data.literal_array.ellipsis);
+            evaled_ellipsis = eval_rvalue(expr->data.literal_array.ellipsis);
         }
 
         return value_new_array(expr->type, evaled_elements, evaled_ellipsis);
@@ -86,8 +84,7 @@ eval_rvalue(struct tir_expr const* expr)
     case TIR_EXPR_LITERAL_SLICE: {
         struct value* const pointer =
             eval_rvalue(expr->data.literal_slice.pointer);
-        struct value* const count =
-            eval_rvalue(expr->data.literal_slice.count);
+        struct value* const count = eval_rvalue(expr->data.literal_slice.count);
         return value_new_slice(expr->type, pointer, count);
     }
     case TIR_EXPR_CAST: {
@@ -215,8 +212,7 @@ eval_rvalue(struct tir_expr const* expr)
                     idx_uz);
             }
 
-            autil_sbuf(struct value*) const elements =
-                lhs->data.array.elements;
+            autil_sbuf(struct value*) const elements = lhs->data.array.elements;
             struct value* const ellipsis = lhs->data.array.ellipsis;
             assert(idx_uz < autil_sbuf_count(elements) || ellipsis != NULL);
             struct value* const res = idx_uz < autil_sbuf_count(elements)
@@ -243,8 +239,7 @@ eval_rvalue(struct tir_expr const* expr)
     }
     case TIR_EXPR_SLICE: {
         struct value* const lhs = eval_rvalue(expr->data.slice.lhs);
-        struct value* const begin =
-            eval_rvalue(expr->data.slice.begin);
+        struct value* const begin = eval_rvalue(expr->data.slice.begin);
         struct value* const end = eval_rvalue(expr->data.slice.end);
 
         assert(begin->type->kind == TYPE_USIZE);
@@ -282,8 +277,7 @@ eval_rvalue(struct tir_expr const* expr)
                     end_uz);
             }
 
-            struct value* const pointer =
-                eval_lvalue(expr->data.slice.lhs);
+            struct value* const pointer = eval_lvalue(expr->data.slice.lhs);
             assert(pointer->type->kind == TYPE_POINTER);
             assert(pointer->data.pointer.kind == ADDRESS_STATIC);
             pointer->type = type_unique_pointer(expr->type->data.slice.base);
@@ -329,21 +323,18 @@ eval_rvalue(struct tir_expr const* expr)
     case TIR_EXPR_UNARY: {
         switch (expr->data.unary.op) {
         case UOP_NOT: {
-            struct value* const rhs =
-                eval_rvalue(expr->data.unary.rhs);
+            struct value* const rhs = eval_rvalue(expr->data.unary.rhs);
             assert(rhs->type->kind == TYPE_BOOL);
             rhs->data.boolean = !rhs->data.boolean;
             return rhs;
         }
         case UOP_POS: {
-            struct value* const rhs =
-                eval_rvalue(expr->data.unary.rhs);
+            struct value* const rhs = eval_rvalue(expr->data.unary.rhs);
             assert(type_is_integer(rhs->type));
             return rhs;
         }
         case UOP_NEG: {
-            struct value* const rhs =
-                eval_rvalue(expr->data.unary.rhs);
+            struct value* const rhs = eval_rvalue(expr->data.unary.rhs);
             assert(type_is_integer(rhs->type));
             struct autil_bigint* const r = autil_bigint_new(AUTIL_BIGINT_ZERO);
             autil_bigint_neg(r, rhs->data.integer);
@@ -358,8 +349,7 @@ eval_rvalue(struct tir_expr const* expr)
             return value_new_integer(expr->type, r);
         }
         case UOP_BITNOT: {
-            struct value* const rhs =
-                eval_rvalue(expr->data.unary.rhs);
+            struct value* const rhs = eval_rvalue(expr->data.unary.rhs);
             assert(rhs->type->kind == TYPE_BYTE || type_is_integer(rhs->type));
 
             if (rhs->type->kind == TYPE_BYTE) {
@@ -403,8 +393,7 @@ eval_rvalue(struct tir_expr const* expr)
             struct value* const res = value_new_integer(
                 context()->builtin.usize, autil_bigint_new(AUTIL_BIGINT_ZERO));
 
-            struct value* const rhs =
-                eval_rvalue(expr->data.unary.rhs);
+            struct value* const rhs = eval_rvalue(expr->data.unary.rhs);
             switch (rhs->type->kind) {
             case TYPE_ARRAY: {
                 size_t const count_uz = rhs->type->data.array.count;
