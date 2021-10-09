@@ -683,11 +683,8 @@ resolve_decl_variable(
     bool is_static = resolver_is_global(resolver);
     struct value* value = NULL;
     if (is_static) {
-        struct evaluator* const evaluator =
-            evaluator_new(resolver->current_symbol_table);
-        value = eval_rvalue(evaluator, expr);
+        value = eval_rvalue(expr);
         value_freeze(value, context()->freezer);
-        evaluator_del(evaluator);
     }
 
     struct address const* const address = is_static
@@ -741,11 +738,8 @@ resolve_decl_constant(struct resolver* resolver, struct ast_decl const* decl)
     // Constants (globals and locals) have their values computed at compile-time
     // and therefore must always be added to the symbol table with an evaluated
     // value.
-    struct evaluator* const evaluator =
-        evaluator_new(resolver->current_symbol_table);
-    struct value* const value = eval_rvalue(evaluator, expr);
+    struct value* const value = eval_rvalue(expr);
     value_freeze(value, context()->freezer);
-    evaluator_del(evaluator);
 
     struct address const* const address =
         resolver_reserve_storage_static(resolver, decl->name);
@@ -2388,11 +2382,8 @@ resolve_expr_binary_compare_equality(
     if (lhs->kind == TIR_EXPR_INTEGER && rhs->kind == TIR_EXPR_INTEGER
         && lhs->type->kind == TYPE_UNSIZED_INTEGER
         && rhs->type->kind == TYPE_UNSIZED_INTEGER) {
-        struct evaluator* const evaluator =
-            evaluator_new(resolver->current_symbol_table);
-        struct value* const value = eval_rvalue(evaluator, resolved);
+        struct value* const value = eval_rvalue(resolved);
         value_freeze(value, context()->freezer);
-        evaluator_del(evaluator);
 
         assert(value->type->kind == TYPE_BOOL);
         resolved =
@@ -2454,11 +2445,8 @@ resolve_expr_binary_compare_order(
     if (lhs->kind == TIR_EXPR_INTEGER && rhs->kind == TIR_EXPR_INTEGER
         && lhs->type->kind == TYPE_UNSIZED_INTEGER
         && rhs->type->kind == TYPE_UNSIZED_INTEGER) {
-        struct evaluator* const evaluator =
-            evaluator_new(resolver->current_symbol_table);
-        struct value* const value = eval_rvalue(evaluator, resolved);
+        struct value* const value = eval_rvalue(resolved);
         value_freeze(value, context()->freezer);
-        evaluator_del(evaluator);
 
         assert(value->type->kind == TYPE_BOOL);
         resolved =
@@ -2514,11 +2502,8 @@ resolve_expr_binary_arithmetic(
     if (lhs->kind == TIR_EXPR_INTEGER && rhs->kind == TIR_EXPR_INTEGER
         && lhs->type->kind == TYPE_UNSIZED_INTEGER
         && rhs->type->kind == TYPE_UNSIZED_INTEGER) {
-        struct evaluator* const evaluator =
-            evaluator_new(resolver->current_symbol_table);
-        struct value* const value = eval_rvalue(evaluator, resolved);
+        struct value* const value = eval_rvalue(resolved);
         value_freeze(value, context()->freezer);
-        evaluator_del(evaluator);
 
         assert(type_is_integer(value->type));
         resolved = tir_expr_new_integer(
@@ -2580,11 +2565,8 @@ resolve_expr_binary_bitwise(
     if (lhs->kind == TIR_EXPR_INTEGER && rhs->kind == TIR_EXPR_INTEGER
         && lhs->type->kind == TYPE_UNSIZED_INTEGER
         && rhs->type->kind == TYPE_UNSIZED_INTEGER) {
-        struct evaluator* const evaluator =
-            evaluator_new(resolver->current_symbol_table);
-        struct value* const value = eval_rvalue(evaluator, resolved);
+        struct value* const value = eval_rvalue(resolved);
         value_freeze(value, context()->freezer);
-        evaluator_del(evaluator);
 
         assert(type_is_integer(value->type));
         resolved = tir_expr_new_integer(
@@ -2696,10 +2678,7 @@ resolve_typespec(struct resolver* resolver, struct ast_typespec const* typespec)
                 count_expr->type->name);
         }
 
-        struct evaluator* const evaluator =
-            evaluator_new(resolver->current_symbol_table);
-        struct value* const count_value = eval_rvalue(evaluator, count_expr);
-        evaluator_del(evaluator);
+        struct value* const count_value = eval_rvalue(count_expr);
 
         assert(count_value->type == context()->builtin.usize);
         size_t count = 0u;

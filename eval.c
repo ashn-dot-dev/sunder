@@ -6,30 +6,6 @@
 
 #include "sunder.h"
 
-struct evaluator {
-    struct symbol_table const* symbol_table;
-};
-
-struct evaluator*
-evaluator_new(struct symbol_table const* symbol_table)
-{
-    assert(symbol_table != NULL);
-
-    struct evaluator* const self = autil_xalloc(NULL, sizeof(*self));
-    memset(self, 0x00, sizeof(*self));
-    self->symbol_table = symbol_table;
-
-    return self;
-}
-void
-evaluator_del(struct evaluator* self)
-{
-    assert(self != NULL);
-
-    memset(self, 0x00, sizeof(*self));
-    autil_xalloc(self, AUTIL_XALLOC_FREE);
-}
-
 static bool
 integer_is_out_of_range(struct type const* type, struct autil_bigint const* res)
 {
@@ -48,9 +24,8 @@ integer_is_out_of_range(struct type const* type, struct autil_bigint const* res)
 }
 
 struct value*
-eval_rvalue(struct evaluator* evaluator, struct tir_expr const* expr)
+eval_rvalue(struct tir_expr const* expr)
 {
-    assert(evaluator != NULL);
     assert(expr != NULL);
 
     switch (expr->kind) {
@@ -97,26 +72,26 @@ eval_rvalue(struct evaluator* evaluator, struct tir_expr const* expr)
         autil_sbuf(struct value*) evaled_elements = NULL;
         for (size_t i = 0; i < autil_sbuf_count(elements); ++i) {
             autil_sbuf_push(
-                evaled_elements, eval_rvalue(evaluator, elements[i]));
+                evaled_elements, eval_rvalue(elements[i]));
         }
 
         struct value* evaled_ellipsis = NULL;
         if (expr->data.literal_array.ellipsis != NULL) {
             evaled_ellipsis =
-                eval_rvalue(evaluator, expr->data.literal_array.ellipsis);
+                eval_rvalue(expr->data.literal_array.ellipsis);
         }
 
         return value_new_array(expr->type, evaled_elements, evaled_ellipsis);
     }
     case TIR_EXPR_LITERAL_SLICE: {
         struct value* const pointer =
-            eval_rvalue(evaluator, expr->data.literal_slice.pointer);
+            eval_rvalue(expr->data.literal_slice.pointer);
         struct value* const count =
-            eval_rvalue(evaluator, expr->data.literal_slice.count);
+            eval_rvalue(expr->data.literal_slice.count);
         return value_new_slice(expr->type, pointer, count);
     }
     case TIR_EXPR_CAST: {
-        struct value* const from = eval_rvalue(evaluator, expr->data.cast.expr);
+        struct value* const from = eval_rvalue(expr->data.cast.expr);
 
         // Check if the value casted from is already the correct type.
         // Also allows us to assume to from->type != expr->type from this point
@@ -218,8 +193,8 @@ eval_rvalue(struct evaluator* evaluator, struct tir_expr const* expr)
         fatal(expr->location, "constant expression contains function call");
     }
     case TIR_EXPR_INDEX: {
-        struct value* const lhs = eval_rvalue(evaluator, expr->data.index.lhs);
-        struct value* const idx = eval_rvalue(evaluator, expr->data.index.idx);
+        struct value* const lhs = eval_rvalue(expr->data.index.lhs);
+        struct value* const idx = eval_rvalue(expr->data.index.idx);
 
         assert(idx->type->kind == TYPE_USIZE);
         struct autil_bigint const* const idx_bigint = idx->data.integer;
@@ -267,10 +242,10 @@ eval_rvalue(struct evaluator* evaluator, struct tir_expr const* expr)
         UNREACHABLE();
     }
     case TIR_EXPR_SLICE: {
-        struct value* const lhs = eval_rvalue(evaluator, expr->data.slice.lhs);
+        struct value* const lhs = eval_rvalue(expr->data.slice.lhs);
         struct value* const begin =
-            eval_rvalue(evaluator, expr->data.slice.begin);
-        struct value* const end = eval_rvalue(evaluator, expr->data.slice.end);
+            eval_rvalue(expr->data.slice.begin);
+        struct value* const end = eval_rvalue(expr->data.slice.end);
 
         assert(begin->type->kind == TYPE_USIZE);
         struct autil_bigint const* const begin_bigint = begin->data.integer;
@@ -308,7 +283,7 @@ eval_rvalue(struct evaluator* evaluator, struct tir_expr const* expr)
             }
 
             struct value* const pointer =
-                eval_lvalue(evaluator, expr->data.slice.lhs);
+                eval_lvalue(expr->data.slice.lhs);
             assert(pointer->type->kind == TYPE_POINTER);
             assert(pointer->data.pointer.kind == ADDRESS_STATIC);
             pointer->type = type_unique_pointer(expr->type->data.slice.base);
@@ -355,20 +330,20 @@ eval_rvalue(struct evaluator* evaluator, struct tir_expr const* expr)
         switch (expr->data.unary.op) {
         case UOP_NOT: {
             struct value* const rhs =
-                eval_rvalue(evaluator, expr->data.unary.rhs);
+                eval_rvalue(expr->data.unary.rhs);
             assert(rhs->type->kind == TYPE_BOOL);
             rhs->data.boolean = !rhs->data.boolean;
             return rhs;
         }
         case UOP_POS: {
             struct value* const rhs =
-                eval_rvalue(evaluator, expr->data.unary.rhs);
+                eval_rvalue(expr->data.unary.rhs);
             assert(type_is_integer(rhs->type));
             return rhs;
         }
         case UOP_NEG: {
             struct value* const rhs =
-                eval_rvalue(evaluator, expr->data.unary.rhs);
+                eval_rvalue(expr->data.unary.rhs);
             assert(type_is_integer(rhs->type));
             struct autil_bigint* const r = autil_bigint_new(AUTIL_BIGINT_ZERO);
             autil_bigint_neg(r, rhs->data.integer);
@@ -384,7 +359,7 @@ eval_rvalue(struct evaluator* evaluator, struct tir_expr const* expr)
         }
         case UOP_BITNOT: {
             struct value* const rhs =
-                eval_rvalue(evaluator, expr->data.unary.rhs);
+                eval_rvalue(expr->data.unary.rhs);
             assert(rhs->type->kind == TYPE_BYTE || type_is_integer(rhs->type));
 
             if (rhs->type->kind == TYPE_BYTE) {
@@ -421,7 +396,7 @@ eval_rvalue(struct evaluator* evaluator, struct tir_expr const* expr)
                 "dereference operator not supported in compile-time expressions");
         }
         case UOP_ADDRESSOF: {
-            return eval_lvalue(evaluator, expr->data.unary.rhs);
+            return eval_lvalue(expr->data.unary.rhs);
         }
         case UOP_COUNTOF: {
             assert(expr->type->kind == TYPE_USIZE);
@@ -429,7 +404,7 @@ eval_rvalue(struct evaluator* evaluator, struct tir_expr const* expr)
                 context()->builtin.usize, autil_bigint_new(AUTIL_BIGINT_ZERO));
 
             struct value* const rhs =
-                eval_rvalue(evaluator, expr->data.unary.rhs);
+                eval_rvalue(expr->data.unary.rhs);
             switch (rhs->type->kind) {
             case TYPE_ARRAY: {
                 size_t const count_uz = rhs->type->data.array.count;
@@ -454,8 +429,8 @@ eval_rvalue(struct evaluator* evaluator, struct tir_expr const* expr)
         UNREACHABLE();
     }
     case TIR_EXPR_BINARY: {
-        struct value* const lhs = eval_rvalue(evaluator, expr->data.binary.lhs);
-        struct value* const rhs = eval_rvalue(evaluator, expr->data.binary.rhs);
+        struct value* const lhs = eval_rvalue(expr->data.binary.lhs);
+        struct value* const rhs = eval_rvalue(expr->data.binary.rhs);
         struct value* res = NULL;
         switch (expr->data.binary.op) {
         case BOP_OR: {
@@ -719,9 +694,8 @@ eval_rvalue(struct evaluator* evaluator, struct tir_expr const* expr)
 }
 
 struct value*
-eval_lvalue(struct evaluator* evaluator, struct tir_expr const* expr)
+eval_lvalue(struct tir_expr const* expr)
 {
-    assert(evaluator != NULL);
     assert(expr != NULL);
     assert(tir_expr_is_lvalue(expr));
 
@@ -737,8 +711,8 @@ eval_lvalue(struct evaluator* evaluator, struct tir_expr const* expr)
         return value_new_pointer(type, *symbol->address);
     }
     case TIR_EXPR_INDEX: {
-        struct value* const lhs = eval_lvalue(evaluator, expr->data.index.lhs);
-        struct value* const idx = eval_rvalue(evaluator, expr->data.index.idx);
+        struct value* const lhs = eval_lvalue(expr->data.index.lhs);
+        struct value* const idx = eval_rvalue(expr->data.index.idx);
         assert(lhs->type->kind == TYPE_POINTER);
         assert(idx->type->kind == TYPE_USIZE);
         struct type const* const array_type = lhs->type->data.pointer.base;

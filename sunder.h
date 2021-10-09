@@ -1370,15 +1370,10 @@ resolve(struct module* module);
 ////////////////////////////////////////////////////////////////////////////////
 //////// eval.c ////////////////////////////////////////////////////////////////
 
-struct evaluator*
-evaluator_new(struct symbol_table const* symbol_table);
-void
-evaluator_del(struct evaluator* self);
-
 struct value*
-eval_rvalue(struct evaluator* evaluator, struct tir_expr const* expr);
+eval_rvalue(struct tir_expr const* expr);
 struct value*
-eval_lvalue(struct evaluator* evaluator, struct tir_expr const* expr);
+eval_lvalue(struct tir_expr const* expr);
 
 ////////////////////////////////////////////////////////////////////////////////
 //////// codegen.c /////////////////////////////////////////////////////////////
