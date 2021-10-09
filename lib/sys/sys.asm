@@ -1,9 +1,39 @@
-; BUILTIN NIL POINTER / VALUE
+; BUILTIN CONSTANT VALUES
+; =======================
 __nil: equ 0
 
+__EXIT_SUCCESS: equ 0
+__EXIT_FAILURE: equ 1
+
+__STDIN_FILENO: equ 0
+__STDOUT_FILENO: equ 1
+__STDERR_FILENO: equ 2
+
+__SYS_WRITE: equ 1
+__SYS_EXIT: equ 60
+
+
 ; BUILTIN DUMP SUBROUTINE
+; =======================
+; func dump(obj: T, size: usize)
+;
+; ## Stack
+; +--------------------+ <- rbp + 0x18 + size
+; | obj (high bytes)   |
+; | ...                |
+; | obj (low bytes)    |
+; +--------------------+ <- rbp + 0x18
+; | size               |
+; +--------------------+ <- rbp + 0x10
+; | return address     |
+; +--------------------+
+; | saved rbp          |
+; +--------------------+ <- rbp
+; | buf (high bytes)   |
+; | ...                |
+; | buf (low bytes)    |
+; +--------------------+ <- rsp
 section .text
-global dump
 dump:
     push rbp
     mov rbp, rsp
@@ -12,8 +42,8 @@ dump:
 
     cmp r15, 0
     jne .setup
-    mov rax, 1 ; SYS_WRITE
-    mov rdi, 2 ; STDERR_FILENO
+    mov rax, __SYS_WRITE
+    mov rdi, __STDERR_FILENO
     mov rsi, __dump_nl
     mov rdx, 1
     syscall
@@ -59,8 +89,8 @@ dump:
     mov byte [r11], 0x0A ; *ptr = '\n'
 
     ; write(STDERR_FILENO, buf, size * 3)
-    mov rax, 1 ; SYS_WRITE
-    mov rdi, 2 ; STDERR_FILENO
+    mov rax, __SYS_WRITE
+    mov rdi, __STDERR_FILENO
     mov rsi, rsp
     mov rdx, r14
     syscall
@@ -105,73 +135,83 @@ __dump_lookup_table: db \
     'F0', 'F1', 'F2', 'F3', 'F4', 'F5', 'F6', 'F7', \
     'F8', 'F9', 'FA', 'FB', 'FC', 'FD', 'FE', 'FF'
 
+
 ; BUILTIN OUT-OF-RANGE INTEGER RESULT HANDLER
+; ===========================================
 section .text
 __integer_oor_handler:
     push rbp
     mov rbp, rsp
 
-    mov rax, 1 ; SYS_WRITE
-    mov rdi, 2 ; STDERR_FILENO
+    mov rax, __SYS_WRITE
+    mov rdi, __STDERR_FILENO
     mov rsi, __integer_oor_msg_start
     mov rdx, __integer_oor_msg_count
     syscall
 
-    mov rax, 60 ; exit
-        mov rdi, 1 ; EXIT_FAILURE
+    mov rax, __SYS_EXIT
+    mov rdi, __EXIT_FAILURE
     syscall
 
 section .rodata
-__integer_oor_msg_start: db\
+__integer_oor_msg_start: db \
     "fatal: arithmetic operation produces out-of-range result", 0x0A
 __integer_oor_msg_count: equ $ - __integer_oor_msg_start
 
+
 ; BUILTIN INTEGER DIVIDE BY ZERO HANDLER
+; ======================================
 section .text
 __integer_divz_handler:
     push rbp
     mov rbp, rsp
 
-    mov rax, 1 ; SYS_WRITE
-    mov rdi, 2 ; STDERR_FILENO
+    mov rax, __SYS_WRITE
+    mov rdi, __STDERR_FILENO
     mov rsi, __integer_divz_msg_start
     mov rdx, __integer_divz_msg_count
     syscall
 
-    mov rax, 60 ; exit
-        mov rdi, 1 ; EXIT_FAILURE
+    mov rax, __SYS_EXIT
+    mov rdi, __EXIT_FAILURE
     syscall
 
 section .rodata
 __integer_divz_msg_start: db "fatal: divide by zero", 0x0A
 __integer_divz_msg_count: equ $ - __integer_divz_msg_start
 
+
 ; BUILTIN INDEX OUT-OF-BOUNDS HANDLER
+; ===================================
 section .text
 __index_oob_handler:
     push rbp
     mov rbp, rsp
 
-    mov rax, 1 ; SYS_WRITE
-    mov rdi, 2 ; STDERR_FILENO
+    mov rax, __SYS_WRITE
+    mov rdi, __STDERR_FILENO
     mov rsi, __index_oob_msg_start
     mov rdx, __index_oob_msg_count
     syscall
 
-    mov rax, 60 ; exit
-        mov rdi, 1 ; EXIT_FAILURE
+    mov rax, __SYS_EXIT
+        mov rdi, __EXIT_FAILURE
     syscall
 
 section .rodata
 __index_oob_msg_start: db "fatal: index out-of-bounds", 0x0A
 __index_oob_msg_count: equ $ - __index_oob_msg_start
 
-; SYS DEFINITIONS
+
+; SYS DEFINITIONS (lib/sys/sys.sunder)
+; ====================================
 section .data
 sys.argc: dq 0 ; extern var argc: usize;
 sys.argv: dq 0 ; extern var argv: **byte;
 
+
 ; PROGRAM ENTRY POINT
+; ===================
 section .text
 global _start
 _start:
@@ -182,6 +222,6 @@ _start:
     mov [sys.argc], rax ; sys.argc = SysV ABI argc
     mov [sys.argv], rbx ; sys.argv = SysV ABI argv
     call main
-    mov rax, 60 ; exit
-    mov rdi, 0  ; EXIT_SUCCESS
+    mov rax, __SYS_EXIT
+    mov rdi, __EXIT_SUCCESS
     syscall
