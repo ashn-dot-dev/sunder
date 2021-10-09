@@ -1015,7 +1015,7 @@ codegen_stmt_dump(struct tir_stmt const* stmt)
 
     codegen_rvalue(stmt->data.expr);
     appendli("push %#zx", stmt->data.expr->type->size);
-    appendli("call dump");
+    appendli("call __dump");
     appendli("pop rax");
     pop(stmt->data.expr->type->size);
 }

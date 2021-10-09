@@ -34,7 +34,7 @@ __SYS_EXIT: equ 60
 ; | buf (low bytes)    |
 ; +--------------------+ <- rsp
 section .text
-dump:
+__dump:
     push rbp
     mov rbp, rsp
 
