@@ -247,10 +247,10 @@ sys.argv: dq 0 ; extern var argv: **byte;
 section .text
 global _start
 _start:
-    xor rbp, rbp    ; [SysV ABI] deepest stack frame
-    mov rax, [rsp]  ; [SysV ABI] argc @ rsp
-    mov rbx, rsp    ; [SysV ABI] argv @ rsp + 8
-    add rbx, 0x8    ; ...
+    xor rbp, rbp   ; [SysV ABI] deepest stack frame
+    mov rax, [rsp] ; [SysV ABI] argc @ rsp
+    mov rbx, rsp   ; [SysV ABI] argv @ rsp + 8
+    add rbx, 0x8   ; ...
     mov [sys.argc], rax ; sys.argc = SysV ABI argc
     mov [sys.argv], rbx ; sys.argv = SysV ABI argv
     call main
