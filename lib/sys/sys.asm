@@ -15,15 +15,15 @@ __SYS_EXIT: equ 60
 
 ; BUILTIN DUMP SUBROUTINE
 ; =======================
-; func dump(obj: T, size: usize)
+; func dump(obj: T, obj_size: usize) void
 ;
 ; ## Stack
-; +--------------------+ <- rbp + 0x18 + size
+; +--------------------+ <- rbp + 0x18 + obj_size
 ; | obj (high bytes)   |
 ; | ...                |
 ; | obj (low bytes)    |
 ; +--------------------+ <- rbp + 0x18
-; | size               |
+; | obj_size           |
 ; +--------------------+ <- rbp + 0x10
 ; | return address     |
 ; +--------------------+
@@ -33,74 +33,106 @@ __SYS_EXIT: equ 60
 ; | ...                |
 ; | buf (low bytes)    |
 ; +--------------------+ <- rsp
+;
+; ## Registers
+; r8  := obj_size
+; r9  := obj_addr
+; r10 := buf_size
+; rsp := buf_addr (after alloca)
+; r11 := obj_ptr
+; r12 := obj_end
+; r13 := buf_ptr
 section .text
 __dump:
     push rbp
     mov rbp, rsp
 
-    mov r15, [rbp + 0x10] ; r15 = size
+    ; r8 = obj_size
+    mov r8, [rbp + 0x10]
 
-    cmp r15, 0
+    ; if obj_size == 0 { write(STDERR_FILENO, "\n", 1) then return }
+    cmp r8, 0
     jne .setup
     mov rax, __SYS_WRITE
     mov rdi, __STDERR_FILENO
-    mov rsi, __dump_nl
-    mov rdx, 1
+    mov rsi, __dump_nl_start
+    mov rdx, __dump_nl_count
     syscall
-    mov rsp, rbp
-    pop rbp
-    ret
+    jmp .return
 
 .setup:
-    mov r14, r15 ; r14 = size * 3
-    imul r14, 3
-    sub rsp, r14 ; buf = rsp = alloca(size * 3)
+    ; r9 = obj_addr
+    mov r9, rbp
+    add r9, 0x18
 
-    mov r11, rsp ; ptr = r11 = buf
-    mov r12, rbp ; cur = r12 = &obj
-    add r12, 0x18
-    mov r13, r12 ; end = r13 = &obj + size
-    add r13, r15
+    ; r10 = buf_size = obj_size * 3
+    mov r10, r8 ; obj_size
+    imul r10, 3 ; obj_size * 3
+
+    ; rsp = alloca(buf_size)
+    sub rsp, r10
+
+    ; r11 = obj_ptr
+    mov r11, r9 ; obj_addr
+
+    ; r12 = obj_end
+    mov r12, r9 ; obj_addr
+    add r12, r8 ; obj_addr + obj_size
+
+    ; r13 = buf_ptr
+    mov r13, rsp ; buf_addr
 
 .loop:
-    cmp r12, r13 ; while (cur != end)
+    ; for obj_ptr != obj_end
+    cmp r11, r12
     je .write
 
-    mov rax, [r12] ; repr = rax = dump_lookup_table + *cur * 2
-    and rax, 0xFF
-    imul rax, 2
-    add rax, __dump_lookup_table
+    ; Load the address of the two byte hex digit sequence corresponding to
+    ; the value of *(:byte)obj_ptr into rax.
+    ; rax = seq = lookup_table + *(:byte)obj_ptr * 2
+    movzx rax, byte [r11]        ; *(:byte)obj_ptr
+    imul rax, 2                  ; *(:byte)obj_ptr * 2
+    add rax, __dump_lookup_table ; lookup_table + *(:byte)obj_ptr * 2
 
-    mov bl, [rax + 0] ; *ptr = repr[0]
-    mov [r11], bl
-    inc r11 ; ptr += 1
-    mov bl, [rax + 1] ; *ptr = repr[1]
-    mov [r11], bl
-    inc r11 ; ptr += 1
-    mov bl, 0x20 ; *ptr = ' '
-    mov byte [r11], bl
-    inc r11 ; ptr += 1
+    ; *((:byte)buf_ptr + 0) = *((:byte)seq + 0)
+    mov bl, [rax + 0]
+    mov [r13 + 0], bl
 
-    inc r12 ; cur += 1
+    ; *((:byte)buf_ptr + 1) = *((:byte)seq + 1)
+    mov bl, [rax + 1]
+    mov [r13 + 1], bl
+
+    ; *((:byte)buf_ptr + 2) = ' '
+    mov byte [r13 + 2], 0x20 ; ' '
+
+    ; obj_ptr += 1
+    inc r11
+    ; buf_ptr += 3
+    add r13, 3
+
     jmp .loop
 
 .write:
-    dec r11 ; ptr -= 1
-    mov byte [r11], 0x0A ; *ptr = '\n'
+    ; buf_ptr -= 1
+    dec r13
+    ; *(:byte)buf_ptr = '\n'
+    mov byte [r13], 0x0A ; '\n'
 
-    ; write(STDERR_FILENO, buf, size * 3)
+    ; write(STDERR_FILENO, buf, buf_size)
     mov rax, __SYS_WRITE
     mov rdi, __STDERR_FILENO
     mov rsi, rsp
-    mov rdx, r14
+    mov rdx, r10
     syscall
 
+.return:
     mov rsp, rbp
     pop rbp
     ret
 
 section .rodata
-__dump_nl: db 0x0A
+__dump_nl_start: db 0x0A
+__dump_nl_count: equ 1
 __dump_lookup_table: db \
     '00', '01', '02', '03', '04', '05', '06', '07', \
     '08', '09', '0A', '0B', '0C', '0D', '0E', '0F', \
