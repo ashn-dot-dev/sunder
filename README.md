@@ -1,10 +1,9 @@
 # The Sunder Programming Language
-Sunder is a work-in-progress C-like systems programming language designed for
-educational purposes.
-
-**The Sunder Project is in an early stage of development and should be
-considered pre-alpha software. There is currently not much to see and the code
-is probably riddled with bugs.**
+Sunder is a work-in-progress C-like systems programming language and compiler
+for x86-64 Linux. See [this blog
+post](https://www.ashn.dev/blog/2021-10-05-i-wrote-a-compiler-for-my-own-programming-language.html)
+for a quick background on some of the current features supported by the language
+and compiler.
 
 ## Dependencies
 + POSIX-compatible `make`
@@ -45,7 +44,7 @@ The `install` target will install the Sunder toolchain into the directory
 specified by `$SUNDER_HOME` (default `$HOME/.sunder`). Run `make install` with
 `$SUNDER_HOME` specified as the directory of your choice, add `$SUNDER_HOME` to
 your `.profile` (or equivalent), and then finally add `$SUNDER_HOME/bin` to your
-`$PATH` if necessary.
+`$PATH`.
 ```sh
 $ make install
 ```
@@ -56,6 +55,42 @@ if [ -d "$HOME/.sunder" ]; then
     export SUNDER_IMPORT_PATH="${SUNDER_HOME}/lib"
     PATH="${SUNDER_HOME}/bin:$PATH"
 fi
+```
+
+Verify that the compiler has been successfully installed by running
+`sunder-compile --help`. You may have to source your `.profile` in new shells
+until the start of your next login session.
+
+## Using the Sunder Compiler
+Compiling the source file `hello.sunder` into the executable `hello`.
+
+```sunder
+import "std/io.sunder";
+
+func main() void {
+    std::println("Hello, world!");
+}
+```
+```sh
+$ sunder-compile -o hello hello.sunder
+$ ./hello
+Hello, world!
+```
+
+The `-o FILE` option determines the name of the output executable. If this
+option is not provided then the output executable will default to the name
+`a.out`.
+
+The intermediate assembly file `FILE.asm` (output file name plus `.asm`
+extension) is generated during compilation and then subsequently removed after
+the output executable has been created. The `-k` or `--keep` flags will instruct
+the compiler *not* to remove this file after compilation has finished (useful
+for debugging).
+
+```sh
+$ sunder-compile -o hello hello.sunder --keep
+$ file -i hello.asm
+hello.asm: text/plain; charset=us-ascii
 ```
 
 ## License
