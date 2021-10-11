@@ -1,9 +1,9 @@
 # The Sunder Programming Language
 Sunder is a work-in-progress C-like systems programming language and compiler
-for x86-64 Linux. See [this blog
-post](https://www.ashn.dev/blog/2021-10-05-i-wrote-a-compiler-for-my-own-programming-language.html)
-for a quick background on some of the current features supported by the language
-and compiler.
+for x86-64 Linux.
+
+See [this blog post](https://www.ashn.dev/blog/2021-10-05-i-wrote-a-compiler-for-my-own-programming-language.html)
+for a quick overview of the features supported within the language.
 
 ## Dependencies
 + POSIX-compatible `make`
@@ -81,11 +81,10 @@ The `-o FILE` option determines the name of the output executable. If this
 option is not provided then the output executable will default to the name
 `a.out`.
 
-The intermediate assembly file `FILE.asm` (output file name plus `.asm`
+The intermediate assembly file `FILE.asm` (output executable name plus `.asm`
 extension) is generated during compilation and then subsequently removed after
 the output executable has been created. The `-k` or `--keep` flags will instruct
-the compiler *not* to remove this file after compilation has finished (useful
-for debugging).
+the compiler *not* to remove this file (useful for debugging).
 
 ```sh
 $ sunder-compile -o hello hello.sunder --keep
