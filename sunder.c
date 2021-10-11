@@ -115,15 +115,10 @@ messagev_(
 void
 debug(struct source_location const* location, char const* fmt, ...)
 {
-#if ENABLE_DEBUG != 0
     va_list args;
     va_start(args, fmt);
     messagev_(location, "debug", ANSI_MSG_DEBUG, fmt, args);
     va_end(args);
-#else
-    (void)location;
-    (void)fmt;
-#endif
 }
 
 void
