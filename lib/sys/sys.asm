@@ -227,7 +227,7 @@ __index_oob_handler:
     syscall
 
     mov rax, __SYS_EXIT
-        mov rdi, __EXIT_FAILURE
+    mov rdi, __EXIT_FAILURE
     syscall
 
 section .rodata
