@@ -2363,17 +2363,18 @@ codegen(char const* const opt_o, bool opt_k)
     appendch('\n');
     codegen_static_functions();
 
-    if (autil_file_write(
-            autil_string_start(asm_path),
-            autil_string_start(out),
-            autil_string_count(out))) {
-        fatal(
+    int err = 0;
+    if ((err = autil_file_write(
+             autil_string_start(asm_path),
+             autil_string_start(out),
+             autil_string_count(out)))) {
+        error(
             NULL,
             "unable to write file `%s` with error '%s'",
             autil_string_start(asm_path),
             strerror(errno));
+        goto cleanup;
     }
-    autil_string_del(out);
 
     // clang-format off
     char const* const nasm_argv[] = {
@@ -2381,27 +2382,28 @@ codegen(char const* const opt_o, bool opt_k)
         autil_string_start(asm_path), (char const*)NULL
     };
     // clang-format on
-    xspawnvpw("nasm", nasm_argv);
+    if ((err = spawnvpw("nasm", nasm_argv))) {
+        goto cleanup;
+    }
 
     // clang-format off
     char const* const ld_argv[] = {
         "ld", "-o",  opt_o, autil_string_start(obj_path), (char const*)NULL
     };
     // clang-format on
-    xspawnvpw("ld", ld_argv);
-
-    if (!opt_k) {
-        // clang-format off
-        char const* const rm_argv[] = {
-            "rm",
-            autil_string_start(asm_path),
-            autil_string_start(obj_path),
-            (char const*)NULL
-        };
-        // clang-format on
-        xspawnvpw("rm", rm_argv);
+    if ((err = spawnvpw("ld", ld_argv))) {
+        goto cleanup;
     }
 
+cleanup:
+    if (!opt_k) {
+        (void)remove(autil_string_start(asm_path));
+        (void)remove(autil_string_start(obj_path));
+    }
     autil_string_del(asm_path);
     autil_string_del(obj_path);
+    autil_string_del(out);
+    if (err) {
+        exit(EXIT_FAILURE);
+    }
 }
