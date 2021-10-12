@@ -110,11 +110,11 @@ bitarr_to_bigint(
 // Spawn a subprocess and wait for it to complete.
 // Returns the exit status of the spawned process.
 int
-spawnvpw(char const* path, char const* const* argv);
+spawnvpw(char const* const* argv);
 // Spawn a subprocess and wait for it to complete.
 // Fatally exits if the exit status of the spawned process is non-zero.
 void
-xspawnvpw(char const* path, char const* const* argv);
+xspawnvpw(char const* const* argv);
 
 bool
 file_exists(char const* path);

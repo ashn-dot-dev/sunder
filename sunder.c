@@ -182,38 +182,6 @@ ceil8zu(size_t x)
 }
 
 int
-spawnvpw(char const* path, char const* const* argv)
-{
-    assert(path != NULL);
-    assert(argv != NULL);
-    assert(argv[0] != NULL);
-
-    pid_t const pid = fork();
-    if (pid == -1) {
-        fatal(NULL, "failed to fork with error '%s'", strerror(errno));
-    }
-
-    if (pid == 0) {
-        // The POSIX 2017 rational section for the exec family of functions
-        // notes that the neither the argv vector's elements nor the characters
-        // within those elements are modified. The parameter declaration `char
-        // *const argv[]` was chosen to allow for for historical compatibility.
-        char* const* argv_ = (char* const*)argv;
-        if (execvp(path, argv_) == -1) {
-            fatal(
-                NULL,
-                "failed to execvp '%s' with error '%s'",
-                path,
-                strerror(errno));
-        }
-    }
-
-    int status = 0;
-    waitpid(pid, &status, 0);
-    return status;
-}
-
-int
 bigint_to_u8(uint8_t* res, struct autil_bigint const* bigint)
 {
     assert(res != NULL);
@@ -362,14 +330,43 @@ bitarr_to_bigint(
     autil_bitarr_del(mag_bits);
 }
 
-void
-xspawnvpw(char const* path, char const* const* argv)
+int
+spawnvpw(char const* const* argv)
 {
-    assert(path != NULL);
     assert(argv != NULL);
     assert(argv[0] != NULL);
 
-    if (spawnvpw(path, argv) != 0) {
+    pid_t const pid = fork();
+    if (pid == -1) {
+        fatal(NULL, "failed to fork with error '%s'", strerror(errno));
+    }
+
+    if (pid == 0) {
+        // The POSIX 2017 rational section for the exec family of functions
+        // notes that the neither the argv vector's elements nor the characters
+        // within those elements are modified. The parameter declaration `char
+        // *const argv[]` was chosen to allow for for historical compatibility.
+        char* const* argv_ = (char* const*)argv;
+        if (execvp(argv[0], argv_) == -1) {
+            fatal(
+                NULL,
+                "failed to execvp '%s' with error '%s'",
+                argv[0],
+                strerror(errno));
+        }
+    }
+
+    int status = 0;
+    waitpid(pid, &status, 0);
+    return status;
+}
+
+void
+xspawnvpw(char const* const* argv)
+{
+    assert(argv != NULL);
+
+    if (spawnvpw(argv) != 0) {
         exit(EXIT_FAILURE);
     }
 }

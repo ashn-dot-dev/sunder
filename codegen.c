@@ -2382,7 +2382,7 @@ codegen(char const* const opt_o, bool opt_k)
         autil_string_start(asm_path), (char const*)NULL
     };
     // clang-format on
-    if ((err = spawnvpw("nasm", nasm_argv))) {
+    if ((err = spawnvpw(nasm_argv))) {
         goto cleanup;
     }
 
@@ -2391,7 +2391,7 @@ codegen(char const* const opt_o, bool opt_k)
         "ld", "-o",  opt_o, autil_string_start(obj_path), (char const*)NULL
     };
     // clang-format on
-    if ((err = spawnvpw("ld", ld_argv))) {
+    if ((err = spawnvpw(ld_argv))) {
         goto cleanup;
     }
 
