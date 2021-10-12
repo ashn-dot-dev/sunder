@@ -1300,7 +1300,7 @@ resolve_stmt_assign(struct resolver* resolver, struct ast_stmt const* stmt)
     if (rhs->type->kind == TYPE_UNSIZED_INTEGER) {
         rhs = convert_unsized_integer(lhs->type, rhs);
     }
-    check_type_compatibility(rhs->location, rhs->type, lhs->type);
+    check_type_compatibility(stmt->location, rhs->type, lhs->type);
 
     struct tir_stmt* const resolved =
         tir_stmt_new_assign(stmt->location, lhs, rhs);

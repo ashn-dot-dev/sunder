@@ -1,0 +1,8 @@
+func main() void {
+    var x: s64 = 0;
+    x = 1s32 + 2s32 * 3s32;
+}
+################################################################################
+# [error-stmt-assign-incompatible-type.sunder:3] error: incompatible type `s32` (expected `s64`)
+#     x = 1s32 + 2s32 * 3s32;
+#       ^
