@@ -28,41 +28,41 @@ check_peek(struct parser const* parser, enum token_kind kind);
 static struct token const*
 expect_current(struct parser* parser, enum token_kind kind);
 
-static struct ast_module const*
+static struct cst_module const*
 parse_module(struct parser* parser);
 
-static struct ast_namespace const*
+static struct cst_namespace const*
 parse_namespace(struct parser* parser);
 
-static struct ast_import const*
+static struct cst_import const*
 parse_import(struct parser* parser);
 
-static struct ast_decl const*
+static struct cst_decl const*
 parse_decl(struct parser* parser);
-static struct ast_decl const*
+static struct cst_decl const*
 parse_decl_variable(struct parser* parser);
-static struct ast_decl const*
+static struct cst_decl const*
 parse_decl_constant(struct parser* parser);
-static struct ast_decl const*
+static struct cst_decl const*
 parse_decl_function(struct parser* parser);
-static struct ast_decl const*
+static struct cst_decl const*
 parse_decl_extern_variable(struct parser* parser);
 
-static struct ast_stmt const*
+static struct cst_stmt const*
 parse_stmt(struct parser* parser);
-static struct ast_stmt const*
+static struct cst_stmt const*
 parse_stmt_if(struct parser* parser);
-static struct ast_stmt const*
+static struct cst_stmt const*
 parse_stmt_for(struct parser* parser);
-static struct ast_stmt const*
+static struct cst_stmt const*
 parse_stmt_break(struct parser* parser);
-static struct ast_stmt const*
+static struct cst_stmt const*
 parse_stmt_continue(struct parser* parser);
-static struct ast_stmt const*
+static struct cst_stmt const*
 parse_stmt_dump(struct parser* parser);
-static struct ast_stmt const*
+static struct cst_stmt const*
 parse_stmt_return(struct parser* parser);
-static struct ast_stmt const*
+static struct cst_stmt const*
 parse_stmt_decl(struct parser* parser);
 
 enum precedence {
@@ -83,10 +83,10 @@ static enum precedence
 current_precedence(struct parser* parser);
 
 // Parse function for a null denotation.
-typedef struct ast_expr const* (*parse_nud_fn)(struct parser*);
+typedef struct cst_expr const* (*parse_nud_fn)(struct parser*);
 // Parse function for a left denotation.
-typedef struct ast_expr const* (*parse_led_fn)(
-    struct parser*, struct ast_expr const*);
+typedef struct cst_expr const* (*parse_led_fn)(
+    struct parser*, struct cst_expr const*);
 // Returns NULL if no function is associated with the provided token kind.
 static parse_nud_fn
 token_kind_nud(enum token_kind kind);
@@ -94,62 +94,62 @@ token_kind_nud(enum token_kind kind);
 static parse_led_fn
 token_kind_led(enum token_kind kind);
 
-static struct ast_expr const*
+static struct cst_expr const*
 parse_expr(struct parser* parser);
-static struct ast_expr const*
+static struct cst_expr const*
 parse_expr_identifier(struct parser* parser);
-static struct ast_expr const*
+static struct cst_expr const*
 parse_expr_qualified_identifier(
-    struct parser* parser, struct ast_identifier const* first);
-static struct ast_expr const*
+    struct parser* parser, struct cst_identifier const* first);
+static struct cst_expr const*
 parse_expr_boolean(struct parser* parser);
-static struct ast_expr const*
+static struct cst_expr const*
 parse_expr_integer(struct parser* parser);
-static struct ast_expr const*
+static struct cst_expr const*
 parse_expr_bytes(struct parser* parser);
-static struct ast_expr const*
+static struct cst_expr const*
 parse_expr_lparen(struct parser* parser);
-static struct ast_expr const*
+static struct cst_expr const*
 parse_expr_syscall(struct parser* parser);
-static struct ast_expr const*
-parse_expr_led_call(struct parser* parser, struct ast_expr const* lhs);
-static struct ast_expr const*
-parse_expr_led_index(struct parser* parser, struct ast_expr const* lhs);
-static struct ast_expr const*
+static struct cst_expr const*
+parse_expr_led_call(struct parser* parser, struct cst_expr const* lhs);
+static struct cst_expr const*
+parse_expr_led_index(struct parser* parser, struct cst_expr const* lhs);
+static struct cst_expr const*
 parse_expr_sizeof(struct parser* parser);
-static struct ast_expr const*
+static struct cst_expr const*
 parse_expr_nud_unary(struct parser* parser);
-static struct ast_expr const*
-parse_expr_led_binary(struct parser* parser, struct ast_expr const* lhs);
+static struct cst_expr const*
+parse_expr_led_binary(struct parser* parser, struct cst_expr const* lhs);
 
-static struct ast_block const*
+static struct cst_block const*
 parse_block(struct parser* parser);
 
-static struct ast_parameter const* const*
+static struct cst_parameter const* const*
 parse_parameter_list(struct parser* parser);
-static struct ast_parameter const*
+static struct cst_parameter const*
 parse_parameter(struct parser* parser);
 
-static struct ast_typespec const*
+static struct cst_typespec const*
 parse_typespec(struct parser* parser);
-static struct ast_typespec const*
+static struct cst_typespec const*
 parse_typespec_identifier(struct parser* parser);
-static struct ast_typespec const*
+static struct cst_typespec const*
 parse_typespec_function(struct parser* parser);
-static struct ast_typespec const*
+static struct cst_typespec const*
 parse_typespec_pointer(struct parser* parser);
-static struct ast_typespec const*
+static struct cst_typespec const*
 parse_typespec_array_or_slice(struct parser* parser);
-static struct ast_typespec const*
+static struct cst_typespec const*
 parse_typespec_typeof(struct parser* parser);
 
-static struct ast_identifier const*
+static struct cst_identifier const*
 parse_identifier(struct parser* parser);
 
-static struct ast_boolean const*
+static struct cst_boolean const*
 parse_boolean(struct parser* parser);
 
-static struct ast_integer const*
+static struct cst_integer const*
 parse_integer(struct parser* parser);
 
 static struct parser*
@@ -223,42 +223,42 @@ expect_current(struct parser* parser, enum token_kind kind)
     return advance_token(parser);
 }
 
-static struct ast_module const*
+static struct cst_module const*
 parse_module(struct parser* parser)
 {
     assert(parser != NULL);
 
-    struct ast_namespace const* namespace = NULL;
+    struct cst_namespace const* namespace = NULL;
     if (check_current(parser, TOKEN_NAMESPACE)) {
         namespace = parse_namespace(parser);
     }
 
-    autil_sbuf(struct ast_import const*) imports = NULL;
+    autil_sbuf(struct cst_import const*) imports = NULL;
     while (check_current(parser, TOKEN_IMPORT)) {
         autil_sbuf_push(imports, parse_import(parser));
     }
     autil_sbuf_freeze(imports, context()->freezer);
 
-    autil_sbuf(struct ast_decl const*) decls = NULL;
+    autil_sbuf(struct cst_decl const*) decls = NULL;
     while (!check_current(parser, TOKEN_EOF)) {
         autil_sbuf_push(decls, parse_decl(parser));
     }
     autil_sbuf_freeze(decls, context()->freezer);
 
-    struct ast_module* const product =
-        ast_module_new(namespace, imports, decls);
+    struct cst_module* const product =
+        cst_module_new(namespace, imports, decls);
 
     autil_freezer_register(context()->freezer, product);
     return product;
 }
 
-static struct ast_namespace const*
+static struct cst_namespace const*
 parse_namespace(struct parser* parser)
 {
     struct source_location const* const location =
         &expect_current(parser, TOKEN_NAMESPACE)->location;
 
-    autil_sbuf(struct ast_identifier const*) identifiers = NULL;
+    autil_sbuf(struct cst_identifier const*) identifiers = NULL;
     autil_sbuf_push(identifiers, parse_identifier(parser));
     while (!check_current(parser, TOKEN_SEMICOLON)) {
         expect_current(parser, TOKEN_COLON_COLON);
@@ -267,14 +267,14 @@ parse_namespace(struct parser* parser)
     expect_current(parser, TOKEN_SEMICOLON);
 
     autil_sbuf_freeze(identifiers, context()->freezer);
-    struct ast_namespace* const product =
-        ast_namespace_new(location, identifiers);
+    struct cst_namespace* const product =
+        cst_namespace_new(location, identifiers);
 
     autil_freezer_register(context()->freezer, product);
     return product;
 }
 
-static struct ast_import const*
+static struct cst_import const*
 parse_import(struct parser* parser)
 {
     struct source_location const* const location =
@@ -286,13 +286,13 @@ parse_import(struct parser* parser)
         autil_sipool_intern_cstr(context()->sipool, autil_string_start(bytes));
     expect_current(parser, TOKEN_SEMICOLON);
 
-    struct ast_import* const product = ast_import_new(location, path);
+    struct cst_import* const product = cst_import_new(location, path);
 
     autil_freezer_register(context()->freezer, product);
     return product;
 }
 
-static struct ast_decl const*
+static struct cst_decl const*
 parse_decl(struct parser* parser)
 {
     assert(parser != NULL);
@@ -320,71 +320,71 @@ parse_decl(struct parser* parser)
     return NULL;
 }
 
-static struct ast_decl const*
+static struct cst_decl const*
 parse_decl_variable(struct parser* parser)
 {
     assert(parser != NULL);
 
     struct source_location const* const location =
         &expect_current(parser, TOKEN_VAR)->location;
-    struct ast_identifier const* const identifier = parse_identifier(parser);
+    struct cst_identifier const* const identifier = parse_identifier(parser);
     expect_current(parser, TOKEN_COLON);
-    struct ast_typespec const* const typespec = parse_typespec(parser);
+    struct cst_typespec const* const typespec = parse_typespec(parser);
     expect_current(parser, TOKEN_ASSIGN);
-    struct ast_expr const* const expr = parse_expr(parser);
+    struct cst_expr const* const expr = parse_expr(parser);
     expect_current(parser, TOKEN_SEMICOLON);
 
-    struct ast_decl* const product =
-        ast_decl_new_variable(location, identifier, typespec, expr);
+    struct cst_decl* const product =
+        cst_decl_new_variable(location, identifier, typespec, expr);
 
     autil_freezer_register(context()->freezer, product);
     return product;
 }
 
-static struct ast_decl const*
+static struct cst_decl const*
 parse_decl_constant(struct parser* parser)
 {
     assert(parser != NULL);
 
     struct source_location const* const location =
         &expect_current(parser, TOKEN_CONST)->location;
-    struct ast_identifier const* const identifier = parse_identifier(parser);
+    struct cst_identifier const* const identifier = parse_identifier(parser);
     expect_current(parser, TOKEN_COLON);
-    struct ast_typespec const* const typespec = parse_typespec(parser);
+    struct cst_typespec const* const typespec = parse_typespec(parser);
     expect_current(parser, TOKEN_ASSIGN);
-    struct ast_expr const* const expr = parse_expr(parser);
+    struct cst_expr const* const expr = parse_expr(parser);
     expect_current(parser, TOKEN_SEMICOLON);
 
-    struct ast_decl* const product =
-        ast_decl_new_constant(location, identifier, typespec, expr);
+    struct cst_decl* const product =
+        cst_decl_new_constant(location, identifier, typespec, expr);
 
     autil_freezer_register(context()->freezer, product);
     return product;
 }
 
-static struct ast_decl const*
+static struct cst_decl const*
 parse_decl_function(struct parser* parser)
 {
     assert(parser != NULL);
 
     struct source_location const* const location =
         &expect_current(parser, TOKEN_FUNC)->location;
-    struct ast_identifier const* const identifier = parse_identifier(parser);
+    struct cst_identifier const* const identifier = parse_identifier(parser);
     expect_current(parser, TOKEN_LPAREN);
-    autil_sbuf(struct ast_parameter const* const) parameters =
+    autil_sbuf(struct cst_parameter const* const) parameters =
         parse_parameter_list(parser);
     expect_current(parser, TOKEN_RPAREN);
-    struct ast_typespec const* const return_typespec = parse_typespec(parser);
-    struct ast_block const* const body = parse_block(parser);
+    struct cst_typespec const* const return_typespec = parse_typespec(parser);
+    struct cst_block const* const body = parse_block(parser);
 
-    struct ast_decl* const product = ast_decl_new_func(
+    struct cst_decl* const product = cst_decl_new_func(
         location, identifier, parameters, return_typespec, body);
 
     autil_freezer_register(context()->freezer, product);
     return product;
 }
 
-static struct ast_decl const*
+static struct cst_decl const*
 parse_decl_extern_variable(struct parser* parser)
 {
     assert(parser != NULL);
@@ -392,19 +392,19 @@ parse_decl_extern_variable(struct parser* parser)
     struct source_location const* const location =
         &expect_current(parser, TOKEN_EXTERN)->location;
     expect_current(parser, TOKEN_VAR);
-    struct ast_identifier const* const identifier = parse_identifier(parser);
+    struct cst_identifier const* const identifier = parse_identifier(parser);
     expect_current(parser, TOKEN_COLON);
-    struct ast_typespec const* const typespec = parse_typespec(parser);
+    struct cst_typespec const* const typespec = parse_typespec(parser);
     expect_current(parser, TOKEN_SEMICOLON);
 
-    struct ast_decl* const product =
-        ast_decl_new_extern_variable(location, identifier, typespec);
+    struct cst_decl* const product =
+        cst_decl_new_extern_variable(location, identifier, typespec);
 
     autil_freezer_register(context()->freezer, product);
     return product;
 }
 
-static struct ast_stmt const*
+static struct cst_stmt const*
 parse_stmt(struct parser* parser)
 {
     assert(parser != NULL);
@@ -438,41 +438,41 @@ parse_stmt(struct parser* parser)
         return parse_stmt_return(parser);
     }
 
-    struct ast_expr const* const expr = parse_expr(parser);
+    struct cst_expr const* const expr = parse_expr(parser);
     if (check_current(parser, TOKEN_ASSIGN)) {
         // <stmt-assign>
         struct source_location const* const location =
             &expect_current(parser, TOKEN_ASSIGN)->location;
-        struct ast_expr const* const rhs = parse_expr(parser);
+        struct cst_expr const* const rhs = parse_expr(parser);
         expect_current(parser, TOKEN_SEMICOLON);
 
-        struct ast_stmt* const product =
-            ast_stmt_new_assign(location, expr, rhs);
+        struct cst_stmt* const product =
+            cst_stmt_new_assign(location, expr, rhs);
         autil_freezer_register(context()->freezer, product);
         return product;
     }
 
     // <stmt-expr>
     expect_current(parser, TOKEN_SEMICOLON);
-    struct ast_stmt* const product = ast_stmt_new_expr(expr);
+    struct cst_stmt* const product = cst_stmt_new_expr(expr);
     autil_freezer_register(context()->freezer, product);
     return product;
 }
 
-static struct ast_stmt const*
+static struct cst_stmt const*
 parse_stmt_if(struct parser* parser)
 {
     assert(parser != NULL);
     assert(check_current(parser, TOKEN_IF));
 
-    autil_sbuf(struct ast_conditional const*) conditionals = NULL;
+    autil_sbuf(struct cst_conditional const*) conditionals = NULL;
 
     struct source_location const* location =
         &expect_current(parser, TOKEN_IF)->location;
-    struct ast_expr const* condition = parse_expr(parser);
-    struct ast_block const* body = parse_block(parser);
-    struct ast_conditional* conditional =
-        ast_conditional_new(location, condition, body);
+    struct cst_expr const* condition = parse_expr(parser);
+    struct cst_block const* body = parse_block(parser);
+    struct cst_conditional* conditional =
+        cst_conditional_new(location, condition, body);
     autil_freezer_register(context()->freezer, conditional);
     autil_sbuf_push(conditionals, conditional);
 
@@ -480,7 +480,7 @@ parse_stmt_if(struct parser* parser)
         location = &advance_token(parser)->location;
         condition = parse_expr(parser);
         body = parse_block(parser);
-        conditional = ast_conditional_new(location, condition, body);
+        conditional = cst_conditional_new(location, condition, body);
         autil_freezer_register(context()->freezer, conditional);
         autil_sbuf_push(conditionals, conditional);
     }
@@ -488,19 +488,19 @@ parse_stmt_if(struct parser* parser)
     if (check_current(parser, TOKEN_ELSE)) {
         location = &advance_token(parser)->location;
         body = parse_block(parser);
-        conditional = ast_conditional_new(location, NULL, body);
+        conditional = cst_conditional_new(location, NULL, body);
         autil_freezer_register(context()->freezer, conditional);
         autil_sbuf_push(conditionals, conditional);
     }
 
     autil_sbuf_freeze(conditionals, context()->freezer);
-    struct ast_stmt* const product = ast_stmt_new_if(conditionals);
+    struct cst_stmt* const product = cst_stmt_new_if(conditionals);
 
     autil_freezer_register(context()->freezer, product);
     return product;
 }
 
-static struct ast_stmt const*
+static struct cst_stmt const*
 parse_stmt_for(struct parser* parser)
 {
     assert(parser != NULL);
@@ -512,33 +512,33 @@ parse_stmt_for(struct parser* parser)
     // <stmt-for-range>
     if (check_current(parser, TOKEN_IDENTIFIER)
         && check_peek(parser, TOKEN_IN)) {
-        struct ast_identifier const* const identifier =
+        struct cst_identifier const* const identifier =
             parse_identifier(parser);
         expect_current(parser, TOKEN_IN);
-        struct ast_expr const* const begin = parse_expr(parser);
+        struct cst_expr const* const begin = parse_expr(parser);
         expect_current(parser, TOKEN_COLON);
-        struct ast_expr const* const end = parse_expr(parser);
-        struct ast_block const* const body = parse_block(parser);
+        struct cst_expr const* const end = parse_expr(parser);
+        struct cst_block const* const body = parse_block(parser);
 
-        struct ast_stmt* const product =
-            ast_stmt_new_for_range(location, identifier, begin, end, body);
+        struct cst_stmt* const product =
+            cst_stmt_new_for_range(location, identifier, begin, end, body);
 
         autil_freezer_register(context()->freezer, product);
         return product;
     }
 
     // <stmt-for-expr>
-    struct ast_expr const* const expr = parse_expr(parser);
-    struct ast_block const* const body = parse_block(parser);
+    struct cst_expr const* const expr = parse_expr(parser);
+    struct cst_block const* const body = parse_block(parser);
 
-    struct ast_stmt* const product =
-        ast_stmt_new_for_expr(location, expr, body);
+    struct cst_stmt* const product =
+        cst_stmt_new_for_expr(location, expr, body);
 
     autil_freezer_register(context()->freezer, product);
     return product;
 }
 
-static struct ast_stmt const*
+static struct cst_stmt const*
 parse_stmt_break(struct parser* parser)
 {
     assert(parser != NULL);
@@ -549,13 +549,13 @@ parse_stmt_break(struct parser* parser)
 
     expect_current(parser, TOKEN_SEMICOLON);
 
-    struct ast_stmt* const product = ast_stmt_new_break(location);
+    struct cst_stmt* const product = cst_stmt_new_break(location);
 
     autil_freezer_register(context()->freezer, product);
     return product;
 }
 
-static struct ast_stmt const*
+static struct cst_stmt const*
 parse_stmt_continue(struct parser* parser)
 {
     assert(parser != NULL);
@@ -566,13 +566,13 @@ parse_stmt_continue(struct parser* parser)
 
     expect_current(parser, TOKEN_SEMICOLON);
 
-    struct ast_stmt* const product = ast_stmt_new_continue(location);
+    struct cst_stmt* const product = cst_stmt_new_continue(location);
 
     autil_freezer_register(context()->freezer, product);
     return product;
 }
 
-static struct ast_stmt const*
+static struct cst_stmt const*
 parse_stmt_dump(struct parser* parser)
 {
     assert(parser != NULL);
@@ -580,16 +580,16 @@ parse_stmt_dump(struct parser* parser)
 
     struct source_location const* const location =
         &expect_current(parser, TOKEN_DUMP)->location;
-    struct ast_expr const* const expr = parse_expr(parser);
+    struct cst_expr const* const expr = parse_expr(parser);
     expect_current(parser, TOKEN_SEMICOLON);
 
-    struct ast_stmt* const product = ast_stmt_new_dump(location, expr);
+    struct cst_stmt* const product = cst_stmt_new_dump(location, expr);
 
     autil_freezer_register(context()->freezer, product);
     return product;
 }
 
-static struct ast_stmt const*
+static struct cst_stmt const*
 parse_stmt_return(struct parser* parser)
 {
     assert(parser != NULL);
@@ -598,25 +598,25 @@ parse_stmt_return(struct parser* parser)
     struct source_location const* const location =
         &expect_current(parser, TOKEN_RETURN)->location;
 
-    struct ast_expr const* expr = NULL;
+    struct cst_expr const* expr = NULL;
     if (!check_current(parser, TOKEN_SEMICOLON)) {
         expr = parse_expr(parser);
     }
 
     expect_current(parser, TOKEN_SEMICOLON);
-    struct ast_stmt* const product = ast_stmt_new_return(location, expr);
+    struct cst_stmt* const product = cst_stmt_new_return(location, expr);
 
     autil_freezer_register(context()->freezer, product);
     return product;
 }
 
-static struct ast_stmt const*
+static struct cst_stmt const*
 parse_stmt_decl(struct parser* parser)
 {
     assert(parser != NULL);
 
-    struct ast_decl const* const decl = parse_decl(parser);
-    struct ast_stmt* const product = ast_stmt_new_decl(decl);
+    struct cst_decl const* const decl = parse_decl(parser);
+    struct cst_stmt* const product = cst_stmt_new_decl(decl);
 
     autil_freezer_register(context()->freezer, product);
     return product;
@@ -729,7 +729,7 @@ token_kind_led(enum token_kind kind)
     return NULL;
 }
 
-static struct ast_expr const*
+static struct cst_expr const*
 parse_expr_precedence(struct parser* parser, enum precedence precedence)
 {
     assert(parser != NULL);
@@ -743,7 +743,7 @@ parse_expr_precedence(struct parser* parser, enum precedence precedence)
             token_kind_to_cstr(nud_token->kind));
     }
 
-    struct ast_expr const* expr = parse_nud(parser);
+    struct cst_expr const* expr = parse_nud(parser);
     while (precedence < current_precedence(parser)) {
         parse_led_fn const parse_led =
             token_kind_led(parser->current_token->kind);
@@ -756,42 +756,42 @@ parse_expr_precedence(struct parser* parser, enum precedence precedence)
     return expr;
 }
 
-static struct ast_expr const*
+static struct cst_expr const*
 parse_expr(struct parser* parser)
 {
     assert(parser != NULL);
 
-    struct ast_expr const* const product =
+    struct cst_expr const* const product =
         parse_expr_precedence(parser, PRECEDENCE_LOWEST);
 
     return product;
 }
 
-static struct ast_expr const*
+static struct cst_expr const*
 parse_expr_identifier(struct parser* parser)
 {
     assert(parser != NULL);
 
-    struct ast_identifier const* const identifier = parse_identifier(parser);
+    struct cst_identifier const* const identifier = parse_identifier(parser);
     if (check_current(parser, TOKEN_COLON_COLON)) {
         return parse_expr_qualified_identifier(parser, identifier);
     }
 
-    struct ast_expr* const product = ast_expr_new_identifier(identifier);
+    struct cst_expr* const product = cst_expr_new_identifier(identifier);
 
     autil_freezer_register(context()->freezer, product);
     return product;
 }
 
-static struct ast_expr const*
+static struct cst_expr const*
 parse_expr_qualified_identifier(
-    struct parser* parser, struct ast_identifier const* first)
+    struct parser* parser, struct cst_identifier const* first)
 {
     assert(parser != NULL);
     assert(first != NULL);
     assert(check_current(parser, TOKEN_COLON_COLON));
 
-    autil_sbuf(struct ast_identifier const*) identifiers = NULL;
+    autil_sbuf(struct cst_identifier const*) identifiers = NULL;
     autil_sbuf_push(identifiers, first);
     while (check_current(parser, TOKEN_COLON_COLON)) {
         expect_current(parser, TOKEN_COLON_COLON);
@@ -799,51 +799,51 @@ parse_expr_qualified_identifier(
     }
 
     autil_sbuf_freeze(identifiers, context()->freezer);
-    struct ast_expr* const product =
-        ast_expr_new_qualified_identifier(identifiers);
+    struct cst_expr* const product =
+        cst_expr_new_qualified_identifier(identifiers);
 
     autil_freezer_register(context()->freezer, product);
     return product;
 }
 
-static struct ast_expr const*
+static struct cst_expr const*
 parse_expr_boolean(struct parser* parser)
 {
     assert(parser != NULL);
 
-    struct ast_boolean const* const boolean = parse_boolean(parser);
-    struct ast_expr* const product = ast_expr_new_boolean(boolean);
+    struct cst_boolean const* const boolean = parse_boolean(parser);
+    struct cst_expr* const product = cst_expr_new_boolean(boolean);
 
     autil_freezer_register(context()->freezer, product);
     return product;
 }
 
-static struct ast_expr const*
+static struct cst_expr const*
 parse_expr_integer(struct parser* parser)
 {
     assert(parser != NULL);
 
-    struct ast_integer const* const integer = parse_integer(parser);
-    struct ast_expr* const product = ast_expr_new_integer(integer);
+    struct cst_integer const* const integer = parse_integer(parser);
+    struct cst_expr* const product = cst_expr_new_integer(integer);
 
     autil_freezer_register(context()->freezer, product);
     return product;
 }
 
-static struct ast_expr const*
+static struct cst_expr const*
 parse_expr_bytes(struct parser* parser)
 {
     assert(parser != NULL);
 
     struct token const* const token = expect_current(parser, TOKEN_BYTES);
-    struct ast_expr* const product =
-        ast_expr_new_bytes(&token->location, token->data.bytes);
+    struct cst_expr* const product =
+        cst_expr_new_bytes(&token->location, token->data.bytes);
 
     autil_freezer_register(context()->freezer, product);
     return product;
 }
 
-static struct ast_expr const*
+static struct cst_expr const*
 parse_expr_lparen(struct parser* parser)
 {
     assert(parser != NULL);
@@ -853,29 +853,29 @@ parse_expr_lparen(struct parser* parser)
 
     if (!check_current(parser, TOKEN_COLON)) {
         // <expr-grouped>
-        struct ast_expr const* const expr = parse_expr(parser);
+        struct cst_expr const* const expr = parse_expr(parser);
         expect_current(parser, TOKEN_RPAREN);
-        struct ast_expr* const product = ast_expr_new_grouped(location, expr);
+        struct cst_expr* const product = cst_expr_new_grouped(location, expr);
 
         autil_freezer_register(context()->freezer, product);
         return product;
     }
 
     expect_current(parser, TOKEN_COLON);
-    struct ast_typespec const* const typespec = parse_typespec(parser);
+    struct cst_typespec const* const typespec = parse_typespec(parser);
     expect_current(parser, TOKEN_RPAREN);
 
     if (check_current(parser, TOKEN_LBRACKET)) {
         // <expr-array>
         expect_current(parser, TOKEN_LBRACKET);
-        autil_sbuf(struct ast_expr const*) elements = NULL;
-        struct ast_expr const* ellipsis = NULL;
+        autil_sbuf(struct cst_expr const*) elements = NULL;
+        struct cst_expr const* ellipsis = NULL;
         while (!check_current(parser, TOKEN_RBRACKET)) {
             if (autil_sbuf_count(elements) != 0u) {
                 expect_current(parser, TOKEN_COMMA);
             }
 
-            struct ast_expr const* const expr = parse_expr(parser);
+            struct cst_expr const* const expr = parse_expr(parser);
             if (check_current(parser, TOKEN_ELLIPSIS)) {
                 expect_current(parser, TOKEN_ELLIPSIS);
                 ellipsis = expr;
@@ -887,8 +887,8 @@ parse_expr_lparen(struct parser* parser)
         autil_sbuf_freeze(elements, context()->freezer);
         expect_current(parser, TOKEN_RBRACKET);
 
-        struct ast_expr* const product =
-            ast_expr_new_literal_array(location, typespec, elements, ellipsis);
+        struct cst_expr* const product =
+            cst_expr_new_literal_array(location, typespec, elements, ellipsis);
 
         autil_freezer_register(context()->freezer, product);
         return product;
@@ -897,30 +897,30 @@ parse_expr_lparen(struct parser* parser)
     if (check_current(parser, TOKEN_LBRACE)) {
         // <expr-slice>
         expect_current(parser, TOKEN_LBRACE);
-        struct ast_expr const* const pointer = parse_expr(parser);
+        struct cst_expr const* const pointer = parse_expr(parser);
         expect_current(parser, TOKEN_COMMA);
-        struct ast_expr const* const count = parse_expr(parser);
+        struct cst_expr const* const count = parse_expr(parser);
         expect_current(parser, TOKEN_RBRACE);
 
-        struct ast_expr* const product =
-            ast_expr_new_literal_slice(location, typespec, pointer, count);
+        struct cst_expr* const product =
+            cst_expr_new_literal_slice(location, typespec, pointer, count);
 
         autil_freezer_register(context()->freezer, product);
         return product;
     }
 
     // <expr-cast>
-    struct ast_expr const* const expr =
+    struct cst_expr const* const expr =
         parse_expr_precedence(parser, PRECEDENCE_PREFIX);
 
-    struct ast_expr* const product =
-        ast_expr_new_cast(location, typespec, expr);
+    struct cst_expr* const product =
+        cst_expr_new_cast(location, typespec, expr);
 
     autil_freezer_register(context()->freezer, product);
     return product;
 }
 
-static struct ast_expr const*
+static struct cst_expr const*
 parse_expr_syscall(struct parser* parser)
 {
     assert(parser != NULL);
@@ -928,7 +928,7 @@ parse_expr_syscall(struct parser* parser)
     struct source_location const* const location =
         &expect_current(parser, TOKEN_SYSCALL)->location;
     expect_current(parser, TOKEN_LPAREN);
-    autil_sbuf(struct ast_expr const*) exprs = NULL;
+    autil_sbuf(struct cst_expr const*) exprs = NULL;
     autil_sbuf_push(exprs, parse_expr(parser));
     while (!check_current(parser, TOKEN_RPAREN)) {
         expect_current(parser, TOKEN_COMMA);
@@ -937,20 +937,20 @@ parse_expr_syscall(struct parser* parser)
     autil_sbuf_freeze(exprs, context()->freezer);
     expect_current(parser, TOKEN_RPAREN);
 
-    struct ast_expr* const product = ast_expr_new_syscall(location, exprs);
+    struct cst_expr* const product = cst_expr_new_syscall(location, exprs);
 
     autil_freezer_register(context()->freezer, product);
     return product;
 }
 
-static struct ast_expr const*
-parse_expr_led_call(struct parser* parser, struct ast_expr const* lhs)
+static struct cst_expr const*
+parse_expr_led_call(struct parser* parser, struct cst_expr const* lhs)
 {
     assert(parser != NULL);
     assert(lhs != NULL);
 
     expect_current(parser, TOKEN_LPAREN);
-    autil_sbuf(struct ast_expr const*) args = NULL;
+    autil_sbuf(struct cst_expr const*) args = NULL;
     while (!check_current(parser, TOKEN_RPAREN)) {
         if (autil_sbuf_count(args) != 0) {
             expect_current(parser, TOKEN_COMMA);
@@ -959,30 +959,30 @@ parse_expr_led_call(struct parser* parser, struct ast_expr const* lhs)
     }
     autil_sbuf_freeze(args, context()->freezer);
     expect_current(parser, TOKEN_RPAREN);
-    struct ast_expr* const product = ast_expr_new_call(lhs, args);
+    struct cst_expr* const product = cst_expr_new_call(lhs, args);
 
     autil_freezer_register(context()->freezer, product);
     return product;
 }
 
-static struct ast_expr const*
-parse_expr_led_index(struct parser* parser, struct ast_expr const* lhs)
+static struct cst_expr const*
+parse_expr_led_index(struct parser* parser, struct cst_expr const* lhs)
 {
     assert(parser != NULL);
     assert(lhs != NULL);
 
     struct source_location const* const location =
         &expect_current(parser, TOKEN_LBRACKET)->location;
-    struct ast_expr const* const idx = parse_expr(parser);
+    struct cst_expr const* const idx = parse_expr(parser);
 
     if (check_current(parser, TOKEN_COLON)) {
         // <expr-slice>
         expect_current(parser, TOKEN_COLON);
-        struct ast_expr const* const end = parse_expr(parser);
+        struct cst_expr const* const end = parse_expr(parser);
         expect_current(parser, TOKEN_RBRACKET);
 
-        struct ast_expr* const product =
-            ast_expr_new_slice(location, lhs, idx, end);
+        struct cst_expr* const product =
+            cst_expr_new_slice(location, lhs, idx, end);
 
         autil_freezer_register(context()->freezer, product);
         return product;
@@ -990,13 +990,13 @@ parse_expr_led_index(struct parser* parser, struct ast_expr const* lhs)
 
     // <expr-index>
     expect_current(parser, TOKEN_RBRACKET);
-    struct ast_expr* const product = ast_expr_new_index(location, lhs, idx);
+    struct cst_expr* const product = cst_expr_new_index(location, lhs, idx);
 
     autil_freezer_register(context()->freezer, product);
     return product;
 }
 
-static struct ast_expr const*
+static struct cst_expr const*
 parse_expr_nud_unary(struct parser* parser)
 {
     assert(parser != NULL);
@@ -1007,19 +1007,19 @@ parse_expr_nud_unary(struct parser* parser)
     if (paren) {
         expect_current(parser, TOKEN_LPAREN);
     }
-    struct ast_expr const* const rhs =
+    struct cst_expr const* const rhs =
         parse_expr_precedence(parser, PRECEDENCE_PREFIX);
     if (paren) {
         expect_current(parser, TOKEN_RPAREN);
     }
 
-    struct ast_expr* const product = ast_expr_new_unary(op, rhs);
+    struct cst_expr* const product = cst_expr_new_unary(op, rhs);
 
     autil_freezer_register(context()->freezer, product);
     return product;
 }
 
-static struct ast_expr const*
+static struct cst_expr const*
 parse_expr_sizeof(struct parser* parser)
 {
     assert(parser != NULL);
@@ -1028,31 +1028,31 @@ parse_expr_sizeof(struct parser* parser)
         &expect_current(parser, TOKEN_SIZEOF)->location;
     expect_current(parser, TOKEN_LPAREN);
     expect_current(parser, TOKEN_COLON);
-    struct ast_typespec const* const rhs = parse_typespec(parser);
+    struct cst_typespec const* const rhs = parse_typespec(parser);
     expect_current(parser, TOKEN_RPAREN);
 
-    struct ast_expr* const product = ast_expr_new_sizeof(location, rhs);
+    struct cst_expr* const product = cst_expr_new_sizeof(location, rhs);
 
     autil_freezer_register(context()->freezer, product);
     return product;
 }
 
-static struct ast_expr const*
-parse_expr_led_binary(struct parser* parser, struct ast_expr const* lhs)
+static struct cst_expr const*
+parse_expr_led_binary(struct parser* parser, struct cst_expr const* lhs)
 {
     assert(parser != NULL);
     assert(lhs != NULL);
 
     struct token const* const op = advance_token(parser);
-    struct ast_expr const* const rhs =
+    struct cst_expr const* const rhs =
         parse_expr_precedence(parser, token_kind_precedence(op->kind));
-    struct ast_expr* const product = ast_expr_new_binary(op, lhs, rhs);
+    struct cst_expr* const product = cst_expr_new_binary(op, lhs, rhs);
 
     autil_freezer_register(context()->freezer, product);
     return product;
 }
 
-static struct ast_block const*
+static struct cst_block const*
 parse_block(struct parser* parser)
 {
     assert(parser != NULL);
@@ -1060,25 +1060,25 @@ parse_block(struct parser* parser)
     struct source_location const* const location =
         &expect_current(parser, TOKEN_LBRACE)->location;
 
-    autil_sbuf(struct ast_stmt const*) stmts = NULL;
+    autil_sbuf(struct cst_stmt const*) stmts = NULL;
     while (!check_current(parser, TOKEN_RBRACE)) {
         autil_sbuf_push(stmts, parse_stmt(parser));
     }
     autil_sbuf_freeze(stmts, context()->freezer);
     expect_current(parser, TOKEN_RBRACE);
 
-    struct ast_block* const product = ast_block_new(location, stmts);
+    struct cst_block* const product = cst_block_new(location, stmts);
 
     autil_freezer_register(context()->freezer, product);
     return product;
 }
 
-static struct ast_parameter const* const*
+static struct cst_parameter const* const*
 parse_parameter_list(struct parser* parser)
 {
     assert(parser != NULL);
 
-    autil_sbuf(struct ast_parameter const*) parameters = NULL;
+    autil_sbuf(struct cst_parameter const*) parameters = NULL;
     if (!check_current(parser, TOKEN_IDENTIFIER)) {
         return parameters;
     }
@@ -1093,23 +1093,23 @@ parse_parameter_list(struct parser* parser)
     return parameters;
 }
 
-static struct ast_parameter const*
+static struct cst_parameter const*
 parse_parameter(struct parser* parser)
 {
     assert(parser != NULL);
     assert(check_current(parser, TOKEN_IDENTIFIER));
 
-    struct ast_identifier const* identifier = parse_identifier(parser);
+    struct cst_identifier const* identifier = parse_identifier(parser);
     expect_current(parser, TOKEN_COLON);
-    struct ast_typespec const* typespec = parse_typespec(parser);
-    struct ast_parameter* const product =
-        ast_parameter_new(identifier, typespec);
+    struct cst_typespec const* typespec = parse_typespec(parser);
+    struct cst_parameter* const product =
+        cst_parameter_new(identifier, typespec);
 
     autil_freezer_register(context()->freezer, product);
     return product;
 }
 
-static struct ast_typespec const*
+static struct cst_typespec const*
 parse_typespec(struct parser* parser)
 {
     assert(parser != NULL);
@@ -1141,21 +1141,21 @@ parse_typespec(struct parser* parser)
     return NULL;
 }
 
-static struct ast_typespec const*
+static struct cst_typespec const*
 parse_typespec_identifier(struct parser* parser)
 {
     assert(parser != NULL);
     assert(check_current(parser, TOKEN_IDENTIFIER));
 
-    struct ast_identifier const* identifier = parse_identifier(parser);
-    struct ast_typespec* const product =
-        ast_typespec_new_identifier(identifier);
+    struct cst_identifier const* identifier = parse_identifier(parser);
+    struct cst_typespec* const product =
+        cst_typespec_new_identifier(identifier);
 
     autil_freezer_register(context()->freezer, product);
     return product;
 }
 
-static struct ast_typespec const*
+static struct cst_typespec const*
 parse_typespec_function(struct parser* parser)
 {
     assert(parser != NULL);
@@ -1165,7 +1165,7 @@ parse_typespec_function(struct parser* parser)
         &expect_current(parser, TOKEN_FUNC)->location;
 
     expect_current(parser, TOKEN_LPAREN);
-    autil_sbuf(struct ast_typespec const*) parameter_typespecs = NULL;
+    autil_sbuf(struct cst_typespec const*) parameter_typespecs = NULL;
     if (!check_current(parser, TOKEN_RPAREN)) {
         autil_sbuf_push(parameter_typespecs, parse_typespec(parser));
         while (check_current(parser, TOKEN_COMMA)) {
@@ -1176,16 +1176,16 @@ parse_typespec_function(struct parser* parser)
     expect_current(parser, TOKEN_RPAREN);
     autil_sbuf_freeze(parameter_typespecs, context()->freezer);
 
-    struct ast_typespec const* const return_typespec = parse_typespec(parser);
+    struct cst_typespec const* const return_typespec = parse_typespec(parser);
 
-    struct ast_typespec* const product = ast_typespec_new_function(
+    struct cst_typespec* const product = cst_typespec_new_function(
         location, parameter_typespecs, return_typespec);
 
     autil_freezer_register(context()->freezer, product);
     return product;
 }
 
-static struct ast_typespec const*
+static struct cst_typespec const*
 parse_typespec_pointer(struct parser* parser)
 {
     assert(parser != NULL);
@@ -1194,16 +1194,16 @@ parse_typespec_pointer(struct parser* parser)
     struct source_location const* const location =
         &expect_current(parser, TOKEN_STAR)->location;
 
-    struct ast_typespec const* const base = parse_typespec(parser);
+    struct cst_typespec const* const base = parse_typespec(parser);
 
-    struct ast_typespec* const product =
-        ast_typespec_new_pointer(location, base);
+    struct cst_typespec* const product =
+        cst_typespec_new_pointer(location, base);
 
     autil_freezer_register(context()->freezer, product);
     return product;
 }
 
-static struct ast_typespec const*
+static struct cst_typespec const*
 parse_typespec_array_or_slice(struct parser* parser)
 {
     assert(parser != NULL);
@@ -1215,28 +1215,28 @@ parse_typespec_array_or_slice(struct parser* parser)
     if (check_current(parser, TOKEN_RBRACKET)) {
         // <typespec-slice>
         expect_current(parser, TOKEN_RBRACKET);
-        struct ast_typespec const* const base = parse_typespec(parser);
+        struct cst_typespec const* const base = parse_typespec(parser);
 
-        struct ast_typespec* const product =
-            ast_typespec_new_slice(location, base);
+        struct cst_typespec* const product =
+            cst_typespec_new_slice(location, base);
 
         autil_freezer_register(context()->freezer, product);
         return product;
     }
 
     // <typespec-array>
-    struct ast_expr const* const count = parse_expr(parser);
+    struct cst_expr const* const count = parse_expr(parser);
     expect_current(parser, TOKEN_RBRACKET);
-    struct ast_typespec const* const base = parse_typespec(parser);
+    struct cst_typespec const* const base = parse_typespec(parser);
 
-    struct ast_typespec* const product =
-        ast_typespec_new_array(location, count, base);
+    struct cst_typespec* const product =
+        cst_typespec_new_array(location, count, base);
 
     autil_freezer_register(context()->freezer, product);
     return product;
 }
 
-static struct ast_typespec const*
+static struct cst_typespec const*
 parse_typespec_typeof(struct parser* parser)
 {
     assert(parser != NULL);
@@ -1245,17 +1245,17 @@ parse_typespec_typeof(struct parser* parser)
     struct source_location const* const location =
         &expect_current(parser, TOKEN_TYPEOF)->location;
     expect_current(parser, TOKEN_LPAREN);
-    struct ast_expr const* expr = parse_expr(parser);
+    struct cst_expr const* expr = parse_expr(parser);
     expect_current(parser, TOKEN_RPAREN);
 
-    struct ast_typespec* const product =
-        ast_typespec_new_typeof(location, expr);
+    struct cst_typespec* const product =
+        cst_typespec_new_typeof(location, expr);
 
     autil_freezer_register(context()->freezer, product);
     return product;
 }
 
-static struct ast_identifier const*
+static struct cst_identifier const*
 parse_identifier(struct parser* parser)
 {
     assert(parser != NULL);
@@ -1264,13 +1264,13 @@ parse_identifier(struct parser* parser)
     struct source_location const* location = &token->location;
     char const* const name =
         autil_sipool_intern(context()->sipool, token->start, token->count);
-    struct ast_identifier* const product = ast_identifier_new(location, name);
+    struct cst_identifier* const product = cst_identifier_new(location, name);
 
     autil_freezer_register(context()->freezer, product);
     return product;
 }
 
-static struct ast_boolean const*
+static struct cst_boolean const*
 parse_boolean(struct parser* parser)
 {
     assert(parser != NULL);
@@ -1279,13 +1279,13 @@ parse_boolean(struct parser* parser)
     assert(token->kind == TOKEN_TRUE || token->kind == TOKEN_FALSE);
     struct source_location const* const location = &token->location;
     bool const value = token->kind == TOKEN_TRUE;
-    struct ast_boolean* const product = ast_boolean_new(location, value);
+    struct cst_boolean* const product = cst_boolean_new(location, value);
 
     autil_freezer_register(context()->freezer, product);
     return product;
 }
 
-static struct ast_integer const*
+static struct cst_integer const*
 parse_integer(struct parser* parser)
 {
     assert(parser != NULL);
@@ -1299,8 +1299,8 @@ parse_integer(struct parser* parser)
         context()->sipool,
         token->data.integer.suffix.start,
         token->data.integer.suffix.count);
-    struct ast_integer* const product =
-        ast_integer_new(location, value, suffix);
+    struct cst_integer* const product =
+        cst_integer_new(location, value, suffix);
 
     autil_freezer_register(context()->freezer, product);
     return product;
@@ -1310,12 +1310,12 @@ void
 parse(struct module* module)
 {
     assert(module != NULL);
-    assert(module->ast == NULL);
+    assert(module->cst == NULL);
 
     struct lexer* const lexer = lexer_new(module);
     struct parser* const parser = parser_new(module, lexer);
 
-    module->ast = parse_module(parser);
+    module->cst = parse_module(parser);
 
     lexer_del(lexer);
     parser_del(parser);

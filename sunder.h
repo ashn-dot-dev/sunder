@@ -134,13 +134,13 @@ struct module {
     // Exported symbols declared in this module.
     struct symbol_table* exports;
 
-    // Abstract syntax tree for the module. Initialized to NULL and populated
+    // Concrete syntax tree for the module. Initialized to NULL and populated
     // during the parse phase.
-    struct ast_module const* ast;
+    struct cst_module const* cst;
     // List of top level declarations topologically ordered such that
     // declaration with index k does not depend on any declaration with index
     // k+n for all n. Initialized to NULL and populated during the order phase.
-    autil_sbuf(struct ast_decl const*) ordered;
+    autil_sbuf(struct cst_decl const*) ordered;
 };
 struct module*
 module_new(char const* path);
@@ -339,343 +339,343 @@ struct token const*
 lexer_next_token(struct lexer* self);
 
 ////////////////////////////////////////////////////////////////////////////////
-//////// ast.c /////////////////////////////////////////////////////////////////
-// Abstract syntax tree.
+//////// cst.c /////////////////////////////////////////////////////////////////
+// Concrete syntax tree.
 
-struct ast_module {
-    struct ast_namespace const* namespace; // optional
-    autil_sbuf(struct ast_import const* const) imports;
-    autil_sbuf(struct ast_decl const* const) decls;
+struct cst_module {
+    struct cst_namespace const* namespace; // optional
+    autil_sbuf(struct cst_import const* const) imports;
+    autil_sbuf(struct cst_decl const* const) decls;
 };
-struct ast_module*
-ast_module_new(
-    struct ast_namespace const* namespace,
-    struct ast_import const* const* imports,
-    struct ast_decl const* const* decls);
+struct cst_module*
+cst_module_new(
+    struct cst_namespace const* namespace,
+    struct cst_import const* const* imports,
+    struct cst_decl const* const* decls);
 
-struct ast_namespace {
+struct cst_namespace {
     struct source_location const* location;
-    autil_sbuf(struct ast_identifier const* const) identifiers;
+    autil_sbuf(struct cst_identifier const* const) identifiers;
 };
-struct ast_namespace*
-ast_namespace_new(
+struct cst_namespace*
+cst_namespace_new(
     struct source_location const* location,
-    struct ast_identifier const* const* identifiers);
+    struct cst_identifier const* const* identifiers);
 
-struct ast_import {
+struct cst_import {
     struct source_location const* location;
     char const* path; // interned
 };
-struct ast_import*
-ast_import_new(struct source_location const* location, char const* path);
+struct cst_import*
+cst_import_new(struct source_location const* location, char const* path);
 
-struct ast_decl {
+struct cst_decl {
     struct source_location const* location;
     char const* name; // interned (from the identifier)
     enum {
-        AST_DECL_VARIABLE,
-        AST_DECL_CONSTANT,
-        AST_DECL_FUNCTION,
-        AST_DECL_EXTERN_VARIABLE,
+        CST_DECL_VARIABLE,
+        CST_DECL_CONSTANT,
+        CST_DECL_FUNCTION,
+        CST_DECL_EXTERN_VARIABLE,
     } kind;
     union {
         struct {
-            struct ast_identifier const* identifier;
-            struct ast_typespec const* typespec;
-            struct ast_expr const* expr;
+            struct cst_identifier const* identifier;
+            struct cst_typespec const* typespec;
+            struct cst_expr const* expr;
         } variable;
         struct {
-            struct ast_identifier const* identifier;
-            struct ast_typespec const* typespec;
-            struct ast_expr const* expr;
+            struct cst_identifier const* identifier;
+            struct cst_typespec const* typespec;
+            struct cst_expr const* expr;
         } constant;
         struct {
-            struct ast_identifier const* identifier;
-            autil_sbuf(struct ast_parameter const* const) parameters;
-            struct ast_typespec const* return_typespec;
-            struct ast_block const* body;
+            struct cst_identifier const* identifier;
+            autil_sbuf(struct cst_parameter const* const) parameters;
+            struct cst_typespec const* return_typespec;
+            struct cst_block const* body;
         } function;
         struct {
-            struct ast_identifier const* identifier;
-            struct ast_typespec const* typespec;
+            struct cst_identifier const* identifier;
+            struct cst_typespec const* typespec;
         } extern_variable;
     } data;
 };
-struct ast_decl*
-ast_decl_new_variable(
+struct cst_decl*
+cst_decl_new_variable(
     struct source_location const* location,
-    struct ast_identifier const* identifier,
-    struct ast_typespec const* typespec,
-    struct ast_expr const* expr);
-struct ast_decl*
-ast_decl_new_constant(
+    struct cst_identifier const* identifier,
+    struct cst_typespec const* typespec,
+    struct cst_expr const* expr);
+struct cst_decl*
+cst_decl_new_constant(
     struct source_location const* location,
-    struct ast_identifier const* identifier,
-    struct ast_typespec const* typespec,
-    struct ast_expr const* expr);
-struct ast_decl*
-ast_decl_new_func(
+    struct cst_identifier const* identifier,
+    struct cst_typespec const* typespec,
+    struct cst_expr const* expr);
+struct cst_decl*
+cst_decl_new_func(
     struct source_location const* location,
-    struct ast_identifier const* identifier,
-    struct ast_parameter const* const* paramseters,
-    struct ast_typespec const* return_typespec,
-    struct ast_block const* body);
-struct ast_decl*
-ast_decl_new_extern_variable(
+    struct cst_identifier const* identifier,
+    struct cst_parameter const* const* paramseters,
+    struct cst_typespec const* return_typespec,
+    struct cst_block const* body);
+struct cst_decl*
+cst_decl_new_extern_variable(
     struct source_location const* location,
-    struct ast_identifier const* identifier,
-    struct ast_typespec const* typespec);
+    struct cst_identifier const* identifier,
+    struct cst_typespec const* typespec);
 
-struct ast_stmt {
+struct cst_stmt {
     struct source_location const* location;
-    enum ast_stmt_kind {
-        AST_STMT_DECL,
-        AST_STMT_IF,
-        AST_STMT_FOR_RANGE,
-        AST_STMT_FOR_EXPR,
-        AST_STMT_BREAK, /* no .data member */
-        AST_STMT_CONTINUE, /* no .data member */
-        AST_STMT_DUMP,
-        AST_STMT_RETURN,
-        AST_STMT_ASSIGN,
-        AST_STMT_EXPR,
+    enum cst_stmt_kind {
+        CST_STMT_DECL,
+        CST_STMT_IF,
+        CST_STMT_FOR_RANGE,
+        CST_STMT_FOR_EXPR,
+        CST_STMT_BREAK, /* no .data member */
+        CST_STMT_CONTINUE, /* no .data member */
+        CST_STMT_DUMP,
+        CST_STMT_RETURN,
+        CST_STMT_ASSIGN,
+        CST_STMT_EXPR,
     } kind;
     union {
-        struct ast_decl const* decl;
+        struct cst_decl const* decl;
         struct {
-            autil_sbuf(struct ast_conditional const* const) conditionals;
+            autil_sbuf(struct cst_conditional const* const) conditionals;
         } if_;
         struct {
-            struct ast_identifier const* identifier;
-            struct ast_expr const* begin;
-            struct ast_expr const* end;
-            struct ast_block const* body;
+            struct cst_identifier const* identifier;
+            struct cst_expr const* begin;
+            struct cst_expr const* end;
+            struct cst_block const* body;
         } for_range;
         struct {
-            struct ast_expr const* expr;
-            struct ast_block const* body;
+            struct cst_expr const* expr;
+            struct cst_block const* body;
         } for_expr;
         struct {
-            struct ast_expr const* expr;
+            struct cst_expr const* expr;
         } dump;
         struct {
-            struct ast_expr const* expr; // optional
+            struct cst_expr const* expr; // optional
         } return_;
         struct {
-            struct ast_expr const* lhs;
-            struct ast_expr const* rhs;
+            struct cst_expr const* lhs;
+            struct cst_expr const* rhs;
         } assign;
-        struct ast_expr const* expr;
+        struct cst_expr const* expr;
     } data;
 };
-struct ast_stmt*
-ast_stmt_new_decl(struct ast_decl const* decl);
-struct ast_stmt*
-ast_stmt_new_if(struct ast_conditional const* const* conditionals);
-struct ast_stmt*
-ast_stmt_new_for_range(
+struct cst_stmt*
+cst_stmt_new_decl(struct cst_decl const* decl);
+struct cst_stmt*
+cst_stmt_new_if(struct cst_conditional const* const* conditionals);
+struct cst_stmt*
+cst_stmt_new_for_range(
     struct source_location const* location,
-    struct ast_identifier const* identifier,
-    struct ast_expr const* begin,
-    struct ast_expr const* end,
-    struct ast_block const* body);
-struct ast_stmt*
-ast_stmt_new_for_expr(
+    struct cst_identifier const* identifier,
+    struct cst_expr const* begin,
+    struct cst_expr const* end,
+    struct cst_block const* body);
+struct cst_stmt*
+cst_stmt_new_for_expr(
     struct source_location const* location,
-    struct ast_expr const* expr,
-    struct ast_block const* body);
-struct ast_stmt*
-ast_stmt_new_break(struct source_location const* location);
-struct ast_stmt*
-ast_stmt_new_continue(struct source_location const* location);
-struct ast_stmt*
-ast_stmt_new_dump(
-    struct source_location const* location, struct ast_expr const* expr);
-struct ast_stmt*
-ast_stmt_new_return(
-    struct source_location const* location, struct ast_expr const* expr);
-struct ast_stmt*
-ast_stmt_new_assign(
+    struct cst_expr const* expr,
+    struct cst_block const* body);
+struct cst_stmt*
+cst_stmt_new_break(struct source_location const* location);
+struct cst_stmt*
+cst_stmt_new_continue(struct source_location const* location);
+struct cst_stmt*
+cst_stmt_new_dump(
+    struct source_location const* location, struct cst_expr const* expr);
+struct cst_stmt*
+cst_stmt_new_return(
+    struct source_location const* location, struct cst_expr const* expr);
+struct cst_stmt*
+cst_stmt_new_assign(
     struct source_location const* location,
-    struct ast_expr const* lhs,
-    struct ast_expr const* rhs);
-struct ast_stmt*
-ast_stmt_new_expr(struct ast_expr const* expr);
+    struct cst_expr const* lhs,
+    struct cst_expr const* rhs);
+struct cst_stmt*
+cst_stmt_new_expr(struct cst_expr const* expr);
 
-struct ast_expr {
+struct cst_expr {
     struct source_location const* location;
-    enum ast_expr_kind {
+    enum cst_expr_kind {
         // Primary Expressions
-        AST_EXPR_IDENTIFIER,
-        AST_EXPR_QUALIFIED_IDENTIFIER,
-        AST_EXPR_BOOLEAN,
-        AST_EXPR_INTEGER,
-        AST_EXPR_BYTES,
-        AST_EXPR_LITERAL_ARRAY,
-        AST_EXPR_LITERAL_SLICE,
-        AST_EXPR_CAST,
-        AST_EXPR_GROUPED,
+        CST_EXPR_IDENTIFIER,
+        CST_EXPR_QUALIFIED_IDENTIFIER,
+        CST_EXPR_BOOLEAN,
+        CST_EXPR_INTEGER,
+        CST_EXPR_BYTES,
+        CST_EXPR_LITERAL_ARRAY,
+        CST_EXPR_LITERAL_SLICE,
+        CST_EXPR_CAST,
+        CST_EXPR_GROUPED,
         // Postfix Expressions
-        AST_EXPR_SYSCALL,
-        AST_EXPR_CALL,
-        AST_EXPR_INDEX,
-        AST_EXPR_SLICE,
+        CST_EXPR_SYSCALL,
+        CST_EXPR_CALL,
+        CST_EXPR_INDEX,
+        CST_EXPR_SLICE,
         // Prefix Unary Operator Expressions
-        AST_EXPR_SIZEOF,
-        AST_EXPR_UNARY,
+        CST_EXPR_SIZEOF,
+        CST_EXPR_UNARY,
         // Infix Binary Operator Expressions
-        AST_EXPR_BINARY,
+        CST_EXPR_BINARY,
     } kind;
-    union ast_expr_data {
-        struct ast_identifier const* identifier;
+    union cst_expr_data {
+        struct cst_identifier const* identifier;
         struct {
-            autil_sbuf(struct ast_identifier const* const) identifiers;
+            autil_sbuf(struct cst_identifier const* const) identifiers;
         } qualified_identifier;
-        struct ast_boolean const* boolean;
-        struct ast_integer const* integer;
+        struct cst_boolean const* boolean;
+        struct cst_integer const* integer;
         struct autil_string const* bytes;
         struct {
-            struct ast_typespec const* typespec;
-            autil_sbuf(struct ast_expr const* const) elements;
-            struct ast_expr const* ellipsis; // optional
+            struct cst_typespec const* typespec;
+            autil_sbuf(struct cst_expr const* const) elements;
+            struct cst_expr const* ellipsis; // optional
         } literal_array;
         struct {
-            struct ast_typespec const* typespec;
-            struct ast_expr const* pointer;
-            struct ast_expr const* count;
+            struct cst_typespec const* typespec;
+            struct cst_expr const* pointer;
+            struct cst_expr const* count;
         } literal_slice;
         struct {
-            struct ast_typespec const* typespec;
-            struct ast_expr const* expr;
+            struct cst_typespec const* typespec;
+            struct cst_expr const* expr;
         } cast;
         struct {
-            struct ast_expr const* expr;
+            struct cst_expr const* expr;
         } grouped;
-        struct ast_stmt_syscall {
-            autil_sbuf(struct ast_expr const* const) arguments;
+        struct cst_stmt_syscall {
+            autil_sbuf(struct cst_expr const* const) arguments;
         } syscall;
         struct {
-            struct ast_expr const* func;
-            autil_sbuf(struct ast_expr const* const) arguments;
+            struct cst_expr const* func;
+            autil_sbuf(struct cst_expr const* const) arguments;
         } call;
         struct {
-            struct ast_expr const* lhs;
-            struct ast_expr const* idx;
+            struct cst_expr const* lhs;
+            struct cst_expr const* idx;
         } index;
         struct {
-            struct ast_expr const* lhs;
-            struct ast_expr const* begin;
-            struct ast_expr const* end;
+            struct cst_expr const* lhs;
+            struct cst_expr const* begin;
+            struct cst_expr const* end;
         } slice;
         struct {
-            struct ast_typespec const* rhs;
+            struct cst_typespec const* rhs;
         } sizeof_;
         struct {
             struct token const* op;
-            struct ast_expr const* rhs;
+            struct cst_expr const* rhs;
         } unary;
         struct {
             struct token const* op;
-            struct ast_expr const* lhs;
-            struct ast_expr const* rhs;
+            struct cst_expr const* lhs;
+            struct cst_expr const* rhs;
         } binary;
     } data;
 };
-struct ast_expr*
-ast_expr_new_identifier(struct ast_identifier const* identifier);
-struct ast_expr*
-ast_expr_new_qualified_identifier(
-    struct ast_identifier const* const* identifiers);
-struct ast_expr*
-ast_expr_new_boolean(struct ast_boolean const* boolean);
-struct ast_expr*
-ast_expr_new_integer(struct ast_integer const* integer);
-struct ast_expr*
-ast_expr_new_bytes(
+struct cst_expr*
+cst_expr_new_identifier(struct cst_identifier const* identifier);
+struct cst_expr*
+cst_expr_new_qualified_identifier(
+    struct cst_identifier const* const* identifiers);
+struct cst_expr*
+cst_expr_new_boolean(struct cst_boolean const* boolean);
+struct cst_expr*
+cst_expr_new_integer(struct cst_integer const* integer);
+struct cst_expr*
+cst_expr_new_bytes(
     struct source_location const* location, struct autil_string const* bytes);
-struct ast_expr*
-ast_expr_new_literal_array(
+struct cst_expr*
+cst_expr_new_literal_array(
     struct source_location const* location,
-    struct ast_typespec const* typespec,
-    struct ast_expr const* const* elements,
-    struct ast_expr const* ellipsis);
-struct ast_expr*
-ast_expr_new_literal_slice(
+    struct cst_typespec const* typespec,
+    struct cst_expr const* const* elements,
+    struct cst_expr const* ellipsis);
+struct cst_expr*
+cst_expr_new_literal_slice(
     struct source_location const* location,
-    struct ast_typespec const* typespec,
-    struct ast_expr const* pointer,
-    struct ast_expr const* count);
-struct ast_expr*
-ast_expr_new_cast(
+    struct cst_typespec const* typespec,
+    struct cst_expr const* pointer,
+    struct cst_expr const* count);
+struct cst_expr*
+cst_expr_new_cast(
     struct source_location const* location,
-    struct ast_typespec const* typespec,
-    struct ast_expr const* expr);
-struct ast_expr*
-ast_expr_new_grouped(
-    struct source_location const* location, struct ast_expr const* expr);
-struct ast_expr*
-ast_expr_new_syscall(
+    struct cst_typespec const* typespec,
+    struct cst_expr const* expr);
+struct cst_expr*
+cst_expr_new_grouped(
+    struct source_location const* location, struct cst_expr const* expr);
+struct cst_expr*
+cst_expr_new_syscall(
     struct source_location const* location,
-    struct ast_expr const* const* arguments);
-struct ast_expr*
-ast_expr_new_call(
-    struct ast_expr const* func, struct ast_expr const* const* arguments);
-struct ast_expr*
-ast_expr_new_index(
+    struct cst_expr const* const* arguments);
+struct cst_expr*
+cst_expr_new_call(
+    struct cst_expr const* func, struct cst_expr const* const* arguments);
+struct cst_expr*
+cst_expr_new_index(
     struct source_location const* location,
-    struct ast_expr const* lhs,
-    struct ast_expr const* idx);
-struct ast_expr*
-ast_expr_new_slice(
+    struct cst_expr const* lhs,
+    struct cst_expr const* idx);
+struct cst_expr*
+cst_expr_new_slice(
     struct source_location const* location,
-    struct ast_expr const* lhs,
-    struct ast_expr const* begin,
-    struct ast_expr const* end);
-struct ast_expr*
-ast_expr_new_sizeof(
-    struct source_location const* location, struct ast_typespec const* rhs);
-struct ast_expr*
-ast_expr_new_unary(struct token const* op, struct ast_expr const* rhs);
-struct ast_expr*
-ast_expr_new_binary(
+    struct cst_expr const* lhs,
+    struct cst_expr const* begin,
+    struct cst_expr const* end);
+struct cst_expr*
+cst_expr_new_sizeof(
+    struct source_location const* location, struct cst_typespec const* rhs);
+struct cst_expr*
+cst_expr_new_unary(struct token const* op, struct cst_expr const* rhs);
+struct cst_expr*
+cst_expr_new_binary(
     struct token const* op,
-    struct ast_expr const* lhs,
-    struct ast_expr const* rhs);
+    struct cst_expr const* lhs,
+    struct cst_expr const* rhs);
 
-// Helper ast node that denotes a conditional expression (if, elif, etc.)
+// Helper CST node that denotes a conditional expression (if, elif, etc.)
 // consisting of a conditional expression and body.
-struct ast_conditional {
+struct cst_conditional {
     struct source_location const* location;
-    struct ast_expr const* condition; // optional (NULL => else)
-    struct ast_block const* body;
+    struct cst_expr const* condition; // optional (NULL => else)
+    struct cst_block const* body;
 };
-struct ast_conditional*
-ast_conditional_new(
+struct cst_conditional*
+cst_conditional_new(
     struct source_location const* location,
-    struct ast_expr const* condition,
-    struct ast_block const* body);
+    struct cst_expr const* condition,
+    struct cst_block const* body);
 
-struct ast_block {
+struct cst_block {
     struct source_location const* location;
-    autil_sbuf(struct ast_stmt const* const) stmts;
+    autil_sbuf(struct cst_stmt const* const) stmts;
 };
-struct ast_block*
-ast_block_new(
+struct cst_block*
+cst_block_new(
     struct source_location const* location,
-    struct ast_stmt const* const* stmts);
+    struct cst_stmt const* const* stmts);
 
-struct ast_parameter {
+struct cst_parameter {
     struct source_location const* location;
-    struct ast_identifier const* identifier;
-    struct ast_typespec const* typespec;
+    struct cst_identifier const* identifier;
+    struct cst_typespec const* typespec;
 };
-struct ast_parameter*
-ast_parameter_new(
-    struct ast_identifier const* identifier,
-    struct ast_typespec const* typespec);
+struct cst_parameter*
+cst_parameter_new(
+    struct cst_identifier const* identifier,
+    struct cst_typespec const* typespec);
 
 // ISO/IEC 9899:1999 Section 6.7.2 - Type Specifiers
-struct ast_typespec {
+struct cst_typespec {
     struct source_location const* location;
     enum typespec_kind {
         TYPESPEC_IDENTIFIER,
@@ -686,69 +686,69 @@ struct ast_typespec {
         TYPESPEC_TYPEOF
     } kind;
     union {
-        struct ast_identifier const* identifier;
+        struct cst_identifier const* identifier;
         struct {
-            autil_sbuf(struct ast_typespec const* const) parameter_typespecs;
-            struct ast_typespec const* return_typespec;
+            autil_sbuf(struct cst_typespec const* const) parameter_typespecs;
+            struct cst_typespec const* return_typespec;
         } function;
         struct {
-            struct ast_typespec const* base;
+            struct cst_typespec const* base;
         } pointer;
         struct {
-            struct ast_expr const* count;
-            struct ast_typespec const* base;
+            struct cst_expr const* count;
+            struct cst_typespec const* base;
         } array;
         struct {
-            struct ast_typespec const* base;
+            struct cst_typespec const* base;
         } slice;
         struct {
-            struct ast_expr const* expr;
+            struct cst_expr const* expr;
         } typeof;
     } data;
 };
-struct ast_typespec*
-ast_typespec_new_identifier(struct ast_identifier const* identifier);
-struct ast_typespec*
-ast_typespec_new_function(
+struct cst_typespec*
+cst_typespec_new_identifier(struct cst_identifier const* identifier);
+struct cst_typespec*
+cst_typespec_new_function(
     struct source_location const* location,
-    struct ast_typespec const* const* parameter_typespecs,
-    struct ast_typespec const* return_typespec);
-struct ast_typespec*
-ast_typespec_new_pointer(
-    struct source_location const* location, struct ast_typespec const* base);
-struct ast_typespec*
-ast_typespec_new_array(
+    struct cst_typespec const* const* parameter_typespecs,
+    struct cst_typespec const* return_typespec);
+struct cst_typespec*
+cst_typespec_new_pointer(
+    struct source_location const* location, struct cst_typespec const* base);
+struct cst_typespec*
+cst_typespec_new_array(
     struct source_location const* location,
-    struct ast_expr const* count,
-    struct ast_typespec const* base);
-struct ast_typespec*
-ast_typespec_new_slice(
-    struct source_location const* location, struct ast_typespec const* base);
-struct ast_typespec*
-ast_typespec_new_typeof(
-    struct source_location const* location, struct ast_expr const* expr);
+    struct cst_expr const* count,
+    struct cst_typespec const* base);
+struct cst_typespec*
+cst_typespec_new_slice(
+    struct source_location const* location, struct cst_typespec const* base);
+struct cst_typespec*
+cst_typespec_new_typeof(
+    struct source_location const* location, struct cst_expr const* expr);
 
-struct ast_identifier {
+struct cst_identifier {
     struct source_location const* location;
     char const* name; // interned
 };
-struct ast_identifier*
-ast_identifier_new(struct source_location const* location, char const* name);
+struct cst_identifier*
+cst_identifier_new(struct source_location const* location, char const* name);
 
-struct ast_boolean {
+struct cst_boolean {
     struct source_location const* location;
     bool value;
 };
-struct ast_boolean*
-ast_boolean_new(struct source_location const* location, bool value);
+struct cst_boolean*
+cst_boolean_new(struct source_location const* location, bool value);
 
-struct ast_integer {
+struct cst_integer {
     struct source_location const* location;
     struct autil_bigint const* value;
     char const* suffix; // interned
 };
-struct ast_integer*
-ast_integer_new(
+struct cst_integer*
+cst_integer_new(
     struct source_location const* location,
     struct autil_bigint const* value,
     char const* suffix);

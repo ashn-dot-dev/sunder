@@ -7,7 +7,7 @@
 #include "sunder.h"
 
 struct incomplete_function {
-    struct ast_decl const* decl;
+    struct cst_decl const* decl;
     struct tir_function* function;
     struct symbol_table* symbol_table;
 };
@@ -97,84 +97,84 @@ static struct tir_expr const*
 convert_unsized_integer(struct type const* type, struct tir_expr const* expr);
 
 static void
-resolve_import(struct resolver* resolver, struct ast_import const* import);
+resolve_import(struct resolver* resolver, struct cst_import const* import);
 
 static struct symbol const*
-resolve_decl(struct resolver* resolver, struct ast_decl const* decl);
+resolve_decl(struct resolver* resolver, struct cst_decl const* decl);
 static struct symbol const*
 resolve_decl_variable(
     struct resolver* resolver,
-    struct ast_decl const* decl,
+    struct cst_decl const* decl,
     struct tir_expr const** /*optional*/ lhs,
     struct tir_expr const** /*optional*/ rhs);
 static struct symbol const*
-resolve_decl_constant(struct resolver* resolver, struct ast_decl const* decl);
+resolve_decl_constant(struct resolver* resolver, struct cst_decl const* decl);
 static struct symbol const*
-resolve_decl_function(struct resolver* resolver, struct ast_decl const* decl);
+resolve_decl_function(struct resolver* resolver, struct cst_decl const* decl);
 static struct symbol const*
 resolve_decl_extern_variable(
-    struct resolver* resolver, struct ast_decl const* decl);
+    struct resolver* resolver, struct cst_decl const* decl);
 
 static void
 complete_function(
     struct resolver* resolver, struct incomplete_function const* incomplete);
 
 static struct tir_stmt const* // optional
-resolve_stmt(struct resolver* resolver, struct ast_stmt const* stmt);
+resolve_stmt(struct resolver* resolver, struct cst_stmt const* stmt);
 static struct tir_stmt const* // optional
-resolve_stmt_decl(struct resolver* resolver, struct ast_stmt const* stmt);
+resolve_stmt_decl(struct resolver* resolver, struct cst_stmt const* stmt);
 static struct tir_stmt const*
-resolve_stmt_if(struct resolver* resolver, struct ast_stmt const* stmt);
+resolve_stmt_if(struct resolver* resolver, struct cst_stmt const* stmt);
 static struct tir_stmt const*
-resolve_stmt_for_range(struct resolver* resolver, struct ast_stmt const* stmt);
+resolve_stmt_for_range(struct resolver* resolver, struct cst_stmt const* stmt);
 static struct tir_stmt const*
-resolve_stmt_for_expr(struct resolver* resolver, struct ast_stmt const* stmt);
+resolve_stmt_for_expr(struct resolver* resolver, struct cst_stmt const* stmt);
 static struct tir_stmt const*
-resolve_stmt_break(struct resolver* resolver, struct ast_stmt const* stmt);
+resolve_stmt_break(struct resolver* resolver, struct cst_stmt const* stmt);
 static struct tir_stmt const*
-resolve_stmt_continue(struct resolver* resolver, struct ast_stmt const* stmt);
+resolve_stmt_continue(struct resolver* resolver, struct cst_stmt const* stmt);
 static struct tir_stmt const*
-resolve_stmt_dump(struct resolver* resolver, struct ast_stmt const* stmt);
+resolve_stmt_dump(struct resolver* resolver, struct cst_stmt const* stmt);
 static struct tir_stmt const*
-resolve_stmt_return(struct resolver* resolver, struct ast_stmt const* stmt);
+resolve_stmt_return(struct resolver* resolver, struct cst_stmt const* stmt);
 static struct tir_stmt const*
-resolve_stmt_assign(struct resolver* resolver, struct ast_stmt const* stmt);
+resolve_stmt_assign(struct resolver* resolver, struct cst_stmt const* stmt);
 static struct tir_stmt const*
-resolve_stmt_expr(struct resolver* resolver, struct ast_stmt const* stmt);
+resolve_stmt_expr(struct resolver* resolver, struct cst_stmt const* stmt);
 
 static struct tir_expr const*
-resolve_expr(struct resolver* resolver, struct ast_expr const* expr);
+resolve_expr(struct resolver* resolver, struct cst_expr const* expr);
 static struct tir_expr const*
-resolve_expr_identifier(struct resolver* resolver, struct ast_expr const* expr);
+resolve_expr_identifier(struct resolver* resolver, struct cst_expr const* expr);
 static struct tir_expr const*
 resolve_expr_qualified_identifier(
-    struct resolver* resolver, struct ast_expr const* expr);
+    struct resolver* resolver, struct cst_expr const* expr);
 static struct tir_expr const*
-resolve_expr_boolean(struct resolver* resolver, struct ast_expr const* expr);
+resolve_expr_boolean(struct resolver* resolver, struct cst_expr const* expr);
 static struct tir_expr const*
-resolve_expr_integer(struct resolver* resolver, struct ast_expr const* expr);
+resolve_expr_integer(struct resolver* resolver, struct cst_expr const* expr);
 static struct tir_expr const*
-resolve_expr_bytes(struct resolver* resolver, struct ast_expr const* expr);
+resolve_expr_bytes(struct resolver* resolver, struct cst_expr const* expr);
 static struct tir_expr const*
 resolve_expr_literal_array(
-    struct resolver* resolver, struct ast_expr const* expr);
+    struct resolver* resolver, struct cst_expr const* expr);
 static struct tir_expr const*
 resolve_expr_literal_slice(
-    struct resolver* resolver, struct ast_expr const* expr);
+    struct resolver* resolver, struct cst_expr const* expr);
 static struct tir_expr const*
-resolve_expr_cast(struct resolver* resolver, struct ast_expr const* expr);
+resolve_expr_cast(struct resolver* resolver, struct cst_expr const* expr);
 static struct tir_expr const*
-resolve_expr_syscall(struct resolver* resolver, struct ast_expr const* expr);
+resolve_expr_syscall(struct resolver* resolver, struct cst_expr const* expr);
 static struct tir_expr const*
-resolve_expr_call(struct resolver* resolver, struct ast_expr const* expr);
+resolve_expr_call(struct resolver* resolver, struct cst_expr const* expr);
 static struct tir_expr const*
-resolve_expr_index(struct resolver* resolver, struct ast_expr const* expr);
+resolve_expr_index(struct resolver* resolver, struct cst_expr const* expr);
 static struct tir_expr const*
-resolve_expr_slice(struct resolver* resolver, struct ast_expr const* expr);
+resolve_expr_slice(struct resolver* resolver, struct cst_expr const* expr);
 static struct tir_expr const*
-resolve_expr_sizeof(struct resolver* resolver, struct ast_expr const* expr);
+resolve_expr_sizeof(struct resolver* resolver, struct cst_expr const* expr);
 static struct tir_expr const*
-resolve_expr_unary(struct resolver* resolver, struct ast_expr const* expr);
+resolve_expr_unary(struct resolver* resolver, struct cst_expr const* expr);
 static struct tir_expr const*
 resolve_expr_unary_logical(
     struct resolver* resolver,
@@ -209,7 +209,7 @@ resolve_expr_unary_countof(
     struct token const* op,
     struct tir_expr const* rhs);
 static struct tir_expr const*
-resolve_expr_binary(struct resolver* resolver, struct ast_expr const* expr);
+resolve_expr_binary(struct resolver* resolver, struct cst_expr const* expr);
 static struct tir_expr const*
 resolve_expr_binary_logical(
     struct resolver* resolver,
@@ -250,11 +250,11 @@ static struct tir_block const*
 resolve_block(
     struct resolver* resolver,
     struct symbol_table* symbol_table,
-    struct ast_block const* block);
+    struct cst_block const* block);
 
 static struct type const*
 resolve_typespec(
-    struct resolver* resolver, struct ast_typespec const* typespec);
+    struct resolver* resolver, struct cst_typespec const* typespec);
 
 static struct resolver*
 resolver_new(struct module* module)
@@ -601,7 +601,7 @@ canonical_import_path(char const* module_path, char const* import_path)
 }
 
 static void
-resolve_import(struct resolver* resolver, struct ast_import const* import)
+resolve_import(struct resolver* resolver, struct cst_import const* import)
 {
     assert(resolver != NULL);
     assert(import != NULL);
@@ -627,22 +627,22 @@ resolve_import(struct resolver* resolver, struct ast_import const* import)
 }
 
 static struct symbol const*
-resolve_decl(struct resolver* resolver, struct ast_decl const* decl)
+resolve_decl(struct resolver* resolver, struct cst_decl const* decl)
 {
     assert(resolver != NULL);
     assert(decl != NULL);
 
     switch (decl->kind) {
-    case AST_DECL_VARIABLE: {
+    case CST_DECL_VARIABLE: {
         return resolve_decl_variable(resolver, decl, NULL, NULL);
     }
-    case AST_DECL_CONSTANT: {
+    case CST_DECL_CONSTANT: {
         return resolve_decl_constant(resolver, decl);
     }
-    case AST_DECL_FUNCTION: {
+    case CST_DECL_FUNCTION: {
         return resolve_decl_function(resolver, decl);
     }
-    case AST_DECL_EXTERN_VARIABLE: {
+    case CST_DECL_EXTERN_VARIABLE: {
         return resolve_decl_extern_variable(resolver, decl);
     }
     }
@@ -653,13 +653,13 @@ resolve_decl(struct resolver* resolver, struct ast_decl const* decl)
 static struct symbol const*
 resolve_decl_variable(
     struct resolver* resolver,
-    struct ast_decl const* decl,
+    struct cst_decl const* decl,
     struct tir_expr const** lhs,
     struct tir_expr const** rhs)
 {
     assert(resolver != NULL);
     assert(decl != NULL);
-    assert(decl->kind == AST_DECL_VARIABLE);
+    assert(decl->kind == CST_DECL_VARIABLE);
 
     struct tir_expr const* expr =
         resolve_expr(resolver, decl->data.variable.expr);
@@ -713,11 +713,11 @@ resolve_decl_variable(
 }
 
 static struct symbol const*
-resolve_decl_constant(struct resolver* resolver, struct ast_decl const* decl)
+resolve_decl_constant(struct resolver* resolver, struct cst_decl const* decl)
 {
     assert(resolver != NULL);
     assert(decl != NULL);
-    assert(decl->kind == AST_DECL_CONSTANT);
+    assert(decl->kind == CST_DECL_CONSTANT);
 
     struct tir_expr const* expr =
         resolve_expr(resolver, decl->data.constant.expr);
@@ -754,14 +754,14 @@ resolve_decl_constant(struct resolver* resolver, struct ast_decl const* decl)
 }
 
 static struct symbol const*
-resolve_decl_function(struct resolver* resolver, struct ast_decl const* decl)
+resolve_decl_function(struct resolver* resolver, struct cst_decl const* decl)
 {
     assert(resolver != NULL);
     assert(decl != NULL);
-    assert(decl->kind == AST_DECL_FUNCTION);
+    assert(decl->kind == CST_DECL_FUNCTION);
     assert(resolver_is_global(resolver));
 
-    autil_sbuf(struct ast_parameter const* const) const parameters =
+    autil_sbuf(struct cst_parameter const* const) const parameters =
         decl->data.function.parameters;
 
     // Create the type corresponding to the function.
@@ -885,11 +885,11 @@ resolve_decl_function(struct resolver* resolver, struct ast_decl const* decl)
 
 static struct symbol const*
 resolve_decl_extern_variable(
-    struct resolver* resolver, struct ast_decl const* decl)
+    struct resolver* resolver, struct cst_decl const* decl)
 {
     assert(resolver != NULL);
     assert(decl != NULL);
-    assert(decl->kind == AST_DECL_EXTERN_VARIABLE);
+    assert(decl->kind == CST_DECL_EXTERN_VARIABLE);
     assert(resolver_is_global(resolver));
 
     struct type const* const type =
@@ -948,41 +948,41 @@ complete_function(
 }
 
 static struct tir_stmt const*
-resolve_stmt(struct resolver* resolver, struct ast_stmt const* stmt)
+resolve_stmt(struct resolver* resolver, struct cst_stmt const* stmt)
 {
     assert(resolver != NULL);
     assert(!resolver_is_global(resolver));
     assert(stmt != NULL);
 
     switch (stmt->kind) {
-    case AST_STMT_DECL: {
+    case CST_STMT_DECL: {
         return resolve_stmt_decl(resolver, stmt);
     }
-    case AST_STMT_IF: {
+    case CST_STMT_IF: {
         return resolve_stmt_if(resolver, stmt);
     }
-    case AST_STMT_FOR_RANGE: {
+    case CST_STMT_FOR_RANGE: {
         return resolve_stmt_for_range(resolver, stmt);
     }
-    case AST_STMT_FOR_EXPR: {
+    case CST_STMT_FOR_EXPR: {
         return resolve_stmt_for_expr(resolver, stmt);
     }
-    case AST_STMT_BREAK: {
+    case CST_STMT_BREAK: {
         return resolve_stmt_break(resolver, stmt);
     }
-    case AST_STMT_CONTINUE: {
+    case CST_STMT_CONTINUE: {
         return resolve_stmt_continue(resolver, stmt);
     }
-    case AST_STMT_DUMP: {
+    case CST_STMT_DUMP: {
         return resolve_stmt_dump(resolver, stmt);
     }
-    case AST_STMT_RETURN: {
+    case CST_STMT_RETURN: {
         return resolve_stmt_return(resolver, stmt);
     }
-    case AST_STMT_ASSIGN: {
+    case CST_STMT_ASSIGN: {
         return resolve_stmt_assign(resolver, stmt);
     }
-    case AST_STMT_EXPR: {
+    case CST_STMT_EXPR: {
         return resolve_stmt_expr(resolver, stmt);
     }
     }
@@ -992,16 +992,16 @@ resolve_stmt(struct resolver* resolver, struct ast_stmt const* stmt)
 }
 
 static struct tir_stmt const*
-resolve_stmt_decl(struct resolver* resolver, struct ast_stmt const* stmt)
+resolve_stmt_decl(struct resolver* resolver, struct cst_stmt const* stmt)
 {
     assert(resolver != NULL);
     assert(!resolver_is_global(resolver));
     assert(stmt != NULL);
-    assert(stmt->kind == AST_STMT_DECL);
+    assert(stmt->kind == CST_STMT_DECL);
 
-    struct ast_decl const* const decl = stmt->data.decl;
+    struct cst_decl const* const decl = stmt->data.decl;
     switch (decl->kind) {
-    case AST_DECL_VARIABLE: {
+    case CST_DECL_VARIABLE: {
         struct tir_expr const* lhs = NULL;
         struct tir_expr const* rhs = NULL;
         resolve_decl_variable(resolver, decl, &lhs, &rhs);
@@ -1011,15 +1011,15 @@ resolve_stmt_decl(struct resolver* resolver, struct ast_stmt const* stmt)
         autil_freezer_register(context()->freezer, resolved);
         return resolved;
     }
-    case AST_DECL_CONSTANT: {
+    case CST_DECL_CONSTANT: {
         resolve_decl_constant(resolver, decl);
         return NULL;
     }
-    case AST_DECL_FUNCTION: {
+    case CST_DECL_FUNCTION: {
         fatal(stmt->location, "nested function declaration");
         return NULL;
     }
-    case AST_DECL_EXTERN_VARIABLE: {
+    case CST_DECL_EXTERN_VARIABLE: {
         fatal(
             decl->location,
             "local declaration of extern variable `%s`",
@@ -1033,14 +1033,14 @@ resolve_stmt_decl(struct resolver* resolver, struct ast_stmt const* stmt)
 }
 
 static struct tir_stmt const*
-resolve_stmt_if(struct resolver* resolver, struct ast_stmt const* stmt)
+resolve_stmt_if(struct resolver* resolver, struct cst_stmt const* stmt)
 {
     assert(resolver != NULL);
     assert(!resolver_is_global(resolver));
     assert(stmt != NULL);
-    assert(stmt->kind == AST_STMT_IF);
+    assert(stmt->kind == CST_STMT_IF);
 
-    autil_sbuf(struct ast_conditional const* const) const conditionals =
+    autil_sbuf(struct cst_conditional const* const) const conditionals =
         stmt->data.if_.conditionals;
     autil_sbuf(struct tir_conditional const*) resolved_conditionals = NULL;
     autil_sbuf_resize(resolved_conditionals, autil_sbuf_count(conditionals));
@@ -1082,12 +1082,12 @@ resolve_stmt_if(struct resolver* resolver, struct ast_stmt const* stmt)
 }
 
 static struct tir_stmt const*
-resolve_stmt_for_range(struct resolver* resolver, struct ast_stmt const* stmt)
+resolve_stmt_for_range(struct resolver* resolver, struct cst_stmt const* stmt)
 {
     assert(resolver != NULL);
     assert(!resolver_is_global(resolver));
     assert(stmt != NULL);
-    assert(stmt->kind == AST_STMT_FOR_RANGE);
+    assert(stmt->kind == CST_STMT_FOR_RANGE);
 
     struct tir_expr const* begin =
         resolve_expr(resolver, stmt->data.for_range.begin);
@@ -1150,12 +1150,12 @@ resolve_stmt_for_range(struct resolver* resolver, struct ast_stmt const* stmt)
 }
 
 static struct tir_stmt const*
-resolve_stmt_for_expr(struct resolver* resolver, struct ast_stmt const* stmt)
+resolve_stmt_for_expr(struct resolver* resolver, struct cst_stmt const* stmt)
 {
     assert(resolver != NULL);
     assert(!resolver_is_global(resolver));
     assert(stmt != NULL);
-    assert(stmt->kind == AST_STMT_FOR_EXPR);
+    assert(stmt->kind == CST_STMT_FOR_EXPR);
 
     struct tir_expr const* const expr =
         resolve_expr(resolver, stmt->data.for_expr.expr);
@@ -1187,12 +1187,12 @@ resolve_stmt_for_expr(struct resolver* resolver, struct ast_stmt const* stmt)
 }
 
 static struct tir_stmt const*
-resolve_stmt_break(struct resolver* resolver, struct ast_stmt const* stmt)
+resolve_stmt_break(struct resolver* resolver, struct cst_stmt const* stmt)
 {
     assert(resolver != NULL);
     assert(!resolver_is_global(resolver));
     assert(stmt != NULL);
-    assert(stmt->kind == AST_STMT_BREAK);
+    assert(stmt->kind == CST_STMT_BREAK);
 
     if (!resolver->is_within_loop) {
         fatal(stmt->location, "break statement outside of loop");
@@ -1205,12 +1205,12 @@ resolve_stmt_break(struct resolver* resolver, struct ast_stmt const* stmt)
 }
 
 static struct tir_stmt const*
-resolve_stmt_continue(struct resolver* resolver, struct ast_stmt const* stmt)
+resolve_stmt_continue(struct resolver* resolver, struct cst_stmt const* stmt)
 {
     assert(resolver != NULL);
     assert(!resolver_is_global(resolver));
     assert(stmt != NULL);
-    assert(stmt->kind == AST_STMT_CONTINUE);
+    assert(stmt->kind == CST_STMT_CONTINUE);
 
     if (!resolver->is_within_loop) {
         fatal(stmt->location, "continue statement outside of loop");
@@ -1223,12 +1223,12 @@ resolve_stmt_continue(struct resolver* resolver, struct ast_stmt const* stmt)
 }
 
 static struct tir_stmt const*
-resolve_stmt_dump(struct resolver* resolver, struct ast_stmt const* stmt)
+resolve_stmt_dump(struct resolver* resolver, struct cst_stmt const* stmt)
 {
     assert(resolver != NULL);
     assert(!resolver_is_global(resolver));
     assert(stmt != NULL);
-    assert(stmt->kind == AST_STMT_DUMP);
+    assert(stmt->kind == CST_STMT_DUMP);
 
     struct tir_expr const* expr = resolve_expr(resolver, stmt->data.dump.expr);
     if (expr->type->size == SIZEOF_UNSIZED) {
@@ -1243,12 +1243,12 @@ resolve_stmt_dump(struct resolver* resolver, struct ast_stmt const* stmt)
 }
 
 static struct tir_stmt const*
-resolve_stmt_return(struct resolver* resolver, struct ast_stmt const* stmt)
+resolve_stmt_return(struct resolver* resolver, struct cst_stmt const* stmt)
 {
     assert(resolver != NULL);
     assert(!resolver_is_global(resolver));
     assert(stmt != NULL);
-    assert(stmt->kind == AST_STMT_RETURN);
+    assert(stmt->kind == CST_STMT_RETURN);
 
     struct type const* const return_type =
         resolver->current_function->type->data.function.return_type;
@@ -1275,12 +1275,12 @@ resolve_stmt_return(struct resolver* resolver, struct ast_stmt const* stmt)
 }
 
 static struct tir_stmt const*
-resolve_stmt_assign(struct resolver* resolver, struct ast_stmt const* stmt)
+resolve_stmt_assign(struct resolver* resolver, struct cst_stmt const* stmt)
 {
     assert(resolver != NULL);
     assert(!resolver_is_global(resolver));
     assert(stmt != NULL);
-    assert(stmt->kind == AST_STMT_ASSIGN);
+    assert(stmt->kind == CST_STMT_ASSIGN);
 
     struct tir_expr const* const lhs =
         resolve_expr(resolver, stmt->data.assign.lhs);
@@ -1310,12 +1310,12 @@ resolve_stmt_assign(struct resolver* resolver, struct ast_stmt const* stmt)
 }
 
 static struct tir_stmt const*
-resolve_stmt_expr(struct resolver* resolver, struct ast_stmt const* stmt)
+resolve_stmt_expr(struct resolver* resolver, struct cst_stmt const* stmt)
 {
     assert(resolver != NULL);
     assert(!resolver_is_global(resolver));
     assert(stmt != NULL);
-    assert(stmt->kind == AST_STMT_EXPR);
+    assert(stmt->kind == CST_STMT_EXPR);
 
     struct tir_expr const* const expr = resolve_expr(resolver, stmt->data.expr);
 
@@ -1332,58 +1332,58 @@ resolve_stmt_expr(struct resolver* resolver, struct ast_stmt const* stmt)
 }
 
 static struct tir_expr const*
-resolve_expr(struct resolver* resolver, struct ast_expr const* expr)
+resolve_expr(struct resolver* resolver, struct cst_expr const* expr)
 {
     assert(resolver != NULL);
     assert(expr != NULL);
 
     switch (expr->kind) {
-    case AST_EXPR_IDENTIFIER: {
+    case CST_EXPR_IDENTIFIER: {
         return resolve_expr_identifier(resolver, expr);
     }
-    case AST_EXPR_QUALIFIED_IDENTIFIER: {
+    case CST_EXPR_QUALIFIED_IDENTIFIER: {
         return resolve_expr_qualified_identifier(resolver, expr);
     }
-    case AST_EXPR_BOOLEAN: {
+    case CST_EXPR_BOOLEAN: {
         return resolve_expr_boolean(resolver, expr);
     }
-    case AST_EXPR_INTEGER: {
+    case CST_EXPR_INTEGER: {
         return resolve_expr_integer(resolver, expr);
     }
-    case AST_EXPR_BYTES: {
+    case CST_EXPR_BYTES: {
         return resolve_expr_bytes(resolver, expr);
     }
-    case AST_EXPR_LITERAL_ARRAY: {
+    case CST_EXPR_LITERAL_ARRAY: {
         return resolve_expr_literal_array(resolver, expr);
     }
-    case AST_EXPR_LITERAL_SLICE: {
+    case CST_EXPR_LITERAL_SLICE: {
         return resolve_expr_literal_slice(resolver, expr);
     }
-    case AST_EXPR_CAST: {
+    case CST_EXPR_CAST: {
         return resolve_expr_cast(resolver, expr);
     }
-    case AST_EXPR_GROUPED: {
+    case CST_EXPR_GROUPED: {
         return resolve_expr(resolver, expr->data.grouped.expr);
     }
-    case AST_EXPR_SYSCALL: {
+    case CST_EXPR_SYSCALL: {
         return resolve_expr_syscall(resolver, expr);
     }
-    case AST_EXPR_CALL: {
+    case CST_EXPR_CALL: {
         return resolve_expr_call(resolver, expr);
     }
-    case AST_EXPR_INDEX: {
+    case CST_EXPR_INDEX: {
         return resolve_expr_index(resolver, expr);
     }
-    case AST_EXPR_SLICE: {
+    case CST_EXPR_SLICE: {
         return resolve_expr_slice(resolver, expr);
     }
-    case AST_EXPR_SIZEOF: {
+    case CST_EXPR_SIZEOF: {
         return resolve_expr_sizeof(resolver, expr);
     }
-    case AST_EXPR_UNARY: {
+    case CST_EXPR_UNARY: {
         return resolve_expr_unary(resolver, expr);
     }
-    case AST_EXPR_BINARY: {
+    case CST_EXPR_BINARY: {
         return resolve_expr_binary(resolver, expr);
     }
     }
@@ -1393,11 +1393,11 @@ resolve_expr(struct resolver* resolver, struct ast_expr const* expr)
 }
 
 static struct tir_expr const*
-resolve_expr_identifier(struct resolver* resolver, struct ast_expr const* expr)
+resolve_expr_identifier(struct resolver* resolver, struct cst_expr const* expr)
 {
     assert(resolver != NULL);
     assert(expr != NULL);
-    assert(expr->kind == AST_EXPR_IDENTIFIER);
+    assert(expr->kind == CST_EXPR_IDENTIFIER);
 
     char const* const name = expr->data.identifier->name;
     struct symbol const* const symbol =
@@ -1435,13 +1435,13 @@ resolve_expr_identifier(struct resolver* resolver, struct ast_expr const* expr)
 
 static struct tir_expr const*
 resolve_expr_qualified_identifier(
-    struct resolver* resolver, struct ast_expr const* expr)
+    struct resolver* resolver, struct cst_expr const* expr)
 {
     assert(resolver != NULL);
     assert(expr != NULL);
-    assert(expr->kind == AST_EXPR_QUALIFIED_IDENTIFIER);
+    assert(expr->kind == CST_EXPR_QUALIFIED_IDENTIFIER);
 
-    autil_sbuf(struct ast_identifier const* const) const identifiers =
+    autil_sbuf(struct cst_identifier const* const) const identifiers =
         expr->data.qualified_identifier.identifiers;
     // lhs::name
     // ^---+---^
@@ -1501,11 +1501,11 @@ resolve_expr_qualified_identifier(
 }
 
 static struct tir_expr const*
-resolve_expr_boolean(struct resolver* resolver, struct ast_expr const* expr)
+resolve_expr_boolean(struct resolver* resolver, struct cst_expr const* expr)
 {
     assert(resolver != NULL);
     assert(expr != NULL);
-    assert(expr->kind == AST_EXPR_BOOLEAN);
+    assert(expr->kind == CST_EXPR_BOOLEAN);
 
     bool const value = expr->data.boolean->value;
     struct tir_expr* const resolved =
@@ -1563,16 +1563,16 @@ integer_literal_suffix_to_type(
 }
 
 static struct tir_expr const*
-resolve_expr_integer(struct resolver* resolver, struct ast_expr const* expr)
+resolve_expr_integer(struct resolver* resolver, struct cst_expr const* expr)
 {
     assert(resolver != NULL);
     assert(expr != NULL);
-    assert(expr->kind == AST_EXPR_INTEGER);
+    assert(expr->kind == CST_EXPR_INTEGER);
 
-    struct ast_integer const* const ast_integer = expr->data.integer;
-    struct autil_bigint const* const value = ast_integer->value;
+    struct cst_integer const* const cst_integer = expr->data.integer;
+    struct autil_bigint const* const value = cst_integer->value;
     struct type const* const type = integer_literal_suffix_to_type(
-        ast_integer->location, ast_integer->suffix);
+        cst_integer->location, cst_integer->suffix);
 
     struct tir_expr* const resolved =
         tir_expr_new_integer(expr->location, type, value);
@@ -1582,11 +1582,11 @@ resolve_expr_integer(struct resolver* resolver, struct ast_expr const* expr)
 }
 
 static struct tir_expr const*
-resolve_expr_bytes(struct resolver* resolver, struct ast_expr const* expr)
+resolve_expr_bytes(struct resolver* resolver, struct cst_expr const* expr)
 {
     assert(resolver != NULL);
     assert(expr != NULL);
-    assert(expr->kind == AST_EXPR_BYTES);
+    assert(expr->kind == CST_EXPR_BYTES);
 
     struct address const* const address =
         resolver_reserve_storage_static(resolver, "__bytes");
@@ -1622,11 +1622,11 @@ resolve_expr_bytes(struct resolver* resolver, struct ast_expr const* expr)
 
 static struct tir_expr const*
 resolve_expr_literal_array(
-    struct resolver* resolver, struct ast_expr const* expr)
+    struct resolver* resolver, struct cst_expr const* expr)
 {
     assert(resolver != NULL);
     assert(expr != NULL);
-    assert(expr->kind == AST_EXPR_LITERAL_ARRAY);
+    assert(expr->kind == CST_EXPR_LITERAL_ARRAY);
 
     struct type const* const type =
         resolve_typespec(resolver, expr->data.literal_array.typespec);
@@ -1637,7 +1637,7 @@ resolve_expr_literal_array(
             type->name);
     }
 
-    autil_sbuf(struct ast_expr const* const) elements =
+    autil_sbuf(struct cst_expr const* const) elements =
         expr->data.literal_array.elements;
     autil_sbuf(struct tir_expr const*) resolved_elements = NULL;
     for (size_t i = 0; i < autil_sbuf_count(elements); ++i) {
@@ -1688,11 +1688,11 @@ resolve_expr_literal_array(
 
 static struct tir_expr const*
 resolve_expr_literal_slice(
-    struct resolver* resolver, struct ast_expr const* expr)
+    struct resolver* resolver, struct cst_expr const* expr)
 {
     assert(resolver != NULL);
     assert(expr != NULL);
-    assert(expr->kind == AST_EXPR_LITERAL_SLICE);
+    assert(expr->kind == CST_EXPR_LITERAL_SLICE);
 
     struct type const* const type =
         resolve_typespec(resolver, expr->data.literal_slice.typespec);
@@ -1732,11 +1732,11 @@ resolve_expr_literal_slice(
 }
 
 static struct tir_expr const*
-resolve_expr_cast(struct resolver* resolver, struct ast_expr const* expr)
+resolve_expr_cast(struct resolver* resolver, struct cst_expr const* expr)
 {
     assert(resolver != NULL);
     assert(expr != NULL);
-    assert(expr->kind == AST_EXPR_CAST);
+    assert(expr->kind == CST_EXPR_CAST);
 
     struct type const* const type =
         resolve_typespec(resolver, expr->data.cast.typespec);
@@ -1789,13 +1789,13 @@ resolve_expr_cast(struct resolver* resolver, struct ast_expr const* expr)
 }
 
 static struct tir_expr const*
-resolve_expr_syscall(struct resolver* resolver, struct ast_expr const* expr)
+resolve_expr_syscall(struct resolver* resolver, struct cst_expr const* expr)
 {
     assert(resolver != NULL);
     assert(expr != NULL);
-    assert(expr->kind == AST_EXPR_SYSCALL);
+    assert(expr->kind == CST_EXPR_SYSCALL);
 
-    autil_sbuf(struct ast_expr const* const) arguments =
+    autil_sbuf(struct cst_expr const* const) arguments =
         expr->data.syscall.arguments;
     size_t const arguments_count = autil_sbuf_count(arguments);
 
@@ -1840,11 +1840,11 @@ resolve_expr_syscall(struct resolver* resolver, struct ast_expr const* expr)
 }
 
 static struct tir_expr const*
-resolve_expr_call(struct resolver* resolver, struct ast_expr const* expr)
+resolve_expr_call(struct resolver* resolver, struct cst_expr const* expr)
 {
     assert(resolver != NULL);
     assert(expr != NULL);
-    assert(expr->kind == AST_EXPR_CALL);
+    assert(expr->kind == CST_EXPR_CALL);
 
     struct tir_expr const* const function =
         resolve_expr(resolver, expr->data.call.func);
@@ -1902,11 +1902,11 @@ resolve_expr_call(struct resolver* resolver, struct ast_expr const* expr)
 }
 
 static struct tir_expr const*
-resolve_expr_index(struct resolver* resolver, struct ast_expr const* expr)
+resolve_expr_index(struct resolver* resolver, struct cst_expr const* expr)
 {
     assert(resolver != NULL);
     assert(expr != NULL);
-    assert(expr->kind == AST_EXPR_INDEX);
+    assert(expr->kind == CST_EXPR_INDEX);
 
     struct tir_expr const* const lhs =
         resolve_expr(resolver, expr->data.index.lhs);
@@ -1936,11 +1936,11 @@ resolve_expr_index(struct resolver* resolver, struct ast_expr const* expr)
 }
 
 static struct tir_expr const*
-resolve_expr_slice(struct resolver* resolver, struct ast_expr const* expr)
+resolve_expr_slice(struct resolver* resolver, struct cst_expr const* expr)
 {
     assert(resolver != NULL);
     assert(expr != NULL);
-    assert(expr->kind == AST_EXPR_SLICE);
+    assert(expr->kind == CST_EXPR_SLICE);
 
     struct tir_expr const* const lhs =
         resolve_expr(resolver, expr->data.slice.lhs);
@@ -1987,7 +1987,7 @@ resolve_expr_slice(struct resolver* resolver, struct ast_expr const* expr)
 }
 
 static struct tir_expr const*
-resolve_expr_sizeof(struct resolver* resolver, struct ast_expr const* expr)
+resolve_expr_sizeof(struct resolver* resolver, struct cst_expr const* expr)
 {
     assert(resolver != NULL);
     assert(expr != NULL);
@@ -2005,11 +2005,11 @@ resolve_expr_sizeof(struct resolver* resolver, struct ast_expr const* expr)
 }
 
 static struct tir_expr const*
-resolve_expr_unary(struct resolver* resolver, struct ast_expr const* expr)
+resolve_expr_unary(struct resolver* resolver, struct cst_expr const* expr)
 {
     assert(resolver != NULL);
     assert(expr != NULL);
-    assert(expr->kind == AST_EXPR_UNARY);
+    assert(expr->kind == CST_EXPR_UNARY);
 
     // While a human would identify the integer expression -128s8 as the hex
     // byte 0x80, the parser identifies the integer expression -128s8 as the
@@ -2021,10 +2021,10 @@ resolve_expr_unary(struct resolver* resolver, struct ast_expr const* expr)
     // into a single integer expression.
     struct token const* const op = expr->data.unary.op;
     bool const is_sign = (op->kind == TOKEN_PLUS) || (op->kind == TOKEN_DASH);
-    struct ast_expr const* const ast_rhs = expr->data.unary.rhs;
-    if (is_sign && ast_rhs->kind == AST_EXPR_INTEGER) {
-        struct ast_integer const* const ast_integer = ast_rhs->data.integer;
-        struct autil_bigint const* value = ast_integer->value;
+    struct cst_expr const* const cst_rhs = expr->data.unary.rhs;
+    if (is_sign && cst_rhs->kind == CST_EXPR_INTEGER) {
+        struct cst_integer const* const cst_integer = cst_rhs->data.integer;
+        struct autil_bigint const* value = cst_integer->value;
         if (op->kind == TOKEN_DASH) {
             struct autil_bigint* const tmp = autil_bigint_new(value);
             autil_bigint_neg(tmp, value);
@@ -2032,7 +2032,7 @@ resolve_expr_unary(struct resolver* resolver, struct ast_expr const* expr)
             value = tmp;
         }
         struct type const* const type = integer_literal_suffix_to_type(
-            ast_integer->location, ast_integer->suffix);
+            cst_integer->location, cst_integer->suffix);
 
         struct tir_expr* const resolved =
             tir_expr_new_integer(&op->location, type, value);
@@ -2041,7 +2041,7 @@ resolve_expr_unary(struct resolver* resolver, struct ast_expr const* expr)
         return resolved;
     }
 
-    struct tir_expr const* const rhs = resolve_expr(resolver, ast_rhs);
+    struct tir_expr const* const rhs = resolve_expr(resolver, cst_rhs);
     switch (op->kind) {
     case TOKEN_NOT: {
         return resolve_expr_unary_logical(resolver, op, UOP_NOT, rhs);
@@ -2228,11 +2228,11 @@ resolve_expr_unary_countof(
 }
 
 static struct tir_expr const*
-resolve_expr_binary(struct resolver* resolver, struct ast_expr const* expr)
+resolve_expr_binary(struct resolver* resolver, struct cst_expr const* expr)
 {
     assert(resolver != NULL);
     assert(expr != NULL);
-    assert(expr->kind == AST_EXPR_BINARY);
+    assert(expr->kind == CST_EXPR_BINARY);
 
     struct tir_expr const* const lhs =
         resolve_expr(resolver, expr->data.binary.lhs);
@@ -2589,7 +2589,7 @@ static struct tir_block const*
 resolve_block(
     struct resolver* resolver,
     struct symbol_table* symbol_table,
-    struct ast_block const* block)
+    struct cst_block const* block)
 {
     assert(resolver->current_function != NULL);
     assert(symbol_table != NULL);
@@ -2619,7 +2619,7 @@ resolve_block(
 }
 
 static struct type const*
-resolve_typespec(struct resolver* resolver, struct ast_typespec const* typespec)
+resolve_typespec(struct resolver* resolver, struct cst_typespec const* typespec)
 {
     assert(resolver != NULL);
     assert(typespec != NULL);
@@ -2641,7 +2641,7 @@ resolve_typespec(struct resolver* resolver, struct ast_typespec const* typespec)
         return symbol->type;
     }
     case TYPESPEC_FUNCTION: {
-        autil_sbuf(struct ast_typespec const* const) const parameter_typespecs =
+        autil_sbuf(struct cst_typespec const* const) const parameter_typespecs =
             typespec->data.function.parameter_typespecs;
 
         autil_sbuf(struct type const*) parameter_types = NULL;
@@ -2718,9 +2718,9 @@ resolve(struct module* module)
     struct resolver* const resolver = resolver_new(module);
 
     // Module namespace.
-    if (module->ast->namespace != NULL) {
-        autil_sbuf(struct ast_identifier const* const) const identifiers =
-            module->ast->namespace->identifiers;
+    if (module->cst->namespace != NULL) {
+        autil_sbuf(struct cst_identifier const* const) const identifiers =
+            module->cst->namespace->identifiers;
 
         char const* nsname = NULL;
         char const* nsaddr = NULL;
@@ -2759,12 +2759,12 @@ resolve(struct module* module)
     }
 
     // Imports.
-    for (size_t i = 0; i < autil_sbuf_count(module->ast->imports); ++i) {
-        resolve_import(resolver, module->ast->imports[i]);
+    for (size_t i = 0; i < autil_sbuf_count(module->cst->imports); ++i) {
+        resolve_import(resolver, module->cst->imports[i]);
     }
 
     // Top-level declarations.
-    autil_sbuf(struct ast_decl const* const) const ordered = module->ordered;
+    autil_sbuf(struct cst_decl const* const) const ordered = module->ordered;
     for (size_t i = 0; i < autil_sbuf_count(ordered); ++i) {
         struct symbol const* const symbol =
             resolve_decl(resolver, module->ordered[i]);
@@ -2772,7 +2772,7 @@ resolve(struct module* module)
         // have been added under the (exported) module namespace and should
         // *not* be added to the module export table or global symbol table
         // using their unqualified names.
-        if (module->ast->namespace == NULL) {
+        if (module->cst->namespace == NULL) {
             symbol_table_insert(
                 resolver->current_export_table, symbol->name, symbol);
             symbol_table_insert(

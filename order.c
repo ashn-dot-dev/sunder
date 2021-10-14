@@ -13,7 +13,7 @@ struct tldecl {
         TLDECL_ORDERING,
         TLDECL_ORDERED,
     } state;
-    struct ast_decl const* decl;
+    struct cst_decl const* decl;
 };
 
 struct orderer {
@@ -40,23 +40,23 @@ orderer_new(struct module* module);
 static void
 orderer_del(struct orderer* self);
 static void
-orderer_tldecl_insert(struct orderer* orderer, struct ast_decl const* decl);
+orderer_tldecl_insert(struct orderer* orderer, struct cst_decl const* decl);
 static struct tldecl*
 orderer_tldecl_lookup(struct orderer* orderer, char const* name);
 
 static void
 order_tldecl(struct orderer* orderer, struct tldecl* tldecl);
 static void
-order_decl(struct orderer* orderer, struct ast_decl const* decl);
+order_decl(struct orderer* orderer, struct cst_decl const* decl);
 static void
-order_expr(struct orderer* orderer, struct ast_expr const* expr);
+order_expr(struct orderer* orderer, struct cst_expr const* expr);
 static void
-order_parameter(struct orderer* orderer, struct ast_parameter const* parameter);
+order_parameter(struct orderer* orderer, struct cst_parameter const* parameter);
 static void
-order_typespec(struct orderer* orderer, struct ast_typespec const* typespec);
+order_typespec(struct orderer* orderer, struct cst_typespec const* typespec);
 static void
 order_identifier(
-    struct orderer* orderer, struct ast_identifier const* identifier);
+    struct orderer* orderer, struct cst_identifier const* identifier);
 static void
 order_name(struct orderer* orderer, char const* name);
 
@@ -72,8 +72,8 @@ orderer_new(struct module* module)
         sizeof(TLDECL_MAP_KEY_TYPE),
         sizeof(TLDECL_MAP_VAL_TYPE),
         TLDECL_MAP_CMP_FUNC);
-    for (size_t i = 0; i < autil_sbuf_count(module->ast->decls); ++i) {
-        orderer_tldecl_insert(self, module->ast->decls[i]);
+    for (size_t i = 0; i < autil_sbuf_count(module->cst->decls); ++i) {
+        orderer_tldecl_insert(self, module->cst->decls[i]);
     }
     return self;
 }
@@ -92,7 +92,7 @@ orderer_del(struct orderer* self)
 }
 
 static void
-orderer_tldecl_insert(struct orderer* orderer, struct ast_decl const* decl)
+orderer_tldecl_insert(struct orderer* orderer, struct cst_decl const* decl)
 {
     assert(orderer != NULL);
     assert(decl != NULL);
@@ -152,21 +152,21 @@ order_tldecl(struct orderer* orderer, struct tldecl* tldecl)
 }
 
 static void
-order_decl(struct orderer* orderer, struct ast_decl const* decl)
+order_decl(struct orderer* orderer, struct cst_decl const* decl)
 {
     switch (decl->kind) {
-    case AST_DECL_VARIABLE: {
+    case CST_DECL_VARIABLE: {
         order_typespec(orderer, decl->data.variable.typespec);
         order_expr(orderer, decl->data.variable.expr);
         return;
     }
-    case AST_DECL_CONSTANT: {
+    case CST_DECL_CONSTANT: {
         order_typespec(orderer, decl->data.constant.typespec);
         order_expr(orderer, decl->data.constant.expr);
         return;
     }
-    case AST_DECL_FUNCTION: {
-        struct ast_parameter const* const* const parameters =
+    case CST_DECL_FUNCTION: {
+        struct cst_parameter const* const* const parameters =
             decl->data.function.parameters;
         for (size_t i = 0; i < autil_sbuf_count(parameters); ++i) {
             order_parameter(orderer, parameters[i]);
@@ -174,7 +174,7 @@ order_decl(struct orderer* orderer, struct ast_decl const* decl)
         order_typespec(orderer, decl->data.function.return_typespec);
         return;
     }
-    case AST_DECL_EXTERN_VARIABLE: {
+    case CST_DECL_EXTERN_VARIABLE: {
         order_typespec(orderer, decl->data.extern_variable.typespec);
         return;
     }
@@ -184,28 +184,28 @@ order_decl(struct orderer* orderer, struct ast_decl const* decl)
 }
 
 static void
-order_expr(struct orderer* orderer, struct ast_expr const* expr)
+order_expr(struct orderer* orderer, struct cst_expr const* expr)
 {
     assert(orderer != NULL);
     assert(expr != NULL);
 
     switch (expr->kind) {
-    case AST_EXPR_IDENTIFIER: {
+    case CST_EXPR_IDENTIFIER: {
         order_identifier(orderer, expr->data.identifier);
         return;
     }
-    case AST_EXPR_QUALIFIED_IDENTIFIER: {
+    case CST_EXPR_QUALIFIED_IDENTIFIER: {
         // If the namespace prefix matches the module namespace then order the
         // leaf identifier of the qualified identifier. The eventual call to
         // order_name will silently ignore identifiers from other modules, but
         // will correctly order any identifiers within *this* module.
-        struct ast_namespace const* const namespace =
-            orderer->module->ast->namespace;
+        struct cst_namespace const* const namespace =
+            orderer->module->cst->namespace;
         if (namespace == NULL) {
             // Module does not have a namespace.
             return;
         }
-        autil_sbuf(struct ast_identifier const* const) const identifiers =
+        autil_sbuf(struct cst_identifier const* const) const identifiers =
             expr->data.qualified_identifier.identifiers;
         size_t const prefix_count = autil_sbuf_count(identifiers) - 1;
         assert(prefix_count >= 1);
@@ -221,13 +221,13 @@ order_expr(struct orderer* orderer, struct ast_expr const* expr)
         order_identifier(orderer, identifiers[prefix_count]);
         return;
     }
-    case AST_EXPR_BOOLEAN: /* fallthrough */
-    case AST_EXPR_INTEGER: /* fallthrough */
-    case AST_EXPR_BYTES: {
+    case CST_EXPR_BOOLEAN: /* fallthrough */
+    case CST_EXPR_INTEGER: /* fallthrough */
+    case CST_EXPR_BYTES: {
         return;
     }
-    case AST_EXPR_LITERAL_ARRAY: {
-        autil_sbuf(struct ast_expr const* const) const elements =
+    case CST_EXPR_LITERAL_ARRAY: {
+        autil_sbuf(struct cst_expr const* const) const elements =
             expr->data.literal_array.elements;
         for (size_t i = 0; i < autil_sbuf_count(elements); ++i) {
             order_expr(orderer, elements[i]);
@@ -237,57 +237,57 @@ order_expr(struct orderer* orderer, struct ast_expr const* expr)
         }
         return;
     }
-    case AST_EXPR_LITERAL_SLICE: {
+    case CST_EXPR_LITERAL_SLICE: {
         order_expr(orderer, expr->data.literal_slice.pointer);
         order_expr(orderer, expr->data.literal_slice.count);
         return;
     }
-    case AST_EXPR_CAST: {
+    case CST_EXPR_CAST: {
         order_typespec(orderer, expr->data.cast.typespec);
         order_expr(orderer, expr->data.cast.expr);
         return;
     }
-    case AST_EXPR_GROUPED: {
+    case CST_EXPR_GROUPED: {
         order_expr(orderer, expr->data.grouped.expr);
         return;
     }
-    case AST_EXPR_SYSCALL: {
-        autil_sbuf(struct ast_expr const* const) const arguments =
+    case CST_EXPR_SYSCALL: {
+        autil_sbuf(struct cst_expr const* const) const arguments =
             expr->data.syscall.arguments;
         for (size_t i = 0; i < autil_sbuf_count(arguments); ++i) {
             order_expr(orderer, arguments[i]);
         }
         return;
     }
-    case AST_EXPR_CALL: {
+    case CST_EXPR_CALL: {
         order_expr(orderer, expr->data.call.func);
-        autil_sbuf(struct ast_expr const* const) const arguments =
+        autil_sbuf(struct cst_expr const* const) const arguments =
             expr->data.call.arguments;
         for (size_t i = 0; i < autil_sbuf_count(arguments); ++i) {
             order_expr(orderer, arguments[i]);
         }
         return;
     }
-    case AST_EXPR_INDEX: {
+    case CST_EXPR_INDEX: {
         order_expr(orderer, expr->data.index.lhs);
         order_expr(orderer, expr->data.index.idx);
         return;
     }
-    case AST_EXPR_SLICE: {
+    case CST_EXPR_SLICE: {
         order_expr(orderer, expr->data.slice.lhs);
         order_expr(orderer, expr->data.slice.begin);
         order_expr(orderer, expr->data.slice.end);
         return;
     }
-    case AST_EXPR_SIZEOF: {
+    case CST_EXPR_SIZEOF: {
         order_typespec(orderer, expr->data.sizeof_.rhs);
         return;
     }
-    case AST_EXPR_UNARY: {
+    case CST_EXPR_UNARY: {
         order_expr(orderer, expr->data.unary.rhs);
         return;
     }
-    case AST_EXPR_BINARY: {
+    case CST_EXPR_BINARY: {
         order_expr(orderer, expr->data.binary.lhs);
         order_expr(orderer, expr->data.binary.rhs);
         return;
@@ -298,7 +298,7 @@ order_expr(struct orderer* orderer, struct ast_expr const* expr)
 }
 
 static void
-order_parameter(struct orderer* orderer, struct ast_parameter const* parameter)
+order_parameter(struct orderer* orderer, struct cst_parameter const* parameter)
 {
     assert(orderer != NULL);
     assert(parameter != NULL);
@@ -307,7 +307,7 @@ order_parameter(struct orderer* orderer, struct ast_parameter const* parameter)
 }
 
 static void
-order_typespec(struct orderer* orderer, struct ast_typespec const* typespec)
+order_typespec(struct orderer* orderer, struct cst_typespec const* typespec)
 {
     assert(orderer != NULL);
     assert(typespec != NULL);
@@ -318,7 +318,7 @@ order_typespec(struct orderer* orderer, struct ast_typespec const* typespec)
         return;
     }
     case TYPESPEC_FUNCTION: {
-        autil_sbuf(struct ast_typespec const* const) const parameter_typespecs =
+        autil_sbuf(struct cst_typespec const* const) const parameter_typespecs =
             typespec->data.function.parameter_typespecs;
         for (size_t i = 0; i < autil_sbuf_count(parameter_typespecs); ++i) {
             order_typespec(orderer, parameter_typespecs[i]);
@@ -351,7 +351,7 @@ order_typespec(struct orderer* orderer, struct ast_typespec const* typespec)
 
 static void
 order_identifier(
-    struct orderer* orderer, struct ast_identifier const* identifier)
+    struct orderer* orderer, struct cst_identifier const* identifier)
 {
     assert(orderer != NULL);
     assert(identifier != NULL);
@@ -393,7 +393,7 @@ order(struct module* module)
     assert(decl_count == autil_sbuf_count(orderer->tldecls.topological_order));
     for (size_t i = 0; i < decl_count; ++i) {
         char const* const name = orderer->tldecls.topological_order[i];
-        struct ast_decl const* const decl =
+        struct cst_decl const* const decl =
             orderer_tldecl_lookup(orderer, name)->decl;
         autil_sbuf_push(module->ordered, decl);
     }

@@ -37,7 +37,7 @@ SUNDER_COMPILE_OBJS = \
 	sunder-compile.o \
 	sunder.o \
 	lex.o \
-	ast.o \
+	cst.o \
 	parse.o \
 	order.o \
 	tir.o \
