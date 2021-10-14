@@ -8,7 +8,7 @@
 #include "sunder.h"
 
 static struct autil_string* out = NULL;
-static struct tir_function const* current_function = NULL;
+static struct function const* current_function = NULL;
 static size_t current_loop_id; // Used for generating break & continue lables.
 static size_t unique_id = 0; // Used for generating unique names and labels.
 
@@ -563,74 +563,74 @@ static void
 codegen_static_function(struct symbol const* symbol);
 
 static void
-codegen_stmt(struct tir_stmt const* stmt);
+codegen_stmt(struct stmt const* stmt);
 static void
-codegen_stmt_if(struct tir_stmt const* stmt);
+codegen_stmt_if(struct stmt const* stmt);
 static void
-codegen_stmt_for_range(struct tir_stmt const* stmt);
+codegen_stmt_for_range(struct stmt const* stmt);
 static void
-codegen_stmt_for_expr(struct tir_stmt const* stmt);
+codegen_stmt_for_expr(struct stmt const* stmt);
 static void
-codegen_stmt_break(struct tir_stmt const* stmt);
+codegen_stmt_break(struct stmt const* stmt);
 static void
-codegen_stmt_continue(struct tir_stmt const* stmt);
+codegen_stmt_continue(struct stmt const* stmt);
 static void
-codegen_stmt_dump(struct tir_stmt const* stmt);
+codegen_stmt_dump(struct stmt const* stmt);
 static void
-codegen_stmt_return(struct tir_stmt const* stmt);
+codegen_stmt_return(struct stmt const* stmt);
 static void
-codegen_stmt_assign(struct tir_stmt const* stmt);
+codegen_stmt_assign(struct stmt const* stmt);
 static void
-codegen_stmt_expr(struct tir_stmt const* stmt);
+codegen_stmt_expr(struct stmt const* stmt);
 
 static void
-codegen_rvalue(struct tir_expr const* expr);
+codegen_rvalue(struct expr const* expr);
 static void
-codegen_rvalue_identifier(struct tir_expr const* expr);
+codegen_rvalue_identifier(struct expr const* expr);
 static void
-codegen_rvalue_boolean(struct tir_expr const* expr);
+codegen_rvalue_boolean(struct expr const* expr);
 static void
-codegen_rvalue_integer(struct tir_expr const* expr);
+codegen_rvalue_integer(struct expr const* expr);
 static void
-codegen_rvalue_bytes(struct tir_expr const* expr);
+codegen_rvalue_bytes(struct expr const* expr);
 static void
-codegen_rvalue_literal_array(struct tir_expr const* expr);
+codegen_rvalue_literal_array(struct expr const* expr);
 static void
-codegen_rvalue_literal_slice(struct tir_expr const* expr);
+codegen_rvalue_literal_slice(struct expr const* expr);
 static void
-codegen_rvalue_cast(struct tir_expr const* expr);
+codegen_rvalue_cast(struct expr const* expr);
 static void
-codegen_rvalue_syscall(struct tir_expr const* expr);
+codegen_rvalue_syscall(struct expr const* expr);
 static void
-codegen_rvalue_call(struct tir_expr const* expr);
+codegen_rvalue_call(struct expr const* expr);
 static void
-codegen_rvalue_index(struct tir_expr const* expr);
+codegen_rvalue_index(struct expr const* expr);
 static void
-codegen_rvalue_index_lhs_array(struct tir_expr const* expr);
+codegen_rvalue_index_lhs_array(struct expr const* expr);
 static void
-codegen_rvalue_index_lhs_slice(struct tir_expr const* expr);
+codegen_rvalue_index_lhs_slice(struct expr const* expr);
 static void
-codegen_rvalue_slice(struct tir_expr const* expr);
+codegen_rvalue_slice(struct expr const* expr);
 static void
-codegen_rvalue_slice_lhs_array(struct tir_expr const* expr);
+codegen_rvalue_slice_lhs_array(struct expr const* expr);
 static void
-codegen_rvalue_slice_lhs_slice(struct tir_expr const* expr);
+codegen_rvalue_slice_lhs_slice(struct expr const* expr);
 static void
-codegen_rvalue_sizeof(struct tir_expr const* expr);
+codegen_rvalue_sizeof(struct expr const* expr);
 static void
-codegen_rvalue_unary(struct tir_expr const* expr);
+codegen_rvalue_unary(struct expr const* expr);
 static void
-codegen_rvalue_binary(struct tir_expr const* expr);
+codegen_rvalue_binary(struct expr const* expr);
 static void
-codegen_lvalue(struct tir_expr const* expr);
+codegen_lvalue(struct expr const* expr);
 static void
-codegen_lvalue_index(struct tir_expr const* expr);
+codegen_lvalue_index(struct expr const* expr);
 static void
-codegen_lvalue_index_lhs_array(struct tir_expr const* expr);
+codegen_lvalue_index_lhs_array(struct expr const* expr);
 static void
-codegen_lvalue_index_lhs_slice(struct tir_expr const* expr);
+codegen_lvalue_index_lhs_slice(struct expr const* expr);
 static void
-codegen_lvalue_unary(struct tir_expr const* expr);
+codegen_lvalue_unary(struct expr const* expr);
 
 static void
 codegen_static_constants(void)
@@ -775,7 +775,7 @@ codegen_static_function(struct symbol const* symbol)
     assert(symbol->value != NULL);
 
     assert(symbol->value->type->kind == TYPE_FUNCTION);
-    struct tir_function const* const function = symbol->value->data.function;
+    struct function const* const function = symbol->value->data.function;
 
     assert(symbol->address->data.static_.offset == 0);
     appendln("global %s", function->name);
@@ -793,7 +793,7 @@ codegen_static_function(struct symbol const* symbol)
     assert(current_function == NULL);
     current_function = function;
     for (size_t i = 0; i < autil_sbuf_count(function->body->stmts); ++i) {
-        struct tir_stmt const* const stmt = function->body->stmts[i];
+        struct stmt const* const stmt = function->body->stmts[i];
         codegen_stmt(stmt);
     }
     current_function = NULL;
@@ -813,52 +813,52 @@ codegen_static_function(struct symbol const* symbol)
 }
 
 static void
-codegen_stmt(struct tir_stmt const* stmt)
+codegen_stmt(struct stmt const* stmt)
 {
     assert(stmt != NULL);
 
     switch (stmt->kind) {
-    case TIR_STMT_IF: {
+    case STMT_IF: {
         appendli_location(stmt->location, "<stmt-if>");
         codegen_stmt_if(stmt);
         return;
     }
-    case TIR_STMT_FOR_RANGE: {
+    case STMT_FOR_RANGE: {
         appendli_location(stmt->location, "<stmt-for-range>");
         codegen_stmt_for_range(stmt);
         return;
     }
-    case TIR_STMT_FOR_EXPR: {
+    case STMT_FOR_EXPR: {
         appendli_location(stmt->location, "<stmt-for-expr>");
         codegen_stmt_for_expr(stmt);
         return;
     }
-    case TIR_STMT_BREAK: {
+    case STMT_BREAK: {
         appendli_location(stmt->location, "<stmt-break>");
         codegen_stmt_break(stmt);
         return;
     }
-    case TIR_STMT_CONTINUE: {
+    case STMT_CONTINUE: {
         appendli_location(stmt->location, "<stmt-continue>");
         codegen_stmt_continue(stmt);
         return;
     }
-    case TIR_STMT_DUMP: {
+    case STMT_DUMP: {
         appendli_location(stmt->location, "<stmt-dump>");
         codegen_stmt_dump(stmt);
         return;
     }
-    case TIR_STMT_RETURN: {
+    case STMT_RETURN: {
         appendli_location(stmt->location, "<stmt-return>");
         codegen_stmt_return(stmt);
         return;
     }
-    case TIR_STMT_ASSIGN: {
+    case STMT_ASSIGN: {
         appendli_location(stmt->location, "<stmt-assign>");
         codegen_stmt_assign(stmt);
         return;
     }
-    case TIR_STMT_EXPR: {
+    case STMT_EXPR: {
         appendli_location(stmt->location, "<stmt-expr>");
         codegen_stmt_expr(stmt);
         return;
@@ -869,13 +869,13 @@ codegen_stmt(struct tir_stmt const* stmt)
 }
 
 static void
-codegen_stmt_if(struct tir_stmt const* stmt)
+codegen_stmt_if(struct stmt const* stmt)
 {
     assert(stmt != NULL);
-    assert(stmt->kind == TIR_STMT_IF);
+    assert(stmt->kind == STMT_IF);
 
     size_t const stmt_id = unique_id++;
-    autil_sbuf(struct tir_conditional const* const) const conditionals =
+    autil_sbuf(struct conditional const* const) const conditionals =
         stmt->data.if_.conditionals;
     appendln(".l%zu_stmt_if_bgn:", stmt_id);
     for (size_t i = 0; i < autil_sbuf_count(conditionals); ++i) {
@@ -901,7 +901,7 @@ codegen_stmt_if(struct tir_stmt const* stmt)
         }
 
         appendln(".l%zu_stmt_if_%zu_body:", stmt_id, i);
-        autil_sbuf(struct tir_stmt const* const) const stmts =
+        autil_sbuf(struct stmt const* const) const stmts =
             conditionals[i]->body->stmts;
         for (size_t i = 0; i < autil_sbuf_count(stmts); ++i) {
             codegen_stmt(stmts[i]);
@@ -912,10 +912,10 @@ codegen_stmt_if(struct tir_stmt const* stmt)
 }
 
 static void
-codegen_stmt_for_range(struct tir_stmt const* stmt)
+codegen_stmt_for_range(struct stmt const* stmt)
 {
     assert(stmt != NULL);
-    assert(stmt->kind == TIR_STMT_FOR_RANGE);
+    assert(stmt->kind == STMT_FOR_RANGE);
 
     assert(
         stmt->data.for_range.loop_variable->type == context()->builtin.usize);
@@ -943,7 +943,7 @@ codegen_stmt_for_range(struct tir_stmt const* stmt)
     appendli("cmp rax, rbx");
     appendli("je .l%zu_stmt_for_end", stmt_id);
     appendln(".l%zu_stmt_for_body_bgn:", stmt_id);
-    autil_sbuf(struct tir_stmt const* const) const stmts =
+    autil_sbuf(struct stmt const* const) const stmts =
         stmt->data.for_range.body->stmts;
     for (size_t i = 0; i < autil_sbuf_count(stmts); ++i) {
         codegen_stmt(stmts[i]);
@@ -959,10 +959,10 @@ codegen_stmt_for_range(struct tir_stmt const* stmt)
 }
 
 static void
-codegen_stmt_for_expr(struct tir_stmt const* stmt)
+codegen_stmt_for_expr(struct stmt const* stmt)
 {
     assert(stmt != NULL);
-    assert(stmt->kind == TIR_STMT_FOR_EXPR);
+    assert(stmt->kind == STMT_FOR_EXPR);
 
     size_t const stmt_id = unique_id++;
     size_t const save_current_loop_id = current_loop_id;
@@ -977,7 +977,7 @@ codegen_stmt_for_expr(struct tir_stmt const* stmt)
     appendli("cmp al, bl");
     appendli("je .l%zu_stmt_for_end", stmt_id);
     appendln(".l%zu_stmt_for_body_bgn:", stmt_id);
-    autil_sbuf(struct tir_stmt const* const) const stmts =
+    autil_sbuf(struct stmt const* const) const stmts =
         stmt->data.for_expr.body->stmts;
     for (size_t i = 0; i < autil_sbuf_count(stmts); ++i) {
         codegen_stmt(stmts[i]);
@@ -990,28 +990,28 @@ codegen_stmt_for_expr(struct tir_stmt const* stmt)
 }
 
 static void
-codegen_stmt_break(struct tir_stmt const* stmt)
+codegen_stmt_break(struct stmt const* stmt)
 {
     assert(stmt != NULL);
-    assert(stmt->kind == TIR_STMT_BREAK);
+    assert(stmt->kind == STMT_BREAK);
 
     appendli("jmp .l%zu_stmt_for_end", current_loop_id);
 }
 
 static void
-codegen_stmt_continue(struct tir_stmt const* stmt)
+codegen_stmt_continue(struct stmt const* stmt)
 {
     assert(stmt != NULL);
-    assert(stmt->kind == TIR_STMT_CONTINUE);
+    assert(stmt->kind == STMT_CONTINUE);
 
     appendli("jmp .l%zu_stmt_for_body_end", current_loop_id);
 }
 
 static void
-codegen_stmt_dump(struct tir_stmt const* stmt)
+codegen_stmt_dump(struct stmt const* stmt)
 {
     assert(stmt != NULL);
-    assert(stmt->kind == TIR_STMT_DUMP);
+    assert(stmt->kind == STMT_DUMP);
 
     codegen_rvalue(stmt->data.expr);
     appendli("push %#zx", stmt->data.expr->type->size);
@@ -1021,10 +1021,10 @@ codegen_stmt_dump(struct tir_stmt const* stmt)
 }
 
 static void
-codegen_stmt_return(struct tir_stmt const* stmt)
+codegen_stmt_return(struct stmt const* stmt)
 {
     assert(stmt != NULL);
-    assert(stmt->kind == TIR_STMT_RETURN);
+    assert(stmt->kind == STMT_RETURN);
 
     if (stmt->data.return_.expr != NULL) {
         // Compute result.
@@ -1050,10 +1050,10 @@ codegen_stmt_return(struct tir_stmt const* stmt)
 }
 
 static void
-codegen_stmt_assign(struct tir_stmt const* stmt)
+codegen_stmt_assign(struct stmt const* stmt)
 {
     assert(stmt != NULL);
-    assert(stmt->kind == TIR_STMT_ASSIGN);
+    assert(stmt->kind == STMT_ASSIGN);
 
     codegen_rvalue(stmt->data.assign.rhs);
     codegen_lvalue(stmt->data.assign.lhs);
@@ -1097,10 +1097,10 @@ codegen_stmt_assign(struct tir_stmt const* stmt)
 }
 
 static void
-codegen_stmt_expr(struct tir_stmt const* stmt)
+codegen_stmt_expr(struct stmt const* stmt)
 {
     assert(stmt != NULL);
-    assert(stmt->kind == TIR_STMT_EXPR);
+    assert(stmt->kind == STMT_EXPR);
 
     codegen_rvalue(stmt->data.expr);
     // Remove the (unused) result from the stack.
@@ -1108,64 +1108,64 @@ codegen_stmt_expr(struct tir_stmt const* stmt)
 }
 
 static void
-codegen_rvalue(struct tir_expr const* expr)
+codegen_rvalue(struct expr const* expr)
 {
     assert(expr != NULL);
 
     switch (expr->kind) {
-    case TIR_EXPR_IDENTIFIER: {
+    case EXPR_IDENTIFIER: {
         codegen_rvalue_identifier(expr);
         return;
     }
-    case TIR_EXPR_BOOLEAN: {
+    case EXPR_BOOLEAN: {
         codegen_rvalue_boolean(expr);
         return;
     }
-    case TIR_EXPR_INTEGER: {
+    case EXPR_INTEGER: {
         codegen_rvalue_integer(expr);
         return;
     }
-    case TIR_EXPR_BYTES: {
+    case EXPR_BYTES: {
         codegen_rvalue_bytes(expr);
         return;
     }
-    case TIR_EXPR_LITERAL_ARRAY: {
+    case EXPR_LITERAL_ARRAY: {
         codegen_rvalue_literal_array(expr);
         return;
     }
-    case TIR_EXPR_LITERAL_SLICE: {
+    case EXPR_LITERAL_SLICE: {
         codegen_rvalue_literal_slice(expr);
         return;
     }
-    case TIR_EXPR_CAST: {
+    case EXPR_CAST: {
         codegen_rvalue_cast(expr);
         return;
     }
-    case TIR_EXPR_SYSCALL: {
+    case EXPR_SYSCALL: {
         codegen_rvalue_syscall(expr);
         return;
     }
-    case TIR_EXPR_CALL: {
+    case EXPR_CALL: {
         codegen_rvalue_call(expr);
         return;
     }
-    case TIR_EXPR_INDEX: {
+    case EXPR_INDEX: {
         codegen_rvalue_index(expr);
         return;
     }
-    case TIR_EXPR_SLICE: {
+    case EXPR_SLICE: {
         codegen_rvalue_slice(expr);
         return;
     }
-    case TIR_EXPR_SIZEOF: {
+    case EXPR_SIZEOF: {
         codegen_rvalue_sizeof(expr);
         return;
     }
-    case TIR_EXPR_UNARY: {
+    case EXPR_UNARY: {
         codegen_rvalue_unary(expr);
         return;
     }
-    case TIR_EXPR_BINARY: {
+    case EXPR_BINARY: {
         codegen_rvalue_binary(expr);
         return;
     }
@@ -1175,10 +1175,10 @@ codegen_rvalue(struct tir_expr const* expr)
 }
 
 static void
-codegen_rvalue_identifier(struct tir_expr const* expr)
+codegen_rvalue_identifier(struct expr const* expr)
 {
     assert(expr != NULL);
-    assert(expr->kind == TIR_EXPR_IDENTIFIER);
+    assert(expr->kind == EXPR_IDENTIFIER);
 
     struct symbol const* const symbol = expr->data.identifier;
     switch (symbol->kind) {
@@ -1201,20 +1201,20 @@ codegen_rvalue_identifier(struct tir_expr const* expr)
 }
 
 static void
-codegen_rvalue_boolean(struct tir_expr const* expr)
+codegen_rvalue_boolean(struct expr const* expr)
 {
     assert(expr != NULL);
-    assert(expr->kind == TIR_EXPR_BOOLEAN);
+    assert(expr->kind == EXPR_BOOLEAN);
 
     appendli("mov rax, %s", expr->data.boolean ? "0x01" : "0x00");
     appendli("push rax");
 }
 
 static void
-codegen_rvalue_integer(struct tir_expr const* expr)
+codegen_rvalue_integer(struct expr const* expr)
 {
     assert(expr != NULL);
-    assert(expr->kind == TIR_EXPR_INTEGER);
+    assert(expr->kind == EXPR_INTEGER);
 
     char* const cstr = autil_bigint_to_new_cstr(expr->data.integer, NULL);
 
@@ -1227,10 +1227,10 @@ codegen_rvalue_integer(struct tir_expr const* expr)
 }
 
 static void
-codegen_rvalue_bytes(struct tir_expr const* expr)
+codegen_rvalue_bytes(struct expr const* expr)
 {
     assert(expr != NULL);
-    assert(expr->kind == TIR_EXPR_BYTES);
+    assert(expr->kind == EXPR_BYTES);
     assert(expr->type->kind == TYPE_SLICE);
 
     appendli("push %zu", expr->data.bytes.count); // count
@@ -1238,10 +1238,10 @@ codegen_rvalue_bytes(struct tir_expr const* expr)
 }
 
 static void
-codegen_rvalue_literal_array(struct tir_expr const* expr)
+codegen_rvalue_literal_array(struct expr const* expr)
 {
     assert(expr != NULL);
-    assert(expr->kind == TIR_EXPR_LITERAL_ARRAY);
+    assert(expr->kind == EXPR_LITERAL_ARRAY);
     assert(expr->type->kind == TYPE_ARRAY);
 
     // Make space for the array.
@@ -1255,7 +1255,7 @@ codegen_rvalue_literal_array(struct tir_expr const* expr)
     // array elements. Additionally pushing/popping to and from the stack uses
     // 8-byte alignment, but arrays may have element alignment that does not
     // cleanly match the stack alignment (e.g. [count]bool).
-    autil_sbuf(struct tir_expr const* const) const elements =
+    autil_sbuf(struct expr const* const) const elements =
         expr->data.literal_array.elements;
     struct type const* const element_type = expr->type->data.array.base;
     size_t const element_size = element_type->size;
@@ -1309,10 +1309,10 @@ codegen_rvalue_literal_array(struct tir_expr const* expr)
 }
 
 static void
-codegen_rvalue_literal_slice(struct tir_expr const* expr)
+codegen_rvalue_literal_slice(struct expr const* expr)
 {
     assert(expr != NULL);
-    assert(expr->kind == TIR_EXPR_LITERAL_SLICE);
+    assert(expr->kind == EXPR_LITERAL_SLICE);
     assert(expr->type->kind == TYPE_SLICE);
 
     // +---------+
@@ -1325,14 +1325,14 @@ codegen_rvalue_literal_slice(struct tir_expr const* expr)
 }
 
 static void
-codegen_rvalue_cast(struct tir_expr const* expr)
+codegen_rvalue_cast(struct expr const* expr)
 {
     assert(expr != NULL);
-    assert(expr->kind == TIR_EXPR_CAST);
+    assert(expr->kind == EXPR_CAST);
     assert(expr->type->size >= 1u);
     assert(expr->type->size <= 8u);
 
-    struct tir_expr const* const from = expr->data.cast.expr;
+    struct expr const* const from = expr->data.cast.expr;
     assert(from->type->size >= 1u);
     assert(from->type->size <= 8u);
     codegen_rvalue(from);
@@ -1386,13 +1386,12 @@ codegen_rvalue_cast(struct tir_expr const* expr)
 }
 
 static void
-codegen_rvalue_syscall(struct tir_expr const* expr)
+codegen_rvalue_syscall(struct expr const* expr)
 {
     assert(expr != NULL);
-    assert(expr->kind == TIR_EXPR_SYSCALL);
+    assert(expr->kind == EXPR_SYSCALL);
 
-    struct tir_expr const* const* const arguments =
-        expr->data.syscall.arguments;
+    struct expr const* const* const arguments = expr->data.syscall.arguments;
     size_t const count = autil_sbuf_count(arguments);
     for (size_t i = 0; i < count; ++i) {
         assert(arguments[i]->type->size <= 8);
@@ -1427,10 +1426,10 @@ codegen_rvalue_syscall(struct tir_expr const* expr)
 }
 
 static void
-codegen_rvalue_call(struct tir_expr const* expr)
+codegen_rvalue_call(struct expr const* expr)
 {
     assert(expr != NULL);
-    assert(expr->kind == TIR_EXPR_CALL);
+    assert(expr->kind == EXPR_CALL);
 
     // Push space for return value.
     struct type const* function_type = expr->data.call.function->type;
@@ -1439,7 +1438,7 @@ codegen_rvalue_call(struct tir_expr const* expr)
     push(return_type->size);
 
     // Evaluate & push arguments from left to right.
-    struct tir_expr const* const* const arguments = expr->data.call.arguments;
+    struct expr const* const* const arguments = expr->data.call.arguments;
     for (size_t i = 0; i < autil_sbuf_count(arguments); ++i) {
         codegen_rvalue(arguments[i]);
     }
@@ -1457,10 +1456,10 @@ codegen_rvalue_call(struct tir_expr const* expr)
 }
 
 static void
-codegen_rvalue_index(struct tir_expr const* expr)
+codegen_rvalue_index(struct expr const* expr)
 {
     assert(expr != NULL);
-    assert(expr->kind == TIR_EXPR_INDEX);
+    assert(expr->kind == EXPR_INDEX);
 
     if (expr->data.index.lhs->type->kind == TYPE_ARRAY) {
         codegen_rvalue_index_lhs_array(expr);
@@ -1476,10 +1475,10 @@ codegen_rvalue_index(struct tir_expr const* expr)
 }
 
 static void
-codegen_rvalue_index_lhs_array(struct tir_expr const* expr)
+codegen_rvalue_index_lhs_array(struct expr const* expr)
 {
     assert(expr != NULL);
-    assert(expr->kind == TIR_EXPR_INDEX);
+    assert(expr->kind == EXPR_INDEX);
     assert(expr->data.index.lhs->type->kind == TYPE_ARRAY);
     assert(expr->data.index.idx->type->kind == TYPE_USIZE);
     size_t const expr_id = unique_id++;
@@ -1494,7 +1493,7 @@ codegen_rvalue_index_lhs_array(struct tir_expr const* expr)
     assert(expr->type == element_type);
     push(expr->type->size);
 
-    if (tir_expr_is_lvalue(expr->data.index.lhs)) {
+    if (expr_is_lvalue(expr->data.index.lhs)) {
         // Array expression is an lvalue. Compute the address of the of the
         // indexed element and copy from that address into the result.
         codegen_lvalue(expr->data.index.lhs);
@@ -1551,10 +1550,10 @@ codegen_rvalue_index_lhs_array(struct tir_expr const* expr)
 }
 
 static void
-codegen_rvalue_index_lhs_slice(struct tir_expr const* expr)
+codegen_rvalue_index_lhs_slice(struct expr const* expr)
 {
     assert(expr != NULL);
-    assert(expr->kind == TIR_EXPR_INDEX);
+    assert(expr->kind == EXPR_INDEX);
     assert(expr->data.index.lhs->type->kind == TYPE_SLICE);
     assert(expr->data.index.idx->type->kind == TYPE_USIZE);
     size_t const expr_id = unique_id++;
@@ -1589,10 +1588,10 @@ codegen_rvalue_index_lhs_slice(struct tir_expr const* expr)
 }
 
 static void
-codegen_rvalue_slice(struct tir_expr const* expr)
+codegen_rvalue_slice(struct expr const* expr)
 {
     assert(expr != NULL);
-    assert(expr->kind == TIR_EXPR_SLICE);
+    assert(expr->kind == EXPR_SLICE);
 
     if (expr->data.slice.lhs->type->kind == TYPE_ARRAY) {
         codegen_rvalue_slice_lhs_array(expr);
@@ -1608,14 +1607,14 @@ codegen_rvalue_slice(struct tir_expr const* expr)
 }
 
 static void
-codegen_rvalue_slice_lhs_array(struct tir_expr const* expr)
+codegen_rvalue_slice_lhs_array(struct expr const* expr)
 {
     assert(expr != NULL);
-    assert(expr->kind == TIR_EXPR_SLICE);
+    assert(expr->kind == EXPR_SLICE);
     assert(expr->data.slice.lhs->type->kind == TYPE_ARRAY);
     assert(expr->data.slice.begin->type->kind == TYPE_USIZE);
     assert(expr->data.slice.end->type->kind == TYPE_USIZE);
-    assert(tir_expr_is_lvalue(expr->data.slice.lhs));
+    assert(expr_is_lvalue(expr->data.slice.lhs));
     size_t const expr_id = unique_id++;
 
     struct type const* const lhs_type = expr->data.slice.lhs->type;
@@ -1659,10 +1658,10 @@ codegen_rvalue_slice_lhs_array(struct tir_expr const* expr)
 }
 
 static void
-codegen_rvalue_slice_lhs_slice(struct tir_expr const* expr)
+codegen_rvalue_slice_lhs_slice(struct expr const* expr)
 {
     assert(expr != NULL);
-    assert(expr->kind == TIR_EXPR_SLICE);
+    assert(expr->kind == EXPR_SLICE);
     assert(expr->data.slice.lhs->type->kind == TYPE_SLICE);
     assert(expr->data.slice.begin->type->kind == TYPE_USIZE);
     assert(expr->data.slice.end->type->kind == TYPE_USIZE);
@@ -1704,10 +1703,10 @@ codegen_rvalue_slice_lhs_slice(struct tir_expr const* expr)
 }
 
 static void
-codegen_rvalue_sizeof(struct tir_expr const* expr)
+codegen_rvalue_sizeof(struct expr const* expr)
 {
     assert(expr != NULL);
-    assert(expr->kind == TIR_EXPR_SIZEOF);
+    assert(expr->kind == EXPR_SIZEOF);
 
     assert(expr->type->kind == TYPE_USIZE);
     appendli("mov rax, %zu", expr->data.sizeof_.rhs->size);
@@ -1715,10 +1714,10 @@ codegen_rvalue_sizeof(struct tir_expr const* expr)
 }
 
 static void
-codegen_rvalue_unary(struct tir_expr const* expr)
+codegen_rvalue_unary(struct expr const* expr)
 {
     assert(expr != NULL);
-    assert(expr->kind == TIR_EXPR_UNARY);
+    assert(expr->kind == EXPR_UNARY);
 
     switch (expr->data.unary.op) {
     case UOP_NOT: {
@@ -1740,7 +1739,7 @@ codegen_rvalue_unary(struct tir_expr const* expr)
         return;
     }
     case UOP_NEG: {
-        struct tir_expr const* const rhs = expr->data.unary.rhs;
+        struct expr const* const rhs = expr->data.unary.rhs;
         size_t const expr_id = unique_id++;
 
         assert(rhs->type->size <= 8u);
@@ -1803,7 +1802,7 @@ codegen_rvalue_unary(struct tir_expr const* expr)
             // If possible evaluate the left hand side of the expression as an
             // lvalue so that we do not push the entire contents of the array
             // onto the stack.
-            if (tir_expr_is_lvalue(expr->data.unary.rhs)) {
+            if (expr_is_lvalue(expr->data.unary.rhs)) {
                 codegen_lvalue(expr->data.unary.rhs);
                 appendli("pop rax ; discard array lvalue");
             }
@@ -1832,10 +1831,10 @@ codegen_rvalue_unary(struct tir_expr const* expr)
 }
 
 static void
-codegen_rvalue_binary(struct tir_expr const* expr)
+codegen_rvalue_binary(struct expr const* expr)
 {
     assert(expr != NULL);
-    assert(expr->kind == TIR_EXPR_BINARY);
+    assert(expr->kind == EXPR_BINARY);
 
     switch (expr->data.binary.op) {
     case BOP_OR: {
@@ -2204,35 +2203,35 @@ codegen_rvalue_binary(struct tir_expr const* expr)
 }
 
 static void
-codegen_lvalue(struct tir_expr const* expr)
+codegen_lvalue(struct expr const* expr)
 {
     assert(expr != NULL);
 
     switch (expr->kind) {
-    case TIR_EXPR_IDENTIFIER: {
+    case EXPR_IDENTIFIER: {
         push_address(expr->data.identifier->address);
         return;
     }
-    case TIR_EXPR_INDEX: {
+    case EXPR_INDEX: {
         codegen_lvalue_index(expr);
         return;
     }
-    case TIR_EXPR_UNARY: {
+    case EXPR_UNARY: {
         codegen_lvalue_unary(expr);
         return;
     }
-    case TIR_EXPR_BOOLEAN: /* fallthrough */
-    case TIR_EXPR_INTEGER: /* fallthrough */
-    case TIR_EXPR_BYTES: /* fallthrough */
-    case TIR_EXPR_LITERAL_ARRAY: /* fallthrough */
-    case TIR_EXPR_LITERAL_SLICE: /* fallthrough */
-    case TIR_EXPR_CAST: /* fallthrough */
-    case TIR_EXPR_SYSCALL: /* fallthrough */
-    case TIR_EXPR_CALL: /* fallthrough */
-    case TIR_EXPR_SLICE: /* fallthrough */
-    case TIR_EXPR_SIZEOF: /* fallthrough */
-    case TIR_EXPR_BINARY: {
-        assert(!tir_expr_is_lvalue(expr));
+    case EXPR_BOOLEAN: /* fallthrough */
+    case EXPR_INTEGER: /* fallthrough */
+    case EXPR_BYTES: /* fallthrough */
+    case EXPR_LITERAL_ARRAY: /* fallthrough */
+    case EXPR_LITERAL_SLICE: /* fallthrough */
+    case EXPR_CAST: /* fallthrough */
+    case EXPR_SYSCALL: /* fallthrough */
+    case EXPR_CALL: /* fallthrough */
+    case EXPR_SLICE: /* fallthrough */
+    case EXPR_SIZEOF: /* fallthrough */
+    case EXPR_BINARY: {
+        assert(!expr_is_lvalue(expr));
         UNREACHABLE();
     }
     }
@@ -2240,10 +2239,10 @@ codegen_lvalue(struct tir_expr const* expr)
     UNREACHABLE();
 }
 static void
-codegen_lvalue_index(struct tir_expr const* expr)
+codegen_lvalue_index(struct expr const* expr)
 {
     assert(expr != NULL);
-    assert(expr->kind == TIR_EXPR_INDEX);
+    assert(expr->kind == EXPR_INDEX);
 
     if (expr->data.index.lhs->type->kind == TYPE_ARRAY) {
         codegen_lvalue_index_lhs_array(expr);
@@ -2259,10 +2258,10 @@ codegen_lvalue_index(struct tir_expr const* expr)
 }
 
 static void
-codegen_lvalue_index_lhs_array(struct tir_expr const* expr)
+codegen_lvalue_index_lhs_array(struct expr const* expr)
 {
     assert(expr != NULL);
-    assert(expr->kind == TIR_EXPR_INDEX);
+    assert(expr->kind == EXPR_INDEX);
     assert(expr->data.index.lhs->type->kind == TYPE_ARRAY);
     assert(expr->data.index.idx->type->kind == TYPE_USIZE);
 
@@ -2290,10 +2289,10 @@ codegen_lvalue_index_lhs_array(struct tir_expr const* expr)
 }
 
 static void
-codegen_lvalue_index_lhs_slice(struct tir_expr const* expr)
+codegen_lvalue_index_lhs_slice(struct expr const* expr)
 {
     assert(expr != NULL);
-    assert(expr->kind == TIR_EXPR_INDEX);
+    assert(expr->kind == EXPR_INDEX);
     assert(expr->data.index.lhs->type->kind == TYPE_SLICE);
     assert(expr->data.index.idx->type->kind == TYPE_USIZE);
 
@@ -2322,7 +2321,7 @@ codegen_lvalue_index_lhs_slice(struct tir_expr const* expr)
 }
 
 static void
-codegen_lvalue_unary(struct tir_expr const* expr)
+codegen_lvalue_unary(struct expr const* expr)
 {
     assert(expr != NULL);
 
@@ -2338,7 +2337,7 @@ codegen_lvalue_unary(struct tir_expr const* expr)
     case UOP_BITNOT: /* fallthrough */
     case UOP_ADDRESSOF: /* fallthrough */
     case UOP_COUNTOF: {
-        assert(!tir_expr_is_lvalue(expr));
+        assert(!expr_is_lvalue(expr));
         UNREACHABLE();
     }
     }

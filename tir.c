@@ -571,34 +571,33 @@ symbol_table_lookup_local(struct symbol_table const* self, char const* name)
     return existing != NULL ? *existing : NULL;
 }
 
-static struct tir_stmt*
-tir_stmt_new(struct source_location const* location, enum tir_stmt_kind kind)
+static struct stmt*
+stmt_new(struct source_location const* location, enum stmt_kind kind)
 {
-    struct tir_stmt* const self = autil_xalloc(NULL, sizeof(*self));
+    struct stmt* const self = autil_xalloc(NULL, sizeof(*self));
     memset(self, 0x00, sizeof(*self));
     self->location = location;
     self->kind = kind;
     return self;
 }
 
-struct tir_stmt*
-tir_stmt_new_if(struct tir_conditional const* const* conditionals)
+struct stmt*
+stmt_new_if(struct conditional const* const* conditionals)
 {
     assert(autil_sbuf_count(conditionals) > 0u);
 
-    struct tir_stmt* const self =
-        tir_stmt_new(conditionals[0]->location, TIR_STMT_IF);
+    struct stmt* const self = stmt_new(conditionals[0]->location, STMT_IF);
     self->data.if_.conditionals = conditionals;
     return self;
 }
 
-struct tir_stmt*
-tir_stmt_new_for_range(
+struct stmt*
+stmt_new_for_range(
     struct source_location const* location,
     struct symbol const* loop_variable,
-    struct tir_expr const* begin,
-    struct tir_expr const* end,
-    struct tir_block const* body)
+    struct expr const* begin,
+    struct expr const* end,
+    struct block const* body)
 {
     assert(location != NULL);
     assert(loop_variable != NULL);
@@ -610,7 +609,7 @@ tir_stmt_new_for_range(
     assert(end->type == context()->builtin.usize);
     assert(body != NULL);
 
-    struct tir_stmt* const self = tir_stmt_new(location, TIR_STMT_FOR_RANGE);
+    struct stmt* const self = stmt_new(location, STMT_FOR_RANGE);
     self->data.for_range.loop_variable = loop_variable;
     self->data.for_range.begin = begin;
     self->data.for_range.end = end;
@@ -618,100 +617,97 @@ tir_stmt_new_for_range(
     return self;
 }
 
-struct tir_stmt*
-tir_stmt_new_for_expr(
+struct stmt*
+stmt_new_for_expr(
     struct source_location const* location,
-    struct tir_expr const* expr,
-    struct tir_block const* body)
+    struct expr const* expr,
+    struct block const* body)
 {
     assert(location != NULL);
     assert(expr != NULL);
     assert(body != NULL);
 
-    struct tir_stmt* const self = tir_stmt_new(location, TIR_STMT_FOR_EXPR);
+    struct stmt* const self = stmt_new(location, STMT_FOR_EXPR);
     self->data.for_expr.expr = expr;
     self->data.for_expr.body = body;
     return self;
 }
 
-struct tir_stmt*
-tir_stmt_new_break(struct source_location const* location)
+struct stmt*
+stmt_new_break(struct source_location const* location)
 {
     assert(location != NULL);
 
-    struct tir_stmt* const self = tir_stmt_new(location, TIR_STMT_BREAK);
+    struct stmt* const self = stmt_new(location, STMT_BREAK);
     return self;
 }
 
-struct tir_stmt*
-tir_stmt_new_continue(struct source_location const* location)
+struct stmt*
+stmt_new_continue(struct source_location const* location)
 {
     assert(location != NULL);
 
-    struct tir_stmt* const self = tir_stmt_new(location, TIR_STMT_CONTINUE);
+    struct stmt* const self = stmt_new(location, STMT_CONTINUE);
     return self;
 }
 
-struct tir_stmt*
-tir_stmt_new_dump(
-    struct source_location const* location, struct tir_expr const* expr)
+struct stmt*
+stmt_new_dump(struct source_location const* location, struct expr const* expr)
 {
     assert(location != NULL);
     assert(expr != NULL);
 
-    struct tir_stmt* const self = tir_stmt_new(location, TIR_STMT_DUMP);
+    struct stmt* const self = stmt_new(location, STMT_DUMP);
     self->data.dump.expr = expr;
     return self;
 }
 
-struct tir_stmt*
-tir_stmt_new_return(
-    struct source_location const* location, struct tir_expr const* expr)
+struct stmt*
+stmt_new_return(struct source_location const* location, struct expr const* expr)
 {
     assert(location != NULL);
 
-    struct tir_stmt* const self = tir_stmt_new(location, TIR_STMT_RETURN);
+    struct stmt* const self = stmt_new(location, STMT_RETURN);
     self->data.return_.expr = expr;
     return self;
 }
 
-struct tir_stmt*
-tir_stmt_new_assign(
+struct stmt*
+stmt_new_assign(
     struct source_location const* location,
-    struct tir_expr const* lhs,
-    struct tir_expr const* rhs)
+    struct expr const* lhs,
+    struct expr const* rhs)
 {
     assert(location != NULL);
     assert(lhs != NULL);
     assert(rhs != NULL);
 
-    struct tir_stmt* const self = tir_stmt_new(location, TIR_STMT_ASSIGN);
+    struct stmt* const self = stmt_new(location, STMT_ASSIGN);
     self->data.assign.lhs = lhs;
     self->data.assign.rhs = rhs;
     return self;
 }
 
-struct tir_stmt*
-tir_stmt_new_expr(
-    struct source_location const* location, struct tir_expr const* expr)
+struct stmt*
+stmt_new_expr(struct source_location const* location, struct expr const* expr)
 {
     assert(expr != NULL);
 
-    struct tir_stmt* const self = tir_stmt_new(location, TIR_STMT_EXPR);
+    struct stmt* const self = stmt_new(location, STMT_EXPR);
     self->data.expr = expr;
     return self;
 }
 
-static struct tir_expr*
-tir_expr_new(
+static struct expr*
+expr_new(
     struct source_location const* location,
     struct type const* type,
-    enum tir_expr_kind kind)
+    enum expr_kind kind)
 {
     assert(location != NULL);
     assert(type != NULL);
 
-    struct tir_expr* const self = autil_xalloc(NULL, sizeof(*self));
+    struct expr* const self = autil_xalloc(NULL, sizeof(*self));
     memset(self, 0x00, sizeof(*self));
     self->location = location;
     self->type = type;
@@ -719,34 +715,33 @@ tir_expr_new(
     return self;
 }
 
-struct tir_expr*
-tir_expr_new_identifier(
+struct expr*
+expr_new_identifier(
     struct source_location const* location, struct symbol const* identifier)
 {
     assert(location != NULL);
     assert(identifier != NULL);
     assert(identifier->kind != SYMBOL_TYPE);
 
-    struct tir_expr* const self =
-        tir_expr_new(location, identifier->type, TIR_EXPR_IDENTIFIER);
+    struct expr* const self =
+        expr_new(location, identifier->type, EXPR_IDENTIFIER);
     self->data.identifier = identifier;
     return self;
 }
 
-struct tir_expr*
-tir_expr_new_boolean(struct source_location const* location, bool value)
+struct expr*
+expr_new_boolean(struct source_location const* location, bool value)
 {
     assert(location != NULL);
 
     struct type const* const type = context()->builtin.bool_;
-    struct tir_expr* const self =
-        tir_expr_new(location, type, TIR_EXPR_BOOLEAN);
+    struct expr* const self = expr_new(location, type, EXPR_BOOLEAN);
     self->data.boolean = value;
     return self;
 }
 
-struct tir_expr*
-tir_expr_new_integer(
+struct expr*
+expr_new_integer(
     struct source_location const* location,
     struct type const* type,
     struct autil_bigint const* value)
@@ -802,14 +797,13 @@ tir_expr_new_integer(
             lit_cstr,
             max_cstr);
     }
-    struct tir_expr* const self =
-        tir_expr_new(location, type, TIR_EXPR_INTEGER);
+    struct expr* const self = expr_new(location, type, EXPR_INTEGER);
     self->data.integer = value;
     return self;
 }
 
-struct tir_expr*
-tir_expr_new_bytes(
+struct expr*
+expr_new_bytes(
     struct source_location const* location,
     struct address const* address,
     size_t count)
@@ -818,36 +812,35 @@ tir_expr_new_bytes(
     assert(address != NULL);
 
     struct type const* const type = type_unique_slice(context()->builtin.byte);
-    struct tir_expr* const self = tir_expr_new(location, type, TIR_EXPR_BYTES);
+    struct expr* const self = expr_new(location, type, EXPR_BYTES);
     self->data.bytes.address = address;
     self->data.bytes.count = count;
     return self;
 }
 
-struct tir_expr*
-tir_expr_new_literal_array(
+struct expr*
+expr_new_literal_array(
     struct source_location const* location,
     struct type const* type,
-    struct tir_expr const* const* elements,
-    struct tir_expr const* ellipsis)
+    struct expr const* const* elements,
+    struct expr const* ellipsis)
 {
     assert(location != NULL);
     assert(type != NULL);
     assert(type->kind == TYPE_ARRAY);
 
-    struct tir_expr* const self =
-        tir_expr_new(location, type, TIR_EXPR_LITERAL_ARRAY);
+    struct expr* const self = expr_new(location, type, EXPR_LITERAL_ARRAY);
     self->data.literal_array.elements = elements;
     self->data.literal_array.ellipsis = ellipsis;
     return self;
 }
 
-struct tir_expr*
-tir_expr_new_literal_slice(
+struct expr*
+expr_new_literal_slice(
     struct source_location const* location,
     struct type const* type,
-    struct tir_expr const* pointer,
-    struct tir_expr const* count)
+    struct expr const* pointer,
+    struct expr const* count)
 {
     assert(location != NULL);
     assert(type != NULL);
@@ -855,64 +848,62 @@ tir_expr_new_literal_slice(
     assert(pointer != NULL);
     assert(count != NULL);
 
-    struct tir_expr* const self =
-        tir_expr_new(location, type, TIR_EXPR_LITERAL_SLICE);
+    struct expr* const self = expr_new(location, type, EXPR_LITERAL_SLICE);
     self->data.literal_slice.pointer = pointer;
     self->data.literal_slice.count = count;
     return self;
 }
 
-struct tir_expr*
-tir_expr_new_cast(
+struct expr*
+expr_new_cast(
     struct source_location const* location,
     struct type const* type,
-    struct tir_expr const* expr)
+    struct expr const* expr)
 {
     assert(location != NULL);
     assert(type != NULL);
     assert(expr != NULL);
 
-    struct tir_expr* const self = tir_expr_new(location, type, TIR_EXPR_CAST);
+    struct expr* const self = expr_new(location, type, EXPR_CAST);
     self->data.cast.expr = expr;
     return self;
 }
 
-struct tir_expr*
-tir_expr_new_syscall(
-    struct source_location const* location,
-    struct tir_expr const* const* arguments)
+struct expr*
+expr_new_syscall(
+    struct source_location const* location, struct expr const* const* arguments)
 {
     assert(location != NULL);
     assert(arguments != NULL);
 
-    struct tir_expr* const self =
-        tir_expr_new(location, context()->builtin.ssize, TIR_EXPR_SYSCALL);
+    struct expr* const self =
+        expr_new(location, context()->builtin.ssize, EXPR_SYSCALL);
     self->data.syscall.arguments = arguments;
     return self;
 }
 
-struct tir_expr*
-tir_expr_new_call(
+struct expr*
+expr_new_call(
     struct source_location const* location,
-    struct tir_expr const* function,
-    struct tir_expr const* const* arguments)
+    struct expr const* function,
+    struct expr const* const* arguments)
 {
     assert(location != NULL);
     assert(function != NULL);
     assert(function->type->kind == TYPE_FUNCTION);
 
     struct type const* const type = function->type->data.function.return_type;
-    struct tir_expr* const self = tir_expr_new(location, type, TIR_EXPR_CALL);
+    struct expr* const self = expr_new(location, type, EXPR_CALL);
     self->data.call.function = function;
     self->data.call.arguments = arguments;
     return self;
 }
 
-struct tir_expr*
-tir_expr_new_index(
+struct expr*
+expr_new_index(
     struct source_location const* location,
-    struct tir_expr const* lhs,
-    struct tir_expr const* idx)
+    struct expr const* lhs,
+    struct expr const* idx)
 {
     assert(location != NULL);
     assert(lhs != NULL);
@@ -921,8 +912,7 @@ tir_expr_new_index(
 
     if (lhs->type->kind == TYPE_ARRAY) {
         struct type const* const type = lhs->type->data.array.base;
-        struct tir_expr* const self =
-            tir_expr_new(location, type, TIR_EXPR_INDEX);
+        struct expr* const self = expr_new(location, type, EXPR_INDEX);
         self->data.index.lhs = lhs;
         self->data.index.idx = idx;
         return self;
@@ -930,8 +920,7 @@ tir_expr_new_index(
 
     if (lhs->type->kind == TYPE_SLICE) {
         struct type const* const type = lhs->type->data.slice.base;
-        struct tir_expr* const self =
-            tir_expr_new(location, type, TIR_EXPR_INDEX);
+        struct expr* const self = expr_new(location, type, EXPR_INDEX);
         self->data.index.lhs = lhs;
         self->data.index.idx = idx;
         return self;
@@ -940,12 +929,12 @@ tir_expr_new_index(
     UNREACHABLE();
 }
 
-struct tir_expr*
-tir_expr_new_slice(
+struct expr*
+expr_new_slice(
     struct source_location const* location,
-    struct tir_expr const* lhs,
-    struct tir_expr const* begin,
-    struct tir_expr const* end)
+    struct expr const* lhs,
+    struct expr const* begin,
+    struct expr const* end)
 {
     assert(location != NULL);
     assert(lhs != NULL);
@@ -956,8 +945,7 @@ tir_expr_new_slice(
     if (lhs->type->kind == TYPE_ARRAY) {
         struct type const* const type =
             type_unique_slice(lhs->type->data.array.base);
-        struct tir_expr* const self =
-            tir_expr_new(location, type, TIR_EXPR_SLICE);
+        struct expr* const self = expr_new(location, type, EXPR_SLICE);
         self->data.slice.lhs = lhs;
         self->data.slice.begin = begin;
         self->data.slice.end = end;
@@ -967,8 +955,7 @@ tir_expr_new_slice(
     if (lhs->type->kind == TYPE_SLICE) {
         struct type const* const type =
             type_unique_slice(lhs->type->data.slice.base);
-        struct tir_expr* const self =
-            tir_expr_new(location, type, TIR_EXPR_SLICE);
+        struct expr* const self = expr_new(location, type, EXPR_SLICE);
         self->data.slice.lhs = lhs;
         self->data.slice.begin = begin;
         self->data.slice.end = end;
@@ -978,50 +965,49 @@ tir_expr_new_slice(
     UNREACHABLE();
 }
 
-struct tir_expr*
-tir_expr_new_sizeof(
-    struct source_location const* location, struct type const* rhs)
+struct expr*
+expr_new_sizeof(struct source_location const* location, struct type const* rhs)
 {
     assert(location != NULL);
     assert(rhs != NULL);
 
-    struct tir_expr* const self =
-        tir_expr_new(location, context()->builtin.usize, TIR_EXPR_SIZEOF);
+    struct expr* const self =
+        expr_new(location, context()->builtin.usize, EXPR_SIZEOF);
     self->data.sizeof_.rhs = rhs;
     return self;
 }
 
-struct tir_expr*
-tir_expr_new_unary(
+struct expr*
+expr_new_unary(
     struct source_location const* location,
     struct type const* type,
     enum uop_kind op,
-    struct tir_expr const* rhs)
+    struct expr const* rhs)
 {
     assert(location != NULL);
     assert(type != NULL);
     assert(rhs != NULL);
 
-    struct tir_expr* const self = tir_expr_new(location, type, TIR_EXPR_UNARY);
+    struct expr* const self = expr_new(location, type, EXPR_UNARY);
     self->data.unary.op = op;
     self->data.unary.rhs = rhs;
     return self;
 }
 
-struct tir_expr*
-tir_expr_new_binary(
+struct expr*
+expr_new_binary(
     struct source_location const* location,
     struct type const* type,
     enum bop_kind op,
-    struct tir_expr const* lhs,
-    struct tir_expr const* rhs)
+    struct expr const* lhs,
+    struct expr const* rhs)
 {
     assert(location != NULL);
     assert(type != NULL);
     assert(lhs != NULL);
     assert(rhs != NULL);
 
-    struct tir_expr* const self = tir_expr_new(location, type, TIR_EXPR_BINARY);
+    struct expr* const self = expr_new(location, type, EXPR_BINARY);
     self->data.binary.op = op;
     self->data.binary.lhs = lhs;
     self->data.binary.rhs = rhs;
@@ -1029,12 +1015,12 @@ tir_expr_new_binary(
 }
 
 bool
-tir_expr_is_lvalue(struct tir_expr const* self)
+expr_is_lvalue(struct expr const* self)
 {
     assert(self != NULL);
 
     switch (self->kind) {
-    case TIR_EXPR_IDENTIFIER: {
+    case EXPR_IDENTIFIER: {
         switch (self->data.identifier->kind) {
         case SYMBOL_TYPE: /* fallthrough */
         case SYMBOL_NAMESPACE:
@@ -1047,24 +1033,24 @@ tir_expr_is_lvalue(struct tir_expr const* self)
         }
         UNREACHABLE();
     }
-    case TIR_EXPR_INDEX: {
+    case EXPR_INDEX: {
         return self->data.index.lhs->type->kind == TYPE_SLICE
-            || tir_expr_is_lvalue(self->data.index.lhs);
+            || expr_is_lvalue(self->data.index.lhs);
     }
-    case TIR_EXPR_UNARY: {
+    case EXPR_UNARY: {
         return self->data.unary.op == UOP_DEREFERENCE;
     }
-    case TIR_EXPR_BOOLEAN: /* fallthrough */
-    case TIR_EXPR_INTEGER: /* fallthrough */
-    case TIR_EXPR_BYTES: /* fallthrough */
-    case TIR_EXPR_LITERAL_ARRAY: /* fallthrough */
-    case TIR_EXPR_LITERAL_SLICE: /* fallthrough */
-    case TIR_EXPR_CAST: /* fallthrough */
-    case TIR_EXPR_SYSCALL: /* fallthrough */
-    case TIR_EXPR_CALL: /* fallthrough */
-    case TIR_EXPR_SLICE: /* fallthrough */
-    case TIR_EXPR_SIZEOF: /* fallthrough */
-    case TIR_EXPR_BINARY: {
+    case EXPR_BOOLEAN: /* fallthrough */
+    case EXPR_INTEGER: /* fallthrough */
+    case EXPR_BYTES: /* fallthrough */
+    case EXPR_LITERAL_ARRAY: /* fallthrough */
+    case EXPR_LITERAL_SLICE: /* fallthrough */
+    case EXPR_CAST: /* fallthrough */
+    case EXPR_SYSCALL: /* fallthrough */
+    case EXPR_CALL: /* fallthrough */
+    case EXPR_SLICE: /* fallthrough */
+    case EXPR_SIZEOF: /* fallthrough */
+    case EXPR_BINARY: {
         return false;
     }
     }
@@ -1073,8 +1059,8 @@ tir_expr_is_lvalue(struct tir_expr const* self)
     return false;
 }
 
-struct tir_function*
-tir_function_new(
+struct function*
+function_new(
     char const* name, struct type const* type, struct address const* address)
 {
     assert(name != NULL);
@@ -1083,7 +1069,7 @@ tir_function_new(
     assert(address != NULL);
     assert(address->kind == ADDRESS_STATIC);
 
-    struct tir_function* const self = autil_xalloc(NULL, sizeof(*self));
+    struct function* const self = autil_xalloc(NULL, sizeof(*self));
     memset(self, 0x00, sizeof(*self));
     self->name = name;
     self->type = type;
@@ -1091,13 +1077,13 @@ tir_function_new(
     return self;
 }
 
-struct tir_conditional*
-tir_conditional_new(
+struct conditional*
+conditional_new(
     struct source_location const* location,
-    struct tir_expr const* condition,
-    struct tir_block const* body)
+    struct expr const* condition,
+    struct block const* body)
 {
-    struct tir_conditional* const self = autil_xalloc(NULL, sizeof(*self));
+    struct conditional* const self = autil_xalloc(NULL, sizeof(*self));
     memset(self, 0x00, sizeof(*self));
     self->location = location;
     self->condition = condition;
@@ -1105,16 +1091,16 @@ tir_conditional_new(
     return self;
 }
 
-struct tir_block*
-tir_block_new(
+struct block*
+block_new(
     struct source_location const* location,
     struct symbol_table* symbol_table,
-    struct tir_stmt const* const* stmts)
+    struct stmt const* const* stmts)
 {
     assert(location != NULL);
     assert(symbol_table != NULL);
 
-    struct tir_block* const self = autil_xalloc(NULL, sizeof(*self));
+    struct block* const self = autil_xalloc(NULL, sizeof(*self));
     memset(self, 0x00, sizeof(*self));
     self->location = location;
     self->symbol_table = symbol_table;
@@ -1170,7 +1156,7 @@ value_new_integer(struct type const* type, struct autil_bigint* integer)
 }
 
 struct value*
-value_new_function(struct tir_function const* function)
+value_new_function(struct function const* function)
 {
     assert(function != NULL);
 

@@ -999,78 +999,76 @@ symbol_table_lookup(struct symbol_table const* self, char const* name);
 struct symbol const*
 symbol_table_lookup_local(struct symbol_table const* self, char const* name);
 
-struct tir_stmt {
+struct stmt {
     struct source_location const* location;
-    enum tir_stmt_kind {
-        TIR_STMT_IF,
-        TIR_STMT_FOR_RANGE,
-        TIR_STMT_FOR_EXPR,
-        TIR_STMT_BREAK, /* no .data member */
-        TIR_STMT_CONTINUE, /* no .data member */
-        TIR_STMT_DUMP,
-        TIR_STMT_RETURN,
-        TIR_STMT_ASSIGN,
-        TIR_STMT_EXPR,
+    enum stmt_kind {
+        STMT_IF,
+        STMT_FOR_RANGE,
+        STMT_FOR_EXPR,
+        STMT_BREAK, /* no .data member */
+        STMT_CONTINUE, /* no .data member */
+        STMT_DUMP,
+        STMT_RETURN,
+        STMT_ASSIGN,
+        STMT_EXPR,
     } kind;
     union {
         struct {
-            autil_sbuf(struct tir_conditional const* const) conditionals;
+            autil_sbuf(struct conditional const* const) conditionals;
         } if_;
         struct {
             struct symbol const* loop_variable;
-            struct tir_expr const* begin;
-            struct tir_expr const* end;
-            struct tir_block const* body;
+            struct expr const* begin;
+            struct expr const* end;
+            struct block const* body;
         } for_range;
         struct {
-            struct tir_expr const* expr;
-            struct tir_block const* body;
+            struct expr const* expr;
+            struct block const* body;
         } for_expr;
         struct {
-            struct tir_expr const* expr;
+            struct expr const* expr;
         } dump;
         struct {
-            struct tir_expr const* expr; // optional
+            struct expr const* expr; // optional
         } return_;
         struct {
-            struct tir_expr const* lhs;
-            struct tir_expr const* rhs;
+            struct expr const* lhs;
+            struct expr const* rhs;
         } assign;
-        struct tir_expr const* expr;
+        struct expr const* expr;
     } data;
 };
-struct tir_stmt*
-tir_stmt_new_if(struct tir_conditional const* const* conditionals);
-struct tir_stmt*
-tir_stmt_new_for_range(
+struct stmt*
+stmt_new_if(struct conditional const* const* conditionals);
+struct stmt*
+stmt_new_for_range(
     struct source_location const* location,
     struct symbol const* loop_variable,
-    struct tir_expr const* begin,
-    struct tir_expr const* end,
-    struct tir_block const* body);
-struct tir_stmt*
-tir_stmt_new_for_expr(
+    struct expr const* begin,
+    struct expr const* end,
+    struct block const* body);
+struct stmt*
+stmt_new_for_expr(
     struct source_location const* location,
-    struct tir_expr const* expr,
-    struct tir_block const* body);
-struct tir_stmt*
-tir_stmt_new_break(struct source_location const* location);
-struct tir_stmt*
-tir_stmt_new_continue(struct source_location const* location);
-struct tir_stmt*
-tir_stmt_new_dump(
-    struct source_location const* location, struct tir_expr const* expr);
-struct tir_stmt*
-tir_stmt_new_return(
-    struct source_location const* location, struct tir_expr const* expr);
-struct tir_stmt*
-tir_stmt_new_assign(
+    struct expr const* expr,
+    struct block const* body);
+struct stmt*
+stmt_new_break(struct source_location const* location);
+struct stmt*
+stmt_new_continue(struct source_location const* location);
+struct stmt*
+stmt_new_dump(struct source_location const* location, struct expr const* expr);
+struct stmt*
+stmt_new_return(
+    struct source_location const* location, struct expr const* expr);
+struct stmt*
+stmt_new_assign(
     struct source_location const* location,
-    struct tir_expr const* lhs,
-    struct tir_expr const* rhs);
-struct tir_stmt*
-tir_stmt_new_expr(
-    struct source_location const* location, struct tir_expr const* expr);
+    struct expr const* lhs,
+    struct expr const* rhs);
+struct stmt*
+stmt_new_expr(struct source_location const* location, struct expr const* expr);
 
 // Minimum and maximum number of syscall arguments (including the syscall
 // number) passed to a syscall expression. This is based on the Linux syscall
@@ -1078,24 +1076,24 @@ tir_stmt_new_expr(
 // number to be passed via registers.
 #define SYSCALL_ARGUMENTS_MIN ((size_t)1)
 #define SYSCALL_ARGUMENTS_MAX ((size_t)7)
-struct tir_expr {
+struct expr {
     struct source_location const* location;
     struct type const* type;
-    enum tir_expr_kind {
-        TIR_EXPR_IDENTIFIER,
-        TIR_EXPR_BOOLEAN,
-        TIR_EXPR_INTEGER,
-        TIR_EXPR_BYTES,
-        TIR_EXPR_LITERAL_ARRAY,
-        TIR_EXPR_LITERAL_SLICE,
-        TIR_EXPR_CAST,
-        TIR_EXPR_SYSCALL,
-        TIR_EXPR_CALL,
-        TIR_EXPR_INDEX,
-        TIR_EXPR_SLICE,
-        TIR_EXPR_SIZEOF,
-        TIR_EXPR_UNARY,
-        TIR_EXPR_BINARY,
+    enum expr_kind {
+        EXPR_IDENTIFIER,
+        EXPR_BOOLEAN,
+        EXPR_INTEGER,
+        EXPR_BYTES,
+        EXPR_LITERAL_ARRAY,
+        EXPR_LITERAL_SLICE,
+        EXPR_CAST,
+        EXPR_SYSCALL,
+        EXPR_CALL,
+        EXPR_INDEX,
+        EXPR_SLICE,
+        EXPR_SIZEOF,
+        EXPR_UNARY,
+        EXPR_BINARY,
     } kind;
     union {
         struct symbol const* identifier;
@@ -1106,33 +1104,33 @@ struct tir_expr {
             size_t count;
         } bytes;
         struct {
-            autil_sbuf(struct tir_expr const* const) elements;
-            struct tir_expr const* ellipsis; // optional
+            autil_sbuf(struct expr const* const) elements;
+            struct expr const* ellipsis; // optional
         } literal_array;
         struct {
-            struct tir_expr const* pointer;
-            struct tir_expr const* count;
+            struct expr const* pointer;
+            struct expr const* count;
         } literal_slice;
         struct {
-            struct tir_expr const* expr;
+            struct expr const* expr;
         } cast;
         struct {
-            autil_sbuf(struct tir_expr const* const) arguments;
+            autil_sbuf(struct expr const* const) arguments;
         } syscall;
         struct {
             // Expression resulting in a callable function.
-            struct tir_expr const* function;
+            struct expr const* function;
             // Arguments to the callable function.
-            autil_sbuf(struct tir_expr const* const) arguments;
+            autil_sbuf(struct expr const* const) arguments;
         } call;
         struct {
-            struct tir_expr const* lhs;
-            struct tir_expr const* idx;
+            struct expr const* lhs;
+            struct expr const* idx;
         } index;
         struct {
-            struct tir_expr const* lhs;
-            struct tir_expr const* begin;
-            struct tir_expr const* end;
+            struct expr const* lhs;
+            struct expr const* begin;
+            struct expr const* end;
         } slice;
         struct {
             struct type const* rhs;
@@ -1147,7 +1145,7 @@ struct tir_expr {
                 UOP_ADDRESSOF,
                 UOP_COUNTOF,
             } op;
-            struct tir_expr const* rhs;
+            struct expr const* rhs;
         } unary;
         struct {
             enum bop_kind {
@@ -1167,85 +1165,84 @@ struct tir_expr {
                 BOP_BITXOR,
                 BOP_BITAND,
             } op;
-            struct tir_expr const* lhs;
-            struct tir_expr const* rhs;
+            struct expr const* lhs;
+            struct expr const* rhs;
         } binary;
     } data;
 };
-struct tir_expr*
-tir_expr_new_identifier(
+struct expr*
+expr_new_identifier(
     struct source_location const* location, struct symbol const* identifier);
-struct tir_expr*
-tir_expr_new_boolean(struct source_location const* location, bool value);
-struct tir_expr*
-tir_expr_new_integer(
+struct expr*
+expr_new_boolean(struct source_location const* location, bool value);
+struct expr*
+expr_new_integer(
     struct source_location const* location,
     struct type const* type,
     struct autil_bigint const* value);
-struct tir_expr*
-tir_expr_new_bytes(
+struct expr*
+expr_new_bytes(
     struct source_location const* location,
     struct address const* address,
     size_t count);
-struct tir_expr*
-tir_expr_new_literal_array(
+struct expr*
+expr_new_literal_array(
     struct source_location const* location,
     struct type const* type,
-    struct tir_expr const* const* elements,
-    struct tir_expr const* ellipsis);
-struct tir_expr*
-tir_expr_new_literal_slice(
+    struct expr const* const* elements,
+    struct expr const* ellipsis);
+struct expr*
+expr_new_literal_slice(
     struct source_location const* location,
     struct type const* type,
-    struct tir_expr const* pointer,
-    struct tir_expr const* count);
-struct tir_expr*
-tir_expr_new_cast(
+    struct expr const* pointer,
+    struct expr const* count);
+struct expr*
+expr_new_cast(
     struct source_location const* location,
     struct type const* type,
-    struct tir_expr const* expr);
-struct tir_expr*
-tir_expr_new_syscall(
+    struct expr const* expr);
+struct expr*
+expr_new_syscall(
     struct source_location const* location,
-    struct tir_expr const* const* arguments);
-struct tir_expr*
-tir_expr_new_call(
+    struct expr const* const* arguments);
+struct expr*
+expr_new_call(
     struct source_location const* location,
-    struct tir_expr const* function,
-    struct tir_expr const* const* arguments);
-struct tir_expr*
-tir_expr_new_index(
+    struct expr const* function,
+    struct expr const* const* arguments);
+struct expr*
+expr_new_index(
     struct source_location const* location,
-    struct tir_expr const* lhs,
-    struct tir_expr const* idx);
-struct tir_expr*
-tir_expr_new_slice(
+    struct expr const* lhs,
+    struct expr const* idx);
+struct expr*
+expr_new_slice(
     struct source_location const* location,
-    struct tir_expr const* lhs,
-    struct tir_expr const* begin,
-    struct tir_expr const* end);
-struct tir_expr*
-tir_expr_new_sizeof(
-    struct source_location const* location, struct type const* rhs);
-struct tir_expr*
-tir_expr_new_unary(
+    struct expr const* lhs,
+    struct expr const* begin,
+    struct expr const* end);
+struct expr*
+expr_new_sizeof(struct source_location const* location, struct type const* rhs);
+struct expr*
+expr_new_unary(
     struct source_location const* location,
     struct type const* type,
     enum uop_kind op,
-    struct tir_expr const* rhs);
-struct tir_expr*
-tir_expr_new_binary(
+    struct expr const* rhs);
+struct expr*
+expr_new_binary(
     struct source_location const* location,
     struct type const* type,
     enum bop_kind op,
-    struct tir_expr const* lhs,
-    struct tir_expr const* rhs);
+    struct expr const* lhs,
+    struct expr const* rhs);
 // ISO/IEC 9899:1999 Section 6.3.2.1
 // https://en.cppreference.com/w/c/language/value_category
 bool
-tir_expr_is_lvalue(struct tir_expr const* self);
+expr_is_lvalue(struct expr const* self);
 
-struct tir_function {
+struct function {
     char const* name; // interned
     struct type const* type; // TYPE_FUNCTION
     struct address const* address; // ADDRESS_STATIC
@@ -1259,7 +1256,7 @@ struct tir_function {
     // Initialized to NULL on struct creation.
     struct symbol const* symbol_return;
     // Initialized to NULL on struct creation.
-    struct tir_block const* body;
+    struct block const* body;
 
     // Offset required to store all local variables in this function.
     // When the function is entered the stack pointer will be offset by this
@@ -1270,33 +1267,33 @@ struct tir_function {
 // Creates a new incomplete (empty) function.
 // The type of the function must be of kind TYPE_FUNCTION.
 // The address of the function must be of kind ADDRESS_STATIC.
-struct tir_function*
-tir_function_new(
+struct function*
+function_new(
     char const* name, struct type const* type, struct address const* address);
 void
-tir_function_del(struct tir_function* self);
+function_del(struct function* self);
 
-struct tir_conditional {
+struct conditional {
     struct source_location const* location;
-    struct tir_expr const* condition; // optional (NULL => else)
-    struct tir_block const* body;
+    struct expr const* condition; // optional (NULL => else)
+    struct block const* body;
 };
-struct tir_conditional*
-tir_conditional_new(
+struct conditional*
+conditional_new(
     struct source_location const* location,
-    struct tir_expr const* condition,
-    struct tir_block const* body);
+    struct expr const* condition,
+    struct block const* body);
 
-struct tir_block {
+struct block {
     struct source_location const* location;
     struct symbol_table* symbol_table; // not owned
-    autil_sbuf(struct tir_stmt const* const) stmts;
+    autil_sbuf(struct stmt const* const) stmts;
 };
-struct tir_block*
-tir_block_new(
+struct block*
+block_new(
     struct source_location const* location,
     struct symbol_table* symbol_table,
-    struct tir_stmt const* const* stmts);
+    struct stmt const* const* stmts);
 
 struct value {
     struct type const* type;
@@ -1304,7 +1301,7 @@ struct value {
         bool boolean;
         uint8_t byte;
         struct autil_bigint* integer;
-        struct tir_function const* function;
+        struct function const* function;
         struct address pointer;
         struct {
             // Concrete values specified for elements of the array value before
@@ -1332,7 +1329,7 @@ value_new_byte(uint8_t byte);
 struct value*
 value_new_integer(struct type const* type, struct autil_bigint* integer);
 struct value*
-value_new_function(struct tir_function const* function);
+value_new_function(struct function const* function);
 struct value*
 value_new_pointer(struct type const* type, struct address address);
 struct value*
@@ -1368,9 +1365,9 @@ resolve(struct module* module);
 //////// eval.c ////////////////////////////////////////////////////////////////
 
 struct value*
-eval_rvalue(struct tir_expr const* expr);
+eval_rvalue(struct expr const* expr);
 struct value*
-eval_lvalue(struct tir_expr const* expr);
+eval_lvalue(struct expr const* expr);
 
 ////////////////////////////////////////////////////////////////////////////////
 //////// codegen.c /////////////////////////////////////////////////////////////

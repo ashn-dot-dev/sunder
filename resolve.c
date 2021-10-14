@@ -8,7 +8,7 @@
 
 struct incomplete_function {
     struct cst_decl const* decl;
-    struct tir_function* function;
+    struct function* function;
     struct symbol_table* symbol_table;
 };
 
@@ -19,7 +19,7 @@ struct resolver {
     // symbol factory functions.
     char const* current_symbol_name_prefix; // Optional (NULL => no prefix).
     char const* current_static_addr_prefix; // Optional (NULL => no prefix).
-    struct tir_function* current_function; // NULL if not in a function.
+    struct function* current_function; // NULL if not in a function.
     struct symbol_table* current_symbol_table;
     struct symbol_table* current_export_table;
     // Current offset of rbp for stack allocated data. Initialized to zero at
@@ -93,8 +93,8 @@ check_type_compatibility(
     struct type const* actual,
     struct type const* expected);
 
-static struct tir_expr const*
-convert_unsized_integer(struct type const* type, struct tir_expr const* expr);
+static struct expr const*
+convert_unsized_integer(struct type const* type, struct expr const* expr);
 
 static void
 resolve_import(struct resolver* resolver, struct cst_import const* import);
@@ -105,8 +105,8 @@ static struct symbol const*
 resolve_decl_variable(
     struct resolver* resolver,
     struct cst_decl const* decl,
-    struct tir_expr const** /*optional*/ lhs,
-    struct tir_expr const** /*optional*/ rhs);
+    struct expr const** /*optional*/ lhs,
+    struct expr const** /*optional*/ rhs);
 static struct symbol const*
 resolve_decl_constant(struct resolver* resolver, struct cst_decl const* decl);
 static struct symbol const*
@@ -119,134 +119,128 @@ static void
 complete_function(
     struct resolver* resolver, struct incomplete_function const* incomplete);
 
-static struct tir_stmt const* // optional
+static struct stmt const* // optional
 resolve_stmt(struct resolver* resolver, struct cst_stmt const* stmt);
-static struct tir_stmt const* // optional
+static struct stmt const* // optional
 resolve_stmt_decl(struct resolver* resolver, struct cst_stmt const* stmt);
-static struct tir_stmt const*
+static struct stmt const*
 resolve_stmt_if(struct resolver* resolver, struct cst_stmt const* stmt);
-static struct tir_stmt const*
+static struct stmt const*
 resolve_stmt_for_range(struct resolver* resolver, struct cst_stmt const* stmt);
-static struct tir_stmt const*
+static struct stmt const*
 resolve_stmt_for_expr(struct resolver* resolver, struct cst_stmt const* stmt);
-static struct tir_stmt const*
+static struct stmt const*
 resolve_stmt_break(struct resolver* resolver, struct cst_stmt const* stmt);
-static struct tir_stmt const*
+static struct stmt const*
 resolve_stmt_continue(struct resolver* resolver, struct cst_stmt const* stmt);
-static struct tir_stmt const*
+static struct stmt const*
 resolve_stmt_dump(struct resolver* resolver, struct cst_stmt const* stmt);
-static struct tir_stmt const*
+static struct stmt const*
 resolve_stmt_return(struct resolver* resolver, struct cst_stmt const* stmt);
-static struct tir_stmt const*
+static struct stmt const*
 resolve_stmt_assign(struct resolver* resolver, struct cst_stmt const* stmt);
-static struct tir_stmt const*
+static struct stmt const*
 resolve_stmt_expr(struct resolver* resolver, struct cst_stmt const* stmt);
 
-static struct tir_expr const*
+static struct expr const*
 resolve_expr(struct resolver* resolver, struct cst_expr const* expr);
-static struct tir_expr const*
+static struct expr const*
 resolve_expr_identifier(struct resolver* resolver, struct cst_expr const* expr);
-static struct tir_expr const*
+static struct expr const*
 resolve_expr_qualified_identifier(
     struct resolver* resolver, struct cst_expr const* expr);
-static struct tir_expr const*
+static struct expr const*
 resolve_expr_boolean(struct resolver* resolver, struct cst_expr const* expr);
-static struct tir_expr const*
+static struct expr const*
 resolve_expr_integer(struct resolver* resolver, struct cst_expr const* expr);
-static struct tir_expr const*
+static struct expr const*
 resolve_expr_bytes(struct resolver* resolver, struct cst_expr const* expr);
-static struct tir_expr const*
+static struct expr const*
 resolve_expr_literal_array(
     struct resolver* resolver, struct cst_expr const* expr);
-static struct tir_expr const*
+static struct expr const*
 resolve_expr_literal_slice(
     struct resolver* resolver, struct cst_expr const* expr);
-static struct tir_expr const*
+static struct expr const*
 resolve_expr_cast(struct resolver* resolver, struct cst_expr const* expr);
-static struct tir_expr const*
+static struct expr const*
 resolve_expr_syscall(struct resolver* resolver, struct cst_expr const* expr);
-static struct tir_expr const*
+static struct expr const*
 resolve_expr_call(struct resolver* resolver, struct cst_expr const* expr);
-static struct tir_expr const*
+static struct expr const*
 resolve_expr_index(struct resolver* resolver, struct cst_expr const* expr);
-static struct tir_expr const*
+static struct expr const*
 resolve_expr_slice(struct resolver* resolver, struct cst_expr const* expr);
-static struct tir_expr const*
+static struct expr const*
 resolve_expr_sizeof(struct resolver* resolver, struct cst_expr const* expr);
-static struct tir_expr const*
+static struct expr const*
 resolve_expr_unary(struct resolver* resolver, struct cst_expr const* expr);
-static struct tir_expr const*
+static struct expr const*
 resolve_expr_unary_logical(
     struct resolver* resolver,
     struct token const* op,
     enum uop_kind uop,
-    struct tir_expr const* rhs);
-static struct tir_expr const*
+    struct expr const* rhs);
+static struct expr const*
 resolve_expr_unary_arithmetic(
     struct resolver* resolver,
     struct token const* op,
     enum uop_kind uop,
-    struct tir_expr const* rhs);
-static struct tir_expr const*
+    struct expr const* rhs);
+static struct expr const*
 resolve_expr_unary_bitwise(
     struct resolver* resolver,
     struct token const* op,
     enum uop_kind uop,
-    struct tir_expr const* rhs);
-static struct tir_expr const*
+    struct expr const* rhs);
+static struct expr const*
 resolve_expr_unary_dereference(
-    struct resolver* resolver,
-    struct token const* op,
-    struct tir_expr const* rhs);
-static struct tir_expr const*
+    struct resolver* resolver, struct token const* op, struct expr const* rhs);
+static struct expr const*
 resolve_expr_unary_addressof(
-    struct resolver* resolver,
-    struct token const* op,
-    struct tir_expr const* rhs);
-static struct tir_expr const*
+    struct resolver* resolver, struct token const* op, struct expr const* rhs);
+static struct expr const*
 resolve_expr_unary_countof(
-    struct resolver* resolver,
-    struct token const* op,
-    struct tir_expr const* rhs);
-static struct tir_expr const*
+    struct resolver* resolver, struct token const* op, struct expr const* rhs);
+static struct expr const*
 resolve_expr_binary(struct resolver* resolver, struct cst_expr const* expr);
-static struct tir_expr const*
+static struct expr const*
 resolve_expr_binary_logical(
     struct resolver* resolver,
     struct token const* op,
     enum bop_kind bop,
-    struct tir_expr const* lhs,
-    struct tir_expr const* rhs);
-static struct tir_expr const*
+    struct expr const* lhs,
+    struct expr const* rhs);
+static struct expr const*
 resolve_expr_binary_compare_equality(
     struct resolver* resolver,
     struct token const* op,
     enum bop_kind bop,
-    struct tir_expr const* lhs,
-    struct tir_expr const* rhs);
-static struct tir_expr const*
+    struct expr const* lhs,
+    struct expr const* rhs);
+static struct expr const*
 resolve_expr_binary_compare_order(
     struct resolver* resolver,
     struct token const* op,
     enum bop_kind bop,
-    struct tir_expr const* lhs,
-    struct tir_expr const* rhs);
-static struct tir_expr const*
+    struct expr const* lhs,
+    struct expr const* rhs);
+static struct expr const*
 resolve_expr_binary_arithmetic(
     struct resolver* resolver,
     struct token const* op,
     enum bop_kind bop,
-    struct tir_expr const* lhs,
-    struct tir_expr const* rhs);
-static struct tir_expr const*
+    struct expr const* lhs,
+    struct expr const* rhs);
+static struct expr const*
 resolve_expr_binary_bitwise(
     struct resolver* resolver,
     struct token const* op,
     enum bop_kind bop,
-    struct tir_expr const* lhs,
-    struct tir_expr const* rhs);
+    struct expr const* lhs,
+    struct expr const* rhs);
 
-static struct tir_block const*
+static struct block const*
 resolve_block(
     struct resolver* resolver,
     struct symbol_table* symbol_table,
@@ -441,12 +435,12 @@ check_type_compatibility(
     }
 }
 
-static struct tir_expr const*
-convert_unsized_integer(struct type const* type, struct tir_expr const* expr)
+static struct expr const*
+convert_unsized_integer(struct type const* type, struct expr const* expr)
 {
     assert(type != NULL);
     assert(expr != NULL);
-    assert(expr->kind == TIR_EXPR_INTEGER);
+    assert(expr->kind == EXPR_INTEGER);
     assert(expr->type->kind == TYPE_UNSIZED_INTEGER);
 
     if (type->kind == TYPE_UNSIZED_INTEGER) {
@@ -490,8 +484,8 @@ convert_unsized_integer(struct type const* type, struct tir_expr const* expr)
             autil_bigint_to_new_cstr(max, NULL));
     }
 
-    struct tir_expr* const result =
-        tir_expr_new_integer(expr->location, type, expr->data.integer);
+    struct expr* const result =
+        expr_new_integer(expr->location, type, expr->data.integer);
 
     autil_freezer_register(context()->freezer, result);
     return result;
@@ -654,15 +648,14 @@ static struct symbol const*
 resolve_decl_variable(
     struct resolver* resolver,
     struct cst_decl const* decl,
-    struct tir_expr const** lhs,
-    struct tir_expr const** rhs)
+    struct expr const** lhs,
+    struct expr const** rhs)
 {
     assert(resolver != NULL);
     assert(decl != NULL);
     assert(decl->kind == CST_DECL_VARIABLE);
 
-    struct tir_expr const* expr =
-        resolve_expr(resolver, decl->data.variable.expr);
+    struct expr const* expr = resolve_expr(resolver, decl->data.variable.expr);
 
     struct type const* const type =
         resolve_typespec(resolver, decl->data.variable.typespec);
@@ -701,7 +694,7 @@ resolve_decl_variable(
     }
 
     if (lhs != NULL) {
-        struct tir_expr* const identifier = tir_expr_new_identifier(
+        struct expr* const identifier = expr_new_identifier(
             decl->data.variable.identifier->location, symbol);
         autil_freezer_register(context()->freezer, identifier);
         *lhs = identifier;
@@ -719,8 +712,7 @@ resolve_decl_constant(struct resolver* resolver, struct cst_decl const* decl)
     assert(decl != NULL);
     assert(decl->kind == CST_DECL_CONSTANT);
 
-    struct tir_expr const* expr =
-        resolve_expr(resolver, decl->data.constant.expr);
+    struct expr const* expr = resolve_expr(resolver, decl->data.constant.expr);
 
     struct type const* const type =
         resolve_typespec(resolver, decl->data.constant.typespec);
@@ -796,7 +788,7 @@ resolve_decl_function(struct resolver* resolver, struct cst_decl const* decl)
 
     // Create a new incomplete function, a value that evaluates to that
     // function, and the address of that function/value.
-    struct tir_function* const function = tir_function_new(
+    struct function* const function = function_new(
         decl->data.function.identifier->name, function_type, address);
     autil_freezer_register(context()->freezer, function);
 
@@ -947,7 +939,7 @@ complete_function(
     symbol_table_freeze(incomplete->symbol_table, context()->freezer);
 }
 
-static struct tir_stmt const*
+static struct stmt const*
 resolve_stmt(struct resolver* resolver, struct cst_stmt const* stmt)
 {
     assert(resolver != NULL);
@@ -991,7 +983,7 @@ resolve_stmt(struct resolver* resolver, struct cst_stmt const* stmt)
     return NULL;
 }
 
-static struct tir_stmt const*
+static struct stmt const*
 resolve_stmt_decl(struct resolver* resolver, struct cst_stmt const* stmt)
 {
     assert(resolver != NULL);
@@ -1002,11 +994,10 @@ resolve_stmt_decl(struct resolver* resolver, struct cst_stmt const* stmt)
     struct cst_decl const* const decl = stmt->data.decl;
     switch (decl->kind) {
     case CST_DECL_VARIABLE: {
-        struct tir_expr const* lhs = NULL;
-        struct tir_expr const* rhs = NULL;
+        struct expr const* lhs = NULL;
+        struct expr const* rhs = NULL;
         resolve_decl_variable(resolver, decl, &lhs, &rhs);
-        struct tir_stmt* const resolved =
-            tir_stmt_new_assign(stmt->location, lhs, rhs);
+        struct stmt* const resolved = stmt_new_assign(stmt->location, lhs, rhs);
 
         autil_freezer_register(context()->freezer, resolved);
         return resolved;
@@ -1032,7 +1023,7 @@ resolve_stmt_decl(struct resolver* resolver, struct cst_stmt const* stmt)
     return NULL;
 }
 
-static struct tir_stmt const*
+static struct stmt const*
 resolve_stmt_if(struct resolver* resolver, struct cst_stmt const* stmt)
 {
     assert(resolver != NULL);
@@ -1042,14 +1033,14 @@ resolve_stmt_if(struct resolver* resolver, struct cst_stmt const* stmt)
 
     autil_sbuf(struct cst_conditional const* const) const conditionals =
         stmt->data.if_.conditionals;
-    autil_sbuf(struct tir_conditional const*) resolved_conditionals = NULL;
+    autil_sbuf(struct conditional const*) resolved_conditionals = NULL;
     autil_sbuf_resize(resolved_conditionals, autil_sbuf_count(conditionals));
     for (size_t i = 0; i < autil_sbuf_count(conditionals); ++i) {
         assert(
             (conditionals[i]->condition != NULL)
             || (i == (autil_sbuf_count(conditionals) - 1)));
 
-        struct tir_expr const* condition = NULL;
+        struct expr const* condition = NULL;
         if (conditionals[i]->condition != NULL) {
             condition = resolve_expr(resolver, conditionals[i]->condition);
             if (condition->type->kind != TYPE_BOOL) {
@@ -1062,26 +1053,26 @@ resolve_stmt_if(struct resolver* resolver, struct cst_stmt const* stmt)
 
         struct symbol_table* const symbol_table =
             symbol_table_new(resolver->current_symbol_table);
-        struct tir_block const* const block =
+        struct block const* const block =
             resolve_block(resolver, symbol_table, conditionals[i]->body);
         // Freeze the symbol table now that the block has been resolved and no
         // new symbols will be added.
         symbol_table_freeze(symbol_table, context()->freezer);
 
-        struct tir_conditional* const resolved_conditional =
-            tir_conditional_new(conditionals[i]->location, condition, block);
+        struct conditional* const resolved_conditional =
+            conditional_new(conditionals[i]->location, condition, block);
         autil_freezer_register(context()->freezer, resolved_conditional);
         resolved_conditionals[i] = resolved_conditional;
     }
 
     autil_sbuf_freeze(resolved_conditionals, context()->freezer);
-    struct tir_stmt* const resolved = tir_stmt_new_if(resolved_conditionals);
+    struct stmt* const resolved = stmt_new_if(resolved_conditionals);
 
     autil_freezer_register(context()->freezer, resolved);
     return resolved;
 }
 
-static struct tir_stmt const*
+static struct stmt const*
 resolve_stmt_for_range(struct resolver* resolver, struct cst_stmt const* stmt)
 {
     assert(resolver != NULL);
@@ -1089,7 +1080,7 @@ resolve_stmt_for_range(struct resolver* resolver, struct cst_stmt const* stmt)
     assert(stmt != NULL);
     assert(stmt->kind == CST_STMT_FOR_RANGE);
 
-    struct tir_expr const* begin =
+    struct expr const* begin =
         resolve_expr(resolver, stmt->data.for_range.begin);
     if (begin->type->kind == TYPE_UNSIZED_INTEGER) {
         begin = convert_unsized_integer(context()->builtin.usize, begin);
@@ -1101,8 +1092,7 @@ resolve_stmt_for_range(struct resolver* resolver, struct cst_stmt const* stmt)
             begin->type->name);
     }
 
-    struct tir_expr const* end =
-        resolve_expr(resolver, stmt->data.for_range.end);
+    struct expr const* end = resolve_expr(resolver, stmt->data.for_range.end);
     if (end->type->kind == TYPE_UNSIZED_INTEGER) {
         end = convert_unsized_integer(context()->builtin.usize, end);
     }
@@ -1134,7 +1124,7 @@ resolve_stmt_for_range(struct resolver* resolver, struct cst_stmt const* stmt)
 
     bool const save_is_within_loop = resolver->is_within_loop;
     resolver->is_within_loop = true;
-    struct tir_block const* const body =
+    struct block const* const body =
         resolve_block(resolver, symbol_table, stmt->data.for_range.body);
     resolver->current_rbp_offset = save_rbp_offset;
     resolver->is_within_loop = save_is_within_loop;
@@ -1143,13 +1133,13 @@ resolve_stmt_for_range(struct resolver* resolver, struct cst_stmt const* stmt)
     // symbols will be added.
     symbol_table_freeze(symbol_table, context()->freezer);
 
-    struct tir_stmt* const resolved = tir_stmt_new_for_range(
-        stmt->location, loop_var_symbol, begin, end, body);
+    struct stmt* const resolved =
+        stmt_new_for_range(stmt->location, loop_var_symbol, begin, end, body);
     autil_freezer_register(context()->freezer, resolved);
     return resolved;
 }
 
-static struct tir_stmt const*
+static struct stmt const*
 resolve_stmt_for_expr(struct resolver* resolver, struct cst_stmt const* stmt)
 {
     assert(resolver != NULL);
@@ -1157,7 +1147,7 @@ resolve_stmt_for_expr(struct resolver* resolver, struct cst_stmt const* stmt)
     assert(stmt != NULL);
     assert(stmt->kind == CST_STMT_FOR_EXPR);
 
-    struct tir_expr const* const expr =
+    struct expr const* const expr =
         resolve_expr(resolver, stmt->data.for_expr.expr);
     if (expr->type->kind != TYPE_BOOL) {
         fatal(
@@ -1171,7 +1161,7 @@ resolve_stmt_for_expr(struct resolver* resolver, struct cst_stmt const* stmt)
 
     bool const save_is_within_loop = resolver->is_within_loop;
     resolver->is_within_loop = true;
-    struct tir_block const* const body =
+    struct block const* const body =
         resolve_block(resolver, symbol_table, stmt->data.for_expr.body);
     resolver->is_within_loop = save_is_within_loop;
 
@@ -1179,14 +1169,13 @@ resolve_stmt_for_expr(struct resolver* resolver, struct cst_stmt const* stmt)
     // symbols will be added.
     symbol_table_freeze(symbol_table, context()->freezer);
 
-    struct tir_stmt* const resolved =
-        tir_stmt_new_for_expr(stmt->location, expr, body);
+    struct stmt* const resolved = stmt_new_for_expr(stmt->location, expr, body);
 
     autil_freezer_register(context()->freezer, resolved);
     return resolved;
 }
 
-static struct tir_stmt const*
+static struct stmt const*
 resolve_stmt_break(struct resolver* resolver, struct cst_stmt const* stmt)
 {
     assert(resolver != NULL);
@@ -1198,13 +1187,13 @@ resolve_stmt_break(struct resolver* resolver, struct cst_stmt const* stmt)
         fatal(stmt->location, "break statement outside of loop");
     }
 
-    struct tir_stmt* const resolved = tir_stmt_new_break(stmt->location);
+    struct stmt* const resolved = stmt_new_break(stmt->location);
 
     autil_freezer_register(context()->freezer, resolved);
     return resolved;
 }
 
-static struct tir_stmt const*
+static struct stmt const*
 resolve_stmt_continue(struct resolver* resolver, struct cst_stmt const* stmt)
 {
     assert(resolver != NULL);
@@ -1216,13 +1205,13 @@ resolve_stmt_continue(struct resolver* resolver, struct cst_stmt const* stmt)
         fatal(stmt->location, "continue statement outside of loop");
     }
 
-    struct tir_stmt* const resolved = tir_stmt_new_continue(stmt->location);
+    struct stmt* const resolved = stmt_new_continue(stmt->location);
 
     autil_freezer_register(context()->freezer, resolved);
     return resolved;
 }
 
-static struct tir_stmt const*
+static struct stmt const*
 resolve_stmt_dump(struct resolver* resolver, struct cst_stmt const* stmt)
 {
     assert(resolver != NULL);
@@ -1230,19 +1219,19 @@ resolve_stmt_dump(struct resolver* resolver, struct cst_stmt const* stmt)
     assert(stmt != NULL);
     assert(stmt->kind == CST_STMT_DUMP);
 
-    struct tir_expr const* expr = resolve_expr(resolver, stmt->data.dump.expr);
+    struct expr const* expr = resolve_expr(resolver, stmt->data.dump.expr);
     if (expr->type->size == SIZEOF_UNSIZED) {
         fatal(
             stmt->location, "type `%s` has no defined size", expr->type->name);
     }
 
-    struct tir_stmt* const resolved = tir_stmt_new_dump(stmt->location, expr);
+    struct stmt* const resolved = stmt_new_dump(stmt->location, expr);
 
     autil_freezer_register(context()->freezer, resolved);
     return resolved;
 }
 
-static struct tir_stmt const*
+static struct stmt const*
 resolve_stmt_return(struct resolver* resolver, struct cst_stmt const* stmt)
 {
     assert(resolver != NULL);
@@ -1252,7 +1241,7 @@ resolve_stmt_return(struct resolver* resolver, struct cst_stmt const* stmt)
 
     struct type const* const return_type =
         resolver->current_function->type->data.function.return_type;
-    struct tir_expr const* expr = NULL;
+    struct expr const* expr = NULL;
     if (stmt->data.return_.expr != NULL) {
         expr = resolve_expr(resolver, stmt->data.return_.expr);
         if (expr->type->kind == TYPE_UNSIZED_INTEGER) {
@@ -1268,13 +1257,13 @@ resolve_stmt_return(struct resolver* resolver, struct cst_stmt const* stmt)
         }
     }
 
-    struct tir_stmt* const resolved = tir_stmt_new_return(stmt->location, expr);
+    struct stmt* const resolved = stmt_new_return(stmt->location, expr);
 
     autil_freezer_register(context()->freezer, resolved);
     return resolved;
 }
 
-static struct tir_stmt const*
+static struct stmt const*
 resolve_stmt_assign(struct resolver* resolver, struct cst_stmt const* stmt)
 {
     assert(resolver != NULL);
@@ -1282,16 +1271,16 @@ resolve_stmt_assign(struct resolver* resolver, struct cst_stmt const* stmt)
     assert(stmt != NULL);
     assert(stmt->kind == CST_STMT_ASSIGN);
 
-    struct tir_expr const* const lhs =
+    struct expr const* const lhs =
         resolve_expr(resolver, stmt->data.assign.lhs);
-    struct tir_expr const* rhs = resolve_expr(resolver, stmt->data.assign.rhs);
+    struct expr const* rhs = resolve_expr(resolver, stmt->data.assign.rhs);
 
     // TODO: Rather than query if lhs is an lvalue, perhaps there could function
     // `validate_expr_is_lvalue` in resolve.c which traverses the expression
     // tree and emits an error with more context about *why* a specific
     // expression is not an lvalue. Currently it's up to the user to figure out
     // *why* lhs is not an lvalue, and better information could ease debugging.
-    if (!tir_expr_is_lvalue(lhs)) {
+    if (!expr_is_lvalue(lhs)) {
         fatal(
             lhs->location,
             "left hand side of assignment statement is not an lvalue");
@@ -1302,14 +1291,13 @@ resolve_stmt_assign(struct resolver* resolver, struct cst_stmt const* stmt)
     }
     check_type_compatibility(stmt->location, rhs->type, lhs->type);
 
-    struct tir_stmt* const resolved =
-        tir_stmt_new_assign(stmt->location, lhs, rhs);
+    struct stmt* const resolved = stmt_new_assign(stmt->location, lhs, rhs);
 
     autil_freezer_register(context()->freezer, resolved);
     return resolved;
 }
 
-static struct tir_stmt const*
+static struct stmt const*
 resolve_stmt_expr(struct resolver* resolver, struct cst_stmt const* stmt)
 {
     assert(resolver != NULL);
@@ -1317,7 +1305,7 @@ resolve_stmt_expr(struct resolver* resolver, struct cst_stmt const* stmt)
     assert(stmt != NULL);
     assert(stmt->kind == CST_STMT_EXPR);
 
-    struct tir_expr const* const expr = resolve_expr(resolver, stmt->data.expr);
+    struct expr const* const expr = resolve_expr(resolver, stmt->data.expr);
 
     if (expr->type->size == SIZEOF_UNSIZED) {
         fatal(
@@ -1325,13 +1313,13 @@ resolve_stmt_expr(struct resolver* resolver, struct cst_stmt const* stmt)
             "statement-expression produces result of unsized type `%s`",
             expr->type->name);
     }
-    struct tir_stmt* const resolved = tir_stmt_new_expr(stmt->location, expr);
+    struct stmt* const resolved = stmt_new_expr(stmt->location, expr);
 
     autil_freezer_register(context()->freezer, resolved);
     return resolved;
 }
 
-static struct tir_expr const*
+static struct expr const*
 resolve_expr(struct resolver* resolver, struct cst_expr const* expr)
 {
     assert(resolver != NULL);
@@ -1392,7 +1380,7 @@ resolve_expr(struct resolver* resolver, struct cst_expr const* expr)
     return NULL;
 }
 
-static struct tir_expr const*
+static struct expr const*
 resolve_expr_identifier(struct resolver* resolver, struct cst_expr const* expr)
 {
     assert(resolver != NULL);
@@ -1426,14 +1414,13 @@ resolve_expr_identifier(struct resolver* resolver, struct cst_expr const* expr)
     }
     }
 
-    struct tir_expr* const resolved =
-        tir_expr_new_identifier(expr->location, symbol);
+    struct expr* const resolved = expr_new_identifier(expr->location, symbol);
 
     autil_freezer_register(context()->freezer, resolved);
     return resolved;
 }
 
-static struct tir_expr const*
+static struct expr const*
 resolve_expr_qualified_identifier(
     struct resolver* resolver, struct cst_expr const* expr)
 {
@@ -1493,14 +1480,13 @@ resolve_expr_qualified_identifier(
     }
     }
 
-    struct tir_expr* const resolved =
-        tir_expr_new_identifier(expr->location, symbol);
+    struct expr* const resolved = expr_new_identifier(expr->location, symbol);
 
     autil_freezer_register(context()->freezer, resolved);
     return resolved;
 }
 
-static struct tir_expr const*
+static struct expr const*
 resolve_expr_boolean(struct resolver* resolver, struct cst_expr const* expr)
 {
     assert(resolver != NULL);
@@ -1508,8 +1494,7 @@ resolve_expr_boolean(struct resolver* resolver, struct cst_expr const* expr)
     assert(expr->kind == CST_EXPR_BOOLEAN);
 
     bool const value = expr->data.boolean->value;
-    struct tir_expr* const resolved =
-        tir_expr_new_boolean(expr->location, value);
+    struct expr* const resolved = expr_new_boolean(expr->location, value);
 
     autil_freezer_register(context()->freezer, resolved);
     return resolved;
@@ -1562,7 +1547,7 @@ integer_literal_suffix_to_type(
     return NULL;
 }
 
-static struct tir_expr const*
+static struct expr const*
 resolve_expr_integer(struct resolver* resolver, struct cst_expr const* expr)
 {
     assert(resolver != NULL);
@@ -1574,14 +1559,13 @@ resolve_expr_integer(struct resolver* resolver, struct cst_expr const* expr)
     struct type const* const type = integer_literal_suffix_to_type(
         cst_integer->location, cst_integer->suffix);
 
-    struct tir_expr* const resolved =
-        tir_expr_new_integer(expr->location, type, value);
+    struct expr* const resolved = expr_new_integer(expr->location, type, value);
 
     autil_freezer_register(context()->freezer, resolved);
     return resolved;
 }
 
-static struct tir_expr const*
+static struct expr const*
 resolve_expr_bytes(struct resolver* resolver, struct cst_expr const* expr)
 {
     assert(resolver != NULL);
@@ -1613,14 +1597,14 @@ resolve_expr_bytes(struct resolver* resolver, struct cst_expr const* expr)
     autil_freezer_register(context()->freezer, symbol);
     register_static_symbol(symbol);
 
-    struct tir_expr* const resolved =
-        tir_expr_new_bytes(expr->location, address, count);
+    struct expr* const resolved =
+        expr_new_bytes(expr->location, address, count);
 
     autil_freezer_register(context()->freezer, resolved);
     return resolved;
 }
 
-static struct tir_expr const*
+static struct expr const*
 resolve_expr_literal_array(
     struct resolver* resolver, struct cst_expr const* expr)
 {
@@ -1639,9 +1623,9 @@ resolve_expr_literal_array(
 
     autil_sbuf(struct cst_expr const* const) elements =
         expr->data.literal_array.elements;
-    autil_sbuf(struct tir_expr const*) resolved_elements = NULL;
+    autil_sbuf(struct expr const*) resolved_elements = NULL;
     for (size_t i = 0; i < autil_sbuf_count(elements); ++i) {
-        struct tir_expr const* resolved_element =
+        struct expr const* resolved_element =
             resolve_expr(resolver, elements[i]);
         if (resolved_element->type->kind == TYPE_UNSIZED_INTEGER) {
             resolved_element = convert_unsized_integer(
@@ -1655,7 +1639,7 @@ resolve_expr_literal_array(
     }
     autil_sbuf_freeze(resolved_elements, context()->freezer);
 
-    struct tir_expr const* resolved_ellipsis = NULL;
+    struct expr const* resolved_ellipsis = NULL;
     if (expr->data.literal_array.ellipsis != NULL) {
         resolved_ellipsis =
             resolve_expr(resolver, expr->data.literal_array.ellipsis);
@@ -1679,14 +1663,14 @@ resolve_expr_literal_array(
             type->data.array.count);
     }
 
-    struct tir_expr* const resolved = tir_expr_new_literal_array(
+    struct expr* const resolved = expr_new_literal_array(
         expr->location, type, resolved_elements, resolved_ellipsis);
 
     autil_freezer_register(context()->freezer, resolved);
     return resolved;
 }
 
-static struct tir_expr const*
+static struct expr const*
 resolve_expr_literal_slice(
     struct resolver* resolver, struct cst_expr const* expr)
 {
@@ -1703,7 +1687,7 @@ resolve_expr_literal_slice(
             type->name);
     }
 
-    struct tir_expr const* const pointer =
+    struct expr const* const pointer =
         resolve_expr(resolver, expr->data.literal_slice.pointer);
     if (pointer->type->kind != TYPE_POINTER) {
         fatal(
@@ -1716,7 +1700,7 @@ resolve_expr_literal_slice(
     check_type_compatibility(
         pointer->location, pointer->type, slice_pointer_type);
 
-    struct tir_expr const* count =
+    struct expr const* count =
         resolve_expr(resolver, expr->data.literal_slice.count);
     if (count->type->kind == TYPE_UNSIZED_INTEGER) {
         count = convert_unsized_integer(context()->builtin.usize, count);
@@ -1724,14 +1708,14 @@ resolve_expr_literal_slice(
     check_type_compatibility(
         count->location, count->type, context()->builtin.usize);
 
-    struct tir_expr* const resolved =
-        tir_expr_new_literal_slice(expr->location, type, pointer, count);
+    struct expr* const resolved =
+        expr_new_literal_slice(expr->location, type, pointer, count);
 
     autil_freezer_register(context()->freezer, resolved);
     return resolved;
 }
 
-static struct tir_expr const*
+static struct expr const*
 resolve_expr_cast(struct resolver* resolver, struct cst_expr const* expr)
 {
     assert(resolver != NULL);
@@ -1740,8 +1724,7 @@ resolve_expr_cast(struct resolver* resolver, struct cst_expr const* expr)
 
     struct type const* const type =
         resolve_typespec(resolver, expr->data.cast.typespec);
-    struct tir_expr const* const rhs =
-        resolve_expr(resolver, expr->data.cast.expr);
+    struct expr const* const rhs = resolve_expr(resolver, expr->data.cast.expr);
 
     // TODO: Casts to and from unsized integers are not permitted because it is
     // unclear how we should handle modulo operations when a casted-from value
@@ -1781,14 +1764,13 @@ resolve_expr_cast(struct resolver* resolver, struct cst_expr const* expr)
             type->name);
     }
 
-    struct tir_expr* const resolved =
-        tir_expr_new_cast(expr->location, type, rhs);
+    struct expr* const resolved = expr_new_cast(expr->location, type, rhs);
 
     autil_freezer_register(context()->freezer, resolved);
     return resolved;
 }
 
-static struct tir_expr const*
+static struct expr const*
 resolve_expr_syscall(struct resolver* resolver, struct cst_expr const* expr)
 {
     assert(resolver != NULL);
@@ -1811,9 +1793,9 @@ resolve_expr_syscall(struct resolver* resolver, struct cst_expr const* expr)
             SYSCALL_ARGUMENTS_MAX);
     }
 
-    autil_sbuf(struct tir_expr const*) exprs = NULL;
+    autil_sbuf(struct expr const*) exprs = NULL;
     for (size_t i = 0; i < autil_sbuf_count(arguments); ++i) {
-        struct tir_expr const* const arg = resolve_expr(resolver, arguments[i]);
+        struct expr const* const arg = resolve_expr(resolver, arguments[i]);
         if (arg->type->size == SIZEOF_UNSIZED) {
             fatal(
                 arg->location,
@@ -1832,21 +1814,20 @@ resolve_expr_syscall(struct resolver* resolver, struct cst_expr const* expr)
         autil_sbuf_push(exprs, arg);
     }
     autil_sbuf_freeze(exprs, context()->freezer);
-    struct tir_expr* const resolved =
-        tir_expr_new_syscall(expr->location, exprs);
+    struct expr* const resolved = expr_new_syscall(expr->location, exprs);
 
     autil_freezer_register(context()->freezer, resolved);
     return resolved;
 }
 
-static struct tir_expr const*
+static struct expr const*
 resolve_expr_call(struct resolver* resolver, struct cst_expr const* expr)
 {
     assert(resolver != NULL);
     assert(expr != NULL);
     assert(expr->kind == CST_EXPR_CALL);
 
-    struct tir_expr const* const function =
+    struct expr const* const function =
         resolve_expr(resolver, expr->data.call.func);
     if (function->type->kind != TYPE_FUNCTION) {
         fatal(
@@ -1865,9 +1846,9 @@ resolve_expr_call(struct resolver* resolver, struct cst_expr const* expr)
             autil_sbuf_count(expr->data.call.arguments));
     }
 
-    autil_sbuf(struct tir_expr const*) arguments = NULL;
+    autil_sbuf(struct expr const*) arguments = NULL;
     for (size_t i = 0; i < autil_sbuf_count(expr->data.call.arguments); ++i) {
-        struct tir_expr const* arg =
+        struct expr const* arg =
             resolve_expr(resolver, expr->data.call.arguments[i]);
         autil_sbuf_push(arguments, arg);
     }
@@ -1894,22 +1875,21 @@ resolve_expr_call(struct resolver* resolver, struct cst_expr const* expr)
         }
     }
 
-    struct tir_expr* const resolved =
-        tir_expr_new_call(expr->location, function, arguments);
+    struct expr* const resolved =
+        expr_new_call(expr->location, function, arguments);
 
     autil_freezer_register(context()->freezer, resolved);
     return resolved;
 }
 
-static struct tir_expr const*
+static struct expr const*
 resolve_expr_index(struct resolver* resolver, struct cst_expr const* expr)
 {
     assert(resolver != NULL);
     assert(expr != NULL);
     assert(expr->kind == CST_EXPR_INDEX);
 
-    struct tir_expr const* const lhs =
-        resolve_expr(resolver, expr->data.index.lhs);
+    struct expr const* const lhs = resolve_expr(resolver, expr->data.index.lhs);
     if (lhs->type->kind != TYPE_ARRAY && lhs->type->kind != TYPE_SLICE) {
         fatal(
             lhs->location,
@@ -1917,7 +1897,7 @@ resolve_expr_index(struct resolver* resolver, struct cst_expr const* expr)
             lhs->type->name);
     }
 
-    struct tir_expr const* idx = resolve_expr(resolver, expr->data.index.idx);
+    struct expr const* idx = resolve_expr(resolver, expr->data.index.idx);
     if (idx->type->kind == TYPE_UNSIZED_INTEGER) {
         idx = convert_unsized_integer(context()->builtin.usize, idx);
     }
@@ -1928,36 +1908,33 @@ resolve_expr_index(struct resolver* resolver, struct cst_expr const* expr)
             idx->type->name);
     }
 
-    struct tir_expr* const resolved =
-        tir_expr_new_index(expr->location, lhs, idx);
+    struct expr* const resolved = expr_new_index(expr->location, lhs, idx);
 
     autil_freezer_register(context()->freezer, resolved);
     return resolved;
 }
 
-static struct tir_expr const*
+static struct expr const*
 resolve_expr_slice(struct resolver* resolver, struct cst_expr const* expr)
 {
     assert(resolver != NULL);
     assert(expr != NULL);
     assert(expr->kind == CST_EXPR_SLICE);
 
-    struct tir_expr const* const lhs =
-        resolve_expr(resolver, expr->data.slice.lhs);
+    struct expr const* const lhs = resolve_expr(resolver, expr->data.slice.lhs);
     if (lhs->type->kind != TYPE_ARRAY && lhs->type->kind != TYPE_SLICE) {
         fatal(
             lhs->location,
             "illegal slice operation with left-hand-side of type `%s`",
             lhs->type->name);
     }
-    if (lhs->type->kind == TYPE_ARRAY && !tir_expr_is_lvalue(lhs)) {
+    if (lhs->type->kind == TYPE_ARRAY && !expr_is_lvalue(lhs)) {
         fatal(
             lhs->location,
             "left hand side of slice operation is an rvalue array");
     }
 
-    struct tir_expr const* begin =
-        resolve_expr(resolver, expr->data.slice.begin);
+    struct expr const* begin = resolve_expr(resolver, expr->data.slice.begin);
     if (begin->type->kind == TYPE_UNSIZED_INTEGER) {
         begin = convert_unsized_integer(context()->builtin.usize, begin);
     }
@@ -1968,7 +1945,7 @@ resolve_expr_slice(struct resolver* resolver, struct cst_expr const* expr)
             begin->type->name);
     }
 
-    struct tir_expr const* end = resolve_expr(resolver, expr->data.slice.end);
+    struct expr const* end = resolve_expr(resolver, expr->data.slice.end);
     if (end->type->kind == TYPE_UNSIZED_INTEGER) {
         end = convert_unsized_integer(context()->builtin.usize, end);
     }
@@ -1979,14 +1956,14 @@ resolve_expr_slice(struct resolver* resolver, struct cst_expr const* expr)
             end->type->name);
     }
 
-    struct tir_expr* const resolved =
-        tir_expr_new_slice(expr->location, lhs, begin, end);
+    struct expr* const resolved =
+        expr_new_slice(expr->location, lhs, begin, end);
 
     autil_freezer_register(context()->freezer, resolved);
     return resolved;
 }
 
-static struct tir_expr const*
+static struct expr const*
 resolve_expr_sizeof(struct resolver* resolver, struct cst_expr const* expr)
 {
     assert(resolver != NULL);
@@ -1998,13 +1975,13 @@ resolve_expr_sizeof(struct resolver* resolver, struct cst_expr const* expr)
         fatal(expr->location, "type `%s` has no defined size", rhs->name);
     }
 
-    struct tir_expr* const resolved = tir_expr_new_sizeof(expr->location, rhs);
+    struct expr* const resolved = expr_new_sizeof(expr->location, rhs);
 
     autil_freezer_register(context()->freezer, resolved);
     return resolved;
 }
 
-static struct tir_expr const*
+static struct expr const*
 resolve_expr_unary(struct resolver* resolver, struct cst_expr const* expr)
 {
     assert(resolver != NULL);
@@ -2034,14 +2011,14 @@ resolve_expr_unary(struct resolver* resolver, struct cst_expr const* expr)
         struct type const* const type = integer_literal_suffix_to_type(
             cst_integer->location, cst_integer->suffix);
 
-        struct tir_expr* const resolved =
-            tir_expr_new_integer(&op->location, type, value);
+        struct expr* const resolved =
+            expr_new_integer(&op->location, type, value);
 
         autil_freezer_register(context()->freezer, resolved);
         return resolved;
     }
 
-    struct tir_expr const* const rhs = resolve_expr(resolver, cst_rhs);
+    struct expr const* const rhs = resolve_expr(resolver, cst_rhs);
     switch (op->kind) {
     case TOKEN_NOT: {
         return resolve_expr_unary_logical(resolver, op, UOP_NOT, rhs);
@@ -2080,12 +2057,12 @@ resolve_expr_unary(struct resolver* resolver, struct cst_expr const* expr)
     return NULL;
 }
 
-static struct tir_expr const*
+static struct expr const*
 resolve_expr_unary_logical(
     struct resolver* resolver,
     struct token const* op,
     enum uop_kind uop,
-    struct tir_expr const* rhs)
+    struct expr const* rhs)
 {
     assert(resolver != NULL);
     assert(op != NULL);
@@ -2099,19 +2076,19 @@ resolve_expr_unary_logical(
             token_kind_to_cstr(op->kind));
     }
 
-    struct tir_expr* const resolved =
-        tir_expr_new_unary(&op->location, rhs->type, uop, rhs);
+    struct expr* const resolved =
+        expr_new_unary(&op->location, rhs->type, uop, rhs);
 
     autil_freezer_register(context()->freezer, resolved);
     return resolved;
 }
 
-static struct tir_expr const*
+static struct expr const*
 resolve_expr_unary_arithmetic(
     struct resolver* resolver,
     struct token const* op,
     enum uop_kind uop,
-    struct tir_expr const* rhs)
+    struct expr const* rhs)
 {
     assert(resolver != NULL);
     assert(op != NULL);
@@ -2125,19 +2102,19 @@ resolve_expr_unary_arithmetic(
             token_kind_to_cstr(op->kind));
     }
 
-    struct tir_expr* const resolved =
-        tir_expr_new_unary(&op->location, rhs->type, uop, rhs);
+    struct expr* const resolved =
+        expr_new_unary(&op->location, rhs->type, uop, rhs);
 
     autil_freezer_register(context()->freezer, resolved);
     return resolved;
 }
 
-static struct tir_expr const*
+static struct expr const*
 resolve_expr_unary_bitwise(
     struct resolver* resolver,
     struct token const* op,
     enum uop_kind uop,
-    struct tir_expr const* rhs)
+    struct expr const* rhs)
 {
     assert(resolver != NULL);
     assert(op != NULL);
@@ -2149,18 +2126,16 @@ resolve_expr_unary_bitwise(
             "cannot apply bitwise NOT to type `%s`",
             rhs->type->name);
     }
-    struct tir_expr* const resolved =
-        tir_expr_new_unary(&op->location, rhs->type, uop, rhs);
+    struct expr* const resolved =
+        expr_new_unary(&op->location, rhs->type, uop, rhs);
 
     autil_freezer_register(context()->freezer, resolved);
     return resolved;
 }
 
-static struct tir_expr const*
+static struct expr const*
 resolve_expr_unary_dereference(
-    struct resolver* resolver,
-    struct token const* op,
-    struct tir_expr const* rhs)
+    struct resolver* resolver, struct token const* op, struct expr const* rhs)
 {
     assert(resolver != NULL);
     assert(op != NULL);
@@ -2173,40 +2148,36 @@ resolve_expr_unary_dereference(
             "cannot dereference non-pointer type `%s`",
             rhs->type->name);
     }
-    struct tir_expr* const resolved = tir_expr_new_unary(
+    struct expr* const resolved = expr_new_unary(
         &op->location, rhs->type->data.pointer.base, UOP_DEREFERENCE, rhs);
 
     autil_freezer_register(context()->freezer, resolved);
     return resolved;
 }
 
-static struct tir_expr const*
+static struct expr const*
 resolve_expr_unary_addressof(
-    struct resolver* resolver,
-    struct token const* op,
-    struct tir_expr const* rhs)
+    struct resolver* resolver, struct token const* op, struct expr const* rhs)
 {
     assert(resolver != NULL);
     assert(op != NULL);
     assert(op->kind == TOKEN_AMPERSAND);
     assert(rhs != NULL);
 
-    if (!tir_expr_is_lvalue(rhs)) {
+    if (!expr_is_lvalue(rhs)) {
         fatal(rhs->location, "cannot take the address of a non-lvalue");
     }
 
-    struct tir_expr* const resolved = tir_expr_new_unary(
+    struct expr* const resolved = expr_new_unary(
         &op->location, type_unique_pointer(rhs->type), UOP_ADDRESSOF, rhs);
 
     autil_freezer_register(context()->freezer, resolved);
     return resolved;
 }
 
-static struct tir_expr const*
+static struct expr const*
 resolve_expr_unary_countof(
-    struct resolver* resolver,
-    struct token const* op,
-    struct tir_expr const* rhs)
+    struct resolver* resolver, struct token const* op, struct expr const* rhs)
 {
     assert(resolver != NULL);
     assert(op != NULL);
@@ -2220,23 +2191,23 @@ resolve_expr_unary_countof(
             rhs->type->name);
     }
 
-    struct tir_expr* const resolved = tir_expr_new_unary(
+    struct expr* const resolved = expr_new_unary(
         &op->location, context()->builtin.usize, UOP_COUNTOF, rhs);
 
     autil_freezer_register(context()->freezer, resolved);
     return resolved;
 }
 
-static struct tir_expr const*
+static struct expr const*
 resolve_expr_binary(struct resolver* resolver, struct cst_expr const* expr)
 {
     assert(resolver != NULL);
     assert(expr != NULL);
     assert(expr->kind == CST_EXPR_BINARY);
 
-    struct tir_expr const* const lhs =
+    struct expr const* const lhs =
         resolve_expr(resolver, expr->data.binary.lhs);
-    struct tir_expr const* const rhs =
+    struct expr const* const rhs =
         resolve_expr(resolver, expr->data.binary.rhs);
     struct token const* const op = expr->data.binary.op;
     switch (op->kind) {
@@ -2300,13 +2271,13 @@ resolve_expr_binary(struct resolver* resolver, struct cst_expr const* expr)
     return NULL;
 }
 
-static struct tir_expr const*
+static struct expr const*
 resolve_expr_binary_logical(
     struct resolver* resolver,
     struct token const* op,
     enum bop_kind bop,
-    struct tir_expr const* lhs,
-    struct tir_expr const* rhs)
+    struct expr const* lhs,
+    struct expr const* rhs)
 {
     assert(resolver != NULL);
     assert(op != NULL);
@@ -2325,20 +2296,20 @@ resolve_expr_binary_logical(
     }
 
     struct type const* const type = context()->builtin.bool_;
-    struct tir_expr* const resolved =
-        tir_expr_new_binary(&op->location, type, bop, lhs, rhs);
+    struct expr* const resolved =
+        expr_new_binary(&op->location, type, bop, lhs, rhs);
 
     autil_freezer_register(context()->freezer, resolved);
     return resolved;
 }
 
-static struct tir_expr const*
+static struct expr const*
 resolve_expr_binary_compare_equality(
     struct resolver* resolver,
     struct token const* op,
     enum bop_kind bop,
-    struct tir_expr const* lhs,
-    struct tir_expr const* rhs)
+    struct expr const* lhs,
+    struct expr const* rhs)
 {
     assert(resolver != NULL);
     assert(op != NULL);
@@ -2369,8 +2340,8 @@ resolve_expr_binary_compare_equality(
             token_kind_to_cstr(op->kind));
     }
 
-    struct tir_expr* resolved = tir_expr_new_binary(
-        &op->location, context()->builtin.bool_, bop, lhs, rhs);
+    struct expr* resolved =
+        expr_new_binary(&op->location, context()->builtin.bool_, bop, lhs, rhs);
     autil_freezer_register(context()->freezer, resolved);
 
     // TODO: We constant fold untyped integer expressions so that chaining
@@ -2379,28 +2350,27 @@ resolve_expr_binary_compare_equality(
     // values when coerced into another integer type. Investigate maybe doing
     // this for all integer constant sub-expressions and make constant folding
     // a defined part of the language.
-    if (lhs->kind == TIR_EXPR_INTEGER && rhs->kind == TIR_EXPR_INTEGER
+    if (lhs->kind == EXPR_INTEGER && rhs->kind == EXPR_INTEGER
         && lhs->type->kind == TYPE_UNSIZED_INTEGER
         && rhs->type->kind == TYPE_UNSIZED_INTEGER) {
         struct value* const value = eval_rvalue(resolved);
         value_freeze(value, context()->freezer);
 
         assert(value->type->kind == TYPE_BOOL);
-        resolved =
-            tir_expr_new_boolean(resolved->location, value->data.boolean);
+        resolved = expr_new_boolean(resolved->location, value->data.boolean);
         autil_freezer_register(context()->freezer, resolved);
     }
 
     return resolved;
 }
 
-static struct tir_expr const*
+static struct expr const*
 resolve_expr_binary_compare_order(
     struct resolver* resolver,
     struct token const* op,
     enum bop_kind bop,
-    struct tir_expr const* lhs,
-    struct tir_expr const* rhs)
+    struct expr const* lhs,
+    struct expr const* rhs)
 {
     assert(resolver != NULL);
     assert(op != NULL);
@@ -2432,8 +2402,8 @@ resolve_expr_binary_compare_order(
             token_kind_to_cstr(op->kind));
     }
 
-    struct tir_expr* resolved = tir_expr_new_binary(
-        &op->location, context()->builtin.bool_, bop, lhs, rhs);
+    struct expr* resolved =
+        expr_new_binary(&op->location, context()->builtin.bool_, bop, lhs, rhs);
     autil_freezer_register(context()->freezer, resolved);
 
     // TODO: We constant fold untyped integer expressions so that chaining
@@ -2442,28 +2412,27 @@ resolve_expr_binary_compare_order(
     // values when coerced into another integer type. Investigate maybe doing
     // this for all integer constant sub-expressions and make constant folding
     // a defined part of the language.
-    if (lhs->kind == TIR_EXPR_INTEGER && rhs->kind == TIR_EXPR_INTEGER
+    if (lhs->kind == EXPR_INTEGER && rhs->kind == EXPR_INTEGER
         && lhs->type->kind == TYPE_UNSIZED_INTEGER
         && rhs->type->kind == TYPE_UNSIZED_INTEGER) {
         struct value* const value = eval_rvalue(resolved);
         value_freeze(value, context()->freezer);
 
         assert(value->type->kind == TYPE_BOOL);
-        resolved =
-            tir_expr_new_boolean(resolved->location, value->data.boolean);
+        resolved = expr_new_boolean(resolved->location, value->data.boolean);
         autil_freezer_register(context()->freezer, resolved);
     }
 
     return resolved;
 }
 
-static struct tir_expr const*
+static struct expr const*
 resolve_expr_binary_arithmetic(
     struct resolver* resolver,
     struct token const* op,
     enum bop_kind bop,
-    struct tir_expr const* lhs,
-    struct tir_expr const* rhs)
+    struct expr const* lhs,
+    struct expr const* rhs)
 {
     assert(resolver != NULL);
     assert(op != NULL);
@@ -2489,8 +2458,7 @@ resolve_expr_binary_arithmetic(
     }
 
     struct type const* const type = lhs->type; // Arbitrarily use lhs.
-    struct tir_expr* resolved =
-        tir_expr_new_binary(&op->location, type, bop, lhs, rhs);
+    struct expr* resolved = expr_new_binary(&op->location, type, bop, lhs, rhs);
     autil_freezer_register(context()->freezer, resolved);
 
     // TODO: We constant fold untyped integer expressions so that chaining
@@ -2499,14 +2467,14 @@ resolve_expr_binary_arithmetic(
     // values when coerced into another integer type. Investigate maybe doing
     // this for all integer constant sub-expressions and make constant folding
     // a defined part of the language.
-    if (lhs->kind == TIR_EXPR_INTEGER && rhs->kind == TIR_EXPR_INTEGER
+    if (lhs->kind == EXPR_INTEGER && rhs->kind == EXPR_INTEGER
         && lhs->type->kind == TYPE_UNSIZED_INTEGER
         && rhs->type->kind == TYPE_UNSIZED_INTEGER) {
         struct value* const value = eval_rvalue(resolved);
         value_freeze(value, context()->freezer);
 
         assert(type_is_integer(value->type));
-        resolved = tir_expr_new_integer(
+        resolved = expr_new_integer(
             resolved->location, resolved->type, value->data.integer);
         autil_freezer_register(context()->freezer, resolved);
     }
@@ -2514,13 +2482,13 @@ resolve_expr_binary_arithmetic(
     return resolved;
 }
 
-static struct tir_expr const*
+static struct expr const*
 resolve_expr_binary_bitwise(
     struct resolver* resolver,
     struct token const* op,
     enum bop_kind bop,
-    struct tir_expr const* lhs,
-    struct tir_expr const* rhs)
+    struct expr const* lhs,
+    struct expr const* rhs)
 {
     assert(resolver != NULL);
     assert(op != NULL);
@@ -2552,8 +2520,7 @@ resolve_expr_binary_bitwise(
         goto invalid_operand_types;
     }
 
-    struct tir_expr* resolved =
-        tir_expr_new_binary(&op->location, type, bop, lhs, rhs);
+    struct expr* resolved = expr_new_binary(&op->location, type, bop, lhs, rhs);
     autil_freezer_register(context()->freezer, resolved);
 
     // TODO: We constant fold untyped integer expressions so that chaining
@@ -2562,14 +2529,14 @@ resolve_expr_binary_bitwise(
     // values when coerced into another integer type. Investigate maybe doing
     // this for all integer constant sub-expressions and make constant folding
     // a defined part of the language.
-    if (lhs->kind == TIR_EXPR_INTEGER && rhs->kind == TIR_EXPR_INTEGER
+    if (lhs->kind == EXPR_INTEGER && rhs->kind == EXPR_INTEGER
         && lhs->type->kind == TYPE_UNSIZED_INTEGER
         && rhs->type->kind == TYPE_UNSIZED_INTEGER) {
         struct value* const value = eval_rvalue(resolved);
         value_freeze(value, context()->freezer);
 
         assert(type_is_integer(value->type));
-        resolved = tir_expr_new_integer(
+        resolved = expr_new_integer(
             resolved->location, resolved->type, value->data.integer);
         autil_freezer_register(context()->freezer, resolved);
     }
@@ -2585,7 +2552,7 @@ invalid_operand_types:
         token_kind_to_cstr(op->kind));
 }
 
-static struct tir_block const*
+static struct block const*
 resolve_block(
     struct resolver* resolver,
     struct symbol_table* symbol_table,
@@ -2599,9 +2566,9 @@ resolve_block(
     resolver->current_symbol_table = symbol_table;
     int const save_rbp_offset = resolver->current_rbp_offset;
 
-    autil_sbuf(struct tir_stmt const*) stmts = NULL;
+    autil_sbuf(struct stmt const*) stmts = NULL;
     for (size_t i = 0; i < autil_sbuf_count(block->stmts); ++i) {
-        struct tir_stmt const* const resolved_stmt =
+        struct stmt const* const resolved_stmt =
             resolve_stmt(resolver, block->stmts[i]);
         if (resolved_stmt != NULL) {
             autil_sbuf_push(stmts, resolved_stmt);
@@ -2609,8 +2576,8 @@ resolve_block(
     }
     autil_sbuf_freeze(stmts, context()->freezer);
 
-    struct tir_block* const resolved =
-        tir_block_new(block->location, symbol_table, stmts);
+    struct block* const resolved =
+        block_new(block->location, symbol_table, stmts);
 
     autil_freezer_register(context()->freezer, resolved);
     resolver->current_symbol_table = save_symbol_table;
@@ -2664,7 +2631,7 @@ resolve_typespec(struct resolver* resolver, struct cst_typespec const* typespec)
         return type_unique_pointer(base);
     }
     case TYPESPEC_ARRAY: {
-        struct tir_expr const* count_expr =
+        struct expr const* count_expr =
             resolve_expr(resolver, typespec->data.array.count);
         if (count_expr->type->kind == TYPE_UNSIZED_INTEGER) {
             count_expr =
@@ -2700,7 +2667,7 @@ resolve_typespec(struct resolver* resolver, struct cst_typespec const* typespec)
         return type_unique_slice(base);
     }
     case TYPESPEC_TYPEOF: {
-        struct tir_expr const* const expr =
+        struct expr const* const expr =
             resolve_expr(resolver, typespec->data.typeof.expr);
         return expr->type;
     }

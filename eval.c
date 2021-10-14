@@ -24,12 +24,12 @@ integer_is_out_of_range(struct type const* type, struct autil_bigint const* res)
 }
 
 struct value*
-eval_rvalue(struct tir_expr const* expr)
+eval_rvalue(struct expr const* expr)
 {
     assert(expr != NULL);
 
     switch (expr->kind) {
-    case TIR_EXPR_IDENTIFIER: {
+    case EXPR_IDENTIFIER: {
         struct symbol const* const symbol = expr->data.identifier;
         enum symbol_kind const kind = symbol->kind;
         if (kind == SYMBOL_CONSTANT || kind == SYMBOL_FUNCTION) {
@@ -39,10 +39,10 @@ eval_rvalue(struct tir_expr const* expr)
         fatal(
             expr->location, "identifier `%s` is not a constant", symbol->name);
     }
-    case TIR_EXPR_BOOLEAN: {
+    case EXPR_BOOLEAN: {
         return value_new_boolean(expr->data.boolean);
     }
-    case TIR_EXPR_INTEGER: {
+    case EXPR_INTEGER: {
         struct autil_bigint const* const integer = expr->data.integer;
         if (expr->type->kind == TYPE_BYTE) {
             uint8_t byte = 0;
@@ -53,7 +53,7 @@ eval_rvalue(struct tir_expr const* expr)
         assert(type_is_integer(expr->type));
         return value_new_integer(expr->type, autil_bigint_new(integer));
     }
-    case TIR_EXPR_BYTES: {
+    case EXPR_BYTES: {
         struct value* const pointer = value_new_pointer(
             type_unique_pointer(context()->builtin.byte),
             *expr->data.bytes.address);
@@ -66,8 +66,8 @@ eval_rvalue(struct tir_expr const* expr)
 
         return value_new_slice(expr->type, pointer, count);
     }
-    case TIR_EXPR_LITERAL_ARRAY: {
-        autil_sbuf(struct tir_expr const* const) elements =
+    case EXPR_LITERAL_ARRAY: {
+        autil_sbuf(struct expr const* const) elements =
             expr->data.literal_array.elements;
         autil_sbuf(struct value*) evaled_elements = NULL;
         for (size_t i = 0; i < autil_sbuf_count(elements); ++i) {
@@ -81,13 +81,13 @@ eval_rvalue(struct tir_expr const* expr)
 
         return value_new_array(expr->type, evaled_elements, evaled_ellipsis);
     }
-    case TIR_EXPR_LITERAL_SLICE: {
+    case EXPR_LITERAL_SLICE: {
         struct value* const pointer =
             eval_rvalue(expr->data.literal_slice.pointer);
         struct value* const count = eval_rvalue(expr->data.literal_slice.count);
         return value_new_slice(expr->type, pointer, count);
     }
-    case TIR_EXPR_CAST: {
+    case EXPR_CAST: {
         struct value* const from = eval_rvalue(expr->data.cast.expr);
 
         // Check if the value casted from is already the correct type.
@@ -183,13 +183,13 @@ eval_rvalue(struct tir_expr const* expr)
         autil_sbuf_fini(bytes);
         return res;
     }
-    case TIR_EXPR_SYSCALL: {
+    case EXPR_SYSCALL: {
         fatal(expr->location, "constant expression contains system call");
     }
-    case TIR_EXPR_CALL: {
+    case EXPR_CALL: {
         fatal(expr->location, "constant expression contains function call");
     }
-    case TIR_EXPR_INDEX: {
+    case EXPR_INDEX: {
         struct value* const lhs = eval_rvalue(expr->data.index.lhs);
         struct value* const idx = eval_rvalue(expr->data.index.idx);
 
@@ -237,7 +237,7 @@ eval_rvalue(struct tir_expr const* expr)
 
         UNREACHABLE();
     }
-    case TIR_EXPR_SLICE: {
+    case EXPR_SLICE: {
         struct value* const lhs = eval_rvalue(expr->data.slice.lhs);
         struct value* const begin = eval_rvalue(expr->data.slice.begin);
         struct value* const end = eval_rvalue(expr->data.slice.end);
@@ -312,7 +312,7 @@ eval_rvalue(struct tir_expr const* expr)
 
         UNREACHABLE();
     }
-    case TIR_EXPR_SIZEOF: {
+    case EXPR_SIZEOF: {
         struct autil_bigint* const size_bigint =
             autil_bigint_new(AUTIL_BIGINT_ZERO);
         uz_to_bigint(size_bigint, expr->data.sizeof_.rhs->size);
@@ -320,7 +320,7 @@ eval_rvalue(struct tir_expr const* expr)
         assert(expr->type->kind == TYPE_USIZE);
         return value_new_integer(context()->builtin.usize, size_bigint);
     }
-    case TIR_EXPR_UNARY: {
+    case EXPR_UNARY: {
         switch (expr->data.unary.op) {
         case UOP_NOT: {
             struct value* const rhs = eval_rvalue(expr->data.unary.rhs);
@@ -417,7 +417,7 @@ eval_rvalue(struct tir_expr const* expr)
         }
         UNREACHABLE();
     }
-    case TIR_EXPR_BINARY: {
+    case EXPR_BINARY: {
         struct value* const lhs = eval_rvalue(expr->data.binary.lhs);
         struct value* const rhs = eval_rvalue(expr->data.binary.rhs);
         struct value* res = NULL;
@@ -683,13 +683,13 @@ eval_rvalue(struct tir_expr const* expr)
 }
 
 struct value*
-eval_lvalue(struct tir_expr const* expr)
+eval_lvalue(struct expr const* expr)
 {
     assert(expr != NULL);
-    assert(tir_expr_is_lvalue(expr));
+    assert(expr_is_lvalue(expr));
 
     switch (expr->kind) {
-    case TIR_EXPR_IDENTIFIER: {
+    case EXPR_IDENTIFIER: {
         struct symbol const* const symbol = expr->data.identifier;
         if (symbol->address->kind != ADDRESS_STATIC) {
             fatal(
@@ -699,7 +699,7 @@ eval_lvalue(struct tir_expr const* expr)
         struct type const* const type = type_unique_pointer(symbol->type);
         return value_new_pointer(type, *symbol->address);
     }
-    case TIR_EXPR_INDEX: {
+    case EXPR_INDEX: {
         struct value* const lhs = eval_lvalue(expr->data.index.lhs);
         struct value* const idx = eval_rvalue(expr->data.index.idx);
         assert(lhs->type->kind == TYPE_POINTER);
@@ -735,7 +735,7 @@ eval_lvalue(struct tir_expr const* expr)
         value_del(idx);
         return value_new_pointer(type, address);
     }
-    case TIR_EXPR_UNARY: {
+    case EXPR_UNARY: {
         switch (expr->data.unary.op) {
         case UOP_DEREFERENCE: {
             fatal(
@@ -752,17 +752,17 @@ eval_lvalue(struct tir_expr const* expr)
         }
         UNREACHABLE();
     }
-    case TIR_EXPR_BOOLEAN: /* fallthrough */
-    case TIR_EXPR_INTEGER: /* fallthrough */
-    case TIR_EXPR_BYTES: /* fallthrough */
-    case TIR_EXPR_LITERAL_ARRAY: /* fallthrough */
-    case TIR_EXPR_LITERAL_SLICE: /* fallthrough */
-    case TIR_EXPR_CAST: /* fallthrough */
-    case TIR_EXPR_SYSCALL: /* fallthrough */
-    case TIR_EXPR_CALL: /* fallthrough */
-    case TIR_EXPR_SLICE: /* fallthrough */
-    case TIR_EXPR_SIZEOF: /* fallthrough */
-    case TIR_EXPR_BINARY: {
+    case EXPR_BOOLEAN: /* fallthrough */
+    case EXPR_INTEGER: /* fallthrough */
+    case EXPR_BYTES: /* fallthrough */
+    case EXPR_LITERAL_ARRAY: /* fallthrough */
+    case EXPR_LITERAL_SLICE: /* fallthrough */
+    case EXPR_CAST: /* fallthrough */
+    case EXPR_SYSCALL: /* fallthrough */
+    case EXPR_CALL: /* fallthrough */
+    case EXPR_SLICE: /* fallthrough */
+    case EXPR_SIZEOF: /* fallthrough */
+    case EXPR_BINARY: {
         UNREACHABLE();
     }
     }
