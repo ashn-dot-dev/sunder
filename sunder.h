@@ -799,6 +799,11 @@ struct type {
     } kind;
     union {
         struct {
+            // NOTE: The min and max fields are "optional" in the sense that
+            // they are not necessarily defined for all types satisfying the
+            // type_is_integer function. The type kind TYPE_UNSIZED_INTEGER
+            // will have these as NULL as integers of this type have no defined
+            // size.
             struct autil_bigint const* min; // optional
             struct autil_bigint const* max; // optional
         } integer;
