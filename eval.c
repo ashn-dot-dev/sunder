@@ -36,7 +36,11 @@ static struct value*
 eval_rvalue_binary(struct expr const* expr);
 
 struct value*
-eval_lvalue(struct expr const* expr);
+eval_lvalue_identifier(struct expr const* expr);
+struct value*
+eval_lvalue_index(struct expr const* expr);
+struct value*
+eval_lvalue_unary(struct expr const* expr);
 
 static bool
 integer_is_out_of_range(struct type const* type, struct autil_bigint const* res)
@@ -834,67 +838,13 @@ eval_lvalue(struct expr const* expr)
 
     switch (expr->kind) {
     case EXPR_IDENTIFIER: {
-        struct symbol const* const symbol = expr->data.identifier;
-        if (symbol->address->kind != ADDRESS_STATIC) {
-            fatal(
-                expr->location,
-                "addressof operator applied to non-static object in compile-time expression");
-        }
-        struct type const* const type = type_unique_pointer(symbol->type);
-        return value_new_pointer(type, *symbol->address);
+        return eval_lvalue_identifier(expr);
     }
     case EXPR_INDEX: {
-        struct value* const lhs = eval_lvalue(expr->data.index.lhs);
-        struct value* const idx = eval_rvalue(expr->data.index.idx);
-        assert(lhs->type->kind == TYPE_POINTER);
-        assert(idx->type->kind == TYPE_USIZE);
-        struct type const* const array_type = lhs->type->data.pointer.base;
-        assert(array_type->kind == TYPE_ARRAY);
-        struct type const* const element_type = array_type->data.array.base;
-        struct type const* const type = type_unique_pointer(element_type);
-
-        size_t idx_uz = 0u;
-        if (bigint_to_uz(&idx_uz, idx->data.integer)) {
-            fatal(
-                expr->data.index.idx->location,
-                "index out-of-range (received %s)",
-                autil_bigint_to_new_cstr(idx->data.integer, NULL));
-        }
-
-        assert(expr->data.index.lhs->type->kind == TYPE_ARRAY);
-        if (idx_uz >= expr->data.index.lhs->type->data.array.count) {
-            fatal(
-                expr->data.index.idx->location,
-                "index out-of-bounds (array count is %zu, received %s)",
-                lhs->type->data.array.count,
-                autil_bigint_to_new_cstr(idx->data.integer, NULL));
-        }
-
-        assert(lhs->data.pointer.kind == ADDRESS_STATIC);
-        struct address const address = address_init_static(
-            lhs->data.pointer.data.static_.name,
-            lhs->data.pointer.data.static_.offset
-                + element_type->size * idx_uz);
-        value_del(lhs);
-        value_del(idx);
-        return value_new_pointer(type, address);
+        return eval_lvalue_index(expr);
     }
     case EXPR_UNARY: {
-        switch (expr->data.unary.op) {
-        case UOP_DEREFERENCE: {
-            fatal(
-                expr->location,
-                "dereference operator not supported in compile-time expressions");
-        }
-        case UOP_NOT: /* fallthrough */
-        case UOP_POS: /* fallthrough */
-        case UOP_NEG: /* fallthrough */
-        case UOP_BITNOT: /* fallthrough */
-        case UOP_ADDRESSOF: /* fallthrough */
-        case UOP_COUNTOF:
-            UNREACHABLE();
-        }
-        UNREACHABLE();
+        return eval_lvalue_unary(expr);
     }
     case EXPR_BOOLEAN: /* fallthrough */
     case EXPR_INTEGER: /* fallthrough */
@@ -909,6 +859,88 @@ eval_lvalue(struct expr const* expr)
     case EXPR_BINARY: {
         UNREACHABLE();
     }
+    }
+
+    UNREACHABLE();
+    return NULL;
+}
+
+struct value*
+eval_lvalue_identifier(struct expr const* expr)
+{
+    assert(expr != NULL);
+    assert(expr->kind == EXPR_IDENTIFIER);
+
+    struct symbol const* const symbol = expr->data.identifier;
+    if (symbol->address->kind != ADDRESS_STATIC) {
+        fatal(
+            expr->location,
+            "addressof operator applied to non-static object in compile-time expression");
+    }
+    struct type const* const type = type_unique_pointer(symbol->type);
+    return value_new_pointer(type, *symbol->address);
+}
+
+struct value*
+eval_lvalue_index(struct expr const* expr)
+{
+    assert(expr != NULL);
+    assert(expr->kind == EXPR_INDEX);
+
+    struct value* const lhs = eval_lvalue(expr->data.index.lhs);
+    struct value* const idx = eval_rvalue(expr->data.index.idx);
+    assert(lhs->type->kind == TYPE_POINTER);
+    assert(idx->type->kind == TYPE_USIZE);
+    struct type const* const array_type = lhs->type->data.pointer.base;
+    assert(array_type->kind == TYPE_ARRAY);
+    struct type const* const element_type = array_type->data.array.base;
+    struct type const* const type = type_unique_pointer(element_type);
+
+    size_t idx_uz = 0u;
+    if (bigint_to_uz(&idx_uz, idx->data.integer)) {
+        fatal(
+            expr->data.index.idx->location,
+            "index out-of-range (received %s)",
+            autil_bigint_to_new_cstr(idx->data.integer, NULL));
+    }
+
+    assert(expr->data.index.lhs->type->kind == TYPE_ARRAY);
+    if (idx_uz >= expr->data.index.lhs->type->data.array.count) {
+        fatal(
+            expr->data.index.idx->location,
+            "index out-of-bounds (array count is %zu, received %s)",
+            lhs->type->data.array.count,
+            autil_bigint_to_new_cstr(idx->data.integer, NULL));
+    }
+
+    assert(lhs->data.pointer.kind == ADDRESS_STATIC);
+    struct address const address = address_init_static(
+        lhs->data.pointer.data.static_.name,
+        lhs->data.pointer.data.static_.offset + element_type->size * idx_uz);
+    value_del(lhs);
+    value_del(idx);
+    return value_new_pointer(type, address);
+}
+
+struct value*
+eval_lvalue_unary(struct expr const* expr)
+{
+    assert(expr != NULL);
+    assert(expr->kind == EXPR_UNARY);
+
+    switch (expr->data.unary.op) {
+    case UOP_DEREFERENCE: {
+        fatal(
+            expr->location,
+            "dereference operator not supported in compile-time expressions");
+    }
+    case UOP_NOT: /* fallthrough */
+    case UOP_POS: /* fallthrough */
+    case UOP_NEG: /* fallthrough */
+    case UOP_BITNOT: /* fallthrough */
+    case UOP_ADDRESSOF: /* fallthrough */
+    case UOP_COUNTOF:
+        UNREACHABLE();
     }
 
     UNREACHABLE();
