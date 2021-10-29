@@ -81,8 +81,8 @@ The `-o FILE` option determines the name of the output executable. If this
 option is not provided then the output executable will default to the name
 `a.out`.
 
-The intermediate assembly files `FILE.asm` and `FILE.o` (output executable name
-plus `.asm` and `.o` extensions) are generated during compilation and then
+The intermediate files `FILE.asm` and `FILE.o` (output executable name plus
+`.asm` and `.o` extensions) are generated during compilation and then
 subsequently removed after the output executable has been created. The `-k` or
 `--keep` flags will instruct the compiler *not* to remove these files (useful
 for debugging).
