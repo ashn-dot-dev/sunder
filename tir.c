@@ -900,7 +900,7 @@ expr_new_call(
 }
 
 struct expr*
-expr_new_index(
+expr_new_access_index(
     struct source_location const* location,
     struct expr const* lhs,
     struct expr const* idx)
@@ -912,17 +912,17 @@ expr_new_index(
 
     if (lhs->type->kind == TYPE_ARRAY) {
         struct type const* const type = lhs->type->data.array.base;
-        struct expr* const self = expr_new(location, type, EXPR_INDEX);
-        self->data.index.lhs = lhs;
-        self->data.index.idx = idx;
+        struct expr* const self = expr_new(location, type, EXPR_ACCESS_INDEX);
+        self->data.access_index.lhs = lhs;
+        self->data.access_index.idx = idx;
         return self;
     }
 
     if (lhs->type->kind == TYPE_SLICE) {
         struct type const* const type = lhs->type->data.slice.base;
-        struct expr* const self = expr_new(location, type, EXPR_INDEX);
-        self->data.index.lhs = lhs;
-        self->data.index.idx = idx;
+        struct expr* const self = expr_new(location, type, EXPR_ACCESS_INDEX);
+        self->data.access_index.lhs = lhs;
+        self->data.access_index.idx = idx;
         return self;
     }
 
@@ -930,7 +930,7 @@ expr_new_index(
 }
 
 struct expr*
-expr_new_slice(
+expr_new_access_slice(
     struct source_location const* location,
     struct expr const* lhs,
     struct expr const* begin,
@@ -945,20 +945,20 @@ expr_new_slice(
     if (lhs->type->kind == TYPE_ARRAY) {
         struct type const* const type =
             type_unique_slice(lhs->type->data.array.base);
-        struct expr* const self = expr_new(location, type, EXPR_SLICE);
-        self->data.slice.lhs = lhs;
-        self->data.slice.begin = begin;
-        self->data.slice.end = end;
+        struct expr* const self = expr_new(location, type, EXPR_ACCESS_SLICE);
+        self->data.access_slice.lhs = lhs;
+        self->data.access_slice.begin = begin;
+        self->data.access_slice.end = end;
         return self;
     }
 
     if (lhs->type->kind == TYPE_SLICE) {
         struct type const* const type =
             type_unique_slice(lhs->type->data.slice.base);
-        struct expr* const self = expr_new(location, type, EXPR_SLICE);
-        self->data.slice.lhs = lhs;
-        self->data.slice.begin = begin;
-        self->data.slice.end = end;
+        struct expr* const self = expr_new(location, type, EXPR_ACCESS_SLICE);
+        self->data.access_slice.lhs = lhs;
+        self->data.access_slice.begin = begin;
+        self->data.access_slice.end = end;
         return self;
     }
 
@@ -1033,9 +1033,9 @@ expr_is_lvalue(struct expr const* self)
         }
         UNREACHABLE();
     }
-    case EXPR_INDEX: {
-        return self->data.index.lhs->type->kind == TYPE_SLICE
-            || expr_is_lvalue(self->data.index.lhs);
+    case EXPR_ACCESS_INDEX: {
+        return self->data.access_index.lhs->type->kind == TYPE_SLICE
+            || expr_is_lvalue(self->data.access_index.lhs);
     }
     case EXPR_UNARY: {
         return self->data.unary.op == UOP_DEREFERENCE;
@@ -1048,7 +1048,7 @@ expr_is_lvalue(struct expr const* self)
     case EXPR_CAST: /* fallthrough */
     case EXPR_SYSCALL: /* fallthrough */
     case EXPR_CALL: /* fallthrough */
-    case EXPR_SLICE: /* fallthrough */
+    case EXPR_ACCESS_SLICE: /* fallthrough */
     case EXPR_SIZEOF: /* fallthrough */
     case EXPR_BINARY: {
         return false;

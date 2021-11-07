@@ -112,9 +112,9 @@ parse_expr_lparen(struct parser* parser);
 static struct cst_expr const*
 parse_expr_syscall(struct parser* parser);
 static struct cst_expr const*
-parse_expr_led_call(struct parser* parser, struct cst_expr const* lhs);
+parse_expr_led_lparen(struct parser* parser, struct cst_expr const* lhs);
 static struct cst_expr const*
-parse_expr_led_index(struct parser* parser, struct cst_expr const* lhs);
+parse_expr_led_lbracket(struct parser* parser, struct cst_expr const* lhs);
 static struct cst_expr const*
 parse_expr_sizeof(struct parser* parser);
 static struct cst_expr const*
@@ -703,9 +703,9 @@ token_kind_led(enum token_kind kind)
 {
     switch (kind) {
     case TOKEN_LPAREN:
-        return parse_expr_led_call;
+        return parse_expr_led_lparen;
     case TOKEN_LBRACKET:
-        return parse_expr_led_index;
+        return parse_expr_led_lbracket;
     case TOKEN_OR: /* fallthrough */
     case TOKEN_AND: /* fallthrough */
     case TOKEN_EQ: /* fallthrough */
@@ -944,7 +944,7 @@ parse_expr_syscall(struct parser* parser)
 }
 
 static struct cst_expr const*
-parse_expr_led_call(struct parser* parser, struct cst_expr const* lhs)
+parse_expr_led_lparen(struct parser* parser, struct cst_expr const* lhs)
 {
     assert(parser != NULL);
     assert(lhs != NULL);
@@ -966,7 +966,7 @@ parse_expr_led_call(struct parser* parser, struct cst_expr const* lhs)
 }
 
 static struct cst_expr const*
-parse_expr_led_index(struct parser* parser, struct cst_expr const* lhs)
+parse_expr_led_lbracket(struct parser* parser, struct cst_expr const* lhs)
 {
     assert(parser != NULL);
     assert(lhs != NULL);
@@ -976,21 +976,22 @@ parse_expr_led_index(struct parser* parser, struct cst_expr const* lhs)
     struct cst_expr const* const idx = parse_expr(parser);
 
     if (check_current(parser, TOKEN_COLON)) {
-        // <expr-slice>
+        // <expr-access-slice>
         expect_current(parser, TOKEN_COLON);
         struct cst_expr const* const end = parse_expr(parser);
         expect_current(parser, TOKEN_RBRACKET);
 
         struct cst_expr* const product =
-            cst_expr_new_slice(location, lhs, idx, end);
+            cst_expr_new_access_slice(location, lhs, idx, end);
 
         autil_freezer_register(context()->freezer, product);
         return product;
     }
 
-    // <expr-index>
+    // <expr-access-index>
     expect_current(parser, TOKEN_RBRACKET);
-    struct cst_expr* const product = cst_expr_new_index(location, lhs, idx);
+    struct cst_expr* const product =
+        cst_expr_new_access_index(location, lhs, idx);
 
     autil_freezer_register(context()->freezer, product);
     return product;

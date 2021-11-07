@@ -268,15 +268,15 @@ order_expr(struct orderer* orderer, struct cst_expr const* expr)
         }
         return;
     }
-    case CST_EXPR_INDEX: {
-        order_expr(orderer, expr->data.index.lhs);
-        order_expr(orderer, expr->data.index.idx);
+    case CST_EXPR_ACCESS_INDEX: {
+        order_expr(orderer, expr->data.access_index.lhs);
+        order_expr(orderer, expr->data.access_index.idx);
         return;
     }
-    case CST_EXPR_SLICE: {
-        order_expr(orderer, expr->data.slice.lhs);
-        order_expr(orderer, expr->data.slice.begin);
-        order_expr(orderer, expr->data.slice.end);
+    case CST_EXPR_ACCESS_SLICE: {
+        order_expr(orderer, expr->data.access_slice.lhs);
+        order_expr(orderer, expr->data.access_slice.begin);
+        order_expr(orderer, expr->data.access_slice.end);
         return;
     }
     case CST_EXPR_SIZEOF: {

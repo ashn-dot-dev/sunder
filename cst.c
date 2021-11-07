@@ -428,7 +428,7 @@ cst_expr_new_call(
 }
 
 struct cst_expr*
-cst_expr_new_index(
+cst_expr_new_access_index(
     struct source_location const* location,
     struct cst_expr const* lhs,
     struct cst_expr const* idx)
@@ -437,14 +437,14 @@ cst_expr_new_index(
     assert(lhs != NULL);
     assert(idx != NULL);
 
-    struct cst_expr* const self = cst_expr_new(location, CST_EXPR_INDEX);
-    self->data.index.lhs = lhs;
-    self->data.index.idx = idx;
+    struct cst_expr* const self = cst_expr_new(location, CST_EXPR_ACCESS_INDEX);
+    self->data.access_index.lhs = lhs;
+    self->data.access_index.idx = idx;
     return self;
 }
 
 struct cst_expr*
-cst_expr_new_slice(
+cst_expr_new_access_slice(
     struct source_location const* location,
     struct cst_expr const* lhs,
     struct cst_expr const* begin,
@@ -455,10 +455,10 @@ cst_expr_new_slice(
     assert(begin != NULL);
     assert(end != NULL);
 
-    struct cst_expr* const self = cst_expr_new(location, CST_EXPR_SLICE);
-    self->data.slice.lhs = lhs;
-    self->data.slice.begin = begin;
-    self->data.slice.end = end;
+    struct cst_expr* const self = cst_expr_new(location, CST_EXPR_ACCESS_SLICE);
+    self->data.access_slice.lhs = lhs;
+    self->data.access_slice.begin = begin;
+    self->data.access_slice.end = end;
     return self;
 }
 

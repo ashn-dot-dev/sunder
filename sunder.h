@@ -518,8 +518,8 @@ struct cst_expr {
         // Postfix Expressions
         CST_EXPR_SYSCALL,
         CST_EXPR_CALL,
-        CST_EXPR_INDEX,
-        CST_EXPR_SLICE,
+        CST_EXPR_ACCESS_INDEX,
+        CST_EXPR_ACCESS_SLICE,
         // Prefix Unary Operator Expressions
         CST_EXPR_SIZEOF,
         CST_EXPR_UNARY,
@@ -561,12 +561,12 @@ struct cst_expr {
         struct {
             struct cst_expr const* lhs;
             struct cst_expr const* idx;
-        } index;
+        } access_index;
         struct {
             struct cst_expr const* lhs;
             struct cst_expr const* begin;
             struct cst_expr const* end;
-        } slice;
+        } access_slice;
         struct {
             struct cst_typespec const* rhs;
         } sizeof_;
@@ -621,12 +621,12 @@ struct cst_expr*
 cst_expr_new_call(
     struct cst_expr const* func, struct cst_expr const* const* arguments);
 struct cst_expr*
-cst_expr_new_index(
+cst_expr_new_access_index(
     struct source_location const* location,
     struct cst_expr const* lhs,
     struct cst_expr const* idx);
 struct cst_expr*
-cst_expr_new_slice(
+cst_expr_new_access_slice(
     struct source_location const* location,
     struct cst_expr const* lhs,
     struct cst_expr const* begin,
@@ -1094,8 +1094,8 @@ struct expr {
         EXPR_CAST,
         EXPR_SYSCALL,
         EXPR_CALL,
-        EXPR_INDEX,
-        EXPR_SLICE,
+        EXPR_ACCESS_INDEX,
+        EXPR_ACCESS_SLICE,
         EXPR_SIZEOF,
         EXPR_UNARY,
         EXPR_BINARY,
@@ -1131,12 +1131,12 @@ struct expr {
         struct {
             struct expr const* lhs;
             struct expr const* idx;
-        } index;
+        } access_index;
         struct {
             struct expr const* lhs;
             struct expr const* begin;
             struct expr const* end;
-        } slice;
+        } access_slice;
         struct {
             struct type const* rhs;
         } sizeof_;
@@ -1217,12 +1217,12 @@ expr_new_call(
     struct expr const* function,
     struct expr const* const* arguments);
 struct expr*
-expr_new_index(
+expr_new_access_index(
     struct source_location const* location,
     struct expr const* lhs,
     struct expr const* idx);
 struct expr*
-expr_new_slice(
+expr_new_access_slice(
     struct source_location const* location,
     struct expr const* lhs,
     struct expr const* begin,

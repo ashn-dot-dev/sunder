@@ -59,8 +59,8 @@
          | <expr-grouped>
          | <expr-syscall>
          | <expr-call>
-         | <expr-index>
-         | <expr-slice>
+         | <expr-access-index>
+         | <expr-access-slice>
          | <expr-sizeof>
          | <expr-unary>
          | <expr-binary>
@@ -81,9 +81,9 @@
 
 <expr-call> ::= <expr> "(" (<expr> ("," <expr>)*)? ")"
 
-<expr-index> ::= <expr> "[" <expr> "]"
+<expr-access-index> ::= <expr> "[" <expr> "]"
 
-<expr-slice> ::= <expr> "[" <expr> ":" <expr> "]"
+<expr-access-slice> ::= <expr> "[" <expr> ":" <expr> "]"
 
 <expr-sizeof> ::= "sizeof" "(" ":" <typespec> ")"
 

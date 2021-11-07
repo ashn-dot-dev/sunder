@@ -168,9 +168,11 @@ resolve_expr_syscall(struct resolver* resolver, struct cst_expr const* expr);
 static struct expr const*
 resolve_expr_call(struct resolver* resolver, struct cst_expr const* expr);
 static struct expr const*
-resolve_expr_index(struct resolver* resolver, struct cst_expr const* expr);
+resolve_expr_access_index(
+    struct resolver* resolver, struct cst_expr const* expr);
 static struct expr const*
-resolve_expr_slice(struct resolver* resolver, struct cst_expr const* expr);
+resolve_expr_access_slice(
+    struct resolver* resolver, struct cst_expr const* expr);
 static struct expr const*
 resolve_expr_sizeof(struct resolver* resolver, struct cst_expr const* expr);
 static struct expr const*
@@ -1359,11 +1361,11 @@ resolve_expr(struct resolver* resolver, struct cst_expr const* expr)
     case CST_EXPR_CALL: {
         return resolve_expr_call(resolver, expr);
     }
-    case CST_EXPR_INDEX: {
-        return resolve_expr_index(resolver, expr);
+    case CST_EXPR_ACCESS_INDEX: {
+        return resolve_expr_access_index(resolver, expr);
     }
-    case CST_EXPR_SLICE: {
-        return resolve_expr_slice(resolver, expr);
+    case CST_EXPR_ACCESS_SLICE: {
+        return resolve_expr_access_slice(resolver, expr);
     }
     case CST_EXPR_SIZEOF: {
         return resolve_expr_sizeof(resolver, expr);
@@ -1883,13 +1885,15 @@ resolve_expr_call(struct resolver* resolver, struct cst_expr const* expr)
 }
 
 static struct expr const*
-resolve_expr_index(struct resolver* resolver, struct cst_expr const* expr)
+resolve_expr_access_index(
+    struct resolver* resolver, struct cst_expr const* expr)
 {
     assert(resolver != NULL);
     assert(expr != NULL);
-    assert(expr->kind == CST_EXPR_INDEX);
+    assert(expr->kind == CST_EXPR_ACCESS_INDEX);
 
-    struct expr const* const lhs = resolve_expr(resolver, expr->data.index.lhs);
+    struct expr const* const lhs =
+        resolve_expr(resolver, expr->data.access_index.lhs);
     if (lhs->type->kind != TYPE_ARRAY && lhs->type->kind != TYPE_SLICE) {
         fatal(
             lhs->location,
@@ -1897,7 +1901,8 @@ resolve_expr_index(struct resolver* resolver, struct cst_expr const* expr)
             lhs->type->name);
     }
 
-    struct expr const* idx = resolve_expr(resolver, expr->data.index.idx);
+    struct expr const* idx =
+        resolve_expr(resolver, expr->data.access_index.idx);
     if (idx->type->kind == TYPE_UNSIZED_INTEGER) {
         idx = convert_unsized_integer(context()->builtin.usize, idx);
     }
@@ -1908,20 +1913,23 @@ resolve_expr_index(struct resolver* resolver, struct cst_expr const* expr)
             idx->type->name);
     }
 
-    struct expr* const resolved = expr_new_index(expr->location, lhs, idx);
+    struct expr* const resolved =
+        expr_new_access_index(expr->location, lhs, idx);
 
     autil_freezer_register(context()->freezer, resolved);
     return resolved;
 }
 
 static struct expr const*
-resolve_expr_slice(struct resolver* resolver, struct cst_expr const* expr)
+resolve_expr_access_slice(
+    struct resolver* resolver, struct cst_expr const* expr)
 {
     assert(resolver != NULL);
     assert(expr != NULL);
-    assert(expr->kind == CST_EXPR_SLICE);
+    assert(expr->kind == CST_EXPR_ACCESS_SLICE);
 
-    struct expr const* const lhs = resolve_expr(resolver, expr->data.slice.lhs);
+    struct expr const* const lhs =
+        resolve_expr(resolver, expr->data.access_slice.lhs);
     if (lhs->type->kind != TYPE_ARRAY && lhs->type->kind != TYPE_SLICE) {
         fatal(
             lhs->location,
@@ -1934,7 +1942,8 @@ resolve_expr_slice(struct resolver* resolver, struct cst_expr const* expr)
             "left hand side of slice operation is an rvalue array");
     }
 
-    struct expr const* begin = resolve_expr(resolver, expr->data.slice.begin);
+    struct expr const* begin =
+        resolve_expr(resolver, expr->data.access_slice.begin);
     if (begin->type->kind == TYPE_UNSIZED_INTEGER) {
         begin = convert_unsized_integer(context()->builtin.usize, begin);
     }
@@ -1945,7 +1954,8 @@ resolve_expr_slice(struct resolver* resolver, struct cst_expr const* expr)
             begin->type->name);
     }
 
-    struct expr const* end = resolve_expr(resolver, expr->data.slice.end);
+    struct expr const* end =
+        resolve_expr(resolver, expr->data.access_slice.end);
     if (end->type->kind == TYPE_UNSIZED_INTEGER) {
         end = convert_unsized_integer(context()->builtin.usize, end);
     }
@@ -1957,7 +1967,7 @@ resolve_expr_slice(struct resolver* resolver, struct cst_expr const* expr)
     }
 
     struct expr* const resolved =
-        expr_new_slice(expr->location, lhs, begin, end);
+        expr_new_access_slice(expr->location, lhs, begin, end);
 
     autil_freezer_register(context()->freezer, resolved);
     return resolved;

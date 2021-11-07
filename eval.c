@@ -25,9 +25,9 @@ eval_rvalue_literal_slice(struct expr const* expr);
 static struct value*
 eval_rvalue_cast(struct expr const* expr);
 static struct value*
-eval_rvalue_index(struct expr const* expr);
+eval_rvalue_access_index(struct expr const* expr);
 static struct value*
-eval_rvalue_slice(struct expr const* expr);
+eval_rvalue_access_slice(struct expr const* expr);
 static struct value*
 eval_rvalue_sizeof(struct expr const* expr);
 static struct value*
@@ -38,7 +38,7 @@ eval_rvalue_binary(struct expr const* expr);
 struct value*
 eval_lvalue_identifier(struct expr const* expr);
 struct value*
-eval_lvalue_index(struct expr const* expr);
+eval_lvalue_access_index(struct expr const* expr);
 struct value*
 eval_lvalue_unary(struct expr const* expr);
 
@@ -92,11 +92,11 @@ eval_rvalue(struct expr const* expr)
     case EXPR_CALL: {
         fatal(expr->location, "constant expression contains function call");
     }
-    case EXPR_INDEX: {
-        return eval_rvalue_index(expr);
+    case EXPR_ACCESS_INDEX: {
+        return eval_rvalue_access_index(expr);
     }
-    case EXPR_SLICE: {
-        return eval_rvalue_slice(expr);
+    case EXPR_ACCESS_SLICE: {
+        return eval_rvalue_access_slice(expr);
     }
     case EXPR_SIZEOF: {
         return eval_rvalue_sizeof(expr);
@@ -311,20 +311,20 @@ eval_rvalue_cast(struct expr const* expr)
 }
 
 static struct value*
-eval_rvalue_index(struct expr const* expr)
+eval_rvalue_access_index(struct expr const* expr)
 {
     assert(expr != NULL);
-    assert(expr->kind == EXPR_INDEX);
+    assert(expr->kind == EXPR_ACCESS_INDEX);
 
-    struct value* const lhs = eval_rvalue(expr->data.index.lhs);
-    struct value* const idx = eval_rvalue(expr->data.index.idx);
+    struct value* const lhs = eval_rvalue(expr->data.access_index.lhs);
+    struct value* const idx = eval_rvalue(expr->data.access_index.idx);
 
     assert(idx->type->kind == TYPE_USIZE);
     struct autil_bigint const* const idx_bigint = idx->data.integer;
     size_t idx_uz = 0u;
     if (bigint_to_uz(&idx_uz, idx_bigint)) {
         fatal(
-            expr->data.index.idx->location,
+            expr->data.access_index.idx->location,
             "index out-of-range (received %s)",
             autil_bigint_to_new_cstr(idx_bigint, NULL));
     }
@@ -332,7 +332,7 @@ eval_rvalue_index(struct expr const* expr)
     if (lhs->type->kind == TYPE_ARRAY) {
         if (idx_uz >= lhs->type->data.array.count) {
             fatal(
-                expr->data.index.idx->location,
+                expr->data.access_index.idx->location,
                 "index out-of-bounds (array count is %zu, received %zu)",
                 lhs->type->data.array.count,
                 idx_uz);
@@ -366,21 +366,21 @@ eval_rvalue_index(struct expr const* expr)
 }
 
 static struct value*
-eval_rvalue_slice(struct expr const* expr)
+eval_rvalue_access_slice(struct expr const* expr)
 {
     assert(expr != NULL);
-    assert(expr->kind == EXPR_SLICE);
+    assert(expr->kind == EXPR_ACCESS_SLICE);
 
-    struct value* const lhs = eval_rvalue(expr->data.slice.lhs);
-    struct value* const begin = eval_rvalue(expr->data.slice.begin);
-    struct value* const end = eval_rvalue(expr->data.slice.end);
+    struct value* const lhs = eval_rvalue(expr->data.access_slice.lhs);
+    struct value* const begin = eval_rvalue(expr->data.access_slice.begin);
+    struct value* const end = eval_rvalue(expr->data.access_slice.end);
 
     assert(begin->type->kind == TYPE_USIZE);
     struct autil_bigint const* const begin_bigint = begin->data.integer;
     size_t begin_uz = 0u;
     if (bigint_to_uz(&begin_uz, begin_bigint)) {
         fatal(
-            expr->data.slice.begin->location,
+            expr->data.access_slice.begin->location,
             "index out-of-range (received %s)",
             autil_bigint_to_new_cstr(begin_bigint, NULL));
     }
@@ -389,7 +389,7 @@ eval_rvalue_slice(struct expr const* expr)
     size_t end_uz = 0u;
     if (bigint_to_uz(&end_uz, end_bigint)) {
         fatal(
-            expr->data.slice.end->location,
+            expr->data.access_slice.end->location,
             "index out-of-range (received %s)",
             autil_bigint_to_new_cstr(end_bigint, NULL));
     }
@@ -397,20 +397,20 @@ eval_rvalue_slice(struct expr const* expr)
     if (lhs->type->kind == TYPE_ARRAY) {
         if (begin_uz >= lhs->type->data.array.count) {
             fatal(
-                expr->data.slice.begin->location,
+                expr->data.access_slice.begin->location,
                 "index out-of-bounds (array count is %zu, received %zu)",
                 lhs->type->data.array.count,
                 begin_uz);
         }
         if (end_uz > lhs->type->data.array.count) {
             fatal(
-                expr->data.slice.begin->location,
+                expr->data.access_slice.begin->location,
                 "index out-of-bounds (array count is %zu, received %zu)",
                 lhs->type->data.array.count,
                 end_uz);
         }
 
-        struct value* const pointer = eval_lvalue(expr->data.slice.lhs);
+        struct value* const pointer = eval_lvalue(expr->data.access_slice.lhs);
         assert(pointer->type->kind == TYPE_POINTER);
         assert(pointer->data.pointer.kind == ADDRESS_STATIC);
         pointer->type = type_unique_pointer(expr->type->data.slice.base);
@@ -840,8 +840,8 @@ eval_lvalue(struct expr const* expr)
     case EXPR_IDENTIFIER: {
         return eval_lvalue_identifier(expr);
     }
-    case EXPR_INDEX: {
-        return eval_lvalue_index(expr);
+    case EXPR_ACCESS_INDEX: {
+        return eval_lvalue_access_index(expr);
     }
     case EXPR_UNARY: {
         return eval_lvalue_unary(expr);
@@ -854,7 +854,7 @@ eval_lvalue(struct expr const* expr)
     case EXPR_CAST: /* fallthrough */
     case EXPR_SYSCALL: /* fallthrough */
     case EXPR_CALL: /* fallthrough */
-    case EXPR_SLICE: /* fallthrough */
+    case EXPR_ACCESS_SLICE: /* fallthrough */
     case EXPR_SIZEOF: /* fallthrough */
     case EXPR_BINARY: {
         UNREACHABLE();
@@ -882,13 +882,13 @@ eval_lvalue_identifier(struct expr const* expr)
 }
 
 struct value*
-eval_lvalue_index(struct expr const* expr)
+eval_lvalue_access_index(struct expr const* expr)
 {
     assert(expr != NULL);
-    assert(expr->kind == EXPR_INDEX);
+    assert(expr->kind == EXPR_ACCESS_INDEX);
 
-    struct value* const lhs = eval_lvalue(expr->data.index.lhs);
-    struct value* const idx = eval_rvalue(expr->data.index.idx);
+    struct value* const lhs = eval_lvalue(expr->data.access_index.lhs);
+    struct value* const idx = eval_rvalue(expr->data.access_index.idx);
     assert(lhs->type->kind == TYPE_POINTER);
     assert(idx->type->kind == TYPE_USIZE);
     struct type const* const array_type = lhs->type->data.pointer.base;
@@ -899,15 +899,15 @@ eval_lvalue_index(struct expr const* expr)
     size_t idx_uz = 0u;
     if (bigint_to_uz(&idx_uz, idx->data.integer)) {
         fatal(
-            expr->data.index.idx->location,
+            expr->data.access_index.idx->location,
             "index out-of-range (received %s)",
             autil_bigint_to_new_cstr(idx->data.integer, NULL));
     }
 
-    assert(expr->data.index.lhs->type->kind == TYPE_ARRAY);
-    if (idx_uz >= expr->data.index.lhs->type->data.array.count) {
+    assert(expr->data.access_index.lhs->type->kind == TYPE_ARRAY);
+    if (idx_uz >= expr->data.access_index.lhs->type->data.array.count) {
         fatal(
-            expr->data.index.idx->location,
+            expr->data.access_index.idx->location,
             "index out-of-bounds (array count is %zu, received %s)",
             lhs->type->data.array.count,
             autil_bigint_to_new_cstr(idx->data.integer, NULL));
