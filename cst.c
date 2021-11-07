@@ -641,7 +641,7 @@ cst_typespec_new_typeof(
 
     struct cst_typespec* const self =
         cst_typespec_new(location, TYPESPEC_TYPEOF);
-    self->data.typeof.expr = expr;
+    self->data.typeof_.expr = expr;
     return self;
 }
 

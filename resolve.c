@@ -2678,7 +2678,7 @@ resolve_typespec(struct resolver* resolver, struct cst_typespec const* typespec)
     }
     case TYPESPEC_TYPEOF: {
         struct expr const* const expr =
-            resolve_expr(resolver, typespec->data.typeof.expr);
+            resolve_expr(resolver, typespec->data.typeof_.expr);
         return expr->type;
     }
     }

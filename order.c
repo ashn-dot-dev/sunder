@@ -341,7 +341,7 @@ order_typespec(struct orderer* orderer, struct cst_typespec const* typespec)
         return;
     }
     case TYPESPEC_TYPEOF: {
-        order_expr(orderer, typespec->data.typeof.expr);
+        order_expr(orderer, typespec->data.typeof_.expr);
         return;
     }
     }

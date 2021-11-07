@@ -703,7 +703,7 @@ struct cst_typespec {
         } slice;
         struct {
             struct cst_expr const* expr;
-        } typeof;
+        } typeof_;
     } data;
 };
 struct cst_typespec*
