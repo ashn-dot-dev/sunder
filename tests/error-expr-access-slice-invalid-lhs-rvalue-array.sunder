@@ -2,6 +2,6 @@ func main() void {
     (:[3u]u16)[0xAAAAu16, 0xBBBBu16, 0xCCCu16][1u:3u];
 }
 ################################################################################
-# [error-expr-slice-invalid-lhs-rvalue-array.sunder:2] error: left hand side of slice operation is an rvalue array
+# [error-expr-access-slice-invalid-lhs-rvalue-array.sunder:2] error: left hand side of slice operation is an rvalue array
 #     (:[3u]u16)[0xAAAAu16, 0xBBBBu16, 0xCCCu16][1u:3u];
 #     ^

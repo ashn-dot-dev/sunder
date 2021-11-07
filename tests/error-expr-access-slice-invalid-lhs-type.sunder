@@ -3,6 +3,6 @@ func main() void {
     a[0u:1u];
 }
 ################################################################################
-# [error-expr-slice-invalid-lhs-type.sunder:3] error: illegal slice operation with left-hand-side of type `u16`
+# [error-expr-access-slice-invalid-lhs-type.sunder:3] error: illegal slice operation with left-hand-side of type `u16`
 #     a[0u:1u];
 #     ^
