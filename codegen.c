@@ -150,7 +150,7 @@ appendli_location(struct source_location const* location, char const* fmt, ...)
 
     char const* const source = lookup_module(location->path)->source;
     char const* const line_start = source_line_start(source, location->psrc);
-    char const* const line_end = source_line_end(source, location->psrc);
+    char const* const line_end = source_line_end(location->psrc);
 
     autil_string_append_fmt(
         out, "    ;%.*s\n", (int)(line_end - line_start), line_start);
@@ -982,6 +982,7 @@ codegen_stmt_break(struct stmt const* stmt, size_t id)
 {
     assert(stmt != NULL);
     assert(stmt->kind == STMT_BREAK);
+    (void)stmt;
     (void)id;
 
     appendli("jmp %s%zu_end", LABEL_STMT, current_loop_id);
@@ -992,6 +993,7 @@ codegen_stmt_continue(struct stmt const* stmt, size_t id)
 {
     assert(stmt != NULL);
     assert(stmt->kind == STMT_CONTINUE);
+    (void)stmt;
     (void)id;
 
     appendli("jmp %s%zu_body_end", LABEL_STMT, current_loop_id);

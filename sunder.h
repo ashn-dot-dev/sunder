@@ -19,13 +19,13 @@
 #endif
 
 // Returns a pointer to the first character of the line containing ptr in the
-// NUL-terminated source.
+// provided NUL-terminated source string.
 char const*
 source_line_start(char const* source, char const* ptr);
 // Returns a pointer to the end-of-line newline or NUL of the line containing
-// ptr in the NUL-terminated source.
+// ptr in some NUL-terminated source string.
 char const*
-source_line_end(char const* source, char const* ptr);
+source_line_end(char const* ptr);
 
 #define NO_PATH ((char const*)NULL)
 #define NO_LINE ((size_t)0u)

@@ -150,7 +150,9 @@ eval_rvalue_integer(struct expr const* expr)
     if (expr->type->kind == TYPE_BYTE) {
         uint8_t byte = 0;
         int const out_of_range = bigint_to_u8(&byte, integer);
-        assert(!out_of_range);
+        if (out_of_range) {
+            UNREACHABLE();
+        }
         return value_new_byte(byte);
     }
 

@@ -42,9 +42,8 @@ source_line_start(char const* source, char const* ptr)
 }
 
 char const*
-source_line_end(char const* source, char const* ptr)
+source_line_end(char const* ptr)
 {
-    assert(source != NULL);
     assert(ptr != NULL);
 
     while (*ptr != '\n' && *ptr != '\0') {
@@ -105,7 +104,7 @@ messagev_(
         assert(path != NULL);
         char const* const source = lookup_module(path)->source;
         char const* const line_start = source_line_start(source, psrc);
-        char const* const line_end = source_line_end(source, psrc);
+        char const* const line_end = source_line_end(psrc);
 
         fprintf(stderr, "%.*s\n", (int)(line_end - line_start), line_start);
         fprintf(stderr, "%*s^\n", (int)(psrc - line_start), "");

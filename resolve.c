@@ -1494,6 +1494,7 @@ resolve_expr_boolean(struct resolver* resolver, struct cst_expr const* expr)
     assert(resolver != NULL);
     assert(expr != NULL);
     assert(expr->kind == CST_EXPR_BOOLEAN);
+    (void)resolver;
 
     bool const value = expr->data.boolean->value;
     struct expr* const resolved = expr_new_boolean(expr->location, value);
@@ -1555,6 +1556,7 @@ resolve_expr_integer(struct resolver* resolver, struct cst_expr const* expr)
     assert(resolver != NULL);
     assert(expr != NULL);
     assert(expr->kind == CST_EXPR_INTEGER);
+    (void)resolver;
 
     struct cst_integer const* const cst_integer = expr->data.integer;
     struct autil_bigint const* const value = cst_integer->value;
@@ -1573,6 +1575,7 @@ resolve_expr_bytes(struct resolver* resolver, struct cst_expr const* expr)
     assert(resolver != NULL);
     assert(expr != NULL);
     assert(expr->kind == CST_EXPR_BYTES);
+    (void)resolver;
 
     struct address const* const address =
         resolver_reserve_storage_static(resolver, "__bytes");
@@ -2077,6 +2080,7 @@ resolve_expr_unary_logical(
     assert(resolver != NULL);
     assert(op != NULL);
     assert(rhs != NULL);
+    (void)resolver;
 
     if (rhs->type->kind != TYPE_BOOL) {
         fatal(
@@ -2103,6 +2107,7 @@ resolve_expr_unary_arithmetic(
     assert(resolver != NULL);
     assert(op != NULL);
     assert(rhs != NULL);
+    (void)resolver;
 
     if (!type_is_integer(rhs->type)) {
         fatal(
@@ -2129,6 +2134,7 @@ resolve_expr_unary_bitwise(
     assert(resolver != NULL);
     assert(op != NULL);
     assert(rhs != NULL);
+    (void)resolver;
 
     if (!(rhs->type->kind == TYPE_BYTE || type_is_integer(rhs->type))) {
         fatal(
@@ -2151,6 +2157,7 @@ resolve_expr_unary_dereference(
     assert(op != NULL);
     assert(op->kind == TOKEN_STAR);
     assert(rhs != NULL);
+    (void)resolver;
 
     if (rhs->type->kind != TYPE_POINTER) {
         fatal(
@@ -2173,6 +2180,7 @@ resolve_expr_unary_addressof(
     assert(op != NULL);
     assert(op->kind == TOKEN_AMPERSAND);
     assert(rhs != NULL);
+    (void)resolver;
 
     if (!expr_is_lvalue(rhs)) {
         fatal(rhs->location, "cannot take the address of a non-lvalue");
@@ -2193,6 +2201,7 @@ resolve_expr_unary_countof(
     assert(op != NULL);
     assert(op->kind == TOKEN_COUNTOF);
     assert(rhs != NULL);
+    (void)resolver;
 
     if (rhs->type->kind != TYPE_ARRAY && rhs->type->kind != TYPE_SLICE) {
         fatal(
@@ -2293,6 +2302,7 @@ resolve_expr_binary_logical(
     assert(op != NULL);
     assert(lhs != NULL);
     assert(rhs != NULL);
+    (void)resolver;
 
     bool const valid = lhs->type == rhs->type && lhs->type->kind == TYPE_BOOL
         && rhs->type->kind == TYPE_BOOL;
@@ -2325,6 +2335,7 @@ resolve_expr_binary_compare_equality(
     assert(op != NULL);
     assert(lhs != NULL);
     assert(rhs != NULL);
+    (void)resolver;
 
     if (lhs->type->kind == TYPE_UNSIZED_INTEGER) {
         lhs = convert_unsized_integer(rhs->type, lhs);
@@ -2386,6 +2397,7 @@ resolve_expr_binary_compare_order(
     assert(op != NULL);
     assert(lhs != NULL);
     assert(rhs != NULL);
+    (void)resolver;
 
     if (lhs->type->kind == TYPE_UNSIZED_INTEGER) {
         lhs = convert_unsized_integer(rhs->type, lhs);
@@ -2448,6 +2460,7 @@ resolve_expr_binary_arithmetic(
     assert(op != NULL);
     assert(lhs != NULL);
     assert(rhs != NULL);
+    (void)resolver;
 
     if (lhs->type->kind == TYPE_UNSIZED_INTEGER) {
         lhs = convert_unsized_integer(rhs->type, lhs);
@@ -2504,6 +2517,7 @@ resolve_expr_binary_bitwise(
     assert(op != NULL);
     assert(lhs != NULL);
     assert(rhs != NULL);
+    (void)resolver;
 
     if (lhs->type->kind == TYPE_UNSIZED_INTEGER) {
         lhs = convert_unsized_integer(rhs->type, lhs);
