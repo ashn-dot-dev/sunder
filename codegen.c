@@ -982,6 +982,7 @@ codegen_stmt_break(struct stmt const* stmt, size_t id)
 {
     assert(stmt != NULL);
     assert(stmt->kind == STMT_BREAK);
+    (void)id;
 
     appendli("jmp %s%zu_end", LABEL_STMT, current_loop_id);
 }
@@ -991,6 +992,7 @@ codegen_stmt_continue(struct stmt const* stmt, size_t id)
 {
     assert(stmt != NULL);
     assert(stmt->kind == STMT_CONTINUE);
+    (void)id;
 
     appendli("jmp %s%zu_body_end", LABEL_STMT, current_loop_id);
 }
@@ -1000,6 +1002,7 @@ codegen_stmt_dump(struct stmt const* stmt, size_t id)
 {
     assert(stmt != NULL);
     assert(stmt->kind == STMT_DUMP);
+    (void)id;
 
     codegen_rvalue(stmt->data.expr);
     appendli("push %#zx", stmt->data.expr->type->size);
@@ -1013,6 +1016,7 @@ codegen_stmt_return(struct stmt const* stmt, size_t id)
 {
     assert(stmt != NULL);
     assert(stmt->kind == STMT_RETURN);
+    (void)id;
 
     if (stmt->data.return_.expr != NULL) {
         // Compute result.
@@ -1042,6 +1046,7 @@ codegen_stmt_assign(struct stmt const* stmt, size_t id)
 {
     assert(stmt != NULL);
     assert(stmt->kind == STMT_ASSIGN);
+    (void)id;
 
     codegen_rvalue(stmt->data.assign.rhs);
     codegen_lvalue(stmt->data.assign.lhs);
@@ -1089,6 +1094,7 @@ codegen_stmt_expr(struct stmt const* stmt, size_t id)
 {
     assert(stmt != NULL);
     assert(stmt->kind == STMT_EXPR);
+    (void)id;
 
     codegen_rvalue(stmt->data.expr);
     // Remove the (unused) result from the stack.
