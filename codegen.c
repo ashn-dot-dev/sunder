@@ -12,6 +12,26 @@ static struct function const* current_function = NULL;
 static size_t current_loop_id; // Used for generating break & continue lables.
 static size_t unique_id = 0; // Used for generating unique names and labels.
 
+// Local labels take the form:
+//      .__<TIR-node-type>_<unique-id>_<description>
+//
+// The <TIR-node-type> is STMT for stmt nodes and EXPR for expr nodes.
+//
+// The <unique-id> is generated for each node in the call to codegen_stmt,
+// codegen_rvalue, and codegen_lvalue.
+//
+// The <description> is used to denote what section of TIR node generation is
+// taking place as well as provide the necessary labels for jumps.
+//
+// For each stmt and expr node, the local labels:
+//      .__<TIR-node-type>_<unique_id>_bgn:
+// and
+//      .__<TIR-node-type>_<unique_id>_end:
+// are generated to denote the beginning and end of code generation for that
+// node. These labels are always present and may be used for jump targets.
+#define LABEL_STMT ".__STMT_"
+#define LABEL_EXPR ".__EXPR_"
+
 static void
 append(char const* fmt, ...);
 static void
@@ -565,72 +585,75 @@ codegen_static_function(struct symbol const* symbol);
 static void
 codegen_stmt(struct stmt const* stmt);
 static void
-codegen_stmt_if(struct stmt const* stmt);
+codegen_stmt_if(struct stmt const* stmt, size_t id);
 static void
-codegen_stmt_for_range(struct stmt const* stmt);
+codegen_stmt_for_range(struct stmt const* stmt, size_t id);
 static void
-codegen_stmt_for_expr(struct stmt const* stmt);
+codegen_stmt_for_expr(struct stmt const* stmt, size_t id);
 static void
-codegen_stmt_break(struct stmt const* stmt);
+codegen_stmt_break(struct stmt const* stmt, size_t id);
 static void
-codegen_stmt_continue(struct stmt const* stmt);
+codegen_stmt_continue(struct stmt const* stmt, size_t id);
 static void
-codegen_stmt_dump(struct stmt const* stmt);
+codegen_stmt_dump(struct stmt const* stmt, size_t id);
 static void
-codegen_stmt_return(struct stmt const* stmt);
+codegen_stmt_return(struct stmt const* stmt, size_t id);
 static void
-codegen_stmt_assign(struct stmt const* stmt);
+codegen_stmt_assign(struct stmt const* stmt, size_t id);
 static void
-codegen_stmt_expr(struct stmt const* stmt);
+codegen_stmt_expr(struct stmt const* stmt, size_t id);
 
 static void
 codegen_rvalue(struct expr const* expr);
 static void
-codegen_rvalue_identifier(struct expr const* expr);
+codegen_rvalue_identifier(struct expr const* expr, size_t id);
 static void
-codegen_rvalue_boolean(struct expr const* expr);
+codegen_rvalue_boolean(struct expr const* expr, size_t id);
 static void
-codegen_rvalue_integer(struct expr const* expr);
+codegen_rvalue_integer(struct expr const* expr, size_t id);
 static void
-codegen_rvalue_bytes(struct expr const* expr);
+codegen_rvalue_bytes(struct expr const* expr, size_t id);
 static void
-codegen_rvalue_literal_array(struct expr const* expr);
+codegen_rvalue_literal_array(struct expr const* expr, size_t id);
 static void
-codegen_rvalue_literal_slice(struct expr const* expr);
+codegen_rvalue_literal_slice(struct expr const* expr, size_t id);
 static void
-codegen_rvalue_cast(struct expr const* expr);
+codegen_rvalue_cast(struct expr const* expr, size_t id);
 static void
-codegen_rvalue_syscall(struct expr const* expr);
+codegen_rvalue_syscall(struct expr const* expr, size_t id);
 static void
-codegen_rvalue_call(struct expr const* expr);
+codegen_rvalue_call(struct expr const* expr, size_t id);
 static void
-codegen_rvalue_index(struct expr const* expr);
+codegen_rvalue_index(struct expr const* expr, size_t id);
 static void
-codegen_rvalue_index_lhs_array(struct expr const* expr);
+codegen_rvalue_index_lhs_array(struct expr const* expr, size_t id);
 static void
-codegen_rvalue_index_lhs_slice(struct expr const* expr);
+codegen_rvalue_index_lhs_slice(struct expr const* expr, size_t id);
 static void
-codegen_rvalue_slice(struct expr const* expr);
+codegen_rvalue_slice(struct expr const* expr, size_t id);
 static void
-codegen_rvalue_slice_lhs_array(struct expr const* expr);
+codegen_rvalue_slice_lhs_array(struct expr const* expr, size_t id);
 static void
-codegen_rvalue_slice_lhs_slice(struct expr const* expr);
+codegen_rvalue_slice_lhs_slice(struct expr const* expr, size_t id);
 static void
-codegen_rvalue_sizeof(struct expr const* expr);
+codegen_rvalue_sizeof(struct expr const* expr, size_t id);
 static void
-codegen_rvalue_unary(struct expr const* expr);
+codegen_rvalue_unary(struct expr const* expr, size_t id);
 static void
-codegen_rvalue_binary(struct expr const* expr);
+codegen_rvalue_binary(struct expr const* expr, size_t id);
+
 static void
 codegen_lvalue(struct expr const* expr);
 static void
-codegen_lvalue_index(struct expr const* expr);
+codegen_lvalue_identifier(struct expr const* expr, size_t id);
 static void
-codegen_lvalue_index_lhs_array(struct expr const* expr);
+codegen_lvalue_index(struct expr const* expr, size_t id);
 static void
-codegen_lvalue_index_lhs_slice(struct expr const* expr);
+codegen_lvalue_index_lhs_array(struct expr const* expr, size_t id);
 static void
-codegen_lvalue_unary(struct expr const* expr);
+codegen_lvalue_index_lhs_slice(struct expr const* expr, size_t id);
+static void
+codegen_lvalue_unary(struct expr const* expr, size_t id);
 
 static void
 codegen_static_constants(void)
@@ -817,102 +840,73 @@ codegen_stmt(struct stmt const* stmt)
 {
     assert(stmt != NULL);
 
-    switch (stmt->kind) {
-    case STMT_IF: {
-        appendli_location(stmt->location, "<stmt-if>");
-        codegen_stmt_if(stmt);
-        return;
-    }
-    case STMT_FOR_RANGE: {
-        appendli_location(stmt->location, "<stmt-for-range>");
-        codegen_stmt_for_range(stmt);
-        return;
-    }
-    case STMT_FOR_EXPR: {
-        appendli_location(stmt->location, "<stmt-for-expr>");
-        codegen_stmt_for_expr(stmt);
-        return;
-    }
-    case STMT_BREAK: {
-        appendli_location(stmt->location, "<stmt-break>");
-        codegen_stmt_break(stmt);
-        return;
-    }
-    case STMT_CONTINUE: {
-        appendli_location(stmt->location, "<stmt-continue>");
-        codegen_stmt_continue(stmt);
-        return;
-    }
-    case STMT_DUMP: {
-        appendli_location(stmt->location, "<stmt-dump>");
-        codegen_stmt_dump(stmt);
-        return;
-    }
-    case STMT_RETURN: {
-        appendli_location(stmt->location, "<stmt-return>");
-        codegen_stmt_return(stmt);
-        return;
-    }
-    case STMT_ASSIGN: {
-        appendli_location(stmt->location, "<stmt-assign>");
-        codegen_stmt_assign(stmt);
-        return;
-    }
-    case STMT_EXPR: {
-        appendli_location(stmt->location, "<stmt-expr>");
-        codegen_stmt_expr(stmt);
-        return;
-    }
-    }
+    static struct {
+        char const* kind_cstr;
+        void (*codegen_fn)(struct stmt const*, size_t);
+    } const table[] = {
+#define TABLE_ENTRY(kind, fn) [kind] = {#kind, fn}
+        TABLE_ENTRY(STMT_IF, codegen_stmt_if),
+        TABLE_ENTRY(STMT_FOR_RANGE, codegen_stmt_for_range),
+        TABLE_ENTRY(STMT_FOR_EXPR, codegen_stmt_for_expr),
+        TABLE_ENTRY(STMT_BREAK, codegen_stmt_break),
+        TABLE_ENTRY(STMT_CONTINUE, codegen_stmt_continue),
+        TABLE_ENTRY(STMT_DUMP, codegen_stmt_dump),
+        TABLE_ENTRY(STMT_RETURN, codegen_stmt_return),
+        TABLE_ENTRY(STMT_ASSIGN, codegen_stmt_assign),
+        TABLE_ENTRY(STMT_EXPR, codegen_stmt_expr),
+#undef TABLE_ENTRY
+    };
 
-    UNREACHABLE();
+    size_t const id = unique_id++;
+    char const* const cstr = table[stmt->kind].kind_cstr;
+    appendli_location(stmt->location, "%s (ID %zu)", cstr, id);
+    appendln("%s%zu_bgn:", LABEL_STMT, id);
+    table[stmt->kind].codegen_fn(stmt, id);
+    appendln("%s%zu_end:", LABEL_STMT, id);
 }
 
 static void
-codegen_stmt_if(struct stmt const* stmt)
+codegen_stmt_if(struct stmt const* stmt, size_t id)
 {
     assert(stmt != NULL);
     assert(stmt->kind == STMT_IF);
 
-    size_t const stmt_id = unique_id++;
     autil_sbuf(struct conditional const* const) const conditionals =
         stmt->data.if_.conditionals;
-    appendln(".l%zu_stmt_if_bgn:", stmt_id);
     for (size_t i = 0; i < autil_sbuf_count(conditionals); ++i) {
         bool const is_last = i == (autil_sbuf_count(conditionals) - 1);
 
         if (conditionals[i]->condition != NULL) {
-            appendln(".l%zu_stmt_if_%zu_condition:", stmt_id, i);
+            appendln("%s%zu_condition_%zu:", LABEL_STMT, id, i);
             assert(conditionals[i]->condition->type->kind == TYPE_BOOL);
             codegen_rvalue(conditionals[i]->condition);
             appendli("pop rax");
             appendli("mov rbx, 0x00");
             appendli("cmp al, bl");
             if (is_last) {
-                appendli("je .l%zu_stmt_if_end", stmt_id);
+                appendli("je %s%zu_end", LABEL_STMT, id);
             }
             else {
-                appendli("je .l%zu_stmt_if_%zu_condition", stmt_id, i + 1);
+                appendli("je %s%zu_condition_%zu", LABEL_STMT, id, i + 1);
             }
         }
         else {
-            appendln(".l%zu_stmt_if_%zu_condition:", stmt_id, i);
+            appendln("%s%zu_condition_%zu:", LABEL_STMT, id, i);
             appendli("; else condition (always true)");
         }
 
-        appendln(".l%zu_stmt_if_%zu_body:", stmt_id, i);
+        appendln("%s%zu_body_%zu:", LABEL_STMT, id, i);
         autil_sbuf(struct stmt const* const) const stmts =
             conditionals[i]->body->stmts;
         for (size_t i = 0; i < autil_sbuf_count(stmts); ++i) {
             codegen_stmt(stmts[i]);
         }
-        appendli("jmp .l%zu_stmt_if_end", stmt_id);
+        appendli("jmp %s%zu_end", LABEL_STMT, id);
     }
-    appendln(".l%zu_stmt_if_end:", stmt_id);
 }
 
 static void
-codegen_stmt_for_range(struct stmt const* stmt)
+codegen_stmt_for_range(struct stmt const* stmt, size_t id)
 {
     assert(stmt != NULL);
     assert(stmt->kind == STMT_FOR_RANGE);
@@ -923,17 +917,15 @@ codegen_stmt_for_range(struct stmt const* stmt)
     assert(stmt->data.for_range.end->type == context()->builtin.usize);
     assert(stmt->data.for_range.loop_variable->address->kind == ADDRESS_LOCAL);
 
-    size_t const stmt_id = unique_id++;
     size_t const save_current_loop_id = current_loop_id;
-    current_loop_id = stmt_id;
+    current_loop_id = id;
 
-    appendln(".l%zu_stmt_for_bgn:", stmt_id);
     push_address(stmt->data.for_range.loop_variable->address);
     codegen_rvalue(stmt->data.for_range.begin);
     appendli("pop rbx"); // begin
     appendli("pop rax"); // addr of loop variable
     appendli("mov [rax], rbx");
-    appendln(".l%zu_stmt_for_condition:", stmt_id);
+    appendln("%s%zu_condition:", LABEL_STMT, id);
     push_at_address(
         stmt->data.for_range.loop_variable->type->size,
         stmt->data.for_range.loop_variable->address);
@@ -941,74 +933,70 @@ codegen_stmt_for_range(struct stmt const* stmt)
     appendli("pop rbx"); // end
     appendli("pop rax"); // loop variable
     appendli("cmp rax, rbx");
-    appendli("je .l%zu_stmt_for_end", stmt_id);
-    appendln(".l%zu_stmt_for_body_bgn:", stmt_id);
+    appendli("je %s%zu_end", LABEL_STMT, id);
+    appendln("%s%zu_body_bgn:", LABEL_STMT, id);
     autil_sbuf(struct stmt const* const) const stmts =
         stmt->data.for_range.body->stmts;
     for (size_t i = 0; i < autil_sbuf_count(stmts); ++i) {
         codegen_stmt(stmts[i]);
     }
-    appendln(".l%zu_stmt_for_body_end:", stmt_id);
+    appendln("%s%zu_body_end:", LABEL_STMT, id);
     appendli(
         "inc qword [rbp + %d]",
         stmt->data.for_range.loop_variable->address->data.local.rbp_offset);
-    appendli("jmp .l%zu_stmt_for_condition", stmt_id);
-    appendln(".l%zu_stmt_for_end:", stmt_id);
+    appendli("jmp %s%zu_condition", LABEL_STMT, id);
 
     current_loop_id = save_current_loop_id;
 }
 
 static void
-codegen_stmt_for_expr(struct stmt const* stmt)
+codegen_stmt_for_expr(struct stmt const* stmt, size_t id)
 {
     assert(stmt != NULL);
     assert(stmt->kind == STMT_FOR_EXPR);
 
-    size_t const stmt_id = unique_id++;
     size_t const save_current_loop_id = current_loop_id;
-    current_loop_id = stmt_id;
+    current_loop_id = id;
 
-    appendln(".l%zu_stmt_for_bgn:", stmt_id);
-    appendln(".l%zu_stmt_for_condition:", stmt_id);
+    appendln("%s%zu_condition:", LABEL_STMT, id);
     assert(stmt->data.for_expr.expr->type->kind == TYPE_BOOL);
     codegen_rvalue(stmt->data.for_expr.expr);
     appendli("pop rax");
     appendli("mov rbx, 0x00");
     appendli("cmp al, bl");
-    appendli("je .l%zu_stmt_for_end", stmt_id);
-    appendln(".l%zu_stmt_for_body_bgn:", stmt_id);
+    appendli("je %s%zu_end", LABEL_STMT, id);
+    appendln("%s%zu_body_bgn:", LABEL_STMT, id);
     autil_sbuf(struct stmt const* const) const stmts =
         stmt->data.for_expr.body->stmts;
     for (size_t i = 0; i < autil_sbuf_count(stmts); ++i) {
         codegen_stmt(stmts[i]);
     }
-    appendln(".l%zu_stmt_for_body_end:", stmt_id);
-    appendli("jmp .l%zu_stmt_for_condition", stmt_id);
-    appendln(".l%zu_stmt_for_end:", stmt_id);
+    appendln("%s%zu_body_end:", LABEL_STMT, id);
+    appendli("jmp %s%zu_condition", LABEL_STMT, id);
 
     current_loop_id = save_current_loop_id;
 }
 
 static void
-codegen_stmt_break(struct stmt const* stmt)
+codegen_stmt_break(struct stmt const* stmt, size_t id)
 {
     assert(stmt != NULL);
     assert(stmt->kind == STMT_BREAK);
 
-    appendli("jmp .l%zu_stmt_for_end", current_loop_id);
+    appendli("jmp %s%zu_end", LABEL_STMT, current_loop_id);
 }
 
 static void
-codegen_stmt_continue(struct stmt const* stmt)
+codegen_stmt_continue(struct stmt const* stmt, size_t id)
 {
     assert(stmt != NULL);
     assert(stmt->kind == STMT_CONTINUE);
 
-    appendli("jmp .l%zu_stmt_for_body_end", current_loop_id);
+    appendli("jmp %s%zu_body_end", LABEL_STMT, current_loop_id);
 }
 
 static void
-codegen_stmt_dump(struct stmt const* stmt)
+codegen_stmt_dump(struct stmt const* stmt, size_t id)
 {
     assert(stmt != NULL);
     assert(stmt->kind == STMT_DUMP);
@@ -1021,7 +1009,7 @@ codegen_stmt_dump(struct stmt const* stmt)
 }
 
 static void
-codegen_stmt_return(struct stmt const* stmt)
+codegen_stmt_return(struct stmt const* stmt, size_t id)
 {
     assert(stmt != NULL);
     assert(stmt->kind == STMT_RETURN);
@@ -1040,7 +1028,7 @@ codegen_stmt_return(struct stmt const* stmt)
         copy_rsp_rbx_via_rcx(return_symbol->type->size);
     }
 
-    appendli("; EPILOGUE");
+    appendli("; STMT_RETURN EPILOGUE");
     // Restore stack pointer.
     appendli("mov rsp, rbp");
     // Restore previous frame pointer.
@@ -1050,7 +1038,7 @@ codegen_stmt_return(struct stmt const* stmt)
 }
 
 static void
-codegen_stmt_assign(struct stmt const* stmt)
+codegen_stmt_assign(struct stmt const* stmt, size_t id)
 {
     assert(stmt != NULL);
     assert(stmt->kind == STMT_ASSIGN);
@@ -1097,7 +1085,7 @@ codegen_stmt_assign(struct stmt const* stmt)
 }
 
 static void
-codegen_stmt_expr(struct stmt const* stmt)
+codegen_stmt_expr(struct stmt const* stmt, size_t id)
 {
     assert(stmt != NULL);
     assert(stmt->kind == STMT_EXPR);
@@ -1112,73 +1100,42 @@ codegen_rvalue(struct expr const* expr)
 {
     assert(expr != NULL);
 
-    switch (expr->kind) {
-    case EXPR_IDENTIFIER: {
-        codegen_rvalue_identifier(expr);
-        return;
-    }
-    case EXPR_BOOLEAN: {
-        codegen_rvalue_boolean(expr);
-        return;
-    }
-    case EXPR_INTEGER: {
-        codegen_rvalue_integer(expr);
-        return;
-    }
-    case EXPR_BYTES: {
-        codegen_rvalue_bytes(expr);
-        return;
-    }
-    case EXPR_LITERAL_ARRAY: {
-        codegen_rvalue_literal_array(expr);
-        return;
-    }
-    case EXPR_LITERAL_SLICE: {
-        codegen_rvalue_literal_slice(expr);
-        return;
-    }
-    case EXPR_CAST: {
-        codegen_rvalue_cast(expr);
-        return;
-    }
-    case EXPR_SYSCALL: {
-        codegen_rvalue_syscall(expr);
-        return;
-    }
-    case EXPR_CALL: {
-        codegen_rvalue_call(expr);
-        return;
-    }
-    case EXPR_INDEX: {
-        codegen_rvalue_index(expr);
-        return;
-    }
-    case EXPR_SLICE: {
-        codegen_rvalue_slice(expr);
-        return;
-    }
-    case EXPR_SIZEOF: {
-        codegen_rvalue_sizeof(expr);
-        return;
-    }
-    case EXPR_UNARY: {
-        codegen_rvalue_unary(expr);
-        return;
-    }
-    case EXPR_BINARY: {
-        codegen_rvalue_binary(expr);
-        return;
-    }
-    }
+    static struct {
+        char const* kind_cstr;
+        void (*codegen_fn)(struct expr const*, size_t);
+    } const table[] = {
+#define TABLE_ENTRY(kind, fn) [kind] = {#kind, fn}
+        TABLE_ENTRY(EXPR_IDENTIFIER, codegen_rvalue_identifier),
+        TABLE_ENTRY(EXPR_BOOLEAN, codegen_rvalue_boolean),
+        TABLE_ENTRY(EXPR_INTEGER, codegen_rvalue_integer),
+        TABLE_ENTRY(EXPR_BYTES, codegen_rvalue_bytes),
+        TABLE_ENTRY(EXPR_LITERAL_ARRAY, codegen_rvalue_literal_array),
+        TABLE_ENTRY(EXPR_LITERAL_SLICE, codegen_rvalue_literal_slice),
+        TABLE_ENTRY(EXPR_CAST, codegen_rvalue_cast),
+        TABLE_ENTRY(EXPR_SYSCALL, codegen_rvalue_syscall),
+        TABLE_ENTRY(EXPR_CALL, codegen_rvalue_call),
+        TABLE_ENTRY(EXPR_INDEX, codegen_rvalue_index),
+        TABLE_ENTRY(EXPR_SLICE, codegen_rvalue_slice),
+        TABLE_ENTRY(EXPR_SIZEOF, codegen_rvalue_sizeof),
+        TABLE_ENTRY(EXPR_UNARY, codegen_rvalue_unary),
+        TABLE_ENTRY(EXPR_BINARY, codegen_rvalue_binary),
+#undef TABLE_ENTRY
+    };
 
-    UNREACHABLE();
+    size_t const id = unique_id++;
+    char const* const cstr = table[expr->kind].kind_cstr;
+    appendli_location(expr->location, "%s (ID %zu, RVALUE)", cstr, id);
+    appendln("%s%zu_bgn:", LABEL_EXPR, id);
+    table[expr->kind].codegen_fn(expr, id);
+    appendln("%s%zu_end:", LABEL_EXPR, id);
 }
 
 static void
-codegen_rvalue_identifier(struct expr const* expr)
+codegen_rvalue_identifier(struct expr const* expr, size_t id)
 {
     assert(expr != NULL);
     assert(expr->kind == EXPR_IDENTIFIER);
+    (void)id;
 
     struct symbol const* const symbol = expr->data.identifier;
     switch (symbol->kind) {
@@ -1201,20 +1158,22 @@ codegen_rvalue_identifier(struct expr const* expr)
 }
 
 static void
-codegen_rvalue_boolean(struct expr const* expr)
+codegen_rvalue_boolean(struct expr const* expr, size_t id)
 {
     assert(expr != NULL);
     assert(expr->kind == EXPR_BOOLEAN);
+    (void)id;
 
     appendli("mov rax, %s", expr->data.boolean ? "0x01" : "0x00");
     appendli("push rax");
 }
 
 static void
-codegen_rvalue_integer(struct expr const* expr)
+codegen_rvalue_integer(struct expr const* expr, size_t id)
 {
     assert(expr != NULL);
     assert(expr->kind == EXPR_INTEGER);
+    (void)id;
 
     char* const cstr = autil_bigint_to_new_cstr(expr->data.integer, NULL);
 
@@ -1227,18 +1186,19 @@ codegen_rvalue_integer(struct expr const* expr)
 }
 
 static void
-codegen_rvalue_bytes(struct expr const* expr)
+codegen_rvalue_bytes(struct expr const* expr, size_t id)
 {
     assert(expr != NULL);
     assert(expr->kind == EXPR_BYTES);
     assert(expr->type->kind == TYPE_SLICE);
+    (void)id;
 
     appendli("push %zu", expr->data.bytes.count); // count
     push_address(expr->data.bytes.address); // pointer
 }
 
 static void
-codegen_rvalue_literal_array(struct expr const* expr)
+codegen_rvalue_literal_array(struct expr const* expr, size_t id)
 {
     assert(expr != NULL);
     assert(expr->kind == EXPR_LITERAL_ARRAY);
@@ -1286,34 +1246,34 @@ codegen_rvalue_literal_array(struct expr const* expr)
         size_t const completed = autil_sbuf_count(elements);
         // Number of elements remaining to be filled in with the ellipsis.
         size_t const remaining = count - autil_sbuf_count(elements);
-        size_t const id = unique_id++;
 
-        appendln(".l%zu_ellipsis_bgn:", id);
+        appendln("%s%zu_ellipsis_bgn:", LABEL_EXPR, id);
         codegen_rvalue(expr->data.literal_array.ellipsis);
         appendli("mov rbx, rsp");
         appendli("add rbx, %zu", ceil8zu(element_size)); // array start
         appendli("add rbx, %zu", element_size * completed); // array offset
         // rbx is now the destination register.
         appendli("mov rax, %zu", remaining); // rax := counter down to zero
-        appendln(".l%zu_ellipsis_condition:", id);
+        appendln("%s%zu_ellipsis_condition:", LABEL_EXPR, id);
         appendli("cmp rax, 0");
-        appendli("je .l%zu_ellipsis_pop", id);
+        appendli("je %s%zu_ellipsis_pop", LABEL_EXPR, id);
         copy_rsp_rbx_via_rcx(element_size);
         appendli("add rbx, %zu", element_size); // ptr = ptr + 1
         appendli("dec rax");
-        appendli("jmp .l%zu_ellipsis_condition", id);
-        appendln(".l%zu_ellipsis_pop:", id);
+        appendli("jmp %s%zu_ellipsis_condition", LABEL_EXPR, id);
+        appendln("%s%zu_ellipsis_pop:", LABEL_EXPR, id);
         pop(element_size);
-        appendln(".l%zu_ellipsis_end:", id);
+        appendln("%s%zu_ellipsis_end:", LABEL_EXPR, id);
     }
 }
 
 static void
-codegen_rvalue_literal_slice(struct expr const* expr)
+codegen_rvalue_literal_slice(struct expr const* expr, size_t id)
 {
     assert(expr != NULL);
     assert(expr->kind == EXPR_LITERAL_SLICE);
     assert(expr->type->kind == TYPE_SLICE);
+    (void)id;
 
     // +---------+
     // | count   |
@@ -1325,12 +1285,13 @@ codegen_rvalue_literal_slice(struct expr const* expr)
 }
 
 static void
-codegen_rvalue_cast(struct expr const* expr)
+codegen_rvalue_cast(struct expr const* expr, size_t id)
 {
     assert(expr != NULL);
     assert(expr->kind == EXPR_CAST);
     assert(expr->type->size >= 1u);
     assert(expr->type->size <= 8u);
+    (void)id;
 
     struct expr const* const from = expr->data.cast.expr;
     assert(from->type->size >= 1u);
@@ -1386,10 +1347,11 @@ codegen_rvalue_cast(struct expr const* expr)
 }
 
 static void
-codegen_rvalue_syscall(struct expr const* expr)
+codegen_rvalue_syscall(struct expr const* expr, size_t id)
 {
     assert(expr != NULL);
     assert(expr->kind == EXPR_SYSCALL);
+    (void)id;
 
     struct expr const* const* const arguments = expr->data.syscall.arguments;
     size_t const count = autil_sbuf_count(arguments);
@@ -1426,10 +1388,11 @@ codegen_rvalue_syscall(struct expr const* expr)
 }
 
 static void
-codegen_rvalue_call(struct expr const* expr)
+codegen_rvalue_call(struct expr const* expr, size_t id)
 {
     assert(expr != NULL);
     assert(expr->kind == EXPR_CALL);
+    (void)id;
 
     // Push space for return value.
     struct type const* function_type = expr->data.call.function->type;
@@ -1456,18 +1419,18 @@ codegen_rvalue_call(struct expr const* expr)
 }
 
 static void
-codegen_rvalue_index(struct expr const* expr)
+codegen_rvalue_index(struct expr const* expr, size_t id)
 {
     assert(expr != NULL);
     assert(expr->kind == EXPR_INDEX);
 
     if (expr->data.index.lhs->type->kind == TYPE_ARRAY) {
-        codegen_rvalue_index_lhs_array(expr);
+        codegen_rvalue_index_lhs_array(expr, id);
         return;
     }
 
     if (expr->data.index.lhs->type->kind == TYPE_SLICE) {
-        codegen_rvalue_index_lhs_slice(expr);
+        codegen_rvalue_index_lhs_slice(expr, id);
         return;
     }
 
@@ -1475,13 +1438,12 @@ codegen_rvalue_index(struct expr const* expr)
 }
 
 static void
-codegen_rvalue_index_lhs_array(struct expr const* expr)
+codegen_rvalue_index_lhs_array(struct expr const* expr, size_t id)
 {
     assert(expr != NULL);
     assert(expr->kind == EXPR_INDEX);
     assert(expr->data.index.lhs->type->kind == TYPE_ARRAY);
     assert(expr->data.index.idx->type->kind == TYPE_USIZE);
-    size_t const expr_id = unique_id++;
 
     struct type const* const lhs_type = expr->data.index.lhs->type;
     struct type const* const element_type = lhs_type->data.array.base;
@@ -1506,9 +1468,9 @@ codegen_rvalue_index_lhs_array(struct expr const* expr)
         appendli("pop rax"); // index
         appendli("mov rbx, %zu", lhs_type->data.array.count); // count
         appendli("cmp rax, rbx");
-        appendli("jb .l%zu_index_array_rvalue_calc", expr_id);
+        appendli("jb %s%zu_op", LABEL_EXPR, id);
         appendli("call __index_oob_handler");
-        appendln(".l%zu_index_array_rvalue_calc:", expr_id);
+        appendln("%s%zu_op:", LABEL_EXPR, id);
         appendli("mov rbx, %zu", element_type->size); // sizeof(element_type)
         appendli("mul rbx"); // index * sizeof(element_type)
         appendli("pop rbx"); // start
@@ -1527,9 +1489,9 @@ codegen_rvalue_index_lhs_array(struct expr const* expr)
     appendli("pop rax"); // index
     appendli("mov rbx, %zu", lhs_type->data.array.count); // count
     appendli("cmp rax, rbx");
-    appendli("jb .l%zu_index_array_rvalue_calc", expr_id);
+    appendli("jb %s%zu_op", LABEL_EXPR, id);
     appendli("call __index_oob_handler");
-    appendln(".l%zu_index_array_rvalue_calc:", expr_id);
+    appendln("%s%zu_op:", LABEL_EXPR, id);
     appendli("mov rbx, %zu", element_type->size); // sizeof(element_type)
     appendli("mul rbx"); // index * sizeof(element_type)
     appendli("add rax, rsp"); // start + index * sizeof(element_type)
@@ -1550,13 +1512,12 @@ codegen_rvalue_index_lhs_array(struct expr const* expr)
 }
 
 static void
-codegen_rvalue_index_lhs_slice(struct expr const* expr)
+codegen_rvalue_index_lhs_slice(struct expr const* expr, size_t id)
 {
     assert(expr != NULL);
     assert(expr->kind == EXPR_INDEX);
     assert(expr->data.index.lhs->type->kind == TYPE_SLICE);
     assert(expr->data.index.idx->type->kind == TYPE_USIZE);
-    size_t const expr_id = unique_id++;
 
     struct type const* const lhs_type = expr->data.index.lhs->type;
     struct type const* const element_type = lhs_type->data.slice.base;
@@ -1575,9 +1536,9 @@ codegen_rvalue_index_lhs_slice(struct expr const* expr)
     appendli("pop rax"); // index
     appendli("mov rbx, [rsp + 8]"); // slice count
     appendli("cmp rax, rbx");
-    appendli("jb .l%zu_slice_rvalue_calc", expr_id);
+    appendli("jb %s%zu_op", LABEL_EXPR, id);
     appendli("call __index_oob_handler");
-    appendln(".l%zu_slice_rvalue_calc:", expr_id);
+    appendln("%s%zu_op:", LABEL_EXPR, id);
     appendli("mov rbx, %zu", element_type->size); // sizeof(element_type)
     appendli("mul rbx"); // index * sizeof(element_type)
     appendli("pop rbx"); // start
@@ -1588,18 +1549,18 @@ codegen_rvalue_index_lhs_slice(struct expr const* expr)
 }
 
 static void
-codegen_rvalue_slice(struct expr const* expr)
+codegen_rvalue_slice(struct expr const* expr, size_t id)
 {
     assert(expr != NULL);
     assert(expr->kind == EXPR_SLICE);
 
     if (expr->data.slice.lhs->type->kind == TYPE_ARRAY) {
-        codegen_rvalue_slice_lhs_array(expr);
+        codegen_rvalue_slice_lhs_array(expr, id);
         return;
     }
 
     if (expr->data.slice.lhs->type->kind == TYPE_SLICE) {
-        codegen_rvalue_slice_lhs_slice(expr);
+        codegen_rvalue_slice_lhs_slice(expr, id);
         return;
     }
 
@@ -1607,7 +1568,7 @@ codegen_rvalue_slice(struct expr const* expr)
 }
 
 static void
-codegen_rvalue_slice_lhs_array(struct expr const* expr)
+codegen_rvalue_slice_lhs_array(struct expr const* expr, size_t id)
 {
     assert(expr != NULL);
     assert(expr->kind == EXPR_SLICE);
@@ -1615,7 +1576,6 @@ codegen_rvalue_slice_lhs_array(struct expr const* expr)
     assert(expr->data.slice.begin->type->kind == TYPE_USIZE);
     assert(expr->data.slice.end->type->kind == TYPE_USIZE);
     assert(expr_is_lvalue(expr->data.slice.lhs));
-    size_t const expr_id = unique_id++;
 
     struct type const* const lhs_type = expr->data.slice.lhs->type;
     struct type const* const element_type = lhs_type->data.array.base;
@@ -1627,20 +1587,20 @@ codegen_rvalue_slice_lhs_array(struct expr const* expr)
     appendli("mov rcx, %zu", lhs_type->data.array.count); // count
 
     appendli("cmp rax, rbx"); // cmp begin end
-    appendli("jb .l%zu_expr_slice_bgn_oob", expr_id); // jmp begin < end
+    appendli("jb %s%zu_oob_check_bgnidx", LABEL_EXPR, id); // jmp begin < end
     appendli("call __index_oob_handler");
 
-    appendli(".l%zu_expr_slice_bgn_oob:", expr_id);
+    appendli("%s%zu_oob_check_bgnidx:", LABEL_EXPR, id);
     appendli("cmp rax, rcx"); // cmp begin count
-    appendli("jb .l%zu_expr_slice_end_oob", expr_id); // jmp begin < count
+    appendli("jb %s%zu_oob_check_endidx", LABEL_EXPR, id); // jmp begin < count
     appendli("call __index_oob_handler");
 
-    appendli(".l%zu_expr_slice_end_oob:", expr_id);
+    appendli("%s%zu_oob_check_endidx:", LABEL_EXPR, id);
     appendli("cmp rbx, rcx"); // cmp end count
-    appendli("jbe .l%zu_expr_slice_calc", expr_id); // jmp end <= count
+    appendli("jbe %s%zu_op", LABEL_EXPR, id); // jmp end <= count
     appendli("call __index_oob_handler");
 
-    appendli(".l%zu_expr_slice_calc:", expr_id);
+    appendli("%s%zu_op:", LABEL_EXPR, id);
     appendli("sub rbx, rax"); // count = end - begin
     appendli("push rbx"); // push count
 
@@ -1658,14 +1618,13 @@ codegen_rvalue_slice_lhs_array(struct expr const* expr)
 }
 
 static void
-codegen_rvalue_slice_lhs_slice(struct expr const* expr)
+codegen_rvalue_slice_lhs_slice(struct expr const* expr, size_t id)
 {
     assert(expr != NULL);
     assert(expr->kind == EXPR_SLICE);
     assert(expr->data.slice.lhs->type->kind == TYPE_SLICE);
     assert(expr->data.slice.begin->type->kind == TYPE_USIZE);
     assert(expr->data.slice.end->type->kind == TYPE_USIZE);
-    size_t const expr_id = unique_id++;
 
     struct type const* const lhs_type = expr->data.slice.lhs->type;
     struct type const* const element_type = lhs_type->data.slice.base;
@@ -1679,20 +1638,20 @@ codegen_rvalue_slice_lhs_slice(struct expr const* expr)
     appendli("pop rcx"); // count
 
     appendli("cmp rax, rbx"); // cmp begin end
-    appendli("jb .l%zu_expr_slice_bgn_oob", expr_id); // jmp begin < end
+    appendli("jb %s%zu_oob_check_bgnidx", LABEL_EXPR, id); // jmp begin < end
     appendli("call __index_oob_handler");
 
-    appendli(".l%zu_expr_slice_bgn_oob:", expr_id);
+    appendli("%s%zu_oob_check_bgnidx:", LABEL_EXPR, id);
     appendli("cmp rax, rcx"); // cmp begin count
-    appendli("jb .l%zu_expr_slice_end_oob", expr_id); // jmp begin < count
+    appendli("jb %s%zu_oob_check_endidx", LABEL_EXPR, id); // jmp begin < count
     appendli("call __index_oob_handler");
 
-    appendli(".l%zu_expr_slice_end_oob:", expr_id);
+    appendli("%s%zu_oob_check_endidx:", LABEL_EXPR, id);
     appendli("cmp rbx, rcx"); // cmp end count
-    appendli("jbe .l%zu_expr_slice_calc", expr_id); // jmp end <= count
+    appendli("jbe %s%zu_op", LABEL_EXPR, id); // jmp end <= count
     appendli("call __index_oob_handler");
 
-    appendli(".l%zu_expr_slice_calc:", expr_id);
+    appendli("%s%zu_op:", LABEL_EXPR, id);
     appendli("sub rbx, rax"); // count = end - begin
     appendli("push rbx"); // push count
 
@@ -1703,10 +1662,11 @@ codegen_rvalue_slice_lhs_slice(struct expr const* expr)
 }
 
 static void
-codegen_rvalue_sizeof(struct expr const* expr)
+codegen_rvalue_sizeof(struct expr const* expr, size_t id)
 {
     assert(expr != NULL);
     assert(expr->kind == EXPR_SIZEOF);
+    (void)id;
 
     assert(expr->type->kind == TYPE_USIZE);
     appendli("mov rax, %zu", expr->data.sizeof_.rhs->size);
@@ -1714,7 +1674,7 @@ codegen_rvalue_sizeof(struct expr const* expr)
 }
 
 static void
-codegen_rvalue_unary(struct expr const* expr)
+codegen_rvalue_unary(struct expr const* expr, size_t id)
 {
     assert(expr != NULL);
     assert(expr->kind == EXPR_UNARY);
@@ -1740,14 +1700,12 @@ codegen_rvalue_unary(struct expr const* expr)
     }
     case UOP_NEG: {
         struct expr const* const rhs = expr->data.unary.rhs;
-        size_t const expr_id = unique_id++;
 
         assert(rhs->type->size <= 8u);
         codegen_rvalue(expr->data.unary.rhs);
 
         char const* rhs_reg = reg_a(expr->data.unary.rhs->type->size);
         appendli("pop rax");
-        appendln(".l%zu_expr_unary_neg_bgn:", expr_id);
         if (type_is_sinteger(rhs->type)) {
             char* const min_cstr =
                 autil_bigint_to_new_cstr(rhs->type->data.integer.min, NULL);
@@ -1755,13 +1713,12 @@ codegen_rvalue_unary(struct expr const* expr)
             autil_xalloc(min_cstr, AUTIL_XALLOC_FREE);
             appendli(
                 "cmp %s, %s", rhs_reg, reg_b(expr->data.unary.rhs->type->size));
-            appendli("jne .l%zu_expr_unary_neg_op", expr_id);
+            appendli("jne %s%zu_op", LABEL_EXPR, id);
             appendli("call __integer_oor_handler");
         }
-        appendln(".l%zu_expr_unary_neg_op:", expr_id);
+        appendln("%s%zu_op:", LABEL_EXPR, id);
         appendli("neg rax");
         appendli("push rax");
-        appendln(".l%zu_expr_unary_neg_end:", expr_id);
         return;
     }
     case UOP_BITNOT: {
@@ -1831,7 +1788,7 @@ codegen_rvalue_unary(struct expr const* expr)
 }
 
 static void
-codegen_rvalue_binary(struct expr const* expr)
+codegen_rvalue_binary(struct expr const* expr, size_t id)
 {
     assert(expr != NULL);
     assert(expr->kind == EXPR_BINARY);
@@ -1842,36 +1799,32 @@ codegen_rvalue_binary(struct expr const* expr)
         assert(expr->data.binary.rhs->type->kind == TYPE_BOOL);
         assert(expr->data.binary.lhs->type->size == 1u);
         assert(expr->data.binary.rhs->type->size == 1u);
-        size_t const id = unique_id++;
 
         char const* lhs_reg = reg_a(expr->data.binary.lhs->type->size);
         char const* rhs_reg = reg_b(expr->data.binary.rhs->type->size);
-        // TODO: Remove redundant jumps.
-        appendln(".l%zu_binary_or_lhs:", id);
+        appendln("%s%zu_lhs:", LABEL_EXPR, id);
         codegen_rvalue(expr->data.binary.lhs);
         appendli("pop rax");
         appendli("mov rbx, 0x00");
         appendli("cmp %s, %s", lhs_reg, rhs_reg);
-        appendli("jne .l%zu_binary_or_true", id);
-        appendli("jmp .l%zu_binary_or_rhs", id);
+        appendli("jne %s%zu_true", LABEL_EXPR, id);
+        appendli("jmp %s%zu_rhs", LABEL_EXPR, id);
 
-        appendln(".l%zu_binary_or_rhs:", id);
+        appendln("%s%zu_rhs:", LABEL_EXPR, id);
         codegen_rvalue(expr->data.binary.rhs);
         appendli("pop rax");
         appendli("mov rbx, 0x00");
         appendli("cmp %s, %s", lhs_reg, rhs_reg);
-        appendli("jne .l%zu_binary_or_true", id);
-        appendli("jmp .l%zu_binary_or_false", id);
+        appendli("jne %s%zu_true", LABEL_EXPR, id);
+        appendli("jmp %s%zu_false", LABEL_EXPR, id);
 
-        appendln(".l%zu_binary_or_true:", id);
+        appendln("%s%zu_true:", LABEL_EXPR, id);
         appendli("push 0x01");
-        appendli("jmp .l%zu_binary_or_end", id);
+        appendli("jmp %s%zu_end", LABEL_EXPR, id);
 
-        appendln(".l%zu_binary_or_false:", id);
+        appendln("%s%zu_false:", LABEL_EXPR, id);
         appendli("push 0x00");
-        appendli("jmp .l%zu_binary_or_end", id);
-
-        appendln(".l%zu_binary_or_end:", id);
+        appendli("jmp %s%zu_end", LABEL_EXPR, id);
         return;
     }
     case BOP_AND: {
@@ -1879,36 +1832,32 @@ codegen_rvalue_binary(struct expr const* expr)
         assert(expr->data.binary.rhs->type->kind == TYPE_BOOL);
         assert(expr->data.binary.lhs->type->size == 1u);
         assert(expr->data.binary.rhs->type->size == 1u);
-        size_t const id = unique_id++;
 
         char const* lhs_reg = reg_a(expr->data.binary.lhs->type->size);
         char const* rhs_reg = reg_b(expr->data.binary.rhs->type->size);
-        // TODO: Remove redundant jumps.
-        appendln(".l%zu_binary_and_lhs:", id);
+        appendln("%s%zu_lhs:", LABEL_EXPR, id);
         codegen_rvalue(expr->data.binary.lhs);
         appendli("pop rax");
         appendli("mov rbx, 0x00");
         appendli("cmp %s, %s", lhs_reg, rhs_reg);
-        appendli("jne .l%zu_binary_and_rhs", id);
-        appendli("jmp .l%zu_binary_and_false", id);
+        appendli("jne %s%zu_rhs", LABEL_EXPR, id);
+        appendli("jmp %s%zu_false", LABEL_EXPR, id);
 
-        appendln(".l%zu_binary_and_rhs:", id);
+        appendln("%s%zu_rhs:", LABEL_EXPR, id);
         codegen_rvalue(expr->data.binary.rhs);
         appendli("pop rax");
         appendli("mov rbx, 0x00");
         appendli("cmp %s, %s", lhs_reg, rhs_reg);
-        appendli("jne .l%zu_binary_and_true", id);
-        appendli("jmp .l%zu_binary_and_false", id);
+        appendli("jne %s%zu_true", LABEL_EXPR, id);
+        appendli("jmp %s%zu_false", LABEL_EXPR, id);
 
-        appendln(".l%zu_binary_and_true:", id);
+        appendln("%s%zu_true:", LABEL_EXPR, id);
         appendli("push 0x01");
-        appendli("jmp .l%zu_binary_and_end", id);
+        appendli("jmp %s%zu_end", LABEL_EXPR, id);
 
-        appendln(".l%zu_binary_and_false:", id);
+        appendln("%s%zu_false:", LABEL_EXPR, id);
         appendli("push 0x00");
-        appendli("jmp .l%zu_binary_and_end", id);
-
-        appendln(".l%zu_binary_and_end:", id);
+        appendli("jmp %s%zu_end", LABEL_EXPR, id);
         return;
     }
     case BOP_EQ: {
@@ -2050,23 +1999,20 @@ codegen_rvalue_binary(struct expr const* expr)
         assert(expr->data.binary.rhs->type->size <= 8u);
         assert(expr->data.binary.lhs->type == expr->data.binary.rhs->type);
         struct type const* const xhs_type = expr->data.binary.lhs->type;
-        size_t const expr_id = unique_id++;
 
         char const* const lhs_reg = reg_a(xhs_type->size);
         char const* const rhs_reg = reg_b(xhs_type->size);
         char const* const jmp_not_overflow =
             type_is_sinteger(xhs_type) ? "jno" : "jnc";
 
-        appendln(".l%zu_expr_binary_add_bgn:", expr_id);
         codegen_rvalue(expr->data.binary.lhs);
         codegen_rvalue(expr->data.binary.rhs);
         appendli("pop rbx");
         appendli("pop rax");
         appendli("add %s, %s", lhs_reg, rhs_reg);
         appendli("push rax");
-        appendli("%s .l%zu_expr_binary_add_end", jmp_not_overflow, expr_id);
+        appendli("%s %s%zu_end", jmp_not_overflow, LABEL_EXPR, id);
         appendli("call __integer_oor_handler");
-        appendln(".l%zu_expr_binary_add_end:", expr_id);
         return;
     }
     case BOP_SUB: {
@@ -2076,23 +2022,20 @@ codegen_rvalue_binary(struct expr const* expr)
         assert(expr->data.binary.rhs->type->size <= 8u);
         assert(expr->data.binary.lhs->type == expr->data.binary.rhs->type);
         struct type const* const xhs_type = expr->data.binary.lhs->type;
-        size_t const expr_id = unique_id++;
 
         char const* const lhs_reg = reg_a(xhs_type->size);
         char const* const rhs_reg = reg_b(xhs_type->size);
         char const* const jmp_not_overflow =
             type_is_sinteger(xhs_type) ? "jno" : "jnc";
 
-        appendln(".l%zu_expr_binary_add_bgn:", expr_id);
         codegen_rvalue(expr->data.binary.lhs);
         codegen_rvalue(expr->data.binary.rhs);
         appendli("pop rbx");
         appendli("pop rax");
         appendli("sub %s, %s", lhs_reg, rhs_reg);
         appendli("push rax");
-        appendli("%s .l%zu_expr_binary_add_end", jmp_not_overflow, expr_id);
+        appendli("%s %s%zu_end", jmp_not_overflow, LABEL_EXPR, id);
         appendli("call __integer_oor_handler");
-        appendln(".l%zu_expr_binary_add_end:", expr_id);
         return;
     }
     case BOP_MUL: {
@@ -2102,21 +2045,18 @@ codegen_rvalue_binary(struct expr const* expr)
         assert(expr->data.binary.rhs->type->size <= 8u);
         assert(expr->data.binary.lhs->type == expr->data.binary.rhs->type);
         struct type const* const xhs_type = expr->data.binary.lhs->type;
-        size_t const expr_id = unique_id++;
 
         char const* const rhs_reg = reg_b(xhs_type->size);
         char const* const mul = type_is_sinteger(xhs_type) ? "imul" : "mul";
 
-        appendln(".l%zu_expr_binary_mul_bgn:", expr_id);
         codegen_rvalue(expr->data.binary.lhs);
         codegen_rvalue(expr->data.binary.rhs);
         appendli("pop rbx");
         appendli("pop rax");
         appendli("%s %s", mul, rhs_reg);
         appendli("push rax");
-        appendli("jno .l%zu_expr_binary_mul_end", expr_id);
+        appendli("jno %s%zu_end", LABEL_EXPR, id);
         appendli("call __integer_oor_handler");
-        appendln(".l%zu_expr_binary_mul_end:", expr_id);
         return;
     }
     case BOP_DIV: {
@@ -2126,12 +2066,10 @@ codegen_rvalue_binary(struct expr const* expr)
         assert(expr->data.binary.rhs->type->size <= 8u);
         assert(expr->data.binary.lhs->type == expr->data.binary.rhs->type);
         struct type const* const xhs_type = expr->data.binary.lhs->type;
-        size_t const expr_id = unique_id++;
 
         char const* const rhs_reg = reg_b(xhs_type->size);
         char const* const div = type_is_sinteger(xhs_type) ? "idiv" : "div";
 
-        appendln(".l%zu_expr_binary_div_bgn:", expr_id);
         codegen_rvalue(expr->data.binary.lhs);
         codegen_rvalue(expr->data.binary.rhs);
         appendli("pop rbx"); // rhs
@@ -2141,12 +2079,11 @@ codegen_rvalue_binary(struct expr const* expr)
             "cmp %s, %s",
             rhs_reg,
             reg_d(xhs_type->size)); // divide-by-zero check
-        appendli("jne .l%zu_expr_binary_div_op", expr_id);
+        appendli("jne %s%zu_op", LABEL_EXPR, id);
         appendli("call __integer_divz_handler");
-        appendli(".l%zu_expr_binary_div_op:", expr_id);
+        appendli("%s%zu_op:", LABEL_EXPR, id);
         appendli("%s %s", div, rhs_reg);
         appendli("push rax");
-        appendln(".l%zu_expr_binary_div_end:", expr_id);
         return;
     }
     case BOP_BITOR: {
@@ -2206,51 +2143,50 @@ static void
 codegen_lvalue(struct expr const* expr)
 {
     assert(expr != NULL);
+    assert(expr_is_lvalue(expr));
 
-    switch (expr->kind) {
-    case EXPR_IDENTIFIER: {
-        push_address(expr->data.identifier->address);
-        return;
-    }
-    case EXPR_INDEX: {
-        codegen_lvalue_index(expr);
-        return;
-    }
-    case EXPR_UNARY: {
-        codegen_lvalue_unary(expr);
-        return;
-    }
-    case EXPR_BOOLEAN: /* fallthrough */
-    case EXPR_INTEGER: /* fallthrough */
-    case EXPR_BYTES: /* fallthrough */
-    case EXPR_LITERAL_ARRAY: /* fallthrough */
-    case EXPR_LITERAL_SLICE: /* fallthrough */
-    case EXPR_CAST: /* fallthrough */
-    case EXPR_SYSCALL: /* fallthrough */
-    case EXPR_CALL: /* fallthrough */
-    case EXPR_SLICE: /* fallthrough */
-    case EXPR_SIZEOF: /* fallthrough */
-    case EXPR_BINARY: {
-        assert(!expr_is_lvalue(expr));
-        UNREACHABLE();
-    }
-    }
+    static struct {
+        char const* kind_cstr;
+        void (*codegen_fn)(struct expr const*, size_t);
+    } const table[] = {
+#define TABLE_ENTRY(kind, fn) [kind] = {#kind, fn}
+        TABLE_ENTRY(EXPR_IDENTIFIER, codegen_lvalue_identifier),
+        TABLE_ENTRY(EXPR_INDEX, codegen_lvalue_index),
+        TABLE_ENTRY(EXPR_UNARY, codegen_lvalue_unary),
+#undef TABLE_ENTRY
+    };
 
-    UNREACHABLE();
+    size_t const id = unique_id++;
+    char const* const cstr = table[expr->kind].kind_cstr;
+    appendli_location(expr->location, "%s (ID %zu, LVALUE)", cstr, id);
+    appendln("%s%zu_bgn:", LABEL_EXPR, id);
+    table[expr->kind].codegen_fn(expr, id);
+    appendln("%s%zu_end:", LABEL_EXPR, id);
 }
+
 static void
-codegen_lvalue_index(struct expr const* expr)
+codegen_lvalue_identifier(struct expr const* expr, size_t id)
+{
+    assert(expr != NULL);
+    assert(expr->kind == EXPR_IDENTIFIER);
+    (void)id;
+
+    push_address(expr->data.identifier->address);
+}
+
+static void
+codegen_lvalue_index(struct expr const* expr, size_t id)
 {
     assert(expr != NULL);
     assert(expr->kind == EXPR_INDEX);
 
     if (expr->data.index.lhs->type->kind == TYPE_ARRAY) {
-        codegen_lvalue_index_lhs_array(expr);
+        codegen_lvalue_index_lhs_array(expr, id);
         return;
     }
 
     if (expr->data.index.lhs->type->kind == TYPE_SLICE) {
-        codegen_lvalue_index_lhs_slice(expr);
+        codegen_lvalue_index_lhs_slice(expr, id);
         return;
     }
 
@@ -2258,7 +2194,7 @@ codegen_lvalue_index(struct expr const* expr)
 }
 
 static void
-codegen_lvalue_index_lhs_array(struct expr const* expr)
+codegen_lvalue_index_lhs_array(struct expr const* expr, size_t id)
 {
     assert(expr != NULL);
     assert(expr->kind == EXPR_INDEX);
@@ -2272,15 +2208,14 @@ codegen_lvalue_index_lhs_array(struct expr const* expr)
         return;
     }
 
-    size_t const expr_id = unique_id++;
     codegen_lvalue(expr->data.index.lhs);
     codegen_rvalue(expr->data.index.idx);
     appendli("pop rax"); // index
     appendli("mov rbx, %zu", lhs_type->data.array.count); // count
     appendli("cmp rax, rbx");
-    appendli("jb .l%zu_index_array_lvalue_calc", expr_id);
+    appendli("jb %s%zu_op", LABEL_EXPR, id);
     appendli("call __index_oob_handler");
-    appendln(".l%zu_index_array_lvalue_calc:", expr_id);
+    appendln("%s%zu_op:", LABEL_EXPR, id);
     appendli("mov rbx, %zu", element_type->size); // sizeof(element_type)
     appendli("mul rbx"); // index * sizeof(element_type)
     appendli("pop rbx"); // start
@@ -2289,7 +2224,7 @@ codegen_lvalue_index_lhs_array(struct expr const* expr)
 }
 
 static void
-codegen_lvalue_index_lhs_slice(struct expr const* expr)
+codegen_lvalue_index_lhs_slice(struct expr const* expr, size_t id)
 {
     assert(expr != NULL);
     assert(expr->kind == EXPR_INDEX);
@@ -2303,15 +2238,14 @@ codegen_lvalue_index_lhs_slice(struct expr const* expr)
         return;
     }
 
-    size_t const expr_id = unique_id++;
     codegen_rvalue(expr->data.index.lhs);
     codegen_rvalue(expr->data.index.idx);
     appendli("pop rax"); // index
     appendli("mov rbx, [rsp + 8]"); // slice count
     appendli("cmp rax, rbx");
-    appendli("jb .l%zu_slice_lvalue_calc", expr_id);
+    appendli("jb %s%zu_op", LABEL_EXPR, id);
     appendli("call __index_oob_handler");
-    appendln(".l%zu_slice_lvalue_calc:", expr_id);
+    appendln("%s%zu_op:", LABEL_EXPR, id);
     appendli("mov rbx, %zu", element_type->size); // sizeof(element_type)
     appendli("mul rbx"); // index * sizeof(element_type)
     appendli("pop rbx"); // start
@@ -2321,9 +2255,11 @@ codegen_lvalue_index_lhs_slice(struct expr const* expr)
 }
 
 static void
-codegen_lvalue_unary(struct expr const* expr)
+codegen_lvalue_unary(struct expr const* expr, size_t id)
 {
     assert(expr != NULL);
+    assert(expr_is_lvalue(expr));
+    (void)id;
 
     switch (expr->data.unary.op) {
     case UOP_DEREFERENCE: {
@@ -2337,7 +2273,6 @@ codegen_lvalue_unary(struct expr const* expr)
     case UOP_BITNOT: /* fallthrough */
     case UOP_ADDRESSOF: /* fallthrough */
     case UOP_COUNTOF: {
-        assert(!expr_is_lvalue(expr));
         UNREACHABLE();
     }
     }
