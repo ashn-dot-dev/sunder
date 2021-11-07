@@ -511,8 +511,8 @@ struct cst_expr {
         CST_EXPR_BOOLEAN,
         CST_EXPR_INTEGER,
         CST_EXPR_BYTES,
-        CST_EXPR_LITERAL_ARRAY,
-        CST_EXPR_LITERAL_SLICE,
+        CST_EXPR_ARRAY,
+        CST_EXPR_SLICE,
         CST_EXPR_CAST,
         CST_EXPR_GROUPED,
         // Postfix Expressions
@@ -538,12 +538,12 @@ struct cst_expr {
             struct cst_typespec const* typespec;
             autil_sbuf(struct cst_expr const* const) elements;
             struct cst_expr const* ellipsis; // optional
-        } literal_array;
+        } array;
         struct {
             struct cst_typespec const* typespec;
             struct cst_expr const* pointer;
             struct cst_expr const* count;
-        } literal_slice;
+        } slice;
         struct {
             struct cst_typespec const* typespec;
             struct cst_expr const* expr;
@@ -594,13 +594,13 @@ struct cst_expr*
 cst_expr_new_bytes(
     struct source_location const* location, struct autil_string const* bytes);
 struct cst_expr*
-cst_expr_new_literal_array(
+cst_expr_new_array(
     struct source_location const* location,
     struct cst_typespec const* typespec,
     struct cst_expr const* const* elements,
     struct cst_expr const* ellipsis);
 struct cst_expr*
-cst_expr_new_literal_slice(
+cst_expr_new_slice(
     struct source_location const* location,
     struct cst_typespec const* typespec,
     struct cst_expr const* pointer,
@@ -1089,8 +1089,8 @@ struct expr {
         EXPR_BOOLEAN,
         EXPR_INTEGER,
         EXPR_BYTES,
-        EXPR_LITERAL_ARRAY,
-        EXPR_LITERAL_SLICE,
+        EXPR_ARRAY,
+        EXPR_SLICE,
         EXPR_CAST,
         EXPR_SYSCALL,
         EXPR_CALL,
@@ -1111,11 +1111,11 @@ struct expr {
         struct {
             autil_sbuf(struct expr const* const) elements;
             struct expr const* ellipsis; // optional
-        } literal_array;
+        } array;
         struct {
             struct expr const* pointer;
             struct expr const* count;
-        } literal_slice;
+        } slice;
         struct {
             struct expr const* expr;
         } cast;
@@ -1191,13 +1191,13 @@ expr_new_bytes(
     struct address const* address,
     size_t count);
 struct expr*
-expr_new_literal_array(
+expr_new_array(
     struct source_location const* location,
     struct type const* type,
     struct expr const* const* elements,
     struct expr const* ellipsis);
 struct expr*
-expr_new_literal_slice(
+expr_new_slice(
     struct source_location const* location,
     struct type const* type,
     struct expr const* pointer,

@@ -341,7 +341,7 @@ cst_expr_new_bytes(
 }
 
 struct cst_expr*
-cst_expr_new_literal_array(
+cst_expr_new_array(
     struct source_location const* location,
     struct cst_typespec const* typespec,
     struct cst_expr const* const* elements,
@@ -351,15 +351,15 @@ cst_expr_new_literal_array(
     assert(typespec != NULL);
 
     struct cst_expr* const self =
-        cst_expr_new(location, CST_EXPR_LITERAL_ARRAY);
-    self->data.literal_array.typespec = typespec;
-    self->data.literal_array.elements = elements;
-    self->data.literal_array.ellipsis = ellipsis;
+        cst_expr_new(location, CST_EXPR_ARRAY);
+    self->data.array.typespec = typespec;
+    self->data.array.elements = elements;
+    self->data.array.ellipsis = ellipsis;
     return self;
 }
 
 struct cst_expr*
-cst_expr_new_literal_slice(
+cst_expr_new_slice(
     struct source_location const* location,
     struct cst_typespec const* typespec,
     struct cst_expr const* pointer,
@@ -371,10 +371,10 @@ cst_expr_new_literal_slice(
     assert(count != NULL);
 
     struct cst_expr* const self =
-        cst_expr_new(location, CST_EXPR_LITERAL_SLICE);
-    self->data.literal_slice.typespec = typespec;
-    self->data.literal_slice.pointer = pointer;
-    self->data.literal_slice.count = count;
+        cst_expr_new(location, CST_EXPR_SLICE);
+    self->data.slice.typespec = typespec;
+    self->data.slice.pointer = pointer;
+    self->data.slice.count = count;
     return self;
 }
 

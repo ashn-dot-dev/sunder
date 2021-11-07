@@ -226,20 +226,20 @@ order_expr(struct orderer* orderer, struct cst_expr const* expr)
     case CST_EXPR_BYTES: {
         return;
     }
-    case CST_EXPR_LITERAL_ARRAY: {
+    case CST_EXPR_ARRAY: {
         autil_sbuf(struct cst_expr const* const) const elements =
-            expr->data.literal_array.elements;
+            expr->data.array.elements;
         for (size_t i = 0; i < autil_sbuf_count(elements); ++i) {
             order_expr(orderer, elements[i]);
         }
-        if (expr->data.literal_array.ellipsis != NULL) {
-            order_expr(orderer, expr->data.literal_array.ellipsis);
+        if (expr->data.array.ellipsis != NULL) {
+            order_expr(orderer, expr->data.array.ellipsis);
         }
         return;
     }
-    case CST_EXPR_LITERAL_SLICE: {
-        order_expr(orderer, expr->data.literal_slice.pointer);
-        order_expr(orderer, expr->data.literal_slice.count);
+    case CST_EXPR_SLICE: {
+        order_expr(orderer, expr->data.slice.pointer);
+        order_expr(orderer, expr->data.slice.count);
         return;
     }
     case CST_EXPR_CAST: {

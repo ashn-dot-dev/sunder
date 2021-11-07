@@ -156,10 +156,10 @@ resolve_expr_integer(struct resolver* resolver, struct cst_expr const* expr);
 static struct expr const*
 resolve_expr_bytes(struct resolver* resolver, struct cst_expr const* expr);
 static struct expr const*
-resolve_expr_literal_array(
+resolve_expr_array(
     struct resolver* resolver, struct cst_expr const* expr);
 static struct expr const*
-resolve_expr_literal_slice(
+resolve_expr_slice(
     struct resolver* resolver, struct cst_expr const* expr);
 static struct expr const*
 resolve_expr_cast(struct resolver* resolver, struct cst_expr const* expr);
@@ -1343,11 +1343,11 @@ resolve_expr(struct resolver* resolver, struct cst_expr const* expr)
     case CST_EXPR_BYTES: {
         return resolve_expr_bytes(resolver, expr);
     }
-    case CST_EXPR_LITERAL_ARRAY: {
-        return resolve_expr_literal_array(resolver, expr);
+    case CST_EXPR_ARRAY: {
+        return resolve_expr_array(resolver, expr);
     }
-    case CST_EXPR_LITERAL_SLICE: {
-        return resolve_expr_literal_slice(resolver, expr);
+    case CST_EXPR_SLICE: {
+        return resolve_expr_slice(resolver, expr);
     }
     case CST_EXPR_CAST: {
         return resolve_expr_cast(resolver, expr);
@@ -1607,24 +1607,24 @@ resolve_expr_bytes(struct resolver* resolver, struct cst_expr const* expr)
 }
 
 static struct expr const*
-resolve_expr_literal_array(
+resolve_expr_array(
     struct resolver* resolver, struct cst_expr const* expr)
 {
     assert(resolver != NULL);
     assert(expr != NULL);
-    assert(expr->kind == CST_EXPR_LITERAL_ARRAY);
+    assert(expr->kind == CST_EXPR_ARRAY);
 
     struct type const* const type =
-        resolve_typespec(resolver, expr->data.literal_array.typespec);
+        resolve_typespec(resolver, expr->data.array.typespec);
     if (type->kind != TYPE_ARRAY) {
         fatal(
-            expr->data.literal_array.typespec->location,
+            expr->data.array.typespec->location,
             "expected array type (received `%s`)",
             type->name);
     }
 
     autil_sbuf(struct cst_expr const* const) elements =
-        expr->data.literal_array.elements;
+        expr->data.array.elements;
     autil_sbuf(struct expr const*) resolved_elements = NULL;
     for (size_t i = 0; i < autil_sbuf_count(elements); ++i) {
         struct expr const* resolved_element =
@@ -1642,9 +1642,9 @@ resolve_expr_literal_array(
     autil_sbuf_freeze(resolved_elements, context()->freezer);
 
     struct expr const* resolved_ellipsis = NULL;
-    if (expr->data.literal_array.ellipsis != NULL) {
+    if (expr->data.array.ellipsis != NULL) {
         resolved_ellipsis =
-            resolve_expr(resolver, expr->data.literal_array.ellipsis);
+            resolve_expr(resolver, expr->data.array.ellipsis);
         if (resolved_ellipsis->type->kind == TYPE_UNSIZED_INTEGER) {
             resolved_ellipsis = convert_unsized_integer(
                 type->data.array.base, resolved_ellipsis);
@@ -1665,7 +1665,7 @@ resolve_expr_literal_array(
             type->data.array.count);
     }
 
-    struct expr* const resolved = expr_new_literal_array(
+    struct expr* const resolved = expr_new_array(
         expr->location, type, resolved_elements, resolved_ellipsis);
 
     autil_freezer_register(context()->freezer, resolved);
@@ -1673,24 +1673,24 @@ resolve_expr_literal_array(
 }
 
 static struct expr const*
-resolve_expr_literal_slice(
+resolve_expr_slice(
     struct resolver* resolver, struct cst_expr const* expr)
 {
     assert(resolver != NULL);
     assert(expr != NULL);
-    assert(expr->kind == CST_EXPR_LITERAL_SLICE);
+    assert(expr->kind == CST_EXPR_SLICE);
 
     struct type const* const type =
-        resolve_typespec(resolver, expr->data.literal_slice.typespec);
+        resolve_typespec(resolver, expr->data.slice.typespec);
     if (type->kind != TYPE_SLICE) {
         fatal(
-            expr->data.literal_slice.typespec->location,
+            expr->data.slice.typespec->location,
             "expected slice type (received `%s`)",
             type->name);
     }
 
     struct expr const* const pointer =
-        resolve_expr(resolver, expr->data.literal_slice.pointer);
+        resolve_expr(resolver, expr->data.slice.pointer);
     if (pointer->type->kind != TYPE_POINTER) {
         fatal(
             pointer->location,
@@ -1703,7 +1703,7 @@ resolve_expr_literal_slice(
         pointer->location, pointer->type, slice_pointer_type);
 
     struct expr const* count =
-        resolve_expr(resolver, expr->data.literal_slice.count);
+        resolve_expr(resolver, expr->data.slice.count);
     if (count->type->kind == TYPE_UNSIZED_INTEGER) {
         count = convert_unsized_integer(context()->builtin.usize, count);
     }
@@ -1711,7 +1711,7 @@ resolve_expr_literal_slice(
         count->location, count->type, context()->builtin.usize);
 
     struct expr* const resolved =
-        expr_new_literal_slice(expr->location, type, pointer, count);
+        expr_new_slice(expr->location, type, pointer, count);
 
     autil_freezer_register(context()->freezer, resolved);
     return resolved;

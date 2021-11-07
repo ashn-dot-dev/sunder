@@ -53,8 +53,8 @@
          | <boolean>
          | <integer>
          | <expr-bytes>
-         | <expr-literal-array>
-         | <expr-literal-slice>
+         | <expr-array>
+         | <expr-slice>
          | <expr-cast>
          | <expr-grouped>
          | <expr-syscall>
@@ -67,11 +67,11 @@
 
 <expr-bytes> ::= <literal-bytes>
 
-<expr-literal-array> ::= "(" ":" <typespec> ")" "[" "]"
-                       | "(" ":" <typespec> ")" "[" <expr> "..." "]"
-                       | "(" ":" <typespec> ")" "[" <expr> ("," <expr>)* ("," <expr> "...")? "]"
+<expr-array> ::= "(" ":" <typespec> ")" "[" "]"
+               | "(" ":" <typespec> ")" "[" <expr> "..." "]"
+               | "(" ":" <typespec> ")" "[" <expr> ("," <expr>)* ("," <expr> "...")? "]"
 
-<expr-literal-slice> ::= "(" ":" <typespec> ")" "{" <expr> "," <expr> "}"
+<expr-slice> ::= "(" ":" <typespec> ")" "{" <expr> "," <expr> "}"
 
 <expr-cast> ::= "(" ":" <typespec> ")" <expr>
 

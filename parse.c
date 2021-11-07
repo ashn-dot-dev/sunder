@@ -888,7 +888,7 @@ parse_expr_lparen(struct parser* parser)
         expect_current(parser, TOKEN_RBRACKET);
 
         struct cst_expr* const product =
-            cst_expr_new_literal_array(location, typespec, elements, ellipsis);
+            cst_expr_new_array(location, typespec, elements, ellipsis);
 
         autil_freezer_register(context()->freezer, product);
         return product;
@@ -903,7 +903,7 @@ parse_expr_lparen(struct parser* parser)
         expect_current(parser, TOKEN_RBRACE);
 
         struct cst_expr* const product =
-            cst_expr_new_literal_slice(location, typespec, pointer, count);
+            cst_expr_new_slice(location, typespec, pointer, count);
 
         autil_freezer_register(context()->freezer, product);
         return product;

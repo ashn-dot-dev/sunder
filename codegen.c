@@ -614,9 +614,9 @@ codegen_rvalue_integer(struct expr const* expr, size_t id);
 static void
 codegen_rvalue_bytes(struct expr const* expr, size_t id);
 static void
-codegen_rvalue_literal_array(struct expr const* expr, size_t id);
+codegen_rvalue_array(struct expr const* expr, size_t id);
 static void
-codegen_rvalue_literal_slice(struct expr const* expr, size_t id);
+codegen_rvalue_slice(struct expr const* expr, size_t id);
 static void
 codegen_rvalue_cast(struct expr const* expr, size_t id);
 static void
@@ -1115,8 +1115,8 @@ codegen_rvalue(struct expr const* expr)
         TABLE_ENTRY(EXPR_BOOLEAN, codegen_rvalue_boolean),
         TABLE_ENTRY(EXPR_INTEGER, codegen_rvalue_integer),
         TABLE_ENTRY(EXPR_BYTES, codegen_rvalue_bytes),
-        TABLE_ENTRY(EXPR_LITERAL_ARRAY, codegen_rvalue_literal_array),
-        TABLE_ENTRY(EXPR_LITERAL_SLICE, codegen_rvalue_literal_slice),
+        TABLE_ENTRY(EXPR_ARRAY, codegen_rvalue_array),
+        TABLE_ENTRY(EXPR_SLICE, codegen_rvalue_slice),
         TABLE_ENTRY(EXPR_CAST, codegen_rvalue_cast),
         TABLE_ENTRY(EXPR_SYSCALL, codegen_rvalue_syscall),
         TABLE_ENTRY(EXPR_CALL, codegen_rvalue_call),
@@ -1204,10 +1204,10 @@ codegen_rvalue_bytes(struct expr const* expr, size_t id)
 }
 
 static void
-codegen_rvalue_literal_array(struct expr const* expr, size_t id)
+codegen_rvalue_array(struct expr const* expr, size_t id)
 {
     assert(expr != NULL);
-    assert(expr->kind == EXPR_LITERAL_ARRAY);
+    assert(expr->kind == EXPR_ARRAY);
     assert(expr->type->kind == TYPE_ARRAY);
 
     // Make space for the array.
@@ -1222,7 +1222,7 @@ codegen_rvalue_literal_array(struct expr const* expr, size_t id)
     // 8-byte alignment, but arrays may have element alignment that does not
     // cleanly match the stack alignment (e.g. [count]bool).
     autil_sbuf(struct expr const* const) const elements =
-        expr->data.literal_array.elements;
+        expr->data.array.elements;
     struct type const* const element_type = expr->type->data.array.base;
     size_t const element_size = element_type->size;
     // TODO: This loop is manually unrolled here, but should probably be turned
@@ -1245,8 +1245,8 @@ codegen_rvalue_literal_array(struct expr const* expr, size_t id)
 
     size_t const count = expr->type->data.array.count;
     if (autil_sbuf_count(elements) < count) { // ellipsis
-        assert(expr->data.literal_array.ellipsis != NULL);
-        assert(expr->data.literal_array.ellipsis->type == element_type);
+        assert(expr->data.array.ellipsis != NULL);
+        assert(expr->data.array.ellipsis->type == element_type);
 
         // Number of elements already filled in.
         size_t const completed = autil_sbuf_count(elements);
@@ -1254,7 +1254,7 @@ codegen_rvalue_literal_array(struct expr const* expr, size_t id)
         size_t const remaining = count - autil_sbuf_count(elements);
 
         appendln("%s%zu_ellipsis_bgn:", LABEL_EXPR, id);
-        codegen_rvalue(expr->data.literal_array.ellipsis);
+        codegen_rvalue(expr->data.array.ellipsis);
         appendli("mov rbx, rsp");
         appendli("add rbx, %zu", ceil8zu(element_size)); // array start
         appendli("add rbx, %zu", element_size * completed); // array offset
@@ -1274,10 +1274,10 @@ codegen_rvalue_literal_array(struct expr const* expr, size_t id)
 }
 
 static void
-codegen_rvalue_literal_slice(struct expr const* expr, size_t id)
+codegen_rvalue_slice(struct expr const* expr, size_t id)
 {
     assert(expr != NULL);
-    assert(expr->kind == EXPR_LITERAL_SLICE);
+    assert(expr->kind == EXPR_SLICE);
     assert(expr->type->kind == TYPE_SLICE);
     (void)id;
 
@@ -1286,8 +1286,8 @@ codegen_rvalue_literal_slice(struct expr const* expr, size_t id)
     // +---------+ <-- rsp + 0x8
     // | pointer |
     // +---------+ <-- rsp
-    codegen_rvalue(expr->data.literal_slice.count);
-    codegen_rvalue(expr->data.literal_slice.pointer);
+    codegen_rvalue(expr->data.slice.count);
+    codegen_rvalue(expr->data.slice.pointer);
 }
 
 static void

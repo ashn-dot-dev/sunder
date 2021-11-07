@@ -19,9 +19,9 @@ eval_rvalue_integer(struct expr const* expr);
 static struct value*
 eval_rvalue_bytes(struct expr const* expr);
 static struct value*
-eval_rvalue_literal_array(struct expr const* expr);
+eval_rvalue_array(struct expr const* expr);
 static struct value*
-eval_rvalue_literal_slice(struct expr const* expr);
+eval_rvalue_slice(struct expr const* expr);
 static struct value*
 eval_rvalue_cast(struct expr const* expr);
 static struct value*
@@ -77,11 +77,11 @@ eval_rvalue(struct expr const* expr)
     case EXPR_BYTES: {
         return eval_rvalue_bytes(expr);
     }
-    case EXPR_LITERAL_ARRAY: {
-        return eval_rvalue_literal_array(expr);
+    case EXPR_ARRAY: {
+        return eval_rvalue_array(expr);
     }
-    case EXPR_LITERAL_SLICE: {
-        return eval_rvalue_literal_slice(expr);
+    case EXPR_SLICE: {
+        return eval_rvalue_slice(expr);
     }
     case EXPR_CAST: {
         return eval_rvalue_cast(expr);
@@ -178,34 +178,34 @@ eval_rvalue_bytes(struct expr const* expr)
 }
 
 static struct value*
-eval_rvalue_literal_array(struct expr const* expr)
+eval_rvalue_array(struct expr const* expr)
 {
     assert(expr != NULL);
-    assert(expr->kind == EXPR_LITERAL_ARRAY);
+    assert(expr->kind == EXPR_ARRAY);
 
     autil_sbuf(struct expr const* const) elements =
-        expr->data.literal_array.elements;
+        expr->data.array.elements;
     autil_sbuf(struct value*) evaled_elements = NULL;
     for (size_t i = 0; i < autil_sbuf_count(elements); ++i) {
         autil_sbuf_push(evaled_elements, eval_rvalue(elements[i]));
     }
 
     struct value* evaled_ellipsis = NULL;
-    if (expr->data.literal_array.ellipsis != NULL) {
-        evaled_ellipsis = eval_rvalue(expr->data.literal_array.ellipsis);
+    if (expr->data.array.ellipsis != NULL) {
+        evaled_ellipsis = eval_rvalue(expr->data.array.ellipsis);
     }
 
     return value_new_array(expr->type, evaled_elements, evaled_ellipsis);
 }
 
 static struct value*
-eval_rvalue_literal_slice(struct expr const* expr)
+eval_rvalue_slice(struct expr const* expr)
 {
     assert(expr != NULL);
-    assert(expr->kind == EXPR_LITERAL_SLICE);
+    assert(expr->kind == EXPR_SLICE);
 
-    struct value* const pointer = eval_rvalue(expr->data.literal_slice.pointer);
-    struct value* const count = eval_rvalue(expr->data.literal_slice.count);
+    struct value* const pointer = eval_rvalue(expr->data.slice.pointer);
+    struct value* const count = eval_rvalue(expr->data.slice.count);
     return value_new_slice(expr->type, pointer, count);
 }
 
@@ -849,8 +849,8 @@ eval_lvalue(struct expr const* expr)
     case EXPR_BOOLEAN: /* fallthrough */
     case EXPR_INTEGER: /* fallthrough */
     case EXPR_BYTES: /* fallthrough */
-    case EXPR_LITERAL_ARRAY: /* fallthrough */
-    case EXPR_LITERAL_SLICE: /* fallthrough */
+    case EXPR_ARRAY: /* fallthrough */
+    case EXPR_SLICE: /* fallthrough */
     case EXPR_CAST: /* fallthrough */
     case EXPR_SYSCALL: /* fallthrough */
     case EXPR_CALL: /* fallthrough */

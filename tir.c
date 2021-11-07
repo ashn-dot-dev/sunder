@@ -819,7 +819,7 @@ expr_new_bytes(
 }
 
 struct expr*
-expr_new_literal_array(
+expr_new_array(
     struct source_location const* location,
     struct type const* type,
     struct expr const* const* elements,
@@ -829,14 +829,14 @@ expr_new_literal_array(
     assert(type != NULL);
     assert(type->kind == TYPE_ARRAY);
 
-    struct expr* const self = expr_new(location, type, EXPR_LITERAL_ARRAY);
-    self->data.literal_array.elements = elements;
-    self->data.literal_array.ellipsis = ellipsis;
+    struct expr* const self = expr_new(location, type, EXPR_ARRAY);
+    self->data.array.elements = elements;
+    self->data.array.ellipsis = ellipsis;
     return self;
 }
 
 struct expr*
-expr_new_literal_slice(
+expr_new_slice(
     struct source_location const* location,
     struct type const* type,
     struct expr const* pointer,
@@ -848,9 +848,9 @@ expr_new_literal_slice(
     assert(pointer != NULL);
     assert(count != NULL);
 
-    struct expr* const self = expr_new(location, type, EXPR_LITERAL_SLICE);
-    self->data.literal_slice.pointer = pointer;
-    self->data.literal_slice.count = count;
+    struct expr* const self = expr_new(location, type, EXPR_SLICE);
+    self->data.slice.pointer = pointer;
+    self->data.slice.count = count;
     return self;
 }
 
@@ -1043,8 +1043,8 @@ expr_is_lvalue(struct expr const* self)
     case EXPR_BOOLEAN: /* fallthrough */
     case EXPR_INTEGER: /* fallthrough */
     case EXPR_BYTES: /* fallthrough */
-    case EXPR_LITERAL_ARRAY: /* fallthrough */
-    case EXPR_LITERAL_SLICE: /* fallthrough */
+    case EXPR_ARRAY: /* fallthrough */
+    case EXPR_SLICE: /* fallthrough */
     case EXPR_CAST: /* fallthrough */
     case EXPR_SYSCALL: /* fallthrough */
     case EXPR_CALL: /* fallthrough */
