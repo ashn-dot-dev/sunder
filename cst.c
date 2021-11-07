@@ -350,8 +350,7 @@ cst_expr_new_array(
     assert(location != NULL);
     assert(typespec != NULL);
 
-    struct cst_expr* const self =
-        cst_expr_new(location, CST_EXPR_ARRAY);
+    struct cst_expr* const self = cst_expr_new(location, CST_EXPR_ARRAY);
     self->data.array.typespec = typespec;
     self->data.array.elements = elements;
     self->data.array.ellipsis = ellipsis;
@@ -370,8 +369,7 @@ cst_expr_new_slice(
     assert(pointer != NULL);
     assert(count != NULL);
 
-    struct cst_expr* const self =
-        cst_expr_new(location, CST_EXPR_SLICE);
+    struct cst_expr* const self = cst_expr_new(location, CST_EXPR_SLICE);
     self->data.slice.typespec = typespec;
     self->data.slice.pointer = pointer;
     self->data.slice.count = count;

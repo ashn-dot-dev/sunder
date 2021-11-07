@@ -185,8 +185,7 @@ eval_rvalue_array(struct expr const* expr)
     assert(expr != NULL);
     assert(expr->kind == EXPR_ARRAY);
 
-    autil_sbuf(struct expr const* const) elements =
-        expr->data.array.elements;
+    autil_sbuf(struct expr const* const) elements = expr->data.array.elements;
     autil_sbuf(struct value*) evaled_elements = NULL;
     for (size_t i = 0; i < autil_sbuf_count(elements); ++i) {
         autil_sbuf_push(evaled_elements, eval_rvalue(elements[i]));

@@ -156,11 +156,9 @@ resolve_expr_integer(struct resolver* resolver, struct cst_expr const* expr);
 static struct expr const*
 resolve_expr_bytes(struct resolver* resolver, struct cst_expr const* expr);
 static struct expr const*
-resolve_expr_array(
-    struct resolver* resolver, struct cst_expr const* expr);
+resolve_expr_array(struct resolver* resolver, struct cst_expr const* expr);
 static struct expr const*
-resolve_expr_slice(
-    struct resolver* resolver, struct cst_expr const* expr);
+resolve_expr_slice(struct resolver* resolver, struct cst_expr const* expr);
 static struct expr const*
 resolve_expr_cast(struct resolver* resolver, struct cst_expr const* expr);
 static struct expr const*
@@ -1610,8 +1608,7 @@ resolve_expr_bytes(struct resolver* resolver, struct cst_expr const* expr)
 }
 
 static struct expr const*
-resolve_expr_array(
-    struct resolver* resolver, struct cst_expr const* expr)
+resolve_expr_array(struct resolver* resolver, struct cst_expr const* expr)
 {
     assert(resolver != NULL);
     assert(expr != NULL);
@@ -1646,8 +1643,7 @@ resolve_expr_array(
 
     struct expr const* resolved_ellipsis = NULL;
     if (expr->data.array.ellipsis != NULL) {
-        resolved_ellipsis =
-            resolve_expr(resolver, expr->data.array.ellipsis);
+        resolved_ellipsis = resolve_expr(resolver, expr->data.array.ellipsis);
         if (resolved_ellipsis->type->kind == TYPE_UNSIZED_INTEGER) {
             resolved_ellipsis = convert_unsized_integer(
                 type->data.array.base, resolved_ellipsis);
@@ -1676,8 +1672,7 @@ resolve_expr_array(
 }
 
 static struct expr const*
-resolve_expr_slice(
-    struct resolver* resolver, struct cst_expr const* expr)
+resolve_expr_slice(struct resolver* resolver, struct cst_expr const* expr)
 {
     assert(resolver != NULL);
     assert(expr != NULL);
@@ -1705,8 +1700,7 @@ resolve_expr_slice(
     check_type_compatibility(
         pointer->location, pointer->type, slice_pointer_type);
 
-    struct expr const* count =
-        resolve_expr(resolver, expr->data.slice.count);
+    struct expr const* count = resolve_expr(resolver, expr->data.slice.count);
     if (count->type->kind == TYPE_UNSIZED_INTEGER) {
         count = convert_unsized_integer(context()->builtin.usize, count);
     }
