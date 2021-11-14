@@ -1663,8 +1663,8 @@ resolve_expr_array(struct resolver* resolver, struct cst_expr const* expr)
     for (size_t i = 0; i < autil_sbuf_count(elements); ++i) {
         struct expr const* resolved_element =
             resolve_expr(resolver, elements[i]);
-        resolved_element = shallow_implicit_cast(
-            type->data.array.base, resolved_element);
+        resolved_element =
+            shallow_implicit_cast(type->data.array.base, resolved_element);
         check_type_compatibility(
             resolved_element->location,
             resolved_element->type,
@@ -1676,8 +1676,8 @@ resolve_expr_array(struct resolver* resolver, struct cst_expr const* expr)
     struct expr const* resolved_ellipsis = NULL;
     if (expr->data.array.ellipsis != NULL) {
         resolved_ellipsis = resolve_expr(resolver, expr->data.array.ellipsis);
-        resolved_ellipsis = shallow_implicit_cast(
-            type->data.array.base, resolved_ellipsis);
+        resolved_ellipsis =
+            shallow_implicit_cast(type->data.array.base, resolved_ellipsis);
         check_type_compatibility(
             resolved_ellipsis->location,
             resolved_ellipsis->type,
@@ -1885,8 +1885,7 @@ resolve_expr_call(struct resolver* resolver, struct cst_expr const* expr)
     autil_sbuf(struct type const* const) const parameter_types =
         function->type->data.function.parameter_types;
     for (size_t i = 0; i < autil_sbuf_count(arguments); ++i) {
-        arguments[i] =
-            shallow_implicit_cast(parameter_types[i], arguments[i]);
+        arguments[i] = shallow_implicit_cast(parameter_types[i], arguments[i]);
     }
     for (size_t i = 0; i < autil_sbuf_count(parameter_types); ++i) {
         struct type const* const expected = parameter_types[i];
