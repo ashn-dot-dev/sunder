@@ -95,6 +95,8 @@ check_type_compatibility(
 
 static struct expr const*
 convert_unsized_integer(struct type const* type, struct expr const* expr);
+static struct expr const*
+shallow_implicit_cast(struct type const* type, struct expr const* expr);
 
 static void
 resolve_import(struct resolver* resolver, struct cst_import const* import);
@@ -489,6 +491,86 @@ convert_unsized_integer(struct type const* type, struct expr const* expr)
 
     autil_freezer_register(context()->freezer, result);
     return result;
+}
+
+static struct expr const*
+shallow_implicit_cast(struct type const* type, struct expr const* expr)
+{
+    assert(type != NULL);
+    assert(expr != NULL);
+
+    // FROM type TO type (same type).
+    if (type->kind == expr->type->kind) {
+        return expr;
+    }
+
+    // FROM untyped integer TO byte.
+    if (type->kind == TYPE_BYTE && expr->type->kind == TYPE_UNSIZED_INTEGER) {
+        struct autil_bigint const* const min = context()->u8_min;
+        struct autil_bigint const* const max = context()->u8_max;
+
+        if (autil_bigint_cmp(expr->data.integer, min) < 0) {
+            fatal(
+                expr->location,
+                "out-of-range conversion from `%s` to `%s` (%s < %s)",
+                expr->type->name,
+                type->name,
+                autil_bigint_to_new_cstr(expr->data.integer, NULL),
+                autil_bigint_to_new_cstr(min, NULL));
+        }
+        if (autil_bigint_cmp(expr->data.integer, max) > 0) {
+            fatal(
+                expr->location,
+                "out-of-range conversion from `%s` to `%s` (%s > %s)",
+                expr->type->name,
+                type->name,
+                autil_bigint_to_new_cstr(expr->data.integer, NULL),
+                autil_bigint_to_new_cstr(max, NULL));
+        }
+
+        struct expr* const result =
+            expr_new_integer(expr->location, type, expr->data.integer);
+
+        autil_freezer_register(context()->freezer, result);
+        return result;
+    }
+
+    // FROM untyped integer TO typed integer.
+    if (type_is_integer(type) && type->kind != TYPE_UNSIZED_INTEGER
+        && expr->type->kind == TYPE_UNSIZED_INTEGER) {
+        assert(type->data.integer.min != NULL);
+        assert(type->data.integer.max != NULL);
+        struct autil_bigint const* const min = type->data.integer.min;
+        struct autil_bigint const* const max = type->data.integer.max;
+
+        if (autil_bigint_cmp(expr->data.integer, min) < 0) {
+            fatal(
+                expr->location,
+                "out-of-range conversion from `%s` to `%s` (%s < %s)",
+                expr->type->name,
+                type->name,
+                autil_bigint_to_new_cstr(expr->data.integer, NULL),
+                autil_bigint_to_new_cstr(min, NULL));
+        }
+        if (autil_bigint_cmp(expr->data.integer, max) > 0) {
+            fatal(
+                expr->location,
+                "out-of-range conversion from `%s` to `%s` (%s > %s)",
+                expr->type->name,
+                type->name,
+                autil_bigint_to_new_cstr(expr->data.integer, NULL),
+                autil_bigint_to_new_cstr(max, NULL));
+        }
+
+        struct expr* const result =
+            expr_new_integer(expr->location, type, expr->data.integer);
+
+        autil_freezer_register(context()->freezer, result);
+        return result;
+    }
+
+    // No implicit cast could be performed.
+    return expr;
 }
 
 static void
@@ -2359,15 +2441,11 @@ resolve_expr_binary_compare_equality(
         expr_new_binary(&op->location, context()->builtin.bool_, bop, lhs, rhs);
     autil_freezer_register(context()->freezer, resolved);
 
-    // TODO: We constant fold untyped integer expressions so that chaining
-    // expressions (such as the binary arithmetic expression 1 + 2 + 123u8)
-    // will allow untyped integer sub expressions to be checked for out-of-range
-    // values when coerced into another integer type. Investigate maybe doing
-    // this for all integer constant sub-expressions and make constant folding
-    // a defined part of the language.
-    if (lhs->kind == EXPR_INTEGER && rhs->kind == EXPR_INTEGER
-        && lhs->type->kind == TYPE_UNSIZED_INTEGER
-        && rhs->type->kind == TYPE_UNSIZED_INTEGER) {
+    // Constant fold integer literal constant expression.
+    if (lhs->kind == EXPR_INTEGER && rhs->kind == EXPR_INTEGER) {
+        lhs = shallow_implicit_cast(rhs->type, lhs);
+        rhs = shallow_implicit_cast(lhs->type, rhs);
+
         struct value* const value = eval_rvalue(resolved);
         value_freeze(value, context()->freezer);
 
@@ -2422,15 +2500,11 @@ resolve_expr_binary_compare_order(
         expr_new_binary(&op->location, context()->builtin.bool_, bop, lhs, rhs);
     autil_freezer_register(context()->freezer, resolved);
 
-    // TODO: We constant fold untyped integer expressions so that chaining
-    // expressions (such as the binary arithmetic expression 1 + 2 + 123u8)
-    // will allow untyped integer sub expressions to be checked for out-of-range
-    // values when coerced into another integer type. Investigate maybe doing
-    // this for all integer constant sub-expressions and make constant folding
-    // a defined part of the language.
-    if (lhs->kind == EXPR_INTEGER && rhs->kind == EXPR_INTEGER
-        && lhs->type->kind == TYPE_UNSIZED_INTEGER
-        && rhs->type->kind == TYPE_UNSIZED_INTEGER) {
+    // Constant fold integer literal constant expression.
+    if (lhs->kind == EXPR_INTEGER && rhs->kind == EXPR_INTEGER) {
+        lhs = shallow_implicit_cast(rhs->type, lhs);
+        rhs = shallow_implicit_cast(lhs->type, rhs);
+
         struct value* const value = eval_rvalue(resolved);
         value_freeze(value, context()->freezer);
 
@@ -2478,15 +2552,11 @@ resolve_expr_binary_arithmetic(
     struct expr* resolved = expr_new_binary(&op->location, type, bop, lhs, rhs);
     autil_freezer_register(context()->freezer, resolved);
 
-    // TODO: We constant fold untyped integer expressions so that chaining
-    // expressions (such as the binary arithmetic expression 1 + 2 + 123u8)
-    // will allow untyped integer sub expressions to be checked for out-of-range
-    // values when coerced into another integer type. Investigate maybe doing
-    // this for all integer constant sub-expressions and make constant folding
-    // a defined part of the language.
-    if (lhs->kind == EXPR_INTEGER && rhs->kind == EXPR_INTEGER
-        && lhs->type->kind == TYPE_UNSIZED_INTEGER
-        && rhs->type->kind == TYPE_UNSIZED_INTEGER) {
+    // Constant fold integer literal constant expression.
+    if (lhs->kind == EXPR_INTEGER && rhs->kind == EXPR_INTEGER) {
+        lhs = shallow_implicit_cast(rhs->type, lhs);
+        rhs = shallow_implicit_cast(lhs->type, rhs);
+
         struct value* const value = eval_rvalue(resolved);
         value_freeze(value, context()->freezer);
 
@@ -2541,12 +2611,7 @@ resolve_expr_binary_bitwise(
     struct expr* resolved = expr_new_binary(&op->location, type, bop, lhs, rhs);
     autil_freezer_register(context()->freezer, resolved);
 
-    // TODO: We constant fold untyped integer expressions so that chaining
-    // expressions (such as the binary arithmetic expression 1 + 2 + 123u8)
-    // will allow untyped integer sub expressions to be checked for out-of-range
-    // values when coerced into another integer type. Investigate maybe doing
-    // this for all integer constant sub-expressions and make constant folding
-    // a defined part of the language.
+    // Constant fold integer literal constant expression.
     if (lhs->kind == EXPR_INTEGER && rhs->kind == EXPR_INTEGER
         && lhs->type->kind == TYPE_UNSIZED_INTEGER
         && rhs->type->kind == TYPE_UNSIZED_INTEGER) {

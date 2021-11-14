@@ -1,5 +1,7 @@
 func main() void {
-    0xFFFFFFFFu32 * 2u32;
+    var a: u32 = 0xFFFFFFFFu32;
+    var b: u32 = 2u32;
+    a * b;
 }
 ################################################################################
 # fatal: arithmetic operation produces out-of-range result

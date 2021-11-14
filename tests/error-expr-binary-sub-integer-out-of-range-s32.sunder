@@ -1,5 +1,7 @@
 func main() void {
-   -2147483648s32 - 1s32;
+   var a: s32 = -2147483648s32;
+   var b: s32 = 1s32;
+   a - b;
 }
 ################################################################################
 # fatal: arithmetic operation produces out-of-range result

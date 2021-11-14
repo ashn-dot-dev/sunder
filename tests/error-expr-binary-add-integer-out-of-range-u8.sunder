@@ -1,5 +1,7 @@
 func main() void {
-    0xFFu8 + 1u8;
+    var a: u8 = 0xFFu8;
+    var b: u8 = 1u8;
+    a + b;
 }
 ################################################################################
 # fatal: arithmetic operation produces out-of-range result

@@ -1,5 +1,7 @@
 func main() void {
-    0x7FFFFFFFFFFFFFFFs64 * 2s64;
+    var a: s64 = 0x7FFFFFFFFFFFFFFFs64;
+    var b: s64 = 2s64;
+    a * b;
 }
 ################################################################################
 # fatal: arithmetic operation produces out-of-range result

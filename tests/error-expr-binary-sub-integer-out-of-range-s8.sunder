@@ -1,5 +1,7 @@
 func main() void {
-    -128s8 - 1s8;
+    var a: s8 = -128s8;
+    var b: s8 = 1s8;
+    a - b;
 }
 ################################################################################
 # fatal: arithmetic operation produces out-of-range result

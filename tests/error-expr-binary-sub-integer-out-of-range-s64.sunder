@@ -1,5 +1,7 @@
 func main() void {
-   -9223372036854775808s64 - 1s64;
+   var a: s64 = -9223372036854775808s64;
+   var b: s64 = 1s64;
+   a - b;
 }
 ################################################################################
 # fatal: arithmetic operation produces out-of-range result
