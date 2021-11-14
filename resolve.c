@@ -94,8 +94,6 @@ check_type_compatibility(
     struct type const* expected);
 
 static struct expr const*
-convert_unsized_integer(struct type const* type, struct expr const* expr);
-static struct expr const*
 shallow_implicit_cast(struct type const* type, struct expr const* expr);
 
 static void
@@ -438,62 +436,6 @@ check_type_compatibility(
 }
 
 static struct expr const*
-convert_unsized_integer(struct type const* type, struct expr const* expr)
-{
-    assert(type != NULL);
-    assert(expr != NULL);
-    assert(expr->kind == EXPR_INTEGER);
-    assert(expr->type->kind == TYPE_UNSIZED_INTEGER);
-
-    if (type->kind == TYPE_UNSIZED_INTEGER) {
-        return expr;
-    }
-
-    if (type->kind != TYPE_BYTE && !type_is_integer(type)) {
-        fatal(
-            expr->location,
-            "cannot convert from `%s` to `%s`",
-            expr->type->name,
-            type->name);
-    }
-
-    assert(type->kind == TYPE_BYTE || type_is_integer(type));
-    // Default to byte min/max.
-    struct autil_bigint const* min = context()->u8_min;
-    struct autil_bigint const* max = context()->u8_max;
-    // Override with integer min/max if needed.
-    if (type_is_integer(type)) {
-        assert(type->data.integer.min != NULL);
-        assert(type->data.integer.max != NULL);
-        min = type->data.integer.min;
-        max = type->data.integer.max;
-    }
-
-    if (autil_bigint_cmp(expr->data.integer, min) < 0) {
-        fatal(
-            expr->location,
-            "out-of-range integer conversion to `%s` (%s < %s)",
-            type->name,
-            autil_bigint_to_new_cstr(expr->data.integer, NULL),
-            autil_bigint_to_new_cstr(min, NULL));
-    }
-    if (autil_bigint_cmp(expr->data.integer, max) > 0) {
-        fatal(
-            expr->location,
-            "out-of-range integer conversion to `%s` (%s > %s)",
-            type->name,
-            autil_bigint_to_new_cstr(expr->data.integer, NULL),
-            autil_bigint_to_new_cstr(max, NULL));
-    }
-
-    struct expr* const result =
-        expr_new_integer(expr->location, type, expr->data.integer);
-
-    autil_freezer_register(context()->freezer, result);
-    return result;
-}
-
-static struct expr const*
 shallow_implicit_cast(struct type const* type, struct expr const* expr)
 {
     assert(type != NULL);
@@ -747,9 +689,8 @@ resolve_decl_variable(
             "declaration of variable with unsized type `%s`",
             type->name);
     }
-    if (expr->type->kind == TYPE_UNSIZED_INTEGER) {
-        expr = convert_unsized_integer(type, expr);
-    }
+
+    expr = shallow_implicit_cast(type, expr);
     check_type_compatibility(expr->location, expr->type, type);
 
     // Global/static variables have their initial values computed at
@@ -804,9 +745,8 @@ resolve_decl_constant(struct resolver* resolver, struct cst_decl const* decl)
             "declaration of constant with unsized type `%s`",
             type->name);
     }
-    if (expr->type->kind == TYPE_UNSIZED_INTEGER) {
-        expr = convert_unsized_integer(type, expr);
-    }
+
+    expr = shallow_implicit_cast(type, expr);
     check_type_compatibility(expr->location, expr->type, type);
 
     // Constants (globals and locals) have their values computed at compile-time
@@ -1164,9 +1104,7 @@ resolve_stmt_for_range(struct resolver* resolver, struct cst_stmt const* stmt)
 
     struct expr const* begin =
         resolve_expr(resolver, stmt->data.for_range.begin);
-    if (begin->type->kind == TYPE_UNSIZED_INTEGER) {
-        begin = convert_unsized_integer(context()->builtin.usize, begin);
-    }
+    begin = shallow_implicit_cast(context()->builtin.usize, begin);
     if (begin->type != context()->builtin.usize) {
         fatal(
             begin->location,
@@ -1175,9 +1113,7 @@ resolve_stmt_for_range(struct resolver* resolver, struct cst_stmt const* stmt)
     }
 
     struct expr const* end = resolve_expr(resolver, stmt->data.for_range.end);
-    if (end->type->kind == TYPE_UNSIZED_INTEGER) {
-        end = convert_unsized_integer(context()->builtin.usize, end);
-    }
+    end = shallow_implicit_cast(context()->builtin.usize, end);
     if (end->type != context()->builtin.usize) {
         fatal(
             end->location,
@@ -1326,9 +1262,7 @@ resolve_stmt_return(struct resolver* resolver, struct cst_stmt const* stmt)
     struct expr const* expr = NULL;
     if (stmt->data.return_.expr != NULL) {
         expr = resolve_expr(resolver, stmt->data.return_.expr);
-        if (expr->type->kind == TYPE_UNSIZED_INTEGER) {
-            expr = convert_unsized_integer(return_type, expr);
-        }
+        expr = shallow_implicit_cast(return_type, expr);
         check_type_compatibility(expr->location, expr->type, return_type);
     }
     else {
@@ -1368,9 +1302,7 @@ resolve_stmt_assign(struct resolver* resolver, struct cst_stmt const* stmt)
             "left hand side of assignment statement is not an lvalue");
     }
 
-    if (rhs->type->kind == TYPE_UNSIZED_INTEGER) {
-        rhs = convert_unsized_integer(lhs->type, rhs);
-    }
+    rhs = shallow_implicit_cast(lhs->type, rhs);
     check_type_compatibility(stmt->location, rhs->type, lhs->type);
 
     struct stmt* const resolved = stmt_new_assign(stmt->location, lhs, rhs);
@@ -1711,10 +1643,8 @@ resolve_expr_array(struct resolver* resolver, struct cst_expr const* expr)
     for (size_t i = 0; i < autil_sbuf_count(elements); ++i) {
         struct expr const* resolved_element =
             resolve_expr(resolver, elements[i]);
-        if (resolved_element->type->kind == TYPE_UNSIZED_INTEGER) {
-            resolved_element = convert_unsized_integer(
-                type->data.array.base, resolved_element);
-        }
+        resolved_element = shallow_implicit_cast(
+            type->data.array.base, resolved_element);
         check_type_compatibility(
             resolved_element->location,
             resolved_element->type,
@@ -1726,10 +1656,8 @@ resolve_expr_array(struct resolver* resolver, struct cst_expr const* expr)
     struct expr const* resolved_ellipsis = NULL;
     if (expr->data.array.ellipsis != NULL) {
         resolved_ellipsis = resolve_expr(resolver, expr->data.array.ellipsis);
-        if (resolved_ellipsis->type->kind == TYPE_UNSIZED_INTEGER) {
-            resolved_ellipsis = convert_unsized_integer(
-                type->data.array.base, resolved_ellipsis);
-        }
+        resolved_ellipsis = shallow_implicit_cast(
+            type->data.array.base, resolved_ellipsis);
         check_type_compatibility(
             resolved_ellipsis->location,
             resolved_ellipsis->type,
@@ -1783,9 +1711,7 @@ resolve_expr_slice(struct resolver* resolver, struct cst_expr const* expr)
         pointer->location, pointer->type, slice_pointer_type);
 
     struct expr const* count = resolve_expr(resolver, expr->data.slice.count);
-    if (count->type->kind == TYPE_UNSIZED_INTEGER) {
-        count = convert_unsized_integer(context()->builtin.usize, count);
-    }
+    count = shallow_implicit_cast(context()->builtin.usize, count);
     check_type_compatibility(
         count->location, count->type, context()->builtin.usize);
 
@@ -1939,10 +1865,8 @@ resolve_expr_call(struct resolver* resolver, struct cst_expr const* expr)
     autil_sbuf(struct type const* const) const parameter_types =
         function->type->data.function.parameter_types;
     for (size_t i = 0; i < autil_sbuf_count(arguments); ++i) {
-        if (arguments[i]->type->kind == TYPE_UNSIZED_INTEGER) {
-            arguments[i] =
-                convert_unsized_integer(parameter_types[i], arguments[i]);
-        }
+        arguments[i] =
+            shallow_implicit_cast(parameter_types[i], arguments[i]);
     }
     for (size_t i = 0; i < autil_sbuf_count(parameter_types); ++i) {
         struct type const* const expected = parameter_types[i];
@@ -1982,9 +1906,7 @@ resolve_expr_access_index(
 
     struct expr const* idx =
         resolve_expr(resolver, expr->data.access_index.idx);
-    if (idx->type->kind == TYPE_UNSIZED_INTEGER) {
-        idx = convert_unsized_integer(context()->builtin.usize, idx);
-    }
+    idx = shallow_implicit_cast(context()->builtin.usize, idx);
     if (idx->type->kind != TYPE_USIZE) {
         fatal(
             idx->location,
@@ -2023,9 +1945,7 @@ resolve_expr_access_slice(
 
     struct expr const* begin =
         resolve_expr(resolver, expr->data.access_slice.begin);
-    if (begin->type->kind == TYPE_UNSIZED_INTEGER) {
-        begin = convert_unsized_integer(context()->builtin.usize, begin);
-    }
+    begin = shallow_implicit_cast(context()->builtin.usize, begin);
     if (begin->type->kind != TYPE_USIZE) {
         fatal(
             begin->location,
@@ -2035,9 +1955,7 @@ resolve_expr_access_slice(
 
     struct expr const* end =
         resolve_expr(resolver, expr->data.access_slice.end);
-    if (end->type->kind == TYPE_UNSIZED_INTEGER) {
-        end = convert_unsized_integer(context()->builtin.usize, end);
-    }
+    end = shallow_implicit_cast(context()->builtin.usize, end);
     if (end->type->kind != TYPE_USIZE) {
         fatal(
             end->location,
@@ -2413,12 +2331,8 @@ resolve_expr_binary_compare_equality(
     assert(rhs != NULL);
     (void)resolver;
 
-    if (lhs->type->kind == TYPE_UNSIZED_INTEGER) {
-        lhs = convert_unsized_integer(rhs->type, lhs);
-    }
-    if (rhs->type->kind == TYPE_UNSIZED_INTEGER) {
-        rhs = convert_unsized_integer(lhs->type, rhs);
-    }
+    lhs = shallow_implicit_cast(rhs->type, lhs);
+    rhs = shallow_implicit_cast(lhs->type, rhs);
 
     if (lhs->type != rhs->type) {
         fatal(
@@ -2471,12 +2385,8 @@ resolve_expr_binary_compare_order(
     assert(rhs != NULL);
     (void)resolver;
 
-    if (lhs->type->kind == TYPE_UNSIZED_INTEGER) {
-        lhs = convert_unsized_integer(rhs->type, lhs);
-    }
-    if (rhs->type->kind == TYPE_UNSIZED_INTEGER) {
-        rhs = convert_unsized_integer(lhs->type, rhs);
-    }
+    lhs = shallow_implicit_cast(rhs->type, lhs);
+    rhs = shallow_implicit_cast(lhs->type, rhs);
 
     if (lhs->type != rhs->type) {
         fatal(
@@ -2530,12 +2440,8 @@ resolve_expr_binary_arithmetic(
     assert(rhs != NULL);
     (void)resolver;
 
-    if (lhs->type->kind == TYPE_UNSIZED_INTEGER) {
-        lhs = convert_unsized_integer(rhs->type, lhs);
-    }
-    if (rhs->type->kind == TYPE_UNSIZED_INTEGER) {
-        rhs = convert_unsized_integer(lhs->type, rhs);
-    }
+    lhs = shallow_implicit_cast(rhs->type, lhs);
+    rhs = shallow_implicit_cast(lhs->type, rhs);
 
     bool const valid = lhs->type == rhs->type && type_is_integer(lhs->type)
         && type_is_integer(rhs->type);
@@ -2583,12 +2489,8 @@ resolve_expr_binary_bitwise(
     assert(rhs != NULL);
     (void)resolver;
 
-    if (lhs->type->kind == TYPE_UNSIZED_INTEGER) {
-        lhs = convert_unsized_integer(rhs->type, lhs);
-    }
-    if (rhs->type->kind == TYPE_UNSIZED_INTEGER) {
-        rhs = convert_unsized_integer(lhs->type, rhs);
-    }
+    lhs = shallow_implicit_cast(rhs->type, lhs);
+    rhs = shallow_implicit_cast(lhs->type, rhs);
 
     if (lhs->type != rhs->type) {
         goto invalid_operand_types;
@@ -2612,9 +2514,10 @@ resolve_expr_binary_bitwise(
     autil_freezer_register(context()->freezer, resolved);
 
     // Constant fold integer literal constant expression.
-    if (lhs->kind == EXPR_INTEGER && rhs->kind == EXPR_INTEGER
-        && lhs->type->kind == TYPE_UNSIZED_INTEGER
-        && rhs->type->kind == TYPE_UNSIZED_INTEGER) {
+    if (lhs->kind == EXPR_INTEGER && rhs->kind == EXPR_INTEGER) {
+        lhs = shallow_implicit_cast(rhs->type, lhs);
+        rhs = shallow_implicit_cast(lhs->type, rhs);
+
         struct value* const value = eval_rvalue(resolved);
         value_freeze(value, context()->freezer);
 
@@ -2716,10 +2619,8 @@ resolve_typespec(struct resolver* resolver, struct cst_typespec const* typespec)
     case TYPESPEC_ARRAY: {
         struct expr const* count_expr =
             resolve_expr(resolver, typespec->data.array.count);
-        if (count_expr->type->kind == TYPE_UNSIZED_INTEGER) {
-            count_expr =
-                convert_unsized_integer(context()->builtin.usize, count_expr);
-        }
+        count_expr =
+            shallow_implicit_cast(context()->builtin.usize, count_expr);
 
         if (count_expr->type != context()->builtin.usize) {
             fatal(
