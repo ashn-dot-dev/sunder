@@ -93,6 +93,26 @@ check_type_compatibility(
     struct type const* actual,
     struct type const* expected);
 
+// Returns a newly created and registered expression node of expr implicitly
+// casted to type if such an implicit cast is valid. If expr cannot be
+// implicitly casted to type then expr is returned unchanged.
+//
+// The attempted implicit cast is "shallow" in the sense that it will not
+// recursively traverse the expression tree when casting, so currently immediate
+// values (literals) are the only valid expr targets.
+//
+// This function is intended for use when casting untyped literals to an
+// expression that would require a typed literal (e.g. integer->usize).
+// Sub-expressions with integer literal constants are constant folded during the
+// resolve phase, so the expression `123 + 456 * 2` *should* be folded to the
+// integer literal constant `615` long before this function would be called on
+// it, so for most cases the sequence:
+// ```
+// struct expr const* expr = resolve_expr(ice);
+// expr = shallow_implicit_cast(type, expr);
+// ```
+// will correctly perform a tree-rewrite of the integer constance sub-expression
+// `ice` casted to `type`.
 static struct expr const*
 shallow_implicit_cast(struct type const* type, struct expr const* expr);
 
