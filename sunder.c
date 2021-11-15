@@ -422,7 +422,7 @@ read_source(char const* path)
 
     // NUL-prefix and NUL-terminator.
     // [t][e][x][t]
-    // v                      v
+    // to
     // [\0][t][e][x][t][\0]
     text = autil_xalloc(text, text_size + 2);
     char* const result = (char*)text + 1;
