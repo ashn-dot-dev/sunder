@@ -148,8 +148,7 @@ appendli_location(struct source_location const* location, char const* fmt, ...)
 
     autil_string_append_cstr(out, "\n");
 
-    char const* const source = lookup_module(location->path)->source;
-    char const* const line_start = source_line_start(source, location->psrc);
+    char const* const line_start = source_line_start(location->psrc);
     char const* const line_end = source_line_end(location->psrc);
 
     autil_string_append_fmt(

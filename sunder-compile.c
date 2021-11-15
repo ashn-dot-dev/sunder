@@ -25,7 +25,7 @@ main(int argc, char** argv)
     context_init();
     atexit(context_fini);
 
-    load_module(path);
+    load_module(path, canonical_path(path));
     codegen(opt_o, opt_k);
 
     return EXIT_SUCCESS;

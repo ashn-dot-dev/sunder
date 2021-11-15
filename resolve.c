@@ -652,7 +652,7 @@ resolve_import(struct resolver* resolver, struct cst_import const* import)
 
     struct module const* module = lookup_module(path);
     if (module == NULL) {
-        module = load_module(path);
+        module = load_module(import->path, path);
     }
     if (!module->loaded) {
         fatal(

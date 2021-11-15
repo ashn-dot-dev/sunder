@@ -18,10 +18,10 @@
 #    define NORETURN /* nothing */
 #endif
 
-// Returns a pointer to the first character of the line containing ptr in the
-// provided NUL-terminated source string.
+// Returns a pointer to the first character of the line containing ptr in some
+// NUL-terminated source string.
 char const*
-source_line_start(char const* source, char const* ptr);
+source_line_start(char const* ptr);
 // Returns a pointer to the end-of-line newline or NUL of the line containing
 // ptr in some NUL-terminated source string.
 char const*
@@ -33,6 +33,8 @@ source_line_end(char const* ptr);
 #define NO_LOCATION ((struct source_location const*)NULL)
 struct source_location {
     // Optional (NULL indicates no value).
+    // NOTE: Source locations produced by the lexing phase will use a module's
+    // `name` (i.e. non-canonical path) member for the source location path.
     char const* path;
     // Optional (zero indicates no value).
     size_t line;
@@ -125,9 +127,23 @@ char const* // interned
 directory_path(char const* path);
 
 struct module {
-    bool loaded; // True if the module has been fully loaded / resolved.
+    // True if the module has been fully loaded/resolved.
+    bool loaded;
+    // The shorthand path of this module. For a module imported as:
+    //      import "foo/bar.sunder";
+    // this member will hold the string "foo/bar.sunder".
+    char const* name; // interned
+    // The canonical path of this module. For a module imported as:
+    //      import "foo/bar.sunder";
+    // this member will hold the string "/full/path/to/foo/bar.sunder".
     char const* path; // interned
+    // NUL-prefixed, NUL-terminated text contents of the module.
+    // When the module source is loaded a NUL-prefix is added to the beginning
+    // of the source string at position source[-1] and source[source_count + 1]
+    // so that either a forwards or backward search through the source text may
+    // stop if a NUL byte is encountered.
     char const* source;
+    size_t source_count;
 
     // Global symbols.
     struct symbol_table* symbols;
@@ -143,7 +159,7 @@ struct module {
     autil_sbuf(struct cst_decl const*) ordered;
 };
 struct module*
-module_new(char const* path);
+module_new(char const* name, char const* path);
 void
 module_del(struct module* self);
 
@@ -240,7 +256,7 @@ struct context const*
 context(void);
 
 struct module const*
-load_module(char const* path);
+load_module(char const* name, char const* path);
 struct module const*
 lookup_module(char const* path);
 

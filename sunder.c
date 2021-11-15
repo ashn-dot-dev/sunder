@@ -29,12 +29,11 @@
 // clang-format on
 
 char const*
-source_line_start(char const* source, char const* ptr)
+source_line_start(char const* ptr)
 {
-    assert(source != NULL);
     assert(ptr != NULL);
 
-    while (source < ptr && ptr[-1] != '\n') {
+    while (ptr[-1] != '\n' && ptr[-1] != '\0') {
         ptr -= 1;
     }
 
@@ -102,8 +101,7 @@ messagev_(
 
     if (psrc != NO_PSRC) {
         assert(path != NULL);
-        char const* const source = lookup_module(path)->source;
-        char const* const line_start = source_line_start(source, psrc);
+        char const* const line_start = source_line_start(psrc);
         char const* const line_end = source_line_end(psrc);
 
         fprintf(stderr, "%.*s\n", (int)(line_end - line_start), line_start);
@@ -411,9 +409,9 @@ directory_path(char const* path)
 static char*
 read_source(char const* path)
 {
-    void* source = NULL;
-    size_t source_size = 0;
-    if (autil_file_read(path, &source, &source_size)) {
+    void* text = NULL;
+    size_t text_size = 0;
+    if (autil_file_read(path, &text, &text_size)) {
         struct source_location const location = {path, NO_LINE, NO_PSRC};
         fatal(
             &location,
@@ -422,26 +420,35 @@ read_source(char const* path)
             strerror(errno));
     }
 
-    // NUL terminate.
-    source = autil_xalloc(source, source_size + 1);
-    ((char*)source)[source_size] = '\0';
+    // NUL-prefix and NUL-terminator.
+    // [t][e][x][t]
+    // v                      v
+    // [\0][t][e][x][t][\0]
+    text = autil_xalloc(text, text_size + 2);
+    char* const result = (char*)text + 1;
+    autil_memmove(result, text, text_size);
+    result[-1] = '\0'; // NUL-prefix.
+    result[text_size] = '\0'; // NUL-terminator.
 
-    return source;
+    return result;
 }
 
 struct module*
-module_new(char const* path)
+module_new(char const* name, char const* path)
 {
+    assert(name != NULL);
     assert(path != NULL);
 
     struct module* const self = autil_xalloc(NULL, sizeof(*self));
     memset(self, 0x00, sizeof(*self));
 
+    self->name = autil_sipool_intern_cstr(context()->sipool, name);
     self->path = autil_sipool_intern_cstr(context()->sipool, path);
 
     char* const source = read_source(self->path);
-    autil_freezer_register(context()->freezer, source);
+    autil_freezer_register(context()->freezer, source - 1);
     self->source = source;
+    self->source_count = strlen(source);
 
     self->symbols = symbol_table_new(NULL);
     symbol_table_insert(
@@ -658,12 +665,12 @@ context(void)
 }
 
 struct module const*
-load_module(char const* path)
+load_module(char const* name, char const* path)
 {
     assert(path != NULL);
     assert(lookup_module(path) == NULL);
 
-    struct module* const module = module_new(path);
+    struct module* const module = module_new(name, path);
     autil_sbuf_push(s_context.modules, module);
 
     parse(module);
@@ -680,7 +687,6 @@ lookup_module(char const* path)
     assert(path != NULL);
 
     for (size_t i = 0; i < autil_sbuf_count(context()->modules); ++i) {
-        // TODO: Maybe lookup by realpath?
         if (context()->modules[i]->path == path) {
             return context()->modules[i];
         }

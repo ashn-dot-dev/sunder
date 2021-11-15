@@ -267,7 +267,7 @@ lex_integer(struct lexer* self)
     // Digits
     if (!radix_isdigit(*self->current)) {
         struct source_location const location = {
-            self->module->path, self->current_line, self->current};
+            self->module->name, self->current_line, self->current};
         fatal(&location, "integer literal has no digits");
     }
     while (radix_isdigit(*self->current)) {
@@ -304,12 +304,12 @@ lex_bytes(struct lexer* self)
     while (*self->current != '"') {
         if (*self->current == '\n') {
             struct source_location const location = {
-                self->module->path, self->current_line, self->current};
+                self->module->name, self->current_line, self->current};
             fatal(&location, "end-of-line encountered in bytes literal");
         }
         if (!autil_isprint(*self->current)) {
             struct source_location const location = {
-                self->module->path, self->current_line, self->current};
+                self->module->name, self->current_line, self->current};
             fatal(
                 &location,
                 "non-printable byte %x in bytes literal",
@@ -351,7 +351,7 @@ lex_bytes(struct lexer* self)
         }
         default: {
             struct source_location const location = {
-                self->module->path, self->current_line, self->current};
+                self->module->name, self->current_line, self->current};
             fatal(&location, "unknown escape sequence");
         }
         }
@@ -408,7 +408,7 @@ lexer_next_token(struct lexer* self)
 
     skip_whitespace_and_comments(self);
     self->next_token_location = (struct source_location){
-        self->module->path,
+        self->module->name,
         self->current_line,
         self->current,
     };
