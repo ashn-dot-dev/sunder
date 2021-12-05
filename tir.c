@@ -59,7 +59,8 @@ type_new_s8(void)
 struct type*
 type_new_u16(void)
 {
-    struct type* const self = type_new(context()->interned.u16, 2u, 2u, TYPE_U16);
+    struct type* const self =
+        type_new(context()->interned.u16, 2u, 2u, TYPE_U16);
     self->data.integer.min = context()->u16_min;
     self->data.integer.max = context()->u16_max;
     return self;
@@ -68,7 +69,8 @@ type_new_u16(void)
 struct type*
 type_new_s16(void)
 {
-    struct type* const self = type_new(context()->interned.s16, 2u, 2u, TYPE_S16);
+    struct type* const self =
+        type_new(context()->interned.s16, 2u, 2u, TYPE_S16);
     self->data.integer.min = context()->s16_min;
     self->data.integer.max = context()->s16_max;
     return self;
@@ -77,7 +79,8 @@ type_new_s16(void)
 struct type*
 type_new_u32(void)
 {
-    struct type* const self = type_new(context()->interned.u32, 4u, 4u, TYPE_U32);
+    struct type* const self =
+        type_new(context()->interned.u32, 4u, 4u, TYPE_U32);
     self->data.integer.min = context()->u32_min;
     self->data.integer.max = context()->u32_max;
     return self;
@@ -86,7 +89,8 @@ type_new_u32(void)
 struct type*
 type_new_s32(void)
 {
-    struct type* const self = type_new(context()->interned.s32, 4u, 4u, TYPE_S32);
+    struct type* const self =
+        type_new(context()->interned.s32, 4u, 4u, TYPE_S32);
     self->data.integer.min = context()->s32_min;
     self->data.integer.max = context()->s32_max;
     return self;
@@ -95,7 +99,8 @@ type_new_s32(void)
 struct type*
 type_new_u64(void)
 {
-    struct type* const self = type_new(context()->interned.u64, 8u, 8u, TYPE_U64);
+    struct type* const self =
+        type_new(context()->interned.u64, 8u, 8u, TYPE_U64);
     self->data.integer.min = context()->u64_min;
     self->data.integer.max = context()->u64_max;
     return self;
@@ -104,7 +109,8 @@ type_new_u64(void)
 struct type*
 type_new_s64(void)
 {
-    struct type* const self = type_new(context()->interned.s64, 8u, 8u, TYPE_S64);
+    struct type* const self =
+        type_new(context()->interned.s64, 8u, 8u, TYPE_S64);
     self->data.integer.min = context()->s64_min;
     self->data.integer.max = context()->s64_max;
     return self;
@@ -134,7 +140,10 @@ struct type*
 type_new_integer(void)
 {
     struct type* const self = type_new(
-        context()->interned.integer, SIZEOF_UNSIZED, ALIGNOF_UNSIZED, TYPE_UNSIZED_INTEGER);
+        context()->interned.integer,
+        SIZEOF_UNSIZED,
+        ALIGNOF_UNSIZED,
+        TYPE_UNSIZED_INTEGER);
     self->data.integer.min = NULL;
     self->data.integer.max = NULL;
     return self;

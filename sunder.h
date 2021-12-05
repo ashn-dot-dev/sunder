@@ -1260,7 +1260,8 @@ expr_new_access_slice(
 struct expr*
 expr_new_sizeof(struct source_location const* location, struct type const* rhs);
 struct expr*
-expr_new_alignof(struct source_location const* location, struct type const* rhs);
+expr_new_alignof(
+    struct source_location const* location, struct type const* rhs);
 struct expr*
 expr_new_unary(
     struct source_location const* location,
