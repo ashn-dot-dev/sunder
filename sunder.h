@@ -286,6 +286,7 @@ enum token_kind {
     TOKEN_BREAK,
     TOKEN_CONTINUE,
     TOKEN_SYSCALL,
+    TOKEN_ALIGNOF,
     TOKEN_COUNTOF,
     TOKEN_SIZEOF,
     TOKEN_TYPEOF,
@@ -538,6 +539,7 @@ struct cst_expr {
         CST_EXPR_ACCESS_SLICE,
         // Prefix Unary Operator Expressions
         CST_EXPR_SIZEOF,
+        CST_EXPR_ALIGNOF,
         CST_EXPR_UNARY,
         // Infix Binary Operator Expressions
         CST_EXPR_BINARY,
@@ -586,6 +588,9 @@ struct cst_expr {
         struct {
             struct cst_typespec const* rhs;
         } sizeof_;
+        struct {
+            struct cst_typespec const* rhs;
+        } alignof_;
         struct {
             struct token const* op;
             struct cst_expr const* rhs;
@@ -649,6 +654,9 @@ cst_expr_new_access_slice(
     struct cst_expr const* end);
 struct cst_expr*
 cst_expr_new_sizeof(
+    struct source_location const* location, struct cst_typespec const* rhs);
+struct cst_expr*
+cst_expr_new_alignof(
     struct source_location const* location, struct cst_typespec const* rhs);
 struct cst_expr*
 cst_expr_new_unary(struct token const* op, struct cst_expr const* rhs);
@@ -785,13 +793,15 @@ order(struct module* module);
 //////// tir.c /////////////////////////////////////////////////////////////////
 // Tree-based intermediate representation.
 
-// SIZEOF_UNSIZED is given the largest possible value of a size_t so that checks
-// such as assert(type->size <= 8u) in the resolve and code generation phases
-// will fail for unsized types.
+// SIZEOF_UNSIZED and ALIGNOF_UNSIZED are given the largest possible value of a
+// size_t so that checks such as assert(type->size <= 8u) in the resolve and
+// code generation phases will fail for unsized types.
 #define SIZEOF_UNSIZED ((size_t)SIZE_MAX)
+#define ALIGNOF_UNSIZED ((size_t)SIZE_MAX)
 struct type {
     char const* name; // Canonical human-readable type-name (interned)
     size_t size; // sizeof
+    size_t align; // alignof
 
     enum type_kind {
         TYPE_VOID,
@@ -1113,6 +1123,7 @@ struct expr {
         EXPR_ACCESS_INDEX,
         EXPR_ACCESS_SLICE,
         EXPR_SIZEOF,
+        EXPR_ALIGNOF,
         EXPR_UNARY,
         EXPR_BINARY,
     } kind;
@@ -1156,6 +1167,9 @@ struct expr {
         struct {
             struct type const* rhs;
         } sizeof_;
+        struct {
+            struct type const* rhs;
+        } alignof_;
         struct {
             enum uop_kind {
                 UOP_NOT,
@@ -1245,6 +1259,8 @@ expr_new_access_slice(
     struct expr const* end);
 struct expr*
 expr_new_sizeof(struct source_location const* location, struct type const* rhs);
+struct expr*
+expr_new_alignof(struct source_location const* location, struct type const* rhs);
 struct expr*
 expr_new_unary(
     struct source_location const* location,

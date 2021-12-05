@@ -7,7 +7,7 @@
 #include "sunder.h"
 
 static struct type*
-type_new(char const* name, size_t size, enum type_kind kind)
+type_new(char const* name, size_t size, size_t align, enum type_kind kind)
 {
     assert(name != NULL);
 
@@ -15,6 +15,7 @@ type_new(char const* name, size_t size, enum type_kind kind)
     memset(self, 0x00, sizeof(*self));
     self->name = name;
     self->size = size;
+    self->align = align;
     self->kind = kind;
     return self;
 }
@@ -22,25 +23,25 @@ type_new(char const* name, size_t size, enum type_kind kind)
 struct type*
 type_new_void(void)
 {
-    return type_new(context()->interned.void_, 0u, TYPE_VOID);
+    return type_new(context()->interned.void_, 0u, 0u, TYPE_VOID);
 }
 
 struct type*
 type_new_bool(void)
 {
-    return type_new(context()->interned.bool_, 1u, TYPE_BOOL);
+    return type_new(context()->interned.bool_, 1u, 1u, TYPE_BOOL);
 }
 
 struct type*
 type_new_byte(void)
 {
-    return type_new(context()->interned.byte, 1u, TYPE_BYTE);
+    return type_new(context()->interned.byte, 1u, 1u, TYPE_BYTE);
 }
 
 struct type*
 type_new_u8(void)
 {
-    struct type* const self = type_new(context()->interned.u8, 1u, TYPE_U8);
+    struct type* const self = type_new(context()->interned.u8, 1u, 1u, TYPE_U8);
     self->data.integer.min = context()->u8_min;
     self->data.integer.max = context()->u8_max;
     return self;
@@ -49,7 +50,7 @@ type_new_u8(void)
 struct type*
 type_new_s8(void)
 {
-    struct type* const self = type_new(context()->interned.s8, 1u, TYPE_S8);
+    struct type* const self = type_new(context()->interned.s8, 1u, 1u, TYPE_S8);
     self->data.integer.min = context()->s8_min;
     self->data.integer.max = context()->s8_max;
     return self;
@@ -58,7 +59,7 @@ type_new_s8(void)
 struct type*
 type_new_u16(void)
 {
-    struct type* const self = type_new(context()->interned.u16, 2u, TYPE_U16);
+    struct type* const self = type_new(context()->interned.u16, 2u, 2u, TYPE_U16);
     self->data.integer.min = context()->u16_min;
     self->data.integer.max = context()->u16_max;
     return self;
@@ -67,7 +68,7 @@ type_new_u16(void)
 struct type*
 type_new_s16(void)
 {
-    struct type* const self = type_new(context()->interned.s16, 2u, TYPE_S16);
+    struct type* const self = type_new(context()->interned.s16, 2u, 2u, TYPE_S16);
     self->data.integer.min = context()->s16_min;
     self->data.integer.max = context()->s16_max;
     return self;
@@ -76,7 +77,7 @@ type_new_s16(void)
 struct type*
 type_new_u32(void)
 {
-    struct type* const self = type_new(context()->interned.u32, 4u, TYPE_U32);
+    struct type* const self = type_new(context()->interned.u32, 4u, 4u, TYPE_U32);
     self->data.integer.min = context()->u32_min;
     self->data.integer.max = context()->u32_max;
     return self;
@@ -85,7 +86,7 @@ type_new_u32(void)
 struct type*
 type_new_s32(void)
 {
-    struct type* const self = type_new(context()->interned.s32, 4u, TYPE_S32);
+    struct type* const self = type_new(context()->interned.s32, 4u, 4u, TYPE_S32);
     self->data.integer.min = context()->s32_min;
     self->data.integer.max = context()->s32_max;
     return self;
@@ -94,7 +95,7 @@ type_new_s32(void)
 struct type*
 type_new_u64(void)
 {
-    struct type* const self = type_new(context()->interned.u64, 8u, TYPE_U64);
+    struct type* const self = type_new(context()->interned.u64, 8u, 8u, TYPE_U64);
     self->data.integer.min = context()->u64_min;
     self->data.integer.max = context()->u64_max;
     return self;
@@ -103,7 +104,7 @@ type_new_u64(void)
 struct type*
 type_new_s64(void)
 {
-    struct type* const self = type_new(context()->interned.s64, 8u, TYPE_S64);
+    struct type* const self = type_new(context()->interned.s64, 8u, 8u, TYPE_S64);
     self->data.integer.min = context()->s64_min;
     self->data.integer.max = context()->s64_max;
     return self;
@@ -113,7 +114,7 @@ struct type*
 type_new_usize(void)
 {
     struct type* const self =
-        type_new(context()->interned.usize, 8u, TYPE_USIZE);
+        type_new(context()->interned.usize, 8u, 8u, TYPE_USIZE);
     self->data.integer.min = context()->usize_min;
     self->data.integer.max = context()->usize_max;
     return self;
@@ -123,7 +124,7 @@ struct type*
 type_new_ssize(void)
 {
     struct type* const self =
-        type_new(context()->interned.ssize, 8u, TYPE_SSIZE);
+        type_new(context()->interned.ssize, 8u, 8u, TYPE_SSIZE);
     self->data.integer.min = context()->ssize_min;
     self->data.integer.max = context()->ssize_max;
     return self;
@@ -133,7 +134,7 @@ struct type*
 type_new_integer(void)
 {
     struct type* const self = type_new(
-        context()->interned.integer, SIZEOF_UNSIZED, TYPE_UNSIZED_INTEGER);
+        context()->interned.integer, SIZEOF_UNSIZED, ALIGNOF_UNSIZED, TYPE_UNSIZED_INTEGER);
     self->data.integer.min = NULL;
     self->data.integer.max = NULL;
     return self;
@@ -159,7 +160,7 @@ type_new_function(
         autil_string_count(name_string));
     autil_string_del(name_string);
 
-    struct type* const self = type_new(name, 8u, TYPE_FUNCTION);
+    struct type* const self = type_new(name, 8u, 8u, TYPE_FUNCTION);
     self->data.function.parameter_types = parameter_types;
     self->data.function.return_type = return_type;
     return self;
@@ -178,7 +179,7 @@ type_new_pointer(struct type const* base)
         autil_string_count(name_string));
     autil_string_del(name_string);
 
-    struct type* const self = type_new(name, 8u, TYPE_POINTER);
+    struct type* const self = type_new(name, 8u, 8u, TYPE_POINTER);
     self->data.pointer.base = base;
     return self;
 }
@@ -198,8 +199,13 @@ type_new_array(size_t count, struct type const* base)
 
     size_t const size = count * base->size;
     assert((count == 0 || size / count == base->size) && "array size overflow");
+    // https://en.cppreference.com/w/c/language/_Alignof
+    // > Returns the alignment requirement of the type named by type-name. If
+    // > type-name is an array type, the result is the alignment requirement of
+    // > the array element type.
+    size_t const align = base->align;
 
-    struct type* const self = type_new(name, size, TYPE_ARRAY);
+    struct type* const self = type_new(name, size, align, TYPE_ARRAY);
     self->data.array.count = count;
     self->data.array.base = base;
     return self;
@@ -218,7 +224,7 @@ type_new_slice(struct type const* base)
         autil_string_count(name_string));
     autil_string_del(name_string);
 
-    struct type* const self = type_new(name, 8u * 2u, TYPE_SLICE);
+    struct type* const self = type_new(name, 8u * 2u, 8u, TYPE_SLICE);
     self->data.pointer.base = base;
     return self;
 }
@@ -978,6 +984,18 @@ expr_new_sizeof(struct source_location const* location, struct type const* rhs)
 }
 
 struct expr*
+expr_new_alignof(struct source_location const* location, struct type const* rhs)
+{
+    assert(location != NULL);
+    assert(rhs != NULL);
+
+    struct expr* const self =
+        expr_new(location, context()->builtin.usize, EXPR_ALIGNOF);
+    self->data.sizeof_.rhs = rhs;
+    return self;
+}
+
+struct expr*
 expr_new_unary(
     struct source_location const* location,
     struct type const* type,
@@ -1050,6 +1068,7 @@ expr_is_lvalue(struct expr const* self)
     case EXPR_CALL: /* fallthrough */
     case EXPR_ACCESS_SLICE: /* fallthrough */
     case EXPR_SIZEOF: /* fallthrough */
+    case EXPR_ALIGNOF: /* fallthrough */
     case EXPR_BINARY: {
         return false;
     }

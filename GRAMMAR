@@ -62,6 +62,7 @@
          | <expr-access-index>
          | <expr-access-slice>
          | <expr-sizeof>
+         | <expr-alignof>
          | <expr-unary>
          | <expr-binary>
 
@@ -86,6 +87,8 @@
 <expr-access-slice> ::= <expr> "[" <expr> ":" <expr> "]"
 
 <expr-sizeof> ::= "sizeof" "(" ":" <typespec> ")"
+
+<expr-alignof> ::= "alignof" "(" ":" <typespec> ")"
 
 <expr-unary> ::= "not" <expr>
                | "+" <expr>

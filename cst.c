@@ -473,6 +473,18 @@ cst_expr_new_sizeof(
 }
 
 struct cst_expr*
+cst_expr_new_alignof(
+    struct source_location const* location, struct cst_typespec const* rhs)
+{
+    assert(location != NULL);
+    assert(rhs != NULL);
+
+    struct cst_expr* const self = cst_expr_new(location, CST_EXPR_ALIGNOF);
+    self->data.alignof_.rhs = rhs;
+    return self;
+}
+
+struct cst_expr*
 cst_expr_new_unary(struct token const* op, struct cst_expr const* rhs)
 {
     assert(op != NULL);

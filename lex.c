@@ -32,6 +32,7 @@ static struct autil_vstr token_kind_vstrs[TOKEN_EOF + 1u] = {
     [TOKEN_BREAK] = AUTIL_VSTR_INIT_STR_LITERAL("break"),
     [TOKEN_CONTINUE] = AUTIL_VSTR_INIT_STR_LITERAL("continue"),
     [TOKEN_SYSCALL] = AUTIL_VSTR_INIT_STR_LITERAL("syscall"),
+    [TOKEN_ALIGNOF] = AUTIL_VSTR_INIT_STR_LITERAL("alignof"),
     [TOKEN_COUNTOF] = AUTIL_VSTR_INIT_STR_LITERAL("countof"),
     [TOKEN_SIZEOF] = AUTIL_VSTR_INIT_STR_LITERAL("sizeof"),
     [TOKEN_TYPEOF] = AUTIL_VSTR_INIT_STR_LITERAL("typeof"),

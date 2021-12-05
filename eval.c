@@ -31,6 +31,8 @@ eval_rvalue_access_slice(struct expr const* expr);
 static struct value*
 eval_rvalue_sizeof(struct expr const* expr);
 static struct value*
+eval_rvalue_alignof(struct expr const* expr);
+static struct value*
 eval_rvalue_unary(struct expr const* expr);
 static struct value*
 eval_rvalue_binary(struct expr const* expr);
@@ -100,6 +102,9 @@ eval_rvalue(struct expr const* expr)
     }
     case EXPR_SIZEOF: {
         return eval_rvalue_sizeof(expr);
+    }
+    case EXPR_ALIGNOF: {
+        return eval_rvalue_alignof(expr);
     }
     case EXPR_UNARY: {
         return eval_rvalue_unary(expr);
@@ -456,6 +461,20 @@ eval_rvalue_sizeof(struct expr const* expr)
     struct autil_bigint* const size_bigint =
         autil_bigint_new(AUTIL_BIGINT_ZERO);
     uz_to_bigint(size_bigint, expr->data.sizeof_.rhs->size);
+
+    assert(expr->type->kind == TYPE_USIZE);
+    return value_new_integer(context()->builtin.usize, size_bigint);
+}
+
+static struct value*
+eval_rvalue_alignof(struct expr const* expr)
+{
+    assert(expr != NULL);
+    assert(expr->kind == EXPR_ALIGNOF);
+
+    struct autil_bigint* const size_bigint =
+        autil_bigint_new(AUTIL_BIGINT_ZERO);
+    uz_to_bigint(size_bigint, expr->data.alignof_.rhs->align);
 
     assert(expr->type->kind == TYPE_USIZE);
     return value_new_integer(context()->builtin.usize, size_bigint);
@@ -857,6 +876,7 @@ eval_lvalue(struct expr const* expr)
     case EXPR_CALL: /* fallthrough */
     case EXPR_ACCESS_SLICE: /* fallthrough */
     case EXPR_SIZEOF: /* fallthrough */
+    case EXPR_ALIGNOF: /* fallthrough */
     case EXPR_BINARY: {
         UNREACHABLE();
     }

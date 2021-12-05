@@ -194,6 +194,8 @@ resolve_expr_access_slice(
 static struct expr const*
 resolve_expr_sizeof(struct resolver* resolver, struct cst_expr const* expr);
 static struct expr const*
+resolve_expr_alignof(struct resolver* resolver, struct cst_expr const* expr);
+static struct expr const*
 resolve_expr_unary(struct resolver* resolver, struct cst_expr const* expr);
 static struct expr const*
 resolve_expr_unary_logical(
@@ -1402,6 +1404,9 @@ resolve_expr(struct resolver* resolver, struct cst_expr const* expr)
     case CST_EXPR_SIZEOF: {
         return resolve_expr_sizeof(resolver, expr);
     }
+    case CST_EXPR_ALIGNOF: {
+        return resolve_expr_alignof(resolver, expr);
+    }
     case CST_EXPR_UNARY: {
         return resolve_expr_unary(resolver, expr);
     }
@@ -2002,6 +2007,24 @@ resolve_expr_sizeof(struct resolver* resolver, struct cst_expr const* expr)
     }
 
     struct expr* const resolved = expr_new_sizeof(expr->location, rhs);
+
+    autil_freezer_register(context()->freezer, resolved);
+    return resolved;
+}
+
+static struct expr const*
+resolve_expr_alignof(struct resolver* resolver, struct cst_expr const* expr)
+{
+    assert(resolver != NULL);
+    assert(expr != NULL);
+
+    struct type const* const rhs =
+        resolve_typespec(resolver, expr->data.alignof_.rhs);
+    if (rhs->align == ALIGNOF_UNSIZED) {
+        fatal(expr->location, "type `%s` has no defined alignment", rhs->name);
+    }
+
+    struct expr* const resolved = expr_new_alignof(expr->location, rhs);
 
     autil_freezer_register(context()->freezer, resolved);
     return resolved;

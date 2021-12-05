@@ -637,6 +637,8 @@ codegen_rvalue_access_slice_lhs_slice(struct expr const* expr, size_t id);
 static void
 codegen_rvalue_sizeof(struct expr const* expr, size_t id);
 static void
+codegen_rvalue_alignof(struct expr const* expr, size_t id);
+static void
 codegen_rvalue_unary(struct expr const* expr, size_t id);
 static void
 codegen_rvalue_binary(struct expr const* expr, size_t id);
@@ -1124,6 +1126,7 @@ codegen_rvalue(struct expr const* expr)
         TABLE_ENTRY(EXPR_ACCESS_INDEX, codegen_rvalue_access_index),
         TABLE_ENTRY(EXPR_ACCESS_SLICE, codegen_rvalue_access_slice),
         TABLE_ENTRY(EXPR_SIZEOF, codegen_rvalue_sizeof),
+        TABLE_ENTRY(EXPR_ALIGNOF, codegen_rvalue_alignof),
         TABLE_ENTRY(EXPR_UNARY, codegen_rvalue_unary),
         TABLE_ENTRY(EXPR_BINARY, codegen_rvalue_binary),
 #undef TABLE_ENTRY
@@ -1133,6 +1136,7 @@ codegen_rvalue(struct expr const* expr)
     char const* const cstr = table[expr->kind].kind_cstr;
     appendli_location(expr->location, "%s (ID %zu, RVALUE)", cstr, id);
     appendln("%s%zu_bgn:", LABEL_EXPR, id);
+    assert(table[expr->kind].codegen_fn != NULL);
     table[expr->kind].codegen_fn(expr, id);
     appendln("%s%zu_end:", LABEL_EXPR, id);
 }
@@ -1681,6 +1685,18 @@ codegen_rvalue_sizeof(struct expr const* expr, size_t id)
 }
 
 static void
+codegen_rvalue_alignof(struct expr const* expr, size_t id)
+{
+    assert(expr != NULL);
+    assert(expr->kind == EXPR_ALIGNOF);
+    (void)id;
+
+    assert(expr->type->kind == TYPE_USIZE);
+    appendli("mov rax, %zu", expr->data.alignof_.rhs->align);
+    appendli("push rax");
+}
+
+static void
 codegen_rvalue_unary(struct expr const* expr, size_t id)
 {
     assert(expr != NULL);
@@ -2167,6 +2183,7 @@ codegen_lvalue(struct expr const* expr)
     char const* const cstr = table[expr->kind].kind_cstr;
     appendli_location(expr->location, "%s (ID %zu, LVALUE)", cstr, id);
     appendln("%s%zu_bgn:", LABEL_EXPR, id);
+    assert(table[expr->kind].codegen_fn != NULL);
     table[expr->kind].codegen_fn(expr, id);
     appendln("%s%zu_end:", LABEL_EXPR, id);
 }
