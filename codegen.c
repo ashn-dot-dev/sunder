@@ -191,7 +191,7 @@ append_dx_type(struct type const* type)
         append("db");
         return;
     }
-    case TYPE_UNSIZED_INTEGER: {
+    case TYPE_INTEGER: {
         UNREACHABLE();
     }
     case TYPE_FUNCTION: /* fallthrough */
@@ -247,7 +247,7 @@ append_dx_data(struct value const* value)
         autil_sbuf_fini(bytes);
         return;
     }
-    case TYPE_UNSIZED_INTEGER: {
+    case TYPE_INTEGER: {
         UNREACHABLE();
     }
     case TYPE_FUNCTION: {
@@ -1341,7 +1341,7 @@ codegen_rvalue_cast(struct expr const* expr, size_t id)
         // A MOV with r/m64 has nothing to zero-extend/sign-extend.
         break;
     case TYPE_VOID: /* fallthrough */
-    case TYPE_UNSIZED_INTEGER: /* fallthrough */
+    case TYPE_INTEGER: /* fallthrough */
     case TYPE_FUNCTION: /* fallthrough */
     case TYPE_ARRAY: /* fallthrough */
     case TYPE_SLICE:
@@ -1729,7 +1729,7 @@ codegen_rvalue_unary(struct expr const* expr, size_t id)
 
         char const* rhs_reg = reg_a(expr->data.unary.rhs->type->size);
         appendli("pop rax");
-        if (type_is_sinteger(rhs->type)) {
+        if (type_is_signed_integer(rhs->type)) {
             char* const min_cstr =
                 autil_bigint_to_new_cstr(rhs->type->data.integer.min, NULL);
             appendli("mov rbx, %s", min_cstr);
@@ -1944,7 +1944,7 @@ codegen_rvalue_binary(struct expr const* expr, size_t id)
         appendli("mov rdx, 1"); // register holding true
         appendli("cmp %s, %s", lhs_reg, rhs_reg);
         appendli(
-            "%s rcx, rdx", type_is_sinteger(xhs_type) ? "cmovle" : "cmovbe");
+            "%s rcx, rdx", type_is_signed_integer(xhs_type) ? "cmovle" : "cmovbe");
         appendli("push rcx");
         return;
     }
@@ -1966,7 +1966,7 @@ codegen_rvalue_binary(struct expr const* expr, size_t id)
         appendli("mov rcx, 0"); // result (default false)
         appendli("mov rdx, 1"); // register holding true
         appendli("cmp %s, %s", lhs_reg, rhs_reg);
-        appendli("%s rcx, rdx", type_is_sinteger(xhs_type) ? "cmovl" : "cmovb");
+        appendli("%s rcx, rdx", type_is_signed_integer(xhs_type) ? "cmovl" : "cmovb");
         appendli("push rcx");
         return;
     }
@@ -1989,7 +1989,7 @@ codegen_rvalue_binary(struct expr const* expr, size_t id)
         appendli("mov rdx, 1"); // register holding true
         appendli("cmp %s, %s", lhs_reg, rhs_reg);
         appendli(
-            "%s rcx, rdx", type_is_sinteger(xhs_type) ? "cmovge" : "cmovae");
+            "%s rcx, rdx", type_is_signed_integer(xhs_type) ? "cmovge" : "cmovae");
         appendli("push rcx");
         return;
     }
@@ -2011,7 +2011,7 @@ codegen_rvalue_binary(struct expr const* expr, size_t id)
         appendli("mov rcx, 0"); // result (default false)
         appendli("mov rdx, 1"); // register holding true
         appendli("cmp %s, %s", lhs_reg, rhs_reg);
-        appendli("%s rcx, rdx", type_is_sinteger(xhs_type) ? "cmovg" : "cmova");
+        appendli("%s rcx, rdx", type_is_signed_integer(xhs_type) ? "cmovg" : "cmova");
         appendli("push rcx");
         return;
     }
@@ -2026,7 +2026,7 @@ codegen_rvalue_binary(struct expr const* expr, size_t id)
         char const* const lhs_reg = reg_a(xhs_type->size);
         char const* const rhs_reg = reg_b(xhs_type->size);
         char const* const jmp_not_overflow =
-            type_is_sinteger(xhs_type) ? "jno" : "jnc";
+            type_is_signed_integer(xhs_type) ? "jno" : "jnc";
 
         codegen_rvalue(expr->data.binary.lhs);
         codegen_rvalue(expr->data.binary.rhs);
@@ -2049,7 +2049,7 @@ codegen_rvalue_binary(struct expr const* expr, size_t id)
         char const* const lhs_reg = reg_a(xhs_type->size);
         char const* const rhs_reg = reg_b(xhs_type->size);
         char const* const jmp_not_overflow =
-            type_is_sinteger(xhs_type) ? "jno" : "jnc";
+            type_is_signed_integer(xhs_type) ? "jno" : "jnc";
 
         codegen_rvalue(expr->data.binary.lhs);
         codegen_rvalue(expr->data.binary.rhs);
@@ -2070,7 +2070,7 @@ codegen_rvalue_binary(struct expr const* expr, size_t id)
         struct type const* const xhs_type = expr->data.binary.lhs->type;
 
         char const* const rhs_reg = reg_b(xhs_type->size);
-        char const* const mul = type_is_sinteger(xhs_type) ? "imul" : "mul";
+        char const* const mul = type_is_signed_integer(xhs_type) ? "imul" : "mul";
 
         codegen_rvalue(expr->data.binary.lhs);
         codegen_rvalue(expr->data.binary.rhs);
@@ -2091,7 +2091,7 @@ codegen_rvalue_binary(struct expr const* expr, size_t id)
         struct type const* const xhs_type = expr->data.binary.lhs->type;
 
         char const* const rhs_reg = reg_b(xhs_type->size);
-        char const* const div = type_is_sinteger(xhs_type) ? "idiv" : "div";
+        char const* const div = type_is_signed_integer(xhs_type) ? "idiv" : "div";
 
         codegen_rvalue(expr->data.binary.lhs);
         codegen_rvalue(expr->data.binary.rhs);

@@ -469,7 +469,7 @@ shallow_implicit_cast(struct type const* type, struct expr const* expr)
     }
 
     // FROM untyped integer TO byte.
-    if (type->kind == TYPE_BYTE && expr->type->kind == TYPE_UNSIZED_INTEGER) {
+    if (type->kind == TYPE_BYTE && expr->type->kind == TYPE_INTEGER) {
         struct autil_bigint const* const min = context()->u8_min;
         struct autil_bigint const* const max = context()->u8_max;
 
@@ -500,8 +500,8 @@ shallow_implicit_cast(struct type const* type, struct expr const* expr)
     }
 
     // FROM untyped integer TO typed integer.
-    if (type_is_integer(type) && type->kind != TYPE_UNSIZED_INTEGER
-        && expr->type->kind == TYPE_UNSIZED_INTEGER) {
+    if (type_is_any_integer(type) && type->kind != TYPE_INTEGER
+        && expr->type->kind == TYPE_INTEGER) {
         assert(type->data.integer.min != NULL);
         assert(type->data.integer.max != NULL);
         struct autil_bigint const* const min = type->data.integer.min;
@@ -1778,13 +1778,13 @@ resolve_expr_cast(struct resolver* resolver, struct cst_expr const* expr)
             rhs->type->name);
     }
 
-    bool const valid = (type_is_integer(type) && type_is_integer(rhs->type))
+    bool const valid = (type_is_any_integer(type) && type_is_any_integer(rhs->type))
         || (type->kind == TYPE_BOOL && rhs->type->kind == TYPE_BYTE)
         || (type->kind == TYPE_BYTE && rhs->type->kind == TYPE_BOOL)
-        || (type->kind == TYPE_BOOL && type_is_integer(rhs->type))
-        || (type_is_integer(type) && rhs->type->kind == TYPE_BOOL)
-        || (type->kind == TYPE_BYTE && type_is_integer(rhs->type))
-        || (type_is_integer(type) && rhs->type->kind == TYPE_BYTE)
+        || (type->kind == TYPE_BOOL && type_is_any_integer(rhs->type))
+        || (type_is_any_integer(type) && rhs->type->kind == TYPE_BOOL)
+        || (type->kind == TYPE_BYTE && type_is_any_integer(rhs->type))
+        || (type_is_any_integer(type) && rhs->type->kind == TYPE_BYTE)
         || (type->kind == TYPE_POINTER && rhs->type->kind == TYPE_USIZE)
         || (type->kind == TYPE_USIZE && rhs->type->kind == TYPE_POINTER)
         || (type->kind == TYPE_POINTER && rhs->type->kind == TYPE_POINTER);
@@ -1836,7 +1836,7 @@ resolve_expr_syscall(struct resolver* resolver, struct cst_expr const* expr)
         }
 
         bool const valid_type =
-            type_is_integer(arg->type) || arg->type->kind == TYPE_POINTER;
+            type_is_any_integer(arg->type) || arg->type->kind == TYPE_POINTER;
         if (!valid_type) {
             fatal(
                 arg->location,
@@ -2079,7 +2079,7 @@ resolve_expr_unary(struct resolver* resolver, struct cst_expr const* expr)
         return resolve_expr_unary_arithmetic(resolver, op, UOP_POS, rhs);
     }
     case TOKEN_DASH: {
-        if (type_is_uinteger(rhs->type)) {
+        if (type_is_unsigned_integer(rhs->type)) {
             fatal(
                 &op->location,
                 "invalid argument of type `%s` in unary `%s` expression",
@@ -2145,7 +2145,7 @@ resolve_expr_unary_arithmetic(
     assert(rhs != NULL);
     (void)resolver;
 
-    if (!type_is_integer(rhs->type)) {
+    if (!type_is_any_integer(rhs->type)) {
         fatal(
             &op->location,
             "invalid argument of type `%s` in unary `%s` expression",
@@ -2172,7 +2172,7 @@ resolve_expr_unary_bitwise(
     assert(rhs != NULL);
     (void)resolver;
 
-    if (!(rhs->type->kind == TYPE_BYTE || type_is_integer(rhs->type))) {
+    if (!(rhs->type->kind == TYPE_BYTE || type_is_any_integer(rhs->type))) {
         fatal(
             rhs->location,
             "cannot apply bitwise NOT to type `%s`",
@@ -2485,8 +2485,8 @@ resolve_expr_binary_arithmetic(
     lhs = shallow_implicit_cast(rhs->type, lhs);
     rhs = shallow_implicit_cast(lhs->type, rhs);
 
-    bool const valid = lhs->type == rhs->type && type_is_integer(lhs->type)
-        && type_is_integer(rhs->type);
+    bool const valid = lhs->type == rhs->type && type_is_any_integer(lhs->type)
+        && type_is_any_integer(rhs->type);
     if (!valid) {
         fatal(
             &op->location,
@@ -2508,7 +2508,7 @@ resolve_expr_binary_arithmetic(
         struct value* const value = eval_rvalue(resolved);
         value_freeze(value, context()->freezer);
 
-        assert(type_is_integer(value->type));
+        assert(type_is_any_integer(value->type));
         resolved = expr_new_integer(
             resolved->location, resolved->type, value->data.integer);
         autil_freezer_register(context()->freezer, resolved);
@@ -2547,7 +2547,7 @@ resolve_expr_binary_bitwise(
     }
 
     bool const valid = type->kind == TYPE_BOOL || type->kind == TYPE_BYTE
-        || type_is_integer(type);
+        || type_is_any_integer(type);
     if (!valid) {
         goto invalid_operand_types;
     }
@@ -2563,7 +2563,7 @@ resolve_expr_binary_bitwise(
         struct value* const value = eval_rvalue(resolved);
         value_freeze(value, context()->freezer);
 
-        assert(type_is_integer(value->type));
+        assert(type_is_any_integer(value->type));
         resolved = expr_new_integer(
             resolved->location, resolved->type, value->data.integer);
         autil_freezer_register(context()->freezer, resolved);

@@ -143,7 +143,7 @@ type_new_integer(void)
         context()->interned.integer,
         SIZEOF_UNSIZED,
         ALIGNOF_UNSIZED,
-        TYPE_UNSIZED_INTEGER);
+        TYPE_INTEGER);
     self->data.integer.min = NULL;
     self->data.integer.max = NULL;
     return self;
@@ -324,7 +324,7 @@ type_unique_slice(struct type const* base)
 }
 
 bool
-type_is_integer(struct type const* self)
+type_is_any_integer(struct type const* self)
 {
     assert(self != NULL);
 
@@ -332,11 +332,11 @@ type_is_integer(struct type const* self)
     return kind == TYPE_U8 || kind == TYPE_S8 || kind == TYPE_U16
         || kind == TYPE_S16 || kind == TYPE_U32 || kind == TYPE_S32
         || kind == TYPE_U64 || kind == TYPE_S64 || kind == TYPE_USIZE
-        || kind == TYPE_SSIZE || kind == TYPE_UNSIZED_INTEGER;
+        || kind == TYPE_SSIZE || kind == TYPE_INTEGER;
 }
 
 bool
-type_is_uinteger(struct type const* self)
+type_is_unsigned_integer(struct type const* self)
 {
     assert(self != NULL);
 
@@ -346,7 +346,7 @@ type_is_uinteger(struct type const* self)
 }
 
 bool
-type_is_sinteger(struct type const* self)
+type_is_signed_integer(struct type const* self)
 {
     assert(self != NULL);
 
@@ -361,7 +361,7 @@ type_can_compare_equality(struct type const* self)
     assert(self != NULL);
 
     enum type_kind const kind = self->kind;
-    return kind == TYPE_BOOL || kind == TYPE_BYTE || type_is_integer(self)
+    return kind == TYPE_BOOL || kind == TYPE_BYTE || type_is_any_integer(self)
         || kind == TYPE_FUNCTION || kind == TYPE_POINTER;
 }
 
@@ -371,7 +371,7 @@ type_can_compare_order(struct type const* self)
     assert(self != NULL);
 
     enum type_kind const kind = self->kind;
-    return kind == TYPE_BOOL || kind == TYPE_BYTE || type_is_integer(self)
+    return kind == TYPE_BOOL || kind == TYPE_BYTE || type_is_any_integer(self)
         || kind == TYPE_POINTER;
 }
 
@@ -763,12 +763,12 @@ expr_new_integer(
 {
     assert(location != NULL);
     assert(type != NULL);
-    assert(type->kind == TYPE_BYTE || type_is_integer(type));
+    assert(type->kind == TYPE_BYTE || type_is_any_integer(type));
     assert(value != NULL);
 
     bool const is_byte = type->kind == TYPE_BYTE;
     bool const is_sized_integer =
-        type_is_integer(type) && type->kind != TYPE_UNSIZED_INTEGER;
+        type_is_any_integer(type) && type->kind != TYPE_INTEGER;
 
     if (is_byte && autil_bigint_cmp(value, context()->u8_min) < 0) {
         char* const lit_cstr = autil_bigint_to_new_cstr(value, NULL);
@@ -1169,13 +1169,13 @@ struct value*
 value_new_integer(struct type const* type, struct autil_bigint* integer)
 {
     assert(type != NULL);
-    assert(type->kind == TYPE_BYTE || type_is_integer(type));
+    assert(type->kind == TYPE_BYTE || type_is_any_integer(type));
     assert(integer != NULL);
     assert(
-        type->kind == TYPE_UNSIZED_INTEGER
+        type->kind == TYPE_INTEGER
         || autil_bigint_cmp(integer, type->data.integer.min) >= 0);
     assert(
-        type->kind == TYPE_UNSIZED_INTEGER
+        type->kind == TYPE_INTEGER
         || autil_bigint_cmp(integer, type->data.integer.max) <= 0);
 
     struct value* self = value_new(type);
@@ -1268,7 +1268,7 @@ value_del(struct value* self)
     case TYPE_S64: /* fallthrough */
     case TYPE_USIZE: /* fallthrough */
     case TYPE_SSIZE: /* fallthrough */
-    case TYPE_UNSIZED_INTEGER: {
+    case TYPE_INTEGER: {
         autil_bigint_del(self->data.integer);
         break;
     }
@@ -1327,7 +1327,7 @@ value_freeze(struct value* self, struct autil_freezer* freezer)
     case TYPE_S64: /* fallthrough */
     case TYPE_USIZE: /* fallthrough */
     case TYPE_SSIZE: /* fallthrough */
-    case TYPE_UNSIZED_INTEGER: {
+    case TYPE_INTEGER: {
         autil_bigint_freeze(self->data.integer, freezer);
         return;
     }
@@ -1384,7 +1384,7 @@ value_clone(struct value const* self)
     case TYPE_S64: /* fallthrough */
     case TYPE_USIZE: /* fallthrough */
     case TYPE_SSIZE: /* fallthrough */
-    case TYPE_UNSIZED_INTEGER: {
+    case TYPE_INTEGER: {
         return value_new_integer(
             self->type, autil_bigint_new(self->data.integer));
     }
@@ -1443,7 +1443,7 @@ value_eq(struct value const* lhs, struct value const* rhs)
     case TYPE_S64: /* fallthrough */
     case TYPE_USIZE: /* fallthrough */
     case TYPE_SSIZE: /* fallthrough */
-    case TYPE_UNSIZED_INTEGER: {
+    case TYPE_INTEGER: {
         return autil_bigint_cmp(lhs->data.integer, rhs->data.integer) == 0;
     }
     case TYPE_FUNCTION: {
@@ -1497,7 +1497,7 @@ value_lt(struct value const* lhs, struct value const* rhs)
     case TYPE_S64: /* fallthrough */
     case TYPE_USIZE: /* fallthrough */
     case TYPE_SSIZE: /* fallthrough */
-    case TYPE_UNSIZED_INTEGER: {
+    case TYPE_INTEGER: {
         return autil_bigint_cmp(lhs->data.integer, rhs->data.integer) < 0;
     }
     case TYPE_POINTER: {
@@ -1542,7 +1542,7 @@ value_gt(struct value const* lhs, struct value const* rhs)
     case TYPE_S64: /* fallthrough */
     case TYPE_USIZE: /* fallthrough */
     case TYPE_SSIZE: /* fallthrough */
-    case TYPE_UNSIZED_INTEGER: {
+    case TYPE_INTEGER: {
         return autil_bigint_cmp(lhs->data.integer, rhs->data.integer) > 0;
     }
     case TYPE_POINTER: {
@@ -1611,7 +1611,7 @@ value_to_new_bytes(struct value const* value)
         autil_bitarr_del(bits);
         return bytes;
     }
-    case TYPE_UNSIZED_INTEGER: {
+    case TYPE_INTEGER: {
         // Arbitrary precision integers have no meaningful byte representation.
         UNREACHABLE();
     }

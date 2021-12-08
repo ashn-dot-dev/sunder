@@ -48,10 +48,10 @@ static bool
 integer_is_out_of_range(struct type const* type, struct autil_bigint const* res)
 {
     assert(type != NULL);
-    assert(type_is_integer(type));
+    assert(type_is_any_integer(type));
     assert(res != NULL);
 
-    if (type->kind == TYPE_UNSIZED_INTEGER) {
+    if (type->kind == TYPE_INTEGER) {
         assert(type->data.integer.min == NULL);
         assert(type->data.integer.max == NULL);
         // Arbitrary precision integers do not have a defined min or max value.
@@ -161,7 +161,7 @@ eval_rvalue_integer(struct expr const* expr)
         return value_new_byte(byte);
     }
 
-    assert(type_is_integer(expr->type));
+    assert(type_is_any_integer(expr->type));
     return value_new_integer(expr->type, autil_bigint_new(integer));
 }
 
@@ -279,7 +279,7 @@ eval_rvalue_cast(struct expr const* expr)
         // Zero-extension or sign-extension bit.
         size_t bytes_count = autil_sbuf_count(bytes);
         int const extend =
-            type_is_sinteger(from->type) && (bytes[bytes_count - 1] & 0x80);
+            type_is_signed_integer(from->type) && (bytes[bytes_count - 1] & 0x80);
 
         size_t const bit_count = expr->type->size * 8u;
         struct autil_bitarr* const bits = autil_bitarr_new(bit_count);
@@ -296,14 +296,14 @@ eval_rvalue_cast(struct expr const* expr)
 
         struct autil_bigint* const integer =
             autil_bigint_new(AUTIL_BIGINT_ZERO);
-        bitarr_to_bigint(integer, bits, type_is_sinteger(expr->type));
+        bitarr_to_bigint(integer, bits, type_is_signed_integer(expr->type));
         autil_bitarr_del(bits);
 
         res = value_new_integer(expr->type, integer);
         break;
     }
     case TYPE_VOID: /* fallthrough */
-    case TYPE_UNSIZED_INTEGER: /* fallthrough */
+    case TYPE_INTEGER: /* fallthrough */
     case TYPE_FUNCTION: /* fallthrough */
     case TYPE_POINTER: /* fallthrough */
     case TYPE_ARRAY: /* fallthrough */
@@ -495,12 +495,12 @@ eval_rvalue_unary(struct expr const* expr)
     }
     case UOP_POS: {
         struct value* const rhs = eval_rvalue(expr->data.unary.rhs);
-        assert(type_is_integer(rhs->type));
+        assert(type_is_any_integer(rhs->type));
         return rhs;
     }
     case UOP_NEG: {
         struct value* const rhs = eval_rvalue(expr->data.unary.rhs);
-        assert(type_is_integer(rhs->type));
+        assert(type_is_any_integer(rhs->type));
         struct autil_bigint* const r = autil_bigint_new(AUTIL_BIGINT_ZERO);
         autil_bigint_neg(r, rhs->data.integer);
         if (integer_is_out_of_range(expr->type, r)) {
@@ -515,14 +515,14 @@ eval_rvalue_unary(struct expr const* expr)
     }
     case UOP_BITNOT: {
         struct value* const rhs = eval_rvalue(expr->data.unary.rhs);
-        assert(rhs->type->kind == TYPE_BYTE || type_is_integer(rhs->type));
+        assert(rhs->type->kind == TYPE_BYTE || type_is_any_integer(rhs->type));
 
         if (rhs->type->kind == TYPE_BYTE) {
             rhs->data.byte = (uint8_t)~rhs->data.byte;
             return rhs;
         }
 
-        bool is_signed = type_is_sinteger(rhs->type);
+        bool is_signed = type_is_signed_integer(rhs->type);
         size_t bit_count = rhs->type->size * 8u;
         struct autil_bitarr* const rhs_bits = autil_bitarr_new(bit_count);
         struct autil_bitarr* const res_bits = autil_bitarr_new(bit_count);
@@ -632,8 +632,8 @@ eval_rvalue_binary(struct expr const* expr)
         break;
     }
     case BOP_ADD: {
-        assert(type_is_integer(lhs->type));
-        assert(type_is_integer(rhs->type));
+        assert(type_is_any_integer(lhs->type));
+        assert(type_is_any_integer(rhs->type));
         struct autil_bigint* const r = autil_bigint_new(AUTIL_BIGINT_ZERO);
         autil_bigint_add(r, lhs->data.integer, rhs->data.integer);
         if (integer_is_out_of_range(expr->type, r)) {
@@ -648,8 +648,8 @@ eval_rvalue_binary(struct expr const* expr)
         break;
     }
     case BOP_SUB: {
-        assert(type_is_integer(lhs->type));
-        assert(type_is_integer(rhs->type));
+        assert(type_is_any_integer(lhs->type));
+        assert(type_is_any_integer(rhs->type));
         struct autil_bigint* const r = autil_bigint_new(AUTIL_BIGINT_ZERO);
         autil_bigint_sub(r, lhs->data.integer, rhs->data.integer);
         if (integer_is_out_of_range(expr->type, r)) {
@@ -664,8 +664,8 @@ eval_rvalue_binary(struct expr const* expr)
         break;
     }
     case BOP_MUL: {
-        assert(type_is_integer(lhs->type));
-        assert(type_is_integer(rhs->type));
+        assert(type_is_any_integer(lhs->type));
+        assert(type_is_any_integer(rhs->type));
         struct autil_bigint* const r = autil_bigint_new(AUTIL_BIGINT_ZERO);
         autil_bigint_mul(r, lhs->data.integer, rhs->data.integer);
         if (integer_is_out_of_range(expr->type, r)) {
@@ -680,8 +680,8 @@ eval_rvalue_binary(struct expr const* expr)
         break;
     }
     case BOP_DIV: {
-        assert(type_is_integer(lhs->type));
-        assert(type_is_integer(rhs->type));
+        assert(type_is_any_integer(lhs->type));
+        assert(type_is_any_integer(rhs->type));
         if (autil_bigint_cmp(rhs->data.integer, AUTIL_BIGINT_ZERO) == 0) {
             fatal(
                 expr->location,
@@ -697,10 +697,10 @@ eval_rvalue_binary(struct expr const* expr)
     case BOP_BITOR: {
         assert(
             lhs->type->kind == TYPE_BOOL || lhs->type->kind == TYPE_BYTE
-            || type_is_integer(lhs->type));
+            || type_is_any_integer(lhs->type));
         assert(
             rhs->type->kind == TYPE_BOOL || rhs->type->kind == TYPE_BYTE
-            || type_is_integer(rhs->type));
+            || type_is_any_integer(rhs->type));
         assert(lhs->type->kind == rhs->type->kind);
         struct type const* const type = lhs->type;
 
@@ -714,8 +714,8 @@ eval_rvalue_binary(struct expr const* expr)
             break;
         }
 
-        assert(type_is_integer(type));
-        bool is_signed = type_is_sinteger(type);
+        assert(type_is_any_integer(type));
+        bool is_signed = type_is_signed_integer(type);
         size_t bit_count = type->size * 8u;
         struct autil_bitarr* const lhs_bits = autil_bitarr_new(bit_count);
         struct autil_bitarr* const rhs_bits = autil_bitarr_new(bit_count);
@@ -746,10 +746,10 @@ eval_rvalue_binary(struct expr const* expr)
     case BOP_BITXOR: {
         assert(
             lhs->type->kind == TYPE_BOOL || lhs->type->kind == TYPE_BYTE
-            || type_is_integer(lhs->type));
+            || type_is_any_integer(lhs->type));
         assert(
             rhs->type->kind == TYPE_BOOL || rhs->type->kind == TYPE_BYTE
-            || type_is_integer(rhs->type));
+            || type_is_any_integer(rhs->type));
         assert(lhs->type->kind == rhs->type->kind);
         struct type const* const type = lhs->type;
 
@@ -763,8 +763,8 @@ eval_rvalue_binary(struct expr const* expr)
             break;
         }
 
-        assert(type_is_integer(type));
-        bool is_signed = type_is_sinteger(type);
+        assert(type_is_any_integer(type));
+        bool is_signed = type_is_signed_integer(type);
         size_t bit_count = type->size * 8u;
         struct autil_bitarr* const lhs_bits = autil_bitarr_new(bit_count);
         struct autil_bitarr* const rhs_bits = autil_bitarr_new(bit_count);
@@ -795,10 +795,10 @@ eval_rvalue_binary(struct expr const* expr)
     case BOP_BITAND: {
         assert(
             lhs->type->kind == TYPE_BOOL || lhs->type->kind == TYPE_BYTE
-            || type_is_integer(lhs->type));
+            || type_is_any_integer(lhs->type));
         assert(
             rhs->type->kind == TYPE_BOOL || rhs->type->kind == TYPE_BYTE
-            || type_is_integer(rhs->type));
+            || type_is_any_integer(rhs->type));
         assert(lhs->type->kind == rhs->type->kind);
         struct type const* const type = lhs->type;
 
@@ -812,8 +812,8 @@ eval_rvalue_binary(struct expr const* expr)
             break;
         }
 
-        assert(type_is_integer(type));
-        bool is_signed = type_is_sinteger(type);
+        assert(type_is_any_integer(type));
+        bool is_signed = type_is_signed_integer(type);
         size_t bit_count = type->size * 8u;
         struct autil_bitarr* const lhs_bits = autil_bitarr_new(bit_count);
         struct autil_bitarr* const rhs_bits = autil_bitarr_new(bit_count);

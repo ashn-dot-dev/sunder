@@ -817,7 +817,7 @@ struct type {
         TYPE_S64, /* integer */
         TYPE_USIZE, /* integer */
         TYPE_SSIZE, /* integer */
-        TYPE_UNSIZED_INTEGER, /* integer, untyped */
+        TYPE_INTEGER, /* integer */
         TYPE_FUNCTION,
         TYPE_POINTER,
         TYPE_ARRAY,
@@ -826,10 +826,9 @@ struct type {
     union {
         struct {
             // NOTE: The min and max fields are "optional" in the sense that
-            // they are not necessarily defined for all types satisfying the
-            // type_is_integer function. The type kind TYPE_UNSIZED_INTEGER
-            // will have these as NULL as integers of this type have no defined
-            // size.
+            // they are not defined for all types satisfying the
+            // type_is_any_integer function. The type kind TYPE_INTEGER will
+            // have these as NULL as integers of this type have no defined size.
             struct autil_bigint const* min; // optional
             struct autil_bigint const* max; // optional
         } integer;
@@ -898,11 +897,11 @@ struct type const*
 type_unique_slice(struct type const* base);
 
 bool
-type_is_integer(struct type const* self);
+type_is_any_integer(struct type const* self);
 bool
-type_is_uinteger(struct type const* self);
+type_is_unsigned_integer(struct type const* self);
 bool
-type_is_sinteger(struct type const* self);
+type_is_signed_integer(struct type const* self);
 // Returns true if the type may be compared with the == or != operators.
 bool
 type_can_compare_equality(struct type const* self);
