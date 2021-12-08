@@ -278,8 +278,8 @@ eval_rvalue_cast(struct expr const* expr)
     case TYPE_SSIZE: {
         // Zero-extension or sign-extension bit.
         size_t bytes_count = autil_sbuf_count(bytes);
-        int const extend =
-            type_is_signed_integer(from->type) && (bytes[bytes_count - 1] & 0x80);
+        int const extend = type_is_signed_integer(from->type)
+            && (bytes[bytes_count - 1] & 0x80);
 
         size_t const bit_count = expr->type->size * 8u;
         struct autil_bitarr* const bits = autil_bitarr_new(bit_count);

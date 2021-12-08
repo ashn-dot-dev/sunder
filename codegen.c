@@ -1944,7 +1944,8 @@ codegen_rvalue_binary(struct expr const* expr, size_t id)
         appendli("mov rdx, 1"); // register holding true
         appendli("cmp %s, %s", lhs_reg, rhs_reg);
         appendli(
-            "%s rcx, rdx", type_is_signed_integer(xhs_type) ? "cmovle" : "cmovbe");
+            "%s rcx, rdx",
+            type_is_signed_integer(xhs_type) ? "cmovle" : "cmovbe");
         appendli("push rcx");
         return;
     }
@@ -1966,7 +1967,9 @@ codegen_rvalue_binary(struct expr const* expr, size_t id)
         appendli("mov rcx, 0"); // result (default false)
         appendli("mov rdx, 1"); // register holding true
         appendli("cmp %s, %s", lhs_reg, rhs_reg);
-        appendli("%s rcx, rdx", type_is_signed_integer(xhs_type) ? "cmovl" : "cmovb");
+        appendli(
+            "%s rcx, rdx",
+            type_is_signed_integer(xhs_type) ? "cmovl" : "cmovb");
         appendli("push rcx");
         return;
     }
@@ -1989,7 +1992,8 @@ codegen_rvalue_binary(struct expr const* expr, size_t id)
         appendli("mov rdx, 1"); // register holding true
         appendli("cmp %s, %s", lhs_reg, rhs_reg);
         appendli(
-            "%s rcx, rdx", type_is_signed_integer(xhs_type) ? "cmovge" : "cmovae");
+            "%s rcx, rdx",
+            type_is_signed_integer(xhs_type) ? "cmovge" : "cmovae");
         appendli("push rcx");
         return;
     }
@@ -2011,7 +2015,9 @@ codegen_rvalue_binary(struct expr const* expr, size_t id)
         appendli("mov rcx, 0"); // result (default false)
         appendli("mov rdx, 1"); // register holding true
         appendli("cmp %s, %s", lhs_reg, rhs_reg);
-        appendli("%s rcx, rdx", type_is_signed_integer(xhs_type) ? "cmovg" : "cmova");
+        appendli(
+            "%s rcx, rdx",
+            type_is_signed_integer(xhs_type) ? "cmovg" : "cmova");
         appendli("push rcx");
         return;
     }
@@ -2070,7 +2076,8 @@ codegen_rvalue_binary(struct expr const* expr, size_t id)
         struct type const* const xhs_type = expr->data.binary.lhs->type;
 
         char const* const rhs_reg = reg_b(xhs_type->size);
-        char const* const mul = type_is_signed_integer(xhs_type) ? "imul" : "mul";
+        char const* const mul =
+            type_is_signed_integer(xhs_type) ? "imul" : "mul";
 
         codegen_rvalue(expr->data.binary.lhs);
         codegen_rvalue(expr->data.binary.rhs);
@@ -2091,7 +2098,8 @@ codegen_rvalue_binary(struct expr const* expr, size_t id)
         struct type const* const xhs_type = expr->data.binary.lhs->type;
 
         char const* const rhs_reg = reg_b(xhs_type->size);
-        char const* const div = type_is_signed_integer(xhs_type) ? "idiv" : "div";
+        char const* const div =
+            type_is_signed_integer(xhs_type) ? "idiv" : "div";
 
         codegen_rvalue(expr->data.binary.lhs);
         codegen_rvalue(expr->data.binary.rhs);

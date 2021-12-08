@@ -1778,7 +1778,8 @@ resolve_expr_cast(struct resolver* resolver, struct cst_expr const* expr)
             rhs->type->name);
     }
 
-    bool const valid = (type_is_any_integer(type) && type_is_any_integer(rhs->type))
+    bool const valid =
+        (type_is_any_integer(type) && type_is_any_integer(rhs->type))
         || (type->kind == TYPE_BOOL && rhs->type->kind == TYPE_BYTE)
         || (type->kind == TYPE_BYTE && rhs->type->kind == TYPE_BOOL)
         || (type->kind == TYPE_BOOL && type_is_any_integer(rhs->type))
