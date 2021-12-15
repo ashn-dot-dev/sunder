@@ -1,3 +1,8 @@
+# Brainfuck interpreter written in Sunder.
+#
+# See https://esolangs.org/wiki/Brainfuck for an overview of the brainfuck
+# language.
+
 import "std/cptr.sunder";
 import "std/cstr.sunder";
 import "std/io.sunder";
@@ -12,15 +17,6 @@ var stack: [4096]usize = (:[4096]usize)[0...];
 
 var cells_index: usize = 0;
 var stack_index: usize = 0;
-
-const MOVE_R:      byte = 0x3E; # >
-const MOVE_L:      byte = 0x3C; # <
-const INCREMENT:   byte = 0x2B; # +
-const DECREMENT:   byte = 0x2D; # -
-const PUT_BYTE:    byte = 0x2E; # .
-const GET_BYTE:    byte = 0x2C; # ,
-const LOOP_LBRACE: byte = 0x5B; # [
-const LOOP_RBRACE: byte = 0x5D; # ]
 
 func main() void {
     if sys::argc != 2 {
@@ -52,15 +48,15 @@ func main() void {
     for source_index < (:usize)source_size {
         var cur: byte = source[source_index];
 
-        if cur == MOVE_R {
+        if cur == '>' {
             cells_index = cells_index + 1;
             source_index = source_index + 1;
         }
-        elif cur == MOVE_L {
+        elif cur == '<' {
             cells_index = cells_index - 1;
             source_index = source_index + 1;
         }
-        elif cur == INCREMENT {
+        elif cur == '+' {
             if cells[cells_index] == 0xFF {
                 cells[cells_index] = 0x00;
             }
@@ -69,7 +65,7 @@ func main() void {
             }
             source_index = source_index + 1;
         }
-        elif cur == DECREMENT {
+        elif cur == '-' {
             if cells[cells_index] == 0x00 {
                 cells[cells_index] = 0xFF;
             }
@@ -78,26 +74,26 @@ func main() void {
             }
             source_index = source_index + 1;
         }
-        elif cur == PUT_BYTE {
+        elif cur == '.' {
             sys::write(sys::STDOUT_FILENO, (:*byte)&cells[cells_index], 1);
             source_index = source_index + 1;
         }
-        elif cur == GET_BYTE {
+        elif cur == ',' {
             var b: byte = 0;
             if sys::read(sys::STDIN_FILENO, &b, 1) != 0 {
                cells[cells_index] = (:u8)b;
             }
             source_index = source_index + 1;
         }
-        elif cur == LOOP_LBRACE {
+        elif cur == '[' {
             if cells[cells_index] == 0 {
                 var depth: usize = 1;
                 for depth > 0 {
                     source_index = source_index + 1;
-                    if source[source_index] == LOOP_LBRACE {
+                    if source[source_index] == '[' {
                         depth = depth + 1;
                     }
-                    if source[source_index] == LOOP_RBRACE {
+                    if source[source_index] == ']' {
                         depth = depth - 1;
                     }
                 }
@@ -108,7 +104,7 @@ func main() void {
                 source_index = source_index + 1;
             }
         }
-        elif cur == LOOP_RBRACE {
+        elif cur == ']' {
             stack_index = stack_index - 1;
             source_index = stack[stack_index];
         }

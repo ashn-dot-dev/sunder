@@ -329,6 +329,16 @@ cst_expr_new_integer(struct cst_integer const* integer)
 }
 
 struct cst_expr*
+cst_expr_new_character(struct source_location const* location, int character)
+{
+    assert(location != NULL);
+
+    struct cst_expr* const self = cst_expr_new(location, CST_EXPR_CHARACTER);
+    self->data.character = character;
+    return self;
+}
+
+struct cst_expr*
 cst_expr_new_bytes(
     struct source_location const* location, struct autil_string const* bytes)
 {

@@ -106,6 +106,8 @@ parse_expr_boolean(struct parser* parser);
 static struct cst_expr const*
 parse_expr_integer(struct parser* parser);
 static struct cst_expr const*
+parse_expr_character(struct parser* parser);
+static struct cst_expr const*
 parse_expr_bytes(struct parser* parser);
 static struct cst_expr const*
 parse_expr_lparen(struct parser* parser);
@@ -677,6 +679,8 @@ token_kind_nud(enum token_kind kind)
         return parse_expr_boolean;
     case TOKEN_INTEGER:
         return parse_expr_integer;
+    case TOKEN_CHARACTER:
+        return parse_expr_character;
     case TOKEN_BYTES:
         return parse_expr_bytes;
     case TOKEN_LPAREN:
@@ -829,6 +833,19 @@ parse_expr_integer(struct parser* parser)
 
     struct cst_integer const* const integer = parse_integer(parser);
     struct cst_expr* const product = cst_expr_new_integer(integer);
+
+    autil_freezer_register(context()->freezer, product);
+    return product;
+}
+
+static struct cst_expr const*
+parse_expr_character(struct parser* parser)
+{
+    assert(parser != NULL);
+
+    struct token const* const token = expect_current(parser, TOKEN_CHARACTER);
+    struct cst_expr* const product =
+        cst_expr_new_character(&token->location, token->data.character);
 
     autil_freezer_register(context()->freezer, product);
     return product;

@@ -1,0 +1,5 @@
+const a: byte = '';
+################################################################################j
+# [error-invalid-non-printable-character-in-character-literal.sunder:1] error: non-printable byte 0x1b in character literal
+# const a: byte = '';
+#                  ^

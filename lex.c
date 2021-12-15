@@ -67,6 +67,7 @@ static struct autil_vstr token_kind_vstrs[TOKEN_EOF + 1u] = {
     // Identifiers and Non-Keyword Literals
     [TOKEN_IDENTIFIER] = AUTIL_VSTR_INIT_STR_LITERAL("identifier"),
     [TOKEN_INTEGER] = AUTIL_VSTR_INIT_STR_LITERAL("integer"),
+    [TOKEN_CHARACTER] = AUTIL_VSTR_INIT_STR_LITERAL("character"),
     [TOKEN_BYTES] = AUTIL_VSTR_INIT_STR_LITERAL("bytes"),
     // Meta
     [TOKEN_EOF] = AUTIL_VSTR_INIT_STR_LITERAL("end-of-file"),
@@ -293,69 +294,139 @@ lex_integer(struct lexer* self)
     return token;
 }
 
+// Read and return one (possibly escaped) character. Invalid characters (i.e.
+// characters that are not permitted in a character or bytes literal) will
+// produce a fatal error. The `what` cstring should contain the noun of the
+// token being parsed: "character literal", "bytes literal", etc.
+//
+// This function currently only supports reading of ASCII characters and escape
+// sequences as Sunder does not yet have proper support for unicode scalar
+// values.
+static int
+advance_character(struct lexer* self, char const* what)
+{
+    assert(self != NULL);
+
+    // Check for invalid characters.
+    if (*self->current == '\n') {
+        struct source_location const location = {
+            self->module->name, self->current_line, self->current};
+        fatal(&location, "end-of-line encountered in %s", what);
+    }
+    if (!autil_isprint(*self->current)) {
+        struct source_location const location = {
+            self->module->name, self->current_line, self->current};
+        fatal(
+            &location,
+            "non-printable byte 0x%02x in %s",
+            (unsigned char)*self->current,
+            what);
+    }
+
+    // Non-escaped character.
+    if (*self->current != '\\') {
+        return *self->current++;
+    }
+
+    // Parse escape sequence.
+    switch (self->current[1]) {
+    case '0': {
+        self->current += 2;
+        return '\0';
+    }
+    case 't': {
+        self->current += 2;
+        return '\t';
+    }
+    case 'n': {
+        self->current += 2;
+        return '\n';
+    }
+    case '\'': {
+        self->current += 2;
+        return '\'';
+    }
+    case '\"': {
+        self->current += 2;
+        return '\"';
+    }
+    case '\\': {
+        self->current += 2;
+        return '\\';
+    }
+    default: {
+        struct source_location const location = {
+            self->module->name, self->current_line, self->current};
+        fatal(&location, "unknown escape sequence");
+    }
+    }
+
+    UNREACHABLE();
+    return 0;
+}
+
+static struct token*
+lex_character(struct lexer* self)
+{
+    assert(self != NULL);
+
+    assert(*self->current == '\'');
+    char const* const start = self->current;
+    self->current += 1;
+
+    int const character = advance_character(self, "character literal");
+
+    // Special check for the somewhat common case of a character literal
+    // appearing without a closing single quote, followed by a newline:
+    //
+    // var foo: byte = 'a
+    //
+    // A similar check to this is handled within the advance_character function,
+    // but this separate check is needed since only one character is ever be
+    // checked/consumed when lexing a character token:
+    //
+    // var foo: byte = 'a
+    //                 ^^^
+    //                 ||+- The newline here is not checked by
+    //                 ||   advance_character, so this separate check is needed.
+    //                 |+- This character is checked by advance_character.
+    //                 +- Lexing starts here.
+    if (*self->current == '\n') {
+        struct source_location const location = {
+            self->module->name, self->current_line, self->current};
+        fatal(&location, "end-of-line encountered in character literal");
+    }
+
+    if (*self->current != '\'') {
+        struct source_location const location = {
+            self->module->name, self->current_line, start};
+        fatal(&location, "invalid character literal");
+    }
+    self->current += 1;
+
+    struct token* token = token_new(
+        start,
+        (size_t)(self->current - start),
+        self->next_token_location,
+        TOKEN_CHARACTER);
+    token->data.character = character;
+
+    return token;
+}
+
 static struct token*
 lex_bytes(struct lexer* self)
 {
     assert(self != NULL);
-    assert(*self->current == '"');
 
+    assert(*self->current == '\"');
     char const* const start = self->current;
     self->current += 1;
+
     struct autil_string* bytes = autil_string_new(NULL, 0);
     while (*self->current != '"') {
-        if (*self->current == '\n') {
-            struct source_location const location = {
-                self->module->name, self->current_line, self->current};
-            fatal(&location, "end-of-line encountered in bytes literal");
-        }
-        if (!autil_isprint(*self->current)) {
-            struct source_location const location = {
-                self->module->name, self->current_line, self->current};
-            fatal(
-                &location,
-                "non-printable byte %x in bytes literal",
-                (unsigned char)*self->current);
-        }
-
-        if (*self->current != '\\') {
-            autil_string_append_fmt(bytes, "%c", *self->current);
-            self->current += 1;
-            continue;
-        }
-
-        self->current += 1;
-        switch (*self->current) {
-        case '0': {
-            autil_string_append_fmt(bytes, "%c", '\0');
-            self->current += 1;
-            break;
-        }
-        case 't': {
-            autil_string_append_fmt(bytes, "%c", '\t');
-            self->current += 1;
-            break;
-        }
-        case 'n': {
-            autil_string_append_fmt(bytes, "%c", '\n');
-            self->current += 1;
-            break;
-        }
-        case '\"': {
-            autil_string_append_fmt(bytes, "%c", '\"');
-            self->current += 1;
-            break;
-        }
-        case '\\': {
-            autil_string_append_fmt(bytes, "%c", '\\');
-            self->current += 1;
-            break;
-        }
-        default: {
-            struct source_location const location = {
-                self->module->name, self->current_line, self->current};
-            fatal(&location, "unknown escape sequence");
-        }
-        }
+        autil_string_append_fmt(
+            bytes, "%c", advance_character(self, "bytes literal"));
     }
 
     assert(*self->current == '"');
@@ -421,7 +492,10 @@ lexer_next_token(struct lexer* self)
     if (autil_isdigit(ch)) {
         return lex_integer(self);
     }
-    if (ch == '"') {
+    if (ch == '\'') {
+        return lex_character(self);
+    }
+    if (ch == '\"') {
         return lex_bytes(self);
     }
     if (autil_ispunct(ch)) {

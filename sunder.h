@@ -321,6 +321,7 @@ enum token_kind {
     // Identifiers and Non-Keyword Literals
     TOKEN_IDENTIFIER,
     TOKEN_INTEGER,
+    TOKEN_CHARACTER,
     TOKEN_BYTES,
     // Meta
     TOKEN_EOF,
@@ -340,8 +341,11 @@ struct token {
             struct autil_vstr number;
             struct autil_vstr suffix;
         } integer;
+        // TOKEN_CHARACTER
+        // Contains the value of the character literal.
+        int character;
         // TOKEN_BYTES
-        // Contains the unescaped bytes of literal.
+        // Contains the un-escaped contents of the bytes literal.
         struct autil_string const* bytes;
     } data;
 };
@@ -527,6 +531,7 @@ struct cst_expr {
         CST_EXPR_QUALIFIED_IDENTIFIER,
         CST_EXPR_BOOLEAN,
         CST_EXPR_INTEGER,
+        CST_EXPR_CHARACTER,
         CST_EXPR_BYTES,
         CST_EXPR_ARRAY,
         CST_EXPR_SLICE,
@@ -551,6 +556,7 @@ struct cst_expr {
         } qualified_identifier;
         struct cst_boolean const* boolean;
         struct cst_integer const* integer;
+        int character;
         struct autil_string const* bytes;
         struct {
             struct cst_typespec const* typespec;
@@ -611,6 +617,8 @@ struct cst_expr*
 cst_expr_new_boolean(struct cst_boolean const* boolean);
 struct cst_expr*
 cst_expr_new_integer(struct cst_integer const* integer);
+struct cst_expr*
+cst_expr_new_character(struct source_location const* location, int character);
 struct cst_expr*
 cst_expr_new_bytes(
     struct source_location const* location, struct autil_string const* bytes);

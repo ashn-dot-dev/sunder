@@ -174,6 +174,8 @@ resolve_expr_boolean(struct resolver* resolver, struct cst_expr const* expr);
 static struct expr const*
 resolve_expr_integer(struct resolver* resolver, struct cst_expr const* expr);
 static struct expr const*
+resolve_expr_character(struct resolver* resolver, struct cst_expr const* expr);
+static struct expr const*
 resolve_expr_bytes(struct resolver* resolver, struct cst_expr const* expr);
 static struct expr const*
 resolve_expr_array(struct resolver* resolver, struct cst_expr const* expr);
@@ -1374,6 +1376,9 @@ resolve_expr(struct resolver* resolver, struct cst_expr const* expr)
     case CST_EXPR_INTEGER: {
         return resolve_expr_integer(resolver, expr);
     }
+    case CST_EXPR_CHARACTER: {
+        return resolve_expr_character(resolver, expr);
+    }
     case CST_EXPR_BYTES: {
         return resolve_expr_bytes(resolver, expr);
     }
@@ -1600,6 +1605,29 @@ resolve_expr_integer(struct resolver* resolver, struct cst_expr const* expr)
     struct type const* const type = integer_literal_suffix_to_type(
         cst_integer->location, cst_integer->suffix);
 
+    struct expr* const resolved = expr_new_integer(expr->location, type, value);
+
+    autil_freezer_register(context()->freezer, resolved);
+    return resolved;
+}
+
+static struct expr const*
+resolve_expr_character(struct resolver* resolver, struct cst_expr const* expr)
+{
+    assert(resolver != NULL);
+    assert(expr != NULL);
+    assert(expr->kind == CST_EXPR_CHARACTER);
+    (void)resolver;
+
+    // XXX: Hack to get around the autil_bigint API not having a constructor
+    // function that creates a bigint based of of an int input value.
+    char buf[255] = {0};
+    int const written = snprintf(buf, sizeof(buf), "%d", expr->data.character);
+    assert(written < (int)sizeof(buf));
+
+    struct type const* const type = context()->builtin.integer;
+    struct autil_bigint* const value = autil_bigint_new_text(buf, strlen(buf));
+    autil_bigint_freeze(value, context()->freezer);
     struct expr* const resolved = expr_new_integer(expr->location, type, value);
 
     autil_freezer_register(context()->freezer, resolved);

@@ -1,0 +1,5 @@
+const a: []byte = "abc
+################################################################################
+# [error-unexpected-end-of-line-in-bytes-literal.sunder:1] error: end-of-line encountered in bytes literal
+# const a: []byte = "abc
+#                       ^

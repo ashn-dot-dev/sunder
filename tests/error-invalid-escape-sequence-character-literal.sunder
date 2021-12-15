@@ -1,0 +1,5 @@
+const a: byte = '\z';
+################################################################################
+# [error-invalid-escape-sequence-character-literal.sunder:1] error: unknown escape sequence
+# const a: byte = '\z';
+#                  ^

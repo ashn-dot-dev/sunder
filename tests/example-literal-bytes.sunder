@@ -2,6 +2,7 @@ const hello: []byte = "Hello, world!\n";
 const nul: []byte = ">\0<\n";
 const ht: []byte = ">\t<\n";
 const nl: []byte = ">\n<\n";
+const squote: []byte = ">\'<\n";
 const dquote: []byte = ">\"<\n";
 const bslash: []byte = ">\\<\n";
 
@@ -19,6 +20,7 @@ func main() void {
     # assume that the global `nul` constant produced the correct bytes literal.
     print(&ht[0u], 4u);
     print(&nl[0u], 4u);
+    print(&squote[0u], 4u);
     print(&dquote[0u], 4u);
     print(&bslash[0u], 4u);
 
@@ -33,6 +35,7 @@ func main() void {
 # >	<
 # >
 # <
+# >'<
 # >"<
 # >\<
 # bar

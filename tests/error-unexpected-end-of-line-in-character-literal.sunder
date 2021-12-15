@@ -1,0 +1,5 @@
+const a: byte = 'a
+################################################################################
+# [error-unexpected-end-of-line-in-character-literal.sunder:1] error: end-of-line encountered in character literal
+# const a: byte = 'a
+#                   ^

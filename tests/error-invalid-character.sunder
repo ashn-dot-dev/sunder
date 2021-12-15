@@ -1,0 +1,5 @@
+const a: byte = 'abc';
+################################################################################
+# [error-invalid-character.sunder:1] error: invalid character literal
+# const a: byte = 'abc';
+#                 ^

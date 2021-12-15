@@ -52,6 +52,7 @@
          | <qualified-identifier>
          | <boolean>
          | <integer>
+         | <expr-character>
          | <expr-bytes>
          | <expr-array>
          | <expr-slice>
@@ -65,6 +66,8 @@
          | <expr-alignof>
          | <expr-unary>
          | <expr-binary>
+
+<expr-character> ::= <literal-character>
 
 <expr-bytes> ::= <literal-bytes>
 
@@ -116,14 +119,9 @@
 
 <block> ::= "{" <stmt>* "}"
 
-<literal-bytes> ::= '"' <literal-bytes-element>* '"'
+<literal-character> ::= "'" <character> "'"
 
-<literal-bytes-element> ::= "\0"
-                          | "\t"
-                          | "\n"
-                          | '\"'
-                          | "\\"
-                          | ? printable ASCII character ?
+<literal-bytes> ::= '"' <character>* '"'
 
 <parameter-list> ::= ( <parameter> ("," <parameter>)* )?
 
@@ -151,6 +149,14 @@
 <qualified-identifier> ::= <identifier> ("::" <identifier>)+
 
 <identifier> ::= <letter> (<letter> | <digit-dec>)*
+
+<character> ::= "\0"
+              | "\t"
+              | "\n"
+              | '\''
+              | '\"'
+              | "\\"
+              | ? printable ASCII character ?
 
 <letter> ::= "A" .. "Z" | "a" .. "z" | "_"
 
