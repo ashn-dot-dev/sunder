@@ -958,6 +958,7 @@ resolve_decl_struct(struct resolver* resolver, struct cst_decl const* decl)
             autil_sbuf_count(type->data.struct_.member_variables);
         for (size_t j = 0; j < current_member_variable_count; ++j) {
             if (member_name == type->data.struct_.member_variables[j].name) {
+                autil_sbuf_fini(type->data.struct_.member_variables);
                 fatal(
                     member->location,
                     "duplicate definition of member `%s`",
