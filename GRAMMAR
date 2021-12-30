@@ -7,6 +7,7 @@
 <decl> ::= <decl-variable>
          | <decl-constant>
          | <decl-function>
+         | <decl-struct>
          | <decl-extern-variable>
 
 <decl-variable> ::= "var" <identifier> ":" <typespec> "=" <expr> ";"
@@ -14,6 +15,8 @@
 <decl-constant> ::= "const" <identifier> ":" <typespec> "=" <expr> ";"
 
 <decl-function> ::= "func" <identifier> "(" <parameter-list> ")" <typespec> <block>
+
+<decl-struct> ::= "struct" <identifier> "{" <member-list> "}"
 
 <decl-extern-variable> ::= "extern" "var" <identifier> ":" <typespec> ";"
 
@@ -56,6 +59,7 @@
          | <expr-bytes>
          | <expr-array>
          | <expr-slice>
+         | <expr-struct>
          | <expr-cast>
          | <expr-grouped>
          | <expr-syscall>
@@ -76,6 +80,8 @@
                | "(" ":" <typespec> ")" "[" <expr> ("," <expr>)* ("," <expr> "...")? "]"
 
 <expr-slice> ::= "(" ":" <typespec> ")" "{" <expr> "," <expr> "}"
+
+<expr-struct> ::= "(" ":" <typespec> ")" "{" <member-initializer-list> "}"
 
 <expr-cast> ::= "(" ":" <typespec> ")" <expr>
 
@@ -126,6 +132,14 @@
 <parameter-list> ::= ( <parameter> ("," <parameter>)* )?
 
 <parameter> ::= <identifier> ":" <typespec>
+
+<member-list> ::= <member>*
+
+<member> ::= "var" <identifier> ":" <typespec> ";"
+
+<member-initializer-list> ::= ( <member-initializer> ("," <member-initializer>)* )?
+
+<member-initializer> ::= "." <identifier> "=" <expr>
 
 <typespec> ::= <typespec-identifier>
              | <typespec-function>

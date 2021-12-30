@@ -21,6 +21,7 @@ static struct autil_vstr token_kind_vstrs[TOKEN_EOF + 1u] = {
     [TOKEN_VAR] = AUTIL_VSTR_INIT_STR_LITERAL("var"),
     [TOKEN_CONST] = AUTIL_VSTR_INIT_STR_LITERAL("const"),
     [TOKEN_FUNC] = AUTIL_VSTR_INIT_STR_LITERAL("func"),
+    [TOKEN_STRUCT] = AUTIL_VSTR_INIT_STR_LITERAL("struct"),
     [TOKEN_EXTERN] = AUTIL_VSTR_INIT_STR_LITERAL("extern"),
     [TOKEN_DUMP] = AUTIL_VSTR_INIT_STR_LITERAL("dump"),
     [TOKEN_RETURN] = AUTIL_VSTR_INIT_STR_LITERAL("return"),

@@ -1,0 +1,9 @@
+struct foo {
+    var x: u16;
+    var y: u16;
+}
+const a: foo = (:foo){.x = 0};
+################################################################################
+# [error-struct-missing-member-initializer.sunder:5] error: missing initializer for member variable `y`
+# const a: foo = (:foo){.x = 0};
+#                ^

@@ -25,9 +25,9 @@ struct resolver {
     // Current offset of rbp for stack allocated data. Initialized to zero at
     // the start of function completion.
     int current_rbp_offset;
-    // True if the statements being processed are inside a loop. Se to true when
-    // a loop body is being resolved, and set to false once the loop body is
-    // finished resolving.
+    // True if the statements being processed are inside a loop. Set to true
+    // when a loop body is being resolved, and set to false once the loop body
+    // is finished resolving.
     bool is_within_loop;
 
     // Functions to be completed at the end of the resolve phase after all
@@ -132,6 +132,8 @@ resolve_decl_constant(struct resolver* resolver, struct cst_decl const* decl);
 static struct symbol const*
 resolve_decl_function(struct resolver* resolver, struct cst_decl const* decl);
 static struct symbol const*
+resolve_decl_struct(struct resolver* resolver, struct cst_decl const* decl);
+static struct symbol const*
 resolve_decl_extern_variable(
     struct resolver* resolver, struct cst_decl const* decl);
 
@@ -181,6 +183,8 @@ static struct expr const*
 resolve_expr_array(struct resolver* resolver, struct cst_expr const* expr);
 static struct expr const*
 resolve_expr_slice(struct resolver* resolver, struct cst_expr const* expr);
+static struct expr const*
+resolve_expr_struct(struct resolver* resolver, struct cst_expr const* expr);
 static struct expr const*
 resolve_expr_cast(struct resolver* resolver, struct cst_expr const* expr);
 static struct expr const*
@@ -684,6 +688,9 @@ resolve_decl(struct resolver* resolver, struct cst_decl const* decl)
     case CST_DECL_FUNCTION: {
         return resolve_decl_function(resolver, decl);
     }
+    case CST_DECL_STRUCT: {
+        return resolve_decl_struct(resolver, decl);
+    }
     case CST_DECL_EXTERN_VARIABLE: {
         return resolve_decl_extern_variable(resolver, decl);
     }
@@ -922,6 +929,53 @@ resolve_decl_function(struct resolver* resolver, struct cst_decl const* decl)
 }
 
 static struct symbol const*
+resolve_decl_struct(struct resolver* resolver, struct cst_decl const* decl)
+{
+    assert(resolver != NULL);
+    assert(decl != NULL);
+    assert(decl->kind == CST_DECL_STRUCT);
+    assert(resolver_is_global(resolver));
+
+    struct type* const type = type_new_struct(decl->name);
+    autil_freezer_register(context()->freezer, type);
+
+    struct symbol* const symbol = symbol_new_type(decl->location, type);
+    autil_freezer_register(context()->freezer, symbol);
+
+    // Add the symbol to the current symbol table so that structs with
+    // self-referential pointer and slice members may reference the type.
+    symbol_table_insert(resolver->current_symbol_table, symbol->name, symbol);
+
+    // Add all member definitions to the struct.
+    for (size_t i = 0; i < autil_sbuf_count(decl->data.struct_.members); ++i) {
+        struct cst_member const* const member = decl->data.struct_.members[i];
+        char const* const member_name = member->identifier->name;
+        struct type const* const member_type =
+            resolve_typespec(resolver, member->typespec);
+
+        // Check for duplicate member variable definitions.
+        size_t const current_member_variable_count =
+            autil_sbuf_count(type->data.struct_.member_variables);
+        for (size_t j = 0; j < current_member_variable_count; ++j) {
+            if (member_name == type->data.struct_.member_variables[j].name) {
+                fatal(
+                    member->location,
+                    "duplicate definition of member `%s`",
+                    member_name);
+            }
+        }
+
+        type_struct_add_member_variable(type, member_name, member_type);
+    }
+
+    // At this point all member variables have been added to the struct
+    // definition.
+    autil_sbuf_freeze(type->data.struct_.member_variables, context()->freezer);
+
+    return symbol;
+}
+
+static struct symbol const*
 resolve_decl_extern_variable(
     struct resolver* resolver, struct cst_decl const* decl)
 {
@@ -1054,6 +1108,10 @@ resolve_stmt_decl(struct resolver* resolver, struct cst_stmt const* stmt)
     }
     case CST_DECL_FUNCTION: {
         fatal(stmt->location, "nested function declaration");
+        return NULL;
+    }
+    case CST_DECL_STRUCT: {
+        fatal(decl->location, "local declaration of struct `%s`", decl->name);
         return NULL;
     }
     case CST_DECL_EXTERN_VARIABLE: {
@@ -1387,6 +1445,9 @@ resolve_expr(struct resolver* resolver, struct cst_expr const* expr)
     }
     case CST_EXPR_SLICE: {
         return resolve_expr_slice(resolver, expr);
+    }
+    case CST_EXPR_STRUCT: {
+        return resolve_expr_struct(resolver, expr);
     }
     case CST_EXPR_CAST: {
         return resolve_expr_cast(resolver, expr);
@@ -1770,6 +1831,104 @@ resolve_expr_slice(struct resolver* resolver, struct cst_expr const* expr)
 
     struct expr* const resolved =
         expr_new_slice(expr->location, type, pointer, count);
+
+    autil_freezer_register(context()->freezer, resolved);
+    return resolved;
+}
+
+static struct expr const*
+resolve_expr_struct(struct resolver* resolver, struct cst_expr const* expr)
+{
+    assert(resolver != NULL);
+    assert(expr != NULL);
+    assert(expr->kind == CST_EXPR_STRUCT);
+
+    struct type const* const type =
+        resolve_typespec(resolver, expr->data.struct_.typespec);
+    if (type->kind != TYPE_STRUCT) {
+        fatal(
+            expr->location, "expected struct type (received `%s`)", type->name);
+    }
+
+    autil_sbuf(struct member_variable) const member_variable_defs =
+        type->data.struct_.member_variables;
+
+    autil_sbuf(struct cst_member_initializer const* const) const initializers =
+        expr->data.struct_.initializers;
+
+    // Resolve the expressions associated with each initializer element.
+    // Expressions are resolved before the checks for duplicate elements,
+    // missing elements, or extra elements not corresponding to a struct member
+    // variable, all so that the user can receive feedback about any malformed
+    // expressions *before* feedback on how the initializer list does not match
+    // the struct definition.
+    autil_sbuf(struct expr const*) initializer_exprs = NULL;
+    for (size_t i = 0; i < autil_sbuf_count(initializers); ++i) {
+        autil_sbuf_push(
+            initializer_exprs, resolve_expr(resolver, initializers[i]->expr));
+    }
+
+    // Ordered list of member variables corresponding to the member variables
+    // defined by the struct type. The list is initialized to the length of
+    // struct type's member variable list with all NULLs. As the initializer
+    // list is processed the NULLs are replaced with expr pointers so that
+    // duplicate initializers can be detected when a non-NULL value would be
+    // overwritten, and missing initializers can be detected by looking for
+    // remaining NULLs after all initializer elements have been processed.
+    autil_sbuf(struct expr const*) member_variable_exprs = NULL;
+    for (size_t i = 0; i < autil_sbuf_count(member_variable_defs); ++i) {
+        autil_sbuf_push(member_variable_exprs, NULL);
+    }
+
+    for (size_t i = 0; i < autil_sbuf_count(initializers); ++i) {
+        char const* const initializer_name = initializers[i]->identifier->name;
+        bool found = false; // Did we find the member for this initializer?
+
+        for (size_t j = 0; j < autil_sbuf_count(member_variable_defs); ++j) {
+            if (initializer_name != member_variable_defs[j].name) {
+                continue;
+            }
+
+            if (member_variable_exprs[j] != NULL) {
+                fatal(
+                    initializers[i]->location,
+                    "duplicate initializer for member variable `%s`",
+                    member_variable_defs[j].name);
+            }
+
+            struct expr const* const initializer_expr = shallow_implicit_cast(
+                member_variable_defs[j].type, initializer_exprs[i]);
+            check_type_compatibility(
+                initializer_expr->location,
+                initializer_expr->type,
+                member_variable_defs[j].type);
+            member_variable_exprs[j] = initializer_expr;
+            found = true;
+            break;
+        }
+
+        if (!found) {
+            fatal(
+                initializers[i]->location,
+                "struct `%s` does not have a member variable `%s`",
+                type->name,
+                initializer_name);
+        }
+    }
+
+    for (size_t i = 0; i < autil_sbuf_count(member_variable_defs); ++i) {
+        if (member_variable_exprs[i] == NULL) {
+            fatal(
+                expr->location,
+                "missing initializer for member variable `%s`",
+                member_variable_defs[i].name);
+        }
+    }
+
+    autil_sbuf_fini(initializer_exprs);
+    autil_sbuf_freeze(member_variable_exprs, context()->freezer);
+    struct expr* const resolved =
+        expr_new_struct(expr->location, type, member_variable_exprs);
 
     autil_freezer_register(context()->freezer, resolved);
     return resolved;

@@ -23,6 +23,8 @@ eval_rvalue_array(struct expr const* expr);
 static struct value*
 eval_rvalue_slice(struct expr const* expr);
 static struct value*
+eval_rvalue_struct(struct expr const* expr);
+static struct value*
 eval_rvalue_cast(struct expr const* expr);
 static struct value*
 eval_rvalue_access_index(struct expr const* expr);
@@ -84,6 +86,9 @@ eval_rvalue(struct expr const* expr)
     }
     case EXPR_SLICE: {
         return eval_rvalue_slice(expr);
+    }
+    case EXPR_STRUCT: {
+        return eval_rvalue_struct(expr);
     }
     case EXPR_CAST: {
         return eval_rvalue_cast(expr);
@@ -216,6 +221,32 @@ eval_rvalue_slice(struct expr const* expr)
 }
 
 static struct value*
+eval_rvalue_struct(struct expr const* expr)
+{
+    assert(expr != NULL);
+    assert(expr->kind == EXPR_STRUCT);
+
+    struct value* const value = value_new_struct(expr->type);
+
+    autil_sbuf(struct member_variable) const member_variable_defs =
+        expr->type->data.struct_.member_variables;
+    autil_sbuf(struct expr const* const) const member_variable_exprs =
+        expr->data.struct_.member_variables;
+    assert(
+        autil_sbuf_count(member_variable_defs)
+        == autil_sbuf_count(member_variable_exprs));
+
+    for (size_t i = 0; i < autil_sbuf_count(member_variable_exprs); ++i) {
+        value_set_member(
+            value,
+            member_variable_defs[i].name,
+            eval_rvalue(member_variable_exprs[i]));
+    }
+
+    return value;
+}
+
+static struct value*
 eval_rvalue_cast(struct expr const* expr)
 {
     assert(expr != NULL);
@@ -307,8 +338,10 @@ eval_rvalue_cast(struct expr const* expr)
     case TYPE_FUNCTION: /* fallthrough */
     case TYPE_POINTER: /* fallthrough */
     case TYPE_ARRAY: /* fallthrough */
-    case TYPE_SLICE:
+    case TYPE_SLICE: /* fallthrough */
+    case TYPE_STRUCT: {
         UNREACHABLE();
+    }
     }
 
     value_del(from);
@@ -871,6 +904,7 @@ eval_lvalue(struct expr const* expr)
     case EXPR_BYTES: /* fallthrough */
     case EXPR_ARRAY: /* fallthrough */
     case EXPR_SLICE: /* fallthrough */
+    case EXPR_STRUCT: /* fallthrough */
     case EXPR_CAST: /* fallthrough */
     case EXPR_SYSCALL: /* fallthrough */
     case EXPR_CALL: /* fallthrough */

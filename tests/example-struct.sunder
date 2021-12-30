@@ -1,0 +1,85 @@
+struct empty { }
+
+var empty_a: empty = (:empty){};
+const empty_b: empty = (:empty){};
+
+struct point {
+    var x: u32;
+    var y: u32;
+}
+
+var point_a: point = (:point){.x = 0x00112233, .y = 0xAABBCCDD};
+const point_b: point = (:point){.x = 0, .y = 0xFFFFFFFF};
+const point_c: point = (:point){.y = 0xEEEEEEEE, .x = 0};
+
+# Contains self-referential *foo and []foo types as well as alignment padding
+# between the bool and pointer members. At the time of writing integer->pointer
+# casts are not allowed in constant expressions, so instances of foo are all
+# defined in main.
+struct foo {
+    var w: s32;
+    var x: bool;
+    var y: *foo;
+    var z: []foo;
+}
+
+# Contains packed u8 and u16 members to check alignment.
+struct bar {
+    var w: u8;
+    var x: u8;
+    var y: u8;
+    var z: u8;
+    var p: u16;
+    var q: u16;
+    var r: u8;
+    var s: u16;
+}
+const bar_a: bar = (:bar){
+    .w = 0xAA,
+    .x = 0xBB,
+    .y = 0xCC,
+    .z = 0xDD,
+    .p = 0x0011,
+    .q = 0x2233,
+    .r = 0x44,
+    .s = 0x5566
+};
+
+func main() void {
+    dump empty_a;
+    dump empty_b;
+    empty_a = empty_b;
+    dump empty_a;
+
+    dump point_a;
+    dump point_b;
+    dump point_c;
+    point_a = point_b;
+    dump point_a;
+
+    var foo_a: foo = (:foo){
+        .w = 1s32,
+        .x = true,
+        .y = (:*foo)0u,
+        .z = (:[]foo){(:*foo)0u, 0u}
+    };
+
+    var foo_b: foo = (:foo){
+        .z = (:[]foo){&foo_a, 1u},
+        .y = &foo_a,
+        .x = true,
+        .w = 1s32
+    };
+
+    dump bar_a;
+}
+# AA BB CC DD 00 11 00 33 22 44 00 66 55
+################################################################################
+#
+#
+#
+# 33 22 11 00 DD CC BB AA
+# 00 00 00 00 FF FF FF FF
+# 00 00 00 00 EE EE EE EE
+# 00 00 00 00 FF FF FF FF
+# AA BB CC DD 11 00 33 22 44 00 66 55

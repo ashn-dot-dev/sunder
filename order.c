@@ -53,6 +53,8 @@ order_expr(struct orderer* orderer, struct cst_expr const* expr);
 static void
 order_parameter(struct orderer* orderer, struct cst_parameter const* parameter);
 static void
+order_member(struct orderer* orderer, struct cst_member const* member);
+static void
 order_typespec(struct orderer* orderer, struct cst_typespec const* typespec);
 static void
 order_identifier(
@@ -174,6 +176,14 @@ order_decl(struct orderer* orderer, struct cst_decl const* decl)
         order_typespec(orderer, decl->data.function.return_typespec);
         return;
     }
+    case CST_DECL_STRUCT: {
+        struct cst_member const* const* const members =
+            decl->data.struct_.members;
+        for (size_t i = 0; i < autil_sbuf_count(members); ++i) {
+            order_member(orderer, members[i]);
+        }
+        return;
+    }
     case CST_DECL_EXTERN_VARIABLE: {
         order_typespec(orderer, decl->data.extern_variable.typespec);
         return;
@@ -241,6 +251,14 @@ order_expr(struct orderer* orderer, struct cst_expr const* expr)
     case CST_EXPR_SLICE: {
         order_expr(orderer, expr->data.slice.pointer);
         order_expr(orderer, expr->data.slice.count);
+        return;
+    }
+    case CST_EXPR_STRUCT: {
+        autil_sbuf(struct cst_member_initializer const* const)
+            const initializers = expr->data.struct_.initializers;
+        for (size_t i = 0; i < autil_sbuf_count(initializers); ++i) {
+            order_expr(orderer, initializers[i]->expr);
+        }
         return;
     }
     case CST_EXPR_CAST: {
@@ -312,6 +330,15 @@ order_parameter(struct orderer* orderer, struct cst_parameter const* parameter)
 }
 
 static void
+order_member(struct orderer* orderer, struct cst_member const* member)
+{
+    assert(orderer != NULL);
+    assert(member != NULL);
+
+    order_typespec(orderer, member->typespec);
+}
+
+static void
 order_typespec(struct orderer* orderer, struct cst_typespec const* typespec)
 {
     assert(orderer != NULL);
@@ -332,21 +359,47 @@ order_typespec(struct orderer* orderer, struct cst_typespec const* typespec)
         order_typespec(orderer, typespec->data.function.return_typespec);
         return;
     }
-    case TYPESPEC_POINTER: {
-        order_typespec(orderer, typespec->data.pointer.base);
-        return;
-    }
     case TYPESPEC_ARRAY: {
         order_expr(orderer, typespec->data.array.count);
         order_typespec(orderer, typespec->data.array.base);
         return;
     }
-    case TYPESPEC_SLICE: {
-        order_typespec(orderer, typespec->data.slice.base);
-        return;
-    }
     case TYPESPEC_TYPEOF: {
         order_expr(orderer, typespec->data.typeof_.expr);
+        return;
+    }
+    case TYPESPEC_POINTER: /* fallthrough */
+    case TYPESPEC_SLICE: {
+        // Pointer and slice type specifiers are unique because the size of
+        // those types will always be the same regardless of the type of their
+        // base element. A pointer will always use one machine word of space (8
+        // bytes on x64) and a slice will always use two machine words of space
+        // (16 bytes on x64). By extension, any data structure that contains a
+        // pointer or slice type will also always have the same size regardless
+        // of the base element type. A struct containing a pointer member will
+        // always use one machine word for that pointer member, an array of
+        // slices will always use two machine words for each array element, etc.
+        // Since pointer and slice base types have a size (and alignment) that
+        // does *not* depend on their base element type, we may skip ordering
+        // the base element type during the ordering phase.
+        //
+        // Not requiring information on a base element type of a pointer type
+        // (or pointer component of a DIY slice type) matches the behavior of C,
+        // as pointer types may be used before their base type definition has
+        // been completed (e.g. in the case of self-referential structs).
+        //
+        //     struct x {
+        //         /* var pointer: *x; */
+        //         struct x* pointer;
+        //     };
+        //
+        //     struct y {
+        //         /* var slice: []y; */
+        //         struct {
+        //             struct y* start;
+        //             size_t count;
+        //         } slice;
+        //     };
         return;
     }
     }

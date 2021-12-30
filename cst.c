@@ -117,6 +117,25 @@ cst_decl_new_func(
 }
 
 struct cst_decl*
+cst_decl_new_struct(
+    struct source_location const* location,
+    struct cst_identifier const* identifier,
+    struct cst_member const* const* members)
+{
+    assert(location != NULL);
+    assert(identifier != NULL);
+
+    struct cst_decl* const self = autil_xalloc(NULL, sizeof(*self));
+    memset(self, 0x00, sizeof(*self));
+    self->kind = CST_DECL_STRUCT;
+    self->location = location;
+    self->name = identifier->name;
+    self->data.struct_.identifier = identifier;
+    self->data.struct_.members = members;
+    return self;
+}
+
+struct cst_decl*
 cst_decl_new_extern_variable(
     struct source_location const* location,
     struct cst_identifier const* identifier,
@@ -403,6 +422,20 @@ cst_expr_new_cast(
 }
 
 struct cst_expr*
+cst_expr_new_struct(
+    struct source_location const* location,
+    struct cst_typespec const* typespec,
+    struct cst_member_initializer const* const* initializers)
+{
+    assert(location != NULL);
+
+    struct cst_expr* const self = cst_expr_new(location, CST_EXPR_STRUCT);
+    self->data.struct_.typespec = typespec;
+    self->data.struct_.initializers = initializers;
+    return self;
+}
+
+struct cst_expr*
 cst_expr_new_grouped(
     struct source_location const* location, struct cst_expr const* expr)
 {
@@ -566,6 +599,43 @@ cst_parameter_new(
     self->location = identifier->location;
     self->identifier = identifier;
     self->typespec = typespec;
+    return self;
+}
+
+struct cst_member*
+cst_member_new(
+    struct source_location const* location,
+    struct cst_identifier const* identifier,
+    struct cst_typespec const* typespec)
+{
+    assert(location != NULL);
+    assert(identifier != NULL);
+    assert(typespec != NULL);
+
+    struct cst_member* const self = autil_xalloc(NULL, sizeof(*self));
+    memset(self, 0x00, sizeof(*self));
+    self->location = location;
+    self->identifier = identifier;
+    self->typespec = typespec;
+    return self;
+}
+
+struct cst_member_initializer*
+cst_member_initializer_new(
+    struct source_location const* location,
+    struct cst_identifier const* identifier,
+    struct cst_expr const* expr)
+{
+    assert(location != NULL);
+    assert(identifier != NULL);
+    assert(expr != NULL);
+
+    struct cst_member_initializer* const self =
+        autil_xalloc(NULL, sizeof(*self));
+    memset(self, 0x00, sizeof(*self));
+    self->location = location;
+    self->identifier = identifier;
+    self->expr = expr;
     return self;
 }
 

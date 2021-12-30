@@ -275,6 +275,7 @@ enum token_kind {
     TOKEN_VAR,
     TOKEN_CONST,
     TOKEN_FUNC,
+    TOKEN_STRUCT,
     TOKEN_EXTERN,
     TOKEN_DUMP,
     TOKEN_RETURN,
@@ -397,6 +398,7 @@ struct cst_decl {
         CST_DECL_VARIABLE,
         CST_DECL_CONSTANT,
         CST_DECL_FUNCTION,
+        CST_DECL_STRUCT,
         CST_DECL_EXTERN_VARIABLE,
     } kind;
     union {
@@ -416,6 +418,10 @@ struct cst_decl {
             struct cst_typespec const* return_typespec;
             struct cst_block const* body;
         } function;
+        struct {
+            struct cst_identifier const* identifier;
+            autil_sbuf(struct cst_member const* const) members;
+        } struct_;
         struct {
             struct cst_identifier const* identifier;
             struct cst_typespec const* typespec;
@@ -441,6 +447,11 @@ cst_decl_new_func(
     struct cst_parameter const* const* paramseters,
     struct cst_typespec const* return_typespec,
     struct cst_block const* body);
+struct cst_decl*
+cst_decl_new_struct(
+    struct source_location const* location,
+    struct cst_identifier const* identifier,
+    struct cst_member const* const* members);
 struct cst_decl*
 cst_decl_new_extern_variable(
     struct source_location const* location,
@@ -535,6 +546,7 @@ struct cst_expr {
         CST_EXPR_BYTES,
         CST_EXPR_ARRAY,
         CST_EXPR_SLICE,
+        CST_EXPR_STRUCT,
         CST_EXPR_CAST,
         CST_EXPR_GROUPED,
         // Postfix Expressions
@@ -568,6 +580,10 @@ struct cst_expr {
             struct cst_expr const* pointer;
             struct cst_expr const* count;
         } slice;
+        struct {
+            struct cst_typespec const* typespec;
+            autil_sbuf(struct cst_member_initializer const* const) initializers;
+        } struct_;
         struct {
             struct cst_typespec const* typespec;
             struct cst_expr const* expr;
@@ -634,6 +650,11 @@ cst_expr_new_slice(
     struct cst_typespec const* typespec,
     struct cst_expr const* pointer,
     struct cst_expr const* count);
+struct cst_expr*
+cst_expr_new_struct(
+    struct source_location const* location,
+    struct cst_typespec const* typespec,
+    struct cst_member_initializer const* const* initializers);
 struct cst_expr*
 cst_expr_new_cast(
     struct source_location const* location,
@@ -705,6 +726,28 @@ struct cst_parameter*
 cst_parameter_new(
     struct cst_identifier const* identifier,
     struct cst_typespec const* typespec);
+
+struct cst_member {
+    struct source_location const* location;
+    struct cst_identifier const* identifier;
+    struct cst_typespec const* typespec;
+};
+struct cst_member*
+cst_member_new(
+    struct source_location const* location,
+    struct cst_identifier const* identifier,
+    struct cst_typespec const* typespec);
+
+struct cst_member_initializer {
+    struct source_location const* location;
+    struct cst_identifier const* identifier;
+    struct cst_expr const* expr;
+};
+struct cst_member_initializer*
+cst_member_initializer_new(
+    struct source_location const* location,
+    struct cst_identifier const* identifier,
+    struct cst_expr const* expr);
 
 // ISO/IEC 9899:1999 Section 6.7.2 - Type Specifiers
 struct cst_typespec {
@@ -830,6 +873,7 @@ struct type {
         TYPE_POINTER,
         TYPE_ARRAY,
         TYPE_SLICE,
+        TYPE_STRUCT,
     } kind;
     union {
         struct {
@@ -854,6 +898,44 @@ struct type {
         struct {
             struct type const* base;
         } slice;
+        struct {
+            // Offset of the next member variable that would be added to this
+            // struct. Initialized to zero upon struct creation and updated
+            // every time a member variable is added to the struct.
+            //
+            //      # size == 0
+            //      # next_offset == 0
+            //      struct foo { }
+            //
+            //      # size == 2
+            //      # next_offset == 2 (after adding x)
+            //      struct foo {
+            //          var x: u16 # bytes 0->1
+            //      }
+            //
+            //      # size == 4
+            //      # next_offset == 3 (after adding y)
+            //      struct foo {
+            //          var x: u16 # bytes 0->1
+            //          var y: u8  # byte  2
+            //                     # byte  3 (stride padding)
+            //      }
+            //
+            //      # size == 16
+            //      # next_offset == 16 (after adding z)
+            //      struct foo {
+            //          var x: u16 # bytes 0->1
+            //          var y: u8  # byte  2
+            //                     # bytes 3->7 (padding)
+            //          var z: u64 # bytes 8->15
+            //      }
+            size_t next_offset;
+            struct member_variable {
+                char const* name; // interned
+                struct type const* type;
+                size_t offset;
+            } /*sbuf*/ * member_variables;
+        } struct_;
     } data;
 };
 struct type*
@@ -893,6 +975,13 @@ struct type*
 type_new_array(size_t count, struct type const* base);
 struct type*
 type_new_slice(struct type const* base);
+// Create a new struct with no members (size zero and alignment zero).
+struct type*
+type_new_struct(char const* name);
+// Add a member variable definition to the end of the provided struct type.
+void
+type_struct_add_member_variable(
+    struct type* self, char const* name, struct type const* type);
 
 struct type const*
 type_unique_function(
@@ -1124,6 +1213,7 @@ struct expr {
         EXPR_BYTES,
         EXPR_ARRAY,
         EXPR_SLICE,
+        EXPR_STRUCT,
         EXPR_CAST,
         EXPR_SYSCALL,
         EXPR_CALL,
@@ -1150,6 +1240,11 @@ struct expr {
             struct expr const* pointer;
             struct expr const* count;
         } slice;
+        struct {
+            // List of elements corresponding the member variables defined by
+            // the struct type.
+            autil_sbuf(struct expr const* const) member_variables;
+        } struct_;
         struct {
             struct expr const* expr;
         } cast;
@@ -1239,6 +1334,11 @@ expr_new_slice(
     struct type const* type,
     struct expr const* pointer,
     struct expr const* count);
+struct expr*
+expr_new_struct(
+    struct source_location const* location,
+    struct type const* type,
+    struct expr const* const* member_variables);
 struct expr*
 expr_new_cast(
     struct source_location const* location,
@@ -1365,6 +1465,16 @@ struct value {
             struct value* pointer; // TYPE_POINTER
             struct value* count; // TYPE_USIZE
         } slice;
+        struct {
+            // The members struct is an array with length equal to the struct
+            // type's member_variables stretchy buffer. The Xth element of this
+            // array corresponds to the Xth member variable within the struct
+            // type definition. Upon the creation of a value object, each value
+            // pointer in the member_variables array will be initialized to
+            // NULL, and the values of each member variable must be explicitly
+            // set before the value object may be used.
+            autil_sbuf(struct value*) member_variables;
+        } struct_;
     } data;
 };
 struct value*
@@ -1383,12 +1493,21 @@ value_new_array(
 struct value*
 value_new_slice(
     struct type const* type, struct value* pointer, struct value* count);
+struct value*
+value_new_struct(struct type const* type);
 void
 value_del(struct value* self);
 void
 value_freeze(struct value* self, struct autil_freezer* freezer);
 struct value*
 value_clone(struct value const* self);
+
+// Get the value associated with the struct member `self.name`.
+struct value const*
+value_get_member(struct value const* self, char const* name);
+// Set the value associated with the struct member `self.name`.
+void
+value_set_member(struct value* self, char const* name, struct value* value);
 
 bool
 value_eq(struct value const* lhs, struct value const* rhs);

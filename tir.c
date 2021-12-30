@@ -238,6 +238,78 @@ type_new_slice(struct type const* base)
     return self;
 }
 
+struct type*
+type_new_struct(char const* name)
+{
+    struct type* const self = type_new(name, 0, 0, TYPE_STRUCT);
+    self->data.struct_.next_offset = 0;
+    self->data.struct_.member_variables = NULL;
+    return self;
+}
+
+void
+type_struct_add_member_variable(
+    struct type* self, char const* name, struct type const* type)
+{
+    assert(self != NULL);
+    assert(name != NULL);
+    assert(type != NULL);
+
+    // Member variables with size zero are part of the struct, but do not
+    // contribute to the size or alignment of the struct.
+    if (type->size == 0) {
+        struct member_variable const m = {
+            .name = name,
+            .type = type,
+            .offset = self->data.struct_.next_offset,
+        };
+        autil_sbuf_push(self->data.struct_.member_variables, m);
+    }
+
+    assert(type->size != 0);
+    assert(type->align != 0);
+
+    // Increase the offset into the struct until the start of the added member
+    // variable is aligned to a valid byte boundary.
+    //
+    // TODO: Do we need any additional calculation(s) here to account for the
+    // natural alignment of the stack? Currently we are using 8-byte stack
+    // alignment (even though technically x64 has a max alignment of 16), but
+    // this check for "do we need to increase the next offset" does not include
+    // any mention of the natural stack alignment.
+    while (self->data.struct_.next_offset % type->align != 0) {
+        self->data.struct_.next_offset += 1;
+    }
+
+    // Push the added member variable onto the back of the struct's list of
+    // members (ordered by offset).
+    struct member_variable const m = {
+        .name = name,
+        .type = type,
+        .offset = self->data.struct_.next_offset,
+    };
+    autil_sbuf_push(self->data.struct_.member_variables, m);
+
+    // Adjust the struct alignment to match the alignment of the first
+    // non-zero-sized non-zero-aligned member. This case should only ever occur
+    // if the size and alignment are both zero.
+    assert((self->size == 0) == (self->align == 0));
+    if (self->align == 0) {
+        self->align = type->align;
+    }
+
+    // Adjust the struct size to fit all members plus array stride padding.
+    self->size = self->data.struct_.next_offset + type->size;
+    assert(self->align != 0);
+    while (self->size % self->align != 0) {
+        self->size += 1;
+    }
+
+    // Future member variables will search for a valid offset starting at one
+    // byte past the added member variable.
+    self->data.struct_.next_offset += type->size;
+}
+
 struct type const*
 type_unique_function(
     struct type const* const* parameter_types, struct type const* return_type)
@@ -870,6 +942,21 @@ expr_new_slice(
 }
 
 struct expr*
+expr_new_struct(
+    struct source_location const* location,
+    struct type const* type,
+    struct expr const* const* member_variables)
+{
+    assert(location != NULL);
+    assert(type != NULL);
+    assert(type->kind == TYPE_STRUCT);
+
+    struct expr* const self = expr_new(location, type, EXPR_STRUCT);
+    self->data.struct_.member_variables = member_variables;
+    return self;
+}
+
+struct expr*
 expr_new_cast(
     struct source_location const* location,
     struct type const* type,
@@ -1072,6 +1159,7 @@ expr_is_lvalue(struct expr const* self)
     case EXPR_BYTES: /* fallthrough */
     case EXPR_ARRAY: /* fallthrough */
     case EXPR_SLICE: /* fallthrough */
+    case EXPR_STRUCT: /* fallthrough */
     case EXPR_CAST: /* fallthrough */
     case EXPR_SYSCALL: /* fallthrough */
     case EXPR_CALL: /* fallthrough */
@@ -1243,6 +1331,24 @@ value_new_slice(
     return self;
 }
 
+struct value*
+value_new_struct(struct type const* type)
+{
+    assert(type != NULL);
+    assert(type->kind == TYPE_STRUCT);
+
+    struct value* self = value_new(type);
+
+    size_t const member_variables_count =
+        autil_sbuf_count(type->data.struct_.member_variables);
+    self->data.struct_.member_variables = NULL;
+    for (size_t i = 0; i < member_variables_count; ++i) {
+        autil_sbuf_push(self->data.struct_.member_variables, NULL);
+    }
+
+    return self;
+}
+
 void
 value_del(struct value* self)
 {
@@ -1292,6 +1398,20 @@ value_del(struct value* self)
     case TYPE_SLICE: {
         value_del(self->data.slice.pointer);
         value_del(self->data.slice.count);
+        break;
+    }
+    case TYPE_STRUCT: {
+        size_t const member_variables_count =
+            autil_sbuf_count(self->type->data.struct_.member_variables);
+        for (size_t i = 0; i < member_variables_count; ++i) {
+            struct value** pvalue = self->data.struct_.member_variables + i;
+            if (*pvalue == NULL) {
+                // Value was never initialized.
+                continue;
+            }
+            value_del(*pvalue);
+        }
+        autil_sbuf_fini(self->data.struct_.member_variables);
         break;
     }
     }
@@ -1354,6 +1474,17 @@ value_freeze(struct value* self, struct autil_freezer* freezer)
         value_freeze(self->data.slice.count, freezer);
         return;
     }
+    case TYPE_STRUCT: {
+        size_t const member_variables_count =
+            autil_sbuf_count(self->type->data.struct_.member_variables);
+        for (size_t i = 0; i < member_variables_count; ++i) {
+            struct value** pvalue = self->data.struct_.member_variables + i;
+            assert(*pvalue != NULL); // Self not fully initialized.
+            value_freeze(*pvalue, freezer);
+        }
+        autil_sbuf_freeze(self->data.struct_.member_variables, freezer);
+        return;
+    }
     }
 
     UNREACHABLE();
@@ -1409,10 +1540,68 @@ value_clone(struct value const* self)
             value_clone(self->data.slice.pointer),
             value_clone(self->data.slice.count));
     }
+    case TYPE_STRUCT: {
+        struct value* const new = value_new_struct(self->type);
+        size_t const member_variables_count =
+            autil_sbuf_count(self->type->data.struct_.member_variables);
+        for (size_t i = 0; i < member_variables_count; ++i) {
+            new->data.struct_.member_variables[i] =
+                value_clone(self->data.struct_.member_variables[i]);
+        }
+        break;
+    }
     }
 
     UNREACHABLE();
     return NULL;
+}
+
+static size_t
+value_member_index(struct value const* self, char const* name)
+{
+    assert(self != NULL);
+    assert(name != NULL);
+
+    assert(self->type->kind == TYPE_STRUCT);
+    struct member_variable const* const member_variables =
+        self->type->data.struct_.member_variables;
+    for (size_t i = 0; i < autil_sbuf_count(member_variables); ++i) {
+        if (0 == strcmp(member_variables[i].name, name)) {
+            return i;
+        }
+    }
+
+    fatal(NULL, "type `%s` has no member `%s`", self->type->name, name);
+    return 0;
+}
+
+struct value const*
+value_get_member(struct value const* self, char const* name)
+{
+    assert(self != NULL);
+    assert(name != NULL);
+
+    size_t const index = value_member_index(self, name);
+    return self->data.struct_.member_variables[index];
+}
+
+void
+value_set_member(struct value* self, char const* name, struct value* value)
+{
+    assert(self != NULL);
+    assert(name != NULL);
+    assert(value != NULL);
+
+    size_t const index = value_member_index(self, name);
+    struct value** const pvalue = self->data.struct_.member_variables + index;
+
+    // De-initialize the value associated with the member if that member has
+    // already been initialized.
+    if (*pvalue != NULL) {
+        value_del(*pvalue);
+    }
+
+    *pvalue = value;
 }
 
 bool
@@ -1460,7 +1649,8 @@ value_eq(struct value const* lhs, struct value const* rhs)
         UNREACHABLE(); // illegal
     }
     case TYPE_ARRAY: /* fallthrough */
-    case TYPE_SLICE: {
+    case TYPE_SLICE: /* fallthrough */
+    case TYPE_STRUCT: {
         UNREACHABLE(); // illegal
     }
     }
@@ -1505,7 +1695,8 @@ value_lt(struct value const* lhs, struct value const* rhs)
     }
     case TYPE_FUNCTION: /* fallthrough */
     case TYPE_ARRAY: /* fallthrough */
-    case TYPE_SLICE: {
+    case TYPE_SLICE: /* fallthrough */
+    case TYPE_STRUCT: {
         UNREACHABLE(); // illegal
     }
     }
@@ -1550,7 +1741,8 @@ value_gt(struct value const* lhs, struct value const* rhs)
     }
     case TYPE_FUNCTION: /* fallthrough */
     case TYPE_ARRAY: /* fallthrough */
-    case TYPE_SLICE: {
+    case TYPE_SLICE: /* fallthrough */
+    case TYPE_STRUCT: {
         UNREACHABLE(); // illegal
     }
     }
@@ -1645,6 +1837,26 @@ value_to_new_bytes(struct value const* value)
         // assembler/linker and has no meaningful representation at
         // compile-time.
         UNREACHABLE();
+    }
+    case TYPE_STRUCT: {
+        struct member_variable const* const member_variable_defs =
+            value->type->data.struct_.member_variables;
+        for (size_t i = 0; i < autil_sbuf_count(member_variable_defs); ++i) {
+            struct member_variable const* const member_def =
+                value->type->data.struct_.member_variables + i;
+
+            struct value const* const member_val =
+                value->data.struct_.member_variables[i];
+
+            autil_sbuf(uint8_t) const member_bytes =
+                value_to_new_bytes(member_val);
+            autil_memmove(
+                bytes + member_def->offset,
+                member_bytes,
+                autil_sbuf_count(member_bytes));
+            autil_sbuf_fini(member_bytes);
+        }
+        return bytes;
     }
     }
 

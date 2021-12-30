@@ -209,6 +209,10 @@ append_dx_type(struct type const* type)
         append("dq");
         return;
     }
+    case TYPE_STRUCT: {
+        append("db");
+        return;
+    }
     }
 
     UNREACHABLE();
@@ -327,6 +331,17 @@ append_dx_data(struct value const* value)
         append_dx_data(value->data.slice.pointer);
         append(", ");
         append_dx_data(value->data.slice.count);
+        return;
+    }
+    case TYPE_STRUCT: {
+        autil_sbuf(uint8_t) const bytes = value_to_new_bytes(value);
+        for (size_t i = 0; i < autil_sbuf_count(bytes); ++i) {
+            if (i != 0) {
+                append(", ");
+            }
+            append("%#x", (unsigned)bytes[i]);
+        }
+        autil_sbuf_fini(bytes);
         return;
     }
     }
@@ -616,6 +631,8 @@ static void
 codegen_rvalue_array(struct expr const* expr, size_t id);
 static void
 codegen_rvalue_slice(struct expr const* expr, size_t id);
+static void
+codegen_rvalue_struct(struct expr const* expr, size_t id);
 static void
 codegen_rvalue_cast(struct expr const* expr, size_t id);
 static void
@@ -1051,6 +1068,11 @@ codegen_stmt_assign(struct stmt const* stmt, size_t id)
     assert(stmt->kind == STMT_ASSIGN);
     (void)id;
 
+    if (stmt->data.assign.lhs->type->size == 0) {
+        // NOP
+        return;
+    }
+
     codegen_rvalue(stmt->data.assign.rhs);
     codegen_lvalue(stmt->data.assign.lhs);
 
@@ -1120,6 +1142,7 @@ codegen_rvalue(struct expr const* expr)
         TABLE_ENTRY(EXPR_BYTES, codegen_rvalue_bytes),
         TABLE_ENTRY(EXPR_ARRAY, codegen_rvalue_array),
         TABLE_ENTRY(EXPR_SLICE, codegen_rvalue_slice),
+        TABLE_ENTRY(EXPR_STRUCT, codegen_rvalue_struct),
         TABLE_ENTRY(EXPR_CAST, codegen_rvalue_cast),
         TABLE_ENTRY(EXPR_SYSCALL, codegen_rvalue_syscall),
         TABLE_ENTRY(EXPR_CALL, codegen_rvalue_call),
@@ -1296,6 +1319,46 @@ codegen_rvalue_slice(struct expr const* expr, size_t id)
 }
 
 static void
+codegen_rvalue_struct(struct expr const* expr, size_t id)
+{
+    assert(expr != NULL);
+    assert(expr->kind == EXPR_STRUCT);
+    assert(expr->type->kind == TYPE_STRUCT);
+    (void)id;
+
+    // Make space for the struct.
+    push(expr->type->size);
+
+    // One by one evaluate the member variables for the elements of the struct.
+    // Each member variable will be at the top of the stack after being
+    // evaluated, so the member variable is manually memcpy-ed into the correct
+    // position on the stack.
+    autil_sbuf(struct member_variable) const member_variable_defs =
+        expr->type->data.struct_.member_variables;
+    autil_sbuf(struct expr const* const) const member_variable_exprs =
+        expr->data.struct_.member_variables;
+    assert(
+        autil_sbuf_count(member_variable_defs)
+        == autil_sbuf_count(member_variable_exprs));
+
+    for (size_t i = 0; i < autil_sbuf_count(member_variable_defs); ++i) {
+        assert(member_variable_exprs[i]->type == member_variable_defs[i].type);
+        codegen_rvalue(member_variable_exprs[i]);
+
+        struct type const* const type = member_variable_exprs[i]->type;
+        size_t const size = type->size;
+        size_t const offset = member_variable_defs[i].offset;
+
+        appendli("mov rbx, rsp");
+        appendli("add rbx, %zu", ceil8zu(size)); // struct start
+        appendli("add rbx, %zu", offset); // member offset
+        copy_rsp_rbx_via_rcx(size);
+
+        pop(size);
+    }
+}
+
+static void
 codegen_rvalue_cast(struct expr const* expr, size_t id)
 {
     assert(expr != NULL);
@@ -1318,34 +1381,40 @@ codegen_rvalue_cast(struct expr const* expr, size_t id)
     case TYPE_BOOL: /* fallthrough */
     case TYPE_BYTE: /* fallthrough */
     case TYPE_U8: /* fallthrough */
-    case TYPE_U16:
+    case TYPE_U16: {
         // Move with Zero-Extend
         appendli("movzx rax, %s", reg);
         break;
-    case TYPE_U32:
+    }
+    case TYPE_U32: {
         // The MOVZX instruction does not have an encoding with SRC of r/m32 or
         // r/m64, but a MOV with SRC of r/m32 will zero out the upper 32 bits.
         appendli("mov rax, %s", reg);
         break;
+    }
     case TYPE_S8: /* fallthrough */
     case TYPE_S16: /* fallthrough */
-    case TYPE_S32:
+    case TYPE_S32: {
         // Move with Sign-Extension
         appendli("movsx rax, %s", reg);
         break;
+    }
     case TYPE_U64: /* fallthrough */
     case TYPE_S64: /* fallthrough */
     case TYPE_USIZE: /* fallthrough */
     case TYPE_SSIZE: /* fallthrough */
-    case TYPE_POINTER:
+    case TYPE_POINTER: {
         // A MOV with r/m64 has nothing to zero-extend/sign-extend.
         break;
+    }
     case TYPE_VOID: /* fallthrough */
     case TYPE_INTEGER: /* fallthrough */
     case TYPE_FUNCTION: /* fallthrough */
     case TYPE_ARRAY: /* fallthrough */
-    case TYPE_SLICE:
+    case TYPE_SLICE: /* fallthrough */
+    case TYPE_STRUCT: {
         UNREACHABLE();
+    }
     }
 
     // Boolean values *must* be either zero or one.
