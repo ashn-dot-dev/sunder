@@ -652,6 +652,8 @@ codegen_rvalue_access_slice_lhs_array(struct expr const* expr, size_t id);
 static void
 codegen_rvalue_access_slice_lhs_slice(struct expr const* expr, size_t id);
 static void
+codegen_rvalue_access_member_variable(struct expr const* expr, size_t id);
+static void
 codegen_rvalue_sizeof(struct expr const* expr, size_t id);
 static void
 codegen_rvalue_alignof(struct expr const* expr, size_t id);
@@ -670,6 +672,8 @@ static void
 codegen_lvalue_access_index_lhs_array(struct expr const* expr, size_t id);
 static void
 codegen_lvalue_access_index_lhs_slice(struct expr const* expr, size_t id);
+static void
+codegen_lvalue_access_member_variable(struct expr const* expr, size_t id);
 static void
 codegen_lvalue_unary(struct expr const* expr, size_t id);
 
@@ -1136,6 +1140,7 @@ codegen_rvalue(struct expr const* expr)
         void (*codegen_fn)(struct expr const*, size_t);
     } const table[] = {
 #define TABLE_ENTRY(kind, fn) [kind] = {#kind, fn}
+        // clang-format off
         TABLE_ENTRY(EXPR_IDENTIFIER, codegen_rvalue_identifier),
         TABLE_ENTRY(EXPR_BOOLEAN, codegen_rvalue_boolean),
         TABLE_ENTRY(EXPR_INTEGER, codegen_rvalue_integer),
@@ -1148,10 +1153,12 @@ codegen_rvalue(struct expr const* expr)
         TABLE_ENTRY(EXPR_CALL, codegen_rvalue_call),
         TABLE_ENTRY(EXPR_ACCESS_INDEX, codegen_rvalue_access_index),
         TABLE_ENTRY(EXPR_ACCESS_SLICE, codegen_rvalue_access_slice),
+        TABLE_ENTRY(EXPR_ACCESS_MEMBER_VARIABLE, codegen_rvalue_access_member_variable),
         TABLE_ENTRY(EXPR_SIZEOF, codegen_rvalue_sizeof),
         TABLE_ENTRY(EXPR_ALIGNOF, codegen_rvalue_alignof),
         TABLE_ENTRY(EXPR_UNARY, codegen_rvalue_unary),
         TABLE_ENTRY(EXPR_BINARY, codegen_rvalue_binary),
+    // clang-format on
 #undef TABLE_ENTRY
     };
 
@@ -1742,6 +1749,65 @@ codegen_rvalue_access_slice_lhs_slice(struct expr const* expr, size_t id)
 }
 
 static void
+codegen_rvalue_access_member_variable(struct expr const* expr, size_t id)
+{
+    assert(expr != NULL);
+    assert(expr->kind == EXPR_ACCESS_MEMBER_VARIABLE);
+    assert(expr->data.access_member_variable.lhs->type->kind == TYPE_STRUCT);
+    (void)id;
+
+    // Copy the member variable data from within the struct onto the "top" of
+    // the stack, where "top" is the future address of the stack pointer at the
+    // end of the access operation.
+    //
+    // Stack (start)
+    //  | ... other values on the stack
+    //  +-- <- rsp
+    //  |
+    //  v
+    //
+    // Stack (after evaluating the rvalue struct)
+    //  | ... other values on the stack
+    //  +-- <- previous rsp
+    //  | member data       <-+
+    //  +--                   |
+    //  | target member data  |
+    //  +--                   +- struct rvalue
+    //  |...                  |
+    //  +--                   |
+    //  | member data       <-+
+    //  +-- <- rsp
+    //  |
+    //  v
+    //
+    // Stack (goal)
+    //  | ... other values on the stack
+    //  +-- <- previous rsp
+    //  | target member data
+    //  +-- <- rsp           <+
+    //  | member data         |
+    //  +--                   +- struct rvalue bytes are still on the stack,
+    //  |...                  |  but the target member data has been copied to
+    //  +--                   |  the "top" of the stack, possibly overwriting
+    //  | member data       <-+  other member data in the struct rvalue
+    //  +--
+    //  |
+    //  v
+    codegen_rvalue(expr->data.access_member_variable.lhs);
+    // Offset from the current rsp to the future location of rsp once the member
+    // varaiable data is copied.
+    size_t const result_rsp_offset =
+        ceil8zu(expr->data.access_member_variable.lhs->type->size)
+        - ceil8zu(expr->type->size);
+    appendli("mov rax, rsp"); // rax := start of the target member variable
+    appendli(
+        "add rax, %zu",
+        expr->data.access_member_variable.member_variable->offset);
+    appendli("add rsp, %zu", result_rsp_offset);
+    copy_rax_rsp_via_rcx(expr->type->size);
+}
+
+static void
 codegen_rvalue_sizeof(struct expr const* expr, size_t id)
 {
     assert(expr != NULL);
@@ -2250,9 +2316,13 @@ codegen_lvalue(struct expr const* expr)
         void (*codegen_fn)(struct expr const*, size_t);
     } const table[] = {
 #define TABLE_ENTRY(kind, fn) [kind] = {#kind, fn}
+        // clang format off
         TABLE_ENTRY(EXPR_IDENTIFIER, codegen_lvalue_identifier),
         TABLE_ENTRY(EXPR_ACCESS_INDEX, codegen_lvalue_access_index),
+        TABLE_ENTRY(
+            EXPR_ACCESS_MEMBER_VARIABLE, codegen_lvalue_access_member_variable),
         TABLE_ENTRY(EXPR_UNARY, codegen_lvalue_unary),
+    // clang format on
 #undef TABLE_ENTRY
     };
 
@@ -2352,6 +2422,22 @@ codegen_lvalue_access_index_lhs_slice(struct expr const* expr, size_t id)
     appendli("pop rbx"); // start
     appendli("add rax, rbx"); // start + index * sizeof(element_type)
     pop(8u); // slice count
+    appendli("push rax");
+}
+
+static void
+codegen_lvalue_access_member_variable(struct expr const* expr, size_t id)
+{
+    assert(expr != NULL);
+    assert(expr->kind == EXPR_ACCESS_MEMBER_VARIABLE);
+    assert(expr->data.access_member_variable.lhs->type->kind == TYPE_STRUCT);
+    (void)id;
+
+    codegen_lvalue(expr->data.access_member_variable.lhs);
+    appendli("pop rax");
+    appendli(
+        "add rax, %zu",
+        expr->data.access_member_variable.member_variable->offset);
     appendli("push rax");
 }
 

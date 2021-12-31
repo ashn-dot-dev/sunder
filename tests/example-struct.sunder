@@ -11,6 +11,16 @@ struct point {
 var point_a: point = (:point){.x = 0x00112233, .y = 0xAABBCCDD};
 const point_b: point = (:point){.x = 0, .y = 0xFFFFFFFF};
 const point_c: point = (:point){.y = 0xEEEEEEEE, .x = 0};
+const point_d: point = (:point){
+    .x = point_b.x + 1,
+    .y = point_b.y - 1
+};
+const array: [2u]u32 = (:[2u]u32)[0xDEADBEEF, 0xCAFEF00D];
+const point_e: point = (:point){
+    .x = array[0],
+    .y = array[1]
+};
+
 
 # Contains self-referential *foo and []foo types as well as alignment padding
 # between the bool and pointer members. At the time of writing integer->pointer
@@ -52,10 +62,21 @@ func main() void {
     dump empty_a;
 
     dump point_a;
+    dump point_a.x;
+    dump point_a.y;
+    point_a.x = 0xDEADBEEF;
+    dump point_a;
+    dump point_a.x;
+    dump point_a.y;
     dump point_b;
     dump point_c;
+    dump point_d;
+    dump point_e;
     point_a = point_b;
     dump point_a;
+
+    dump (:point){.x = array[0], .y = array[1]};
+    dump (:point){.x = array[0], .y = array[1]}.x;
 
     var foo_a: foo = (:foo){
         .w = 1s32,
@@ -73,13 +94,21 @@ func main() void {
 
     dump bar_a;
 }
-# AA BB CC DD 00 11 00 33 22 44 00 66 55
 ################################################################################
 #
 #
 #
 # 33 22 11 00 DD CC BB AA
+# 33 22 11 00
+# DD CC BB AA
+# EF BE AD DE DD CC BB AA
+# EF BE AD DE
+# DD CC BB AA
 # 00 00 00 00 FF FF FF FF
 # 00 00 00 00 EE EE EE EE
+# 01 00 00 00 FE FF FF FF
+# EF BE AD DE 0D F0 FE CA
 # 00 00 00 00 FF FF FF FF
+# EF BE AD DE 0D F0 FE CA
+# EF BE AD DE
 # AA BB CC DD 11 00 33 22 44 00 66 55

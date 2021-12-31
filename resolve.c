@@ -198,6 +198,9 @@ static struct expr const*
 resolve_expr_access_slice(
     struct resolver* resolver, struct cst_expr const* expr);
 static struct expr const*
+resolve_expr_access_member(
+    struct resolver* resolver, struct cst_expr const* expr);
+static struct expr const*
 resolve_expr_sizeof(struct resolver* resolver, struct cst_expr const* expr);
 static struct expr const*
 resolve_expr_alignof(struct resolver* resolver, struct cst_expr const* expr);
@@ -1468,6 +1471,9 @@ resolve_expr(struct resolver* resolver, struct cst_expr const* expr)
     case CST_EXPR_ACCESS_SLICE: {
         return resolve_expr_access_slice(resolver, expr);
     }
+    case CST_EXPR_ACCESS_MEMBER: {
+        return resolve_expr_access_member(resolver, expr);
+    }
     case CST_EXPR_SIZEOF: {
         return resolve_expr_sizeof(resolver, expr);
     }
@@ -2181,6 +2187,43 @@ resolve_expr_access_slice(
 
     autil_freezer_register(context()->freezer, resolved);
     return resolved;
+}
+
+static struct expr const*
+resolve_expr_access_member(
+    struct resolver* resolver, struct cst_expr const* expr)
+{
+    assert(resolver != NULL);
+    assert(expr != NULL);
+    assert(expr->kind == CST_EXPR_ACCESS_MEMBER);
+
+    struct expr const* const lhs =
+        resolve_expr(resolver, expr->data.access_member.lhs);
+    if (lhs->type->kind != TYPE_STRUCT) {
+        fatal(
+            lhs->location,
+            "illegal member access of non-struct type type `%s`",
+            lhs->type->name);
+    }
+
+    char const* const member_name = expr->data.access_member.identifier->name;
+
+    struct member_variable const* const member_variable_def =
+        type_struct_member_variable(lhs->type, member_name);
+    if (member_variable_def != NULL) {
+        struct expr* const resolved = expr_new_access_member_variable(
+            expr->location, lhs, member_variable_def);
+
+        autil_freezer_register(context()->freezer, resolved);
+        return resolved;
+    }
+
+    fatal(
+        lhs->location,
+        "struct `%s` has no member `%s`",
+        lhs->type->name,
+        member_name);
+    return NULL;
 }
 
 static struct expr const*

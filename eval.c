@@ -31,6 +31,8 @@ eval_rvalue_access_index(struct expr const* expr);
 static struct value*
 eval_rvalue_access_slice(struct expr const* expr);
 static struct value*
+eval_rvalue_access_member_variable(struct expr const* expr);
+static struct value*
 eval_rvalue_sizeof(struct expr const* expr);
 static struct value*
 eval_rvalue_alignof(struct expr const* expr);
@@ -39,11 +41,13 @@ eval_rvalue_unary(struct expr const* expr);
 static struct value*
 eval_rvalue_binary(struct expr const* expr);
 
-struct value*
+static struct value*
 eval_lvalue_identifier(struct expr const* expr);
-struct value*
+static struct value*
 eval_lvalue_access_index(struct expr const* expr);
-struct value*
+static struct value*
+eval_lvalue_access_member_variable(struct expr const* expr);
+static struct value*
 eval_lvalue_unary(struct expr const* expr);
 
 static bool
@@ -104,6 +108,9 @@ eval_rvalue(struct expr const* expr)
     }
     case EXPR_ACCESS_SLICE: {
         return eval_rvalue_access_slice(expr);
+    }
+    case EXPR_ACCESS_MEMBER_VARIABLE: {
+        return eval_rvalue_access_member_variable(expr);
     }
     case EXPR_SIZEOF: {
         return eval_rvalue_sizeof(expr);
@@ -483,6 +490,26 @@ eval_rvalue_access_slice(struct expr const* expr)
 
     UNREACHABLE();
     return NULL;
+}
+
+static struct value*
+eval_rvalue_access_member_variable(struct expr const* expr)
+{
+    assert(expr != NULL);
+    assert(expr->kind == EXPR_ACCESS_MEMBER_VARIABLE);
+
+    struct value* const lhs =
+        eval_rvalue(expr->data.access_member_variable.lhs);
+
+    long const index = type_struct_member_variable_index(
+        lhs->type, expr->data.access_member_variable.member_variable->name);
+    assert(index >= 0);
+
+    struct value* const res =
+        value_clone(lhs->data.struct_.member_variables[index]);
+
+    value_del(lhs);
+    return res;
 }
 
 static struct value*
@@ -896,6 +923,9 @@ eval_lvalue(struct expr const* expr)
     case EXPR_ACCESS_INDEX: {
         return eval_lvalue_access_index(expr);
     }
+    case EXPR_ACCESS_MEMBER_VARIABLE: {
+        return eval_lvalue_access_member_variable(expr);
+    }
     case EXPR_UNARY: {
         return eval_lvalue_unary(expr);
     }
@@ -920,7 +950,7 @@ eval_lvalue(struct expr const* expr)
     return NULL;
 }
 
-struct value*
+static struct value*
 eval_lvalue_identifier(struct expr const* expr)
 {
     assert(expr != NULL);
@@ -936,7 +966,7 @@ eval_lvalue_identifier(struct expr const* expr)
     return value_new_pointer(type, *symbol->address);
 }
 
-struct value*
+static struct value*
 eval_lvalue_access_index(struct expr const* expr)
 {
     assert(expr != NULL);
@@ -977,7 +1007,22 @@ eval_lvalue_access_index(struct expr const* expr)
     return value_new_pointer(type, address);
 }
 
-struct value*
+static struct value*
+eval_lvalue_access_member_variable(struct expr const* expr)
+{
+    assert(expr != NULL);
+    assert(expr->kind == EXPR_ACCESS_MEMBER_VARIABLE);
+
+    struct value* const value =
+        eval_lvalue(expr->data.access_member_variable.lhs);
+    assert(value->type->kind == TYPE_POINTER);
+    assert(value->data.pointer.kind == ADDRESS_STATIC);
+    value->data.pointer.data.static_.offset +=
+        expr->data.access_member_variable.member_variable->offset;
+    return value;
+}
+
+static struct value*
 eval_lvalue_unary(struct expr const* expr)
 {
     assert(expr != NULL);

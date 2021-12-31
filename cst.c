@@ -504,6 +504,23 @@ cst_expr_new_access_slice(
 }
 
 struct cst_expr*
+cst_expr_new_access_member(
+    struct source_location const* location,
+    struct cst_expr const* lhs,
+    struct cst_identifier const* identifier)
+{
+    assert(location != NULL);
+    assert(lhs != NULL);
+    assert(identifier != NULL);
+
+    struct cst_expr* const self =
+        cst_expr_new(location, CST_EXPR_ACCESS_MEMBER);
+    self->data.access_member.lhs = lhs;
+    self->data.access_member.identifier = identifier;
+    return self;
+}
+
+struct cst_expr*
 cst_expr_new_sizeof(
     struct source_location const* location, struct cst_typespec const* rhs)
 {

@@ -66,6 +66,7 @@
          | <expr-call>
          | <expr-access-index>
          | <expr-access-slice>
+         | <expr-access-member>
          | <expr-sizeof>
          | <expr-alignof>
          | <expr-unary>
@@ -94,6 +95,8 @@
 <expr-access-index> ::= <expr> "[" <expr> "]"
 
 <expr-access-slice> ::= <expr> "[" <expr> ":" <expr> "]"
+
+<expr-access-member> ::= <expr> "." <identifier>
 
 <expr-sizeof> ::= "sizeof" "(" ":" <typespec> ")"
 

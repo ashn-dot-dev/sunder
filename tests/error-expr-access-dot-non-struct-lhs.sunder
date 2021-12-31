@@ -1,0 +1,7 @@
+func main() void {
+    1u16.x;
+}
+################################################################################
+# [error-expr-access-dot-non-struct-lhs.sunder:2] error: illegal member access of non-struct type type `u16`
+#     1u16.x;
+#     ^

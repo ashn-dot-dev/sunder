@@ -310,6 +310,38 @@ type_struct_add_member_variable(
     self->data.struct_.next_offset += type->size;
 }
 
+long
+type_struct_member_variable_index(struct type const* self, char const* name)
+{
+    assert(self != NULL);
+    assert(self->kind == TYPE_STRUCT);
+    assert(name != NULL);
+
+    struct member_variable const* const member_variables =
+        self->data.struct_.member_variables;
+    for (size_t i = 0; i < autil_sbuf_count(member_variables); ++i) {
+        if (0 == strcmp(member_variables[i].name, name)) {
+            return (long)i;
+        }
+    }
+
+    return -1;
+}
+
+struct member_variable const*
+type_struct_member_variable(struct type const* self, char const* name)
+{
+    assert(self != NULL);
+    assert(self->kind == TYPE_STRUCT);
+    assert(name != NULL);
+
+    long const index = type_struct_member_variable_index(self, name);
+    if (index < 0) {
+        return NULL;
+    }
+    return &self->data.struct_.member_variables[index];
+}
+
 struct type const*
 type_unique_function(
     struct type const* const* parameter_types, struct type const* return_type)
@@ -1068,6 +1100,25 @@ expr_new_access_slice(
 }
 
 struct expr*
+expr_new_access_member_variable(
+    struct source_location const* location,
+    struct expr const* lhs,
+    struct member_variable const* member_variable)
+{
+    assert(location != NULL);
+    assert(lhs != NULL);
+    assert(lhs->type->kind == TYPE_STRUCT);
+    assert(member_variable != NULL);
+
+    struct expr* const self =
+        expr_new(location, member_variable->type, EXPR_ACCESS_MEMBER_VARIABLE);
+
+    self->data.access_member_variable.lhs = lhs;
+    self->data.access_member_variable.member_variable = member_variable;
+    return self;
+}
+
+struct expr*
 expr_new_sizeof(struct source_location const* location, struct type const* rhs)
 {
     assert(location != NULL);
@@ -1150,6 +1201,9 @@ expr_is_lvalue(struct expr const* self)
     case EXPR_ACCESS_INDEX: {
         return self->data.access_index.lhs->type->kind == TYPE_SLICE
             || expr_is_lvalue(self->data.access_index.lhs);
+    }
+    case EXPR_ACCESS_MEMBER_VARIABLE: {
+        return expr_is_lvalue(self->data.access_member_variable.lhs);
     }
     case EXPR_UNARY: {
         return self->data.unary.op == UOP_DEREFERENCE;
@@ -1548,31 +1602,12 @@ value_clone(struct value const* self)
             new->data.struct_.member_variables[i] =
                 value_clone(self->data.struct_.member_variables[i]);
         }
-        break;
+        return new;
     }
     }
 
     UNREACHABLE();
     return NULL;
-}
-
-static size_t
-value_member_index(struct value const* self, char const* name)
-{
-    assert(self != NULL);
-    assert(name != NULL);
-
-    assert(self->type->kind == TYPE_STRUCT);
-    struct member_variable const* const member_variables =
-        self->type->data.struct_.member_variables;
-    for (size_t i = 0; i < autil_sbuf_count(member_variables); ++i) {
-        if (0 == strcmp(member_variables[i].name, name)) {
-            return i;
-        }
-    }
-
-    fatal(NULL, "type `%s` has no member `%s`", self->type->name, name);
-    return 0;
 }
 
 struct value const*
@@ -1581,7 +1616,11 @@ value_get_member(struct value const* self, char const* name)
     assert(self != NULL);
     assert(name != NULL);
 
-    size_t const index = value_member_index(self, name);
+    long const index = type_struct_member_variable_index(self->type, name);
+    if (index < 0) {
+        // Should never happen.
+        fatal(NULL, "type `%s` has no member `%s`", self->type->name, name);
+    }
     return self->data.struct_.member_variables[index];
 }
 
@@ -1592,7 +1631,11 @@ value_set_member(struct value* self, char const* name, struct value* value)
     assert(name != NULL);
     assert(value != NULL);
 
-    size_t const index = value_member_index(self, name);
+    long const index = type_struct_member_variable_index(self->type, name);
+    if (index < 0) {
+        // Should never happen.
+        fatal(NULL, "type `%s` has no member `%s`", self->type->name, name);
+    }
     struct value** const pvalue = self->data.struct_.member_variables + index;
 
     // De-initialize the value associated with the member if that member has

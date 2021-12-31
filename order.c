@@ -298,6 +298,10 @@ order_expr(struct orderer* orderer, struct cst_expr const* expr)
         order_expr(orderer, expr->data.access_slice.end);
         return;
     }
+    case CST_EXPR_ACCESS_MEMBER: {
+        order_expr(orderer, expr->data.access_slice.lhs);
+        return;
+    }
     case CST_EXPR_SIZEOF: {
         order_typespec(orderer, expr->data.sizeof_.rhs);
         return;

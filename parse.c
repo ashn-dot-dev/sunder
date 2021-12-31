@@ -120,6 +120,8 @@ parse_expr_led_lparen(struct parser* parser, struct cst_expr const* lhs);
 static struct cst_expr const*
 parse_expr_led_lbracket(struct parser* parser, struct cst_expr const* lhs);
 static struct cst_expr const*
+parse_expr_led_dot(struct parser* parser, struct cst_expr const* lhs);
+static struct cst_expr const*
 parse_expr_sizeof(struct parser* parser);
 static struct cst_expr const*
 parse_expr_alignof(struct parser* parser);
@@ -688,6 +690,7 @@ token_kind_precedence(enum token_kind kind)
         return PRECEDENCE_PRODUCT;
     case TOKEN_LPAREN: /* fallthrough */
     case TOKEN_LBRACKET:
+    case TOKEN_DOT:
         return PRECEDENCE_POSTFIX;
     default:
         break;
@@ -750,6 +753,8 @@ token_kind_led(enum token_kind kind)
         return parse_expr_led_lparen;
     case TOKEN_LBRACKET:
         return parse_expr_led_lbracket;
+    case TOKEN_DOT:
+        return parse_expr_led_dot;
     case TOKEN_OR: /* fallthrough */
     case TOKEN_AND: /* fallthrough */
     case TOKEN_EQ: /* fallthrough */
@@ -1065,6 +1070,23 @@ parse_expr_led_lbracket(struct parser* parser, struct cst_expr const* lhs)
     expect_current(parser, TOKEN_RBRACKET);
     struct cst_expr* const product =
         cst_expr_new_access_index(location, lhs, idx);
+
+    autil_freezer_register(context()->freezer, product);
+    return product;
+}
+
+static struct cst_expr const*
+parse_expr_led_dot(struct parser* parser, struct cst_expr const* lhs)
+{
+    assert(parser != NULL);
+    assert(lhs != NULL);
+
+    struct source_location const* const location =
+        &expect_current(parser, TOKEN_DOT)->location;
+    struct cst_identifier const* const identifier = parse_identifier(parser);
+
+    struct cst_expr* const product =
+        cst_expr_new_access_member(location, lhs, identifier);
 
     autil_freezer_register(context()->freezer, product);
     return product;

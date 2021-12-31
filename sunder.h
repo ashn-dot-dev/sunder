@@ -554,6 +554,7 @@ struct cst_expr {
         CST_EXPR_CALL,
         CST_EXPR_ACCESS_INDEX,
         CST_EXPR_ACCESS_SLICE,
+        CST_EXPR_ACCESS_MEMBER,
         // Prefix Unary Operator Expressions
         CST_EXPR_SIZEOF,
         CST_EXPR_ALIGNOF,
@@ -607,6 +608,10 @@ struct cst_expr {
             struct cst_expr const* begin;
             struct cst_expr const* end;
         } access_slice;
+        struct {
+            struct cst_expr const* lhs;
+            struct cst_identifier const* identifier;
+        } access_member;
         struct {
             struct cst_typespec const* rhs;
         } sizeof_;
@@ -681,6 +686,11 @@ cst_expr_new_access_slice(
     struct cst_expr const* lhs,
     struct cst_expr const* begin,
     struct cst_expr const* end);
+struct cst_expr*
+cst_expr_new_access_member(
+    struct source_location const* location,
+    struct cst_expr const* lhs,
+    struct cst_identifier const* identifier);
 struct cst_expr*
 cst_expr_new_sizeof(
     struct source_location const* location, struct cst_typespec const* rhs);
@@ -982,6 +992,16 @@ type_new_struct(char const* name);
 void
 type_struct_add_member_variable(
     struct type* self, char const* name, struct type const* type);
+// Returns the index of the member variable `name` in the provided struct type.
+// Returns a non-negative integer index on success.
+// Returns a -1 on failure.
+long
+type_struct_member_variable_index(struct type const* self, char const* name);
+// Returns a pointer to the member variable `name` in the provided struct type.
+// Returns a pointer to the member variable success.
+// Returns NULL on failure.
+struct member_variable const*
+type_struct_member_variable(struct type const* self, char const* name);
 
 struct type const*
 type_unique_function(
@@ -1219,6 +1239,7 @@ struct expr {
         EXPR_CALL,
         EXPR_ACCESS_INDEX,
         EXPR_ACCESS_SLICE,
+        EXPR_ACCESS_MEMBER_VARIABLE,
         EXPR_SIZEOF,
         EXPR_ALIGNOF,
         EXPR_UNARY,
@@ -1266,6 +1287,10 @@ struct expr {
             struct expr const* begin;
             struct expr const* end;
         } access_slice;
+        struct {
+            struct expr const* lhs;
+            struct member_variable const* member_variable;
+        } access_member_variable;
         struct {
             struct type const* rhs;
         } sizeof_;
@@ -1364,6 +1389,11 @@ expr_new_access_slice(
     struct expr const* lhs,
     struct expr const* begin,
     struct expr const* end);
+struct expr*
+expr_new_access_member_variable(
+    struct source_location const* location,
+    struct expr const* lhs,
+    struct member_variable const* member_variable);
 struct expr*
 expr_new_sizeof(struct source_location const* location, struct type const* rhs);
 struct expr*
