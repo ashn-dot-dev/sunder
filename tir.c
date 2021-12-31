@@ -239,11 +239,12 @@ type_new_slice(struct type const* base)
 }
 
 struct type*
-type_new_struct(char const* name)
+type_new_struct(char const* name, struct symbol_table const* symbols)
 {
     struct type* const self = type_new(name, 0, 0, TYPE_STRUCT);
     self->data.struct_.next_offset = 0;
     self->data.struct_.member_variables = NULL;
+    self->data.struct_.symbols = symbols;
     return self;
 }
 

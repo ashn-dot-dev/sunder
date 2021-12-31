@@ -151,11 +151,30 @@ order_tldecl(struct orderer* orderer, struct tldecl* tldecl)
     order_decl(orderer, tldecl->decl);
     tldecl->state = TLDECL_ORDERED;
     autil_sbuf_push(orderer->tldecls.topological_order, tldecl->decl->name);
+    // Special case for structs with member functions. Member functions may
+    // self-reference the struct that they are defined within (e.g. the return
+    // type of init functions). Member functions have their ordering deferred
+    // until after the struct has been ordered (here), mirroring the behavior of
+    // the resolve phase where member functions are resolved after the struct
+    // member variables & layout have been resolved.
+    if (tldecl->decl->kind == CST_DECL_STRUCT) {
+        autil_sbuf(struct cst_member const* const) const members =
+            tldecl->decl->data.struct_.members;
+        for (size_t i = 0; i < autil_sbuf_count(members); ++i) {
+            if (members[i]->kind != CST_MEMBER_FUNCTION) {
+                continue;
+            }
+            order_decl(orderer, members[i]->data.function.decl);
+        }
+    }
 }
 
 static void
 order_decl(struct orderer* orderer, struct cst_decl const* decl)
 {
+    assert(order != NULL);
+    assert(decl != NULL);
+
     switch (decl->kind) {
     case CST_DECL_VARIABLE: {
         order_typespec(orderer, decl->data.variable.typespec);
@@ -339,7 +358,20 @@ order_member(struct orderer* orderer, struct cst_member const* member)
     assert(orderer != NULL);
     assert(member != NULL);
 
-    order_typespec(orderer, member->typespec);
+    switch (member->kind) {
+    case CST_MEMBER_VARIABLE: {
+        order_typespec(orderer, member->data.variable.typespec);
+        return;
+    }
+    case CST_MEMBER_FUNCTION: {
+        // Defer ordering member functions until the struct has been ordered in
+        // order to account for self-referential member functions. There is a
+        // special case to handle this logic in the order_tldecl function.
+        return;
+    }
+    }
+
+    UNREACHABLE();
 }
 
 static void

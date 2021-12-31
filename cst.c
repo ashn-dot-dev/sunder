@@ -620,7 +620,7 @@ cst_parameter_new(
 }
 
 struct cst_member*
-cst_member_new(
+cst_member_new_variable(
     struct source_location const* location,
     struct cst_identifier const* identifier,
     struct cst_typespec const* typespec)
@@ -632,8 +632,25 @@ cst_member_new(
     struct cst_member* const self = autil_xalloc(NULL, sizeof(*self));
     memset(self, 0x00, sizeof(*self));
     self->location = location;
-    self->identifier = identifier;
-    self->typespec = typespec;
+    self->name = identifier->name;
+    self->kind = CST_MEMBER_VARIABLE;
+    self->data.variable.identifier = identifier;
+    self->data.variable.typespec = typespec;
+    return self;
+}
+
+struct cst_member*
+cst_member_new_function(struct cst_decl const* decl)
+{
+    assert(decl != NULL);
+    assert(decl->kind == CST_DECL_FUNCTION);
+
+    struct cst_member* const self = autil_xalloc(NULL, sizeof(*self));
+    memset(self, 0x00, sizeof(*self));
+    self->location = decl->location;
+    self->name = decl->name;
+    self->kind = CST_MEMBER_FUNCTION;
+    self->data.function.decl = decl;
     return self;
 }
 

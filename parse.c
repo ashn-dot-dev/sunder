@@ -142,6 +142,10 @@ static struct cst_member const* const*
 parse_member_list(struct parser* parser);
 static struct cst_member const*
 parse_member(struct parser* parser);
+static struct cst_member const*
+parse_member_variable(struct parser* parser);
+static struct cst_member const*
+parse_member_function(struct parser* parser);
 
 static struct cst_member_initializer const* const*
 parse_member_initializer_list(struct parser* parser);
@@ -1230,7 +1234,7 @@ parse_member_list(struct parser* parser)
     assert(parser != NULL);
 
     autil_sbuf(struct cst_member const*) members = NULL;
-    while (check_current(parser, TOKEN_VAR)) {
+    while (!check_current(parser, TOKEN_RBRACE)) {
         autil_sbuf_push(members, parse_member(parser));
     }
 
@@ -1243,6 +1247,26 @@ parse_member(struct parser* parser)
 {
     assert(parser != NULL);
 
+    if (check_current(parser, TOKEN_VAR)) {
+        return parse_member_variable(parser);
+    }
+
+    if (check_current(parser, TOKEN_FUNC)) {
+        return parse_member_function(parser);
+    }
+
+    fatal(
+        &parser->current_token->location,
+        "expected member variable or member function, found `%s`",
+        token_to_new_cstr(parser->current_token));
+    return NULL;
+}
+
+static struct cst_member const*
+parse_member_variable(struct parser* parser)
+{
+    assert(parser != NULL);
+
     struct source_location const* const location =
         &expect_current(parser, TOKEN_VAR)->location;
     struct cst_identifier const* identifier = parse_identifier(parser);
@@ -1251,7 +1275,20 @@ parse_member(struct parser* parser)
     expect_current(parser, TOKEN_SEMICOLON);
 
     struct cst_member* const product =
-        cst_member_new(location, identifier, typespec);
+        cst_member_new_variable(location, identifier, typespec);
+
+    autil_freezer_register(context()->freezer, product);
+    return product;
+}
+
+static struct cst_member const*
+parse_member_function(struct parser* parser) {
+    assert(parser != NULL);
+
+    struct cst_decl const* const decl = parse_decl_function(parser);
+
+    struct cst_member* const product =
+        cst_member_new_function(decl);
 
     autil_freezer_register(context()->freezer, product);
     return product;

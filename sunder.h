@@ -739,14 +739,29 @@ cst_parameter_new(
 
 struct cst_member {
     struct source_location const* location;
-    struct cst_identifier const* identifier;
-    struct cst_typespec const* typespec;
+    char const* name;
+    enum {
+        CST_MEMBER_VARIABLE,
+        CST_MEMBER_FUNCTION,
+    } kind;
+    struct {
+        struct {
+            struct cst_identifier const* identifier;
+            struct cst_typespec const* typespec;
+        } variable;
+        struct {
+            // CST_DECL_FUNCTION
+            struct cst_decl const* decl;
+        } function;
+    } data;
 };
 struct cst_member*
-cst_member_new(
+cst_member_new_variable(
     struct source_location const* location,
     struct cst_identifier const* identifier,
     struct cst_typespec const* typespec);
+struct cst_member*
+cst_member_new_function(struct cst_decl const* decl);
 
 struct cst_member_initializer {
     struct source_location const* location;
@@ -940,11 +955,18 @@ struct type {
             //          var z: u64 # bytes 8->15
             //      }
             size_t next_offset;
+            // List of member variables within the struct ordered by offset into
+            // the struct (i.e. their declaration order).
             struct member_variable {
                 char const* name; // interned
                 struct type const* type;
                 size_t offset;
             } /*sbuf*/ * member_variables;
+            // Symbol table corresponding to static symbols belonging to the
+            // struct. This symbol table does *NOT* contain symbols for member
+            // variables as member variables are defined only on instances of a
+            // struct.
+            struct symbol_table const* symbols;
         } struct_;
     } data;
 };
@@ -987,7 +1009,7 @@ struct type*
 type_new_slice(struct type const* base);
 // Create a new struct with no members (size zero and alignment zero).
 struct type*
-type_new_struct(char const* name);
+type_new_struct(char const* name, struct symbol_table const* symbols);
 // Add a member variable definition to the end of the provided struct type.
 void
 type_struct_add_member_variable(

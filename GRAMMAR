@@ -138,7 +138,12 @@
 
 <member-list> ::= <member>*
 
-<member> ::= "var" <identifier> ":" <typespec> ";"
+<member> ::= <member-variable>
+           | <member-function>
+
+<member-variable> ::= "var" <identifier> ":" <typespec> ";"
+
+<member-function> ::= "func" <identifier> ":" <typespec> ";"
 
 <member-initializer-list> ::= ( <member-initializer> ("," <member-initializer>)* )?
 

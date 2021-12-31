@@ -939,7 +939,12 @@ resolve_decl_struct(struct resolver* resolver, struct cst_decl const* decl)
     assert(decl->kind == CST_DECL_STRUCT);
     assert(resolver_is_global(resolver));
 
-    struct type* const type = type_new_struct(decl->name);
+    struct symbol_table* const struct_symbols =
+        symbol_table_new(resolver->current_symbol_table);
+    struct type* const type =
+        type_new_struct(
+            decl->name,
+            struct_symbols);
     autil_freezer_register(context()->freezer, type);
 
     struct symbol* const symbol = symbol_new_type(decl->location, type);
@@ -949,32 +954,69 @@ resolve_decl_struct(struct resolver* resolver, struct cst_decl const* decl)
     // self-referential pointer and slice members may reference the type.
     symbol_table_insert(resolver->current_symbol_table, symbol->name, symbol);
 
-    // Add all member definitions to the struct.
-    for (size_t i = 0; i < autil_sbuf_count(decl->data.struct_.members); ++i) {
-        struct cst_member const* const member = decl->data.struct_.members[i];
-        char const* const member_name = member->identifier->name;
-        struct type const* const member_type =
-            resolve_typespec(resolver, member->typespec);
+    autil_sbuf(struct cst_member const* const) const members =
+        decl->data.struct_.members;
+    size_t const members_count = autil_sbuf_count(members);
 
-        // Check for duplicate member variable definitions.
-        size_t const current_member_variable_count =
-            autil_sbuf_count(type->data.struct_.member_variables);
-        for (size_t j = 0; j < current_member_variable_count; ++j) {
-            if (member_name == type->data.struct_.member_variables[j].name) {
+    // Check for duplicate member definitions.
+    for (size_t i = 0; i < members_count; ++i) {
+        for (size_t j = i + 1; j < members_count; ++j) {
+            if (members[i]->name == members[j]->name) {
+                // Call to autil_sbuf_fini here because GCC 8.3 w/ ASAN
+                // complains about a memory leak even though we hold a valid
+                // path to the buffer.
+                //
+                // TODO: See if maybe we can trick ASAN by holding a pointer to
+                // the head of the stretchy buffer here???
                 autil_sbuf_fini(type->data.struct_.member_variables);
+
                 fatal(
-                    member->location,
+                    members[j]->location,
                     "duplicate definition of member `%s`",
-                    member_name);
+                    members[j]->name);
             }
         }
-
-        type_struct_add_member_variable(type, member_name, member_type);
     }
 
+    // Add all member variable definitions to the struct.
+    for (size_t i = 0; i < members_count; ++i) {
+        struct cst_member const* const member = members[i];
+        if (member->kind != CST_MEMBER_VARIABLE) {
+            continue;
+        }
+
+        struct type const* const member_type =
+            resolve_typespec(resolver, member->data.variable.typespec);
+        type_struct_add_member_variable(type, member->name, member_type);
+    }
+
+    // Add all member function definitions to the struct.
+    char const* const save_symbol_name_prefix =
+        resolver->current_symbol_name_prefix;
+    char const* const save_static_addr_prefix =
+        resolver->current_static_addr_prefix;
+    struct symbol_table* const save_symbol_table =
+        resolver->current_symbol_table;
+    resolver->current_symbol_name_prefix = type->name;
+    resolver->current_static_addr_prefix = type->name;
+    resolver->current_symbol_table = struct_symbols;
+    for (size_t i = 0; i < members_count; ++i) {
+        struct cst_member const* const member = members[i];
+        if (member->kind != CST_MEMBER_FUNCTION) {
+            continue;
+        }
+
+        resolve_decl_function(resolver, member->data.function.decl);
+    }
+    resolver->current_symbol_name_prefix = save_symbol_name_prefix;
+    resolver->current_static_addr_prefix = save_static_addr_prefix;
+    resolver->current_symbol_table = save_symbol_table;
+
     // At this point all member variables have been added to the struct
-    // definition.
+    // definition and all member functions have been added to the struct type's
+    // symbol table.
     autil_sbuf_freeze(type->data.struct_.member_variables, context()->freezer);
+    symbol_table_freeze(struct_symbols, context()->freezer);
 
     return symbol;
 }
@@ -1555,21 +1597,37 @@ resolve_expr_qualified_identifier(
 
     struct symbol const* symbol = NULL;
     for (size_t i = 1; i < autil_sbuf_count(identifiers); ++i) {
-        if (lhs->kind != SYMBOL_NAMESPACE) {
-            fatal(expr->location, "`%s` is not a namespace", lhs->name);
-        }
-
         name = identifiers[i]->name;
-        symbol = symbol_table_lookup(lhs->symbols, name);
-        if (symbol == NULL) {
-            fatal(
-                expr->location,
-                "use of undeclared identifier `%s` within `%s`",
-                name,
-                lhs->name);
+
+        if (lhs->kind == SYMBOL_NAMESPACE) {
+            symbol = symbol_table_lookup(lhs->symbols, name);
+            if (symbol == NULL) {
+                fatal(
+                    expr->location,
+                    "use of undeclared identifier `%s` within `%s`",
+                    name,
+                    lhs->name);
+            }
+            lhs = symbol;
+            continue;
         }
 
-        lhs = symbol;
+        if (lhs->kind == SYMBOL_TYPE && lhs->type->kind == TYPE_STRUCT) {
+            symbol =
+                symbol_table_lookup_local(lhs->type->data.struct_.symbols, name);
+            if (symbol == NULL) {
+                fatal(
+                    expr->location,
+                    "use of undeclared identifier `%s` within `%s`",
+                    name,
+                    lhs->name);
+            }
+            lhs = symbol;
+            continue;
+        }
+
+        fatal(expr->location, "`%s` is not a namespace or struct", lhs->name);
+
     }
 
     switch (symbol->kind) {

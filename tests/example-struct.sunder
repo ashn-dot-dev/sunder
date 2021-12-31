@@ -55,6 +55,31 @@ const bar_a: bar = (:bar){
     .s = 0x5566
 };
 
+# Contains member variables and member functions.
+struct baz {
+    var value_a: u8;
+    var value_b: u8;
+
+    func init(value_a: u8, value_b: u8) baz {
+        return (:baz){
+            .value_a = value_a,
+            .value_b = value_b
+        };
+    }
+
+    func init_copy(from: *baz) baz {
+        return (:baz){
+            .value_a = (*from).value_a,
+            .value_b = (*from).value_b
+        };
+    }
+
+    func sum(self: *baz) u16 {
+        return (:u16)(*self).value_a + (:u16)(*self).value_b;
+    }
+}
+const baz_a: baz = (:baz){.value_a = 0xAA, .value_b = 0xBB};
+
 func main() void {
     dump empty_a;
     dump empty_b;
@@ -93,6 +118,13 @@ func main() void {
     };
 
     dump bar_a;
+
+    dump baz_a;
+    var baz_b: baz = baz::init(0xCC, 0xDD);
+    dump baz_b;
+    var baz_c: baz = baz::init_copy(&baz_b);
+    dump baz_c;
+    dump baz::sum(&baz_c);
 }
 ################################################################################
 #
@@ -112,3 +144,7 @@ func main() void {
 # EF BE AD DE 0D F0 FE CA
 # EF BE AD DE
 # AA BB CC DD 11 00 33 22 44 00 66 55
+# AA BB
+# CC DD
+# CC DD
+# A9 01
