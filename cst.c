@@ -458,11 +458,13 @@ cst_expr_new_syscall(
 
 struct cst_expr*
 cst_expr_new_call(
-    struct cst_expr const* func, struct cst_expr const* const* arguments)
+    struct source_location const* location,
+    struct cst_expr const* func,
+    struct cst_expr const* const* arguments)
 {
     assert(func != NULL);
 
-    struct cst_expr* const self = cst_expr_new(func->location, CST_EXPR_CALL);
+    struct cst_expr* const self = cst_expr_new(location, CST_EXPR_CALL);
     self->data.call.func = func;
     self->data.call.arguments = arguments;
     return self;

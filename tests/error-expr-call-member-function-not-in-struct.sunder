@@ -1,0 +1,13 @@
+struct foo {
+    var x: u16;
+    var y: u16;
+}
+
+func main() void {
+    var f: foo = (:foo){.x = 123, .y = 456};
+    f.z();
+}
+################################################################################
+# [error-expr-call-member-function-not-in-struct.sunder:8] error: type `foo` has no member function `z`
+#     f.z();
+#     ^

@@ -343,6 +343,36 @@ type_struct_member_variable(struct type const* self, char const* name)
     return &self->data.struct_.member_variables[index];
 }
 
+struct symbol const*
+type_struct_member_function_symbol(struct type const* self, char const* name)
+{
+    assert(self != NULL);
+    assert(self->kind == TYPE_STRUCT);
+    assert(name != NULL);
+
+    return symbol_table_lookup_local(self->data.struct_.symbols, name);
+}
+
+struct function const*
+type_struct_member_function(struct type const* self, char const* name)
+{
+    assert(self != NULL);
+    assert(self->kind == TYPE_STRUCT);
+    assert(name != NULL);
+
+    struct symbol const* const symbol =
+        type_struct_member_function_symbol(self, name);
+    if (symbol == NULL) {
+        return NULL;
+    }
+    if (symbol->kind != SYMBOL_FUNCTION) {
+        return NULL;
+    }
+
+    assert(symbol->value->type->kind == TYPE_FUNCTION);
+    return symbol->value->data.function;
+}
+
 struct type const*
 type_unique_function(
     struct type const* const* parameter_types, struct type const* return_type)

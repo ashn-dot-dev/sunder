@@ -674,7 +674,9 @@ cst_expr_new_syscall(
     struct cst_expr const* const* arguments);
 struct cst_expr*
 cst_expr_new_call(
-    struct cst_expr const* func, struct cst_expr const* const* arguments);
+    struct source_location const* location,
+    struct cst_expr const* func,
+    struct cst_expr const* const* arguments);
 struct cst_expr*
 cst_expr_new_access_index(
     struct source_location const* location,
@@ -1014,16 +1016,26 @@ type_new_struct(char const* name, struct symbol_table const* symbols);
 void
 type_struct_add_member_variable(
     struct type* self, char const* name, struct type const* type);
-// Returns the index of the member variable `name` in the provided struct type.
+// Returns the index of the member variable `name` of the provided struct type.
 // Returns a non-negative integer index on success.
 // Returns a -1 on failure.
 long
 type_struct_member_variable_index(struct type const* self, char const* name);
-// Returns a pointer to the member variable `name` in the provided struct type.
+// Returns a pointer to the member variable `name` of the provided struct type.
 // Returns a pointer to the member variable success.
 // Returns NULL on failure.
 struct member_variable const*
 type_struct_member_variable(struct type const* self, char const* name);
+// Returns the symbol of the member function `name` of the provided struct type.
+// Returns a symbol pointer for the member function on success.
+// Returns NULL on failure.
+struct symbol const*
+type_struct_member_function_symbol(struct type const* self, char const* name);
+// Returns a pointer to the member function `name` of the provided struct type.
+// Returns a pointer to the member function on success.
+// Returns NULL on failure.
+struct function const*
+type_struct_member_function(struct type const* self, char const* name);
 
 struct type const*
 type_unique_function(

@@ -941,10 +941,7 @@ resolve_decl_struct(struct resolver* resolver, struct cst_decl const* decl)
 
     struct symbol_table* const struct_symbols =
         symbol_table_new(resolver->current_symbol_table);
-    struct type* const type =
-        type_new_struct(
-            decl->name,
-            struct_symbols);
+    struct type* const type = type_new_struct(decl->name, struct_symbols);
     autil_freezer_register(context()->freezer, type);
 
     struct symbol* const symbol = symbol_new_type(decl->location, type);
@@ -1613,8 +1610,8 @@ resolve_expr_qualified_identifier(
         }
 
         if (lhs->kind == SYMBOL_TYPE && lhs->type->kind == TYPE_STRUCT) {
-            symbol =
-                symbol_table_lookup_local(lhs->type->data.struct_.symbols, name);
+            symbol = symbol_table_lookup_local(
+                lhs->type->data.struct_.symbols, name);
             if (symbol == NULL) {
                 fatal(
                     expr->location,
@@ -1627,7 +1624,6 @@ resolve_expr_qualified_identifier(
         }
 
         fatal(expr->location, "`%s` is not a namespace or struct", lhs->name);
-
     }
 
     switch (symbol->kind) {
@@ -2105,6 +2101,8 @@ resolve_expr_syscall(struct resolver* resolver, struct cst_expr const* expr)
     return resolved;
 }
 
+// TODO: Remove redundant logic in this function that is the same for member and
+// non-member functions calls (such as the argument type checking code).
 static struct expr const*
 resolve_expr_call(struct resolver* resolver, struct cst_expr const* expr)
 {
@@ -2112,6 +2110,118 @@ resolve_expr_call(struct resolver* resolver, struct cst_expr const* expr)
     assert(expr != NULL);
     assert(expr->kind == CST_EXPR_CALL);
 
+    // Member function call.
+    if (expr->data.call.func->kind == CST_EXPR_ACCESS_MEMBER) {
+        struct cst_expr const* const dot = expr->data.call.func;
+        struct cst_expr const* const lhs = dot->data.access_member.lhs;
+        char const* const name = dot->data.access_member.identifier->name;
+
+        struct expr const* const instance = resolve_expr(resolver, lhs);
+        if (instance->type->kind != TYPE_STRUCT) {
+            fatal(
+                instance->location,
+                "attempted member function access on non-struct type `%s`",
+                instance->type->name);
+        }
+        if (!expr_is_lvalue(instance)) {
+            fatal(
+                instance->location,
+                "attempted to call member function `%s` on non-lvalue instance of type `%s`",
+                name,
+                instance->type->name);
+        }
+
+        struct function const* const function =
+            type_struct_member_function(instance->type, name);
+        if (function == NULL) {
+            fatal(
+                instance->location,
+                "type `%s` has no member function `%s`",
+                instance->type->name,
+                name);
+        }
+
+        struct type const* const selfptr_type =
+            type_unique_pointer(instance->type);
+
+        autil_sbuf(struct type const* const) const parameter_types =
+            function->type->data.function.parameter_types;
+        if (autil_sbuf_count(parameter_types) == 0) {
+            fatal(
+                instance->location,
+                "expected type `%s` for the first parameter of member function `%s` of type `%s`",
+                selfptr_type->name,
+                name,
+                instance->type->name);
+        }
+        if (parameter_types[0] != selfptr_type) {
+            fatal(
+                instance->location,
+                "expected type `%s` for the first parameter of member function `%s` of type `%s` (found `%s`)",
+                selfptr_type->name,
+                name,
+                instance->type->name,
+                parameter_types[0]->name);
+        }
+        size_t const arg_count = autil_sbuf_count(expr->data.call.arguments);
+        // Number of parameters minus one for the implicit pointer to self.
+        size_t const expected_arg_count = autil_sbuf_count(parameter_types) - 1;
+        if (arg_count != expected_arg_count) {
+            fatal(
+                expr->location,
+                "member function with type `%s` expects %zu argument(s) (%zu provided)",
+                function->type->name,
+                expected_arg_count,
+                arg_count);
+        }
+
+        autil_sbuf(struct expr const*) arguments = NULL;
+        // Add the implicit pointer to self as the first argument.
+        assert(expr_is_lvalue(instance));
+        struct expr* const selfptr = expr_new_unary(
+            expr->location, selfptr_type, UOP_ADDRESSOF, instance);
+        autil_freezer_register(context()->freezer, selfptr);
+        autil_sbuf_push(arguments, selfptr);
+        for (size_t i = 0; i < arg_count; ++i) {
+            struct expr const* arg =
+                resolve_expr(resolver, expr->data.call.arguments[i]);
+            autil_sbuf_push(arguments, arg);
+        }
+        autil_sbuf_freeze(arguments, context()->freezer);
+
+        // Type-check function arguments.
+        for (size_t i = 0; i < autil_sbuf_count(arguments); ++i) {
+            arguments[i] =
+                shallow_implicit_cast(parameter_types[i], arguments[i]);
+        }
+        for (size_t i = 0; i < autil_sbuf_count(parameter_types); ++i) {
+            struct type const* const expected = parameter_types[i];
+            struct type const* const received = arguments[i]->type;
+            if (received != expected) {
+                fatal(
+                    arguments[i]->location,
+                    "incompatible argument type `%s` (expected `%s`)",
+                    received->name,
+                    expected->name);
+            }
+        }
+
+        struct symbol const* const member_function_symbol =
+            type_struct_member_function_symbol(instance->type, name);
+        assert(member_function_symbol != NULL);
+        struct expr* const member_function_expr = expr_new_identifier(
+            dot->data.access_member.identifier->location,
+            member_function_symbol);
+        autil_freezer_register(context()->freezer, member_function_expr);
+
+        struct expr* const resolved =
+            expr_new_call(expr->location, member_function_expr, arguments);
+
+        autil_freezer_register(context()->freezer, resolved);
+        return resolved;
+    }
+
+    // Regular function call.
     struct expr const* const function =
         resolve_expr(resolver, expr->data.call.func);
     if (function->type->kind != TYPE_FUNCTION) {
@@ -2260,7 +2370,7 @@ resolve_expr_access_member(
     if (lhs->type->kind != TYPE_STRUCT) {
         fatal(
             lhs->location,
-            "illegal member access of non-struct type type `%s`",
+            "attempted member access on non-struct type `%s`",
             lhs->type->name);
     }
 
@@ -2274,6 +2384,16 @@ resolve_expr_access_member(
 
         autil_freezer_register(context()->freezer, resolved);
         return resolved;
+    }
+
+    struct function const* const member_function_def =
+        type_struct_member_function(lhs->type, member_name);
+    if (member_function_def != NULL) {
+        fatal(
+            expr->location,
+            "attempted to take the value of member function `%s` on type `%s`",
+            member_function_def->name,
+            lhs->type->name);
     }
 
     fatal(

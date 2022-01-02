@@ -1,0 +1,17 @@
+struct foo {
+    var x: usize;
+
+    func fn(self: *foo) usize {
+        return (*self).x;
+    }
+}
+
+func main() void {
+    var f: foo = (:foo){.x = 123};
+    f.x;
+    f.fn;
+}
+################################################################################
+# [error-expr-access-dot-member-function-as-value.sunder:12] error: attempted to take the value of member function `fn` on type `foo`
+#     f.fn;
+#      ^

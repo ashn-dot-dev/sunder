@@ -1,0 +1,18 @@
+struct foo {
+    var x: u16;
+
+    func fn(self: *foo, p: usize, q: ssize) void {
+    }
+}
+
+func main() void {
+    var f: foo = (:foo){.x = 123};
+    f.fn(
+        123u, # valid
+        456u  # invalid (should be ssize)
+    );
+}
+################################################################################
+# [error-expr-call-member-function-invalid-argument-type.sunder:12] error: incompatible argument type `usize` (expected `ssize`)
+#         456u  # invalid (should be ssize)
+#         ^

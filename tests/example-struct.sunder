@@ -125,6 +125,7 @@ func main() void {
     var baz_c: baz = baz::init_copy(&baz_b);
     dump baz_c;
     dump baz::sum(&baz_c);
+    dump baz_c.sum();
 }
 ################################################################################
 #
@@ -147,4 +148,5 @@ func main() void {
 # AA BB
 # CC DD
 # CC DD
+# A9 01
 # A9 01

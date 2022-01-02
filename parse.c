@@ -1031,7 +1031,8 @@ parse_expr_led_lparen(struct parser* parser, struct cst_expr const* lhs)
     assert(parser != NULL);
     assert(lhs != NULL);
 
-    expect_current(parser, TOKEN_LPAREN);
+    struct source_location const* const location =
+        &expect_current(parser, TOKEN_LPAREN)->location;
     autil_sbuf(struct cst_expr const*) args = NULL;
     while (!check_current(parser, TOKEN_RPAREN)) {
         if (autil_sbuf_count(args) != 0) {
@@ -1041,7 +1042,7 @@ parse_expr_led_lparen(struct parser* parser, struct cst_expr const* lhs)
     }
     autil_sbuf_freeze(args, context()->freezer);
     expect_current(parser, TOKEN_RPAREN);
-    struct cst_expr* const product = cst_expr_new_call(lhs, args);
+    struct cst_expr* const product = cst_expr_new_call(location, lhs, args);
 
     autil_freezer_register(context()->freezer, product);
     return product;
@@ -1282,13 +1283,13 @@ parse_member_variable(struct parser* parser)
 }
 
 static struct cst_member const*
-parse_member_function(struct parser* parser) {
+parse_member_function(struct parser* parser)
+{
     assert(parser != NULL);
 
     struct cst_decl const* const decl = parse_decl_function(parser);
 
-    struct cst_member* const product =
-        cst_member_new_function(decl);
+    struct cst_member* const product = cst_member_new_function(decl);
 
     autil_freezer_register(context()->freezer, product);
     return product;

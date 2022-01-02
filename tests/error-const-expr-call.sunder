@@ -6,4 +6,4 @@ func f() ssize {
 ################################################################################
 # [error-const-expr-call.sunder:1] error: constant expression contains function call
 # const foo: ssize = f() + 1;
-#                    ^
+#                     ^
