@@ -19,14 +19,14 @@ $ apt-get install build-essential clang clang-format nasm
 ```
 
 ## Building
-The script `misc/build-debug.sh` will perform a full build/test cycle using
-appropriate debug flags. This is likely the script you want to be using as your
-build driver when working on the compiler:
+The script `build.sh` will perform a full build/test cycle using appropriate
+debug flags. This is likely the script you want to be using as your build driver
+when working on the compiler:
 ```sh
-$ sh misc/build-debug.sh
+$ sh build.sh
 ```
-By default `build-debug.sh` will run the `clean` and `all` make targets, but
-this can be overridden. See `sh misc/build-debug.sh --help` for details.
+By default `build.sh` will run the `clean` and `all` make targets, but this can
+be overridden. See `sh build.sh --help` for details.
 
 Specific compiler/compiler-flag combinations include:
 ```sh

@@ -30,7 +30,7 @@ esac
 done
 
 TARGETS="$@"
-if [ -z "${TARGETS}" ]; then TARGETS="clean test examples"; fi
+if [ -z "${TARGETS}" ]; then TARGETS="clean all"; fi
 if [ -z "${CC}" ]; then CC=clang; fi
 
 CFLAGS='$(C99_DBG)'
