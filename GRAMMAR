@@ -16,7 +16,7 @@
 
 <decl-function> ::= "func" <identifier> <template-parameter-list>? "(" <parameter-list> ")" <typespec> <block>
 
-<decl-struct> ::= "struct" <identifier> "{" <member-list> "}"
+<decl-struct> ::= "struct" <identifier> <template-parameter-list>? "{" <member-list> "}"
 
 <decl-extern-variable> ::= "extern" "var" <identifier> ":" <typespec> ";"
 
@@ -163,14 +163,13 @@
 
 <member-initializer> ::= "." <identifier> "=" <expr>
 
-<typespec> ::= <typespec-identifier>
+<typespec> ::= <identifier>
+             | <template-instantiation>
              | <typespec-function>
              | <typespec-pointer>
              | <typespec-array>
              | <typespec-slice>
              | <typespec-typeof>
-
-<typespec-identifier> ::= <identifier>
 
 <typespec-function> ::= func "(" ( <typespec> ("," <typespec> )* )? ")" <typespec>
 

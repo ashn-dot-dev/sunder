@@ -122,6 +122,7 @@ struct cst_decl*
 cst_decl_new_struct(
     struct source_location const* location,
     struct cst_identifier const* identifier,
+    struct cst_template_parameter const* const* template_parameters,
     struct cst_member const* const* members)
 {
     assert(location != NULL);
@@ -133,6 +134,7 @@ cst_decl_new_struct(
     self->location = location;
     self->name = identifier->name;
     self->data.struct_.identifier = identifier;
+    self->data.struct_.template_parameters = template_parameters;
     self->data.struct_.members = members;
     return self;
 }
@@ -331,6 +333,7 @@ cst_expr_new_template_instantiation(
     struct cst_identifier const* identifier,
     struct cst_template_argument const* const* arguments)
 {
+    assert(identifier != NULL);
     assert(autil_sbuf_count(arguments) > 0);
 
     struct cst_expr* const self =
@@ -758,6 +761,21 @@ cst_typespec_new_identifier(struct cst_identifier const* identifier)
     struct cst_typespec* const self =
         cst_typespec_new(identifier->location, TYPESPEC_IDENTIFIER);
     self->data.identifier = identifier;
+    return self;
+}
+
+struct cst_typespec*
+cst_typespec_new_template_instantiation(
+    struct cst_identifier const* identifier,
+    struct cst_template_argument const* const* arguments)
+{
+    assert(identifier != NULL);
+    assert(autil_sbuf_count(arguments) > 0);
+
+    struct cst_typespec* const self =
+        cst_typespec_new(identifier->location, TYPESPEC_TEMPLATE_INSTANTIATION);
+    self->data.template_instantiation.identifier = identifier;
+    self->data.template_instantiation.arguments = arguments;
     return self;
 }
 

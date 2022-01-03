@@ -256,6 +256,13 @@ type_struct_add_member_variable(
     assert(name != NULL);
     assert(type != NULL);
 
+    if (self->name == type->name) {
+        fatal(
+            NULL,
+            "struct `%s` contains a member variable of its own type",
+            self->name);
+    }
+
     // Member variables with size zero are part of the struct, but do not
     // contribute to the size or alignment of the struct.
     if (type->size == 0) {

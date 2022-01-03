@@ -7,6 +7,16 @@ func max[[:T]](lhs: T, rhs: T) T {
     return rhs;
 }
 
+func fib[[:T]](n: usize) T {
+    if n == 0 {
+        return 0;
+    }
+    if n == 1 {
+        return 1;
+    }
+    return fib[[:T]](n - 1) + fib[[:T]](n - 2);
+}
+
 func can_roundtrip[[:A, :B]]() bool {
     # Largest value that can be held by a sunder unsigned integer.
     const largest: u64 = 0xFFFFFFFFFFFFFFFFu64;
@@ -28,6 +38,18 @@ func main() void {
     dump max[[:u32]](0xDEADBEEFu32, 0xCAFEF00Du32);
     dump std::max[[:u32]](0xDEADBEEFu32, 0xCAFEF00Du32);
 
+    dump fib[[:u16]](0);
+    dump fib[[:u16]](1);
+    dump fib[[:u16]](3);
+    dump fib[[:u16]](5);
+    dump fib[[:u16]](10);
+
+    dump fib[[:u32]](0);
+    dump fib[[:u32]](1);
+    dump fib[[:u32]](3);
+    dump fib[[:u32]](5);
+    dump fib[[:u32]](10);
+
     dump can_roundtrip[[:u32, :u8]]();
     dump can_roundtrip[[:u32, :u16]]();
     dump can_roundtrip[[:u32, :u32]]();
@@ -41,6 +63,16 @@ func main() void {
 # 2A 00
 # EF BE AD DE
 # EF BE AD DE
+# 00 00
+# 01 00
+# 02 00
+# 05 00
+# 37 00
+# 00 00 00 00
+# 01 00 00 00
+# 02 00 00 00
+# 05 00 00 00
+# 37 00 00 00
 # 00
 # 00
 # 01

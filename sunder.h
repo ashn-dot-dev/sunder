@@ -437,6 +437,10 @@ struct cst_decl {
         } function;
         struct {
             struct cst_identifier const* identifier;
+            // A template parameter list with count zero indicates that this
+            // struct was declared without template parameters.
+            autil_sbuf(struct cst_template_parameter const* const)
+                template_parameters;
             autil_sbuf(struct cst_member const* const) members;
         } struct_;
         struct {
@@ -469,6 +473,7 @@ struct cst_decl*
 cst_decl_new_struct(
     struct source_location const* location,
     struct cst_identifier const* identifier,
+    struct cst_template_parameter const* const* template_parameters,
     struct cst_member const* const* members);
 struct cst_decl*
 cst_decl_new_extern_variable(
@@ -835,6 +840,7 @@ struct cst_typespec {
     struct source_location const* location;
     enum typespec_kind {
         TYPESPEC_IDENTIFIER,
+        TYPESPEC_TEMPLATE_INSTANTIATION,
         TYPESPEC_FUNCTION,
         TYPESPEC_POINTER,
         TYPESPEC_ARRAY,
@@ -843,6 +849,10 @@ struct cst_typespec {
     } kind;
     union {
         struct cst_identifier const* identifier;
+        struct {
+            struct cst_identifier const* identifier;
+            autil_sbuf(struct cst_template_argument const* const) arguments;
+        } template_instantiation;
         struct {
             autil_sbuf(struct cst_typespec const* const) parameter_typespecs;
             struct cst_typespec const* return_typespec;
@@ -864,6 +874,10 @@ struct cst_typespec {
 };
 struct cst_typespec*
 cst_typespec_new_identifier(struct cst_identifier const* identifier);
+struct cst_typespec*
+cst_typespec_new_template_instantiation(
+    struct cst_identifier const* identifier,
+    struct cst_template_argument const* const* arguments);
 struct cst_typespec*
 cst_typespec_new_function(
     struct source_location const* location,

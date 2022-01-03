@@ -1,0 +1,52 @@
+struct primitive[[:T]] {
+    var value: T;
+}
+
+struct pair[[:A, :B]] {
+    var first: A;
+    var second: B;
+
+    func init(first: A, second: B) pair[[:A, :B]] {
+        return (:pair[[:A, :B]]) {
+            .first = first,
+            .second = second
+        };
+    }
+}
+
+func main() void {
+    dump (:primitive[[:u16]]){.value = 0xBEEF}.value;
+    dump (:primitive[[:u16]]){.value = 0xBEEF}.value;  # Should reuse the first instantiation.
+    dump (:primitive[[:u32]]){.value = 0xDEADBEEF}.value;
+
+    var primitive_a: primitive[[:u16]] = (:primitive[[:u16]]){.value = 123};
+    const primitive_b: primitive[[:u16]] = (:primitive[[:u16]]){.value = 123};
+
+    var pair_a: pair[[:u16, :u32]] = (:pair[[:u16, :u32]]){
+        .first = 0xBEEF,
+        .second = 0xCAFEF00D
+    };
+    dump pair_a;
+    dump pair_a.first;
+    dump pair_a.second;
+    var pair_b: pair[[:u8, :u8]] = (:pair[[:u8, :u8]]){
+        .first = 0xFF,
+        .second = 0xEE
+    };
+    dump pair_a;
+    dump pair_a.first;
+    dump pair_a.second;
+
+    #var pair_c: pair[[:u16, :s32]] = pair[[:u16, :s32]]::init(0xBEEF, 0xCAFEF00D);
+    #var pair_c: pair[[:u16, :s32]] = pair[[:u16, :s32]].init(0xBEEF, 0xCAFEF00D);
+}
+################################################################################
+# EF BE
+# EF BE
+# EF BE AD DE
+# EF BE 00 00 0D F0 FE CA
+# EF BE
+# 0D F0 FE CA
+# EF BE 00 00 0D F0 FE CA
+# EF BE
+# 0D F0 FE CA

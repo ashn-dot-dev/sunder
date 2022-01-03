@@ -1332,10 +1332,23 @@ codegen_rvalue_struct(struct expr const* expr, size_t id)
     assert(expr != NULL);
     assert(expr->kind == EXPR_STRUCT);
     assert(expr->type->kind == TYPE_STRUCT);
-    (void)id;
 
     // Make space for the struct.
     push(expr->type->size);
+
+    // Fill in stack bytes of the struct with zeros. Although this should not
+    // really affect the user-visible portions of the language it will allow for
+    // dump statements to be deterministic in the bytes they print if we define
+    // padding bytes to always be zeroed for struct values created at runtime.
+    appendln("%s%zu_zero_memory_bgn:", LABEL_EXPR, id);
+    appendli("mov rax, 0"); // zero value
+    appendli("mov rbx, rsp"); // current address
+    size_t const words_count = ceil8zu(expr->type->size) / 8;
+    for (size_t i = 0; i < words_count; ++i) {
+        appendli("mov [rbx], rax");
+        appendli("add rbx, 8");
+    }
+    appendln("%s%zu_zero_memory_end:", LABEL_EXPR, id);
 
     // One by one evaluate the member variables for the elements of the struct.
     // Each member variable will be at the top of the stack after being
@@ -1348,7 +1361,6 @@ codegen_rvalue_struct(struct expr const* expr, size_t id)
     assert(
         autil_sbuf_count(member_variable_defs)
         == autil_sbuf_count(member_variable_exprs));
-
     for (size_t i = 0; i < autil_sbuf_count(member_variable_defs); ++i) {
         assert(member_variable_exprs[i]->type == member_variable_defs[i].type);
         codegen_rvalue(member_variable_exprs[i]);

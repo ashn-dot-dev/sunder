@@ -206,6 +206,8 @@ order_decl(struct orderer* orderer, struct cst_decl const* decl)
             // dependency-free functions like std::min and std::max we will
             // ignore this ordering problem for now and circle back to it at
             // some point in the future.
+            //
+            // See also => comment under CST_DECL_STRUCT case.
             return;
         }
         struct cst_function_parameter const* const* const function_parameters =
@@ -219,6 +221,18 @@ order_decl(struct orderer* orderer, struct cst_decl const* decl)
     case CST_DECL_STRUCT: {
         struct cst_member const* const* const members =
             decl->data.struct_.members;
+        struct cst_template_parameter const* const* const template_parameters =
+            decl->data.struct_.template_parameters;
+        if (autil_sbuf_count(template_parameters) != 0) {
+            // TODO: Not sure how we want to handle ordering of generics yet.
+            // Since the MVP of generics will be used to implement
+            // dependency-free functions like std::primitive and std::vec we
+            // will ignore this ordering problem for now and circle back to it
+            // at some point in the future.
+            //
+            // See also => comment under CST_DECL_FUNCTION case.
+            return;
+        }
         for (size_t i = 0; i < autil_sbuf_count(members); ++i) {
             order_member(orderer, members[i]);
         }
@@ -418,6 +432,13 @@ order_typespec(struct orderer* orderer, struct cst_typespec const* typespec)
     switch (typespec->kind) {
     case TYPESPEC_IDENTIFIER: {
         order_identifier(orderer, typespec->data.identifier);
+        return;
+    }
+    case TYPESPEC_TEMPLATE_INSTANTIATION: {
+        order_identifier(
+            orderer, typespec->data.template_instantiation.identifier);
+        order_template_argument_list(
+            orderer, typespec->data.template_instantiation.arguments);
         return;
     }
     case TYPESPEC_FUNCTION: {
