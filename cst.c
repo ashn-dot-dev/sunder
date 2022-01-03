@@ -92,10 +92,11 @@ cst_decl_new_constant(
 }
 
 struct cst_decl*
-cst_decl_new_func(
+cst_decl_new_function(
     struct source_location const* location,
     struct cst_identifier const* identifier,
-    struct cst_parameter const* const* parameters,
+    struct cst_template_parameter const* const* template_parameters,
+    struct cst_function_parameter const* const* function_parameters,
     struct cst_typespec const* return_typespec,
     struct cst_block const* body)
 {
@@ -110,7 +111,8 @@ cst_decl_new_func(
     self->location = location;
     self->name = identifier->name;
     self->data.function.identifier = identifier;
-    self->data.function.parameters = parameters;
+    self->data.function.template_parameters = template_parameters;
+    self->data.function.function_parameters = function_parameters;
     self->data.function.return_typespec = return_typespec;
     self->data.function.body = body;
     return self;
@@ -320,8 +322,36 @@ cst_expr_new_qualified_identifier(
 
     struct cst_expr* const self =
         cst_expr_new(identifiers[0]->location, CST_EXPR_QUALIFIED_IDENTIFIER);
-
     self->data.qualified_identifier.identifiers = identifiers;
+    return self;
+}
+
+struct cst_expr*
+cst_expr_new_template_instantiation(
+    struct cst_identifier const* identifier,
+    struct cst_template_argument const* const* arguments)
+{
+    assert(autil_sbuf_count(arguments) > 0);
+
+    struct cst_expr* const self =
+        cst_expr_new(identifier->location, CST_EXPR_TEMPLATE_INSTANTIATION);
+    self->data.template_instantiation.identifier = identifier;
+    self->data.template_instantiation.arguments = arguments;
+    return self;
+}
+
+struct cst_expr*
+cst_expr_new_qualified_template_instantiation(
+    struct cst_identifier const* const* identifiers,
+    struct cst_template_argument const* const* arguments)
+{
+    assert(autil_sbuf_count(identifiers) > 1);
+    assert(autil_sbuf_count(arguments) > 0);
+
+    struct cst_expr* const self = cst_expr_new(
+        identifiers[0]->location, CST_EXPR_QUALIFIED_TEMPLATE_INSTANTIATION);
+    self->data.qualified_template_instantiation.identifiers = identifiers;
+    self->data.qualified_template_instantiation.arguments = arguments;
     return self;
 }
 
@@ -605,15 +635,47 @@ cst_block_new(
     return self;
 }
 
-struct cst_parameter*
-cst_parameter_new(
+struct cst_template_parameter*
+cst_template_parameter_new(
+    struct source_location const* location,
+    struct cst_identifier const* identifier)
+{
+    assert(location != NULL);
+    assert(identifier != NULL);
+
+    struct cst_template_parameter* const self =
+        autil_xalloc(NULL, sizeof(*self));
+    memset(self, 0x00, sizeof(*self));
+    self->location = location;
+    self->identifier = identifier;
+    return self;
+}
+
+struct cst_template_argument*
+cst_template_argument_new(
+    struct source_location const* location, struct cst_typespec const* typespec)
+{
+    assert(location != NULL);
+    assert(typespec != NULL);
+
+    struct cst_template_argument* const self =
+        autil_xalloc(NULL, sizeof(*self));
+    memset(self, 0x00, sizeof(*self));
+    self->location = location;
+    self->typespec = typespec;
+    return self;
+}
+
+struct cst_function_parameter*
+cst_function_parameter_new(
     struct cst_identifier const* identifier,
     struct cst_typespec const* typespec)
 {
     assert(identifier != NULL);
     assert(typespec != NULL);
 
-    struct cst_parameter* const self = autil_xalloc(NULL, sizeof(*self));
+    struct cst_function_parameter* const self =
+        autil_xalloc(NULL, sizeof(*self));
     memset(self, 0x00, sizeof(*self));
     self->location = identifier->location;
     self->identifier = identifier;

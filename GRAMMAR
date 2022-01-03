@@ -14,7 +14,7 @@
 
 <decl-constant> ::= "const" <identifier> ":" <typespec> "=" <expr> ";"
 
-<decl-function> ::= "func" <identifier> "(" <parameter-list> ")" <typespec> <block>
+<decl-function> ::= "func" <identifier> <template-parameter-list>? "(" <parameter-list> ")" <typespec> <block>
 
 <decl-struct> ::= "struct" <identifier> "{" <member-list> "}"
 
@@ -53,6 +53,8 @@
 
 <expr> ::= <identifier>
          | <qualified-identifier>
+         | <template-instantiation>
+         | <qualified-template-instantiation>
          | <boolean>
          | <integer>
          | <expr-character>
@@ -132,9 +134,21 @@
 
 <literal-bytes> ::= '"' <character>* '"'
 
-<parameter-list> ::= ( <parameter> ("," <parameter>)* )?
+<template-parameter-list> ::= "[[" <template-parameter> ("," <template-parameter>)* "]]"
 
-<parameter> ::= <identifier> ":" <typespec>
+<template-parameter> ::= ":" <identifier>
+
+<template-instantiation> ::= <identifier> "[[" <template-argument-list> "]]"
+
+<qualified-template-instantiation> ::= <qualified_identifier> "[[" <template-argument-list> "]]"
+
+<template-argument-list> ::= <template-argument>+
+
+<template-argument> ::= ":" <typespec>
+
+<function-parameter-list> ::= ( <function-parameter> ("," <function-parameter>)* )?
+
+<function-parameter> ::= <identifier> ":" <typespec>
 
 <member-list> ::= <member>*
 

@@ -823,7 +823,7 @@ codegen_static_function(struct symbol const* symbol)
     struct function const* const function = symbol->value->data.function;
 
     assert(symbol->address->data.static_.offset == 0);
-    appendln("global %s", function->name);
+    appendln("global %s", symbol->address->data.static_.name);
     appendln("%s:", symbol->address->data.static_.name);
     appendli("; PROLOGUE");
     // Save previous frame pointer.
@@ -1181,6 +1181,7 @@ codegen_rvalue_identifier(struct expr const* expr, size_t id)
     struct symbol const* const symbol = expr->data.identifier;
     switch (symbol->kind) {
     case SYMBOL_TYPE: /* fallthrough */
+    case SYMBOL_TEMPLATE: /* fallthrough */
     case SYMBOL_NAMESPACE: {
         UNREACHABLE();
     }
@@ -1396,7 +1397,7 @@ codegen_rvalue_cast(struct expr const* expr, size_t id)
     case TYPE_U32: {
         // The MOVZX instruction does not have an encoding with SRC of r/m32 or
         // r/m64, but a MOV with SRC of r/m32 will zero out the upper 32 bits.
-        appendli("mov rax, %s", reg);
+        appendli("mov eax, %s", reg);
         break;
     }
     case TYPE_S8: /* fallthrough */

@@ -546,13 +546,12 @@ symbol_new(
     char const* name,
     struct type const* type,
     struct address const* address,
-    struct value const* value)
+    struct value const* value,
+    struct cst_decl const* decl,
+    struct symbol_table* symbols)
 {
     assert(location != NULL);
     assert(name != NULL);
-    assert(kind == SYMBOL_NAMESPACE || type != NULL);
-    assert(kind != SYMBOL_TYPE || kind != SYMBOL_NAMESPACE || address == NULL);
-    assert(kind != SYMBOL_TYPE || kind != SYMBOL_NAMESPACE || value == NULL);
 
     struct symbol* const self = autil_xalloc(NULL, sizeof(*self));
     memset(self, 0x00, sizeof(*self));
@@ -562,6 +561,8 @@ symbol_new(
     self->type = type;
     self->address = address;
     self->value = value;
+    self->decl = decl;
+    self->symbols = symbols;
     return self;
 }
 
@@ -571,8 +572,8 @@ symbol_new_type(struct source_location const* location, struct type const* type)
     assert(location != NULL);
     assert(type != NULL);
 
-    struct symbol* const self =
-        symbol_new(SYMBOL_TYPE, location, type->name, type, NULL, NULL);
+    struct symbol* const self = symbol_new(
+        SYMBOL_TYPE, location, type->name, type, NULL, NULL, NULL, NULL);
     return self;
 }
 
@@ -593,8 +594,8 @@ symbol_new_variable(
     // to this factory function.
     //assert(address->kind != ADDRESS_STATIC || value != NULL);
 
-    struct symbol* const self =
-        symbol_new(SYMBOL_VARIABLE, location, name, type, address, value);
+    struct symbol* const self = symbol_new(
+        SYMBOL_VARIABLE, location, name, type, address, value, NULL, NULL);
     return self;
 }
 
@@ -612,8 +613,8 @@ symbol_new_constant(
     assert(address != NULL);
     assert(value != NULL);
 
-    struct symbol* const self =
-        symbol_new(SYMBOL_CONSTANT, location, name, type, address, value);
+    struct symbol* const self = symbol_new(
+        SYMBOL_CONSTANT, location, name, type, address, value, NULL, NULL);
     return self;
 }
 
@@ -631,8 +632,25 @@ symbol_new_function(
     assert(address != NULL);
     assert(value != NULL);
 
-    struct symbol* const self =
-        symbol_new(SYMBOL_FUNCTION, location, name, type, address, value);
+    struct symbol* const self = symbol_new(
+        SYMBOL_FUNCTION, location, name, type, address, value, NULL, NULL);
+    return self;
+}
+
+struct symbol*
+symbol_new_template(
+    struct source_location const* location,
+    char const* name,
+    struct cst_decl const* decl,
+    struct symbol_table* symbols)
+{
+    assert(location != NULL);
+    assert(name != NULL);
+    assert(decl != NULL);
+    assert(symbols != NULL);
+
+    struct symbol* const self = symbol_new(
+        SYMBOL_TEMPLATE, location, name, NULL, NULL, NULL, decl, symbols);
     return self;
 }
 
@@ -643,10 +661,11 @@ symbol_new_namespace(
     struct symbol_table* symbols)
 {
     assert(location != NULL);
+    assert(name != NULL);
+    assert(symbols != NULL);
 
-    struct symbol* const self =
-        symbol_new(SYMBOL_NAMESPACE, location, name, NULL, NULL, NULL);
-    self->symbols = symbols;
+    struct symbol* const self = symbol_new(
+        SYMBOL_NAMESPACE, location, name, NULL, NULL, NULL, NULL, symbols);
     return self;
 }
 
@@ -1219,6 +1238,7 @@ expr_is_lvalue(struct expr const* self)
     case EXPR_IDENTIFIER: {
         switch (self->data.identifier->kind) {
         case SYMBOL_TYPE: /* fallthrough */
+        case SYMBOL_TEMPLATE:
         case SYMBOL_NAMESPACE:
             UNREACHABLE();
         case SYMBOL_VARIABLE: /* fallthrough */

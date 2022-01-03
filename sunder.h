@@ -247,12 +247,22 @@ struct context {
     // Currently loaded/loading modules.
     // TODO: Maybe make this a map from realpath to module?
     autil_sbuf(struct module*) modules;
+
+    // Symbol tables belonging to templates. These symbol tables cannot be
+    // frozen until after all modules have been resolved as template
+    // instantiations may be defined in modules other than the module where the
+    // template is defined.
+    //
+    // TODO: We have have a chilling_symbol_tables on the resolver struct. Can
+    // we merge that functionality into this context member variable and have a
+    // single "chilling symbol tables" member for all symbol tables?
+    autil_sbuf(struct symbol_table*) template_symbol_tables;
 };
 void
 context_init(void);
 void
 context_fini(void);
-struct context const*
+struct context*
 context(void);
 
 struct module const*
@@ -311,6 +321,8 @@ enum token_kind {
     TOKEN_RPAREN, // )
     TOKEN_LBRACE, // {
     TOKEN_RBRACE, // }
+    TOKEN_LBRACKET_LBRACKET, // [[
+    TOKEN_RBRACKET_RBRACKET, // ]]
     TOKEN_LBRACKET, // [
     TOKEN_RBRACKET, // ]
     TOKEN_COMMA, // ,
@@ -414,7 +426,12 @@ struct cst_decl {
         } constant;
         struct {
             struct cst_identifier const* identifier;
-            autil_sbuf(struct cst_parameter const* const) parameters;
+            // A template parameter list with count zero indicates that this
+            // function was declared without template parameters.
+            autil_sbuf(struct cst_template_parameter const* const)
+                template_parameters;
+            autil_sbuf(struct cst_function_parameter const* const)
+                function_parameters;
             struct cst_typespec const* return_typespec;
             struct cst_block const* body;
         } function;
@@ -441,10 +458,11 @@ cst_decl_new_constant(
     struct cst_typespec const* typespec,
     struct cst_expr const* expr);
 struct cst_decl*
-cst_decl_new_func(
+cst_decl_new_function(
     struct source_location const* location,
     struct cst_identifier const* identifier,
-    struct cst_parameter const* const* paramseters,
+    struct cst_template_parameter const* const* template_parameters,
+    struct cst_function_parameter const* const* function_parameters,
     struct cst_typespec const* return_typespec,
     struct cst_block const* body);
 struct cst_decl*
@@ -540,6 +558,8 @@ struct cst_expr {
         // Primary Expressions
         CST_EXPR_IDENTIFIER,
         CST_EXPR_QUALIFIED_IDENTIFIER,
+        CST_EXPR_TEMPLATE_INSTANTIATION,
+        CST_EXPR_QUALIFIED_TEMPLATE_INSTANTIATION,
         CST_EXPR_BOOLEAN,
         CST_EXPR_INTEGER,
         CST_EXPR_CHARACTER,
@@ -567,6 +587,14 @@ struct cst_expr {
         struct {
             autil_sbuf(struct cst_identifier const* const) identifiers;
         } qualified_identifier;
+        struct {
+            struct cst_identifier const* identifier;
+            autil_sbuf(struct cst_template_argument const* const) arguments;
+        } template_instantiation;
+        struct {
+            autil_sbuf(struct cst_identifier const* const) identifiers;
+            autil_sbuf(struct cst_template_argument const* const) arguments;
+        } qualified_template_instantiation;
         struct cst_boolean const* boolean;
         struct cst_integer const* integer;
         int character;
@@ -634,6 +662,14 @@ cst_expr_new_identifier(struct cst_identifier const* identifier);
 struct cst_expr*
 cst_expr_new_qualified_identifier(
     struct cst_identifier const* const* identifiers);
+struct cst_expr*
+cst_expr_new_template_instantiation(
+    struct cst_identifier const* identifier,
+    struct cst_template_argument const* const* arguments);
+struct cst_expr*
+cst_expr_new_qualified_template_instantiation(
+    struct cst_identifier const* const* identifiers,
+    struct cst_template_argument const* const* arguments);
 struct cst_expr*
 cst_expr_new_boolean(struct cst_boolean const* boolean);
 struct cst_expr*
@@ -729,13 +765,31 @@ cst_block_new(
     struct source_location const* location,
     struct cst_stmt const* const* stmts);
 
-struct cst_parameter {
+struct cst_template_parameter {
+    struct source_location const* location;
+    struct cst_identifier const* identifier;
+};
+struct cst_template_parameter*
+cst_template_parameter_new(
+    struct source_location const* location,
+    struct cst_identifier const* identifier);
+
+struct cst_template_argument {
+    struct source_location const* location;
+    struct cst_typespec const* typespec;
+};
+struct cst_template_argument*
+cst_template_argument_new(
+    struct source_location const* location,
+    struct cst_typespec const* typespec);
+
+struct cst_function_parameter {
     struct source_location const* location;
     struct cst_identifier const* identifier;
     struct cst_typespec const* typespec;
 };
-struct cst_parameter*
-cst_parameter_new(
+struct cst_function_parameter*
+cst_function_parameter_new(
     struct cst_identifier const* identifier,
     struct cst_typespec const* typespec);
 
@@ -1093,6 +1147,7 @@ struct symbol {
         SYMBOL_VARIABLE,
         SYMBOL_CONSTANT,
         SYMBOL_FUNCTION,
+        SYMBOL_TEMPLATE,
         SYMBOL_NAMESPACE,
     } kind;
     struct source_location const* location;
@@ -1102,12 +1157,14 @@ struct symbol {
     // SYMBOL_VARIABLE  => The type of the variable.
     // SYMBOL_CONSTANT  => The type of the constant.
     // SYMBOL_FUNCTION  => The type of the function (always TYPE_FUNCTION).
+    // SYMBOL_TEMPLATE  => NULL.
     // SYMBOL_NAMESPACE => NULL.
     struct type const* type;
     // SYMBOL_TYPE      => NULL.
     // SYMBOL_VARIABLE  => ADDRESS_STATIC or ADDRESS_LOCAL.
     // SYMBOL_CONSTANT  => ADDRESS_STATIC or ADDRESS_LOCAL.
     // SYMBOL_FUNCTION  => ADDRESS_STATIC.
+    // SYMBOL_TEMPLATE  => NULL.
     // SYMBOL_NAMESPACE => NULL.
     struct address const* address;
     // SYMBOL_TYPE      => NULL.
@@ -1115,12 +1172,21 @@ struct symbol {
     //                     (non-extern globals only).
     // SYMBOL_CONSTANT  => Compile-time value of the constant.
     // SYMBOL_FUNCTION  => Compile-time value of the function.
+    // SYMBOL_TEMPLATE  => NULL.
     // SYMBOL_NAMESPACE => NULL.
     struct value const* value;
     // SYMBOL_TYPE      => NULL.
     // SYMBOL_VARIABLE  => NULL.
     // SYMBOL_CONSTANT  => NULL.
     // SYMBOL_FUNCTION  => NULL.
+    // SYMBOL_TEMPLATE  => Original CST of this template.
+    // SYMBOL_NAMESPACE => NULL.
+    struct cst_decl const* decl;
+    // SYMBOL_TYPE      => NULL.
+    // SYMBOL_VARIABLE  => NULL.
+    // SYMBOL_CONSTANT  => NULL.
+    // SYMBOL_FUNCTION  => NULL.
+    // SYMBOL_TEMPLATE  => Symbols corresponding to instances of this template.
     // SYMBOL_NAMESPACE => Symbols under the namespace.
     struct symbol_table* symbols;
 };
@@ -1148,6 +1214,12 @@ symbol_new_function(
     struct type const* type,
     struct address const* address,
     struct value const* value);
+struct symbol*
+symbol_new_template(
+    struct source_location const* location,
+    char const* name,
+    struct cst_decl const* decl,
+    struct symbol_table* symbols);
 struct symbol*
 symbol_new_namespace(
     struct source_location const* location,

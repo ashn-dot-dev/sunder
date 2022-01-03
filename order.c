@@ -51,7 +51,15 @@ order_decl(struct orderer* orderer, struct cst_decl const* decl);
 static void
 order_expr(struct orderer* orderer, struct cst_expr const* expr);
 static void
-order_parameter(struct orderer* orderer, struct cst_parameter const* parameter);
+order_template_argument_list(
+    struct orderer* orderer,
+    struct cst_template_argument const* const* arguments);
+static void
+order_template_argument(
+    struct orderer* orderer, struct cst_template_argument const* argument);
+static void
+order_function_parameter(
+    struct orderer* orderer, struct cst_function_parameter const* parameter);
 static void
 order_member(struct orderer* orderer, struct cst_member const* member);
 static void
@@ -59,6 +67,9 @@ order_typespec(struct orderer* orderer, struct cst_typespec const* typespec);
 static void
 order_identifier(
     struct orderer* orderer, struct cst_identifier const* identifier);
+static void
+order_qualified_identifier(
+    struct orderer* orderer, struct cst_identifier const* const* identifiers);
 static void
 order_name(struct orderer* orderer, char const* name);
 
@@ -187,10 +198,20 @@ order_decl(struct orderer* orderer, struct cst_decl const* decl)
         return;
     }
     case CST_DECL_FUNCTION: {
-        struct cst_parameter const* const* const parameters =
-            decl->data.function.parameters;
-        for (size_t i = 0; i < autil_sbuf_count(parameters); ++i) {
-            order_parameter(orderer, parameters[i]);
+        struct cst_template_parameter const* const* const template_parameters =
+            decl->data.function.template_parameters;
+        if (autil_sbuf_count(template_parameters) != 0) {
+            // TODO: Not sure how we want to handle ordering of generics yet.
+            // Since the MVP of generics will be used to implement
+            // dependency-free functions like std::min and std::max we will
+            // ignore this ordering problem for now and circle back to it at
+            // some point in the future.
+            return;
+        }
+        struct cst_function_parameter const* const* const function_parameters =
+            decl->data.function.function_parameters;
+        for (size_t i = 0; i < autil_sbuf_count(function_parameters); ++i) {
+            order_function_parameter(orderer, function_parameters[i]);
         }
         order_typespec(orderer, decl->data.function.return_typespec);
         return;
@@ -224,30 +245,21 @@ order_expr(struct orderer* orderer, struct cst_expr const* expr)
         return;
     }
     case CST_EXPR_QUALIFIED_IDENTIFIER: {
-        // If the namespace prefix matches the module namespace then order the
-        // leaf identifier of the qualified identifier. The eventual call to
-        // order_name will silently ignore identifiers from other modules, but
-        // will correctly order any identifiers within *this* module.
-        struct cst_namespace const* const namespace =
-            orderer->module->cst->namespace;
-        if (namespace == NULL) {
-            // Module does not have a namespace.
-            return;
-        }
-        autil_sbuf(struct cst_identifier const* const) const identifiers =
-            expr->data.qualified_identifier.identifiers;
-        size_t const prefix_count = autil_sbuf_count(identifiers) - 1;
-        assert(prefix_count >= 1);
-        for (size_t i = 0; i < prefix_count; ++i) {
-            if (identifiers[i]->name != namespace->identifiers[i]->name) {
-                // Module namespace does not match qualified identifier
-                // namespace.
-                return;
-            }
-        }
-
-        // The actual identifier.
-        order_identifier(orderer, identifiers[prefix_count]);
+        order_qualified_identifier(
+            orderer, expr->data.qualified_identifier.identifiers);
+        return;
+    }
+    case CST_EXPR_TEMPLATE_INSTANTIATION: {
+        order_identifier(orderer, expr->data.template_instantiation.identifier);
+        order_template_argument_list(
+            orderer, expr->data.template_instantiation.arguments);
+        return;
+    }
+    case CST_EXPR_QUALIFIED_TEMPLATE_INSTANTIATION: {
+        order_qualified_identifier(
+            orderer, expr->data.qualified_template_instantiation.identifiers);
+        order_template_argument_list(
+            orderer, expr->data.template_instantiation.arguments);
         return;
     }
     case CST_EXPR_BOOLEAN: /* fallthrough */
@@ -344,7 +356,30 @@ order_expr(struct orderer* orderer, struct cst_expr const* expr)
 }
 
 static void
-order_parameter(struct orderer* orderer, struct cst_parameter const* parameter)
+order_template_argument_list(
+    struct orderer* orderer,
+    struct cst_template_argument const* const* arguments)
+{
+    assert(orderer != NULL);
+
+    for (size_t i = 0; i < autil_sbuf_count(arguments); ++i) {
+        order_template_argument(orderer, arguments[i]);
+    }
+}
+
+static void
+order_template_argument(
+    struct orderer* orderer, struct cst_template_argument const* argument)
+{
+    assert(orderer != NULL);
+    assert(argument != NULL);
+
+    order_typespec(orderer, argument->typespec);
+}
+
+static void
+order_function_parameter(
+    struct orderer* orderer, struct cst_function_parameter const* parameter)
 {
     assert(orderer != NULL);
     assert(parameter != NULL);
@@ -441,6 +476,38 @@ order_typespec(struct orderer* orderer, struct cst_typespec const* typespec)
     }
 
     UNREACHABLE();
+}
+
+static void
+order_qualified_identifier(
+    struct orderer* orderer, struct cst_identifier const* const* identifiers)
+{
+    assert(orderer != NULL);
+    assert(autil_sbuf_count(identifiers) > 1);
+
+    // If the namespace prefix matches the module namespace then order the leaf
+    // identifier of the qualified identifier. The eventual call to order_name
+    // will silently ignore identifiers from other modules, but will correctly
+    // order any identifiers within *this* module.
+    struct cst_namespace const* const namespace =
+        orderer->module->cst->namespace;
+    if (namespace == NULL) {
+        // Module does not have a namespace.
+        return;
+    }
+
+    size_t const prefix_count = autil_sbuf_count(identifiers) - 1;
+    assert(prefix_count >= 1);
+    for (size_t i = 0; i < prefix_count; ++i) {
+        if (identifiers[i]->name != namespace->identifiers[i]->name) {
+            // Module namespace does not match qualified identifier
+            // namespace.
+            return;
+        }
+    }
+
+    // The actual identifier.
+    order_identifier(orderer, identifiers[prefix_count]);
 }
 
 static void

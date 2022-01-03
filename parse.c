@@ -104,6 +104,12 @@ static struct cst_expr const*
 parse_expr_qualified_identifier(
     struct parser* parser, struct cst_identifier const* first);
 static struct cst_expr const*
+parse_expr_template_instantiation(
+    struct parser* parser, struct cst_identifier const* identifier);
+static struct cst_expr const*
+parse_expr_qualified_template_instantiation(
+    struct parser* parser, struct cst_identifier const* const* identifiers);
+static struct cst_expr const*
 parse_expr_boolean(struct parser* parser);
 static struct cst_expr const*
 parse_expr_integer(struct parser* parser);
@@ -133,10 +139,20 @@ parse_expr_led_binary(struct parser* parser, struct cst_expr const* lhs);
 static struct cst_block const*
 parse_block(struct parser* parser);
 
-static struct cst_parameter const* const*
-parse_parameter_list(struct parser* parser);
-static struct cst_parameter const*
-parse_parameter(struct parser* parser);
+static struct cst_template_parameter const* const*
+parse_template_parameter_list(struct parser* parser);
+static struct cst_template_parameter const*
+parse_template_parameter(struct parser* parser);
+
+static struct cst_template_argument const* const*
+parse_template_argument_list(struct parser* parser);
+static struct cst_template_argument const*
+parse_template_argument(struct parser* parser);
+
+static struct cst_function_parameter const* const*
+parse_function_parameter_list(struct parser* parser);
+static struct cst_function_parameter const*
+parse_function_parameter(struct parser* parser);
 
 static struct cst_member const* const*
 parse_member_list(struct parser* parser);
@@ -396,15 +412,22 @@ parse_decl_function(struct parser* parser)
     struct source_location const* const location =
         &expect_current(parser, TOKEN_FUNC)->location;
     struct cst_identifier const* const identifier = parse_identifier(parser);
+    autil_sbuf(struct cst_template_parameter const* const)
+        const template_parameters = parse_template_parameter_list(parser);
     expect_current(parser, TOKEN_LPAREN);
-    autil_sbuf(struct cst_parameter const* const) parameters =
-        parse_parameter_list(parser);
+    autil_sbuf(struct cst_function_parameter const* const)
+        const function_parameters = parse_function_parameter_list(parser);
     expect_current(parser, TOKEN_RPAREN);
     struct cst_typespec const* const return_typespec = parse_typespec(parser);
     struct cst_block const* const body = parse_block(parser);
 
-    struct cst_decl* const product = cst_decl_new_func(
-        location, identifier, parameters, return_typespec, body);
+    struct cst_decl* const product = cst_decl_new_function(
+        location,
+        identifier,
+        template_parameters,
+        function_parameters,
+        return_typespec,
+        body);
 
     autil_freezer_register(context()->freezer, product);
     return product;
@@ -830,6 +853,10 @@ parse_expr_identifier(struct parser* parser)
         return parse_expr_qualified_identifier(parser, identifier);
     }
 
+    if (check_current(parser, TOKEN_LBRACKET_LBRACKET)) {
+        return parse_expr_template_instantiation(parser, identifier);
+    }
+
     struct cst_expr* const product = cst_expr_new_identifier(identifier);
 
     autil_freezer_register(context()->freezer, product);
@@ -852,8 +879,46 @@ parse_expr_qualified_identifier(
     }
 
     autil_sbuf_freeze(identifiers, context()->freezer);
+    if (check_current(parser, TOKEN_LBRACKET_LBRACKET)) {
+        return parse_expr_qualified_template_instantiation(parser, identifiers);
+    }
+
     struct cst_expr* const product =
         cst_expr_new_qualified_identifier(identifiers);
+
+    autil_freezer_register(context()->freezer, product);
+    return product;
+}
+
+static struct cst_expr const*
+parse_expr_template_instantiation(
+    struct parser* parser, struct cst_identifier const* identifier)
+{
+    assert(parser != NULL);
+    assert(identifier != NULL);
+
+    autil_sbuf(struct cst_template_argument const* const) const arguments =
+        parse_template_argument_list(parser);
+
+    struct cst_expr* const product =
+        cst_expr_new_template_instantiation(identifier, arguments);
+
+    autil_freezer_register(context()->freezer, product);
+    return product;
+}
+
+static struct cst_expr const*
+parse_expr_qualified_template_instantiation(
+    struct parser* parser, struct cst_identifier const* const* identifiers)
+{
+    assert(parser != NULL);
+    assert(autil_sbuf_count(identifiers) > 1);
+
+    autil_sbuf(struct cst_template_argument const* const) const arguments =
+        parse_template_argument_list(parser);
+
+    struct cst_expr* const product =
+        cst_expr_new_qualified_template_instantiation(identifiers, arguments);
 
     autil_freezer_register(context()->freezer, product);
     return product;
@@ -1192,38 +1257,127 @@ parse_block(struct parser* parser)
     return product;
 }
 
-static struct cst_parameter const* const*
-parse_parameter_list(struct parser* parser)
+static struct cst_template_parameter const* const*
+parse_template_parameter_list(struct parser* parser)
 {
     assert(parser != NULL);
 
-    autil_sbuf(struct cst_parameter const*) parameters = NULL;
-    if (!check_current(parser, TOKEN_IDENTIFIER)) {
-        return parameters;
+    autil_sbuf(struct cst_template_parameter const*) template_parameters = NULL;
+    if (!check_current(parser, TOKEN_LBRACKET_LBRACKET)) {
+        return template_parameters;
     }
 
-    autil_sbuf_push(parameters, parse_parameter(parser));
+    struct token const* const lbracket =
+        expect_current(parser, TOKEN_LBRACKET_LBRACKET);
+    if (check_current(parser, TOKEN_RBRACKET_RBRACKET)) {
+        fatal(
+            &lbracket->location,
+            "template parameter list declared with zero parameters");
+    }
+
+    autil_sbuf_push(template_parameters, parse_template_parameter(parser));
     while (check_current(parser, TOKEN_COMMA)) {
         advance_token(parser);
-        autil_sbuf_push(parameters, parse_parameter(parser));
+        autil_sbuf_push(template_parameters, parse_template_parameter(parser));
     }
 
-    autil_sbuf_freeze(parameters, context()->freezer);
-    return parameters;
+    expect_current(parser, TOKEN_RBRACKET_RBRACKET);
+
+    autil_sbuf_freeze(template_parameters, context()->freezer);
+    return template_parameters;
 }
 
-static struct cst_parameter const*
-parse_parameter(struct parser* parser)
+static struct cst_template_parameter const*
+parse_template_parameter(struct parser* parser)
+{
+    assert(parser != NULL);
+
+    struct source_location const* const location =
+        &expect_current(parser, TOKEN_COLON)->location;
+    struct cst_identifier const* const identifier = parse_identifier(parser);
+
+    struct cst_template_parameter* const product =
+        cst_template_parameter_new(location, identifier);
+
+    autil_freezer_register(context()->freezer, product);
+    return product;
+}
+
+static struct cst_template_argument const* const*
+parse_template_argument_list(struct parser* parser)
+{
+    assert(parser != NULL);
+
+    struct token const* const lbracket =
+        expect_current(parser, TOKEN_LBRACKET_LBRACKET);
+
+    autil_sbuf(struct cst_template_argument const*) template_arguments = NULL;
+    if (check_current(parser, TOKEN_RBRACKET_RBRACKET)) {
+        fatal(
+            &lbracket->location,
+            "template argument list declared with zero arguments");
+    }
+
+    autil_sbuf_push(template_arguments, parse_template_argument(parser));
+    while (check_current(parser, TOKEN_COMMA)) {
+        advance_token(parser);
+        autil_sbuf_push(template_arguments, parse_template_argument(parser));
+    }
+
+    expect_current(parser, TOKEN_RBRACKET_RBRACKET);
+
+    autil_sbuf_freeze(template_arguments, context()->freezer);
+    return template_arguments;
+}
+
+static struct cst_template_argument const*
+parse_template_argument(struct parser* parser)
+{
+    assert(parser != NULL);
+
+    struct source_location const* const location =
+        &expect_current(parser, TOKEN_COLON)->location;
+    struct cst_typespec const* const typespec = parse_typespec(parser);
+
+    struct cst_template_argument* const product =
+        cst_template_argument_new(location, typespec);
+
+    autil_freezer_register(context()->freezer, product);
+    return product;
+}
+
+static struct cst_function_parameter const* const*
+parse_function_parameter_list(struct parser* parser)
+{
+    assert(parser != NULL);
+
+    autil_sbuf(struct cst_function_parameter const*) function_parameters = NULL;
+    if (!check_current(parser, TOKEN_IDENTIFIER)) {
+        return function_parameters;
+    }
+
+    autil_sbuf_push(function_parameters, parse_function_parameter(parser));
+    while (check_current(parser, TOKEN_COMMA)) {
+        advance_token(parser);
+        autil_sbuf_push(function_parameters, parse_function_parameter(parser));
+    }
+
+    autil_sbuf_freeze(function_parameters, context()->freezer);
+    return function_parameters;
+}
+
+static struct cst_function_parameter const*
+parse_function_parameter(struct parser* parser)
 {
     assert(parser != NULL);
     assert(check_current(parser, TOKEN_IDENTIFIER));
 
-    struct cst_identifier const* identifier = parse_identifier(parser);
+    struct cst_identifier const* const identifier = parse_identifier(parser);
     expect_current(parser, TOKEN_COLON);
-    struct cst_typespec const* typespec = parse_typespec(parser);
+    struct cst_typespec const* const typespec = parse_typespec(parser);
 
-    struct cst_parameter* const product =
-        cst_parameter_new(identifier, typespec);
+    struct cst_function_parameter* const product =
+        cst_function_parameter_new(identifier, typespec);
 
     autil_freezer_register(context()->freezer, product);
     return product;
@@ -1270,9 +1424,9 @@ parse_member_variable(struct parser* parser)
 
     struct source_location const* const location =
         &expect_current(parser, TOKEN_VAR)->location;
-    struct cst_identifier const* identifier = parse_identifier(parser);
+    struct cst_identifier const* const identifier = parse_identifier(parser);
     expect_current(parser, TOKEN_COLON);
-    struct cst_typespec const* typespec = parse_typespec(parser);
+    struct cst_typespec const* const typespec = parse_typespec(parser);
     expect_current(parser, TOKEN_SEMICOLON);
 
     struct cst_member* const product =

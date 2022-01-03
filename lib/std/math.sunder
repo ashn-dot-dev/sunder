@@ -1,0 +1,15 @@
+namespace std;
+
+func min[[:T]](lhs: T, rhs: T) T {
+    if lhs < rhs {
+        return lhs;
+    }
+    return rhs;
+}
+
+func max[[:T]](lhs: T, rhs: T) T {
+    if lhs > rhs {
+        return lhs;
+    }
+    return rhs;
+}

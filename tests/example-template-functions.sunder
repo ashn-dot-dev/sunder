@@ -1,0 +1,49 @@
+import "std/math.sunder";
+
+func max[[:T]](lhs: T, rhs: T) T {
+    if lhs > rhs {
+        return lhs;
+    }
+    return rhs;
+}
+
+func can_roundtrip[[:A, :B]]() bool {
+    # Largest value that can be held by a sunder unsigned integer.
+    const largest: u64 = 0xFFFFFFFFFFFFFFFFu64;
+
+    # Start with the initial type A.
+    var a: A = (:A)largest;
+    # Trip to B.
+    var b: B = (:B)a;
+    # Roundtrip back to A.
+    var r: A = (:A)b;
+
+    return r == a;
+}
+
+func main() void {
+    dump max[[:u16]](123u16, 456u16);
+    dump max[[:u16]](123u16, 456u16); # Should reuse the first instantiation.
+    dump max[[:s16]](+42s16, -42s16);
+    dump max[[:u32]](0xDEADBEEFu32, 0xCAFEF00Du32);
+    dump std::max[[:u32]](0xDEADBEEFu32, 0xCAFEF00Du32);
+
+    dump can_roundtrip[[:u32, :u8]]();
+    dump can_roundtrip[[:u32, :u16]]();
+    dump can_roundtrip[[:u32, :u32]]();
+    dump can_roundtrip[[:u32, :u64]]();
+    dump can_roundtrip[[:u8, :s8]]();
+    dump can_roundtrip[[:s8, :u8]]();
+}
+################################################################################
+# C8 01
+# C8 01
+# 2A 00
+# EF BE AD DE
+# EF BE AD DE
+# 00
+# 00
+# 01
+# 01
+# 01
+# 01
