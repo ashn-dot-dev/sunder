@@ -65,11 +65,10 @@ order_member(struct orderer* orderer, struct cst_member const* member);
 static void
 order_typespec(struct orderer* orderer, struct cst_typespec const* typespec);
 static void
+order_symbol(struct orderer* orderer, struct cst_symbol const* symbol);
+static void
 order_identifier(
     struct orderer* orderer, struct cst_identifier const* identifier);
-static void
-order_qualified_identifier(
-    struct orderer* orderer, struct cst_identifier const* const* identifiers);
 static void
 order_name(struct orderer* orderer, char const* name);
 
@@ -254,26 +253,8 @@ order_expr(struct orderer* orderer, struct cst_expr const* expr)
     assert(expr != NULL);
 
     switch (expr->kind) {
-    case CST_EXPR_IDENTIFIER: {
-        order_identifier(orderer, expr->data.identifier);
-        return;
-    }
-    case CST_EXPR_QUALIFIED_IDENTIFIER: {
-        order_qualified_identifier(
-            orderer, expr->data.qualified_identifier.identifiers);
-        return;
-    }
-    case CST_EXPR_TEMPLATE_INSTANTIATION: {
-        order_identifier(orderer, expr->data.template_instantiation.identifier);
-        order_template_argument_list(
-            orderer, expr->data.template_instantiation.arguments);
-        return;
-    }
-    case CST_EXPR_QUALIFIED_TEMPLATE_INSTANTIATION: {
-        order_qualified_identifier(
-            orderer, expr->data.qualified_template_instantiation.identifiers);
-        order_template_argument_list(
-            orderer, expr->data.template_instantiation.arguments);
+    case CST_EXPR_SYMBOL: {
+        order_symbol(orderer, expr->data.symbol);
         return;
     }
     case CST_EXPR_BOOLEAN: /* fallthrough */
@@ -430,15 +411,8 @@ order_typespec(struct orderer* orderer, struct cst_typespec const* typespec)
     assert(typespec != NULL);
 
     switch (typespec->kind) {
-    case TYPESPEC_IDENTIFIER: {
-        order_identifier(orderer, typespec->data.identifier);
-        return;
-    }
-    case TYPESPEC_TEMPLATE_INSTANTIATION: {
-        order_identifier(
-            orderer, typespec->data.template_instantiation.identifier);
-        order_template_argument_list(
-            orderer, typespec->data.template_instantiation.arguments);
+    case TYPESPEC_SYMBOL: {
+        order_symbol(orderer, typespec->data.symbol);
         return;
     }
     case TYPESPEC_FUNCTION: {
@@ -500,35 +474,60 @@ order_typespec(struct orderer* orderer, struct cst_typespec const* typespec)
 }
 
 static void
-order_qualified_identifier(
-    struct orderer* orderer, struct cst_identifier const* const* identifiers)
+order_symbol(struct orderer* orderer, struct cst_symbol const* symbol)
 {
     assert(orderer != NULL);
-    assert(autil_sbuf_count(identifiers) > 1);
+    assert(autil_sbuf_count(symbol->elements) > 0);
 
-    // If the namespace prefix matches the module namespace then order the leaf
-    // identifier of the qualified identifier. The eventual call to order_name
-    // will silently ignore identifiers from other modules, but will correctly
-    // order any identifiers within *this* module.
+    // If the namespace prefix matches the module namespace then order the
+    // non-prefix portion of the symbol. The eventual call to order_name will
+    // silently ignore symbols from other modules, but will correctly order any
+    // symbols within *this* module.
+    //
+    // If this module does not have a namespace then order the symbol based on
+    // its first symbol element. If that element corresponds to a declaration in
+    // this module (e.g. a struct) then the symbol will be correctly ordered. If
+    // that element does not correspond to a declaration in this module then
+    // again the order_name will silently ignore it assuming it is defined
+    // elsewhere.
     struct cst_namespace const* const namespace =
         orderer->module->cst->namespace;
     if (namespace == NULL) {
-        // Module does not have a namespace.
+        // Module does not have a namespace. Perform ordering based on the first
+        // symbol element in the symbol.
+        order_identifier(orderer, symbol->elements[0]->identifier);
+        order_template_argument_list(
+            orderer, symbol->elements[0]->template_arguments);
         return;
     }
 
-    size_t const prefix_count = autil_sbuf_count(identifiers) - 1;
-    assert(prefix_count >= 1);
-    for (size_t i = 0; i < prefix_count; ++i) {
-        if (identifiers[i]->name != namespace->identifiers[i]->name) {
-            // Module namespace does not match qualified identifier
-            // namespace.
-            return;
-        }
+    size_t const namespace_count = autil_sbuf_count(namespace->identifiers);
+    assert(namespace_count >= 1);
+    if (autil_sbuf_count(symbol->elements) < namespace_count) {
+        // Current symbol refers to some declaration under a parent namespace or
+        // the parent namespace itself. Let the resolution of the symbol occur
+        // during the resolve phase.
+        return;
     }
 
-    // The actual identifier.
-    order_identifier(orderer, identifiers[prefix_count]);
+    for (size_t i = 0; i < namespace_count; ++i) {
+        bool const match = symbol->elements[i]->identifier->name
+            == namespace->identifiers[i]->name;
+        if (match) {
+            // Continue matching against the current module namespace.
+            continue;
+        }
+
+        // Module namespace does not fully match the current module namespace.
+        // Assume that the symbol refers to a construct defined under a parent
+        // namespace in some other module.
+        return;
+    }
+
+    // Perform ordering based on the non-prefix portion of the symbol.
+    order_identifier(orderer, symbol->elements[namespace_count]->identifier);
+    order_template_argument_list(
+        orderer, symbol->elements[namespace_count]->template_arguments);
 }
 
 static void

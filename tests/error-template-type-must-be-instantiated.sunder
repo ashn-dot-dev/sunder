@@ -1,0 +1,9 @@
+struct foo[[:T]] {
+    var value: T;
+}
+
+const a: foo = (:foo[[:u16]]){.value = 123};
+################################################################################
+# [error-template-type-must-be-instantiated.sunder:5] error: template `foo` must be instantiated
+# const a: foo = (:foo[[:u16]]){.value = 123};
+#          ^

@@ -11,7 +11,7 @@ integer_is_out_of_range(
     struct type const* type, struct autil_bigint const* res);
 
 static struct value*
-eval_rvalue_identifier(struct expr const* expr);
+eval_rvalue_symbol(struct expr const* expr);
 static struct value*
 eval_rvalue_boolean(struct expr const* expr);
 static struct value*
@@ -42,7 +42,7 @@ static struct value*
 eval_rvalue_binary(struct expr const* expr);
 
 static struct value*
-eval_lvalue_identifier(struct expr const* expr);
+eval_lvalue_symbol(struct expr const* expr);
 static struct value*
 eval_lvalue_access_index(struct expr const* expr);
 static struct value*
@@ -73,8 +73,8 @@ eval_rvalue(struct expr const* expr)
     assert(expr != NULL);
 
     switch (expr->kind) {
-    case EXPR_IDENTIFIER: {
-        return eval_rvalue_identifier(expr);
+    case EXPR_SYMBOL: {
+        return eval_rvalue_symbol(expr);
     }
     case EXPR_BOOLEAN: {
         return eval_rvalue_boolean(expr);
@@ -131,16 +131,16 @@ eval_rvalue(struct expr const* expr)
 }
 
 static struct value*
-eval_rvalue_identifier(struct expr const* expr)
+eval_rvalue_symbol(struct expr const* expr)
 {
     assert(expr != NULL);
-    assert(expr->kind == EXPR_IDENTIFIER);
+    assert(expr->kind == EXPR_SYMBOL);
 
-    struct symbol const* const symbol = expr->data.identifier;
+    struct symbol const* const symbol = expr->data.symbol;
     enum symbol_kind const kind = symbol->kind;
 
     if (kind == SYMBOL_CONSTANT || kind == SYMBOL_FUNCTION) {
-        assert(expr->data.identifier->value != NULL);
+        assert(expr->data.symbol->value != NULL);
         return value_clone(symbol->value);
     }
 
@@ -917,8 +917,8 @@ eval_lvalue(struct expr const* expr)
     assert(expr_is_lvalue(expr));
 
     switch (expr->kind) {
-    case EXPR_IDENTIFIER: {
-        return eval_lvalue_identifier(expr);
+    case EXPR_SYMBOL: {
+        return eval_lvalue_symbol(expr);
     }
     case EXPR_ACCESS_INDEX: {
         return eval_lvalue_access_index(expr);
@@ -951,12 +951,12 @@ eval_lvalue(struct expr const* expr)
 }
 
 static struct value*
-eval_lvalue_identifier(struct expr const* expr)
+eval_lvalue_symbol(struct expr const* expr)
 {
     assert(expr != NULL);
-    assert(expr->kind == EXPR_IDENTIFIER);
+    assert(expr->kind == EXPR_SYMBOL);
 
-    struct symbol const* const symbol = expr->data.identifier;
+    struct symbol const* const symbol = expr->data.symbol;
     if (symbol->address->kind != ADDRESS_STATIC) {
         fatal(
             expr->location,

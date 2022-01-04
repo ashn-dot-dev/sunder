@@ -306,55 +306,13 @@ cst_expr_new(struct source_location const* location, enum cst_expr_kind kind)
 }
 
 struct cst_expr*
-cst_expr_new_identifier(struct cst_identifier const* identifier)
+cst_expr_new_symbol(struct cst_symbol const* symbol)
 {
-    assert(identifier != NULL);
+    assert(symbol != NULL);
 
     struct cst_expr* const self =
-        cst_expr_new(identifier->location, CST_EXPR_IDENTIFIER);
-    self->data.identifier = identifier;
-    return self;
-}
-
-struct cst_expr*
-cst_expr_new_qualified_identifier(
-    struct cst_identifier const* const* identifiers)
-{
-    assert(autil_sbuf_count(identifiers) > 1);
-
-    struct cst_expr* const self =
-        cst_expr_new(identifiers[0]->location, CST_EXPR_QUALIFIED_IDENTIFIER);
-    self->data.qualified_identifier.identifiers = identifiers;
-    return self;
-}
-
-struct cst_expr*
-cst_expr_new_template_instantiation(
-    struct cst_identifier const* identifier,
-    struct cst_template_argument const* const* arguments)
-{
-    assert(identifier != NULL);
-    assert(autil_sbuf_count(arguments) > 0);
-
-    struct cst_expr* const self =
-        cst_expr_new(identifier->location, CST_EXPR_TEMPLATE_INSTANTIATION);
-    self->data.template_instantiation.identifier = identifier;
-    self->data.template_instantiation.arguments = arguments;
-    return self;
-}
-
-struct cst_expr*
-cst_expr_new_qualified_template_instantiation(
-    struct cst_identifier const* const* identifiers,
-    struct cst_template_argument const* const* arguments)
-{
-    assert(autil_sbuf_count(identifiers) > 1);
-    assert(autil_sbuf_count(arguments) > 0);
-
-    struct cst_expr* const self = cst_expr_new(
-        identifiers[0]->location, CST_EXPR_QUALIFIED_TEMPLATE_INSTANTIATION);
-    self->data.qualified_template_instantiation.identifiers = identifiers;
-    self->data.qualified_template_instantiation.arguments = arguments;
+        cst_expr_new(symbol->location, CST_EXPR_SYMBOL);
+    self->data.symbol = symbol;
     return self;
 }
 
@@ -638,6 +596,33 @@ cst_block_new(
     return self;
 }
 
+struct cst_symbol*
+cst_symbol_new(struct cst_symbol_element const* const* elements)
+{
+    assert(autil_sbuf_count(elements) > 0);
+
+    struct cst_symbol* const self = autil_xalloc(NULL, sizeof(*self));
+    memset(self, 0x00, sizeof(*self));
+    self->location = elements[0]->identifier->location;
+    self->elements = elements;
+    return self;
+}
+
+struct cst_symbol_element*
+cst_symbol_element_new(
+    struct cst_identifier const* identifier,
+    struct cst_template_argument const* const* template_arguments)
+{
+    assert(identifier != NULL);
+
+    struct cst_symbol_element* const self = autil_xalloc(NULL, sizeof(*self));
+    memset(self, 0x00, sizeof(*self));
+    self->location = identifier->location;
+    self->identifier = identifier;
+    self->template_arguments = template_arguments;
+    return self;
+}
+
 struct cst_template_parameter*
 cst_template_parameter_new(
     struct source_location const* location,
@@ -754,28 +739,13 @@ cst_typespec_new(
 }
 
 struct cst_typespec*
-cst_typespec_new_identifier(struct cst_identifier const* identifier)
+cst_typespec_new_symbol(struct cst_symbol const* symbol)
 {
-    assert(identifier != NULL);
+    assert(symbol != NULL);
 
     struct cst_typespec* const self =
-        cst_typespec_new(identifier->location, TYPESPEC_IDENTIFIER);
-    self->data.identifier = identifier;
-    return self;
-}
-
-struct cst_typespec*
-cst_typespec_new_template_instantiation(
-    struct cst_identifier const* identifier,
-    struct cst_template_argument const* const* arguments)
-{
-    assert(identifier != NULL);
-    assert(autil_sbuf_count(arguments) > 0);
-
-    struct cst_typespec* const self =
-        cst_typespec_new(identifier->location, TYPESPEC_TEMPLATE_INSTANTIATION);
-    self->data.template_instantiation.identifier = identifier;
-    self->data.template_instantiation.arguments = arguments;
+        cst_typespec_new(symbol->location, TYPESPEC_SYMBOL);
+    self->data.symbol = symbol;
     return self;
 }
 

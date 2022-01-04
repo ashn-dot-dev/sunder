@@ -620,7 +620,7 @@ codegen_stmt_expr(struct stmt const* stmt, size_t id);
 static void
 codegen_rvalue(struct expr const* expr);
 static void
-codegen_rvalue_identifier(struct expr const* expr, size_t id);
+codegen_rvalue_symbol(struct expr const* expr, size_t id);
 static void
 codegen_rvalue_boolean(struct expr const* expr, size_t id);
 static void
@@ -665,7 +665,7 @@ codegen_rvalue_binary(struct expr const* expr, size_t id);
 static void
 codegen_lvalue(struct expr const* expr);
 static void
-codegen_lvalue_identifier(struct expr const* expr, size_t id);
+codegen_lvalue_symbol(struct expr const* expr, size_t id);
 static void
 codegen_lvalue_access_index(struct expr const* expr, size_t id);
 static void
@@ -1141,7 +1141,7 @@ codegen_rvalue(struct expr const* expr)
     } const table[] = {
 #define TABLE_ENTRY(kind, fn) [kind] = {#kind, fn}
         // clang-format off
-        TABLE_ENTRY(EXPR_IDENTIFIER, codegen_rvalue_identifier),
+        TABLE_ENTRY(EXPR_SYMBOL, codegen_rvalue_symbol),
         TABLE_ENTRY(EXPR_BOOLEAN, codegen_rvalue_boolean),
         TABLE_ENTRY(EXPR_INTEGER, codegen_rvalue_integer),
         TABLE_ENTRY(EXPR_BYTES, codegen_rvalue_bytes),
@@ -1172,13 +1172,13 @@ codegen_rvalue(struct expr const* expr)
 }
 
 static void
-codegen_rvalue_identifier(struct expr const* expr, size_t id)
+codegen_rvalue_symbol(struct expr const* expr, size_t id)
 {
     assert(expr != NULL);
-    assert(expr->kind == EXPR_IDENTIFIER);
+    assert(expr->kind == EXPR_SYMBOL);
     (void)id;
 
-    struct symbol const* const symbol = expr->data.identifier;
+    struct symbol const* const symbol = expr->data.symbol;
     switch (symbol->kind) {
     case SYMBOL_TYPE: /* fallthrough */
     case SYMBOL_TEMPLATE: /* fallthrough */
@@ -2330,7 +2330,7 @@ codegen_lvalue(struct expr const* expr)
     } const table[] = {
 #define TABLE_ENTRY(kind, fn) [kind] = {#kind, fn}
         // clang format off
-        TABLE_ENTRY(EXPR_IDENTIFIER, codegen_lvalue_identifier),
+        TABLE_ENTRY(EXPR_SYMBOL, codegen_lvalue_symbol),
         TABLE_ENTRY(EXPR_ACCESS_INDEX, codegen_lvalue_access_index),
         TABLE_ENTRY(
             EXPR_ACCESS_MEMBER_VARIABLE, codegen_lvalue_access_member_variable),
@@ -2349,13 +2349,13 @@ codegen_lvalue(struct expr const* expr)
 }
 
 static void
-codegen_lvalue_identifier(struct expr const* expr, size_t id)
+codegen_lvalue_symbol(struct expr const* expr, size_t id)
 {
     assert(expr != NULL);
-    assert(expr->kind == EXPR_IDENTIFIER);
+    assert(expr->kind == EXPR_SYMBOL);
     (void)id;
 
-    push_address(expr->data.identifier->address);
+    push_address(expr->data.symbol->address);
 }
 
 static void

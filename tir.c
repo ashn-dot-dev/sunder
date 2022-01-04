@@ -892,16 +892,15 @@ expr_new(
 }
 
 struct expr*
-expr_new_identifier(
-    struct source_location const* location, struct symbol const* identifier)
+expr_new_symbol(
+    struct source_location const* location, struct symbol const* symbol)
 {
     assert(location != NULL);
-    assert(identifier != NULL);
-    assert(identifier->kind != SYMBOL_TYPE);
+    assert(symbol != NULL);
+    assert(symbol->kind != SYMBOL_TYPE);
 
-    struct expr* const self =
-        expr_new(location, identifier->type, EXPR_IDENTIFIER);
-    self->data.identifier = identifier;
+    struct expr* const self = expr_new(location, symbol->type, EXPR_SYMBOL);
+    self->data.symbol = symbol;
     return self;
 }
 
@@ -1242,8 +1241,8 @@ expr_is_lvalue(struct expr const* self)
     assert(self != NULL);
 
     switch (self->kind) {
-    case EXPR_IDENTIFIER: {
-        switch (self->data.identifier->kind) {
+    case EXPR_SYMBOL: {
+        switch (self->data.symbol->kind) {
         case SYMBOL_TYPE: /* fallthrough */
         case SYMBOL_TEMPLATE:
         case SYMBOL_NAMESPACE:

@@ -93,6 +93,20 @@ normalize_unique(char const* prefix, char const* name);
 static void
 register_static_symbol(struct symbol const* symbol);
 
+// Finds the symbol or fatally exits. Returns the symbol associated with the
+// target concrete syntax tree.
+static struct symbol const*
+xget_symbol(struct resolver* resolver, struct cst_symbol const* target);
+// Finds and/or instantiates the template symbol with the provided template
+// arguments or fatally exits. Returns the symbol associated with the
+// instantiated type.
+static struct symbol const*
+xget_template_instance(
+    struct resolver* resolver,
+    struct source_location const* location,
+    struct symbol const* symbol,
+    struct cst_template_argument const* const* const template_arguments);
+
 static void
 check_type_compatibility(
     struct source_location const* location,
@@ -183,16 +197,7 @@ resolve_stmt_expr(struct resolver* resolver, struct cst_stmt const* stmt);
 static struct expr const*
 resolve_expr(struct resolver* resolver, struct cst_expr const* expr);
 static struct expr const*
-resolve_expr_identifier(struct resolver* resolver, struct cst_expr const* expr);
-static struct expr const*
-resolve_expr_qualified_identifier(
-    struct resolver* resolver, struct cst_expr const* expr);
-static struct expr const*
-resolve_expr_template_instantiation(
-    struct resolver* resolver, struct cst_expr const* expr);
-static struct expr const*
-resolve_expr_qualified_template_instantiation(
-    struct resolver* resolver, struct cst_expr const* expr);
+resolve_expr_symbol(struct resolver* resolver, struct cst_expr const* expr);
 static struct expr const*
 resolve_expr_boolean(struct resolver* resolver, struct cst_expr const* expr);
 static struct expr const*
@@ -303,10 +308,7 @@ static struct type const*
 resolve_typespec(
     struct resolver* resolver, struct cst_typespec const* typespec);
 static struct type const*
-resolve_typespec_identifier(
-    struct resolver* resolver, struct cst_typespec const* typespec);
-static struct type const*
-resolve_typespec_template_instantiation(
+resolve_typespec_symbol(
     struct resolver* resolver, struct cst_typespec const* typespec);
 static struct type const*
 resolve_typespec_function(
@@ -501,6 +503,392 @@ register_static_symbol(struct symbol const* symbol)
             __func__,
             symbol->address->data.static_.name);
     }
+}
+
+static struct symbol const*
+xget_symbol(struct resolver* resolver, struct cst_symbol const* target)
+{
+    assert(resolver != NULL);
+    assert(target != NULL);
+
+    assert(autil_sbuf_count(target->elements) != 0);
+    struct cst_symbol_element const* const element = target->elements[0];
+    char const* const name = element->identifier->name;
+    struct symbol const* lhs =
+        symbol_table_lookup(resolver->current_symbol_table, name);
+    if (lhs == NULL) {
+        fatal(target->location, "use of undeclared identifier `%s`", name);
+    }
+    if (autil_sbuf_count(element->template_arguments) != 0) {
+        lhs = xget_template_instance(
+            resolver, element->location, lhs, element->template_arguments);
+    }
+
+    // Single symbol element:
+    //      foo
+    //      foo[[:u16]]
+    size_t const element_count = autil_sbuf_count(target->elements);
+    if (element_count == 1) {
+        return lhs;
+    }
+
+    // Qualified symbol:
+    //      foo::bar
+    //      foo::bar[[:u16]]
+    //      foo::bar[[:u16]]::baz
+    //      foo::bar[[:u16]]::baz::qux[[u32]]
+    struct symbol const* symbol = NULL;
+    for (size_t i = 1; i < element_count; ++i) {
+        struct cst_symbol_element const* const element = target->elements[i];
+        char const* const name = element->identifier->name;
+
+        if (lhs->kind == SYMBOL_NAMESPACE) {
+            symbol = symbol_table_lookup(lhs->symbols, name);
+            if (symbol == NULL) {
+                fatal(
+                    element->location,
+                    "use of undeclared identifier `%s` within `%s`",
+                    name,
+                    lhs->name);
+            }
+            if (autil_sbuf_count(element->template_arguments) != 0) {
+                symbol = xget_template_instance(
+                    resolver,
+                    element->location,
+                    symbol,
+                    element->template_arguments);
+            }
+            lhs = symbol;
+            continue;
+        }
+
+        if (lhs->kind == SYMBOL_TYPE && lhs->type->kind == TYPE_STRUCT) {
+            symbol = symbol_table_lookup_local(
+                lhs->type->data.struct_.symbols, name);
+            if (symbol == NULL) {
+                fatal(
+                    element->location,
+                    "use of undeclared identifier `%s` within `%s`",
+                    name,
+                    lhs->name);
+            }
+            if (autil_sbuf_count(element->template_arguments) != 0) {
+                symbol = xget_template_instance(
+                    resolver,
+                    element->location,
+                    symbol,
+                    element->template_arguments);
+            }
+            lhs = symbol;
+            continue;
+        }
+
+        if (lhs->kind == SYMBOL_TEMPLATE) {
+            if (autil_sbuf_count(element->template_arguments) == 0) {
+                fatal(
+                    element->location,
+                    "template `%s` must be instantiated",
+                    lhs->name);
+            }
+            lhs = xget_template_instance(
+                resolver, element->location, lhs, element->template_arguments);
+            continue;
+        }
+
+        fatal(
+            element->location,
+            "`%s` is not a namespace or struct or template",
+            lhs->name);
+    }
+
+    assert(symbol != NULL);
+    return symbol;
+}
+
+static struct symbol const*
+xget_template_instance(
+    struct resolver* resolver,
+    struct source_location const* location,
+    struct symbol const* symbol,
+    struct cst_template_argument const* const* const template_arguments)
+{
+    assert(resolver != NULL);
+    assert(location != NULL);
+    assert(symbol != NULL);
+    assert(autil_sbuf_count(template_arguments) != 0);
+
+    switch (symbol->kind) {
+    case SYMBOL_TYPE: {
+        fatal(
+            location,
+            "attempted template instantiation of non-template type `%s`",
+            symbol->name);
+    }
+    case SYMBOL_VARIABLE: {
+        fatal(
+            location,
+            "attempted template instantiation of variable `%s`",
+            symbol->name);
+    }
+    case SYMBOL_CONSTANT: {
+        fatal(
+            location,
+            "attempted template instantiation of constant `%s`",
+            symbol->name);
+    }
+    case SYMBOL_FUNCTION: {
+        fatal(
+            location,
+            "attempted template instantiation of function `%s`",
+            symbol->name);
+    }
+    case SYMBOL_TEMPLATE: {
+        break;
+    }
+    case SYMBOL_NAMESPACE: {
+        fatal(
+            location,
+            "attempted template instantiation of namespace `%s`",
+            symbol->name);
+    }
+    }
+
+    // To instantiate the function template we replace the template parameters
+    // of the template declaration with the template arguments from the current
+    // instantiation.
+    struct cst_decl const* const decl = symbol->decl;
+    assert(decl != NULL);
+
+    // Currently, functions and structs are the only declarations that can be
+    // templated, so the rest off this function will only cater to these cases.
+    //
+    // TODO: Go over the common code in these two condition branches and remove
+    // the duplicate and/or redundant logic.
+    assert(decl->kind == CST_DECL_FUNCTION || decl->kind == CST_DECL_STRUCT);
+    if (decl->kind == CST_DECL_FUNCTION) {
+        autil_sbuf(struct cst_template_parameter const* const)
+            const template_parameters = decl->data.function.template_parameters;
+        size_t const template_parameters_count =
+            autil_sbuf_count(template_parameters);
+        size_t const template_arguments_count =
+            autil_sbuf_count(template_arguments);
+
+        if (template_parameters_count != template_arguments_count) {
+            fatal(
+                location,
+                "expected %zu template argument(s) for template `%s` (received %zu)",
+                template_parameters_count,
+                symbol->name,
+                template_arguments_count);
+        }
+
+        autil_sbuf(struct type const*) template_types = NULL;
+        for (size_t i = 0; i < template_arguments_count; ++i) {
+            autil_sbuf_push(
+                template_types,
+                resolve_typespec(resolver, template_arguments[i]->typespec));
+        }
+        autil_sbuf_freeze(template_types, context()->freezer);
+
+        // Replace function identifier (i.e. name).
+        struct autil_string* const name_string =
+            autil_string_new_cstr(symbol->name);
+        autil_string_append_cstr(name_string, "[[");
+        for (size_t i = 0; i < template_arguments_count; ++i) {
+            if (i != 0) {
+                autil_string_append_cstr(name_string, ", ");
+            }
+            autil_string_append_fmt(
+                name_string, ":%s", template_types[i]->name);
+        }
+        autil_string_append_cstr(name_string, "]]");
+        char const* const name_interned = autil_sipool_intern_cstr(
+            context()->sipool, autil_string_start(name_string));
+        autil_string_del(name_string);
+        struct cst_identifier* const instance_identifier =
+            cst_identifier_new(location, name_interned);
+        autil_freezer_register(context()->freezer, instance_identifier);
+        // Replace template parameters. Zero template parameters means this
+        // function is no longer a template.
+        autil_sbuf(struct cst_template_parameter const* const)
+            const instance_template_parameters = NULL;
+        // Function parameters do not change. When the actual function is
+        // resolved it will do so inside a symbol table where a template
+        // parameter's name maps to the template instance's chosen type symbol.
+        autil_sbuf(struct cst_function_parameter const* const)
+            const instance_function_parameters =
+                decl->data.function.function_parameters;
+        // Same goes for the return type specification.
+        struct cst_typespec const* const instance_return_typespec =
+            decl->data.function.return_typespec;
+        // And the body is also unchanged.
+        struct cst_block const* const instance_body = decl->data.function.body;
+
+        // Check if a symbol corresponding to these template arguments has
+        // already been created. If so then we reuse the cached symbol.
+        struct symbol const* const existing_instance =
+            symbol_table_lookup(symbol->symbols, name_interned);
+        if (existing_instance != NULL) {
+            return existing_instance;
+        }
+
+        // Create a symbol table to hold the template arguments for this
+        // instance. Then add each template argument type to the symbol table,
+        // mapping from the template type name to the argument type.
+        struct symbol_table* const instance_symbol_table =
+            symbol_table_new(resolver->current_symbol_table);
+        for (size_t i = 0; i < template_parameters_count; ++i) {
+            // TODO: Should we use the template parameter location or the
+            // template argument location for the type symbol location?
+            struct symbol* const symbol = symbol_new_type(
+                template_parameters[i]->identifier->location,
+                template_types[i]);
+            autil_freezer_register(context()->freezer, symbol);
+            symbol_table_insert(
+                instance_symbol_table,
+                template_parameters[i]->identifier->name,
+                symbol);
+        }
+        symbol_table_freeze(instance_symbol_table, context()->freezer);
+
+        // Generate the template instance concrete syntax tree.
+        struct cst_decl* const instance_decl = cst_decl_new_function(
+            location,
+            instance_identifier,
+            instance_template_parameters,
+            instance_function_parameters,
+            instance_return_typespec,
+            instance_body);
+        autil_freezer_register(context()->freezer, instance_decl);
+
+        // Resolve the actual template instance.
+        struct symbol_table* const save_symbol_table =
+            resolver->current_symbol_table;
+        resolver->current_symbol_table = instance_symbol_table;
+        struct symbol const* resolved_symbol =
+            resolve_decl_function(resolver, instance_decl);
+        resolver->current_symbol_table = save_symbol_table;
+
+        // Add the unique instance to the cache of instances for the template.
+        assert(resolved_symbol->kind == SYMBOL_FUNCTION);
+        symbol_table_insert(symbol->symbols, name_interned, resolved_symbol);
+
+        return resolved_symbol;
+    }
+    if (decl->kind == CST_DECL_STRUCT) {
+        autil_sbuf(struct cst_template_parameter const* const)
+            const template_parameters = decl->data.struct_.template_parameters;
+        size_t const template_parameters_count =
+            autil_sbuf_count(template_parameters);
+        size_t const template_arguments_count =
+            autil_sbuf_count(template_arguments);
+
+        if (template_parameters_count != template_arguments_count) {
+            fatal(
+                location,
+                "expected %zu template argument(s) for template `%s` (received %zu)",
+                template_parameters_count,
+                symbol->name,
+                template_arguments_count);
+        }
+
+        autil_sbuf(struct type const*) template_types = NULL;
+        for (size_t i = 0; i < template_arguments_count; ++i) {
+            autil_sbuf_push(
+                template_types,
+                resolve_typespec(resolver, template_arguments[i]->typespec));
+        }
+        autil_sbuf_freeze(template_types, context()->freezer);
+
+        // Replace struct identifier (i.e. name).
+        struct autil_string* const name_string =
+            autil_string_new_cstr(symbol->name);
+        autil_string_append_cstr(name_string, "[[");
+        for (size_t i = 0; i < template_arguments_count; ++i) {
+            if (i != 0) {
+                autil_string_append_cstr(name_string, ", ");
+            }
+            autil_string_append_fmt(
+                name_string, ":%s", template_types[i]->name);
+        }
+        autil_string_append_cstr(name_string, "]]");
+        char const* const name_interned = autil_sipool_intern_cstr(
+            context()->sipool, autil_string_start(name_string));
+        autil_string_del(name_string);
+        struct cst_identifier* const instance_identifier =
+            cst_identifier_new(location, name_interned);
+        autil_freezer_register(context()->freezer, instance_identifier);
+        // Replace template parameters. Zero template parameters means this
+        // struct is no longer a template.
+        autil_sbuf(struct cst_template_parameter const* const)
+            const instance_template_parameters = NULL;
+        // Struct members do not change. When the actual struct is resolved it
+        // will do so inside a symbol table where a template parameter's name
+        // maps to the template instance's chosen type symbol.
+        autil_sbuf(struct cst_member const* const) const instance_members =
+            decl->data.struct_.members;
+
+        // Check if a symbol corresponding to these template arguments has
+        // already been created. If so then we reuse the cached symbol.
+        struct symbol const* const existing_instance =
+            symbol_table_lookup(symbol->symbols, name_interned);
+        if (existing_instance != NULL) {
+            return existing_instance;
+        }
+
+        // Create a symbol table to hold the template arguments for this
+        // instance. Then add each template argument type to the symbol table,
+        // mapping from the template type name to the argument type.
+        struct symbol_table* const instance_symbol_table =
+            symbol_table_new(resolver->current_symbol_table);
+        for (size_t i = 0; i < template_parameters_count; ++i) {
+            // TODO: Should we use the template parameter location or the
+            // template argument location for the type symbol location?
+            struct symbol* const symbol = symbol_new_type(
+                template_parameters[i]->identifier->location,
+                template_types[i]);
+            autil_freezer_register(context()->freezer, symbol);
+            symbol_table_insert(
+                instance_symbol_table,
+                template_parameters[i]->identifier->name,
+                symbol);
+        }
+        symbol_table_freeze(instance_symbol_table, context()->freezer);
+
+        // Generate the template instance concrete syntax tree.
+        struct cst_decl* const instance_decl = cst_decl_new_struct(
+            location,
+            instance_identifier,
+            instance_template_parameters,
+            instance_members);
+        autil_freezer_register(context()->freezer, instance_decl);
+
+        // Resolve the actual template instance.
+        struct symbol_table* const save_symbol_table =
+            resolver->current_symbol_table;
+        resolver->current_symbol_table = instance_symbol_table;
+        struct symbol const* resolved_symbol =
+            resolve_decl_struct(resolver, instance_decl);
+
+        // Add the unique instance to the cache of instances for the template.
+        assert(resolved_symbol->kind == SYMBOL_TYPE);
+        symbol_table_insert(symbol->symbols, name_interned, resolved_symbol);
+
+        // Now that the instance is in the cache we can complete the struct. If
+        // we did not add the instance to the cache first then any self
+        // referential template instances would cause instance resolution to
+        // enter an infinite loop.
+        complete_struct_member_variables(
+            resolver, resolved_symbol, instance_decl);
+        complete_struct_member_functions(
+            resolver, resolved_symbol, instance_decl);
+        resolver->current_symbol_table = save_symbol_table;
+
+        return resolved_symbol;
+    }
+
+    UNREACHABLE();
+    return NULL;
 }
 
 static void
@@ -803,8 +1191,8 @@ resolve_decl_variable(
     }
 
     if (lhs != NULL) {
-        struct expr* const identifier = expr_new_identifier(
-            decl->data.variable.identifier->location, symbol);
+        struct expr* const identifier =
+            expr_new_symbol(decl->data.variable.identifier->location, symbol);
         autil_freezer_register(context()->freezer, identifier);
         *lhs = identifier;
     }
@@ -1597,17 +1985,8 @@ resolve_expr(struct resolver* resolver, struct cst_expr const* expr)
     assert(expr != NULL);
 
     switch (expr->kind) {
-    case CST_EXPR_IDENTIFIER: {
-        return resolve_expr_identifier(resolver, expr);
-    }
-    case CST_EXPR_QUALIFIED_IDENTIFIER: {
-        return resolve_expr_qualified_identifier(resolver, expr);
-    }
-    case CST_EXPR_TEMPLATE_INSTANTIATION: {
-        return resolve_expr_template_instantiation(resolver, expr);
-    }
-    case CST_EXPR_QUALIFIED_TEMPLATE_INSTANTIATION: {
-        return resolve_expr_qualified_template_instantiation(resolver, expr);
+    case CST_EXPR_SYMBOL: {
+        return resolve_expr_symbol(resolver, expr);
     }
     case CST_EXPR_BOOLEAN: {
         return resolve_expr_boolean(resolver, expr);
@@ -1669,105 +2048,31 @@ resolve_expr(struct resolver* resolver, struct cst_expr const* expr)
     return NULL;
 }
 
-// Finds the identifier or fatally exits.
-static struct symbol const*
-xfind_identifier(
-    struct resolver* resolver, struct cst_identifier const* identifier)
+static struct expr const*
+resolve_expr_symbol(struct resolver* resolver, struct cst_expr const* expr)
 {
     assert(resolver != NULL);
-    assert(identifier != NULL);
+    assert(expr != NULL);
+    assert(expr->kind == CST_EXPR_SYMBOL);
 
     struct symbol const* const symbol =
-        symbol_table_lookup(resolver->current_symbol_table, identifier->name);
-    if (symbol == NULL) {
-        fatal(
-            identifier->location,
-            "use of undeclared identifier `%s`",
-            identifier->name);
-    }
-
-    return symbol;
-}
-
-// Finds the identifier or fatally exits.
-static struct symbol const*
-xfind_qualified_identifier(
-    struct resolver* resolver, struct cst_identifier const* const* identifiers)
-{
-    assert(resolver != NULL);
-    assert(autil_sbuf_count(identifiers) > 1);
-
-    struct source_location const* location = identifiers[0]->location;
-    // lhs::name
-    // ^---+---^
-    //     ^
-    //     symbol
-    char const* name = identifiers[0]->name;
-    struct symbol const* lhs =
-        symbol_table_lookup(resolver->current_symbol_table, name);
-    if (lhs == NULL) {
-        fatal(location, "use of undeclared identifier `%s`", name);
-    }
-
-    struct symbol const* symbol = NULL;
-    for (size_t i = 1; i < autil_sbuf_count(identifiers); ++i) {
-        name = identifiers[i]->name;
-
-        if (lhs->kind == SYMBOL_NAMESPACE) {
-            symbol = symbol_table_lookup(lhs->symbols, name);
-            if (symbol == NULL) {
-                fatal(
-                    location,
-                    "use of undeclared identifier `%s` within `%s`",
-                    name,
-                    lhs->name);
-            }
-            lhs = symbol;
-            continue;
-        }
-
-        if (lhs->kind == SYMBOL_TYPE && lhs->type->kind == TYPE_STRUCT) {
-            symbol = symbol_table_lookup_local(
-                lhs->type->data.struct_.symbols, name);
-            if (symbol == NULL) {
-                fatal(
-                    location,
-                    "use of undeclared identifier `%s` within `%s`",
-                    name,
-                    lhs->name);
-            }
-            lhs = symbol;
-            continue;
-        }
-
-        fatal(location, "`%s` is not a namespace or struct", lhs->name);
-    }
-
-    assert(symbol != NULL);
-    return symbol;
-}
-
-// Resolves <identifier> and <qualified-identifier> expressions from a provided
-// expression location and symbol.
-static struct expr const*
-resolve_expr_symbol(
-    struct resolver* resolver,
-    struct source_location const* location,
-    struct symbol const* symbol)
-{
-    assert(resolver != NULL);
-    assert(location != NULL);
-    assert(symbol != NULL);
-
+        xget_symbol(resolver, expr->data.symbol);
     switch (symbol->kind) {
     case SYMBOL_TYPE: {
-        fatal(location, "use of type `%s` as an expression", symbol->name);
+        fatal(
+            expr->location, "use of type `%s` as an expression", symbol->name);
     }
     case SYMBOL_TEMPLATE: {
-        fatal(location, "use of template `%s` as an expression", symbol->name);
+        fatal(
+            expr->location,
+            "use of template `%s` as an expression",
+            symbol->name);
     }
     case SYMBOL_NAMESPACE: {
-        fatal(location, "use of namespace `%s` as an expression", symbol->name);
+        fatal(
+            expr->location,
+            "use of namespace `%s` as an expression",
+            symbol->name);
     }
     case SYMBOL_VARIABLE: /* fallthrough */
     case SYMBOL_CONSTANT: /* fallthrough */
@@ -1778,249 +2083,10 @@ resolve_expr_symbol(
     }
     }
 
-    struct expr* const resolved = expr_new_identifier(location, symbol);
+    struct expr* const resolved = expr_new_symbol(expr->location, symbol);
 
     autil_freezer_register(context()->freezer, resolved);
     return resolved;
-}
-
-static struct expr const*
-resolve_expr_identifier(struct resolver* resolver, struct cst_expr const* expr)
-{
-    assert(resolver != NULL);
-    assert(expr != NULL);
-    assert(expr->kind == CST_EXPR_IDENTIFIER);
-
-    return resolve_expr_symbol(
-        resolver,
-        expr->location,
-        xfind_identifier(resolver, expr->data.identifier));
-}
-
-static struct expr const*
-resolve_expr_qualified_identifier(
-    struct resolver* resolver, struct cst_expr const* expr)
-{
-    assert(resolver != NULL);
-    assert(expr != NULL);
-    assert(expr->kind == CST_EXPR_QUALIFIED_IDENTIFIER);
-
-    return resolve_expr_symbol(
-        resolver,
-        expr->location,
-        xfind_qualified_identifier(
-            resolver, expr->data.qualified_identifier.identifiers));
-}
-
-// Resolves <template-instantiation> and <qualified-template-instantiation>
-// expressions from a provided expression location, template symbol, and
-// template argument list.
-static struct expr const*
-resolve_expr_symbol_template_instantiation(
-    struct resolver* resolver,
-    struct source_location const* location,
-    struct symbol const* symbol,
-    struct cst_template_argument const* const* const template_arguments)
-{
-    assert(resolver != NULL);
-    assert(location != NULL);
-    assert(symbol != NULL);
-    assert(autil_sbuf_count(template_arguments) != 0);
-
-    switch (symbol->kind) {
-    case SYMBOL_TYPE: {
-        fatal(
-            location,
-            "use of type `%s` as a template expression",
-            symbol->name);
-    }
-    case SYMBOL_VARIABLE: {
-        fatal(
-            location,
-            "use of variable `%s` as a template expression",
-            symbol->name);
-    }
-    case SYMBOL_CONSTANT: {
-        fatal(
-            location,
-            "use of constant `%s` as a template expression",
-            symbol->name);
-    }
-    case SYMBOL_FUNCTION: {
-        fatal(
-            location,
-            "use of function `%s` as a template expression",
-            symbol->name);
-    }
-    case SYMBOL_TEMPLATE: {
-        break;
-    }
-    case SYMBOL_NAMESPACE: {
-        fatal(
-            location,
-            "use of namespace `%s` as a template expression",
-            symbol->name);
-    }
-    }
-
-    // To instantiate the function template we replace the template parameters
-    // of the template declaration with the template arguments from the current
-    // instantiation.
-    struct cst_decl const* decl = symbol->decl;
-    assert(decl != NULL);
-
-    // Currently, functions are the only declarations that can be templated for
-    // use as an expression, so the rest off this function will only cater to
-    // the case of instantiating a template function declaration.
-    assert(decl->kind == CST_DECL_FUNCTION);
-
-    autil_sbuf(struct cst_template_parameter const* const)
-        const template_parameters = decl->data.function.template_parameters;
-    size_t const template_parameters_count =
-        autil_sbuf_count(template_parameters);
-    size_t const template_arguments_count =
-        autil_sbuf_count(template_arguments);
-
-    if (template_parameters_count != template_arguments_count) {
-        fatal(
-            location,
-            "expected %zu template argument(s) for template `%s` (received %zu)",
-            template_parameters_count,
-            symbol->name,
-            template_arguments_count);
-    }
-
-    autil_sbuf(struct type const*) template_types = NULL;
-    for (size_t i = 0; i < template_arguments_count; ++i) {
-        autil_sbuf_push(
-            template_types,
-            resolve_typespec(resolver, template_arguments[i]->typespec));
-    }
-    autil_sbuf_freeze(template_types, context()->freezer);
-
-    // Replace function identifier (i.e. name).
-    struct autil_string* const name_string =
-        autil_string_new_cstr(symbol->name);
-    autil_string_append_cstr(name_string, "[[");
-    for (size_t i = 0; i < template_arguments_count; ++i) {
-        if (i != 0) {
-            autil_string_append_cstr(name_string, ", ");
-        }
-        autil_string_append_fmt(name_string, ":%s", template_types[i]->name);
-    }
-    autil_string_append_cstr(name_string, "]]");
-    char const* const name_interned = autil_sipool_intern_cstr(
-        context()->sipool, autil_string_start(name_string));
-    autil_string_del(name_string);
-    struct cst_identifier* const instance_identifier =
-        cst_identifier_new(location, name_interned);
-    autil_freezer_register(context()->freezer, instance_identifier);
-    // Replace template parameters. Zero template parameters means this function
-    // is no longer a template.
-    autil_sbuf(struct cst_template_parameter const* const)
-        const instance_template_parameters = NULL;
-    // Function parameters do not change. When the actual function is resolved
-    // it will do so inside a symbol table where a template parameter's name
-    // maps to the template instance's chosen type symbol.
-    autil_sbuf(struct cst_function_parameter const* const)
-        const instance_function_parameters =
-            decl->data.function.function_parameters;
-    // Same goes for the return type specification.
-    struct cst_typespec const* const instance_return_typespec =
-        decl->data.function.return_typespec;
-    // And the body is also unchanged.
-    struct cst_block const* const instance_body = decl->data.function.body;
-
-    // Check if a symbol corresponding to these template arguments has already
-    // been created. If so then we reuse the cached symbol.
-    struct symbol const* const existing_instance =
-        symbol_table_lookup(symbol->symbols, name_interned);
-    if (existing_instance != NULL) {
-        struct expr* const resolved =
-            expr_new_identifier(location, existing_instance);
-        autil_freezer_register(context()->freezer, resolved);
-        return resolved;
-    }
-
-    // Create a symbol table to hold the template arguments for this instance.
-    // Then add each template argument type to the symbol table, mapping from
-    // the template type name to the argument type.
-    struct symbol_table* const instance_symbol_table =
-        symbol_table_new(resolver->current_symbol_table);
-    for (size_t i = 0; i < template_parameters_count; ++i) {
-        // TODO: Should we use the template parameter location or the template
-        // argument location for the type symbol location?
-        struct symbol* const symbol = symbol_new_type(
-            template_parameters[i]->identifier->location, template_types[i]);
-        autil_freezer_register(context()->freezer, symbol);
-        symbol_table_insert(
-            instance_symbol_table,
-            template_parameters[i]->identifier->name,
-            symbol);
-    }
-    symbol_table_freeze(instance_symbol_table, context()->freezer);
-
-    // Generate the template instance concrete syntax tree.
-    struct cst_decl* const instance_decl = cst_decl_new_function(
-        location,
-        instance_identifier,
-        instance_template_parameters,
-        instance_function_parameters,
-        instance_return_typespec,
-        instance_body);
-    autil_freezer_register(context()->freezer, instance_decl);
-
-    // Resolve the actual template instance.
-    struct symbol_table* const save_symbol_table =
-        resolver->current_symbol_table;
-    resolver->current_symbol_table = instance_symbol_table;
-    struct symbol const* resolved_symbol =
-        resolve_decl_function(resolver, instance_decl);
-    resolver->current_symbol_table = save_symbol_table;
-
-    // Add the unique instance to the cache of instances for the template.
-    assert(resolved_symbol->kind == SYMBOL_FUNCTION);
-    symbol_table_insert(symbol->symbols, name_interned, resolved_symbol);
-
-    // Return the template instance as an expression.
-    struct expr* const resolved =
-        expr_new_identifier(location, resolved_symbol);
-    autil_freezer_register(context()->freezer, resolved);
-    return resolved;
-}
-
-static struct expr const*
-resolve_expr_template_instantiation(
-    struct resolver* resolver, struct cst_expr const* expr)
-{
-    assert(resolver != NULL);
-    assert(expr != NULL);
-    assert(expr->kind == CST_EXPR_TEMPLATE_INSTANTIATION);
-
-    struct symbol const* const symbol = xfind_identifier(
-        resolver, expr->data.template_instantiation.identifier);
-    return resolve_expr_symbol_template_instantiation(
-        resolver,
-        expr->location,
-        symbol,
-        expr->data.template_instantiation.arguments);
-}
-
-static struct expr const*
-resolve_expr_qualified_template_instantiation(
-    struct resolver* resolver, struct cst_expr const* expr)
-{
-    assert(resolver != NULL);
-    assert(expr != NULL);
-    assert(expr->kind == CST_EXPR_QUALIFIED_TEMPLATE_INSTANTIATION);
-
-    struct symbol const* const symbol = xfind_qualified_identifier(
-        resolver, expr->data.qualified_template_instantiation.identifiers);
-    return resolve_expr_symbol_template_instantiation(
-        resolver,
-        expr->location,
-        symbol,
-        expr->data.qualified_template_instantiation.arguments);
 }
 
 static struct expr const*
@@ -2117,6 +2183,7 @@ resolve_expr_character(struct resolver* resolver, struct cst_expr const* expr)
     char buf[255] = {0};
     int const written = snprintf(buf, sizeof(buf), "%d", expr->data.character);
     assert(written < (int)sizeof(buf));
+    (void)written;
 
     struct type const* const type = context()->builtin.integer;
     struct autil_bigint* const value = autil_bigint_new_text(buf, strlen(buf));
@@ -2580,7 +2647,7 @@ resolve_expr_call(struct resolver* resolver, struct cst_expr const* expr)
         struct symbol const* const member_function_symbol =
             type_struct_member_function_symbol(instance->type, name);
         assert(member_function_symbol != NULL);
-        struct expr* const member_function_expr = expr_new_identifier(
+        struct expr* const member_function_expr = expr_new_symbol(
             dot->data.access_member.identifier->location,
             member_function_symbol);
         autil_freezer_register(context()->freezer, member_function_expr);
@@ -3401,11 +3468,8 @@ resolve_typespec(struct resolver* resolver, struct cst_typespec const* typespec)
     assert(typespec != NULL);
 
     switch (typespec->kind) {
-    case TYPESPEC_IDENTIFIER: {
-        return resolve_typespec_identifier(resolver, typespec);
-    }
-    case TYPESPEC_TEMPLATE_INSTANTIATION: {
-        return resolve_typespec_template_instantiation(resolver, typespec);
+    case TYPESPEC_SYMBOL: {
+        return resolve_typespec_symbol(resolver, typespec);
     }
     case TYPESPEC_FUNCTION: {
         return resolve_typespec_function(resolver, typespec);
@@ -3429,204 +3493,27 @@ resolve_typespec(struct resolver* resolver, struct cst_typespec const* typespec)
 }
 
 static struct type const*
-resolve_typespec_identifier(
+resolve_typespec_symbol(
     struct resolver* resolver, struct cst_typespec const* typespec)
 {
     assert(resolver != NULL);
     assert(typespec != NULL);
-    assert(typespec->kind == TYPESPEC_IDENTIFIER);
+    assert(typespec->kind == TYPESPEC_SYMBOL);
 
     struct symbol const* const symbol =
-        xfind_identifier(resolver, typespec->data.identifier);
+        xget_symbol(resolver, typespec->data.symbol);
+    if (symbol->kind == SYMBOL_TEMPLATE) {
+        fatal(
+            typespec->location,
+            "template `%s` must be instantiated",
+            symbol->name);
+    }
     if (symbol->kind != SYMBOL_TYPE) {
-        char const* const name = typespec->data.identifier->name;
-        fatal(typespec->location, "identifier `%s` is not a type", name);
+        fatal(
+            typespec->location, "identifier `%s` is not a type", symbol->name);
     }
 
     return symbol->type;
-}
-
-// Resolves <template-instantiation> and <qualified-template-instantiation> type
-// specifiers from a provided typespec location, template symbol, and template
-// argument list.
-static struct type const*
-resolve_typespec_symbol_template_instantiation(
-    struct resolver* resolver,
-    struct source_location const* location,
-    struct symbol const* symbol,
-    struct cst_template_argument const* const* const template_arguments)
-{
-    assert(resolver != NULL);
-    assert(location != NULL);
-    assert(symbol != NULL);
-    assert(autil_sbuf_count(template_arguments) != 0);
-
-    switch (symbol->kind) {
-    case SYMBOL_TYPE: {
-        fatal(
-            location,
-            "use of non-template type `%s` as a template type",
-            symbol->name);
-    }
-    case SYMBOL_VARIABLE: {
-        fatal(
-            location, "use of variable `%s` as a template type", symbol->name);
-    }
-    case SYMBOL_CONSTANT: {
-        fatal(
-            location, "use of constant `%s` as a template type", symbol->name);
-    }
-    case SYMBOL_FUNCTION: {
-        fatal(
-            location, "use of function `%s` as a template type", symbol->name);
-    }
-    case SYMBOL_TEMPLATE: {
-        break;
-    }
-    case SYMBOL_NAMESPACE: {
-        fatal(
-            location, "use of namespace `%s` as a template type", symbol->name);
-    }
-    }
-
-    // To instantiate the struct template we replace the template parameters of
-    // the template declaration with the template arguments from the current
-    // instantiation.
-    struct cst_decl const* decl = symbol->decl;
-    assert(decl != NULL);
-
-    // Currently, structs are the only declarations that can be templated for
-    // use as a type, so the rest off this function will only cater to the case
-    // of instantiating a template struct declaration.
-    assert(decl->kind == CST_DECL_STRUCT);
-
-    autil_sbuf(struct cst_template_parameter const* const)
-        const template_parameters = decl->data.struct_.template_parameters;
-    size_t const template_parameters_count =
-        autil_sbuf_count(template_parameters);
-    size_t const template_arguments_count =
-        autil_sbuf_count(template_arguments);
-
-    if (template_parameters_count != template_arguments_count) {
-        fatal(
-            location,
-            "expected %zu template argument(s) for template `%s` (received %zu)",
-            template_parameters_count,
-            symbol->name,
-            template_arguments_count);
-    }
-
-    autil_sbuf(struct type const*) template_types = NULL;
-    for (size_t i = 0; i < template_arguments_count; ++i) {
-        autil_sbuf_push(
-            template_types,
-            resolve_typespec(resolver, template_arguments[i]->typespec));
-    }
-    autil_sbuf_freeze(template_types, context()->freezer);
-
-    // Replace struct identifier (i.e. name).
-    struct autil_string* const name_string =
-        autil_string_new_cstr(symbol->name);
-    autil_string_append_cstr(name_string, "[[");
-    for (size_t i = 0; i < template_arguments_count; ++i) {
-        if (i != 0) {
-            autil_string_append_cstr(name_string, ", ");
-        }
-        autil_string_append_fmt(name_string, ":%s", template_types[i]->name);
-    }
-    autil_string_append_cstr(name_string, "]]");
-    char const* const name_interned = autil_sipool_intern_cstr(
-        context()->sipool, autil_string_start(name_string));
-    autil_string_del(name_string);
-    struct cst_identifier* const instance_identifier =
-        cst_identifier_new(location, name_interned);
-    autil_freezer_register(context()->freezer, instance_identifier);
-    // Replace template parameters. Zero template parameters means this struct
-    // is no longer a template.
-    autil_sbuf(struct cst_template_parameter const* const)
-        const instance_template_parameters = NULL;
-    // Struct members do not change. When the actual struct is resolved
-    // it will do so inside a symbol table where a template parameter's name
-    // maps to the template instance's chosen type symbol.
-    autil_sbuf(struct cst_member const* const) const instance_members =
-        decl->data.struct_.members;
-
-    // Check if a symbol corresponding to these template arguments has already
-    // been created. If so then we reuse the cached symbol.
-    struct symbol const* const existing_instance =
-        symbol_table_lookup(symbol->symbols, name_interned);
-    if (existing_instance != NULL) {
-        struct type const* const resolved = existing_instance->type;
-        assert(resolved->kind == TYPE_STRUCT);
-        return resolved;
-    }
-
-    // Create a symbol table to hold the template arguments for this instance.
-    // Then add each template argument type to the symbol table, mapping from
-    // the template type name to the argument type.
-    struct symbol_table* const instance_symbol_table =
-        symbol_table_new(resolver->current_symbol_table);
-    for (size_t i = 0; i < template_parameters_count; ++i) {
-        // TODO: Should we use the template parameter location or the template
-        // argument location for the type symbol location?
-        struct symbol* const symbol = symbol_new_type(
-            template_parameters[i]->identifier->location, template_types[i]);
-        autil_freezer_register(context()->freezer, symbol);
-        symbol_table_insert(
-            instance_symbol_table,
-            template_parameters[i]->identifier->name,
-            symbol);
-    }
-    symbol_table_freeze(instance_symbol_table, context()->freezer);
-
-    // Generate the template instance concrete syntax tree.
-    struct cst_decl* const instance_decl = cst_decl_new_struct(
-        location,
-        instance_identifier,
-        instance_template_parameters,
-        instance_members);
-    autil_freezer_register(context()->freezer, instance_decl);
-
-    // Resolve the actual template instance.
-    struct symbol_table* const save_symbol_table =
-        resolver->current_symbol_table;
-    resolver->current_symbol_table = instance_symbol_table;
-    struct symbol const* resolved_symbol =
-        resolve_decl_struct(resolver, instance_decl);
-
-    // Add the unique instance to the cache of instances for the template.
-    assert(resolved_symbol->kind == SYMBOL_TYPE);
-    symbol_table_insert(symbol->symbols, name_interned, resolved_symbol);
-
-    // Now that the instance is in the cache we can complete the struct. If we
-    // did not add the instance to the cache first then any self referential
-    // template instances would cause instance resolution to enter an infinite
-    // loop.
-    complete_struct_member_variables(resolver, resolved_symbol, instance_decl);
-    complete_struct_member_functions(resolver, resolved_symbol, instance_decl);
-    resolver->current_symbol_table = save_symbol_table;
-
-    // Return the template instance as a type.
-    struct type const* const resolved = resolved_symbol->type;
-    assert(resolved->kind == TYPE_STRUCT);
-    return resolved;
-}
-
-static struct type const*
-resolve_typespec_template_instantiation(
-    struct resolver* resolver, struct cst_typespec const* typespec)
-{
-    assert(resolver != NULL);
-    assert(typespec != NULL);
-    assert(typespec->kind == TYPESPEC_TEMPLATE_INSTANTIATION);
-
-    struct symbol const* const symbol = xfind_identifier(
-        resolver, typespec->data.template_instantiation.identifier);
-    return resolve_typespec_symbol_template_instantiation(
-        resolver,
-        typespec->location,
-        symbol,
-        typespec->data.template_instantiation.arguments);
 }
 
 static struct type const*

@@ -561,10 +561,7 @@ struct cst_expr {
     struct source_location const* location;
     enum cst_expr_kind {
         // Primary Expressions
-        CST_EXPR_IDENTIFIER,
-        CST_EXPR_QUALIFIED_IDENTIFIER,
-        CST_EXPR_TEMPLATE_INSTANTIATION,
-        CST_EXPR_QUALIFIED_TEMPLATE_INSTANTIATION,
+        CST_EXPR_SYMBOL,
         CST_EXPR_BOOLEAN,
         CST_EXPR_INTEGER,
         CST_EXPR_CHARACTER,
@@ -588,18 +585,7 @@ struct cst_expr {
         CST_EXPR_BINARY,
     } kind;
     union cst_expr_data {
-        struct cst_identifier const* identifier;
-        struct {
-            autil_sbuf(struct cst_identifier const* const) identifiers;
-        } qualified_identifier;
-        struct {
-            struct cst_identifier const* identifier;
-            autil_sbuf(struct cst_template_argument const* const) arguments;
-        } template_instantiation;
-        struct {
-            autil_sbuf(struct cst_identifier const* const) identifiers;
-            autil_sbuf(struct cst_template_argument const* const) arguments;
-        } qualified_template_instantiation;
+        struct cst_symbol const* symbol;
         struct cst_boolean const* boolean;
         struct cst_integer const* integer;
         int character;
@@ -663,18 +649,7 @@ struct cst_expr {
     } data;
 };
 struct cst_expr*
-cst_expr_new_identifier(struct cst_identifier const* identifier);
-struct cst_expr*
-cst_expr_new_qualified_identifier(
-    struct cst_identifier const* const* identifiers);
-struct cst_expr*
-cst_expr_new_template_instantiation(
-    struct cst_identifier const* identifier,
-    struct cst_template_argument const* const* arguments);
-struct cst_expr*
-cst_expr_new_qualified_template_instantiation(
-    struct cst_identifier const* const* identifiers,
-    struct cst_template_argument const* const* arguments);
+cst_expr_new_symbol(struct cst_symbol const* symbol);
 struct cst_expr*
 cst_expr_new_boolean(struct cst_boolean const* boolean);
 struct cst_expr*
@@ -770,6 +745,25 @@ cst_block_new(
     struct source_location const* location,
     struct cst_stmt const* const* stmts);
 
+struct cst_symbol {
+    struct source_location const* location;
+    autil_sbuf(struct cst_symbol_element const* const) elements;
+};
+struct cst_symbol*
+cst_symbol_new(struct cst_symbol_element const* const* elements);
+
+struct cst_symbol_element {
+    struct source_location const* location;
+    struct cst_identifier const* identifier;
+    // Template argument count of zero indicates that this symbol element has no
+    // template arguments.
+    autil_sbuf(struct cst_template_argument const* const) template_arguments;
+};
+struct cst_symbol_element*
+cst_symbol_element_new(
+    struct cst_identifier const* identifier,
+    struct cst_template_argument const* const* template_arguments);
+
 struct cst_template_parameter {
     struct source_location const* location;
     struct cst_identifier const* identifier;
@@ -839,8 +833,7 @@ cst_member_initializer_new(
 struct cst_typespec {
     struct source_location const* location;
     enum typespec_kind {
-        TYPESPEC_IDENTIFIER,
-        TYPESPEC_TEMPLATE_INSTANTIATION,
+        TYPESPEC_SYMBOL,
         TYPESPEC_FUNCTION,
         TYPESPEC_POINTER,
         TYPESPEC_ARRAY,
@@ -848,11 +841,7 @@ struct cst_typespec {
         TYPESPEC_TYPEOF
     } kind;
     union {
-        struct cst_identifier const* identifier;
-        struct {
-            struct cst_identifier const* identifier;
-            autil_sbuf(struct cst_template_argument const* const) arguments;
-        } template_instantiation;
+        struct cst_symbol const* symbol;
         struct {
             autil_sbuf(struct cst_typespec const* const) parameter_typespecs;
             struct cst_typespec const* return_typespec;
@@ -873,11 +862,7 @@ struct cst_typespec {
     } data;
 };
 struct cst_typespec*
-cst_typespec_new_identifier(struct cst_identifier const* identifier);
-struct cst_typespec*
-cst_typespec_new_template_instantiation(
-    struct cst_identifier const* identifier,
-    struct cst_template_argument const* const* arguments);
+cst_typespec_new_symbol(struct cst_symbol const* symbol);
 struct cst_typespec*
 cst_typespec_new_function(
     struct source_location const* location,
@@ -1347,7 +1332,7 @@ struct expr {
     struct source_location const* location;
     struct type const* type;
     enum expr_kind {
-        EXPR_IDENTIFIER,
+        EXPR_SYMBOL,
         EXPR_BOOLEAN,
         EXPR_INTEGER,
         EXPR_BYTES,
@@ -1366,7 +1351,7 @@ struct expr {
         EXPR_BINARY,
     } kind;
     union {
-        struct symbol const* identifier;
+        struct symbol const* symbol;
         bool boolean;
         struct autil_bigint const* integer;
         struct {
@@ -1453,8 +1438,8 @@ struct expr {
     } data;
 };
 struct expr*
-expr_new_identifier(
-    struct source_location const* location, struct symbol const* identifier);
+expr_new_symbol(
+    struct source_location const* location, struct symbol const* symbol);
 struct expr*
 expr_new_boolean(struct source_location const* location, bool value);
 struct expr*
