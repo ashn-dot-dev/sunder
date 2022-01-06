@@ -833,7 +833,7 @@ codegen_static_function(struct symbol const* symbol)
     appendli("mov rbp, rsp");
     // Adjust the stack pointer to make space for locals.
     assert(function->local_stack_offset <= 0);
-    appendli("add rsp, %d", function->local_stack_offset);
+    appendli("add rsp, %d ; local stack space", function->local_stack_offset);
 
     assert(current_function == NULL);
     current_function = function;
@@ -1052,7 +1052,9 @@ codegen_stmt_return(struct stmt const* stmt, size_t id)
         // rbx := destination
         assert(return_symbol->address->kind == ADDRESS_LOCAL);
         appendli("mov rbx, rbp");
-        appendli("add rbx, %d", return_symbol->address->data.local.rbp_offset);
+        appendli(
+            "add rbx, %d ; return symbol rbp offset",
+            return_symbol->address->data.local.rbp_offset);
         copy_rsp_rbx_via_rcx(return_symbol->type->size);
     }
 
@@ -1498,11 +1500,16 @@ codegen_rvalue_call(struct expr const* expr, size_t id)
     struct type const* function_type = expr->data.call.function->type;
     assert(function_type->kind == TYPE_FUNCTION);
     struct type const* return_type = function_type->data.function.return_type;
+    appendli("; push space for return value of type `%s`", return_type->name);
     push(return_type->size);
 
     // Evaluate & push arguments from left to right.
     struct expr const* const* const arguments = expr->data.call.arguments;
     for (size_t i = 0; i < autil_sbuf_count(arguments); ++i) {
+        appendli(
+            "; push argument %zu of type `%s`",
+            i + 1,
+            arguments[i]->type->name);
         codegen_rvalue(arguments[i]);
     }
 
@@ -1514,7 +1521,11 @@ codegen_rvalue_call(struct expr const* expr, size_t id)
     // Pop arguments from right to left, leaving the return value as the top
     // element on the stack (for return values with non-zero size).
     for (size_t i = autil_sbuf_count(arguments); i--;) {
-        appendli("pop rax");
+        appendli(
+            "; discard (pop) argument %zu of type `%s`",
+            i + 1,
+            arguments[i]->type->name);
+        pop(arguments[i]->type->size);
     }
 }
 

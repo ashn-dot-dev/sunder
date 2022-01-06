@@ -1,0 +1,37 @@
+namespace std;
+import "std/mem.sunder";
+import "std/panic.sunder";
+
+struct optional[[:T]] {
+    var _wrapped: T;
+    var _is_some: bool;
+
+    func init_some(some: T) optional[[:T]] {
+        return (:optional[[:T]]){
+            ._wrapped = some,
+            ._is_some = true
+        };
+    }
+
+    func init_none() optional[[:T]] {
+        return (:optional[[:T]]){
+            ._wrapped = std::mem::zeroed[[:T]](),
+            ._is_some = false
+        };
+    }
+
+    func is_some(self: *optional[[:T]]) bool {
+        return (*self)._is_some;
+    }
+
+    func is_none(self: *optional[[:T]]) bool {
+        return not (*self)._is_some;
+    }
+
+    func unwrap(self: *optional[[:T]]) T {
+        if not (*self)._is_some {
+            std::panic("attempted to unwrap std::optional with `none` value");
+        }
+        return (*self)._wrapped;
+    }
+}

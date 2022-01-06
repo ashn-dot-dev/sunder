@@ -1,0 +1,12 @@
+namespace std;
+import "sys/sys.sunder";
+
+func panic(why: []byte) void {
+    const prefix: []byte = "panic: ";
+    sys::write(sys::STDERR_FILENO, &prefix[0], countof(prefix));
+    if countof(why) != 0 {
+        sys::write(sys::STDERR_FILENO, &why[0], countof(why));
+    }
+    sys::write(sys::STDERR_FILENO, &"\n"[0], 1);
+    sys::exit(1);
+}

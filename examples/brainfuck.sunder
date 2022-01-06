@@ -1,7 +1,8 @@
 # Brainfuck interpreter written in Sunder.
 #
 # See https://esolangs.org/wiki/Brainfuck for an overview of the brainfuck
-# language.
+# language. This implementation uses a 30,000 cell tape with 8-bit wrapping
+# cells. No cell update is performed upon reading EOF with the , operation.
 
 import "std/cptr.sunder";
 import "std/cstr.sunder";
@@ -24,11 +25,7 @@ func main() void {
         sys::exit(1);
     }
 
-    var path: *byte = *(:typeof(sys::argv))std::cptr::add(
-        (:usize)sys::argv,
-        sizeof(:typeof(sys::argv)),
-        1
-    );
+    var path: *byte = *std::cptr::add[[:*byte]](sys::argv, 1);
 
     var fd: ssize = sys::open(path, sys::O_RDONLY, 0);
     if fd < 0 {

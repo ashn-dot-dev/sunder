@@ -10,10 +10,9 @@ func cat(filename: *byte) void {
         std::eprintln(": failed to open file");
         sys::exit(1);
     }
+
     var fd: u32 = (:u32)sysret;
-
     var buf: [512]byte = (:[512]byte)[0...];
-
     for true {
         sysret = sys::read(fd, &buf[0], countof(buf));
         if sysret < 0 {
@@ -39,8 +38,7 @@ func cat(filename: *byte) void {
 
 func main() void {
     for i in 1:sys::argc {
-        var filename: typeof(*sys::argv) = *(:typeof(sys::argv))std::cptr::add(
-                (:usize)sys::argv, sizeof(:typeof(sys::argv)), i);
+        var filename: *byte = *std::cptr::add[[:*byte]](sys::argv, i);
         cat(filename);
     }
 }

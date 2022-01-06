@@ -1,0 +1,12 @@
+import "std/optional.sunder";
+
+func main() void {
+    var a: std::optional[[:u16]] = std::optional[[:u16]]::init_none();
+    dump a.is_some();
+    dump a.is_none();
+    dump a.unwrap(); # boom
+}
+################################################################################
+# 00
+# 01
+# panic: attempted to unwrap std::optional with `none` value

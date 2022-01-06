@@ -749,6 +749,10 @@ xget_template_instance(
                 template_parameters[i]->identifier->name,
                 symbol);
         }
+        // Store the template function itself in addition to the template
+        // arguments so that self referential functions (e.g. fibonacci) do not
+        // have to fully qualify the function name.
+        symbol_table_insert(instance_symbol_table, symbol->name, symbol);
         symbol_table_freeze(instance_symbol_table, context()->freezer);
 
         // Generate the template instance concrete syntax tree.
@@ -853,6 +857,10 @@ xget_template_instance(
                 template_parameters[i]->identifier->name,
                 symbol);
         }
+        // Store the template struct itself in addition to the template
+        // arguments so that self referential structs (e.g. return values of
+        // init functions) do not have to fully qualify the struct type.
+        symbol_table_insert(instance_symbol_table, symbol->name, symbol);
         symbol_table_freeze(instance_symbol_table, context()->freezer);
 
         // Generate the template instance concrete syntax tree.
@@ -1036,7 +1044,15 @@ merge_symbol_table(
             continue;
         }
 
-        symbol_table_insert(self, *iter, symbol);
+        // Add the symbol if it has not been added by a previous import. Perform
+        // a pointer inequality comparison so that symbols with the same name
+        // that do not refer to the same symbol definition cause a redeclaration
+        // error.
+        struct symbol const* const existing =
+            symbol_table_lookup_local(self, *iter);
+        if (existing == NULL || existing != symbol) {
+            symbol_table_insert(self, *iter, symbol);
+        }
     }
 }
 
@@ -1365,7 +1381,7 @@ resolve_decl_function(struct resolver* resolver, struct cst_decl const* decl)
             function->symbol_parameters[i]);
     }
 
-    // Add the function's return value to it's outermost symbol table.
+    // Add the function's return value to its outermost symbol table.
     struct address* const return_value_address =
         address_new(address_init_local(rbp_offset));
     autil_freezer_register(context()->freezer, return_value_address);

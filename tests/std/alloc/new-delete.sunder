@@ -1,0 +1,12 @@
+import "std/alloc.sunder";
+
+func main() void {
+    var ptr: *u16 = std::new[[:u16]]();
+    dump *ptr;
+    *ptr = 0xBEEF;
+    dump *ptr;
+    std::delete[[:u16]](ptr);
+}
+################################################################################
+# 00 00
+# EF BE

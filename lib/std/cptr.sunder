@@ -1,23 +1,14 @@
-# Routines for pointers that may represent array-like data that may be NULL.
-# Sunder currently lacks generic functions so these routines use the type usize
-# for input and output pointer values since an object of type usize is capable
-# of representing any pointer.
+# Routines for pointers that represent array-like data and may may be NULL.
 namespace std::cptr;
 
-func is_null(ptr: usize) bool {
-    return ptr == 0u;
+func is_null[[:T]](ptr: *T) bool {
+    return (:usize)ptr == 0;
 }
 
-# Example (pointer + 3 elements):
-#   var p: *s32 = some_pointer();
-#   (:typeof(p))std::cptr::add((:usize)p, sizeof(:typeof(p)), 3u);
-func add(ptr: usize, size: usize, n: usize) usize {
-    return ptr + n * size;
+func add[[:T]](ptr: *T, n: usize) *T {
+    return (:*T)((:usize)ptr + n * sizeof(:typeof(*ptr)));
 }
 
-# Example (pointer - 3 elements):
-#   var p: *s32 = some_pointer();
-#   (:typeof(p))std::cptr::sub((:usize)p, sizeof(:typeof(p)), 3u);
-func sub(ptr: usize, size: usize, n: usize) usize {
-    return ptr - n * size;
+func sub[[:T]](ptr: *T, n: usize) *T {
+    return (:*T)((:usize)ptr - n * sizeof(:typeof(*ptr)));
 }

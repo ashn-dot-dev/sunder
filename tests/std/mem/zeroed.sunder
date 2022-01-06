@@ -1,0 +1,24 @@
+import "std/mem.sunder";
+
+struct foo {
+    var x: byte;  # 1 byte
+                  # 7 bytes padding
+    var y: usize; # 8 bytes
+    var z: u16;   # 2 bytes
+}
+
+func main() void {
+    dump std::mem::zeroed[[:u8]]();
+    dump std::mem::zeroed[[:u16]]();
+    dump std::mem::zeroed[[:u32]]();
+    dump std::mem::zeroed[[:u64]]();
+    dump std::mem::zeroed[[:func(usize, ssize) void]]();
+    dump std::mem::zeroed[[:foo]]();
+}
+################################################################################
+# 00
+# 00 00
+# 00 00 00 00
+# 00 00 00 00 00 00 00 00
+# 00 00 00 00 00 00 00 00
+# 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00

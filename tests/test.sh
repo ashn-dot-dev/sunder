@@ -30,8 +30,7 @@ if [ "$#" -ne 1 ]; then
 fi
 TEST_FILE="$1"
 
-TEST_NAME=$(basename "${TEST_FILE}" .sunder)
-echo "[= RUN ${TEST_NAME} =]"
+echo "[= RUN ${TEST_FILE} =]"
 RECEIVED=$("${SUNDER_HOME}/bin/sunder-run" "${TEST_FILE}" 2>&1)
 EXPECTED=$(\
     sed -n '/^########\(########\)*/,$p' "${TEST_FILE}" |\

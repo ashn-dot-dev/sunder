@@ -1,0 +1,164 @@
+namespace std;
+import "std/mem.sunder";
+import "sys/sys.sunder";
+
+func allocate(align: usize, size: usize) *byte {
+    const MSG_INVALID_ALIGNMENT: []byte =
+        "allocation request with invalid alignment";
+
+    if (align == 0) {
+        if (size == 0) {
+            # Allocating zero bytes with an alignment of zero is a valid use
+            # case when allocating for any zero-sized type:
+            #   allocate(alignof(:void), sizeof(:void));
+            # Use NULL as the canonical address for this situation.
+            return (:*byte)0u;
+        }
+        std::panic(MSG_INVALID_ALIGNMENT);
+    }
+
+    # If the requested alignment is larger than the page size then there is no
+    # way for the kernel to map arbitrary page(s) for the allocation.
+    if (align > sys::PAGE_SIZE) {
+        std::panic(MSG_INVALID_ALIGNMENT);
+    }
+
+    # The requested alignment must be a power of two. The expression:
+    #   (x & (x - 1)) == 0
+    # will evaluate as true for any non-zero x that is a power of two.
+    # We check for an alignment of zero above, so it is safe to perform this
+    # check here without the `x == 0 or ...` component that would normally be
+    # present in an correct is_power_of_two function.
+    var is_power_of_two: bool = (align & (align - 1)) == 0;
+    if (not is_power_of_two) {
+        std::panic(MSG_INVALID_ALIGNMENT);
+    }
+
+    # According to POSIX, a call to mmap with a len argument of zero shall fail
+    # and no mapping shall be established. A request for zero bytes of memory
+    # *is* a valid and common case (e.g. allocating a zero element buffer), so
+    # we choose to return the NULL pointer as the "valid" memory location.
+    if (size == 0) {
+        return (:*byte)0u;
+    }
+
+    # NULL addr indicates no address hint.
+    const addr: usize = 0u;
+
+    # Give the page(s) read and write permissions.
+    const prot: ssize = sys::PROT_READ | sys::PROT_WRITE;
+
+    # Create a private mapping not backed by a file.
+    # The contents of the mapped region are initialized to zero.
+    const flags: ssize = sys::MAP_PRIVATE | sys::MAP_ANONYMOUS;
+
+    # Should be -1 when MAP_ANONYMOUS is specified.
+    const fd: usize = (:usize)-1s;
+
+    # Should be 0 when MAP_ANONYMOUS is specified.
+    const off: usize = 0u;
+
+    var sysret: ssize = sys::mmap(addr, size, prot, flags, fd, off);
+    if (sysret < 0) {
+        std::panic("mmap error");
+    }
+
+    return (:*byte)(:usize)sysret;
+}
+
+func reallocate(
+    ptr: *byte,
+    align: usize,
+    old_size: usize,
+    new_size: usize
+) *byte {
+    var new: *byte = std::allocate(align, new_size);
+
+    # Number of bytes that will need to by copied from the old buffer to the
+    # new buffer. If the new buffer has a smaller size then the old buffer then
+    # we should only copy that smaller number of bytes.
+    var src_size: usize = old_size;
+    if (new_size < old_size) {
+        src_size = new_size;
+    }
+    std::mem::copy[[:byte]](
+        (:[]byte){new, new_size},
+        (:[]byte){ptr, src_size});
+
+    std::deallocate(ptr, align, old_size);
+
+    return new;
+}
+
+func deallocate(ptr: *byte, align: usize, size: usize) void {
+    const MSG_INVALID_ALIGNMENT: []byte =
+        "deallocation request with invalid alignment";
+    const MSG_INVALID_POINTER: []byte =
+        "deallocation request with invalid pointer";
+
+    if (align == 0) {
+        if (size != 0) {
+            std::panic(MSG_INVALID_ALIGNMENT);
+        }
+        # Calls to allocate with align of zero and size of zero are always
+        # handed the NULL pointer as a result.
+        if ((:usize)ptr != 0) {
+            std::panic(MSG_INVALID_POINTER);
+        }
+        # Nothing to deallocate.
+        return;
+    }
+    if (align > sys::PAGE_SIZE) {
+        std::panic(MSG_INVALID_ALIGNMENT);
+    }
+    var is_power_of_two: bool = (align & (align - 1)) == 0;
+    if (not is_power_of_two) {
+        std::panic(MSG_INVALID_ALIGNMENT);
+    }
+
+    var sysret: ssize = sys::munmap((:usize)ptr, size);
+    if (sysret < 0) {
+        std::panic("munmap error");
+    }
+}
+
+func new[[:T]]() *T {
+    return (:*T)std::allocate(alignof(:T), sizeof(:T));
+}
+
+func delete[[:T]](object: *T) void {
+    std::deallocate((:*byte)object, alignof(:T), sizeof(:T));
+}
+
+func new_slice[[:T]](count: usize) []T {
+    if (count == 0) {
+        # Slices with length zero will canonically use the NULL pointer.
+        return (:[]T){(:*T)0u, 0};
+    }
+
+    var size: usize = count * sizeof(:T);
+    var pointer: *T = (:*T)std::allocate(alignof(:T), size);
+    return (:[]T){pointer, count};
+}
+
+func resize_slice[[:T]](slice: []T, new_count: usize) []T {
+    var cur_count: usize = countof(slice);
+    var cur_size: usize = cur_count * sizeof(:T);
+    var new_size: usize = new_count * sizeof(:T);
+    var pointer: *T = (:*T)std::reallocate(
+        (:*byte)&slice[0],
+        alignof(:T),
+        cur_size,
+        new_size);
+    return (:[]T){pointer, new_count};
+}
+
+func delete_slice[[:T]](slice: []T) void {
+    if (countof(slice) == 0) {
+        # Nothing to deallocate.
+        return;
+    }
+
+    var size: usize = countof(slice) * sizeof(:T);
+    std::deallocate((:*byte)&slice[0], alignof(:T), size);
+}

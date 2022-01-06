@@ -4,8 +4,10 @@
 // Definitions taken from:
 // https://pubs.opengroup.org/onlinepubs/9699919799.2018edition/functions/open.html
 // https://pubs.opengroup.org/onlinepubs/9699919799.2018edition/basedefs/sys_stat.h.html
+// https://pubs.opengroup.org/onlinepubs/9699919799/functions/mmap.html
 #include <fcntl.h>
 #include <stdio.h>
+#include <sys/mman.h>
 #include <sys/stat.h>
 #include <unistd.h>
 
@@ -68,7 +70,7 @@ main(void)
     fputc('\n', stdout);
 
 #define PRINT_S_VALUE(s_value) \
-    printf("const %-12s u16 = 0x%04xu16;\n", #s_value ":", s_value)
+    printf("const %-9s u16 = 0x%04xu16;\n", #s_value ":", s_value)
     // The <sys/stat.h> header shall define the following symbolic constants for the file types encoded in type mode_t. The values shall be suitable for use in #if preprocessing directives:
     PRINT_S_VALUE(S_IFMT);   // [XSI] [Option Start] Type of file.
     PRINT_S_VALUE(S_IFIFO);  // FIFO special.
@@ -79,4 +81,29 @@ main(void)
     PRINT_S_VALUE(S_IFLNK);  // Symbolic link.
     PRINT_S_VALUE(S_IFSOCK); // Socket.
 #undef PRINT_S_VALUE
+
+    fputc('\n', stdout);
+
+#define PRINT_PROT_VALUE(prot_value) \
+    printf("const %-11s ssize = 0x%01xs;\n", #prot_value ":", prot_value)
+    // The parameter prot determines whether read, write, execute, or some combination of accesses are permitted to the data being mapped. The prot shall be either PROT_NONE or the bitwise-inclusive OR of one or more of the other flags in the following table, defined in the <sys/mman.h> header.
+    PRINT_PROT_VALUE(PROT_NONE);  // Data cannot be accessed.
+    PRINT_PROT_VALUE(PROT_READ);  // Data can be read.
+    PRINT_PROT_VALUE(PROT_WRITE); // Data can be written.
+    PRINT_PROT_VALUE(PROT_EXEC);  // Data can be executed.
+#undef PRINT_PROT_VALUE
+
+    fputc('\n', stdout);
+
+#define PRINT_MAP_VALUE(map_value) \
+    printf("const %-14s ssize = 0x%02xs;\n", #map_value ":", map_value)
+    // The parameter flags provides other information about the handling of the mapped data. The value of flags is the bitwise-inclusive OR of these options, defined in <sys/mman.h>:
+    PRINT_MAP_VALUE(MAP_SHARED);  // Changes are shared.
+    PRINT_MAP_VALUE(MAP_PRIVATE); // Changes are private.
+    PRINT_MAP_VALUE(MAP_FIXED);   // Interpret addr exactly.
+    // The following flags are *NOT* part of the POSIX standard but are defined on Linux.
+    // Descriptions have been taken from man pages.
+    PRINT_MAP_VALUE(MAP_ANONYMOUS); // The mapping is not backed by any file; its contents are initialized to zero.  The fd argument is ignored; however, some implementations require fd to be -1 if  MAP_ANONYMOUS  (or MAP_ANON) is specified, and portable applications should ensure this.  The offset argument should be zero.  The use of MAP_ANONYMOUS in conjunction with MAP_SHARED is supported on Linux only since kernel 2.4.
+#undef PRINT_MAP_VALUE
+
 }

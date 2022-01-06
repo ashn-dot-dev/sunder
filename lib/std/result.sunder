@@ -1,0 +1,47 @@
+namespace std;
+import "std/mem.sunder";
+import "std/panic.sunder";
+
+struct result[[:T, :E]] {
+    var _value: T;
+    var _error: E;
+    var _is_value: bool;
+
+    func init_value(value: T) result[[:T, :E]] {
+        return (:result[[:T, :E]]){
+            ._value = value,
+            ._error = std::mem::zeroed[[:E]](),
+            ._is_value = true
+        };
+    }
+
+    func init_error(error: E) result[[:T, :E]] {
+        return (:result[[:T, :E]]){
+            ._value = std::mem::zeroed[[:T]](),
+            ._error = error,
+            ._is_value = false
+        };
+    }
+
+    func is_value(self: *result[[:T, :E]]) bool {
+        return (*self)._is_value;
+    }
+
+    func is_error(self: *result[[:T, :E]]) bool {
+        return not (*self)._is_value;
+    }
+
+    func value(self: *result[[:T, :E]]) T {
+        if not (*self)._is_value {
+            std::panic("attempted to retrieve value from std::result in the `error` state");
+        }
+        return (*self)._value;
+    }
+
+    func error(self: *result[[:T, :E]]) E {
+        if (*self)._is_value {
+            std::panic("attempted to retrieve error from std::result in the `value` state");
+        }
+        return (*self)._error;
+    }
+}

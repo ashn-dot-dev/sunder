@@ -272,6 +272,7 @@ type_struct_add_member_variable(
             .offset = self->data.struct_.next_offset,
         };
         autil_sbuf_push(self->data.struct_.member_variables, m);
+        return;
     }
 
     assert(type->size != 0);

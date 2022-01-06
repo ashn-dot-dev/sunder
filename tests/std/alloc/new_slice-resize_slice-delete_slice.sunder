@@ -1,0 +1,20 @@
+import "std/alloc.sunder";
+
+func main() void {
+    var slice: []u16 = std::new_slice[[:u16]](2048);
+    for i in 0:countof(slice) {
+        slice[i] = 0xBEEF;
+    }
+
+    slice = std::resize_slice[[:u16]](slice, 4096);
+    for i in 0:countof(slice) {
+        slice[i] = 0xF00D;
+    }
+
+    slice = std::resize_slice[[:u16]](slice, 1000);
+    for i in 0:countof(slice) {
+        slice[i] = 0xCAFE;
+    }
+
+    std::delete_slice[[:u16]](slice);
+}
