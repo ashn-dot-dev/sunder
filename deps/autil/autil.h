@@ -1,5 +1,5 @@
 /*
-AUTIL - ASHN'S UTILITY LIBRARY - v0.10.0
+AUTIL - ASHN'S UTILITY LIBRARY - v0.11.0
     Single header file containing functions and data structures for rapid
     application development in C99 (or later) with a focus on simplicity.
     This library has no dependencies outside of libc.
@@ -474,6 +474,9 @@ autil_bitarr_new(size_t count);
 // Does nothing if self == NULL.
 AUTIL_API void
 autil_bitarr_del(struct autil_bitarr* self);
+// Register resources within the bit array with the provided freezer.
+AUTIL_API void
+autil_bitarr_freeze(struct autil_bitarr* self, struct autil_freezer* freezer);
 
 // Returns the number of bits in this bit array.
 AUTIL_API size_t
@@ -1685,6 +1688,15 @@ autil_bitarr_del(struct autil_bitarr* self)
     size_t const size = autil__bitarr_size_(self->count);
     memset(self, 0x00, size); // scrub
     autil_xalloc(self, AUTIL_XALLOC_FREE);
+}
+
+AUTIL_API void
+autil_bitarr_freeze(struct autil_bitarr* self, struct autil_freezer* freezer)
+{
+    assert(self != NULL);
+    assert(freezer != NULL);
+
+    autil_freezer_register(freezer, self);
 }
 
 AUTIL_API size_t
@@ -3500,6 +3512,7 @@ autil_map_del(struct autil_map* self)
     memset(self, 0x00, sizeof(*self)); // scrub
     autil_xalloc(self, AUTIL_XALLOC_FREE);
 }
+
 AUTIL_API void
 autil_map_freeze(struct autil_map* self, struct autil_freezer* freezer)
 {
