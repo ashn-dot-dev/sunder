@@ -226,8 +226,6 @@ order_decl(struct orderer* orderer, struct cst_decl const* decl)
         return;
     }
     case CST_DECL_STRUCT: {
-        struct cst_member const* const* const members =
-            decl->data.struct_.members;
         struct cst_template_parameter const* const* const template_parameters =
             decl->data.struct_.template_parameters;
         if (autil_sbuf_count(template_parameters) != 0) {
