@@ -692,6 +692,21 @@ cst_member_new_variable(
 }
 
 struct cst_member*
+cst_member_new_constant(struct cst_decl const* decl)
+{
+    assert(decl != NULL);
+    assert(decl->kind == CST_DECL_CONSTANT);
+
+    struct cst_member* const self = autil_xalloc(NULL, sizeof(*self));
+    memset(self, 0x00, sizeof(*self));
+    self->location = decl->location;
+    self->name = decl->name;
+    self->kind = CST_MEMBER_CONSTANT;
+    self->data.constant.decl = decl;
+    return self;
+}
+
+struct cst_member*
 cst_member_new_function(struct cst_decl const* decl)
 {
     assert(decl != NULL);

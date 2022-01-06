@@ -61,8 +61,6 @@ static void
 order_function_parameter(
     struct orderer* orderer, struct cst_function_parameter const* parameter);
 static void
-order_member(struct orderer* orderer, struct cst_member const* member);
-static void
 order_typespec(struct orderer* orderer, struct cst_typespec const* typespec);
 static void
 order_symbol(struct orderer* orderer, struct cst_symbol const* symbol);
@@ -161,20 +159,30 @@ order_tldecl(struct orderer* orderer, struct tldecl* tldecl)
     order_decl(orderer, tldecl->decl);
     tldecl->state = TLDECL_ORDERED;
     autil_sbuf_push(orderer->tldecls.topological_order, tldecl->decl->name);
-    // Special case for structs with member functions. Member functions may
-    // self-reference the struct that they are defined within (e.g. the return
-    // type of init functions). Member functions have their ordering deferred
-    // until after the struct has been ordered (here), mirroring the behavior of
-    // the resolve phase where member functions are resolved after the struct
-    // member variables & layout have been resolved.
+    // Special case for structs. Struct members may self-reference the struct
+    // that they are defined within (e.g. the return type of init functions).
+    // Members have their ordering deferred until after the struct has been
+    // ordered (here), mirroring the behavior of the resolve phase where the
+    // struct is completed after the struct symbol has been added to the
+    // relevant symbol table.
     if (tldecl->decl->kind == CST_DECL_STRUCT) {
         autil_sbuf(struct cst_member const* const) const members =
             tldecl->decl->data.struct_.members;
         for (size_t i = 0; i < autil_sbuf_count(members); ++i) {
-            if (members[i]->kind != CST_MEMBER_FUNCTION) {
-                continue;
+            struct cst_member const* const member = members[i];
+            switch (member->kind) {
+            case CST_MEMBER_VARIABLE: {
+                order_typespec(orderer, member->data.variable.typespec);
+                return;
             }
-            order_decl(orderer, members[i]->data.function.decl);
+            case CST_MEMBER_CONSTANT: {
+                order_decl(orderer, member->data.constant.decl);
+                return;
+            }
+            case CST_MEMBER_FUNCTION: {
+                order_decl(orderer, members[i]->data.function.decl);
+            }
+            }
         }
     }
 }
@@ -232,9 +240,9 @@ order_decl(struct orderer* orderer, struct cst_decl const* decl)
             // See also => comment under CST_DECL_FUNCTION case.
             return;
         }
-        for (size_t i = 0; i < autil_sbuf_count(members); ++i) {
-            order_member(orderer, members[i]);
-        }
+        // Defer ordering of members until the struct decl has been ordered to
+        // account for self-referential members. There is a special case to
+        // handle this logic in the order_tldecl function.
         return;
     }
     case CST_DECL_EXTERN_VARIABLE: {
@@ -380,28 +388,6 @@ order_function_parameter(
     assert(parameter != NULL);
 
     order_typespec(orderer, parameter->typespec);
-}
-
-static void
-order_member(struct orderer* orderer, struct cst_member const* member)
-{
-    assert(orderer != NULL);
-    assert(member != NULL);
-
-    switch (member->kind) {
-    case CST_MEMBER_VARIABLE: {
-        order_typespec(orderer, member->data.variable.typespec);
-        return;
-    }
-    case CST_MEMBER_FUNCTION: {
-        // Defer ordering member functions until the struct has been ordered in
-        // order to account for self-referential member functions. There is a
-        // special case to handle this logic in the order_tldecl function.
-        return;
-    }
-    }
-
-    UNREACHABLE();
 }
 
 static void

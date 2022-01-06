@@ -158,12 +158,7 @@ resolve_decl_extern_variable(
     struct resolver* resolver, struct cst_decl const* decl);
 
 static void
-complete_struct_member_variables(
-    struct resolver* resolver,
-    struct symbol const* symbol,
-    struct cst_decl const* decl);
-static void
-complete_struct_member_functions(
+complete_struct(
     struct resolver* resolver,
     struct symbol const* symbol,
     struct cst_decl const* decl);
@@ -877,6 +872,7 @@ xget_template_instance(
         resolver->current_symbol_table = instance_symbol_table;
         struct symbol const* resolved_symbol =
             resolve_decl_struct(resolver, instance_decl);
+        resolver->current_symbol_table = save_symbol_table;
 
         // Add the unique instance to the cache of instances for the template.
         assert(resolved_symbol->kind == SYMBOL_TYPE);
@@ -886,11 +882,7 @@ xget_template_instance(
         // we did not add the instance to the cache first then any self
         // referential template instances would cause instance resolution to
         // enter an infinite loop.
-        complete_struct_member_variables(
-            resolver, resolved_symbol, instance_decl);
-        complete_struct_member_functions(
-            resolver, resolved_symbol, instance_decl);
-        resolver->current_symbol_table = save_symbol_table;
+        complete_struct(resolver, resolved_symbol, instance_decl);
 
         return resolved_symbol;
     }
@@ -1455,7 +1447,7 @@ resolve_decl_struct(struct resolver* resolver, struct cst_decl const* decl)
     for (size_t i = 0; i < members_count; ++i) {
         for (size_t j = i + 1; j < members_count; ++j) {
             if (members[i]->name == members[j]->name) {
-                // Call to autil_sbuf_fini here because GCC 8.3 w/ ASAN
+                // XXX: Call to autil_sbuf_fini here because GCC 8.3 w/ ASAN
                 // complains about a memory leak even though we hold a valid
                 // path to the buffer.
                 //
@@ -1507,7 +1499,7 @@ resolve_decl_extern_variable(
 }
 
 static void
-complete_struct_member_variables(
+complete_struct(
     struct resolver* resolver,
     struct symbol const* symbol,
     struct cst_decl const* decl)
@@ -1526,45 +1518,17 @@ complete_struct_member_variables(
 
     // XXX: Evil const cast.
     struct type* type = (struct type*)symbol->type;
-
-    // Add all member variable definitions to the struct.
-    for (size_t i = 0; i < members_count; ++i) {
-        struct cst_member const* const member = members[i];
-        if (member->kind != CST_MEMBER_VARIABLE) {
-            continue;
-        }
-
-        struct type const* const member_type =
-            resolve_typespec(resolver, member->data.variable.typespec);
-        type_struct_add_member_variable(type, member->name, member_type);
-    }
-
-    autil_sbuf_freeze(type->data.struct_.member_variables, context()->freezer);
-}
-
-static void
-complete_struct_member_functions(
-    struct resolver* resolver,
-    struct symbol const* symbol,
-    struct cst_decl const* decl)
-{
-    assert(resolver != NULL);
-    assert(symbol != NULL);
-    assert(symbol->kind == SYMBOL_TYPE);
-    assert(symbol->type->kind == TYPE_STRUCT);
-    assert(decl != NULL);
-    assert(decl->kind == CST_DECL_STRUCT);
-    assert(symbol->name == decl->name);
-
-    autil_sbuf(struct cst_member const* const) const members =
-        decl->data.struct_.members;
-    size_t const members_count = autil_sbuf_count(members);
-
     // XXX: Evil const cast.
     struct symbol_table* const struct_symbols =
         (struct symbol_table*)symbol->type->data.struct_.symbols;
 
-    // Add all member function definitions to the struct.
+    // XXX: A "direct leak" is detected if we encounter a fatal error while
+    // resolving the member constants and declarations below even though we hold
+    // a valid path to the buffer through the `type` pointer. Always keep a
+    // reference to the the stretchy buffer so that ASAN does not complain.
+    autil_sbuf(struct member_variable const) xxx_member_variables_ref = NULL;
+    // Add all member definitions to the struct in the order that they were
+    // defined in.
     char const* const save_symbol_name_prefix =
         resolver->current_symbol_name_prefix;
     char const* const save_static_addr_prefix =
@@ -1578,15 +1542,31 @@ complete_struct_member_functions(
     resolver->current_symbol_table = struct_symbols;
     for (size_t i = 0; i < members_count; ++i) {
         struct cst_member const* const member = members[i];
-        if (member->kind != CST_MEMBER_FUNCTION) {
+        switch (member->kind) {
+        case CST_MEMBER_VARIABLE: {
+            struct type const* const member_type =
+                resolve_typespec(resolver, member->data.variable.typespec);
+            type_struct_add_member_variable(type, member->name, member_type);
+            xxx_member_variables_ref = type->data.struct_.member_variables;
             continue;
         }
+        case CST_MEMBER_CONSTANT: {
+            resolve_decl_constant(resolver, member->data.constant.decl);
+            continue;
+        }
+        case CST_MEMBER_FUNCTION: {
+            resolve_decl_function(resolver, member->data.function.decl);
+            continue;
+        }
+        }
+        UNREACHABLE();
 
-        resolve_decl_function(resolver, member->data.function.decl);
     }
     resolver->current_symbol_name_prefix = save_symbol_name_prefix;
     resolver->current_static_addr_prefix = save_static_addr_prefix;
     resolver->current_symbol_table = save_symbol_table;
+
+    autil_sbuf_freeze(type->data.struct_.member_variables, context()->freezer);
 }
 
 static void
@@ -3702,8 +3682,7 @@ resolve(struct module* module)
         bool const need_to_complete_struct =
             decl->kind == CST_DECL_STRUCT && symbol->kind == SYMBOL_TYPE;
         if (need_to_complete_struct) {
-            complete_struct_member_variables(resolver, symbol, decl);
-            complete_struct_member_functions(resolver, symbol, decl);
+            complete_struct(resolver, symbol, decl);
         }
     }
 

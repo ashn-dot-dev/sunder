@@ -157,6 +157,8 @@ parse_member(struct parser* parser);
 static struct cst_member const*
 parse_member_variable(struct parser* parser);
 static struct cst_member const*
+parse_member_constant(struct parser* parser);
+static struct cst_member const*
 parse_member_function(struct parser* parser);
 
 static struct cst_member_initializer const* const*
@@ -1373,6 +1375,10 @@ parse_member(struct parser* parser)
         return parse_member_variable(parser);
     }
 
+    if (check_current(parser, TOKEN_CONST)) {
+        return parse_member_constant(parser);
+    }
+
     if (check_current(parser, TOKEN_FUNC)) {
         return parse_member_function(parser);
     }
@@ -1398,6 +1404,19 @@ parse_member_variable(struct parser* parser)
 
     struct cst_member* const product =
         cst_member_new_variable(location, identifier, typespec);
+
+    autil_freezer_register(context()->freezer, product);
+    return product;
+}
+
+static struct cst_member const*
+parse_member_constant(struct parser* parser)
+{
+    assert(parser != NULL);
+
+    struct cst_decl const* const decl = parse_decl_constant(parser);
+
+    struct cst_member* const product = cst_member_new_constant(decl);
 
     autil_freezer_register(context()->freezer, product);
     return product;

@@ -797,6 +797,7 @@ struct cst_member {
     char const* name;
     enum {
         CST_MEMBER_VARIABLE,
+        CST_MEMBER_CONSTANT,
         CST_MEMBER_FUNCTION,
     } kind;
     struct {
@@ -804,6 +805,10 @@ struct cst_member {
             struct cst_identifier const* identifier;
             struct cst_typespec const* typespec;
         } variable;
+        struct {
+            // CST_DECL_CONSTANT
+            struct cst_decl const* decl;
+        } constant;
         struct {
             // CST_DECL_FUNCTION
             struct cst_decl const* decl;
@@ -815,6 +820,8 @@ cst_member_new_variable(
     struct source_location const* location,
     struct cst_identifier const* identifier,
     struct cst_typespec const* typespec);
+struct cst_member*
+cst_member_new_constant(struct cst_decl const* decl);
 struct cst_member*
 cst_member_new_function(struct cst_decl const* decl);
 
