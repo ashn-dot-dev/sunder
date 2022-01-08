@@ -1,26 +1,43 @@
 namespace std;
 import "sys/sys.sunder";
 
-func print(str: []byte) void {
-    if countof(str) == 0 {
+func print(bytes: []byte) void {
+    if countof(bytes) == 0 {
         return;
     }
-    sys::write(sys::STDOUT_FILENO, &str[0u], countof(str));
+    sys::write(sys::STDOUT_FILENO, &bytes[0u], countof(bytes));
 }
 
-func println(str: []byte) void {
-    print(str);
+func println(bytes: []byte) void {
+    print(bytes);
     print("\n");
 }
 
-func eprint(str: []byte) void {
-    if countof(str) == 0 {
+func eprint(bytes: []byte) void {
+    if countof(bytes) == 0 {
         return;
     }
-    sys::write(sys::STDERR_FILENO, &str[0u], countof(str));
+    sys::write(sys::STDERR_FILENO, &bytes[0u], countof(bytes));
 }
 
-func eprintln(str: []byte) void {
-    eprint(str);
+func eprintln(bytes: []byte) void {
+    eprint(bytes);
     eprint("\n");
 }
+
+struct stream {
+    var fd: ssize;
+
+    const STDOUT_FD: ssize = (:ssize)sys::STDOUT_FILENO;
+    const STDERR_FD: ssize = (:ssize)sys::STDERR_FILENO;
+
+    func write(self: *stream, bytes: []byte) void {
+        if countof(bytes) == 0 {
+            return;
+        }
+        sys::write((:u32)(*self).fd, &bytes[0u], countof(bytes));
+    }
+}
+
+const fd_stdout: stream = (:stream){.fd = stream::STDOUT_FD};
+const fd_stderr: stream = (:stream){.fd = stream::STDERR_FD};

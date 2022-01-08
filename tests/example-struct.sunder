@@ -118,7 +118,21 @@ func main() void {
         .w = 1s32
     };
 
+
+    # Same definition is used for bar_a and bar_b. Check to make sure they
+    # produce the same byte representation.
+    var bar_b: bar = (:bar){
+        .w = 0xAA,
+        .x = 0xBB,
+        .y = 0xCC,
+        .z = 0xDD,
+        .p = 0x0011,
+        .q = 0x2233,
+        .r = 0x44,
+        .s = 0x5566
+    };
     dump bar_a;
+    dump bar_b;
 
     dump baz_a;
     var baz_b: baz = baz::init(0xCC, 0xDD);
@@ -148,6 +162,7 @@ func main() void {
 # 00 00 00 00 FF FF FF FF
 # EF BE AD DE 0D F0 FE CA
 # EF BE AD DE
+# AA BB CC DD 11 00 33 22 44 00 66 55
 # AA BB CC DD 11 00 33 22 44 00 66 55
 # AA BB
 # CC DD

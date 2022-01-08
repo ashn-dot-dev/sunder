@@ -73,6 +73,10 @@ hello_slice_start: db "Hello, Slice!", 0x0A
 hello_slice_count: equ $ - hello_slice_start
 hello_slice: dq hello_slice_start, hello_slice_count
 
+mixed_db_and_dq:
+    db 0x00, 0x01
+    dq 0xDEADBEEFCAFEF00D
+
 section .data
 exit_status: dq EXIT_FAILURE
 

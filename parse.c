@@ -1339,7 +1339,6 @@ static struct cst_function_parameter const*
 parse_function_parameter(struct parser* parser)
 {
     assert(parser != NULL);
-    assert(check_current(parser, TOKEN_IDENTIFIER));
 
     struct cst_identifier const* const identifier = parse_identifier(parser);
     expect_current(parser, TOKEN_COLON);

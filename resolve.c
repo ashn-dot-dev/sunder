@@ -1560,7 +1560,6 @@ complete_struct(
         }
         }
         UNREACHABLE();
-
     }
     resolver->current_symbol_name_prefix = save_symbol_name_prefix;
     resolver->current_static_addr_prefix = save_static_addr_prefix;
@@ -2203,7 +2202,7 @@ resolve_expr_bytes(struct resolver* resolver, struct cst_expr const* expr)
 
     size_t const count = autil_string_count(expr->data.bytes);
     struct type const* const type =
-        type_unique_array(count, context()->builtin.byte);
+        type_unique_array(count + 1 /*NUL*/, context()->builtin.byte);
     // TODO: Allocating a value for each and every byte in the bytes literal
     // feels wasteful. It may be worth investigating some specific ascii or
     // asciiz static object that would use the expr's autil_string directly and
@@ -2215,6 +2214,10 @@ resolve_expr_bytes(struct resolver* resolver, struct cst_expr const* expr)
             (uint8_t)*autil_string_ref_const(expr->data.bytes, i);
         autil_sbuf_push(elements, value_new_byte(byte));
     }
+    // Append a NUL byte to the end of every bytes literal. This NUL byte is not
+    // included in the slice length, but will allow bytes literals to be
+    // accessed as NUL-terminated arrays when interfacing with C code.
+    autil_sbuf_push(elements, value_new_byte(0x00));
     struct value* const value = value_new_array(type, elements, NULL);
     value_freeze(value, context()->freezer);
 
@@ -2470,7 +2473,13 @@ resolve_expr_cast(struct resolver* resolver, struct cst_expr const* expr)
         || (type_is_any_integer(type) && rhs->type->kind == TYPE_BYTE)
         || (type->kind == TYPE_POINTER && rhs->type->kind == TYPE_USIZE)
         || (type->kind == TYPE_USIZE && rhs->type->kind == TYPE_POINTER)
-        || (type->kind == TYPE_POINTER && rhs->type->kind == TYPE_POINTER);
+        || (type->kind == TYPE_POINTER && rhs->type->kind == TYPE_POINTER)
+        // TODO, XXX: We allow casts between function pointers so that structs
+        // can implement interfaces. In the future we should perform type
+        // checking on the parameters and return type of the two functions and
+        // only allow the cast if the difference between the two functions is
+        // the first pointer-to-self paramter.
+        || (type->kind == TYPE_FUNCTION && rhs->type->kind == TYPE_FUNCTION);
     if (!valid) {
         fatal(
             rhs->location,
@@ -2565,6 +2574,15 @@ resolve_expr_call(struct resolver* resolver, struct cst_expr const* expr)
                 instance->type->name);
         }
 
+        struct member_variable const* const variable =
+            type_struct_member_variable(instance->type, name);
+        if (variable != NULL) {
+            // Actually this is *not* a member function call - this is a normal
+            // function invocation of a member variable that just happens to
+            // have a function type.
+            goto regular_function_call;
+        }
+
         struct function const* const function =
             type_struct_member_function(instance->type, name);
         if (function == NULL) {
@@ -2574,12 +2592,13 @@ resolve_expr_call(struct resolver* resolver, struct cst_expr const* expr)
                 instance->type->name,
                 name);
         }
+        struct type const* function_type = function->type;
 
         struct type const* const selfptr_type =
             type_unique_pointer(instance->type);
 
         autil_sbuf(struct type const* const) const parameter_types =
-            function->type->data.function.parameter_types;
+            function_type->data.function.parameter_types;
         if (autil_sbuf_count(parameter_types) == 0) {
             fatal(
                 instance->location,
@@ -2604,7 +2623,7 @@ resolve_expr_call(struct resolver* resolver, struct cst_expr const* expr)
             fatal(
                 expr->location,
                 "member function with type `%s` expects %zu argument(s) (%zu provided)",
-                function->type->name,
+                function_type->name,
                 expected_arg_count,
                 arg_count);
         }
@@ -2643,12 +2662,13 @@ resolve_expr_call(struct resolver* resolver, struct cst_expr const* expr)
         struct symbol const* const member_function_symbol =
             type_struct_member_function_symbol(instance->type, name);
         assert(member_function_symbol != NULL);
-        struct expr* const member_function_expr = expr_new_symbol(
-            dot->data.access_member.identifier->location,
-            member_function_symbol);
+        struct expr* member_function_expr = member_function_expr =
+            expr_new_symbol(
+                dot->data.access_member.identifier->location,
+                member_function_symbol);
         autil_freezer_register(context()->freezer, member_function_expr);
 
-        struct expr* const resolved =
+        struct expr* resolved =
             expr_new_call(expr->location, member_function_expr, arguments);
 
         autil_freezer_register(context()->freezer, resolved);
@@ -2656,6 +2676,7 @@ resolve_expr_call(struct resolver* resolver, struct cst_expr const* expr)
     }
 
     // Regular function call.
+regular_function_call:;
     struct expr const* const function =
         resolve_expr(resolver, expr->data.call.func);
     if (function->type->kind != TYPE_FUNCTION) {

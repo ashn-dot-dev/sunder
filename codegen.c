@@ -334,14 +334,41 @@ append_dx_data(struct value const* value)
         return;
     }
     case TYPE_STRUCT: {
-        autil_sbuf(uint8_t) const bytes = value_to_new_bytes(value);
-        for (size_t i = 0; i < autil_sbuf_count(bytes); ++i) {
+        autil_sbuf(struct member_variable) const member_variable_defs =
+            value->type->data.struct_.member_variables;
+        size_t const member_variable_defs_count =
+            autil_sbuf_count(member_variable_defs);
+        appendch('\n');
+        for (size_t i = 0; i < member_variable_defs_count; ++i) {
+            struct member_variable const* const def = member_variable_defs + i;
             if (i != 0) {
-                append(", ");
+                struct member_variable const* const prev_def =
+                    member_variable_defs + (i - 1);
+                size_t const padding =
+                    def->offset - (prev_def->offset + prev_def->type->size);
+                if (padding != 0) {
+                    appendln("    ; padding");
+                    append("    db ");
+                    for (size_t i = 0; i < padding; ++i) {
+                        if (i != 0) {
+                            append(", ");
+                        }
+                        append("0x00");
+                    }
+                    appendch('\n');
+                }
             }
-            append("%#x", (unsigned)bytes[i]);
+            struct value const* const val =
+                value->data.struct_.member_variables[i];
+
+            appendln(
+                "    ; member variable %s: %s", def->name, def->type->name);
+            append("    ");
+            append_dx_type(def->type);
+            appendch(' ');
+            append_dx_data(val);
+            appendch('\n');
         }
-        autil_sbuf_fini(bytes);
         return;
     }
     }
@@ -353,6 +380,7 @@ static void
 push(size_t size)
 {
     if (size == 0) {
+        appendli("; (push of size zero)");
         return;
     }
 
@@ -447,6 +475,7 @@ static void
 pop(size_t size)
 {
     if (size == 0) {
+        appendli("; (pop of size zero)");
         return;
     }
 
@@ -794,10 +823,10 @@ codegen_static_object(struct symbol const* symbol)
 
     assert(symbol->address->data.static_.offset == 0);
     append("%s:", symbol->address->data.static_.name);
-    if (value->type->kind != TYPE_ARRAY) {
-        // Only genreate the dx type for non-arrays as arrays have thir own
-        // special way of initializing data from a combination of explicitly
-        // specified elements and the ellipsis element.
+    if (value->type->kind != TYPE_ARRAY && value->type->kind != TYPE_STRUCT) {
+        // Only genreate the dx type for non-arrays / non-structs as
+        // arrays/struct have thir own special way of initializing data from a
+        // combination of explicitly specified data.
         //
         // TODO: The fact that we need this special case here means that there
         // is something not-quite-so-well thought out in the way that
@@ -1028,10 +1057,17 @@ codegen_stmt_dump(struct stmt const* stmt, size_t id)
     assert(stmt->kind == STMT_DUMP);
     (void)id;
 
+    appendli(
+        "; dump `%s` (%zu bytes)",
+        stmt->data.expr->type->name,
+        stmt->data.expr->type->size);
     codegen_rvalue(stmt->data.expr);
-    appendli("push %#zx", stmt->data.expr->type->size);
+    appendli(
+        "push %#zx ; push type `%s` size",
+        stmt->data.expr->type->size,
+        stmt->data.expr->type->name);
     appendli("call __dump");
-    appendli("pop rax");
+    appendli("pop rax ; pop type `%s` size", stmt->data.expr->type->name);
     pop(stmt->data.expr->type->size);
 }
 
@@ -1429,9 +1465,15 @@ codegen_rvalue_cast(struct expr const* expr, size_t id)
         // A MOV with r/m64 has nothing to zero-extend/sign-extend.
         break;
     }
+    case TYPE_FUNCTION: {
+        assert(expr->type->kind == TYPE_FUNCTION);
+        // Functions are implemented as pointers to the function entry point, so
+        // the function value stays the same when casting from one function to
+        // another.
+        break;
+    }
     case TYPE_VOID: /* fallthrough */
     case TYPE_INTEGER: /* fallthrough */
-    case TYPE_FUNCTION: /* fallthrough */
     case TYPE_ARRAY: /* fallthrough */
     case TYPE_SLICE: /* fallthrough */
     case TYPE_STRUCT: {
@@ -1920,7 +1962,7 @@ codegen_rvalue_unary(struct expr const* expr, size_t id)
         }
         codegen_rvalue(expr->data.unary.rhs);
         appendli("pop rax");
-        size_t const size = expr->data.unary.rhs->type->size;
+        size_t const size = expr->type->size;
         push(size);
         copy_rax_rsp_via_rcx(size);
         return;

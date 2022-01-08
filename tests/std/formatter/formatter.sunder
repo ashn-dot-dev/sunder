@@ -1,0 +1,86 @@
+import "std/formatter.sunder";
+import "std/io.sunder";
+import "std/panic.sunder";
+import "std/writer.sunder";
+
+struct name {
+    var first: []byte;
+    var last: []byte;
+
+    func init(first: []byte, last: []byte) name {
+        return (:name){.first = first, .last = last};
+    }
+
+    func format(self: *name, writer: *std::writer, format: []byte) void {
+        if (countof(format) != 0) {
+            std::panic("format error");
+        }
+        (*(*writer).interface).write(((*writer).instance), (*self).first);
+        (*(*writer).interface).write(((*writer).instance), " ");
+        (*(*writer).interface).write(((*writer).instance), (*self).last);
+    }
+}
+
+struct int {
+    # Pretend this is some std::* integer type that accepts a format specifier
+    # of "d" to be printed in decimal, "b" to be printed in binary, "o" to be
+    # printed in octal, or "x" to be printed in hexadecimal. For not we'll
+    # avoid the actual int->bytes conversion part and just print the specifier
+    # choice.
+    func format(self: *name, writer: *std::writer, format: []byte) void {
+        if (countof(format) != 1) {
+            std::panic("format error");
+        }
+        var c: byte = format[0];
+        if (c == 'd') {
+            (*(*writer).interface).write(((*writer).instance), "decimal\n");
+            return;
+        }
+        if (c == 'b') {
+            (*(*writer).interface).write(((*writer).instance), "binary\n");
+            return;
+        }
+        if (c == 'o') {
+            (*(*writer).interface).write(((*writer).instance), "octal\n");
+            return;
+        }
+        if (c == 'x') {
+            (*(*writer).interface).write(((*writer).instance), "hexadecimal\n");
+            return;
+        }
+        std::panic("format error");
+    }
+}
+
+func main() void {
+    var writer: std::writer =
+        std::writer::init[[:std::stream]](&std::fd_stdout);
+
+    var a: name = name::init("Nona", "Gaprindashvili");
+    var b: name = name::init("Judit", "Polgar");
+
+    var a_formatter: std::formatter =
+        std::formatter::init[[:name]](&a);
+    var b_formatter: std::formatter =
+        std::formatter::init[[:name]](&b);
+
+    (*a_formatter.interface).format(a_formatter.instance, &writer, "");
+    (*writer.interface).write(writer.instance, " and ");
+    (*b_formatter.interface).format(b_formatter.instance, &writer, "");
+    (*writer.interface).write(writer.instance, " are amazing players!\n");
+
+    var i: int = (:int){};
+    var i_formatter: std::formatter = std::formatter::init[[:int]](&i);
+    (*i_formatter.interface).format(i_formatter.instance, &writer, "d");
+    (*i_formatter.interface).format(i_formatter.instance, &writer, "b");
+    (*i_formatter.interface).format(i_formatter.instance, &writer, "o");
+    (*i_formatter.interface).format(i_formatter.instance, &writer, "x");
+    (*i_formatter.interface).format(i_formatter.instance, &writer, "boom");
+}
+################################################################################
+# Nona Gaprindashvili and Judit Polgar are amazing players!
+# decimal
+# binary
+# octal
+# hexadecimal
+# panic: format error

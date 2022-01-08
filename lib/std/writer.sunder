@@ -1,0 +1,25 @@
+namespace std;
+
+struct writer_interface {
+    # TODO: Have the write function return
+    #   std::result[[void, void]]
+    # indicating general success or error *or* have the write function return
+    #   std::result[[void, std::writer_error]]
+    # if we ever define a writer_error type.
+    var write: func(*void, []byte) void;
+}
+
+struct writer {
+    var interface: *std::writer_interface;
+    var instance: *void;
+
+    func init[[:T]](instance: *T) std::writer {
+        const interface: std::writer_interface = (:std::writer_interface){
+            .write = (:func(*void, []byte) void)T::write
+        };
+        return (:std::writer){
+            .interface = &interface,
+            .instance = (:*void)instance
+        };
+    }
+}

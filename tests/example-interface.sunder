@@ -1,0 +1,89 @@
+struct foo_interface {
+    var aa: func(*void) void;
+    var bb: func(*void) void;
+}
+
+struct foo {
+    var interface: *foo_interface;
+    var instance: *void;
+
+    func init[[:T]](instance: *T) foo {
+        const interface: foo_interface = (:foo_interface){
+            .aa = (:func(*void) void)T::aa,
+            .bb = (:func(*void) void)T::bb
+        };
+        return (:foo){
+            .interface = &interface,
+            .instance = (:*void)instance
+        };
+    }
+}
+
+struct bar {
+    var x: u32;
+    var y: u32;
+
+    func aa(self: *bar) void {
+        dump 0xAAu8;
+    }
+
+    func bb(self: *bar) void {
+        dump 0xBBu8;
+        dump *self;
+        dump (*self).x;
+        dump (*self).y;
+    }
+}
+
+struct baz {
+    var x: u16;
+    var y: u16;
+
+    func aa(self: *baz) void {
+        dump 0xAAu8;
+    }
+
+    func bb(self: *baz) void {
+        dump 0xBBu8;
+        dump *self;
+        dump (*self).x;
+        dump (*self).y;
+    }
+}
+
+func main() void {
+    var mybar: bar = (:bar){.x = 0xDEADBEEF, .y = 0xCAFEF00D};
+    mybar.aa();
+    mybar.bb();
+    var bar_impl: foo = foo::init[[:bar]](&mybar);
+    (*bar_impl.interface).aa(bar_impl.instance);
+    (*bar_impl.interface).bb(bar_impl.instance);
+
+    const mybaz: baz = (:baz){.x = 0xFBAD, .y = 0xDECA};
+    mybaz.aa();
+    mybaz.bb();
+    var baz_impl: foo = foo::init[[:baz]](&mybaz);
+    (*baz_impl.interface).aa(baz_impl.instance);
+    (*baz_impl.interface).bb(baz_impl.instance);
+}
+################################################################################
+# AA
+# BB
+# EF BE AD DE 0D F0 FE CA
+# EF BE AD DE
+# 0D F0 FE CA
+# AA
+# BB
+# EF BE AD DE 0D F0 FE CA
+# EF BE AD DE
+# 0D F0 FE CA
+# AA
+# BB
+# AD FB CA DE
+# AD FB
+# CA DE
+# AA
+# BB
+# AD FB CA DE
+# AD FB
+# CA DE
