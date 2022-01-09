@@ -1,21 +1,21 @@
 namespace std;
 import "std/writer.sunder";
 
-struct formatter_interface {
+struct formatter_vtable {
     var format: func(*any, *std::writer, []byte) void;
 }
 
 struct formatter {
-    var interface: *std::formatter_interface;
-    var instance: *any;
+    var vtable: *std::formatter_vtable;
+    var self: *any;
 
-    func init[[:T]](instance: *T) std::formatter {
-        const interface: std::formatter_interface = (:std::formatter_interface){
+    func init[[:T]](self: *T) std::formatter {
+        const vtable: std::formatter_vtable = (:std::formatter_vtable){
             .format = T::format
         };
         return (:std::formatter){
-            .interface = &interface,
-            .instance = instance
+            .vtable = &vtable,
+            .self = self
         };
     }
 }

@@ -5,15 +5,11 @@ func main() void {
     std::stdout.write("Hello, stdout!\n");
     std::stderr.write("Hello, stderr!\n");
 
-    var stdout_writer: std::writer =
-        std::writer::init[[:std::stream]](&std::stdout);
-    (*stdout_writer.interface).write(
-        stdout_writer.instance, "Hello, stdout_writer!\n");
+    var stdout_writer: std::writer = std::writer::init[[:std::stream]](&std::stdout);
+    stdout_writer.vtable.*.write(stdout_writer.self, "Hello, stdout_writer!\n");
 
-    var stderr_writer: std::writer =
-        std::writer::init[[:std::stream]](&std::stderr);
-    (*stderr_writer.interface).write(
-        stderr_writer.instance, "Hello, stderr_writer!\n");
+    var stderr_writer: std::writer = std::writer::init[[:std::stream]](&std::stderr);
+    stderr_writer.vtable.*.write(stderr_writer.self, "Hello, stderr_writer!\n");
 }
 ################################################################################
 # Hello, stdout!

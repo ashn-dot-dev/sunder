@@ -15,9 +15,9 @@ struct name {
         if (countof(format) != 0) {
             std::panic("format error");
         }
-        (*(*writer).interface).write(((*writer).instance), (*self).first);
-        (*(*writer).interface).write(((*writer).instance), " ");
-        (*(*writer).interface).write(((*writer).instance), (*self).last);
+        writer.*.vtable.*.write(writer.*.self, self.*.first);
+        writer.*.vtable.*.write(writer.*.self, " ");
+        writer.*.vtable.*.write(writer.*.self, self.*.last);
     }
 }
 
@@ -33,19 +33,19 @@ struct int {
         }
         var c: byte = format[0];
         if (c == 'd') {
-            (*(*writer).interface).write(((*writer).instance), "decimal\n");
+            writer.*.vtable.*.write(writer.*.self, "decimal\n");
             return;
         }
         if (c == 'b') {
-            (*(*writer).interface).write(((*writer).instance), "binary\n");
+            writer.*.vtable.*.write(writer.*.self, "binary\n");
             return;
         }
         if (c == 'o') {
-            (*(*writer).interface).write(((*writer).instance), "octal\n");
+            writer.*.vtable.*.write(writer.*.self, "octal\n");
             return;
         }
         if (c == 'x') {
-            (*(*writer).interface).write(((*writer).instance), "hexadecimal\n");
+            writer.*.vtable.*.write(writer.*.self, "hexadecimal\n");
             return;
         }
         std::panic("format error");
@@ -59,23 +59,21 @@ func main() void {
     var a: name = name::init("Nona", "Gaprindashvili");
     var b: name = name::init("Judit", "Polgar");
 
-    var a_formatter: std::formatter =
-        std::formatter::init[[:name]](&a);
-    var b_formatter: std::formatter =
-        std::formatter::init[[:name]](&b);
+    var a_formatter: std::formatter = std::formatter::init[[:name]](&a);
+    var b_formatter: std::formatter = std::formatter::init[[:name]](&b);
 
-    (*a_formatter.interface).format(a_formatter.instance, &writer, "");
-    (*writer.interface).write(writer.instance, " and ");
-    (*b_formatter.interface).format(b_formatter.instance, &writer, "");
-    (*writer.interface).write(writer.instance, " are amazing players!\n");
+    a_formatter.vtable.*.format(a_formatter.self, &writer, "");
+    writer.vtable.*.write(writer.self, " and ");
+    b_formatter.vtable.*.format(b_formatter.self, &writer, "");
+    writer.vtable.*.write(writer.self, " are amazing players!\n");
 
     var i: int = (:int){};
     var i_formatter: std::formatter = std::formatter::init[[:int]](&i);
-    (*i_formatter.interface).format(i_formatter.instance, &writer, "d");
-    (*i_formatter.interface).format(i_formatter.instance, &writer, "b");
-    (*i_formatter.interface).format(i_formatter.instance, &writer, "o");
-    (*i_formatter.interface).format(i_formatter.instance, &writer, "x");
-    (*i_formatter.interface).format(i_formatter.instance, &writer, "boom");
+    i_formatter.vtable.*.format(i_formatter.self, &writer, "d");
+    i_formatter.vtable.*.format(i_formatter.self, &writer, "b");
+    i_formatter.vtable.*.format(i_formatter.self, &writer, "o");
+    i_formatter.vtable.*.format(i_formatter.self, &writer, "x");
+    i_formatter.vtable.*.format(i_formatter.self, &writer, "boom");
 }
 ################################################################################
 # Nona Gaprindashvili and Judit Polgar are amazing players!

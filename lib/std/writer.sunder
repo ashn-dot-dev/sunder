@@ -1,6 +1,6 @@
 namespace std;
 
-struct writer_interface {
+struct writer_vtable {
     # TODO: Have the write function return
     #   std::result[[void, void]]
     # indicating general success or error *or* have the write function return
@@ -10,16 +10,16 @@ struct writer_interface {
 }
 
 struct writer {
-    var interface: *std::writer_interface;
-    var instance: *any;
+    var vtable: *std::writer_vtable;
+    var self: *any;
 
-    func init[[:T]](instance: *T) std::writer {
-        const interface: std::writer_interface = (:std::writer_interface){
+    func init[[:T]](self: *T) std::writer {
+        const vtable: std::writer_vtable = (:std::writer_vtable){
             .write = T::write
         };
         return (:std::writer){
-            .interface = &interface,
-            .instance = instance
+            .vtable = &vtable,
+            .self = self
         };
     }
 }
