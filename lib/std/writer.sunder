@@ -6,20 +6,20 @@ struct writer_interface {
     # indicating general success or error *or* have the write function return
     #   std::result[[void, std::writer_error]]
     # if we ever define a writer_error type.
-    var write: func(*void, []byte) void;
+    var write: func(*any, []byte) void;
 }
 
 struct writer {
     var interface: *std::writer_interface;
-    var instance: *void;
+    var instance: *any;
 
     func init[[:T]](instance: *T) std::writer {
         const interface: std::writer_interface = (:std::writer_interface){
-            .write = (:func(*void, []byte) void)T::write
+            .write = T::write
         };
         return (:std::writer){
             .interface = &interface,
-            .instance = (:*void)instance
+            .instance = instance
         };
     }
 }

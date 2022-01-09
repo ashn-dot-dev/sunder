@@ -119,20 +119,23 @@ check_type_compatibility(
 //
 // The attempted implicit cast is "shallow" in the sense that it will not
 // recursively traverse the expression tree when casting, so currently immediate
-// values (literals) are the only valid expr targets.
+// values (literals), casts from `*T` to `*any`, and casts of function types
+// with parameter and/or a return type casts  from `*T` to `*any` are the only
+// valid expr targets.
 //
 // This function is intended for use when casting untyped literals to an
-// expression that would require a typed literal (e.g. integer->usize).
+// expression that would require a typed literal (e.g. integer->usize), or for
+// casting from a typed pointer to a generic pointer (e.g. *foo->*any).
 // Sub-expressions with integer literal constants are constant folded during the
 // resolve phase, so the expression `123 + 456 * 2` *should* be folded to the
 // integer literal constant `615` long before this function would be called on
 // it, so for most cases the sequence:
 // ```
-// struct expr const* expr = resolve_expr(ice);
+// struct expr const* expr = resolve_expr(some_cst_expr);
 // expr = shallow_implicit_cast(type, expr);
 // ```
-// will correctly perform a tree-rewrite of the integer constance sub-expression
-// `ice` casted to `type`.
+// will correctly perform a tree-rewrite of the integer constant sub-expression
+// `some_cst_expr` casted to `type`.
 static struct expr const*
 shallow_implicit_cast(struct type const* type, struct expr const* expr);
 
@@ -913,7 +916,7 @@ shallow_implicit_cast(struct type const* type, struct expr const* expr)
     assert(expr != NULL);
 
     // FROM type TO type (same type).
-    if (type->kind == expr->type->kind) {
+    if (type == expr->type) {
         return expr;
     }
 
@@ -977,6 +980,64 @@ shallow_implicit_cast(struct type const* type, struct expr const* expr)
 
         struct expr* const result =
             expr_new_integer(expr->location, type, expr->data.integer);
+
+        autil_freezer_register(context()->freezer, result);
+        return result;
+    }
+
+    // FROM non-any pointer TO any pointer.
+    if (type->kind == TYPE_POINTER && type->data.pointer.base->kind == TYPE_ANY
+        && expr->type->kind == TYPE_POINTER
+        && expr->type->data.pointer.base->kind != TYPE_ANY) {
+        struct expr* const result = expr_new_cast(
+            expr->location, type_unique_pointer(context()->builtin.any), expr);
+
+        autil_freezer_register(context()->freezer, result);
+        return result;
+    }
+
+    // FROM function with typed pointers TO function with any pointers.
+    if (type->kind == TYPE_FUNCTION && expr->type->kind == TYPE_FUNCTION) {
+        struct type const* const from = expr->type;
+        if (autil_sbuf_count(type->data.function.parameter_types)
+            != autil_sbuf_count(from->data.function.parameter_types)) {
+            // Mismatched parameter count. Cannot make an implicit conversion.
+        }
+
+        size_t const param_count =
+            autil_sbuf_count(type->data.function.parameter_types);
+        for (size_t i = 0; i < param_count; ++i) {
+            struct type const* const type_param =
+                type->data.function.parameter_types[i];
+            struct type const* const from_param =
+                from->data.function.parameter_types[i];
+
+            bool const same = type_param == from_param;
+            bool const non_any_ptr_to_any_ptr = type_param->kind == TYPE_POINTER
+                && type_param->data.pointer.base->kind == TYPE_ANY
+                && from_param->kind == TYPE_POINTER
+                && from_param->data.pointer.base->kind != TYPE_ANY;
+            if (!same && !non_any_ptr_to_any_ptr) {
+                // Invalid implicit parameter cast.
+                fprintf(stderr, "[%s:%d] HERE!!!\n", __func__, __LINE__);
+                return expr;
+            }
+        }
+
+        struct type const* const type_return = type->data.function.return_type;
+        struct type const* const from_return = from->data.function.return_type;
+        bool const same = type_return == from_return;
+        bool const non_any_ptr_to_any_ptr = type_return->kind == TYPE_POINTER
+            && type_return->data.pointer.base->kind == TYPE_ANY
+            && from_return->kind == TYPE_POINTER
+            && from_return->data.pointer.base->kind != TYPE_ANY;
+        if (!same && !non_any_ptr_to_any_ptr) {
+            // Invalid implicit return type cast.
+            fprintf(stderr, "[%s:%d] HERE!!!\n", __func__, __LINE__);
+            return expr;
+        }
+
+        struct expr* const result = expr_new_cast(expr->location, type, expr);
 
         autil_freezer_register(context()->freezer, result);
         return result;

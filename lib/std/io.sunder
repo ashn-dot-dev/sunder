@@ -39,5 +39,5 @@ struct stream {
     }
 }
 
-const fd_stdout: stream = (:stream){.fd = stream::STDOUT_FD};
-const fd_stderr: stream = (:stream){.fd = stream::STDERR_FD};
+const stdout: stream = (:stream){.fd = stream::STDOUT_FD};
+const stderr: stream = (:stream){.fd = stream::STDERR_FD};

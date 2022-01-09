@@ -2,20 +2,20 @@ namespace std;
 import "std/writer.sunder";
 
 struct formatter_interface {
-    var format: func(*void, *std::writer, []byte) void;
+    var format: func(*any, *std::writer, []byte) void;
 }
 
 struct formatter {
     var interface: *std::formatter_interface;
-    var instance: *void;
+    var instance: *any;
 
     func init[[:T]](instance: *T) std::formatter {
         const interface: std::formatter_interface = (:std::formatter_interface){
-            .format = (:func(*void, *std::writer, []byte) void)T::format
+            .format = T::format
         };
         return (:std::formatter){
             .interface = &interface,
-            .instance = (:*void)instance
+            .instance = instance
         };
     }
 }

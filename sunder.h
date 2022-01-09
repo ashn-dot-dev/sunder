@@ -174,6 +174,7 @@ struct context {
         char const* empty;   // ""
         char const* builtin; // "builtin"
         char const* return_; // "return"
+        char const* any;     // "any"
         char const* void_;   // "void"
         char const* bool_;   // "bool"
         char const* u8;      // "u8"
@@ -219,6 +220,7 @@ struct context {
     // Language builtins.
     struct {
         struct source_location location;
+        struct type const* any;
         struct type const* void_;
         struct type const* bool_;
         struct type const* byte;
@@ -942,6 +944,7 @@ struct type {
     size_t align; // alignof
 
     enum type_kind {
+        TYPE_ANY,
         TYPE_VOID,
         TYPE_BOOL,
         TYPE_BYTE,
@@ -1032,6 +1035,8 @@ struct type {
         } struct_;
     } data;
 };
+struct type*
+type_new_any(void);
 struct type*
 type_new_void(void);
 struct type*

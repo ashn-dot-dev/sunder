@@ -21,6 +21,13 @@ type_new(char const* name, size_t size, size_t align, enum type_kind kind)
 }
 
 struct type*
+type_new_any(void)
+{
+    return type_new(
+        context()->interned.any, SIZEOF_UNSIZED, ALIGNOF_UNSIZED, TYPE_ANY);
+}
+
+struct type*
 type_new_void(void)
 {
     return type_new(context()->interned.void_, 0u, 0u, TYPE_VOID);
@@ -1467,6 +1474,7 @@ value_del(struct value* self)
     assert(self != NULL);
 
     switch (self->type->kind) {
+    case TYPE_ANY: /* fallthrough */
     case TYPE_VOID: {
         UNREACHABLE();
     }
@@ -1540,6 +1548,7 @@ value_freeze(struct value* self, struct autil_freezer* freezer)
 
     autil_freezer_register(freezer, self);
     switch (self->type->kind) {
+    case TYPE_ANY: /* fallthrough */
     case TYPE_VOID: {
         UNREACHABLE();
     }
@@ -1608,6 +1617,7 @@ value_clone(struct value const* self)
     assert(self != NULL);
 
     switch (self->type->kind) {
+    case TYPE_ANY: /* fallthrough */
     case TYPE_VOID: {
         UNREACHABLE();
     }
@@ -1714,6 +1724,9 @@ value_eq(struct value const* lhs, struct value const* rhs)
 
     struct type const* const type = lhs->type; // Arbitrarily use lhs.
     switch (type->kind) {
+    case TYPE_ANY: {
+        UNREACHABLE();
+    }
     case TYPE_VOID: {
         return true;
     }
@@ -1769,6 +1782,9 @@ value_lt(struct value const* lhs, struct value const* rhs)
 
     struct type const* const type = lhs->type; // Arbitrarily use lhs.
     switch (type->kind) {
+    case TYPE_ANY: {
+        UNREACHABLE();
+    }
     case TYPE_VOID: {
         return true;
     }
@@ -1815,6 +1831,9 @@ value_gt(struct value const* lhs, struct value const* rhs)
 
     struct type const* const type = lhs->type; // Arbitrarily use lhs.
     switch (type->kind) {
+    case TYPE_ANY: {
+        UNREACHABLE();
+    }
     case TYPE_VOID: {
         return true;
     }
@@ -1862,6 +1881,9 @@ value_to_new_bytes(struct value const* value)
     autil_memset(bytes, 0x00, value->type->size);
 
     switch (value->type->kind) {
+    case TYPE_ANY: {
+        UNREACHABLE();
+    }
     case TYPE_VOID: {
         assert(autil_sbuf_count(bytes) == 0);
         return bytes;

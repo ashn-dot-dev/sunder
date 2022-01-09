@@ -1,0 +1,28 @@
+const a: u16 = 0xBEEF;
+const b: *u16 = &a;
+
+var c: *u16 = &a;
+const d: *any = &a;
+
+func f(x: *u16, b: u32) *u16 {
+    *x = (:u16)b;
+    return x;
+}
+
+func main() void {
+    var e: *any = &a;
+    var g: func(*any, u32) *any = f;
+
+    var my_x: u16 = 0xF00D;
+    g(&my_x, 0xDEADBEEF);
+
+    dump (:usize)b == (:usize)c;
+    dump (:usize)b == (:usize)d;
+    dump (:usize)b == (:usize)e;
+    dump my_x;
+}
+################################################################################
+# 01
+# 01
+# 01
+# EF BE

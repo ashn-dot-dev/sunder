@@ -173,6 +173,7 @@ append_dx_type(struct type const* type)
     assert(type->size != 0);
 
     switch (type->kind) {
+    case TYPE_ANY: /* fallthrough */
     case TYPE_VOID: {
         UNREACHABLE();
     }
@@ -226,6 +227,7 @@ append_dx_data(struct value const* value)
     assert(value->type->size != 0);
 
     switch (value->type->kind) {
+    case TYPE_ANY: /* fallthrough */
     case TYPE_VOID: {
         UNREACHABLE();
     }
@@ -1472,6 +1474,7 @@ codegen_rvalue_cast(struct expr const* expr, size_t id)
         // another.
         break;
     }
+    case TYPE_ANY: /* fallthrough */
     case TYPE_VOID: /* fallthrough */
     case TYPE_INTEGER: /* fallthrough */
     case TYPE_ARRAY: /* fallthrough */

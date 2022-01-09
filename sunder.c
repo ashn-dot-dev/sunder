@@ -453,6 +453,11 @@ module_new(char const* name, char const* path)
     self->symbols = symbol_table_new(NULL);
     symbol_table_insert(
         self->symbols,
+        context()->interned.any,
+        symbol_table_lookup(
+            context()->global_symbol_table, context()->interned.any));
+    symbol_table_insert(
+        self->symbols,
         context()->interned.void_,
         symbol_table_lookup(
             context()->global_symbol_table, context()->interned.void_));
@@ -553,6 +558,7 @@ context_init(void)
     s_context.interned.empty = INTERN_STR_LITERAL("");
     s_context.interned.builtin = INTERN_STR_LITERAL("builtin");
     s_context.interned.return_ = INTERN_STR_LITERAL("return");
+    s_context.interned.any = INTERN_STR_LITERAL("any");
     s_context.interned.void_ = INTERN_STR_LITERAL("void");
     s_context.interned.bool_ = INTERN_STR_LITERAL("bool");
     s_context.interned.byte = INTERN_STR_LITERAL("byte");
@@ -621,6 +627,7 @@ context_init(void)
             s_context.global_symbol_table, symbol->name, symbol);              \
         builtin_lvalue = type;                                                 \
     }
+    INIT_BUILTIN_TYPE(s_context.builtin.any, type_new_any());
     INIT_BUILTIN_TYPE(s_context.builtin.void_, type_new_void());
     INIT_BUILTIN_TYPE(s_context.builtin.bool_, type_new_bool());
     INIT_BUILTIN_TYPE(s_context.builtin.byte, type_new_byte());

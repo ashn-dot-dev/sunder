@@ -2,21 +2,21 @@ import "std/io.sunder";
 import "std/writer.sunder";
 
 func main() void {
-    std::fd_stdout.write("Hello, fd_stdout!\n");
-    std::fd_stderr.write("Hello, fd_stderr!\n");
+    std::stdout.write("Hello, stdout!\n");
+    std::stderr.write("Hello, stderr!\n");
 
-    var fd_stdout_writer: std::writer =
-        std::writer::init[[:std::stream]](&std::fd_stdout);
-    (*fd_stdout_writer.interface).write(
-        fd_stdout_writer.instance, "Hello, fd_stdout_writer!\n");
+    var stdout_writer: std::writer =
+        std::writer::init[[:std::stream]](&std::stdout);
+    (*stdout_writer.interface).write(
+        stdout_writer.instance, "Hello, stdout_writer!\n");
 
-    var fd_stderr_writer: std::writer =
-        std::writer::init[[:std::stream]](&std::fd_stderr);
-    (*fd_stderr_writer.interface).write(
-        fd_stderr_writer.instance, "Hello, fd_stderr_writer!\n");
+    var stderr_writer: std::writer =
+        std::writer::init[[:std::stream]](&std::stderr);
+    (*stderr_writer.interface).write(
+        stderr_writer.instance, "Hello, stderr_writer!\n");
 }
 ################################################################################
-# Hello, fd_stdout!
-# Hello, fd_stderr!
-# Hello, fd_stdout_writer!
-# Hello, fd_stderr_writer!
+# Hello, stdout!
+# Hello, stderr!
+# Hello, stdout_writer!
+# Hello, stderr_writer!

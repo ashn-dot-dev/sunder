@@ -340,6 +340,7 @@ eval_rvalue_cast(struct expr const* expr)
         res = value_new_integer(expr->type, integer);
         break;
     }
+    case TYPE_ANY: /* fallthrough */
     case TYPE_VOID: /* fallthrough */
     case TYPE_INTEGER: /* fallthrough */
     case TYPE_FUNCTION: /* fallthrough */
