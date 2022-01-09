@@ -67,6 +67,7 @@
          | <expr-access-index>
          | <expr-access-slice>
          | <expr-access-member>
+         | <expr-access-dereference>
          | <expr-sizeof>
          | <expr-alignof>
          | <expr-unary>
@@ -97,6 +98,8 @@
 <expr-access-slice> ::= <expr> "[" <expr> ":" <expr> "]"
 
 <expr-access-member> ::= <expr> "." <identifier>
+
+<expr-access-dereference> ::= <expr> ".*"
 
 <expr-sizeof> ::= "sizeof" "(" ":" <typespec> ")"
 

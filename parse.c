@@ -117,6 +117,8 @@ parse_expr_led_lparen(struct parser* parser, struct cst_expr const* lhs);
 static struct cst_expr const*
 parse_expr_led_lbracket(struct parser* parser, struct cst_expr const* lhs);
 static struct cst_expr const*
+parse_expr_led_dot_star(struct parser* parser, struct cst_expr const* lhs);
+static struct cst_expr const*
 parse_expr_led_dot(struct parser* parser, struct cst_expr const* lhs);
 static struct cst_expr const*
 parse_expr_sizeof(struct parser* parser);
@@ -695,32 +697,40 @@ static enum precedence
 token_kind_precedence(enum token_kind kind)
 {
     switch (kind) {
-    case TOKEN_OR:
+    case TOKEN_OR: {
         return PRECEDENCE_OR;
-    case TOKEN_AND:
+    }
+    case TOKEN_AND: {
         return PRECEDENCE_AND;
+    }
     case TOKEN_EQ: /* fallthrough */
     case TOKEN_NE: /* fallthrough */
     case TOKEN_LE: /* fallthrough */
     case TOKEN_LT: /* fallthrough */
     case TOKEN_GE: /* fallthrough */
-    case TOKEN_GT:
+    case TOKEN_GT: {
         return PRECEDENCE_COMPARE;
+    }
     case TOKEN_PLUS: /* fallthrough */
     case TOKEN_DASH: /* fallthrough */
     case TOKEN_PIPE: /* fallthrough */
-    case TOKEN_CARET:
+    case TOKEN_CARET: {
         return PRECEDENCE_SUM;
+    }
     case TOKEN_STAR: /* fallthrough */
     case TOKEN_FSLASH: /* fallthrough */
-    case TOKEN_AMPERSAND:
+    case TOKEN_AMPERSAND: {
         return PRECEDENCE_PRODUCT;
+    }
     case TOKEN_LPAREN: /* fallthrough */
-    case TOKEN_LBRACKET:
-    case TOKEN_DOT:
+    case TOKEN_LBRACKET: /* fallthrough */
+    case TOKEN_DOT_STAR: /* fallthrough */
+    case TOKEN_DOT: {
         return PRECEDENCE_POSTFIX;
-    default:
+    }
+    default: {
         break;
+    }
     }
 
     return PRECEDENCE_LOWEST;
@@ -738,33 +748,43 @@ static parse_nud_fn
 token_kind_nud(enum token_kind kind)
 {
     switch (kind) {
-    case TOKEN_IDENTIFIER:
+    case TOKEN_IDENTIFIER: {
         return parse_expr_symbol;
+    }
     case TOKEN_TRUE: /* fallthrough */
-    case TOKEN_FALSE:
+    case TOKEN_FALSE: {
         return parse_expr_boolean;
-    case TOKEN_INTEGER:
+    }
+    case TOKEN_INTEGER: {
         return parse_expr_integer;
-    case TOKEN_CHARACTER:
+    }
+    case TOKEN_CHARACTER: {
         return parse_expr_character;
-    case TOKEN_BYTES:
+    }
+    case TOKEN_BYTES: {
         return parse_expr_bytes;
-    case TOKEN_LPAREN:
+    }
+    case TOKEN_LPAREN: {
         return parse_expr_lparen;
-    case TOKEN_SYSCALL:
+    }
+    case TOKEN_SYSCALL: {
         return parse_expr_syscall;
-    case TOKEN_SIZEOF:
+    }
+    case TOKEN_SIZEOF: {
         return parse_expr_sizeof;
-    case TOKEN_ALIGNOF:
+    }
+    case TOKEN_ALIGNOF: {
         return parse_expr_alignof;
+    }
     case TOKEN_NOT: /* fallthrough */
     case TOKEN_COUNTOF: /* fallthrough */
     case TOKEN_PLUS: /* fallthrough */
     case TOKEN_DASH: /* fallthrough */
     case TOKEN_TILDE: /* fallthrough */
     case TOKEN_STAR: /* fallthrough */
-    case TOKEN_AMPERSAND:
+    case TOKEN_AMPERSAND: {
         return parse_expr_nud_unary;
+    }
     default:
         break;
     }
@@ -776,12 +796,18 @@ static parse_led_fn
 token_kind_led(enum token_kind kind)
 {
     switch (kind) {
-    case TOKEN_LPAREN:
+    case TOKEN_LPAREN: {
         return parse_expr_led_lparen;
-    case TOKEN_LBRACKET:
+    }
+    case TOKEN_LBRACKET: {
         return parse_expr_led_lbracket;
-    case TOKEN_DOT:
+    }
+    case TOKEN_DOT_STAR: {
+        return parse_expr_led_dot_star;
+    }
+    case TOKEN_DOT: {
         return parse_expr_led_dot;
+    }
     case TOKEN_OR: /* fallthrough */
     case TOKEN_AND: /* fallthrough */
     case TOKEN_EQ: /* fallthrough */
@@ -796,10 +822,12 @@ token_kind_led(enum token_kind kind)
     case TOKEN_FSLASH: /* fallthrough */
     case TOKEN_PIPE: /* fallthrough */
     case TOKEN_CARET: /* fallthrough */
-    case TOKEN_AMPERSAND:
+    case TOKEN_AMPERSAND: {
         return parse_expr_led_binary;
-    default:
+    }
+    default: {
         break;
+    }
     }
 
     return NULL;
@@ -1072,6 +1100,22 @@ parse_expr_led_lbracket(struct parser* parser, struct cst_expr const* lhs)
     expect_current(parser, TOKEN_RBRACKET);
     struct cst_expr* const product =
         cst_expr_new_access_index(location, lhs, idx);
+
+    autil_freezer_register(context()->freezer, product);
+    return product;
+}
+
+static struct cst_expr const*
+parse_expr_led_dot_star(struct parser* parser, struct cst_expr const* lhs)
+{
+    assert(parser != NULL);
+    assert(lhs != NULL);
+
+    struct source_location const* const location =
+        &expect_current(parser, TOKEN_DOT_STAR)->location;
+
+    struct cst_expr* const product =
+        cst_expr_new_access_dereference(location, lhs);
 
     autil_freezer_register(context()->freezer, product);
     return product;

@@ -514,6 +514,19 @@ cst_expr_new_access_member(
 }
 
 struct cst_expr*
+cst_expr_new_access_dereference(
+    struct source_location const* location, struct cst_expr const* lhs)
+{
+    assert(location != NULL);
+    assert(lhs != NULL);
+
+    struct cst_expr* const self =
+        cst_expr_new(location, CST_EXPR_ACCESS_DEREFERENCE);
+    self->data.access_member.lhs = lhs;
+    return self;
+}
+
+struct cst_expr*
 cst_expr_new_sizeof(
     struct source_location const* location, struct cst_typespec const* rhs)
 {

@@ -35,7 +35,7 @@ struct stream {
         if countof(bytes) == 0 {
             return;
         }
-        sys::write((:u32)(*self).fd, &bytes[0u], countof(bytes));
+        sys::write((:u32)self.*.fd, &bytes[0u], countof(bytes));
     }
 }
 

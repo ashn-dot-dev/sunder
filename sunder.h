@@ -329,6 +329,7 @@ enum token_kind {
     TOKEN_RBRACKET, // ]
     TOKEN_COMMA, // ,
     TOKEN_ELLIPSIS, // ...
+    TOKEN_DOT_STAR, // .*
     TOKEN_DOT, // .
     TOKEN_COLON_COLON, // :
     TOKEN_COLON, // :
@@ -579,6 +580,7 @@ struct cst_expr {
         CST_EXPR_ACCESS_INDEX,
         CST_EXPR_ACCESS_SLICE,
         CST_EXPR_ACCESS_MEMBER,
+        CST_EXPR_ACCESS_DEREFERENCE,
         // Prefix Unary Operator Expressions
         CST_EXPR_SIZEOF,
         CST_EXPR_ALIGNOF,
@@ -633,6 +635,9 @@ struct cst_expr {
             struct cst_expr const* lhs;
             struct cst_identifier const* identifier;
         } access_member;
+        struct {
+            struct cst_expr const* lhs;
+        } access_dereference;
         struct {
             struct cst_typespec const* rhs;
         } sizeof_;
@@ -711,6 +716,9 @@ cst_expr_new_access_member(
     struct source_location const* location,
     struct cst_expr const* lhs,
     struct cst_identifier const* identifier);
+struct cst_expr*
+cst_expr_new_access_dereference(
+    struct source_location const* location, struct cst_expr const* lhs);
 struct cst_expr*
 cst_expr_new_sizeof(
     struct source_location const* location, struct cst_typespec const* rhs);
@@ -1424,6 +1432,8 @@ struct expr {
                 UOP_ADDRESSOF,
                 UOP_COUNTOF,
             } op;
+            // Called the "right hand side" even though the expression is
+            // actually on the left hand side of the .* operator.
             struct expr const* rhs;
         } unary;
         struct {

@@ -226,6 +226,9 @@ static struct expr const*
 resolve_expr_access_member(
     struct resolver* resolver, struct cst_expr const* expr);
 static struct expr const*
+resolve_expr_access_dereference(
+    struct resolver* resolver, struct cst_expr const* expr);
+static struct expr const*
 resolve_expr_sizeof(struct resolver* resolver, struct cst_expr const* expr);
 static struct expr const*
 resolve_expr_alignof(struct resolver* resolver, struct cst_expr const* expr);
@@ -2086,6 +2089,9 @@ resolve_expr(struct resolver* resolver, struct cst_expr const* expr)
     case CST_EXPR_ACCESS_MEMBER: {
         return resolve_expr_access_member(resolver, expr);
     }
+    case CST_EXPR_ACCESS_DEREFERENCE: {
+        return resolve_expr_access_dereference(resolver, expr);
+    }
     case CST_EXPR_SIZEOF: {
         return resolve_expr_sizeof(resolver, expr);
     }
@@ -2918,6 +2924,33 @@ resolve_expr_access_member(
         lhs->type->name,
         member_name);
     return NULL;
+}
+
+// Basically a copy-paste of the logic from resolve_expr_unary and
+// resolve_expr_unary_dereference with the unary operator fields exchanged for
+// the access dereference fields in the cst_expr.
+static struct expr const*
+resolve_expr_access_dereference(
+    struct resolver* resolver, struct cst_expr const* expr)
+{
+    assert(resolver != NULL);
+    assert(expr != NULL);
+    assert(expr->kind == CST_EXPR_ACCESS_DEREFERENCE);
+
+    struct expr const* const lhs =
+        resolve_expr(resolver, expr->data.access_dereference.lhs);
+
+    if (lhs->type->kind != TYPE_POINTER) {
+        fatal(
+            lhs->location,
+            "cannot dereference non-pointer type `%s`",
+            lhs->type->name);
+    }
+    struct expr* const resolved = expr_new_unary(
+        expr->location, lhs->type->data.pointer.base, UOP_DEREFERENCE, lhs);
+
+    autil_freezer_register(context()->freezer, resolved);
+    return resolved;
 }
 
 static struct expr const*

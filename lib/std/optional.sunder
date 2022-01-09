@@ -21,17 +21,17 @@ struct optional[[:T]] {
     }
 
     func is_some(self: *optional[[:T]]) bool {
-        return (*self)._is_some;
+        return self.*._is_some;
     }
 
     func is_none(self: *optional[[:T]]) bool {
-        return not (*self)._is_some;
+        return not self.*._is_some;
     }
 
     func unwrap(self: *optional[[:T]]) T {
-        if not (*self)._is_some {
+        if not self.*._is_some {
             std::panic("attempted to unwrap std::optional with `none` value");
         }
-        return (*self)._wrapped;
+        return self.*._wrapped;
     }
 }
