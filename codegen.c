@@ -306,22 +306,20 @@ append_dx_data(struct value const* value)
 
         if (autil_sbuf_count(elements) != 0) {
             for (size_t i = 0; i < autil_sbuf_count(elements); ++i) {
-                if (i == 0) {
-                    append("\n    ");
-                    append_dx_type(value->type->data.array.base);
-                    appendch(' ');
-                }
-                else {
-                    append(", ");
-                }
+                appendch('\n');
+                appendli("; element %zu", i);
+                append("    ");
+                append_dx_type(value->type->data.array.base);
+                appendch(' ');
                 append_dx_data(elements[i]);
             }
         }
         if (ellipsis != NULL) {
             size_t const times =
                 value->type->data.array.count - autil_sbuf_count(elements);
-            append("\n    ");
-            append("times %zu", times);
+            appendch('\n');
+            appendli("; ellipsis element...");
+            append("    times %zu", times);
             appendch(' ');
             append_dx_type(value->type->data.array.base);
             appendch(' ');
@@ -332,7 +330,17 @@ append_dx_data(struct value const* value)
     case TYPE_SLICE: {
         append_dx_data(value->data.slice.pointer);
         append(", ");
-        append_dx_data(value->data.slice.count);
+        // Due to an existing bug in the kinda hacky way that append_dx_type and
+        // append_dx_data work, the append_dx_data call on the pointer will
+        // correctly produce the dq address, but an append_dx_data on the usize
+        // count will be written out as bytes. Since both the pointer and the
+        // count need to be written in their qd representation, we manually
+        // write the dq value of the count here instead of making a call to
+        // append_dx_data.
+        char* const count_cstr = autil_bigint_to_new_cstr(
+            value->data.slice.count->data.integer, NULL);
+        append("%s", count_cstr);
+        autil_xalloc(count_cstr, AUTIL_XALLOC_FREE);
         return;
     }
     case TYPE_STRUCT: {
@@ -1825,54 +1833,48 @@ codegen_rvalue_access_member_variable(struct expr const* expr, size_t id)
     assert(expr->data.access_member_variable.lhs->type->kind == TYPE_STRUCT);
     (void)id;
 
-    // Copy the member variable data from within the struct onto the "top" of
-    // the stack, where "top" is the future address of the stack pointer at the
-    // end of the access operation.
+    // Create space on the top of the stack to hold the value of the accessed
+    // member variable. Then copy the member variable data from within the
+    // struct onto the top of the stack.
     //
     // Stack (start)
     //  | ... other values on the stack
-    //  +-- <- rsp
+    //  +-- <- initial rsp
     //  |
     //  v
     //
     // Stack (after evaluating the rvalue struct)
     //  | ... other values on the stack
-    //  +-- <- previous rsp
-    //  | member data       <-+
+    //  +-- <- initial rsp
+    //  | undefined byte(s)
+    //  +-- <- eventual rsp (after copying member data)
+    //  | some member data  <-+
     //  +--                   |
     //  | target member data  |
     //  +--                   +- struct rvalue
-    //  |...                  |
+    //  |... etc.             |
     //  +--                   |
-    //  | member data       <-+
-    //  +-- <- rsp
+    //  | some member data  <-+
+    //  +-- <- current rsp
     //  |
     //  v
     //
-    // Stack (goal)
+    // Stack (after copying member data)
     //  | ... other values on the stack
-    //  +-- <- previous rsp
+    //  +-- <- initial rsp
     //  | target member data
-    //  +-- <- rsp           <+
-    //  | member data         |
-    //  +--                   +- struct rvalue bytes are still on the stack,
-    //  |...                  |  but the target member data has been copied to
-    //  +--                   |  the "top" of the stack, possibly overwriting
-    //  | member data       <-+  other member data in the struct rvalue
-    //  +--
+    //  +-- <- current rsp
     //  |
     //  v
+    push(expr->type->size);
     codegen_rvalue(expr->data.access_member_variable.lhs);
-    // Offset from the current rsp to the future location of rsp once the member
-    // varaiable data is copied.
-    size_t const result_rsp_offset =
-        ceil8zu(expr->data.access_member_variable.lhs->type->size)
-        - ceil8zu(expr->type->size);
-    appendli("mov rax, rsp"); // rax := start of the target member variable
+    appendli("mov rax, rsp ; rax := start of the object");
     appendli(
-        "add rax, %zu",
+        "add rax, %zu ; rax := start of the member variable",
         expr->data.access_member_variable.member_variable->offset);
-    appendli("add rsp, %zu", result_rsp_offset);
+    appendli(
+        "add rsp, %zu ; rsp := location of the member variable result",
+        ceil8zu(expr->data.access_member_variable.lhs->type->size));
     copy_rax_rsp_via_rcx(expr->type->size);
 }
 
@@ -1964,7 +1966,7 @@ codegen_rvalue_unary(struct expr const* expr, size_t id)
             return;
         }
         codegen_rvalue(expr->data.unary.rhs);
-        appendli("pop rax");
+        appendli("pop rax ; pointer object being dereferenced");
         size_t const size = expr->type->size;
         push(size);
         copy_rax_rsp_via_rcx(size);

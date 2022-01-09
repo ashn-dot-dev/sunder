@@ -1,12 +1,16 @@
 namespace std;
+import "std/result.sunder";
 
 struct writer_vtable {
-    # TODO: Have the write function return
-    #   std::result[[void, void]]
-    # indicating general success or error *or* have the write function return
-    #   std::result[[void, std::writer_error]]
-    # if we ever define a writer_error type.
-    var write: func(*any, []byte) void;
+    ### func write(self: *any, bytes: []byte) std::result[[:usize, :[]byte]]
+    ###
+    ### Attempt to write `countof(bytes)` with the provided writer.
+    ###
+    ### On success this function returns the number of bytes written, which may
+    ### be less than `countof(bytes)` in the event of a partial write.
+    ###
+    ### On error this function returns a static string describing error.
+    var write: func(*any, []byte) std::result[[:usize, :[]byte]];
 }
 
 struct writer {
