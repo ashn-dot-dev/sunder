@@ -1,5 +1,6 @@
 import "std/formatter.sunder";
 import "std/io.sunder";
+import "std/mem.sunder";
 import "std/panic.sunder";
 import "std/writer.sunder";
 
@@ -11,13 +12,23 @@ struct name {
         return (:name){.first = first, .last = last};
     }
 
-    func format(self: *name, writer: *std::writer, format: []byte) void {
-        if (countof(format) != 0) {
-            std::panic("format error");
+    func format(self: *name, writer: *std::writer, fmt: []byte) std::result[[:usize, :[]byte]] {
+        if countof(fmt) != 0 {
+            return std::result[[:usize, :[]byte]]::init_error(std::formatter::INVALID_FORMAT_SPECIFIER);
         }
-        writer.*.vtable.*.write(writer.*.self, self.*.first);
-        writer.*.vtable.*.write(writer.*.self, " ");
-        writer.*.vtable.*.write(writer.*.self, self.*.last);
+
+        var written: usize = 0;
+        var result: std::result[[:usize, :[]byte]] = std::mem::zeroed[[:std::result[[:usize, :[]byte]]]]();
+
+        # Just assume all these writes will succeed lmao.
+        result = writer.*.write_all(self.*.first);
+        written = written + result.value();
+        result = writer.*.write_all(" ");
+        written = written + result.value();
+        result = writer.*.write_all(self.*.last);
+        written = written + result.value();
+
+        return std::result[[:usize, :[]byte]]::init_value(written);
     }
 }
 
@@ -27,28 +38,25 @@ struct int {
     # printed in octal, or "x" to be printed in hexadecimal. For not we'll
     # avoid the actual int->bytes conversion part and just print the specifier
     # choice.
-    func format(self: *name, writer: *std::writer, format: []byte) void {
-        if (countof(format) != 1) {
-            std::panic("format error");
+    func format(self: *name, writer: *std::writer, fmt: []byte) std::result[[:usize, :[]byte]] {
+        if countof(fmt) == 0 {
+            return writer.*.write_all("decimal\n");
         }
-        var c: byte = format[0];
-        if (c == 'd') {
-            writer.*.vtable.*.write(writer.*.self, "decimal\n");
-            return;
+
+        var c: byte = fmt[0];
+        if c == 'd' {
+            return writer.*.write_all("decimal\n");
         }
-        if (c == 'b') {
-            writer.*.vtable.*.write(writer.*.self, "binary\n");
-            return;
+        if c == 'b' {
+            return writer.*.write_all("binary\n");
         }
-        if (c == 'o') {
-            writer.*.vtable.*.write(writer.*.self, "octal\n");
-            return;
+        if c == 'o' {
+            return writer.*.write_all("octal\n");
         }
-        if (c == 'x') {
-            writer.*.vtable.*.write(writer.*.self, "hexadecimal\n");
-            return;
+        if c == 'x' {
+            return writer.*.write_all("hexadecimal\n");
         }
-        std::panic("format error");
+        return std::result[[:usize, :[]byte]]::init_error(std::formatter::INVALID_FORMAT_SPECIFIER);
     }
 }
 
@@ -62,23 +70,26 @@ func main() void {
     var a_formatter: std::formatter = std::formatter::init[[:name]](&a);
     var b_formatter: std::formatter = std::formatter::init[[:name]](&b);
 
-    a_formatter.vtable.*.format(a_formatter.self, &writer, "");
-    writer.vtable.*.write(writer.self, " and ");
-    b_formatter.vtable.*.format(b_formatter.self, &writer, "");
-    writer.vtable.*.write(writer.self, " are amazing players!\n");
+    a_formatter.format(&writer, "");
+    writer.write(" and ");
+    b_formatter.format(&writer, "");
+    writer.write(" are amazing players!\n");
 
     var i: int = (:int){};
     var i_formatter: std::formatter = std::formatter::init[[:int]](&i);
-    i_formatter.vtable.*.format(i_formatter.self, &writer, "d");
-    i_formatter.vtable.*.format(i_formatter.self, &writer, "b");
-    i_formatter.vtable.*.format(i_formatter.self, &writer, "o");
-    i_formatter.vtable.*.format(i_formatter.self, &writer, "x");
-    i_formatter.vtable.*.format(i_formatter.self, &writer, "boom");
+    i_formatter.format(&writer, "");
+    i_formatter.format(&writer, "d");
+    i_formatter.format(&writer, "b");
+    i_formatter.format(&writer, "o");
+    i_formatter.format(&writer, "x");
+    var result: std::result[[:usize, :[]byte]] = i_formatter.format(&writer, "nope");
+    std::eprintln(result.error());
 }
 ################################################################################
 # Nona Gaprindashvili and Judit Polgar are amazing players!
 # decimal
+# decimal
 # binary
 # octal
 # hexadecimal
-# panic: format error
+# invalid format specifier

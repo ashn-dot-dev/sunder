@@ -6,13 +6,16 @@ func main() void {
     std::stderr.write("Hello, stderr!\n");
 
     var stdout_writer: std::writer = std::writer::init[[:std::stream]](&std::stdout);
-    stdout_writer.vtable.*.write(stdout_writer.self, "Hello, stdout_writer!\n");
+    stdout_writer.write("Hello, stdout_writer!\n");
 
     var stderr_writer: std::writer = std::writer::init[[:std::stream]](&std::stderr);
-    stderr_writer.vtable.*.write(stderr_writer.self, "Hello, stderr_writer!\n");
+    stderr_writer.write("Hello, stderr_writer!\n");
+
+    stdout_writer.write_all("Call to write_all!\n");
 }
 ################################################################################
 # Hello, stdout!
 # Hello, stderr!
 # Hello, stdout_writer!
 # Hello, stderr_writer!
+# Call to write_all!

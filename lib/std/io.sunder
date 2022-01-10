@@ -30,7 +30,7 @@ const stderr: stream = (:stream){.fd = stream::STDERR_FD};
 
 func print(bytes: []byte) void {
     var writer: std::writer = std::writer::init[[:std::stream]](&std::stdout);
-    var result: std::result[[:usize, :[]byte]] = writer.vtable.*.write(writer.self, bytes);
+    var result: std::result[[:usize, :[]byte]] = writer.write(bytes);
     if result.is_error() {
         std::panic(result.error());
     }
@@ -43,7 +43,7 @@ func println(bytes: []byte) void {
 
 func eprint(bytes: []byte) void {
     var writer: std::writer = std::writer::init[[:std::stream]](&std::stderr);
-    var result: std::result[[:usize, :[]byte]] = writer.vtable.*.write(writer.self, bytes);
+    var result: std::result[[:usize, :[]byte]] = writer.write(bytes);
     if result.is_error() {
         std::panic(result.error());
     }

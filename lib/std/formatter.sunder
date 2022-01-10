@@ -2,20 +2,44 @@ namespace std;
 import "std/writer.sunder";
 
 struct formatter_vtable {
-    var format: func(*any, *std::writer, []byte) void;
+    ### func format(self: *any, writer: *std::writer, fmt: []byte) std::result[[:usize, :[]byte]]
+    ###
+    ### Write a formatted string representation of `self` to the provided
+    ### writer. The format specifier `fmt` describes *how* to format `self`.
+    ### Generally each type will implement its own type-specific format
+    ### specifier(s). However, the empty format specifier `""` should always be
+    ### handled as a "default formatting" case.
+    ###
+    ### On success this function returns the number of bytes written to the
+    ### provided writer. Types implementing this function should ensure that
+    ### all bytes are written to the provided writer.
+    ###
+    ### On error this function returns a static string describing the error.
+    ### In the event of a write error, the erroneous write result should be
+    ### returned. In the event of an invalid format specifier error (the
+    #### provided format specifier does not match any format specifier
+    ### implemented by the type) the error
+    ### `std::formatter::INVALID_FORMAT_SPECIFIER` should be returned.
+    var format: func(*any, *std::writer, []byte) std::result[[:usize, :[]byte]];
 }
 
 struct formatter {
     var vtable: *std::formatter_vtable;
-    var self: *any;
+    var object: *any;
 
-    func init[[:T]](self: *T) std::formatter {
+    const INVALID_FORMAT_SPECIFIER: []byte = "invalid format specifier";
+
+    func init[[:T]](object: *T) std::formatter {
         const vtable: std::formatter_vtable = (:std::formatter_vtable){
             .format = T::format
         };
         return (:std::formatter){
             .vtable = &vtable,
-            .self = self
+            .object = object
         };
+    }
+
+    func format(self: *formatter, writer: *std::writer, fmt: []byte) std::result[[:usize, :[]byte]] {
+        return self.*.vtable.*.format(self.*.object, writer, fmt);
     }
 }

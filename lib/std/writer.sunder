@@ -4,26 +4,42 @@ import "std/result.sunder";
 struct writer_vtable {
     ### func write(self: *any, bytes: []byte) std::result[[:usize, :[]byte]]
     ###
-    ### Attempt to write `countof(bytes)` with the provided writer.
+    ### Write `countof(bytes)` using the provided writer.
     ###
     ### On success this function returns the number of bytes written, which may
     ### be less than `countof(bytes)` in the event of a partial write.
     ###
-    ### On error this function returns a static string describing error.
+    ### On error this function returns a static string describing the error.
     var write: func(*any, []byte) std::result[[:usize, :[]byte]];
 }
 
 struct writer {
     var vtable: *std::writer_vtable;
-    var self: *any;
+    var object: *any;
 
-    func init[[:T]](self: *T) std::writer {
+    func init[[:T]](object: *T) std::writer {
         const vtable: std::writer_vtable = (:std::writer_vtable){
             .write = T::write
         };
         return (:std::writer){
             .vtable = &vtable,
-            .self = self
+            .object = object
         };
+    }
+
+    func write(self: *writer, bytes: []byte) std::result[[:usize, :[]byte]] {
+        return self.*.vtable.*.write(self.*.object, bytes);
+    }
+
+    func write_all(self: *writer, bytes: []byte) std::result[[:usize, :[]byte]] {
+        var written: usize = 0;
+        for written < countof(bytes) {
+            var result: std::result[[:usize, :[]byte]] = self.*.write(bytes[written:countof(bytes)]);
+            if result.is_error() {
+                return result;
+            }
+            written = written + result.value();
+        }
+        return std::result[[:usize, :[]byte]]::init_value(written);
     }
 }
