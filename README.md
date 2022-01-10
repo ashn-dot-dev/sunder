@@ -68,7 +68,7 @@ Compiling the source file `hello.sunder` into the executable `hello`.
 import "std/io.sunder";
 
 func main() void {
-    std::println("Hello, world!");
+    std::out.println("Hello, world!");
 }
 ```
 ```sh

@@ -61,8 +61,7 @@ struct int {
 }
 
 func main() void {
-    var writer: std::writer =
-        std::writer::init[[:std::stream]](&std::out);
+    var writer: std::writer = std::writer::init[[:std::stream]](&std::out);
 
     var a: name = name::init("Nona", "Gaprindashvili");
     var b: name = name::init("Judit", "Polgar");
@@ -83,7 +82,7 @@ func main() void {
     i_formatter.format(&writer, "o");
     i_formatter.format(&writer, "x");
     var result: std::result[[:usize, :[]byte]] = i_formatter.format(&writer, "nope");
-    std::eprintln(result.error());
+    std::err.println(result.error());
 }
 ################################################################################
 # Nona Gaprindashvili and Judit Polgar are amazing players!

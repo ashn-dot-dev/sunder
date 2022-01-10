@@ -12,6 +12,9 @@ func main() void {
     stderr_writer.write("Hello, stderr_writer!\n");
 
     stdout_writer.write_all("Call to write_all!\n");
+
+    std::out.print("foo");
+    std::out.println("bar");
 }
 ################################################################################
 # Hello, stdout!
@@ -19,3 +22,4 @@ func main() void {
 # Hello, stdout_writer!
 # Hello, stderr_writer!
 # Call to write_all!
+# foobar

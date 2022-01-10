@@ -6,8 +6,8 @@ import "sys/sys.sunder";
 func cat(filename: *byte) void {
     var sysret: ssize = sys::open(filename, sys::O_RDONLY, 0);
     if sysret < 0 {
-        std::eprint(std::cstr::to_bytes(filename));
-        std::eprintln(": failed to open file");
+        std::err.print(std::cstr::to_bytes(filename));
+        std::err.println(": failed to open file");
         sys::exit(1);
     }
 
@@ -16,8 +16,8 @@ func cat(filename: *byte) void {
     for true {
         sysret = sys::read(fd, &buf[0], countof(buf));
         if sysret < 0 {
-            std::eprint(std::cstr::to_bytes(filename));
-            std::eprintln(": read error");
+            std::err.print(std::cstr::to_bytes(filename));
+            std::err.println(": read error");
             sys::exit(1);
         }
 
@@ -27,8 +27,8 @@ func cat(filename: *byte) void {
 
         sysret = sys::write(sys::STDOUT_FILENO, &buf[0], (:usize)sysret);
         if sysret < 0 {
-            std::eprint(std::cstr::to_bytes(filename));
-            std::eprintln(": write error");
+            std::err.print(std::cstr::to_bytes(filename));
+            std::err.println(": write error");
             sys::exit(1);
         }
     }

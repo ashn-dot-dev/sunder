@@ -1,7 +1,7 @@
 import "std/io.sunder";
 
 func main() void {
-    std::println("Hello, world!");
+    std::out.println("Hello, world!");
 }
 ################################################################################
 # Hello, world!

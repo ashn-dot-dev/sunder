@@ -6,9 +6,6 @@ import "sys/sys.sunder";
 struct stream {
     var fd: ssize;
 
-    const STDOUT_FD: ssize = (:ssize)sys::STDOUT_FILENO;
-    const STDERR_FD: ssize = (:ssize)sys::STDERR_FILENO;
-
     func write(self: *stream, bytes: []byte) std::result[[:usize, :[]byte]] {
         if countof(bytes) == 0 {
             return std::result[[:usize, :[]byte]]::init_value(0);
@@ -23,33 +20,20 @@ struct stream {
 
         return std::result[[:usize, :[]byte]]::init_value((:usize)sysret);
     }
-}
 
-const out: stream = (:stream){.fd = stream::STDOUT_FD};
-const err: stream = (:stream){.fd = stream::STDERR_FD};
+    func print(self: *stream, bytes: []byte) void {
+        var writer: std::writer = std::writer::init[[:std::stream]](self);
+        var result: std::result[[:usize, :[]byte]] = writer.write_all(bytes);
+        if result.is_error() {
+            std::panic(result.error());
+        }
+    }
 
-func print(bytes: []byte) void {
-    var writer: std::writer = std::writer::init[[:std::stream]](&std::out);
-    var result: std::result[[:usize, :[]byte]] = writer.write(bytes);
-    if result.is_error() {
-        std::panic(result.error());
+    func println(self: *stream, bytes: []byte) void {
+        self.*.print(bytes);
+        self.*.print("\n");
     }
 }
 
-func println(bytes: []byte) void {
-    print(bytes);
-    print("\n");
-}
-
-func eprint(bytes: []byte) void {
-    var writer: std::writer = std::writer::init[[:std::stream]](&std::err);
-    var result: std::result[[:usize, :[]byte]] = writer.write(bytes);
-    if result.is_error() {
-        std::panic(result.error());
-    }
-}
-
-func eprintln(bytes: []byte) void {
-    eprint(bytes);
-    eprint("\n");
-}
+const out: stream = (:stream){.fd = (:ssize)sys::STDOUT_FILENO};
+const err: stream = (:stream){.fd = (:ssize)sys::STDERR_FILENO};

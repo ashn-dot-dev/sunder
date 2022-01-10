@@ -4,7 +4,7 @@ import "sys/sys.sunder"; # Declares sys::argc and sys::argv as extern.
 
 func main() void {
     var bytes: []byte = (:[]byte){*sys::argv, std::cstr::count(*sys::argv)};
-    std::println(bytes);
+    std::out.println(bytes);
 }
 ################################################################################
 # ./a.out

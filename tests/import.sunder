@@ -10,7 +10,7 @@ func main() void {
     c = c + 1u16;
     dump c;
 
-    std::println("imported from the standard library");
+    std::out.println("imported from the standard library");
 }
 ################################################################################
 # AA AA
