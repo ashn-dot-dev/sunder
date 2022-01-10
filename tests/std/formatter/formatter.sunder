@@ -62,7 +62,7 @@ struct int {
 
 func main() void {
     var writer: std::writer =
-        std::writer::init[[:std::stream]](&std::stdout);
+        std::writer::init[[:std::stream]](&std::out);
 
     var a: name = name::init("Nona", "Gaprindashvili");
     var b: name = name::init("Judit", "Polgar");

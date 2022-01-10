@@ -25,11 +25,11 @@ struct stream {
     }
 }
 
-const stdout: stream = (:stream){.fd = stream::STDOUT_FD};
-const stderr: stream = (:stream){.fd = stream::STDERR_FD};
+const out: stream = (:stream){.fd = stream::STDOUT_FD};
+const err: stream = (:stream){.fd = stream::STDERR_FD};
 
 func print(bytes: []byte) void {
-    var writer: std::writer = std::writer::init[[:std::stream]](&std::stdout);
+    var writer: std::writer = std::writer::init[[:std::stream]](&std::out);
     var result: std::result[[:usize, :[]byte]] = writer.write(bytes);
     if result.is_error() {
         std::panic(result.error());
@@ -42,7 +42,7 @@ func println(bytes: []byte) void {
 }
 
 func eprint(bytes: []byte) void {
-    var writer: std::writer = std::writer::init[[:std::stream]](&std::stderr);
+    var writer: std::writer = std::writer::init[[:std::stream]](&std::err);
     var result: std::result[[:usize, :[]byte]] = writer.write(bytes);
     if result.is_error() {
         std::panic(result.error());

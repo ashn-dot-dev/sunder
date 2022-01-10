@@ -5,9 +5,9 @@ func main() void {
     var stream: std::stream = (:std::stream){.fd = 0xBEEFCAFE};
     var res: std::result[[:usize, :[]byte]] = stream.write("nope");
 
-    std::stdout.write("error: ");
-    std::stdout.write(res.error());
-    std::stdout.write("\n");
+    std::out.write("error: ");
+    std::out.write(res.error());
+    std::out.write("\n");
 }
 ################################################################################
 # error: Bad file descriptor
