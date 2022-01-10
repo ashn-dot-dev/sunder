@@ -4,7 +4,7 @@ import "std/result.sunder";
 struct writer_vtable {
     ### func write(self: *any, bytes: []byte) std::result[[:usize, :[]byte]]
     ###
-    ### Write `countof(bytes)` using the provided writer.
+    ### Attempt to write `countof(bytes)` using the provided writer.
     ###
     ### On success this function returns the number of bytes written, which may
     ### be less than `countof(bytes)` in the event of a partial write.
