@@ -31,7 +31,7 @@ be overridden. See `sh build.sh --help` for details.
 Specific compiler/compiler-flag combinations include:
 ```sh
 $ make <targets> CFLAGS='$(C99_DBG)'  # POSIX c99 (debug)
-$ make <targets>                      # POSIX c99 (release)
+$ make <targets> CFLAGS='$(C99_REL)'  # POSIX c99 (release)
 
 $ # Use CC=clang for Clang or CC=gcc for GCC
 $ make <targets> CC=clang CFLAGS='$(GNU_DBG)'              # clang/gcc (debug)

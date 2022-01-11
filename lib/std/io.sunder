@@ -4,14 +4,14 @@ import "std/result.sunder";
 import "sys/sys.sunder";
 
 struct writer_vtable {
-    ### func write(self: *any, bytes: []byte) std::result[[:usize, :[]byte]]
-    ###
-    ### Attempt to write `countof(bytes)` using the provided writer.
-    ###
-    ### On success this function returns the number of bytes written, which may
-    ### be less than `countof(bytes)` in the event of a partial write.
-    ###
-    ### On error this function returns a static string describing the error.
+    # func write(self: *any, bytes: []byte) std::result[[:usize, :[]byte]]
+    #
+    # Attempt to write `countof(bytes)` using the provided writer.
+    #
+    # On success this function returns the number of bytes written, which may
+    # be less than `countof(bytes)` in the event of a partial write.
+    #
+    # On error this function returns a static string describing the error.
     var write: func(*any, []byte) std::result[[:usize, :[]byte]];
 }
 
@@ -47,27 +47,27 @@ func write_all(writer: std::writer, bytes: []byte) std::result[[:usize, :[]byte]
 }
 
 struct formatter_vtable {
-    ### func format(self: *any, writer: std::writer, fmt: []byte) std::result[[:usize, :[]byte]]
-    ###
-    ### Write a formatted string representation of `self` to the provided
-    ### writer. The format specifier `fmt` describes *how* to format `self`.
-    ### Generally each type will implement its own type-specific format
-    ### specifier(s). However, the empty format specifier `""` should always be
-    ### handled as a "default formatting" case.
-    ###
-    ### On success this function returns the number of bytes written to the
-    ### provided writer. Types implementing this function should ensure that
-    ### all bytes are written to the provided writer.
-    ###
-    ### On error this function returns a static string describing the error.
-    ### In the event of a write error, the erroneous write result should be
-    ### returned. In the event of an invalid format specifier error (the
-    ### provided format specifier does not match any format specifier
-    ### implemented by the type) the error
-    ###
-    ###     std::formatter::INVALID_FORMAT_SPECIFIER
-    ###
-    ### should be returned.
+    # func format(self: *any, writer: std::writer, fmt: []byte) std::result[[:usize, :[]byte]]
+    #
+    # Write a formatted string representation of `self` to the provided writer.
+    # The format specifier `fmt` describes *how* to format `self`. Generally
+    # each type will implement its own type-specific format specifier(s).
+    # However, the empty format specifier `""` should always be handled as a
+    # "default formatting" case.
+    #
+    # On success this function returns the number of bytes written to the
+    # provided writer. Types implementing this function should ensure that all
+    # bytes are written to the provided writer.
+    #
+    # On error this function returns a static string describing the error. In
+    # the event of a write error, the erroneous write result should be
+    # returned. In the event of an invalid format specifier error (the provided
+    # format specifier does not match any format specifier implemented by the
+    # type) the error
+    #
+    #     std::formatter::INVALID_FORMAT_SPECIFIER
+    #
+    # should be returned.
     var format: func(*any, std::writer, []byte) std::result[[:usize, :[]byte]];
 }
 
@@ -142,7 +142,7 @@ func write_format(writer: std::writer, format: []byte, args: []std::formatter) s
                 # "some}}text"
                 #      ^^ Escaped '{' or '}' character.
                 var res: std::result[[:usize, :[]byte]] = std::write_all(writer, format[start:end+1]);
-                if (res.is_error()) {
+                if res.is_error() {
                     return res;
                 }
                 written = written + res.value();
@@ -160,7 +160,7 @@ func write_format(writer: std::writer, format: []byte, args: []std::formatter) s
             # "some{fmt}text"
             #      ^ Start of format specifier.
             var res: std::result[[:usize, :[]byte]] = std::write_all(writer, format[start:end]);
-            if (res.is_error()) {
+            if res.is_error() {
                 return res;
             }
             written = written + res.value();
@@ -193,7 +193,7 @@ func write_format(writer: std::writer, format: []byte, args: []std::formatter) s
             # "some{fmt}text"
             #          ^ End of format specifier.
             var res: std::result[[:usize, :[]byte]] = args[arg].format(writer, format[start:end]);
-            if (res.is_error()) {
+            if res.is_error() {
                 return res;
             }
             written = written + res.value();
@@ -216,10 +216,19 @@ func write_format(writer: std::writer, format: []byte, args: []std::formatter) s
     # "some{fmt}text"
     #           ^^^^ Write the remaining walked text.
     var res: std::result[[:usize, :[]byte]] = std::write_all(writer, format[start:end]);
-    if (res.is_error()) {
+    if res.is_error() {
         return res;
     }
     written = written + res.value();
+
+    # Call with a format string "some {fmt} text" (N format specifiers) and N+M
+    # format arguments for some non-zero M. Passing extra format arguments is a
+    # hard error, but we specifically check for this error *after* the rest of
+    # the walked text has been written so that users will be able to observe
+    # that an error occurred even though the full formatted string was written.
+    if arg != countof(args) {
+        return std::result[[:usize, :[]byte]]::init_error(INVALID_FORMAT_ARG_COUNT);
+    }
 
     # Formatting was successful. Return the total number of bytes written.
     return std::result[[:usize, :[]byte]]::init_value(written);

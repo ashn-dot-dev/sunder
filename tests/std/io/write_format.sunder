@@ -190,6 +190,21 @@ func test10() void {
     std::err.println(res.error());
 }
 
+func test11() void {
+    var writer: std::writer = std::writer::init[[:std::stream]](&std::out);
+
+    var alice: person = (:person){.name = "Alice"};
+    var bob: person = (:person){.name = "Bob"};
+
+    var args: [2]std::formatter = (:[2]std::formatter)[
+        std::formatter::init[[:person]](&alice),
+        std::formatter::init[[:person]](&bob)
+    ];
+    var res: std::result[[:usize, :[]byte]] =
+        std::write_format(writer, "{} is alone", args[0:countof(args)]);
+    std::err.println(res.error());
+}
+
 func main() void {
     test0();
     test1();
@@ -202,6 +217,7 @@ func main() void {
     test8();
     test9();
     test10();
+    test11();
 }
 ################################################################################
 # Alice and Bob
@@ -220,3 +236,4 @@ func main() void {
 # invalid format string
 # Alice and Bob and invalid format argument count
 # fooinvalid format string
+# Alice is aloneinvalid format argument count

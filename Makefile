@@ -26,7 +26,7 @@ GNU_REL = $(GNU_BASE) -Os -DNDEBUG
 SANITIZE = -fsanitize=address -fsanitize=leak -fsanitize=undefined
 
 CC = c99
-CFLAGS = $(C99_REL)
+CFLAGS = $(C99_DBG)
 INCS = -Ideps
 
 SUNDER_HOME="$$HOME/.sunder"
