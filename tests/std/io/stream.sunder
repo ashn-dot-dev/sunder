@@ -11,7 +11,7 @@ func main() void {
     var stderr_writer: std::writer = std::writer::init[[:std::stream]](&std::err);
     stderr_writer.write("Hello, stderr_writer!\n");
 
-    stdout_writer.write_all("Call to write_all!\n");
+    std::write_all(stdout_writer, "Call to write_all!\n");
 
     std::out.print("foo");
     std::out.println("bar");

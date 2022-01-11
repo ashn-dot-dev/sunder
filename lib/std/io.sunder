@@ -23,7 +23,7 @@ struct stream {
 
     func print(self: *stream, bytes: []byte) void {
         var writer: std::writer = std::writer::init[[:std::stream]](self);
-        var result: std::result[[:usize, :[]byte]] = writer.write_all(bytes);
+        var result: std::result[[:usize, :[]byte]] = std::write_all(writer, bytes);
         if result.is_error() {
             std::panic(result.error());
         }

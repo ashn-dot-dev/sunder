@@ -3,7 +3,7 @@ import "std/panic.sunder";
 import "std/writer.sunder";
 
 struct formatter_vtable {
-    ### func format(self: *any, writer: *std::writer, fmt: []byte) std::result[[:usize, :[]byte]]
+    ### func format(self: *any, writer: std::writer, fmt: []byte) std::result[[:usize, :[]byte]]
     ###
     ### Write a formatted string representation of `self` to the provided
     ### writer. The format specifier `fmt` describes *how* to format `self`.
@@ -21,7 +21,7 @@ struct formatter_vtable {
     #### provided format specifier does not match any format specifier
     ### implemented by the type) the error
     ### `std::formatter::INVALID_FORMAT_SPECIFIER` should be returned.
-    var format: func(*any, *std::writer, []byte) std::result[[:usize, :[]byte]];
+    var format: func(*any, std::writer, []byte) std::result[[:usize, :[]byte]];
 }
 
 struct formatter {
@@ -40,12 +40,12 @@ struct formatter {
         };
     }
 
-    func format(self: *formatter, writer: *std::writer, fmt: []byte) std::result[[:usize, :[]byte]] {
+    func format(self: *formatter, writer: std::writer, fmt: []byte) std::result[[:usize, :[]byte]] {
         return self.*.vtable.*.format(self.*.object, writer, fmt);
     }
 }
 
-func write_format(writer: *std::writer, format: []byte, args: []std::formatter) std::result[[:usize, :[]byte]] {
+func write_format(writer: std::writer, format: []byte, args: []std::formatter) std::result[[:usize, :[]byte]] {
     # Current format argument index.
     var arg: usize = 0;
 
@@ -92,7 +92,7 @@ func write_format(writer: *std::writer, format: []byte, args: []std::formatter) 
                 #      ^^
                 # "some}}text"
                 #      ^^ Escaped '{' or '}' character.
-                var res: std::result[[:usize, :[]byte]] = writer.*.write_all(format[start:end+1]);
+                var res: std::result[[:usize, :[]byte]] = std::write_all(writer, format[start:end+1]);
                 if (res.is_error()) {
                     return res;
                 }
@@ -110,7 +110,7 @@ func write_format(writer: *std::writer, format: []byte, args: []std::formatter) 
 
             # "some{fmt}text"
             #      ^ Start of format specifier.
-            var res: std::result[[:usize, :[]byte]] = writer.*.write_all(format[start:end]);
+            var res: std::result[[:usize, :[]byte]] = std::write_all(writer, format[start:end]);
             if (res.is_error()) {
                 return res;
             }
@@ -166,7 +166,7 @@ func write_format(writer: *std::writer, format: []byte, args: []std::formatter) 
 
     # "some{fmt}text"
     #           ^^^^ Write the remaining walked text.
-    var res: std::result[[:usize, :[]byte]] = writer.*.write_all(format[start:end]);
+    var res: std::result[[:usize, :[]byte]] = std::write_all(writer, format[start:end]);
     if (res.is_error()) {
         return res;
     }

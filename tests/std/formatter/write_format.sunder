@@ -5,32 +5,32 @@ import "std/writer.sunder";
 struct person {
     var name: []byte;
 
-    func format(self: *person, writer: *std::writer, fmt: []byte) std::result[[:usize, :[]byte]] {
+    func format(self: *person, writer: std::writer, fmt: []byte) std::result[[:usize, :[]byte]] {
         if countof(fmt) != 0 {
             return std::result[[:usize, :[]byte]]::init_error(std::formatter::INVALID_FORMAT_SPECIFIER);
         }
-        return writer.*.write_all(self.*.name);
+        return std::write_all(writer, self.*.name);
     }
 }
 
 struct int {
-    func format(self: *int, writer: *std::writer, fmt: []byte) std::result[[:usize, :[]byte]] {
+    func format(self: *int, writer: std::writer, fmt: []byte) std::result[[:usize, :[]byte]] {
         if countof(fmt) == 0 {
-            return writer.*.write_all("decimal");
+            return std::write_all(writer, "decimal");
         }
 
         var c: byte = fmt[0];
         if c == 'd' {
-            return writer.*.write_all("decimal");
+            return std::write_all(writer, "decimal");
         }
         if c == 'b' {
-            return writer.*.write_all("binary");
+            return std::write_all(writer, "binary");
         }
         if c == 'o' {
-            return writer.*.write_all("octal");
+            return std::write_all(writer, "octal");
         }
         if c == 'x' {
-            return writer.*.write_all("hexadecimal");
+            return std::write_all(writer, "hexadecimal");
         }
         return std::result[[:usize, :[]byte]]::init_error(std::formatter::INVALID_FORMAT_SPECIFIER);
     }
@@ -47,7 +47,7 @@ func test0() void {
         std::formatter::init[[:person]](&bob)
     ];
     var res: std::result[[:usize, :[]byte]] =
-        std::write_format(&writer, "{} and {}", args[0:countof(args)]);
+        std::write_format(writer, "{} and {}", args[0:countof(args)]);
     writer.write("\n"); # Separate '\n' to test format string ending in "{}".
     dump res.value();
 }
@@ -65,7 +65,7 @@ func test1() void {
         std::formatter::init[[:int]](&i)
     ];
     var res: std::result[[:usize, :[]byte]] =
-        std::write_format(&writer, "{} {d} {b} {o} {x}\n", args[0:countof(args)]);
+        std::write_format(writer, "{} {d} {b} {o} {x}\n", args[0:countof(args)]);
     dump res.value();
 }
 
@@ -80,7 +80,7 @@ func test2() void {
         std::formatter::init[[:person]](&bob)
     ];
     var res: std::result[[:usize, :[]byte]] =
-        std::write_format(&writer, "{{ {} {{ {} {{\n", args[0:countof(args)]);
+        std::write_format(writer, "{{ {} {{ {} {{\n", args[0:countof(args)]);
     dump res.value();
 }
 
@@ -95,7 +95,7 @@ func test3() void {
         std::formatter::init[[:person]](&bob)
     ];
     var res: std::result[[:usize, :[]byte]] =
-        std::write_format(&writer, "}} {} }} {} }}\n", args[0:countof(args)]);
+        std::write_format(writer, "}} {} }} {} }}\n", args[0:countof(args)]);
     dump res.value();
 }
 
@@ -108,7 +108,7 @@ func test4() void {
         std::formatter::init[[:person]](&alice)
     ];
     var res: std::result[[:usize, :[]byte]] =
-        std::write_format(&writer, "{{{}\n", args[0:countof(args)]);
+        std::write_format(writer, "{{{}\n", args[0:countof(args)]);
     dump res.value();
 }
 
@@ -121,7 +121,7 @@ func test5() void {
         std::formatter::init[[:person]](&alice)
     ];
     var res: std::result[[:usize, :[]byte]] =
-        std::write_format(&writer, "{}}}\n", args[0:countof(args)]);
+        std::write_format(writer, "{}}}\n", args[0:countof(args)]);
     std::err.println(res.error());
 }
 
@@ -134,7 +134,7 @@ func test6() void {
         std::formatter::init[[:person]](&alice)
     ];
     var res: std::result[[:usize, :[]byte]] =
-        std::write_format(&writer, "foo{", args[0:countof(args)]);
+        std::write_format(writer, "foo{", args[0:countof(args)]);
     std::err.println(res.error());
 }
 
@@ -147,7 +147,7 @@ func test7() void {
         std::formatter::init[[:person]](&alice)
     ];
     var res: std::result[[:usize, :[]byte]] =
-        std::write_format(&writer, "bar}", args[0:countof(args)]);
+        std::write_format(writer, "bar}", args[0:countof(args)]);
     std::err.println(res.error());
 }
 
@@ -160,7 +160,7 @@ func test8() void {
         std::formatter::init[[:person]](&alice)
     ];
     var res: std::result[[:usize, :[]byte]] =
-        std::write_format(&writer, "baz}qux", args[0:countof(args)]);
+        std::write_format(writer, "baz}qux", args[0:countof(args)]);
     std::err.println(res.error());
 }
 
@@ -175,7 +175,7 @@ func test9() void {
         std::formatter::init[[:person]](&bob)
     ];
     var res: std::result[[:usize, :[]byte]] =
-        std::write_format(&writer, "{} and {} and {}\n", args[0:countof(args)]);
+        std::write_format(writer, "{} and {} and {}\n", args[0:countof(args)]);
     std::err.println(res.error());
 }
 
@@ -188,7 +188,7 @@ func test10() void {
         std::formatter::init[[:person]](&alice)
     ];
     var res: std::result[[:usize, :[]byte]] =
-        std::write_format(&writer, "foo{bar", args[0:countof(args)]);
+        std::write_format(writer, "foo{bar", args[0:countof(args)]);
     std::err.println(res.error());
 }
 

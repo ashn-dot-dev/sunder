@@ -1759,7 +1759,8 @@ codegen_rvalue_access_slice_lhs_array(struct expr const* expr, size_t id)
 
     appendli("%s%zu_oob_check_bgnidx:", LABEL_EXPR, id);
     appendli("cmp rax, rcx"); // cmp begin count
-    appendli("jbe %s%zu_oob_check_endidx", LABEL_EXPR, id); // jmp begin <= count
+    appendli(
+        "jbe %s%zu_oob_check_endidx", LABEL_EXPR, id); // jmp begin <= count
     appendli("call __index_oob_handler");
 
     appendli("%s%zu_oob_check_endidx:", LABEL_EXPR, id);
@@ -1810,7 +1811,8 @@ codegen_rvalue_access_slice_lhs_slice(struct expr const* expr, size_t id)
 
     appendli("%s%zu_oob_check_bgnidx:", LABEL_EXPR, id);
     appendli("cmp rax, rcx"); // cmp begin count
-    appendli("jbe %s%zu_oob_check_endidx", LABEL_EXPR, id); // jmp begin <= count
+    appendli(
+        "jbe %s%zu_oob_check_endidx", LABEL_EXPR, id); // jmp begin <= count
     appendli("call __index_oob_handler");
 
     appendli("%s%zu_oob_check_endidx:", LABEL_EXPR, id);
@@ -2420,7 +2422,9 @@ codegen_lvalue_symbol(struct expr const* expr, size_t id)
         // Zero-sized objects should take up zero space. Attempting to take the
         // address of a zero-sized symbol should always produce a pointer with
         // the value zero.
-        appendli("push __nil ; address of type `%s` with size zero", expr->type->name);
+        appendli(
+            "push __nil ; address of type `%s` with size zero",
+            expr->type->name);
         return;
     }
     push_address(expr->data.symbol->address);
