@@ -1,4 +1,4 @@
-# Routines for pointers that represent array-like data and may may be NULL.
+# Routines for pointers that represent array-like data and may be NULL.
 namespace std::cptr;
 
 func is_null[[:T]](ptr: *T) bool {
