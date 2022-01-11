@@ -828,6 +828,9 @@ codegen_static_object(struct symbol const* symbol)
     struct value const* const value = symbol->value;
     struct type const* const type = value->type;
     if (type->size == 0) {
+        // Zero-sized objects should take up zero space. Attempting to take the
+        // address of a zero-sized symbol should always produce a pointer with
+        // the value zero.
         return;
     }
 
@@ -1751,12 +1754,12 @@ codegen_rvalue_access_slice_lhs_array(struct expr const* expr, size_t id)
     appendli("mov rcx, %zu", lhs_type->data.array.count); // count
 
     appendli("cmp rax, rbx"); // cmp begin end
-    appendli("jb %s%zu_oob_check_bgnidx", LABEL_EXPR, id); // jmp begin < end
+    appendli("jbe %s%zu_oob_check_bgnidx", LABEL_EXPR, id); // jmp begin <= end
     appendli("call __index_oob_handler");
 
     appendli("%s%zu_oob_check_bgnidx:", LABEL_EXPR, id);
     appendli("cmp rax, rcx"); // cmp begin count
-    appendli("jb %s%zu_oob_check_endidx", LABEL_EXPR, id); // jmp begin < count
+    appendli("jbe %s%zu_oob_check_endidx", LABEL_EXPR, id); // jmp begin <= count
     appendli("call __index_oob_handler");
 
     appendli("%s%zu_oob_check_endidx:", LABEL_EXPR, id);
@@ -1802,12 +1805,12 @@ codegen_rvalue_access_slice_lhs_slice(struct expr const* expr, size_t id)
     appendli("pop rcx"); // count
 
     appendli("cmp rax, rbx"); // cmp begin end
-    appendli("jb %s%zu_oob_check_bgnidx", LABEL_EXPR, id); // jmp begin < end
+    appendli("jbe %s%zu_oob_check_bgnidx", LABEL_EXPR, id); // jmp begin <= end
     appendli("call __index_oob_handler");
 
     appendli("%s%zu_oob_check_bgnidx:", LABEL_EXPR, id);
     appendli("cmp rax, rcx"); // cmp begin count
-    appendli("jb %s%zu_oob_check_endidx", LABEL_EXPR, id); // jmp begin < count
+    appendli("jbe %s%zu_oob_check_endidx", LABEL_EXPR, id); // jmp begin <= count
     appendli("call __index_oob_handler");
 
     appendli("%s%zu_oob_check_endidx:", LABEL_EXPR, id);
@@ -2413,6 +2416,13 @@ codegen_lvalue_symbol(struct expr const* expr, size_t id)
     assert(expr->kind == EXPR_SYMBOL);
     (void)id;
 
+    if (expr->type->size == 0) {
+        // Zero-sized objects should take up zero space. Attempting to take the
+        // address of a zero-sized symbol should always produce a pointer with
+        // the value zero.
+        appendli("push __nil ; address of type `%s` with size zero", expr->type->name);
+        return;
+    }
     push_address(expr->data.symbol->address);
 }
 

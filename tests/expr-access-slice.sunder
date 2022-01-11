@@ -20,6 +20,8 @@ func main() void {
 
     dump (:[]u16){&array_v[0u], 4u}[0u:1u][0u];
     dump (:[]u16){&array_v[0u], 4u}[1u:4u][0u];
+    dump countof((:[]u16){&array_v[0u], 4u}[0u:0u]);
+    dump countof((:[]u16){&array_v[0u], 4u}[4u:4u]);
 }
 ################################################################################
 # BB BB
@@ -32,3 +34,5 @@ func main() void {
 # DD DD
 # AA AA
 # BB BB
+# 00 00 00 00 00 00 00 00
+# 00 00 00 00 00 00 00 00
