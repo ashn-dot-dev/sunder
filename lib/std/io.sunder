@@ -62,9 +62,12 @@ struct formatter_vtable {
     ### On error this function returns a static string describing the error.
     ### In the event of a write error, the erroneous write result should be
     ### returned. In the event of an invalid format specifier error (the
-    #### provided format specifier does not match any format specifier
+    ### provided format specifier does not match any format specifier
     ### implemented by the type) the error
-    ### `std::formatter::INVALID_FORMAT_SPECIFIER` should be returned.
+    ###
+    ###     std::formatter::INVALID_FORMAT_SPECIFIER
+    ###
+    ### should be returned.
     var format: func(*any, std::writer, []byte) std::result[[:usize, :[]byte]];
 }
 
@@ -97,11 +100,13 @@ func write_format(writer: std::writer, format: []byte, args: []std::formatter) s
     var written: usize = 0;
 
     # Walking along the format string accumulating bytes to be written verbatim.
+    #   "some{fmt}text"
+    #    ^^^^     ^^^^ Walking along either of the byte spans "some" or "text".
     const STATE_WALKING: ssize = 0;
 
     # Inside of a `fmt` string.
-    #   "{fmt}"
-    #     ^^^--here
+    #   "some{fmt}text"
+    #         ^^^-- Walking (fmtting) along the text between the '{' '}' bytes.
     const STATE_FMTTING: ssize = 1;
 
     # Current state.
