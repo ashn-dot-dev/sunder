@@ -1,7 +1,224 @@
 namespace std;
+import "std/panic.sunder";
 import "std/result.sunder";
-import "std/writer.sunder";
 import "sys/sys.sunder";
+
+struct writer_vtable {
+    ### func write(self: *any, bytes: []byte) std::result[[:usize, :[]byte]]
+    ###
+    ### Attempt to write `countof(bytes)` using the provided writer.
+    ###
+    ### On success this function returns the number of bytes written, which may
+    ### be less than `countof(bytes)` in the event of a partial write.
+    ###
+    ### On error this function returns a static string describing the error.
+    var write: func(*any, []byte) std::result[[:usize, :[]byte]];
+}
+
+struct writer {
+    var vtable: *std::writer_vtable;
+    var object: *any;
+
+    func init[[:T]](object: *T) std::writer {
+        const vtable: std::writer_vtable = (:std::writer_vtable){
+            .write = T::write
+        };
+        return (:std::writer){
+            .vtable = &vtable,
+            .object = object
+        };
+    }
+
+    func write(self: *writer, bytes: []byte) std::result[[:usize, :[]byte]] {
+        return self.*.vtable.*.write(self.*.object, bytes);
+    }
+}
+
+func write_all(writer: std::writer, bytes: []byte) std::result[[:usize, :[]byte]] {
+    var written: usize = 0;
+    for written < countof(bytes) {
+        var result: std::result[[:usize, :[]byte]] = writer.write(bytes[written:countof(bytes)]);
+        if result.is_error() {
+            return result;
+        }
+        written = written + result.value();
+    }
+    return std::result[[:usize, :[]byte]]::init_value(written);
+}
+
+struct formatter_vtable {
+    ### func format(self: *any, writer: std::writer, fmt: []byte) std::result[[:usize, :[]byte]]
+    ###
+    ### Write a formatted string representation of `self` to the provided
+    ### writer. The format specifier `fmt` describes *how* to format `self`.
+    ### Generally each type will implement its own type-specific format
+    ### specifier(s). However, the empty format specifier `""` should always be
+    ### handled as a "default formatting" case.
+    ###
+    ### On success this function returns the number of bytes written to the
+    ### provided writer. Types implementing this function should ensure that
+    ### all bytes are written to the provided writer.
+    ###
+    ### On error this function returns a static string describing the error.
+    ### In the event of a write error, the erroneous write result should be
+    ### returned. In the event of an invalid format specifier error (the
+    #### provided format specifier does not match any format specifier
+    ### implemented by the type) the error
+    ### `std::formatter::INVALID_FORMAT_SPECIFIER` should be returned.
+    var format: func(*any, std::writer, []byte) std::result[[:usize, :[]byte]];
+}
+
+struct formatter {
+    var vtable: *std::formatter_vtable;
+    var object: *any;
+
+    const INVALID_FORMAT_SPECIFIER: []byte = "invalid format specifier";
+
+    func init[[:T]](object: *T) std::formatter {
+        const vtable: std::formatter_vtable = (:std::formatter_vtable){
+            .format = T::format
+        };
+        return (:std::formatter){
+            .vtable = &vtable,
+            .object = object
+        };
+    }
+
+    func format(self: *formatter, writer: std::writer, fmt: []byte) std::result[[:usize, :[]byte]] {
+        return self.*.vtable.*.format(self.*.object, writer, fmt);
+    }
+}
+
+func write_format(writer: std::writer, format: []byte, args: []std::formatter) std::result[[:usize, :[]byte]] {
+    # Current format argument index.
+    var arg: usize = 0;
+
+    # Total number of bytes written.
+    var written: usize = 0;
+
+    # Walking along the format string accumulating bytes to be written verbatim.
+    const STATE_WALKING: ssize = 0;
+
+    # Inside of a `fmt` string.
+    #   "{fmt}"
+    #     ^^^--here
+    const STATE_FMTTING: ssize = 1;
+
+    # Current state.
+    var state: ssize = STATE_WALKING;
+
+    # Start and end indices of the current state.
+    var start: usize = 0;
+    var end: usize = start;
+
+    const INVALID_FORMAT_STRING: []byte = "invalid format string";
+    const INVALID_FORMAT_ARG_COUNT: []byte = "invalid format argument count";
+
+    for end < countof(format) {
+        if state == STATE_WALKING {
+            if format[end] != '{' and format[end] != '}' {
+                # "some{fmt}text"
+                #  ^^^^     ^^^^ Any non-'{' non-'}' character.
+                end = end + 1;
+                continue;
+            }
+
+            if (end + 1) == countof(format) {
+                # "some{"
+                #      ^
+                # "some}"
+                #      ^ End-of-format-string '{' or '}' character.
+                return std::result[[:usize, :[]byte]]::init_error(INVALID_FORMAT_STRING);
+            }
+
+            if format[end] == format[end + 1] {
+                # "some{{text"
+                #      ^^
+                # "some}}text"
+                #      ^^ Escaped '{' or '}' character.
+                var res: std::result[[:usize, :[]byte]] = std::write_all(writer, format[start:end+1]);
+                if (res.is_error()) {
+                    return res;
+                }
+                written = written + res.value();
+                start = end + 2;
+                end = start;
+                continue;
+            }
+
+            if format[end] == '}' {
+                # "some}text"
+                #      ^ End-of-fmt when we are not in the fmt-parsing state.
+                return std::result[[:usize, :[]byte]]::init_error(INVALID_FORMAT_STRING);
+            }
+
+            # "some{fmt}text"
+            #      ^ Start of format specifier.
+            var res: std::result[[:usize, :[]byte]] = std::write_all(writer, format[start:end]);
+            if (res.is_error()) {
+                return res;
+            }
+            written = written + res.value();
+            start = end + 1;
+            end = start;
+            state = STATE_FMTTING;
+            if arg == countof(args) {
+                return std::result[[:usize, :[]byte]]::init_error(INVALID_FORMAT_ARG_COUNT);
+            }
+            continue;
+        }
+
+        if state == STATE_FMTTING {
+            if format[end] != '{' and format[end] != '}' {
+                # "some{fmt}text"
+                #       ^^^ Any non-'{' non-'}' character.
+                end = end + 1;
+                continue;
+            }
+
+            if (end + 1) < countof(format) and format[end] == format[end + 1] {
+                # "some{f{{t}text"
+                #        ^^
+                # "some{f}}t}text"
+                #        ^^ Escaped '{' or '}' character is not allowed inside
+                #           a fmt string.
+                return std::result[[:usize, :[]byte]]::init_error(INVALID_FORMAT_STRING);
+            }
+
+            # "some{fmt}text"
+            #          ^ End of format specifier.
+            var res: std::result[[:usize, :[]byte]] = args[arg].format(writer, format[start:end]);
+            if (res.is_error()) {
+                return res;
+            }
+            written = written + res.value();
+            start = end + 1;
+            end = start;
+            arg = arg + 1;
+            state = STATE_WALKING;
+            continue;
+        }
+
+        std::panic("unreachable");
+    }
+
+    # "some{fmt"
+    #          ^ End-of-format-string reached while in the formatting state.
+    if state == STATE_FMTTING {
+        return std::result[[:usize, :[]byte]]::init_error(INVALID_FORMAT_STRING);
+    }
+
+    # "some{fmt}text"
+    #           ^^^^ Write the remaining walked text.
+    var res: std::result[[:usize, :[]byte]] = std::write_all(writer, format[start:end]);
+    if (res.is_error()) {
+        return res;
+    }
+    written = written + res.value();
+
+    # Formatting was successful. Return the total number of bytes written.
+    return std::result[[:usize, :[]byte]]::init_value(written);
+}
 
 struct stream {
     var fd: ssize;

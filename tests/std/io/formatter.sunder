@@ -1,8 +1,6 @@
-import "std/formatter.sunder";
 import "std/io.sunder";
 import "std/mem.sunder";
 import "std/panic.sunder";
-import "std/writer.sunder";
 
 struct name {
     var first: []byte;

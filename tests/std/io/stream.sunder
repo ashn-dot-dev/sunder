@@ -1,5 +1,4 @@
 import "std/io.sunder";
-import "std/writer.sunder";
 
 func main() void {
     std::out.write("Hello, stdout!\n");
@@ -11,8 +10,6 @@ func main() void {
     var stderr_writer: std::writer = std::writer::init[[:std::stream]](&std::err);
     stderr_writer.write("Hello, stderr_writer!\n");
 
-    std::write_all(stdout_writer, "Call to write_all!\n");
-
     std::out.print("foo");
     std::out.println("bar");
 }
@@ -21,5 +18,4 @@ func main() void {
 # Hello, stderr!
 # Hello, stdout_writer!
 # Hello, stderr_writer!
-# Call to write_all!
 # foobar

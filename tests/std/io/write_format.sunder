@@ -1,6 +1,4 @@
-import "std/formatter.sunder";
 import "std/io.sunder";
-import "std/writer.sunder";
 
 struct person {
     var name: []byte;

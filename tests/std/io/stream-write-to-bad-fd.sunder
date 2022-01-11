@@ -1,5 +1,4 @@
 import "std/io.sunder";
-import "std/writer.sunder";
 
 func main() void {
     var stream: std::stream = (:std::stream){.fd = 0xBEEFCAFE};
