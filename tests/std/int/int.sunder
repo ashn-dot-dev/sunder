@@ -149,4 +149,4 @@ func main() void {
 # 0B 00 00 00 00 00 00 00
 # -0xBEEF
 # 08 00 00 00 00 00 00 00
-# invalid format specifier
+# panic: invalid format specifier "l"

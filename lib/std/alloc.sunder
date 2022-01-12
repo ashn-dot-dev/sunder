@@ -108,6 +108,14 @@ func deallocate(ptr: *byte, align: usize, size: usize) void {
         # Nothing to deallocate.
         return;
     }
+
+    if (size == 0) {
+        # std::allocate will not perform a call to mmap when the requested
+        # allocation size is zero. Likewise, munmap should *not* be called if
+        # the current buffer size is zero as there is nothing to deallocate.
+        return;
+    }
+
     if (align > sys::PAGE_SIZE) {
         std::panic(MSG_INVALID_ALIGNMENT);
     }
@@ -145,12 +153,19 @@ func resize_slice[[:T]](slice: []T, new_count: usize) []T {
     var cur_count: usize = countof(slice);
     var cur_size: usize = cur_count * sizeof(:T);
     var new_size: usize = new_count * sizeof(:T);
-    var pointer: *T = (:*T)std::reallocate(
-        (:*byte)&slice[0],
+
+    var cur_pointer: *byte = (:*byte)0u;
+    if countof(slice) != 0 {
+        cur_pointer = (:*byte)&slice[0];
+    }
+
+    var new_pointer: *T = (:*T)std::reallocate(
+        cur_pointer,
         alignof(:T),
         cur_size,
         new_size);
-    return (:[]T){pointer, new_count};
+
+    return (:[]T){new_pointer, new_count};
 }
 
 func delete_slice[[:T]](slice: []T) void {

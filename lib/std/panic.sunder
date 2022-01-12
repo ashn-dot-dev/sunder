@@ -1,11 +1,29 @@
 namespace std;
 import "sys/sys.sunder";
 
+# Print the string `why` to STDERR, followed by a newline, and exit with
+# failure status. This function does not return.
 func panic(why: []byte) void {
-    const prefix: []byte = "panic: ";
-    sys::write(sys::STDERR_FILENO, &prefix[0], countof(prefix));
+    const PREFIX: []byte = "panic: ";
+    sys::write(sys::STDERR_FILENO, &PREFIX[0], countof(PREFIX));
     if countof(why) != 0 {
         sys::write(sys::STDERR_FILENO, &why[0], countof(why));
+    }
+    sys::write(sys::STDERR_FILENO, &"\n"[0], 1);
+    sys::exit(1);
+}
+
+# Print string from the from the the list of string arguments `args` to STDERR,
+# followed by a newline, and exit with failure status. This function does not
+# return.
+func panic_args(args: [][]byte) void {
+    const PREFIX: []byte = "panic: ";
+    sys::write(sys::STDERR_FILENO, &PREFIX[0], countof(PREFIX));
+    for i in 0:countof(args) {
+        if countof(args[i]) == 0 {
+            continue;
+        }
+        sys::write(sys::STDERR_FILENO, &args[i][0], countof(args[i]));
     }
     sys::write(sys::STDERR_FILENO, &"\n"[0], 1);
     sys::exit(1);

@@ -20,7 +20,7 @@ struct int[[:T]] {
         #
         # All non-default format specifiers have a length of one byte.
         if countof(fmt) > 1 {
-            return std::result[[:usize, :[]byte]]::init_error(std::formatter::INVALID_FORMAT_SPECIFIER);
+            std::panic_invalid_format_specifier(fmt);
         }
 
         const DIGITS_TABLE_COUNT: usize = 16;
@@ -60,13 +60,12 @@ struct int[[:T]] {
                 digits_table = DIGITS_TABLE_UPPER[0:DIGITS_TABLE_COUNT];
             }
             else {
-                return std::result[[:usize, :[]byte]]::init_error(std::formatter::INVALID_FORMAT_SPECIFIER);
+                std::panic_invalid_format_specifier(fmt);
             }
         }
 
         var written: usize = 0;
         var value: T = self.*.value;
-        var res: std::result[[:usize, :[]byte]] = std::mem::zeroed[[:std::result[[:usize, :[]byte]]]]();
 
         var is_negative: bool = value < 0;
         if is_negative {
@@ -98,7 +97,7 @@ struct int[[:T]] {
             output_index = output_index - 1;
         }
 
-        res = std::write_all(writer, output[output_index+1:countof(output)]);
+        var res: std::result[[:usize, :[]byte]] = std::write_all(writer, output[output_index+1:countof(output)]);
         if res.is_error() {
             return res;
         }

@@ -5,7 +5,7 @@ struct person {
 
     func format(self: *person, writer: std::writer, fmt: []byte) std::result[[:usize, :[]byte]] {
         if countof(fmt) != 0 {
-            return std::result[[:usize, :[]byte]]::init_error(std::formatter::INVALID_FORMAT_SPECIFIER);
+            std::panic_invalid_format_specifier(fmt);
         }
         return std::write_all(writer, self.*.name);
     }
@@ -30,7 +30,7 @@ struct int {
         if c == 'x' {
             return std::write_all(writer, "hexadecimal");
         }
-        return std::result[[:usize, :[]byte]]::init_error(std::formatter::INVALID_FORMAT_SPECIFIER);
+        std::panic_invalid_format_specifier(fmt);
     }
 }
 
@@ -110,114 +110,12 @@ func test4() void {
     dump res.value();
 }
 
-func test5() void {
-    var writer: std::writer = std::writer::init[[:std::stream]](&std::out);
-
-    var alice: person = (:person){.name = "Alice"};
-
-    var args: [1]std::formatter = (:[1]std::formatter)[
-        std::formatter::init[[:person]](&alice)
-    ];
-    var res: std::result[[:usize, :[]byte]] =
-        std::write_format(writer, "{}}}\n", args[0:countof(args)]);
-    std::err.println(res.error());
-}
-
-func test6() void {
-    var writer: std::writer = std::writer::init[[:std::stream]](&std::out);
-
-    var alice: person = (:person){.name = "Alice"};
-
-    var args: [1]std::formatter = (:[1]std::formatter)[
-        std::formatter::init[[:person]](&alice)
-    ];
-    var res: std::result[[:usize, :[]byte]] =
-        std::write_format(writer, "foo{", args[0:countof(args)]);
-    std::err.println(res.error());
-}
-
-func test7() void {
-    var writer: std::writer = std::writer::init[[:std::stream]](&std::out);
-
-    var alice: person = (:person){.name = "Alice"};
-
-    var args: [1]std::formatter = (:[1]std::formatter)[
-        std::formatter::init[[:person]](&alice)
-    ];
-    var res: std::result[[:usize, :[]byte]] =
-        std::write_format(writer, "bar}", args[0:countof(args)]);
-    std::err.println(res.error());
-}
-
-func test8() void {
-    var writer: std::writer = std::writer::init[[:std::stream]](&std::out);
-
-    var alice: person = (:person){.name = "Alice"};
-
-    var args: [1]std::formatter = (:[1]std::formatter)[
-        std::formatter::init[[:person]](&alice)
-    ];
-    var res: std::result[[:usize, :[]byte]] =
-        std::write_format(writer, "baz}qux", args[0:countof(args)]);
-    std::err.println(res.error());
-}
-
-func test9() void {
-    var writer: std::writer = std::writer::init[[:std::stream]](&std::out);
-
-    var alice: person = (:person){.name = "Alice"};
-    var bob: person = (:person){.name = "Bob"};
-
-    var args: [2]std::formatter = (:[2]std::formatter)[
-        std::formatter::init[[:person]](&alice),
-        std::formatter::init[[:person]](&bob)
-    ];
-    var res: std::result[[:usize, :[]byte]] =
-        std::write_format(writer, "{} and {} and {}\n", args[0:countof(args)]);
-    std::err.println(res.error());
-}
-
-func test10() void {
-    var writer: std::writer = std::writer::init[[:std::stream]](&std::out);
-
-    var alice: person = (:person){.name = "Alice"};
-
-    var args: [1]std::formatter = (:[1]std::formatter)[
-        std::formatter::init[[:person]](&alice)
-    ];
-    var res: std::result[[:usize, :[]byte]] =
-        std::write_format(writer, "foo{bar", args[0:countof(args)]);
-    std::err.println(res.error());
-}
-
-func test11() void {
-    var writer: std::writer = std::writer::init[[:std::stream]](&std::out);
-
-    var alice: person = (:person){.name = "Alice"};
-    var bob: person = (:person){.name = "Bob"};
-
-    var args: [2]std::formatter = (:[2]std::formatter)[
-        std::formatter::init[[:person]](&alice),
-        std::formatter::init[[:person]](&bob)
-    ];
-    var res: std::result[[:usize, :[]byte]] =
-        std::write_format(writer, "{} is alone", args[0:countof(args)]);
-    std::err.println(res.error());
-}
-
 func main() void {
     test0();
     test1();
     test2();
     test3();
     test4();
-    test5();
-    test6();
-    test7();
-    test8();
-    test9();
-    test10();
-    test11();
 }
 ################################################################################
 # Alice and Bob
@@ -230,10 +128,3 @@ func main() void {
 # 10 00 00 00 00 00 00 00
 # {Alice
 # 07 00 00 00 00 00 00 00
-# invalid format string
-# invalid format string
-# invalid format string
-# invalid format string
-# Alice and Bob and invalid format argument count
-# fooinvalid format string
-# Alice is aloneinvalid format argument count

@@ -12,7 +12,7 @@ struct name {
 
     func format(self: *name, writer: std::writer, fmt: []byte) std::result[[:usize, :[]byte]] {
         if countof(fmt) != 0 {
-            return std::result[[:usize, :[]byte]]::init_error(std::formatter::INVALID_FORMAT_SPECIFIER);
+            std::panic_invalid_format_specifier(fmt);
         }
 
         var written: usize = 0;
@@ -54,7 +54,7 @@ struct int {
         if c == 'x' {
             return std::write_all(writer, "hexadecimal\n");
         }
-        return std::result[[:usize, :[]byte]]::init_error(std::formatter::INVALID_FORMAT_SPECIFIER);
+        std::panic_invalid_format_specifier(fmt);
     }
 }
 
@@ -89,4 +89,4 @@ func main() void {
 # binary
 # octal
 # hexadecimal
-# invalid format specifier
+# panic: invalid format specifier "nope"

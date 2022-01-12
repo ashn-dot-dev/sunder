@@ -1,4 +1,5 @@
 namespace std;
+import "std/bytes.sunder";
 import "std/panic.sunder";
 import "std/result.sunder";
 import "sys/sys.sunder";
@@ -61,21 +62,18 @@ struct formatter_vtable {
     #
     # On error this function returns a static string describing the error. In
     # the event of a write error, the erroneous write result should be
-    # returned. In the event of an invalid format specifier error (the provided
-    # format specifier does not match any format specifier implemented by the
-    # type) the error
+    # returned. If the provided format specifier does not match a format
+    # specifier implemented by the type then the format function should call
     #
-    #     std::formatter::INVALID_FORMAT_SPECIFIER
+    #     std::panic_invalid_format_specifier(fmt);
     #
-    # should be returned.
+    # which will cause the application to terminate with failure status.
     var format: func(*any, std::writer, []byte) std::result[[:usize, :[]byte]];
 }
 
 struct formatter {
     var vtable: *std::formatter_vtable;
     var object: *any;
-
-    const INVALID_FORMAT_SPECIFIER: []byte = "invalid format specifier";
 
     func init[[:T]](object: *T) std::formatter {
         const vtable: std::formatter_vtable = (:std::formatter_vtable){
@@ -90,6 +88,15 @@ struct formatter {
     func format(self: *formatter, writer: std::writer, fmt: []byte) std::result[[:usize, :[]byte]] {
         return self.*.vtable.*.format(self.*.object, writer, fmt);
     }
+}
+
+func panic_invalid_format_specifier(fmt: []byte) void {
+    var args: [3][]byte = (:[3][]byte)[
+        "invalid format specifier \"",
+        std::bytes::to_escaped_new_bytes(fmt),
+        "\""
+    ];
+    std::panic_args(args[0:countof(args)]);
 }
 
 func write_format(writer: std::writer, format: []byte, args: []std::formatter) std::result[[:usize, :[]byte]] {
@@ -116,8 +123,8 @@ func write_format(writer: std::writer, format: []byte, args: []std::formatter) s
     var start: usize = 0;
     var end: usize = start;
 
-    const INVALID_FORMAT_STRING: []byte = "invalid format string";
-    const INVALID_FORMAT_ARG_COUNT: []byte = "invalid format argument count";
+    const INVALID_FORMAT_STRING_ARG0: []byte = "invalid format string \"";
+    const INVALID_FORMAT_STRING_ARG2: []byte = "\"";
 
     for end < countof(format) {
         if state == STATE_WALKING {
@@ -133,7 +140,12 @@ func write_format(writer: std::writer, format: []byte, args: []std::formatter) s
                 #      ^
                 # "some}"
                 #      ^ End-of-format-string '{' or '}' character.
-                return std::result[[:usize, :[]byte]]::init_error(INVALID_FORMAT_STRING);
+                var args: [3][]byte = (:[3][]byte)[
+                    INVALID_FORMAT_STRING_ARG0,
+                    std::bytes::to_escaped_new_bytes(format),
+                    INVALID_FORMAT_STRING_ARG2
+                ];
+                std::panic_args(args[0:countof(args)]);
             }
 
             if format[end] == format[end + 1] {
@@ -154,7 +166,12 @@ func write_format(writer: std::writer, format: []byte, args: []std::formatter) s
             if format[end] == '}' {
                 # "some}text"
                 #      ^ End-of-fmt when we are not in the fmt-parsing state.
-                return std::result[[:usize, :[]byte]]::init_error(INVALID_FORMAT_STRING);
+                var args: [3][]byte = (:[3][]byte)[
+                    INVALID_FORMAT_STRING_ARG0,
+                    std::bytes::to_escaped_new_bytes(format),
+                    INVALID_FORMAT_STRING_ARG2
+                ];
+                std::panic_args(args[0:countof(args)]);
             }
 
             # "some{fmt}text"
@@ -168,7 +185,8 @@ func write_format(writer: std::writer, format: []byte, args: []std::formatter) s
             end = start;
             state = STATE_FMTTING;
             if arg == countof(args) {
-                return std::result[[:usize, :[]byte]]::init_error(INVALID_FORMAT_ARG_COUNT);
+                var args: [1][]byte = (:[1][]byte)["invalid format argument count"];
+                std::panic_args(args[0:countof(args)]);
             }
             continue;
         }
@@ -187,7 +205,12 @@ func write_format(writer: std::writer, format: []byte, args: []std::formatter) s
                 # "some{f}}t}text"
                 #        ^^ Escaped '{' or '}' character is not allowed inside
                 #           a fmt string.
-                return std::result[[:usize, :[]byte]]::init_error(INVALID_FORMAT_STRING);
+                var args: [3][]byte = (:[3][]byte)[
+                    INVALID_FORMAT_STRING_ARG0,
+                    std::bytes::to_escaped_new_bytes(format),
+                    INVALID_FORMAT_STRING_ARG2
+                ];
+                std::panic_args(args[0:countof(args)]);
             }
 
             # "some{fmt}text"
@@ -210,7 +233,12 @@ func write_format(writer: std::writer, format: []byte, args: []std::formatter) s
     # "some{fmt"
     #          ^ End-of-format-string reached while in the formatting state.
     if state == STATE_FMTTING {
-        return std::result[[:usize, :[]byte]]::init_error(INVALID_FORMAT_STRING);
+        var args: [3][]byte = (:[3][]byte)[
+            INVALID_FORMAT_STRING_ARG0,
+            std::bytes::to_escaped_new_bytes(format),
+            INVALID_FORMAT_STRING_ARG2
+        ];
+        std::panic_args(args[0:countof(args)]);
     }
 
     # "some{fmt}text"
@@ -227,7 +255,8 @@ func write_format(writer: std::writer, format: []byte, args: []std::formatter) s
     # the walked text has been written so that users will be able to observe
     # that an error occurred even though the full formatted string was written.
     if arg != countof(args) {
-        return std::result[[:usize, :[]byte]]::init_error(INVALID_FORMAT_ARG_COUNT);
+        var args: [1][]byte = (:[1][]byte)["invalid format argument count"];
+        std::panic_args(args[0:countof(args)]);
     }
 
     # Formatting was successful. Return the total number of bytes written.
