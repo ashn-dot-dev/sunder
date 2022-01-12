@@ -2,7 +2,7 @@ namespace std::mem;
 import "std/panic.sunder";
 
 func copy[[:T]](dest: []T, source: []T) void {
-    if (countof(dest) < countof(source)) {
+    if countof(dest) < countof(source) {
         std::panic("destination buffer is too small");
     }
 
