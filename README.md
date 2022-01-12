@@ -2,9 +2,6 @@
 Sunder is a work-in-progress C-like systems programming language and compiler
 for x86-64 Linux.
 
-See [this blog post](https://www.ashn.dev/blog/2021-10-05-i-wrote-a-compiler-for-my-own-programming-language.html)
-for a quick overview of the features supported within the language.
-
 ## Dependencies
 + POSIX-compatible `make`
 + Supported toolchain containing:
@@ -14,21 +11,31 @@ for a quick overview of the features supported within the language.
 + `clang-format` (development only)
 
 Dependencies can be installed on Debian-based distros (amd64) with:
+
 ```sh
 $ apt-get install build-essential clang clang-format nasm
 ```
 
 ## Building
-The script `build.sh` will perform a full build/test cycle using appropriate
-debug flags. This is likely the script you want to be using as your build driver
-when working on the compiler:
-```sh
-$ sh build.sh
-```
-By default `build.sh` will run the `clean` and `all` make targets, but this can
-be overridden. See `sh build.sh --help` for details.
+### Quick Version
+Run `make all` to build the compiler and run the test suite.
+To rebuild from scratch run `make clean all`.
+
+### Long Version
+The top-level `Makefile` contains the following important targets:
+
++ `bin/sunder-compile` => Build the compiler.
++ `test` => Run the test suite for the language and standard library.
++ `examples` => Build the example programs under the `examples` directory.
++ `format` => Run `clang-format` over the compiler sources.
++ `clean` => Remove build artifacts.
+
+Targets will execute with `CC=c99` and `CFLAGS='-O0 -g'` by default. Additional
+compiler/compiler-flag combinations are listed below, but the default `CC` and
+`CFLAGS` selection should be fine for most cases.
 
 Specific compiler/compiler-flag combinations include:
+
 ```sh
 $ make <targets> CFLAGS='$(C99_DBG)'  # POSIX c99 (debug)
 $ make <targets> CFLAGS='$(C99_REL)'  # POSIX c99 (release)
@@ -39,15 +46,31 @@ $ make <targets> CC=clang CFLAGS='$(GNU_DBG) $(SANITIZE)'  # clang/gcc (debug wi
 $ make <targets> CC=clang CFLAGS='$(GNU_REL)'              # clang/gcc (release)
 ```
 
+The script `build.sh` will perform the full build/test cycle with stricter
+checks and with address santizer enabled. Compiling the test suite using a
+compiler built with address sanitizer enabled is *much slower* than the default
+`make test`, but will catch a lot of memory safety and undefined behavior bugs.
+When working on the compiler it is generally most efficient to use `make all`
+while iterating and `sh build.sh` just before committing a changeset.
+
+```sh
+$ sh build.sh
+```
+
+By default `build.sh` will run the `clean` and `all` make targets, but this can
+be overridden. See `sh build.sh --help` for details.
+
 ## Installing
 The `install` target will install the Sunder toolchain into the directory
 specified by `$SUNDER_HOME` (default `$HOME/.sunder`). Run `make install` with
 `$SUNDER_HOME` specified as the directory of your choice, add `$SUNDER_HOME` to
 your `.profile` (or equivalent), and then finally add `$SUNDER_HOME/bin` to your
 `$PATH`.
+
 ```sh
 $ make install
 ```
+
 ```sh
 # Add this to your .profile
 if [ -d "${HOME}/.sunder" ]; then
@@ -71,6 +94,7 @@ func main() void {
     std::out.println("Hello, world!");
 }
 ```
+
 ```sh
 $ sunder-compile -o hello hello.sunder
 $ ./hello
