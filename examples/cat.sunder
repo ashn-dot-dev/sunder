@@ -1,13 +1,19 @@
 import "std/cptr.sunder";
 import "std/cstr.sunder";
 import "std/io.sunder";
+import "std/str.sunder";
 import "sys/sys.sunder";
 
 func cat(filename: *byte) void {
+    var filename_str: std::str = std::str::init(std::cstr::to_bytes(filename));
     var sysret: ssize = sys::open(filename, sys::O_RDONLY, 0);
+
     if sysret < 0 {
-        std::err.print(std::cstr::to_bytes(filename));
-        std::err.println(": failed to open file");
+        std::print_format_line(
+            std::writer::init[[:std::stream]](&std::err),
+            "{}: failed to open file",
+            (:[]std::formatter)[
+                std::formatter::init[[:std::str]](&filename_str)]);
         sys::exit(1);
     }
 
@@ -16,8 +22,11 @@ func cat(filename: *byte) void {
     for true {
         sysret = sys::read(fd, &buf[0], countof(buf));
         if sysret < 0 {
-            std::err.print(std::cstr::to_bytes(filename));
-            std::err.println(": read error");
+            std::print_format_line(
+                std::writer::init[[:std::stream]](&std::err),
+                "{}: read error",
+                (:[]std::formatter)[
+                    std::formatter::init[[:std::str]](&filename_str)]);
             sys::exit(1);
         }
 
@@ -27,8 +36,11 @@ func cat(filename: *byte) void {
 
         sysret = sys::write(sys::STDOUT_FILENO, &buf[0], (:usize)sysret);
         if sysret < 0 {
-            std::err.print(std::cstr::to_bytes(filename));
-            std::err.println(": write error");
+            std::print_format_line(
+                std::writer::init[[:std::stream]](&std::err),
+                "{}: write error",
+                (:[]std::formatter)[
+                    std::formatter::init[[:std::str]](&filename_str)]);
             sys::exit(1);
         }
     }

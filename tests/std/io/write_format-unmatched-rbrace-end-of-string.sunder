@@ -21,7 +21,9 @@ func main() void {
     ];
     var res: std::result[[:usize, :[]byte]] =
         std::write_format(writer, "bar}", args[0:countof(args)]);
-    std::err.println(res.error());
+    std::print_line(
+        std::writer::init[[:std::stream]](&std::err),
+        res.error());
 }
 ################################################################################
 # panic: invalid format string "bar}"

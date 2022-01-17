@@ -263,6 +263,30 @@ func write_format(writer: std::writer, format: []byte, args: []std::formatter) s
     return std::result[[:usize, :[]byte]]::init_value(written);
 }
 
+func print(writer: std::writer, bytes: []byte) void {
+    var result: std::result[[:usize, :[]byte]] = std::write_all(writer, bytes);
+    if result.is_error() {
+        std::panic(result.error());
+    }
+}
+
+func print_line(writer: std::writer, bytes: []byte) void {
+    std::print(writer, bytes);
+    std::print(writer, "\n");
+}
+
+func print_format(writer: std::writer, format: []byte, args: []std::formatter) void {
+    var result: std::result[[:usize, :[]byte]] = std::write_format(writer, format, args);
+    if result.is_error() {
+        std::panic(result.error());
+    }
+}
+
+func print_format_line(writer: std::writer, format: []byte, args: []std::formatter) void {
+    std::print_format(writer, format, args);
+    std::print(writer, "\n");
+}
+
 struct stream {
     var fd: ssize;
 
@@ -279,19 +303,6 @@ struct stream {
         }
 
         return std::result[[:usize, :[]byte]]::init_value((:usize)sysret);
-    }
-
-    func print(self: *stream, bytes: []byte) void {
-        var writer: std::writer = std::writer::init[[:std::stream]](self);
-        var result: std::result[[:usize, :[]byte]] = std::write_all(writer, bytes);
-        if result.is_error() {
-            std::panic(result.error());
-        }
-    }
-
-    func println(self: *stream, bytes: []byte) void {
-        self.*.print(bytes);
-        self.*.print("\n");
     }
 }
 

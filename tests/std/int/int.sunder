@@ -105,7 +105,9 @@ func format_test8() void {
     var args: [1]std::formatter = (:[1]std::formatter)[a_fmtr];
     var res: std::result[[:usize, :[]byte]] = std::write_format(writer, "{l}\n", args[0:countof(args)]);
 
-    dump std::err.println(res.error());
+    std::print_line(
+        std::writer::init[[:std::stream]](&std::err),
+        res.error());
 }
 
 func main() void {

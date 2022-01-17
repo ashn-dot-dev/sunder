@@ -1,6 +1,6 @@
 namespace std;
 import "std/io.sunder";
-import "std/panic.sunder";
+import "std/result.sunder";
 
 struct int[[:T]] {
     var value: T;

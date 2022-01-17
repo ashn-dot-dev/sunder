@@ -21,7 +21,9 @@ var stack_index: usize = 0;
 
 func main() void {
     if sys::argc != 2 {
-        std::err.println("invalid number of arguments");
+        std::print_line(
+            std::writer::init[[:std::stream]](&std::err),
+            "invalid number of arguments");
         sys::exit(1);
     }
 
@@ -29,14 +31,18 @@ func main() void {
 
     var fd: ssize = sys::open(path, sys::O_RDONLY, 0);
     if fd < 0 {
-        std::err.println("failed to open file");
+        std::print_line(
+            std::writer::init[[:std::stream]](&std::err),
+            "failed to open file");
         sys::exit(1);
     }
 
     # Assume the user-provided source will fit into countof(source) bytes.
     var source_size: ssize = sys::read((:u32)fd, &source[0], countof(source));
     if source_size < 0 {
-        std::err.println("read error");
+        std::print_line(
+            std::writer::init[[:std::stream]](&std::err),
+            "read error");
         sys::exit(1);
     }
     sys::close((:u32)fd);
