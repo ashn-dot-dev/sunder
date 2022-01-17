@@ -110,12 +110,36 @@ func test4() void {
     dump res.value();
 }
 
+# Test that std::write_format works as expected when called with array-slice
+# args. This is more of a test of array-slices than of std::write_format, but
+# std::write_format is the primary use case for array-slices, so it worth
+# testing here.
+func test5() void {
+    var writer: std::writer = std::writer::init[[:std::stream]](&std::out);
+
+    var alice: person = (:person){.name = "Alice"};
+    var bob: person = (:person){.name = "Bob"};
+
+    var args: [2]std::formatter = (:[2]std::formatter)[
+        std::formatter::init[[:person]](&alice),
+        std::formatter::init[[:person]](&bob)
+    ];
+    var res: std::result[[:usize, :[]byte]] = std::write_format(
+        writer,
+        "{} and {} as an array-slice\n",
+        (:[]std::formatter)[
+            std::formatter::init[[:person]](&alice),
+            std::formatter::init[[:person]](&bob)]);
+    dump res.value();
+}
+
 func main() void {
     test0();
     test1();
     test2();
     test3();
     test4();
+    test5();
 }
 ################################################################################
 # Alice and Bob
@@ -128,3 +152,5 @@ func main() void {
 # 10 00 00 00 00 00 00 00
 # {Alice
 # 07 00 00 00 00 00 00 00
+# Alice and Bob as an array-slice
+# 20 00 00 00 00 00 00 00

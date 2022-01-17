@@ -397,6 +397,21 @@ cst_expr_new_slice(
 }
 
 struct cst_expr*
+cst_expr_new_array_slice(
+    struct source_location const* location,
+    struct cst_typespec const* typespec,
+    struct cst_expr const* const* elements)
+{
+    assert(location != NULL);
+    assert(typespec != NULL);
+
+    struct cst_expr* const self = cst_expr_new(location, CST_EXPR_ARRAY_SLICE);
+    self->data.array_slice.typespec = typespec;
+    self->data.array_slice.elements = elements;
+    return self;
+}
+
+struct cst_expr*
 cst_expr_new_cast(
     struct source_location const* location,
     struct cst_typespec const* typespec,

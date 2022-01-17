@@ -285,6 +285,14 @@ order_expr(struct orderer* orderer, struct cst_expr const* expr)
         order_expr(orderer, expr->data.slice.count);
         return;
     }
+    case CST_EXPR_ARRAY_SLICE: {
+        autil_sbuf(struct cst_expr const* const) const elements =
+            expr->data.array.elements;
+        for (size_t i = 0; i < autil_sbuf_count(elements); ++i) {
+            order_expr(orderer, elements[i]);
+        }
+        return;
+    }
     case CST_EXPR_STRUCT: {
         autil_sbuf(struct cst_member_initializer const* const)
             const initializers = expr->data.struct_.initializers;

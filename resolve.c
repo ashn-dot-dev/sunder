@@ -25,6 +25,13 @@ struct resolver {
     // Current offset of rbp for stack allocated data. Initialized to zero at
     // the start of function completion.
     int current_rbp_offset;
+    // True if the statements being processed are inside of a constant
+    // declaration. Currently this is only used to tell whether array-slice
+    // backing arrays should be declared as variables or constants.
+    //
+    // TODO: See if there is a better way to determine how we declare the
+    // backing array. This feels like a hack, but it might actually be okay.
+    bool is_within_const_decl;
     // True if the statements being processed are inside a loop. Set to true
     // when a loop body is being resolved, and set to false once the loop body
     // is finished resolving.
@@ -208,6 +215,9 @@ static struct expr const*
 resolve_expr_array(struct resolver* resolver, struct cst_expr const* expr);
 static struct expr const*
 resolve_expr_slice(struct resolver* resolver, struct cst_expr const* expr);
+static struct expr const*
+resolve_expr_array_slice(
+    struct resolver* resolver, struct cst_expr const* expr);
 static struct expr const*
 resolve_expr_struct(struct resolver* resolver, struct cst_expr const* expr);
 static struct expr const*
@@ -500,7 +510,7 @@ register_static_symbol(struct symbol const* symbol)
     if (exists) {
         fatal(
             symbol->location,
-            "[ICE %s] normalized symbol name `%s` already exists",
+            "[%s] normalized symbol name `%s` already exists",
             __func__,
             symbol->address->data.static_.name);
     }
@@ -1022,7 +1032,6 @@ shallow_implicit_cast(struct type const* type, struct expr const* expr)
                 && from_param->data.pointer.base->kind != TYPE_ANY;
             if (!same && !non_any_ptr_to_any_ptr) {
                 // Invalid implicit parameter cast.
-                fprintf(stderr, "[%s:%d] HERE!!!\n", __func__, __LINE__);
                 return expr;
             }
         }
@@ -1036,7 +1045,6 @@ shallow_implicit_cast(struct type const* type, struct expr const* expr)
             && from_return->data.pointer.base->kind != TYPE_ANY;
         if (!same && !non_any_ptr_to_any_ptr) {
             // Invalid implicit return type cast.
-            fprintf(stderr, "[%s:%d] HERE!!!\n", __func__, __LINE__);
             return expr;
         }
 
@@ -1242,7 +1250,7 @@ resolve_decl_variable(
     // Global/static variables have their initial values computed at
     // compile-time, but local/non-static variables have their value
     // calculated/assigned at runtime when the value is placed on the stack.
-    bool is_static = resolver_is_global(resolver);
+    bool const is_static = resolver_is_global(resolver);
     struct value* value = NULL;
     if (is_static) {
         value = eval_rvalue(expr);
@@ -1281,6 +1289,8 @@ resolve_decl_constant(struct resolver* resolver, struct cst_decl const* decl)
     assert(decl != NULL);
     assert(decl->kind == CST_DECL_CONSTANT);
 
+    resolver->is_within_const_decl = true;
+
     struct expr const* expr = resolve_expr(resolver, decl->data.constant.expr);
 
     struct type const* const type =
@@ -1310,6 +1320,9 @@ resolve_decl_constant(struct resolver* resolver, struct cst_decl const* decl)
 
     symbol_table_insert(resolver->current_symbol_table, symbol->name, symbol);
     register_static_symbol(symbol);
+
+    resolver->is_within_const_decl = false;
+
     return symbol;
 }
 
@@ -2065,6 +2078,9 @@ resolve_expr(struct resolver* resolver, struct cst_expr const* expr)
     case CST_EXPR_SLICE: {
         return resolve_expr_slice(resolver, expr);
     }
+    case CST_EXPR_ARRAY_SLICE: {
+        return resolve_expr_array_slice(resolver, expr);
+    }
     case CST_EXPR_STRUCT: {
         return resolve_expr_struct(resolver, expr);
     }
@@ -2396,6 +2412,99 @@ resolve_expr_slice(struct resolver* resolver, struct cst_expr const* expr)
 
     struct expr* const resolved =
         expr_new_slice(expr->location, type, pointer, count);
+
+    autil_freezer_register(context()->freezer, resolved);
+    return resolved;
+}
+
+static struct expr const*
+resolve_expr_array_slice(struct resolver* resolver, struct cst_expr const* expr)
+{
+    assert(resolver != NULL);
+    assert(expr != NULL);
+    assert(expr->kind == CST_EXPR_ARRAY_SLICE);
+
+    struct type const* const type =
+        resolve_typespec(resolver, expr->data.array_slice.typespec);
+    if (type->kind != TYPE_SLICE) {
+        fatal(
+            expr->data.slice.typespec->location,
+            "expected slice type (received `%s`)",
+            type->name);
+    }
+
+    autil_sbuf(struct cst_expr const* const) elements =
+        expr->data.array_slice.elements;
+    size_t const elements_count = autil_sbuf_count(elements);
+
+    static size_t id = 0;
+    struct autil_string* const array_name_string =
+        autil_string_new_fmt("__array_slice_elements_%zu", id++);
+    char const* const array_name = autil_sipool_intern_cstr(
+        context()->sipool, autil_string_start(array_name_string));
+    autil_string_del(array_name_string);
+
+    struct type const* const array_type =
+        type_unique_array(elements_count, type->data.slice.base);
+
+    bool const is_global = resolver_is_global(resolver);
+    bool const is_static = is_global || resolver->is_within_const_decl;
+    struct address const* const array_address = is_static
+        ? resolver_reserve_storage_static(resolver, array_name)
+        : resolver_reserve_storage_local(resolver, type);
+
+    struct value* array_value = NULL;
+    if (is_static) {
+        autil_sbuf(struct expr const*) resolved_elements = NULL;
+        autil_sbuf(struct value*) resolved_values = NULL;
+        for (size_t i = 0; i < autil_sbuf_count(elements); ++i) {
+            struct expr const* resolved_element =
+                resolve_expr(resolver, elements[i]);
+            resolved_element = shallow_implicit_cast(
+                array_type->data.array.base, resolved_element);
+            check_type_compatibility(
+                resolved_element->location,
+                resolved_element->type,
+                array_type->data.array.base);
+            autil_sbuf_push(resolved_elements, resolved_element);
+            autil_sbuf_push(resolved_values, eval_rvalue(resolved_element));
+        }
+        autil_sbuf_freeze(resolved_elements, context()->freezer);
+        array_value = value_new_array(array_type, resolved_values, NULL);
+        value_freeze(array_value, context()->freezer);
+    }
+
+    struct symbol* const array_symbol =
+        (resolver->is_within_const_decl ? symbol_new_constant
+                                        : symbol_new_variable)(
+            expr->location, array_name, array_type, array_address, array_value);
+    if (is_static) {
+        register_static_symbol(array_symbol);
+    }
+    autil_freezer_register(context()->freezer, array_symbol);
+
+    // TODO: Need unique name for symbol. address->data.static_.name is used
+    // for `bytes` objects, but these may be allocated on the stack, so that
+    // won't work.
+    symbol_table_insert(
+        resolver->current_symbol_table, array_symbol->name, array_symbol);
+
+    autil_sbuf(struct expr const*) resolved_elements = NULL;
+    for (size_t i = 0; i < elements_count; ++i) {
+        struct expr const* resolved_element =
+            resolve_expr(resolver, elements[i]);
+        resolved_element =
+            shallow_implicit_cast(type->data.slice.base, resolved_element);
+        check_type_compatibility(
+            resolved_element->location,
+            resolved_element->type,
+            type->data.slice.base);
+        autil_sbuf_push(resolved_elements, resolved_element);
+    }
+    autil_sbuf_freeze(resolved_elements, context()->freezer);
+
+    struct expr* const resolved = expr_new_array_slice(
+        expr->location, type, array_symbol, resolved_elements);
 
     autil_freezer_register(context()->freezer, resolved);
     return resolved;

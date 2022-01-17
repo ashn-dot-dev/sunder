@@ -1038,6 +1038,23 @@ expr_new_slice(
 }
 
 struct expr*
+expr_new_array_slice(
+    struct source_location const* location,
+    struct type const* type,
+    struct symbol const* array_symbol,
+    struct expr const* const* elements)
+{
+    assert(location != NULL);
+    assert(type != NULL);
+    assert(type->kind == TYPE_SLICE);
+
+    struct expr* const self = expr_new(location, type, EXPR_ARRAY_SLICE);
+    self->data.array_slice.array_symbol = array_symbol;
+    self->data.array_slice.elements = elements;
+    return self;
+}
+
+struct expr*
 expr_new_struct(
     struct source_location const* location,
     struct type const* type,
@@ -1278,6 +1295,7 @@ expr_is_lvalue(struct expr const* self)
     case EXPR_BYTES: /* fallthrough */
     case EXPR_ARRAY: /* fallthrough */
     case EXPR_SLICE: /* fallthrough */
+    case EXPR_ARRAY_SLICE: /* fallthrough */
     case EXPR_STRUCT: /* fallthrough */
     case EXPR_CAST: /* fallthrough */
     case EXPR_SYSCALL: /* fallthrough */

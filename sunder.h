@@ -571,6 +571,7 @@ struct cst_expr {
         CST_EXPR_BYTES,
         CST_EXPR_ARRAY,
         CST_EXPR_SLICE,
+        CST_EXPR_ARRAY_SLICE,
         CST_EXPR_STRUCT,
         CST_EXPR_CAST,
         CST_EXPR_GROUPED,
@@ -604,6 +605,10 @@ struct cst_expr {
             struct cst_expr const* pointer;
             struct cst_expr const* count;
         } slice;
+        struct {
+            struct cst_typespec const* typespec;
+            autil_sbuf(struct cst_expr const* const) elements;
+        } array_slice;
         struct {
             struct cst_typespec const* typespec;
             autil_sbuf(struct cst_member_initializer const* const) initializers;
@@ -678,6 +683,11 @@ cst_expr_new_slice(
     struct cst_typespec const* typespec,
     struct cst_expr const* pointer,
     struct cst_expr const* count);
+struct cst_expr*
+cst_expr_new_array_slice(
+    struct source_location const* location,
+    struct cst_typespec const* typespec,
+    struct cst_expr const* const* elements);
 struct cst_expr*
 cst_expr_new_struct(
     struct source_location const* location,
@@ -1358,6 +1368,7 @@ struct expr {
         EXPR_BYTES,
         EXPR_ARRAY,
         EXPR_SLICE,
+        EXPR_ARRAY_SLICE,
         EXPR_STRUCT,
         EXPR_CAST,
         EXPR_SYSCALL,
@@ -1386,6 +1397,10 @@ struct expr {
             struct expr const* pointer;
             struct expr const* count;
         } slice;
+        struct {
+            struct symbol const* array_symbol;
+            autil_sbuf(struct expr const* const) elements;
+        } array_slice;
         struct {
             // List of elements corresponding the member variables defined by
             // the struct type.
@@ -1486,6 +1501,12 @@ expr_new_slice(
     struct type const* type,
     struct expr const* pointer,
     struct expr const* count);
+struct expr*
+expr_new_array_slice(
+    struct source_location const* location,
+    struct type const* type,
+    struct symbol const* array_symbol,
+    struct expr const* const* elements);
 struct expr*
 expr_new_struct(
     struct source_location const* location,

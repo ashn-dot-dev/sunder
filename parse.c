@@ -956,7 +956,8 @@ parse_expr_lparen(struct parser* parser)
     struct cst_typespec const* const typespec = parse_typespec(parser);
     expect_current(parser, TOKEN_RPAREN);
 
-    if (check_current(parser, TOKEN_LBRACKET)) {
+    if (check_current(parser, TOKEN_LBRACKET)
+        && typespec->kind == TYPESPEC_ARRAY) {
         // <expr-array>
         expect_current(parser, TOKEN_LBRACKET);
         autil_sbuf(struct cst_expr const*) elements = NULL;
@@ -996,6 +997,28 @@ parse_expr_lparen(struct parser* parser)
 
         struct cst_expr* const product =
             cst_expr_new_slice(location, typespec, pointer, count);
+
+        autil_freezer_register(context()->freezer, product);
+        return product;
+    }
+
+    if (check_current(parser, TOKEN_LBRACKET)
+        && typespec->kind == TYPESPEC_SLICE) {
+        // <expr-array-slice>
+        expect_current(parser, TOKEN_LBRACKET);
+        autil_sbuf(struct cst_expr const*) elements = NULL;
+        while (!check_current(parser, TOKEN_RBRACKET)) {
+            if (autil_sbuf_count(elements) != 0u) {
+                expect_current(parser, TOKEN_COMMA);
+            }
+
+            autil_sbuf_push(elements, parse_expr(parser));
+        }
+        autil_sbuf_freeze(elements, context()->freezer);
+        expect_current(parser, TOKEN_RBRACKET);
+
+        struct cst_expr* const product =
+            cst_expr_new_array_slice(location, typespec, elements);
 
         autil_freezer_register(context()->freezer, product);
         return product;

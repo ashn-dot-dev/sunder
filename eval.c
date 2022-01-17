@@ -23,6 +23,8 @@ eval_rvalue_array(struct expr const* expr);
 static struct value*
 eval_rvalue_slice(struct expr const* expr);
 static struct value*
+eval_rvalue_array_slice(struct expr const* expr);
+static struct value*
 eval_rvalue_struct(struct expr const* expr);
 static struct value*
 eval_rvalue_cast(struct expr const* expr);
@@ -90,6 +92,9 @@ eval_rvalue(struct expr const* expr)
     }
     case EXPR_SLICE: {
         return eval_rvalue_slice(expr);
+    }
+    case EXPR_ARRAY_SLICE: {
+        return eval_rvalue_array_slice(expr);
     }
     case EXPR_STRUCT: {
         return eval_rvalue_struct(expr);
@@ -224,6 +229,28 @@ eval_rvalue_slice(struct expr const* expr)
 
     struct value* const pointer = eval_rvalue(expr->data.slice.pointer);
     struct value* const count = eval_rvalue(expr->data.slice.count);
+    return value_new_slice(expr->type, pointer, count);
+}
+
+static struct value*
+eval_rvalue_array_slice(struct expr const* expr)
+{
+    assert(expr != NULL);
+    assert(expr->kind == EXPR_ARRAY_SLICE);
+    assert(expr->type->kind == TYPE_SLICE);
+
+    struct address const* const address =
+        expr->data.array_slice.array_symbol->address;
+    assert(address->kind == ADDRESS_STATIC);
+    struct value* const pointer = value_new_pointer(
+        type_unique_pointer(expr->type->data.slice.base), *address);
+
+    autil_sbuf(struct expr const* const) const elements =
+        expr->data.array_slice.elements;
+    struct value* const count = value_new_integer(
+        context()->builtin.usize, autil_bigint_new(AUTIL_BIGINT_ZERO));
+    uz_to_bigint(count->data.integer, autil_sbuf_count(elements));
+
     return value_new_slice(expr->type, pointer, count);
 }
 
@@ -935,6 +962,7 @@ eval_lvalue(struct expr const* expr)
     case EXPR_BYTES: /* fallthrough */
     case EXPR_ARRAY: /* fallthrough */
     case EXPR_SLICE: /* fallthrough */
+    case EXPR_ARRAY_SLICE: /* fallthrough */
     case EXPR_STRUCT: /* fallthrough */
     case EXPR_CAST: /* fallthrough */
     case EXPR_SYSCALL: /* fallthrough */

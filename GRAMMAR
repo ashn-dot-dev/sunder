@@ -59,6 +59,7 @@
          | <expr-bytes>
          | <expr-array>
          | <expr-slice>
+         | <expr-array-slice>
          | <expr-struct>
          | <expr-cast>
          | <expr-grouped>
@@ -77,11 +78,13 @@
 
 <expr-bytes> ::= <literal-bytes>
 
-<expr-array> ::= "(" ":" <typespec> ")" "[" "]"
-               | "(" ":" <typespec> ")" "[" <expr> "..." "]"
-               | "(" ":" <typespec> ")" "[" <expr> ("," <expr>)* ("," <expr> "...")? "]"
+<expr-array> ::= "(" ":" <typespec-array> ")" "[" "]"
+               | "(" ":" <typespec-array> ")" "[" <expr> "..." "]"
+               | "(" ":" <typespec-array> ")" "[" <expr> ("," <expr>)* ("," <expr> "...")? "]"
 
-<expr-slice> ::= "(" ":" <typespec> ")" "{" <expr> "," <expr> "}"
+<expr-slice> ::= "(" ":" <typespec-slice> ")" "{" <expr> "," <expr> "}"
+
+<expr-array-slice> ::= "(" ":" <typespec-slice> ")" "[" <expr> ("," <expr>)* "]"
 
 <expr-struct> ::= "(" ":" <typespec> ")" "{" <member-initializer-list> "}"
 
