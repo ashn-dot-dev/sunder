@@ -51,7 +51,7 @@ test: bin/sunder-compile
 	(cd tests/ && sh test-all.sh)
 
 examples: bin/sunder-compile
-	(cd examples/ && sh build-examples.sh)
+	(cd examples/ && sh examples.build.sh)
 
 install: bin/sunder-compile
 	mkdir -p $(SUNDER_HOME)
@@ -65,7 +65,7 @@ clean:
 	rm -f bin/sunder-compile
 	rm -f $$(find . -type f -name '*.out')
 	rm -f $$(find . -type f -name '*.o')
-	(cd examples/ && sh clean-examples.sh)
+	(cd examples/ && sh examples.clean.sh)
 
 .SUFFIXES: .c .o
 .c.o:
