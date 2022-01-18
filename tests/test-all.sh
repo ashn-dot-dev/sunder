@@ -29,7 +29,7 @@ fi
 
 TESTSRUN=0
 FAILURES=0
-TESTS=$(echo *.sunder $(find std/ -name '*.sunder') | sort)
+TESTS=$(echo *.sunder $(find tests-std/ -name '*.sunder') | sort)
 for t in ${TESTS}; do
     sh test.sh "${t}"
     RESULT="$?"

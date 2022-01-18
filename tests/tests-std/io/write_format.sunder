@@ -112,7 +112,7 @@ func test4() void {
 
 # Test that std::write_format works as expected when called with array-slice
 # args. This is more of a test of array-slices than of std::write_format, but
-# std::write_format is the primary use case for array-slices, so it worth
+# std::write_format is the primary use case for array-slices, so it is worth
 # testing here.
 func test5() void {
     var writer: std::writer = std::writer::init[[:std::stream]](&std::out);
@@ -120,12 +120,8 @@ func test5() void {
     var alice: person = (:person){.name = "Alice"};
     var bob: person = (:person){.name = "Bob"};
 
-    var args: [2]std::formatter = (:[2]std::formatter)[
-        std::formatter::init[[:person]](&alice),
-        std::formatter::init[[:person]](&bob)
-    ];
     var res: std::result[[:usize, :[]byte]] = std::write_format(
-        writer,
+        std::writer::init[[:std::stream]](&std::err),
         "{} and {} as an array-slice\n",
         (:[]std::formatter)[
             std::formatter::init[[:person]](&alice),

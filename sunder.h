@@ -120,11 +120,16 @@ xspawnvpw(char const* const* argv);
 
 bool
 file_exists(char const* path);
+bool
+file_is_directory(char const* path);
 
 char const* // interned
 canonical_path(char const* path);
 char const* // interned
 directory_path(char const* path);
+// Excludes `.` and `..`
+char const* /* interned */* /* sbuf */
+directory_files(char const* path);
 
 struct module {
     // True if the module has been fully loaded/resolved.

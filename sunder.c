@@ -9,7 +9,9 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <dirent.h> /* DIR, *dir-family */
 #include <libgen.h> /* dirname */
+#include <sys/stat.h> /* struct stat, stat */
 #include <sys/types.h> /* pid_t */
 #include <sys/wait.h> /* wait* */
 #include <unistd.h> /* exec*, isatty, fork */
@@ -374,6 +376,18 @@ file_exists(char const* path)
     return access(path, F_OK) == 0;
 }
 
+bool
+file_is_directory(char const* path)
+{
+    assert(path != NULL);
+
+    struct stat statbuf = {0};
+    if (stat(path, &statbuf) != 0) {
+        return false;
+    }
+    return S_ISDIR(statbuf.st_mode);
+}
+
 char const*
 canonical_path(char const* path)
 {
@@ -383,7 +397,7 @@ canonical_path(char const* path)
     if (realpath(path, resolved_path) == NULL) {
         fatal(
             NULL,
-            "failed resolve path '%s' with error '%s'",
+            "failed to resolve path '%s' with error '%s'",
             path,
             strerror(errno));
     }
@@ -404,6 +418,35 @@ directory_path(char const* path)
     autil_xalloc(tmp, AUTIL_XALLOC_FREE);
 
     return interned;
+}
+
+char const**
+directory_files(char const* path)
+{
+    assert(path != NULL);
+
+    DIR* const dir = opendir(path);
+    if (dir == NULL) {
+        fatal(
+            NULL,
+            "failed to open directory '%s' with error '%s'",
+            path,
+            strerror(errno));
+    }
+
+    autil_sbuf(char const*) files = NULL;
+    struct dirent* dirent = {0};
+    while ((dirent = readdir(dir)) != NULL) {
+        char const* file = dirent->d_name;
+        if (strcmp(file, ".") == 0 || strcmp(file, "..") == 0) {
+            continue;
+        }
+        autil_sbuf_push(
+            files, autil_sipool_intern_cstr(context()->sipool, file));
+    }
+
+    (void)closedir(dir);
+    return files;
 }
 
 static char*

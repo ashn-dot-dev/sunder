@@ -4,9 +4,7 @@
 # language. This implementation uses a 30,000 cell tape with 8-bit wrapping
 # cells. No cell update is performed upon reading EOF with the , operation.
 
-import "std/cptr.sunder";
-import "std/cstr.sunder";
-import "std/io.sunder";
+import "std";
 import "sys/sys.sunder";
 
 # A buffer size of 0x10000 is large enough to fit both GitHub user rdebath's

@@ -1121,7 +1121,7 @@ merge_symbol_table(
 }
 
 // Returns the canonical representation of the provided import path or NULL.
-char const* // interned
+static char const* // interned
 canonical_import_path(char const* module_path, char const* import_path)
 {
     assert(module_path != NULL);
@@ -1170,29 +1170,51 @@ canonical_import_path(char const* module_path, char const* import_path)
 }
 
 static void
+resolve_import_file(
+    struct resolver* resolver,
+    struct source_location const* location,
+    char const* file_name)
+{
+    assert(resolver != NULL);
+    assert(file_name != NULL);
+
+    char const* const path =
+        canonical_import_path(resolver->module->path, file_name);
+    if (path == NULL) {
+        fatal(location, "failed to resolve import `%s`", file_name);
+    }
+
+    if (file_is_directory(path)) {
+        autil_sbuf(char const*) dir_contents = directory_files(path);
+        for (size_t i = 0; i < autil_sbuf_count(dir_contents); ++i) {
+            struct autil_string* const string =
+                autil_string_new_fmt("%s/%s", file_name, dir_contents[i]);
+            char const* const interned = autil_sipool_intern_cstr(
+                context()->sipool, autil_string_start(string));
+            autil_string_del(string);
+            resolve_import_file(resolver, location, interned);
+        }
+        autil_sbuf_fini(dir_contents);
+        return;
+    }
+
+    struct module const* module = lookup_module(path);
+    if (module == NULL) {
+        module = load_module(file_name, path);
+    }
+    if (!module->loaded) {
+        fatal(location, "circular dependency when importing `%s`", file_name);
+    }
+    merge_symbol_table(resolver, resolver->module->symbols, module->exports);
+}
+
+static void
 resolve_import(struct resolver* resolver, struct cst_import const* import)
 {
     assert(resolver != NULL);
     assert(import != NULL);
 
-    char const* const path =
-        canonical_import_path(resolver->module->path, import->path);
-    if (path == NULL) {
-        fatal(import->location, "failed to resolve import `%s`", import->path);
-    }
-
-    struct module const* module = lookup_module(path);
-    if (module == NULL) {
-        module = load_module(import->path, path);
-    }
-    if (!module->loaded) {
-        fatal(
-            import->location,
-            "circular dependency when importing `%s`",
-            import->path);
-    }
-
-    merge_symbol_table(resolver, resolver->module->symbols, module->exports);
+    resolve_import_file(resolver, import->location, import->path);
 }
 
 static struct symbol const*
@@ -2451,7 +2473,7 @@ resolve_expr_array_slice(struct resolver* resolver, struct cst_expr const* expr)
     bool const is_static = is_global || resolver->is_within_const_decl;
     struct address const* const array_address = is_static
         ? resolver_reserve_storage_static(resolver, array_name)
-        : resolver_reserve_storage_local(resolver, type);
+        : resolver_reserve_storage_local(resolver, array_type);
 
     struct value* array_value = NULL;
     if (is_static) {
@@ -2483,9 +2505,6 @@ resolve_expr_array_slice(struct resolver* resolver, struct cst_expr const* expr)
     }
     autil_freezer_register(context()->freezer, array_symbol);
 
-    // TODO: Need unique name for symbol. address->data.static_.name is used
-    // for `bytes` objects, but these may be allocated on the stack, so that
-    // won't work.
     symbol_table_insert(
         resolver->current_symbol_table, array_symbol->name, array_symbol);
 

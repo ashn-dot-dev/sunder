@@ -1402,7 +1402,6 @@ codegen_rvalue_array_slice(struct expr const* expr, size_t id)
 
     push_address(expr->data.array_slice.array_symbol->address);
     appendli("pop rbx ; address of the array-slice backing array");
-    appendli("mov rax, rsp ; address of the array-slice data on the stack");
     copy_rsp_rbx_via_rcx(expr->data.array_slice.array_symbol->type->size);
     pop(expr->data.array_slice.array_symbol->type->size);
 
