@@ -1626,6 +1626,7 @@ complete_struct(
     // a valid path to the buffer through the `type` pointer. Always keep a
     // reference to the the stretchy buffer so that ASAN does not complain.
     autil_sbuf(struct member_variable const) xxx_member_variables_ref = NULL;
+    (void)xxx_member_variables_ref;
     // Add all member definitions to the struct in the order that they were
     // defined in.
     char const* const save_symbol_name_prefix =
