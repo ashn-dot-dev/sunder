@@ -344,6 +344,7 @@ order_expr(struct orderer* orderer, struct cst_expr const* expr)
     }
     case CST_EXPR_ACCESS_DEREFERENCE: {
         order_expr(orderer, expr->data.access_dereference.lhs);
+        return;
     }
     case CST_EXPR_SIZEOF: {
         order_typespec(orderer, expr->data.sizeof_.rhs);
