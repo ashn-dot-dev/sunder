@@ -1,0 +1,198 @@
+func u_pos_div_pos() void {
+    dump 3u8  / 1u8;
+    dump 3u16 / 1u16;
+    dump 3u32 / 1u32;
+    dump 3u64 / 1u64;
+
+    dump 3u8  / 2u8;
+    dump 3u16 / 2u16;
+    dump 3u32 / 2u32;
+    dump 3u64 / 2u64;
+
+    dump 3u8  / 3u8;
+    dump 3u16 / 3u16;
+    dump 3u32 / 3u32;
+    dump 3u64 / 3u64;
+
+    dump 3u8  / 4u8;
+    dump 3u16 / 4u16;
+    dump 3u32 / 4u32;
+    dump 3u64 / 4u64;
+}
+
+func s_pos_div_pos() void {
+    dump +3s8  / +1s8;
+    dump +3s16 / +1s16;
+    dump +3s32 / +1s32;
+    dump +3s64 / +1s64;
+
+    dump +3s8  / +2s8;
+    dump +3s16 / +2s16;
+    dump +3s32 / +2s32;
+    dump +3s64 / +2s64;
+
+    dump +3s8  / +3s8;
+    dump +3s16 / +3s16;
+    dump +3s32 / +3s32;
+    dump +3s64 / +3s64;
+
+    dump +3s8  / +4s8;
+    dump +3s16 / +4s16;
+    dump +3s32 / +4s32;
+    dump +3s64 / +4s64;
+}
+
+func s_neg_div_pos() void {
+    dump -3s8  / +1s8;
+    dump -3s16 / +1s16;
+    dump -3s32 / +1s32;
+    dump -3s64 / +1s64;
+
+    dump -3s8  / +2s8;
+    dump -3s16 / +2s16;
+    dump -3s32 / +2s32;
+    dump -3s64 / +2s64;
+
+    dump -3s8  / +3s8;
+    dump -3s16 / +3s16;
+    dump -3s32 / +3s32;
+    dump -3s64 / +3s64;
+
+    dump -3s8  / +4s8;
+    dump -3s16 / +4s16;
+    dump -3s32 / +4s32;
+    dump -3s64 / +4s64;
+}
+
+func s_pos_div_neg() void {
+    dump +3s8  / -1s8;
+    dump +3s16 / -1s16;
+    dump +3s32 / -1s32;
+    dump +3s64 / -1s64;
+
+    dump +3s8  / -2s8;
+    dump +3s16 / -2s16;
+    dump +3s32 / -2s32;
+    dump +3s64 / -2s64;
+
+    dump +3s8  / -3s8;
+    dump +3s16 / -3s16;
+    dump +3s32 / -3s32;
+    dump +3s64 / -3s64;
+
+    dump +3s8  / -4s8;
+    dump +3s16 / -4s16;
+    dump +3s32 / -4s32;
+    dump +3s64 / -4s64;
+}
+
+func s_neg_div_neg() void {
+    dump -3s8  / -1s8;
+    dump -3s16 / -1s16;
+    dump -3s32 / -1s32;
+    dump -3s64 / -1s64;
+
+    dump -3s8  / -2s8;
+    dump -3s16 / -2s16;
+    dump -3s32 / -2s32;
+    dump -3s64 / -2s64;
+
+    dump -3s8  / -3s8;
+    dump -3s16 / -3s16;
+    dump -3s32 / -3s32;
+    dump -3s64 / -3s64;
+
+    dump -3s8  / -4s8;
+    dump -3s16 / -4s16;
+    dump -3s32 / -4s32;
+    dump -3s64 / -4s64;
+}
+
+func main() void {
+    u_pos_div_pos();
+    s_pos_div_pos();
+    s_neg_div_pos();
+    s_pos_div_neg();
+    s_neg_div_neg();
+}
+################################################################################
+# 03
+# 03 00
+# 03 00 00 00
+# 03 00 00 00 00 00 00 00
+# 01
+# 01 00
+# 01 00 00 00
+# 01 00 00 00 00 00 00 00
+# 01
+# 01 00
+# 01 00 00 00
+# 01 00 00 00 00 00 00 00
+# 00
+# 00 00
+# 00 00 00 00
+# 00 00 00 00 00 00 00 00
+# 03
+# 03 00
+# 03 00 00 00
+# 03 00 00 00 00 00 00 00
+# 01
+# 01 00
+# 01 00 00 00
+# 01 00 00 00 00 00 00 00
+# 01
+# 01 00
+# 01 00 00 00
+# 01 00 00 00 00 00 00 00
+# 00
+# 00 00
+# 00 00 00 00
+# 00 00 00 00 00 00 00 00
+# FD
+# FD FF
+# FD FF FF FF
+# FD FF FF FF FF FF FF FF
+# FF
+# FF FF
+# FF FF FF FF
+# FF FF FF FF FF FF FF FF
+# FF
+# FF FF
+# FF FF FF FF
+# FF FF FF FF FF FF FF FF
+# 00
+# 00 00
+# 00 00 00 00
+# 00 00 00 00 00 00 00 00
+# FD
+# FD FF
+# FD FF FF FF
+# FD FF FF FF FF FF FF FF
+# FF
+# FF FF
+# FF FF FF FF
+# FF FF FF FF FF FF FF FF
+# FF
+# FF FF
+# FF FF FF FF
+# FF FF FF FF FF FF FF FF
+# 00
+# 00 00
+# 00 00 00 00
+# 00 00 00 00 00 00 00 00
+# 03
+# 03 00
+# 03 00 00 00
+# 03 00 00 00 00 00 00 00
+# 01
+# 01 00
+# 01 00 00 00
+# 01 00 00 00 00 00 00 00
+# 01
+# 01 00
+# 01 00 00 00
+# 01 00 00 00 00 00 00 00
+# 00
+# 00 00
+# 00 00 00 00
+# 00 00 00 00 00 00 00 00
