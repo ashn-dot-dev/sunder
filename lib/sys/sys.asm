@@ -5,13 +5,12 @@ __nil: equ 0
 __EXIT_SUCCESS: equ 0
 __EXIT_FAILURE: equ 1
 
-__STDIN_FILENO: equ 0
+__STDIN_FILENO:  equ 0
 __STDOUT_FILENO: equ 1
 __STDERR_FILENO: equ 2
 
 __SYS_WRITE: equ 1
-__SYS_EXIT: equ 60
-
+__SYS_EXIT:  equ 60
 
 ; BUILTIN DUMP SUBROUTINE
 ; =======================

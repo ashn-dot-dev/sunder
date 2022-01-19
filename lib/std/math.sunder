@@ -13,3 +13,13 @@ func max[[:T]](x: T, y: T) T {
     }
     return y;
 }
+
+# Calculates the remainder of x and y (truncated towards zero).
+# The remainder will have the same sign as the dividend.
+#   std::rem[[:ssize]](+7, +3) => +1
+#   std::rem[[:ssize]](+7, -3) => +1
+#   std::rem[[:ssize]](-7, +3) => -1
+#   std::rem[[:ssize]](-7, -3) => -1
+func rem[[:T]](x: T, y: T) T {
+    return x - y * (x / y);
+}

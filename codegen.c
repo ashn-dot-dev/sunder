@@ -65,14 +65,14 @@ static void
 pop(size_t size);
 
 // Register al, ax, eax, or rax based on size.
-char const*
+static char const*
 reg_a(size_t size);
 // Register bl, bx, ebx, or rbx based on size.
-char const*
+static char const*
 reg_b(size_t size);
-// Register dl, dx, edx, or rdx based on size.
-char const*
-reg_d(size_t size);
+// Register cl, cx, ecx, or rcx based on size.
+static char const*
+reg_c(size_t size);
 
 // Copy size bytes from the address in rax to to the address in rbx using rcx
 // for intermediate storage. Roughly equivalent to memcpy(rbx, rax, size).
@@ -492,7 +492,7 @@ pop(size_t size)
     appendli("add rsp, %#zx", ceil8zu(size));
 }
 
-char const*
+static char const*
 reg_a(size_t size)
 {
     switch (size) {
@@ -506,9 +506,10 @@ reg_a(size_t size)
         return "rax";
     }
     UNREACHABLE();
+    return NULL;
 }
 
-char const*
+static char const*
 reg_b(size_t size)
 {
     switch (size) {
@@ -522,22 +523,24 @@ reg_b(size_t size)
         return "rbx";
     }
     UNREACHABLE();
+    return NULL;
 }
 
-char const*
-reg_d(size_t size)
+static char const*
+reg_c(size_t size)
 {
     switch (size) {
     case 1:
-        return "dl";
+        return "cl";
     case 2:
-        return "dx";
+        return "cx";
     case 4:
-        return "edx";
+        return "ecx";
     case 8:
-        return "rdx";
+        return "rcx";
     }
     UNREACHABLE();
+    return NULL;
 }
 
 static void
@@ -2280,8 +2283,8 @@ codegen_rvalue_binary(struct expr const* expr, size_t id)
 
         codegen_rvalue(expr->data.binary.lhs);
         codegen_rvalue(expr->data.binary.rhs);
-        appendli("pop rbx");
-        appendli("pop rax");
+        appendli("pop rbx ; add rhs");
+        appendli("pop rax ; add lhs");
         appendli("add %s, %s", lhs_reg, rhs_reg);
         appendli("push rax");
         appendli("%s %s%zu_end", jmp_not_overflow, LABEL_EXPR, id);
@@ -2303,8 +2306,8 @@ codegen_rvalue_binary(struct expr const* expr, size_t id)
 
         codegen_rvalue(expr->data.binary.lhs);
         codegen_rvalue(expr->data.binary.rhs);
-        appendli("pop rbx");
-        appendli("pop rax");
+        appendli("pop rbx ; sub rhs");
+        appendli("pop rax ; sub lhs");
         appendli("sub %s, %s", lhs_reg, rhs_reg);
         appendli("push rax");
         appendli("%s %s%zu_end", jmp_not_overflow, LABEL_EXPR, id);
@@ -2325,8 +2328,8 @@ codegen_rvalue_binary(struct expr const* expr, size_t id)
 
         codegen_rvalue(expr->data.binary.lhs);
         codegen_rvalue(expr->data.binary.rhs);
-        appendli("pop rbx");
-        appendli("pop rax");
+        appendli("pop rbx ; mul rhs");
+        appendli("pop rax ; mul lhs");
         appendli("%s %s", mul, rhs_reg);
         appendli("push rax");
         appendli("jno %s%zu_end", LABEL_EXPR, id);
@@ -2347,13 +2350,38 @@ codegen_rvalue_binary(struct expr const* expr, size_t id)
 
         codegen_rvalue(expr->data.binary.lhs);
         codegen_rvalue(expr->data.binary.rhs);
-        appendli("pop rbx"); // rhs
-        appendli("pop rax"); // lhs
-        appendli("mov rdx, 0");
+        appendli("pop rbx ; div rhs");
+        appendli("pop rax ; div lhs");
+        if (type_is_signed_integer(xhs_type)) {
+            // Sign extend to fill the upper portion of the dividend.
+            // https://www.felixcloutier.com/x86/cbw:cwde:cdqe
+            // https://www.felixcloutier.com/x86/cwd:cdq:cqo
+            switch (xhs_type->size) {
+            case 1:
+                appendli("cbw ; sign extend AL into AX");
+                break;
+            case 2:
+                appendli("cwd ; sign extend AX into DX:AX");
+                break;
+            case 4:
+                appendli("cdq ; sign extend EAX into EDX:EAX");
+                break;
+            case 8:
+                appendli("cqo ; sign extend RAX into RDX:RAX");
+                break;
+            default:
+                UNREACHABLE();
+            }
+        } else {
+            assert(type_is_unsigned_integer(xhs_type));
+            // Clear the upper portion of the dividend.
+            appendli("xor rdx, rdx");
+        }
+        appendli("mov rcx, 0");
         appendli(
             "cmp %s, %s",
             rhs_reg,
-            reg_d(xhs_type->size)); // divide-by-zero check
+            reg_c(xhs_type->size)); // divide-by-zero check
         appendli("jne %s%zu_op", LABEL_EXPR, id);
         appendli("call __integer_divz_handler");
         appendli("%s%zu_op:", LABEL_EXPR, id);
