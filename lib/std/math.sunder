@@ -1,16 +1,16 @@
 namespace std;
 import "std/int.sunder"; # RM ME AFTER DEBUGGING
 
-func min[[:T]](lhs: T, rhs: T) T {
-    if lhs < rhs {
-        return lhs;
+func min[[:T]](x: T, y: T) T {
+    if x < y {
+        return x;
     }
-    return rhs;
+    return y;
 }
 
-func max[[:T]](lhs: T, rhs: T) T {
-    if lhs > rhs {
-        return lhs;
+func max[[:T]](x: T, y: T) T {
+    if x > y {
+        return x;
     }
-    return rhs;
+    return y;
 }
