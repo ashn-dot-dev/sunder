@@ -1,0 +1,54 @@
+import "std/vec.sunder";
+
+func main() void {
+    var vec: std::vec[[:u32]] = std::vec[[:u32]]::init();
+    dump vec.count();
+    dump vec.capacity();
+
+    vec.reserve(0);
+    dump vec.count();
+    dump vec.capacity();
+
+    vec.reserve(1);
+    dump vec.count();
+    dump vec.capacity();
+
+    vec.reserve(0);
+    dump vec.count();
+    dump vec.capacity();
+
+    vec.reserve(1);
+    dump vec.count();
+    dump vec.capacity();
+
+    vec.reserve(2);
+    dump vec.count();
+    dump vec.capacity();
+
+    vec.reserve(0xBEEF);
+    dump vec.count();
+    dump vec.capacity();
+
+    vec.reserve(0);
+    dump vec.count();
+    dump vec.capacity();
+
+    vec.fini();
+}
+################################################################################
+# 00 00 00 00 00 00 00 00
+# 00 00 00 00 00 00 00 00
+# 00 00 00 00 00 00 00 00
+# 00 00 00 00 00 00 00 00
+# 00 00 00 00 00 00 00 00
+# 01 00 00 00 00 00 00 00
+# 00 00 00 00 00 00 00 00
+# 01 00 00 00 00 00 00 00
+# 00 00 00 00 00 00 00 00
+# 01 00 00 00 00 00 00 00
+# 00 00 00 00 00 00 00 00
+# 02 00 00 00 00 00 00 00
+# 00 00 00 00 00 00 00 00
+# EF BE 00 00 00 00 00 00
+# 00 00 00 00 00 00 00 00
+# EF BE 00 00 00 00 00 00

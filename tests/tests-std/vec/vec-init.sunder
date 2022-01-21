@@ -1,0 +1,15 @@
+import "std/vec.sunder";
+
+func main() void {
+    var vec: std::vec[[:u32]] = std::vec[[:u32]]::init();
+    dump vec.start();
+    dump vec.count();
+    dump vec.capacity();
+    dump vec.data();
+    vec.fini();
+}
+################################################################################
+# 00 00 00 00 00 00 00 00
+# 00 00 00 00 00 00 00 00
+# 00 00 00 00 00 00 00 00
+# 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
