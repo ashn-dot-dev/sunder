@@ -1,0 +1,29 @@
+# Writes input from stdin to stdout until an end-of-file condition is reached.
+
+import "std";
+
+func main() void {
+    var buf: [512]byte = (:[512]byte)[0...];
+
+    var r: std::reader = std::reader::init[[:std::stream]](&std::in_);
+    var w: std::writer = std::writer::init[[:std::stream]](&std::out);
+    var res: std::result[[:usize, :[]byte]] =
+        std::mem::zeroed[[:std::result[[:usize, :[]byte]]]]();
+    for true {
+        res = r.read(buf[0:countof(buf)]);
+        if res.is_error() {
+            std::print_line(
+                std::writer::init[[:std::stream]](&std::err),
+                res.error());
+        }
+        if res.value() == 0 {
+            break;
+        }
+        res = w.write(buf[0:res.value()]);
+        if res.is_error() {
+            std::print_line(
+                std::writer::init[[:std::stream]](&std::err),
+                res.error());
+        }
+    }
+}

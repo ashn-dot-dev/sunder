@@ -4,15 +4,52 @@ import "std/panic.sunder";
 import "std/result.sunder";
 import "sys/sys.sunder";
 
+struct reader_vtable {
+    # func read(self: *any, buf: []byte) std::result[[:usize, :[]byte]]
+    #
+    # Attempt to read `countof(buf)` bytes using the provided reader. The read
+    # operation may mutate any portion of `buf`, even if less than
+    # `countof(buf)` bytes are read.
+    #
+    # On success, this function returns the number of bytes read, which must be
+    # less than or equal to `countof(buf)`, and which may be less than
+    # `countof(buf)` in the event of a partial read. A successful read of size
+    # zero indicates an end-of-input condition for non-zero `countof(buf)`
+    # buffer sizes.
+    #
+    # On error, this function returns a static string describing the error.
+    var read: func(*any, []byte) std::result[[:usize, :[]byte]];
+}
+
+struct reader {
+    var vtable: *std::reader_vtable;
+    var object: *any;
+
+    func init[[:T]](object: *T) std::reader {
+        const vtable: std::reader_vtable = (:std::reader_vtable){
+            .read = T::read
+        };
+        return (:std::reader){
+            .vtable = &vtable,
+            .object = object
+        };
+    }
+
+    func read(self: *reader, buf: []byte) std::result[[:usize, :[]byte]] {
+        return self.*.vtable.*.read(self.*.object, buf);
+    }
+}
+
 struct writer_vtable {
-    # func write(self: *any, bytes: []byte) std::result[[:usize, :[]byte]]
+    # func write(self: *any, buf: []byte) std::result[[:usize, :[]byte]]
     #
-    # Attempt to write `countof(bytes)` using the provided writer.
+    # Attempt to write `countof(buf)` using the provided writer. The write
+    # operation must not mutate the contents of `buf`.
     #
-    # On success this function returns the number of bytes written, which may
-    # be less than `countof(bytes)` in the event of a partial write.
+    # On success, this function returns the number of bytes written, which may
+    # be less than `countof(buf)` in the event of a partial write.
     #
-    # On error this function returns a static string describing the error.
+    # On error, this function returns a static string describing the error.
     var write: func(*any, []byte) std::result[[:usize, :[]byte]];
 }
 
@@ -30,15 +67,15 @@ struct writer {
         };
     }
 
-    func write(self: *writer, bytes: []byte) std::result[[:usize, :[]byte]] {
-        return self.*.vtable.*.write(self.*.object, bytes);
+    func write(self: *writer, buf: []byte) std::result[[:usize, :[]byte]] {
+        return self.*.vtable.*.write(self.*.object, buf);
     }
 }
 
-func write_all(writer: std::writer, bytes: []byte) std::result[[:usize, :[]byte]] {
+func write_all(writer: std::writer, buf: []byte) std::result[[:usize, :[]byte]] {
     var written: usize = 0;
-    for written < countof(bytes) {
-        var result: std::result[[:usize, :[]byte]] = writer.write(bytes[written:countof(bytes)]);
+    for written < countof(buf) {
+        var result: std::result[[:usize, :[]byte]] = writer.write(buf[written:countof(buf)]);
         if result.is_error() {
             return result;
         }
@@ -56,11 +93,11 @@ struct formatter_vtable {
     # However, the empty format specifier `""` should always be handled as a
     # "default formatting" case.
     #
-    # On success this function returns the number of bytes written to the
+    # On success, this function returns the number of bytes written to the
     # provided writer. Types implementing this function should ensure that all
     # bytes are written to the provided writer.
     #
-    # On error this function returns a static string describing the error. In
+    # On error, this function returns a static string describing the error. In
     # the event of a write error, the erroneous write result should be
     # returned. If the provided format specifier does not match a format
     # specifier implemented by the type then the format function should call
@@ -290,12 +327,27 @@ func print_format_line(writer: std::writer, format: []byte, args: []std::formatt
 struct stream {
     var fd: ssize;
 
-    func write(self: *stream, bytes: []byte) std::result[[:usize, :[]byte]] {
-        if countof(bytes) == 0 {
+    func read(self: *stream, buf: []byte) std::result[[:usize, :[]byte]] {
+        if countof(buf) == 0 {
             return std::result[[:usize, :[]byte]]::init_value(0);
         }
 
-        var sysret: ssize = sys::write((:u32)self.*.fd, &bytes[0u], countof(bytes));
+        var sysret: ssize = sys::read((:u32)self.*.fd, &buf[0u], countof(buf));
+        if sysret < 0 {
+            return std::result[[:usize, :[]byte]]::init_error(
+                sys::ERRNO_STRINGS[(:usize)-sysret]
+            );
+        }
+
+        return std::result[[:usize, :[]byte]]::init_value((:usize)sysret);
+    }
+
+    func write(self: *stream, buf: []byte) std::result[[:usize, :[]byte]] {
+        if countof(buf) == 0 {
+            return std::result[[:usize, :[]byte]]::init_value(0);
+        }
+
+        var sysret: ssize = sys::write((:u32)self.*.fd, &buf[0u], countof(buf));
         if sysret < 0 {
             return std::result[[:usize, :[]byte]]::init_error(
                 sys::ERRNO_STRINGS[(:usize)-sysret]
@@ -306,5 +358,6 @@ struct stream {
     }
 }
 
+const in_: stream = (:stream){.fd = (:ssize)sys::STDIN_FILENO};
 const out: stream = (:stream){.fd = (:ssize)sys::STDOUT_FILENO};
 const err: stream = (:stream){.fd = (:ssize)sys::STDERR_FILENO};
