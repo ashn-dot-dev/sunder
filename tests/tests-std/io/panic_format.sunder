@@ -1,0 +1,11 @@
+import "std/io.sunder";
+import "std/int.sunder";
+
+func main() void {
+    var int: std::int[[:usize]] = std::int[[:usize]]::init(42);
+    std::panic_format(
+        "foo bar {}",
+        (:[]std::formatter)[std::formatter::init[[:std::int[[:usize]]]](&int)]);
+}
+################################################################################
+# panic: foo bar 42

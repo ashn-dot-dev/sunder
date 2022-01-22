@@ -1,30 +1,26 @@
 namespace std;
 import "sys/sys.sunder";
 
-# Print the string `why` to STDERR, followed by a newline, and exit with
-# failure status. This function does not return.
+# Discontinue program execution due to an irrecoverable error. This function
+# currently operates by making a call to `sys::exit` with failure status, but
+# this behavior may change in the future. This function does not return.
+func terminate() void {
+    sys::exit(1);
+}
+
+# ASCII string appearing before the message decribing a panic reason. Custom
+# panic functions may be created by writing PANIC_PREAMBLE, a panic message, and
+# an ASCII newline character to standard error followed by a call to
+# `std::terminate`.
+const PANIC_PREAMBLE: []byte = "panic: ";
+
+# Print the string `why` to STDERR, followed by a newline, before making a call
+# to `std::terminate`. This function does not return.
 func panic(why: []byte) void {
-    const PREFIX: []byte = "panic: ";
-    sys::write(sys::STDERR_FILENO, &PREFIX[0], countof(PREFIX));
+    sys::write(sys::STDERR_FILENO, &PANIC_PREAMBLE[0], countof(PANIC_PREAMBLE));
     if countof(why) != 0 {
         sys::write(sys::STDERR_FILENO, &why[0], countof(why));
     }
     sys::write(sys::STDERR_FILENO, &"\n"[0], 1);
-    sys::exit(1);
-}
-
-# Print string from the from the the list of string arguments `args` to STDERR,
-# followed by a newline, and exit with failure status. This function does not
-# return.
-func panic_args(args: [][]byte) void {
-    const PREFIX: []byte = "panic: ";
-    sys::write(sys::STDERR_FILENO, &PREFIX[0], countof(PREFIX));
-    for i in 0:countof(args) {
-        if countof(args[i]) == 0 {
-            continue;
-        }
-        sys::write(sys::STDERR_FILENO, &args[i][0], countof(args[i]));
-    }
-    sys::write(sys::STDERR_FILENO, &"\n"[0], 1);
-    sys::exit(1);
+    std::terminate();
 }
