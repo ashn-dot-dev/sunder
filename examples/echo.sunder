@@ -2,13 +2,12 @@ import "std";
 import "sys/sys.sunder";
 
 func main() void {
-    var writer: std::writer = std::writer::init[[:std::stream]](&std::out);
     for i in 1:sys::argc {
         if i != 1 {
-            std::print(writer, " ");
+            std::print(std::out(), " ");
         }
         var arg: *byte = *std::cptr::add[[:*byte]](sys::argv, i);
-        std::print(writer, std::cstr::to_bytes(arg));
+        std::print(std::out(), std::cstr::to_bytes(arg));
     }
-    std::print(writer, "\n");
+    std::print(std::out(), "\n");
 }

@@ -91,9 +91,7 @@ Compiling the source file `hello.sunder` into the executable `hello`.
 import "std/io.sunder";
 
 func main() void {
-    std::print_line(
-        std::writer::init[[:std::stream]](&std::out),
-        "Hello, world!");
+    std::print_line(std::out(), "Hello, world!");
 }
 ```
 

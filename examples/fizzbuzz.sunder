@@ -1,24 +1,23 @@
 import "std";
 
 func main() void {
-    var writer: std::writer = std::writer::init[[:std::stream]](&std::out);
     const N: usize = 100;
     for i in 1:N+1 {
         if std::rem[[:usize]](i, 3) == 0 and std::rem[[:usize]](i, 5) == 0 {
-            std::print(writer, "FizzBuzz\n");
+            std::print(std::out(), "FizzBuzz\n");
             continue;
         }
         if std::rem[[:usize]](i, 3) == 0 {
-            std::print(writer, "Fizz\n");
+            std::print(std::out(), "Fizz\n");
             continue;
         }
         if std::rem[[:usize]](i, 5) == 0 {
-            std::print(writer, "Buzz\n");
+            std::print(std::out(), "Buzz\n");
             continue;
         }
         var int: std::int[[:usize]] = std::int[[:usize]]::init(i);
         std::print_format_line(
-            writer,
+            std::out(),
             "{}",
             (:[]std::formatter)[
                 std::formatter::init[[:std::int[[:usize]]]](&int)]);

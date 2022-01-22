@@ -35,8 +35,6 @@ struct int {
 }
 
 func test0() void {
-    var writer: std::writer = std::writer::init[[:std::stream]](&std::out);
-
     var alice: person = (:person){.name = "Alice"};
     var bob: person = (:person){.name = "Bob"};
 
@@ -45,14 +43,12 @@ func test0() void {
         std::formatter::init[[:person]](&bob)
     ];
     var res: std::result[[:usize, :[]byte]] =
-        std::write_format(writer, "{} and {}", args[0:countof(args)]);
-    writer.write("\n"); # Separate '\n' to test format string ending in "{}".
+        std::write_format(std::out(), "{} and {}", args[0:countof(args)]);
+    std::OUT.write("\n"); # Separate '\n' to test format string ending in "{}".
     dump res.value();
 }
 
 func test1() void {
-    var writer: std::writer = std::writer::init[[:std::stream]](&std::out);
-
     const i: int = (:int){};
 
     var args: [5]std::formatter = (:[5]std::formatter)[
@@ -63,13 +59,11 @@ func test1() void {
         std::formatter::init[[:int]](&i)
     ];
     var res: std::result[[:usize, :[]byte]] =
-        std::write_format(writer, "{} {d} {b} {o} {x}\n", args[0:countof(args)]);
+        std::write_format(std::out(), "{} {d} {b} {o} {x}\n", args[0:countof(args)]);
     dump res.value();
 }
 
 func test2() void {
-    var writer: std::writer = std::writer::init[[:std::stream]](&std::out);
-
     var alice: person = (:person){.name = "Alice"};
     var bob: person = (:person){.name = "Bob"};
 
@@ -78,13 +72,11 @@ func test2() void {
         std::formatter::init[[:person]](&bob)
     ];
     var res: std::result[[:usize, :[]byte]] =
-        std::write_format(writer, "{{ {} {{ {} {{\n", args[0:countof(args)]);
+        std::write_format(std::out(), "{{ {} {{ {} {{\n", args[0:countof(args)]);
     dump res.value();
 }
 
 func test3() void {
-    var writer: std::writer = std::writer::init[[:std::stream]](&std::out);
-
     var alice: person = (:person){.name = "Alice"};
     var bob: person = (:person){.name = "Bob"};
 
@@ -93,20 +85,18 @@ func test3() void {
         std::formatter::init[[:person]](&bob)
     ];
     var res: std::result[[:usize, :[]byte]] =
-        std::write_format(writer, "}} {} }} {} }}\n", args[0:countof(args)]);
+        std::write_format(std::out(), "}} {} }} {} }}\n", args[0:countof(args)]);
     dump res.value();
 }
 
 func test4() void {
-    var writer: std::writer = std::writer::init[[:std::stream]](&std::out);
-
     var alice: person = (:person){.name = "Alice"};
 
     var args: [1]std::formatter = (:[1]std::formatter)[
         std::formatter::init[[:person]](&alice)
     ];
     var res: std::result[[:usize, :[]byte]] =
-        std::write_format(writer, "{{{}\n", args[0:countof(args)]);
+        std::write_format(std::out(), "{{{}\n", args[0:countof(args)]);
     dump res.value();
 }
 
@@ -115,13 +105,11 @@ func test4() void {
 # std::write_format is the primary use case for array-slices, so it is worth
 # testing here.
 func test5() void {
-    var writer: std::writer = std::writer::init[[:std::stream]](&std::out);
-
     var alice: person = (:person){.name = "Alice"};
     var bob: person = (:person){.name = "Bob"};
 
     var res: std::result[[:usize, :[]byte]] = std::write_format(
-        std::writer::init[[:std::stream]](&std::err),
+        std::err(),
         "{} and {} as an array-slice\n",
         (:[]std::formatter)[
             std::formatter::init[[:person]](&alice),

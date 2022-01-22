@@ -12,8 +12,6 @@ struct person {
 }
 
 func main() void {
-    var writer: std::writer = std::writer::init[[:std::stream]](&std::out);
-
     var alice: person = (:person){.name = "Alice"};
     var bob: person = (:person){.name = "Bob"};
 
@@ -22,7 +20,7 @@ func main() void {
         std::formatter::init[[:person]](&bob)
     ];
     var res: std::result[[:usize, :[]byte]] =
-        std::write_format(writer, "{} and {} and {}\n", args[0:countof(args)]);
+        std::write_format(std::out(), "{} and {} and {}\n", args[0:countof(args)]);
 }
 ################################################################################
 # Alice and Bob and panic: invalid format argument count

@@ -358,6 +358,18 @@ struct stream {
     }
 }
 
-const in_: stream = (:stream){.fd = (:ssize)sys::STDIN_FILENO};
-const out: stream = (:stream){.fd = (:ssize)sys::STDOUT_FILENO};
-const err: stream = (:stream){.fd = (:ssize)sys::STDERR_FILENO};
+const INPUT: stream = (:stream){.fd = (:ssize)sys::STDIN_FILENO};
+const OUT: stream = (:stream){.fd = (:ssize)sys::STDOUT_FILENO};
+const ERR: stream = (:stream){.fd = (:ssize)sys::STDERR_FILENO};
+
+func input() std::reader {
+    return std::reader::init[[:std::stream]](&std::INPUT);
+}
+
+func out() std::writer {
+    return std::writer::init[[:std::stream]](&std::OUT);
+}
+
+func err() std::writer {
+    return std::writer::init[[:std::stream]](&std::ERR);
+}

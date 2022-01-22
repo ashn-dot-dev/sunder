@@ -7,7 +7,7 @@ func cat(filename: *byte) void {
 
     if sysret < 0 {
         std::print_format_line(
-            std::writer::init[[:std::stream]](&std::err),
+            std::err(),
             "{}: failed to open file",
             (:[]std::formatter)[
                 std::formatter::init[[:std::str]](&filename_str)]);
@@ -20,7 +20,7 @@ func cat(filename: *byte) void {
         sysret = sys::read(fd, &buf[0], countof(buf));
         if sysret < 0 {
             std::print_format_line(
-                std::writer::init[[:std::stream]](&std::err),
+                std::err(),
                 "{}: read error",
                 (:[]std::formatter)[
                     std::formatter::init[[:std::str]](&filename_str)]);
@@ -34,7 +34,7 @@ func cat(filename: *byte) void {
         sysret = sys::write(sys::STDOUT_FILENO, &buf[0], (:usize)sysret);
         if sysret < 0 {
             std::print_format_line(
-                std::writer::init[[:std::stream]](&std::err),
+                std::err(),
                 "{}: write error",
                 (:[]std::formatter)[
                     std::formatter::init[[:std::str]](&filename_str)]);

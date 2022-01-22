@@ -1,113 +1,93 @@
 import "std/int.sunder";
 
 func format_test0() void {
-    var writer: std::writer = std::writer::init[[:std::stream]](&std::out);
-
     var a: std::int[[:u32]] = std::int[[:u32]]::init(0xDEADBEEF);
     var a_fmtr: std::formatter = std::formatter::init[[:std::int[[:u32]]]](&a);
 
     var args: [1]std::formatter = (:[1]std::formatter)[a_fmtr];
-    var res: std::result[[:usize, :[]byte]] = std::write_format(writer, "{}\n", args[0:countof(args)]);
+    var res: std::result[[:usize, :[]byte]] = std::write_format(std::out(), "{}\n", args[0:countof(args)]);
 
     dump res.value();
 }
 
 func format_test1() void {
-    var writer: std::writer = std::writer::init[[:std::stream]](&std::out);
-
     var a: std::int[[:s32]] = std::int[[:s32]]::init(-123);
     var a_fmtr: std::formatter = std::formatter::init[[:std::int[[:s32]]]](&a);
 
     var args: [1]std::formatter = (:[1]std::formatter)[a_fmtr];
-    var res: std::result[[:usize, :[]byte]] = std::write_format(writer, "{}\n", args[0:countof(args)]);
+    var res: std::result[[:usize, :[]byte]] = std::write_format(std::out(), "{}\n", args[0:countof(args)]);
 
     dump res.value();
 }
 
 func format_test2() void {
-    var writer: std::writer = std::writer::init[[:std::stream]](&std::out);
-
     var a: std::int[[:u32]] = std::int[[:u32]]::init(0xDEADBEEF);
     var a_fmtr: std::formatter = std::formatter::init[[:std::int[[:u32]]]](&a);
 
     var args: [1]std::formatter = (:[1]std::formatter)[a_fmtr];
-    var res: std::result[[:usize, :[]byte]] = std::write_format(writer, "{d}\n", args[0:countof(args)]);
+    var res: std::result[[:usize, :[]byte]] = std::write_format(std::out(), "{d}\n", args[0:countof(args)]);
 
     dump res.value();
 }
 
 func format_test3() void {
-    var writer: std::writer = std::writer::init[[:std::stream]](&std::out);
-
     var a: std::int[[:u32]] = std::int[[:u32]]::init(0xDEADBEEF);
     var a_fmtr: std::formatter = std::formatter::init[[:std::int[[:u32]]]](&a);
 
     var args: [1]std::formatter = (:[1]std::formatter)[a_fmtr];
-    var res: std::result[[:usize, :[]byte]] = std::write_format(writer, "{b}\n", args[0:countof(args)]);
+    var res: std::result[[:usize, :[]byte]] = std::write_format(std::out(), "{b}\n", args[0:countof(args)]);
 
     dump res.value();
 }
 
 func format_test4() void {
-    var writer: std::writer = std::writer::init[[:std::stream]](&std::out);
-
     var a: std::int[[:u32]] = std::int[[:u32]]::init(0xDEADBEEF);
     var a_fmtr: std::formatter = std::formatter::init[[:std::int[[:u32]]]](&a);
 
     var args: [1]std::formatter = (:[1]std::formatter)[a_fmtr];
-    var res: std::result[[:usize, :[]byte]] = std::write_format(writer, "{o}\n", args[0:countof(args)]);
+    var res: std::result[[:usize, :[]byte]] = std::write_format(std::out(), "{o}\n", args[0:countof(args)]);
 
     dump res.value();
 }
 
 func format_test5() void {
-    var writer: std::writer = std::writer::init[[:std::stream]](&std::out);
-
     var a: std::int[[:u32]] = std::int[[:u32]]::init(0xDEADBEEF);
     var a_fmtr: std::formatter = std::formatter::init[[:std::int[[:u32]]]](&a);
 
     var args: [1]std::formatter = (:[1]std::formatter)[a_fmtr];
-    var res: std::result[[:usize, :[]byte]] = std::write_format(writer, "{x}\n", args[0:countof(args)]);
+    var res: std::result[[:usize, :[]byte]] = std::write_format(std::out(), "{x}\n", args[0:countof(args)]);
 
     dump res.value();
 }
 
 func format_test6() void {
-    var writer: std::writer = std::writer::init[[:std::stream]](&std::out);
-
     var a: std::int[[:u32]] = std::int[[:u32]]::init(0xDEADBEEF);
     var a_fmtr: std::formatter = std::formatter::init[[:std::int[[:u32]]]](&a);
 
     var args: [1]std::formatter = (:[1]std::formatter)[a_fmtr];
-    var res: std::result[[:usize, :[]byte]] = std::write_format(writer, "{X}\n", args[0:countof(args)]);
+    var res: std::result[[:usize, :[]byte]] = std::write_format(std::out(), "{X}\n", args[0:countof(args)]);
 
     dump res.value();
 }
 
 func format_test7() void {
-    var writer: std::writer = std::writer::init[[:std::stream]](&std::out);
-
     var a: std::int[[:s32]] = std::int[[:s32]]::init(-0xBEEF);
     var a_fmtr: std::formatter = std::formatter::init[[:std::int[[:s32]]]](&a);
 
     var args: [1]std::formatter = (:[1]std::formatter)[a_fmtr];
-    var res: std::result[[:usize, :[]byte]] = std::write_format(writer, "{X}\n", args[0:countof(args)]);
+    var res: std::result[[:usize, :[]byte]] = std::write_format(std::out(), "{X}\n", args[0:countof(args)]);
 
     dump res.value();
 }
 
 func format_test8() void {
-    var writer: std::writer = std::writer::init[[:std::stream]](&std::out);
-
     var a: std::int[[:u32]] = std::int[[:u32]]::init(0xDEADBEEF);
     var a_fmtr: std::formatter = std::formatter::init[[:std::int[[:u32]]]](&a);
 
     var args: [1]std::formatter = (:[1]std::formatter)[a_fmtr];
-    var res: std::result[[:usize, :[]byte]] = std::write_format(writer, "{l}\n", args[0:countof(args)]);
+    var res: std::result[[:usize, :[]byte]] = std::write_format(std::out(), "{l}\n", args[0:countof(args)]);
 
-    std::print_line(
-        std::writer::init[[:std::stream]](&std::err),
-        res.error());
+    std::print_line(std::err(), res.error());
 }
 
 func main() void {

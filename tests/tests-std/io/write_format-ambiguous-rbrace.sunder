@@ -12,15 +12,13 @@ struct person {
 }
 
 func main() void {
-    var writer: std::writer = std::writer::init[[:std::stream]](&std::out);
-
     var alice: person = (:person){.name = "Alice"};
 
     var args: [1]std::formatter = (:[1]std::formatter)[
         std::formatter::init[[:person]](&alice)
     ];
     var res: std::result[[:usize, :[]byte]] =
-        std::write_format(writer, "{}}}\n", args[0:countof(args)]);
+        std::write_format(std::out(), "{}}}\n", args[0:countof(args)]);
 }
 ################################################################################
 # panic: invalid format string "{}}}\n"

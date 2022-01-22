@@ -10,9 +10,7 @@ func main() void {
     c = c + 1u16;
     dump c;
 
-    std::print_line(
-        std::writer::init[[:std::stream]](&std::out),
-        "imported from the standard library");
+    std::print_line(std::out(), "imported from the standard library");
 }
 ################################################################################
 # AA AA
