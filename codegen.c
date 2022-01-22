@@ -2372,7 +2372,8 @@ codegen_rvalue_binary(struct expr const* expr, size_t id)
             default:
                 UNREACHABLE();
             }
-        } else {
+        }
+        else {
             assert(type_is_unsigned_integer(xhs_type));
             // Clear the upper portion of the dividend.
             appendli("xor rdx, rdx");
