@@ -8,7 +8,7 @@ func terminate() void {
     sys::exit(1);
 }
 
-# ASCII string appearing before the message decribing a panic reason. Custom
+# ASCII string appearing before the message describing a panic reason. Custom
 # panic functions may be created by writing PANIC_PREAMBLE, a panic message, and
 # an ASCII newline character to standard error followed by a call to
 # `std::terminate`.
