@@ -3,16 +3,16 @@ import "std/io.sunder";
 import "std/result.sunder";
 
 struct str {
-    var value: []byte;
+    var bytes: []byte;
 
-    func init(value: []byte) str {
-        return (:str){.value = value};
+    func init(bytes: []byte) str {
+        return (:str){.bytes = bytes};
     }
 
     func format(self: *std::str, writer: std::writer, fmt: []byte) std::result[[:usize, :[]byte]] {
         if countof(fmt) != 0 {
             std::panic_invalid_format_specifier(fmt);
         }
-        return std::write_all(writer, self.*.value);
+        return std::write_all(writer, self.*.bytes);
     }
 }
