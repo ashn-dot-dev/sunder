@@ -1,0 +1,10 @@
+namespace std::sys;
+import "sys/sys.sunder";
+
+struct error {
+    var code: ssize;
+
+    func message(self: *error) []byte {
+        return ::sys::ERRNO_STRINGS[(:usize)self.*.code];
+    }
+}

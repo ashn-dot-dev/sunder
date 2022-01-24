@@ -772,10 +772,18 @@ cst_block_new(
 
 struct cst_symbol {
     struct source_location const* location;
+    // True if this symbol starts with a "::", indicating that symbol lookup
+    // should start from the module root symbol table instead of the current
+    // scope symbol table.
+    bool is_from_root;
+    // Individual symbol elements separated by "::".
     autil_sbuf(struct cst_symbol_element const* const) elements;
 };
 struct cst_symbol*
-cst_symbol_new(struct cst_symbol_element const* const* elements);
+cst_symbol_new(
+    struct source_location const* location,
+    bool is_from_root,
+    struct cst_symbol_element const* const* elements);
 
 struct cst_symbol_element {
     struct source_location const* location;

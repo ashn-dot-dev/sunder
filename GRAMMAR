@@ -138,7 +138,7 @@
 
 <literal-bytes> ::= '"' <character>* '"'
 
-<symbol> ::= <symbol-element> ("::" <symbol-element>)*
+<symbol> ::= "::"? <symbol-element> ("::" <symbol-element>)*
 
 <symbol-element> ::= <identifier> <template-parameter-list>?
 

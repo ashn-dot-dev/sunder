@@ -748,7 +748,8 @@ static parse_nud_fn
 token_kind_nud(enum token_kind kind)
 {
     switch (kind) {
-    case TOKEN_IDENTIFIER: {
+    case TOKEN_IDENTIFIER: /* fallthrough */
+    case TOKEN_COLON_COLON: {
         return parse_expr_symbol;
     }
     case TOKEN_TRUE: /* fallthrough */
@@ -1261,15 +1262,26 @@ parse_symbol(struct parser* parser)
 {
     assert(parser != NULL);
 
+    struct source_location const* location = NULL;
+    bool is_from_root = false;
+    if (check_current(parser, TOKEN_COLON_COLON)) {
+        is_from_root = true;
+        location = &expect_current(parser, TOKEN_COLON_COLON)->location;
+    }
+
     autil_sbuf(struct cst_symbol_element const*) elements = NULL;
     autil_sbuf_push(elements, parse_symbol_element(parser));
+    if (!is_from_root) {
+        location = elements[0]->location;
+    }
     while (check_current(parser, TOKEN_COLON_COLON)) {
         expect_current(parser, TOKEN_COLON_COLON);
         autil_sbuf_push(elements, parse_symbol_element(parser));
     }
     autil_sbuf_freeze(elements, context()->freezer);
 
-    struct cst_symbol* const product = cst_symbol_new(elements);
+    struct cst_symbol* const product =
+        cst_symbol_new(location, is_from_root, elements);
 
     autil_freezer_register(context()->freezer, product);
     return product;
@@ -1575,7 +1587,6 @@ static struct cst_typespec const*
 parse_typespec_symbol(struct parser* parser)
 {
     assert(parser != NULL);
-    assert(check_current(parser, TOKEN_IDENTIFIER));
 
     struct cst_symbol const* const symbol = parse_symbol(parser);
 

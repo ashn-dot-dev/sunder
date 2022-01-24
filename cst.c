@@ -625,13 +625,18 @@ cst_block_new(
 }
 
 struct cst_symbol*
-cst_symbol_new(struct cst_symbol_element const* const* elements)
+cst_symbol_new(
+    struct source_location const* location,
+    bool is_from_root,
+    struct cst_symbol_element const* const* elements)
 {
+    assert(location != NULL);
     assert(autil_sbuf_count(elements) > 0);
 
     struct cst_symbol* const self = autil_xalloc(NULL, sizeof(*self));
     memset(self, 0x00, sizeof(*self));
-    self->location = elements[0]->identifier->location;
+    self->location = location;
+    self->is_from_root = is_from_root;
     self->elements = elements;
     return self;
 }

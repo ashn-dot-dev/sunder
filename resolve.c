@@ -525,8 +525,10 @@ xget_symbol(struct resolver* resolver, struct cst_symbol const* target)
     assert(autil_sbuf_count(target->elements) != 0);
     struct cst_symbol_element const* const element = target->elements[0];
     char const* const name = element->identifier->name;
-    struct symbol const* lhs =
-        symbol_table_lookup(resolver->current_symbol_table, name);
+    struct symbol_table const* const symbol_table = target->is_from_root
+        ? resolver->module->symbols
+        : resolver->current_symbol_table;
+    struct symbol const* lhs = symbol_table_lookup(symbol_table, name);
     if (lhs == NULL) {
         fatal(target->location, "use of undeclared identifier `%s`", name);
     }
