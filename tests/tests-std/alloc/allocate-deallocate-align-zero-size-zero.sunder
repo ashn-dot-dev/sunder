@@ -2,10 +2,12 @@ import "std/alloc.sunder";
 import "std/panic.sunder";
 
 func main() void {
+    var allocator: std::allocator = *std::page_allocator::the();
+
     if (alignof(:void) != 0 or sizeof(:void) != 0) {
         std::panic("unreachable");
     }
 
-    var buf: *void = (:*void)std::allocate(alignof(:void), sizeof(:void));
-    std::deallocate((:*byte)buf, alignof(:void), sizeof(:void));
+    var buf: *void = (:*void)allocator.allocate(alignof(:void), sizeof(:void));
+    allocator.deallocate((:*byte)buf, alignof(:void), sizeof(:void));
 }

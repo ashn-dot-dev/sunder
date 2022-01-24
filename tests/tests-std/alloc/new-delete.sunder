@@ -1,11 +1,15 @@
 import "std/alloc.sunder";
 
 func main() void {
-    var ptr: *u16 = std::new[[:u16]]();
+    # Using std::page_allocator since it was the first allocator that happened
+    # to be implemented in the standard library.
+    var allocator: *std::allocator = std::page_allocator::the();
+
+    var ptr: *u16 = std::new[[:u16]](allocator);
     dump *ptr;
     *ptr = 0xBEEF;
     dump *ptr;
-    std::delete[[:u16]](ptr);
+    std::delete[[:u16]](allocator, ptr);
 }
 ################################################################################
 # 00 00

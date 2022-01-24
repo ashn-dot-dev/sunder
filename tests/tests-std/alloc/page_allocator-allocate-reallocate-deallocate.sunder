@@ -1,8 +1,10 @@
 import "std/alloc.sunder";
 
 func main() void {
+    var allocator: std::allocator = *std::page_allocator::the();
+
     # 2048 * sizeof(:u16) should allocate one page.
-    var buf: *u16 = (:*u16)std::allocate(alignof(:u16), 2048 * sizeof(:u16));
+    var buf: *u16 = (:*u16)allocator.allocate(alignof(:u16), 2048 * sizeof(:u16));
     var slice: []u16 = (:[]u16){buf, 2048};
 
     # Make sure we can write to all the elements.
@@ -11,7 +13,7 @@ func main() void {
     }
 
     # 4096 * sizeof(:u16) should allocate two pages.
-    buf = (:*u16)std::reallocate(
+    buf = (:*u16)allocator.reallocate(
         (:*byte)buf,
         alignof(:u16),
         2048 * sizeof(:u16),
@@ -24,7 +26,7 @@ func main() void {
     }
 
     # Shrink the buffer down.
-    buf = (:*u16)std::reallocate(
+    buf = (:*u16)allocator.reallocate(
         (:*byte)buf,
         alignof(:u16),
         4096 * sizeof(:u16),
@@ -37,5 +39,5 @@ func main() void {
     }
 
     # Deallocate the buffer.
-    std::deallocate((:*byte)buf, alignof(:u16), 1000);
+    allocator.deallocate((:*byte)buf, alignof(:u16), 1000);
 }

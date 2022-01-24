@@ -1,7 +1,7 @@
 import "std/vec.sunder";
 
 func main() void {
-    var vec: std::vec[[:u32]] = std::vec[[:u32]]::init();
+    var vec: std::vec[[:u8]] = std::vec[[:u8]]::init(std::page_allocator::the());
     dump vec.count();
     dump vec.capacity();
 

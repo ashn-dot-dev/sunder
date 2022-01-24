@@ -3,12 +3,14 @@ import "std/alloc.sunder";
 import "std/mem.sunder";
 
 struct vec[[:T]] {
+    var _allocator: *std::allocator;
     var _start: *T;
     var _count: usize;
     var _capacity: usize;
 
-    func init() std::vec[[:T]] {
+    func init(allocator: *std::allocator) std::vec[[:T]] {
         return (:std::vec[[:T]]){
+            ._allocator = allocator,
             ._start = (:*T)0u,
             ._count = 0,
             ._capacity = 0
@@ -16,7 +18,9 @@ struct vec[[:T]] {
     }
 
     func fini(self: *std::vec[[:T]]) void {
-        std::delete_slice[[:T]]((:[]T){self.*._start, self.*._capacity});
+        std::delete_slice[[:T]](
+            self.*._allocator,
+            (:[]T){self.*._start, self.*._capacity});
     }
 
     func start(self: *std::vec[[:T]]) *T {
@@ -41,7 +45,10 @@ struct vec[[:T]] {
         }
 
         var cur: []T = (:[]T){self.*._start, self.*._capacity};
-        var new: []T = std::resize_slice[[:T]](cur, capacity);
+        var new: []T = std::resize_slice[[:T]](
+            self.*._allocator,
+            cur,
+            capacity);
 
         self.*._start = &new[0];
         self.*._capacity = capacity;

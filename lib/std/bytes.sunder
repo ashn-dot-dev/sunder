@@ -2,49 +2,49 @@ namespace std::bytes;
 import "std/alloc.sunder";
 import "std/mem.sunder";
 
-func to_escaped_new_bytes(bytes: []byte) []byte {
-    var escaped: []byte = std::new_slice[[:byte]](0);
+func to_escaped_new_bytes(allocator: *std::allocator, bytes: []byte) []byte {
+    var escaped: []byte = std::new_slice[[:byte]](allocator, 0);
     var index: usize = 0;
 
     for i in 0:countof(bytes) {
         var c: byte = bytes[i];
         if c == '\0' {
-            escaped = std::resize_slice[[:byte]](escaped, countof(escaped) + 2);
+            escaped = std::resize_slice[[:byte]](allocator, escaped, countof(escaped) + 2);
             std::mem::copy[[:byte]](escaped[index:index+2], "\\0");
             index = index + 2;
             continue;
         }
         if c == '\t' {
-            escaped = std::resize_slice[[:byte]](escaped, countof(escaped) + 2);
+            escaped = std::resize_slice[[:byte]](allocator, escaped, countof(escaped) + 2);
             std::mem::copy[[:byte]](escaped[index:index+2], "\\t");
             index = index + 2;
             continue;
         }
         if c == '\n' {
-            escaped = std::resize_slice[[:byte]](escaped, countof(escaped) + 2);
+            escaped = std::resize_slice[[:byte]](allocator, escaped, countof(escaped) + 2);
             std::mem::copy[[:byte]](escaped[index:index+2], "\\n");
             index = index + 2;
             continue;
         }
         if c == '\'' {
-            escaped = std::resize_slice[[:byte]](escaped, countof(escaped) + 2);
+            escaped = std::resize_slice[[:byte]](allocator, escaped, countof(escaped) + 2);
             std::mem::copy[[:byte]](escaped[index:index+2], "\\\'");
             index = index + 2;
             continue;
         }
         if c == '\"' {
-            escaped = std::resize_slice[[:byte]](escaped, countof(escaped) + 2);
+            escaped = std::resize_slice[[:byte]](allocator, escaped, countof(escaped) + 2);
             std::mem::copy[[:byte]](escaped[index:index+2], "\\\"");
             index = index + 2;
             continue;
         }
         if c == '\\' {
-            escaped = std::resize_slice[[:byte]](escaped, countof(escaped) + 2);
+            escaped = std::resize_slice[[:byte]](allocator, escaped, countof(escaped) + 2);
             std::mem::copy[[:byte]](escaped[index:index+2], "\\\\");
             index = index + 2;
             continue;
         }
-        escaped = std::resize_slice[[:byte]](escaped, countof(escaped) + 1);
+        escaped = std::resize_slice[[:byte]](allocator, escaped, countof(escaped) + 1);
         escaped[index] = c;
         index = index + 1;
     }

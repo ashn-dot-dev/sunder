@@ -8,7 +8,7 @@ func dump_elements[[:T]](pvec: *std::vec[[:T]]) void {
 }
 
 func main() void {
-    var vec: std::vec[[:u8]] = std::vec[[:u8]]::init();
+    var vec: std::vec[[:u8]] = std::vec[[:u8]]::init(std::page_allocator::the());
     const A: u8 = 0xAA;
     const B: u8 = 0xBB;
     const C: u8 = 0xCC;
