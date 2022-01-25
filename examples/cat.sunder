@@ -3,46 +3,45 @@ import "sys/sys.sunder";
 
 func cat(filename: *byte) void {
     var filename_str: std::str = std::str::init(std::cstr::to_bytes(filename));
-    var sysret: ssize = sys::open(filename, sys::O_RDONLY, 0);
 
-    if sysret < 0 {
+    var open_result: std::result[[:std::stream, :std::sys::error]] =
+        std::fs::open_file(filename_str.bytes, std::fs::MODE_READ);
+    if open_result.is_error() {
+        var error: std::sys::error = open_result.error();
         std::print_format_line(
             std::err(),
-            "{}: failed to open file",
+            "{}: {}",
             (:[]std::formatter)[
-                std::formatter::init[[:std::str]](&filename_str)]);
-        sys::exit(1);
+                std::formatter::init[[:std::str]](&filename_str),
+                std::formatter::init[[:std::sys::error]](&error)]);
+        std::sys::exit(std::sys::EXIT_FAILURE);
     }
 
-    var fd: u32 = (:u32)sysret;
+    var stream: std::stream = open_result.value();
+
     var buf: [512]byte = (:[512]byte)[0...];
     for true {
-        sysret = sys::read(fd, &buf[0], countof(buf));
-        if sysret < 0 {
+        var read_result: std::result[[:usize, :[]byte]] =
+            stream.read(buf[0:countof(buf)]);
+        if read_result.is_error() {
+            var error: std::sys::error = open_result.error();
             std::print_format_line(
                 std::err(),
-                "{}: read error",
+                "{}: {}",
                 (:[]std::formatter)[
-                    std::formatter::init[[:std::str]](&filename_str)]);
-            sys::exit(1);
+                    std::formatter::init[[:std::str]](&filename_str),
+                    std::formatter::init[[:std::sys::error]](&error)]);
+            std::sys::exit(std::sys::EXIT_FAILURE);
         }
 
-        if sysret == 0 {
+        if read_result.value() == 0 {
             break;
         }
 
-        sysret = sys::write(sys::STDOUT_FILENO, &buf[0], (:usize)sysret);
-        if sysret < 0 {
-            std::print_format_line(
-                std::err(),
-                "{}: write error",
-                (:[]std::formatter)[
-                    std::formatter::init[[:std::str]](&filename_str)]);
-            sys::exit(1);
-        }
+        std::print(std::out(), buf[0:countof(buf)]);
     }
 
-    sys::close(fd);
+    std::fs::close_file(stream);
 }
 
 func main() void {

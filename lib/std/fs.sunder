@@ -1,0 +1,80 @@
+namespace std::fs;
+import "std/alloc.sunder";
+import "std/io.sunder";
+import "std/mem.sunder";
+import "std/panic.sunder";
+import "std/result.sunder";
+import "std/sys.sunder";
+import "sys/sys.sunder";
+
+# Open the file for reading.
+const MODE_READ:   usize = 0b001;
+
+# Open the file for writing.
+# The file is created if it does not exist.
+# The file is truncated if it does exist.
+const MODE_WRITE:  usize = 0b010;
+
+# Open the file for writing.
+# The file is created if it does not exist.
+# Data is appended to the end of the file when written.
+const MODE_APPEND: usize = 0b100;
+
+func open_file(
+    path: []byte,
+    mode: usize
+) std::result[[:std::stream, :std::sys::error]] {
+    var flags: s32 = 0;
+    if mode == 0 {
+        # MODE_READ, MODE_WRITE, or MODE_APPEND must be selected.
+        return std::result[[:std::stream, :std::sys::error]]::init_error(
+            (:std::sys::error){.code = ::sys::EINVAL});
+    }
+    if (mode & MODE_WRITE != 0) and (mode & MODE_APPEND != 0) {
+        # Attempted open with both non-appending and appending write modes.
+        return std::result[[:std::stream, :std::sys::error]]::init_error(
+            (:std::sys::error){.code = ::sys::EINVAL});
+    }
+
+    if (mode & MODE_READ != 0) and (mode & MODE_WRITE != 0) {
+        flags = ::sys::O_RDWR | ::sys::O_CREAT | ::sys::O_TRUNC;
+    }
+    elif (mode & MODE_READ != 0) and (mode & MODE_APPEND != 0) {
+        flags = ::sys::O_RDWR | ::sys::O_CREAT | ::sys::O_APPEND;
+    }
+    elif mode & MODE_READ != 0 {
+        flags = ::sys::O_RDONLY;
+    }
+    elif mode & MODE_WRITE != 0 {
+        flags = ::sys::O_WRONLY | ::sys::O_CREAT | ::sys::O_TRUNC;
+    }
+    elif mode & MODE_APPEND != 0 {
+        flags = ::sys::O_WRONLY | ::sys::O_CREAT | ::sys::O_APPEND;
+    }
+    else {
+        std::panic("unreachable");
+    }
+
+    var path_cstr: [::sys::PATH_MAX]byte = (:[::sys::PATH_MAX]byte)[0...];
+    std::mem::copy[[:byte]](path_cstr[0:countof(path_cstr)], path);
+
+    var sysret: ssize = ::sys::open(&path_cstr[0], flags, 0o666);
+    if sysret < 0 {
+        return std::result[[:std::stream, :std::sys::error]]::init_error(
+            (:std::sys::error){.code = -sysret});
+    }
+
+    return std::result[[:std::stream, :std::sys::error]]::init_value(
+        (:std::stream){.fd = sysret});
+}
+
+func close_file(stream :std::stream) std::result[[:void, :std::sys::error]] {
+    var sysret: ssize = ::sys::close((:u32)stream.fd);
+    if sysret < 0 {
+        return std::result[[:void, :std::sys::error]]::init_error(
+            (:std::sys::error){.code = -sysret});
+    }
+
+    return std::result[[:void, :std::sys::error]]::init_value(
+        std::mem::zeroed[[:void]]());
+}
