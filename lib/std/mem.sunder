@@ -28,7 +28,7 @@ func copy[[:T]](dest: []T, source: []T) void {
     #   [A][B][C][D][E] <- initial buffer
     #   [B][B][C][D][E] <- copy first element
     #   [B][C][C][D][E] <- copy second element
-    #   [B][C][D][D][E] <- copy thrird element
+    #   [B][C][D][D][E] <- copy third element
     #
     # But with a backwards copy we get an incorrect result.
     #
@@ -36,12 +36,12 @@ func copy[[:T]](dest: []T, source: []T) void {
     #   [A][B][C][D][E] <- initial buffer
     #   [A][B][D][D][E] <- copy first element
     #   [A][D][D][D][E] <- copy second element
-    #   [D][D][D][D][E] <- copy thrird element
+    #   [D][D][D][D][E] <- copy third element
     #
-    # So when the the start of dest appears before the start of source we need
-    # to copy forwards, and when the start of source appears before the start
-    # of dest then we need to copy backwards. When the start of dest and the
-    # start of source are the same, we arbitrarily choose to copy forwards.
+    # So when the start of dest appears before the start of source we need to
+    # copy forwards, and when the start of source appears before the start of
+    # dest then we need to copy backwards. When the start of dest and the start
+    # of source are the same, we arbitrarily choose to copy forwards.
     if &dest[0] <= &source[0] {
         # Copy forwards.
         for i in 0:countof(source) {
