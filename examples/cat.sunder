@@ -4,17 +4,17 @@ import "sys/sys.sunder";
 func cat(filename: *byte) void {
     var filename_str: std::str = std::str::init(std::cstr::to_bytes(filename));
 
-    var open_result: std::result[[:std::fs::file, :std::sys::error]] =
+    var open_result: std::result[[:std::fs::file, :std::fs::error]] =
         std::fs::file::open(filename_str.bytes, std::fs::OPEN_READ);
     if open_result.is_error() {
-        var error: std::sys::error = open_result.error();
+        var error: std::fs::error = open_result.error();
         std::print_format_line(
             std::err(),
             "{}: {}",
             (:[]std::formatter)[
                 std::formatter::init[[:std::str]](&filename_str),
-                std::formatter::init[[:std::sys::error]](&error)]);
-        std::sys::exit(std::sys::EXIT_FAILURE);
+                std::formatter::init[[:std::fs::error]](&error)]);
+        std::exit(std::EXIT_FAILURE);
     }
 
     var file: std::fs::file = open_result.value();
@@ -24,14 +24,14 @@ func cat(filename: *byte) void {
         var read_result: std::result[[:usize, :[]byte]] =
             file.read(buf[0:countof(buf)]);
         if read_result.is_error() {
-            var error: std::sys::error = open_result.error();
+            var error: std::fs::error = open_result.error();
             std::print_format_line(
                 std::err(),
                 "{}: {}",
                 (:[]std::formatter)[
                     std::formatter::init[[:std::str]](&filename_str),
-                    std::formatter::init[[:std::sys::error]](&error)]);
-            std::sys::exit(std::sys::EXIT_FAILURE);
+                    std::formatter::init[[:std::fs::error]](&error)]);
+            std::exit(std::EXIT_FAILURE);
         }
 
         if read_result.value() == 0 {

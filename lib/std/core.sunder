@@ -377,11 +377,19 @@ func write_format(
     return std::result[[:usize, :[]byte]]::init_value(written);
 }
 
+const EXIT_SUCCESS: ssize = 0;
+const EXIT_FAILURE: ssize = 1;
+
+# Discontinue program execution.
+func exit(status: ssize) void {
+    sys::exit((:s32)status);
+}
+
 # Discontinue program execution due to an irrecoverable error. This function
 # currently operates by making a call to `sys::exit` with failure status, but
 # this behavior may change in the future. This function does not return.
 func terminate() void {
-    sys::exit(1);
+    std::exit(std::EXIT_FAILURE);
 }
 
 # Print the provided string to standard error, followed by a newline, before

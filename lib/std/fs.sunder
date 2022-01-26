@@ -1,8 +1,22 @@
 namespace std::fs;
 import "std/alloc.sunder";
 import "std/core.sunder";
-import "std/sys.sunder";
 import "sys/sys.sunder";
+
+struct error {
+    var code: ssize;
+
+    func format(
+        self: *std::fs::error,
+        writer: std::writer,
+        fmt: []byte
+    ) std::result[[:usize, :[]byte]] {
+        if countof(fmt) != 0 {
+            std::formatter::invalid_format_specifier(fmt);
+        }
+        return std::write_all(writer, sys::ERRNO_STRINGS[(:usize)self.*.code]);
+    }
+}
 
 # Open the file for reading.
 const OPEN_READ: usize = 0b001;
@@ -23,59 +37,59 @@ struct file {
     func open(
         path: []byte,
         mode: usize
-    ) std::result[[:std::fs::file, :std::sys::error]] {
+    ) std::result[[:std::fs::file, :std::fs::error]] {
         var flags: s32 = 0;
         if mode == 0 {
             # OPEN_READ, OPEN_WRITE, or OPEN_APPEND must be selected.
-            return std::result[[:std::fs::file, :std::sys::error]]::init_error(
-                (:std::sys::error){.code = ::sys::EINVAL});
+            return std::result[[:std::fs::file, :std::fs::error]]::init_error(
+                (:std::fs::error){.code = sys::EINVAL});
         }
         if (mode & OPEN_WRITE != 0) and (mode & OPEN_APPEND != 0) {
             # Attempted open with both non-appending and appending write modes.
-            return std::result[[:std::fs::file, :std::sys::error]]::init_error(
-                (:std::sys::error){.code = ::sys::EINVAL});
+            return std::result[[:std::fs::file, :std::fs::error]]::init_error(
+                (:std::fs::error){.code = sys::EINVAL});
         }
 
         if (mode & OPEN_READ != 0) and (mode & OPEN_WRITE != 0) {
-            flags = ::sys::O_RDWR | ::sys::O_CREAT | ::sys::O_TRUNC;
+            flags = sys::O_RDWR | sys::O_CREAT | sys::O_TRUNC;
         }
         elif (mode & OPEN_READ != 0) and (mode & OPEN_APPEND != 0) {
-            flags = ::sys::O_RDWR | ::sys::O_CREAT | ::sys::O_APPEND;
+            flags = sys::O_RDWR | sys::O_CREAT | sys::O_APPEND;
         }
         elif mode & OPEN_READ != 0 {
-            flags = ::sys::O_RDONLY;
+            flags = sys::O_RDONLY;
         }
         elif mode & OPEN_WRITE != 0 {
-            flags = ::sys::O_WRONLY | ::sys::O_CREAT | ::sys::O_TRUNC;
+            flags = sys::O_WRONLY | sys::O_CREAT | sys::O_TRUNC;
         }
         elif mode & OPEN_APPEND != 0 {
-            flags = ::sys::O_WRONLY | ::sys::O_CREAT | ::sys::O_APPEND;
+            flags = sys::O_WRONLY | sys::O_CREAT | sys::O_APPEND;
         }
         else {
             std::panic("unreachable");
         }
 
-        var path_cstr: [::sys::PATH_MAX]byte = (:[::sys::PATH_MAX]byte)[0...];
+        var path_cstr: [sys::PATH_MAX]byte = (:[sys::PATH_MAX]byte)[0...];
         std::copy_slice[[:byte]](path_cstr[0:countof(path_cstr)], path);
 
-        var sysret: ssize = ::sys::open(&path_cstr[0], flags, 0o666);
+        var sysret: ssize = sys::open(&path_cstr[0], flags, 0o666);
         if sysret < 0 {
-            return std::result[[:std::fs::file, :std::sys::error]]::init_error(
-                (:std::sys::error){.code = -sysret});
+            return std::result[[:std::fs::file, :std::fs::error]]::init_error(
+                (:std::fs::error){.code = -sysret});
         }
 
-        return std::result[[:std::fs::file, :std::sys::error]]::init_value(
+        return std::result[[:std::fs::file, :std::fs::error]]::init_value(
             (:std::fs::file){.fd = sysret});
     }
 
-    func close(self: *std::fs::file) std::result[[:void, :std::sys::error]] {
-        var sysret: ssize = ::sys::close((:u32)self.*.fd);
+    func close(self: *std::fs::file) std::result[[:void, :std::fs::error]] {
+        var sysret: ssize = sys::close((:u32)self.*.fd);
         if sysret < 0 {
-            return std::result[[:void, :std::sys::error]]::init_error(
-                (:std::sys::error){.code = -sysret});
+            return std::result[[:void, :std::fs::error]]::init_error(
+                (:std::fs::error){.code = -sysret});
         }
 
-        return std::result[[:void, :std::sys::error]]::init_value(
+        return std::result[[:void, :std::fs::error]]::init_value(
             std::zeroed[[:void]]());
     }
 
@@ -88,10 +102,10 @@ struct file {
         }
 
         var sysret: ssize =
-            ::sys::read((:u32)self.*.fd, &buf[0u], countof(buf));
+            sys::read((:u32)self.*.fd, &buf[0u], countof(buf));
         if sysret < 0 {
             return std::result[[:usize, :[]byte]]::init_error(
-                ::sys::ERRNO_STRINGS[(:usize)-sysret]);
+                sys::ERRNO_STRINGS[(:usize)-sysret]);
         }
 
         return std::result[[:usize, :[]byte]]::init_value((:usize)sysret);
