@@ -1,5 +1,5 @@
 import "std/alloc.sunder";
-import "std/panic.sunder";
+import "std/core.sunder";
 
 func main() void {
     var allocator: std::allocator = *std::page_allocator::the();

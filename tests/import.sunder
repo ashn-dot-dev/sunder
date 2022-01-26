@@ -1,4 +1,4 @@
-import "std/io.sunder";
+import "std/core.sunder";
 
 import "import/a.sunder";
 import "import/b.sunder";

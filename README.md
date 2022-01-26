@@ -88,7 +88,7 @@ until the start of your next login session.
 Compiling the source file `hello.sunder` into the executable `hello`.
 
 ```sunder
-import "std/io.sunder";
+import "std";
 
 func main() void {
     std::print_line(std::out(), "Hello, world!");

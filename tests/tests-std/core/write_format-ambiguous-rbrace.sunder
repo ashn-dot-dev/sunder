@@ -1,11 +1,11 @@
-import "std/io.sunder";
+import "std/core.sunder";
 
 struct person {
     var name: []byte;
 
     func format(self: *person, writer: std::writer, fmt: []byte) std::result[[:usize, :[]byte]] {
         if countof(fmt) != 0 {
-            std::panic_invalid_format_specifier(fmt);
+            std::formatter::invalid_format_specifier(fmt);
         }
         return std::write_all(writer, self.*.name);
     }
@@ -13,14 +13,12 @@ struct person {
 
 func main() void {
     var alice: person = (:person){.name = "Alice"};
-    var bob: person = (:person){.name = "Bob"};
 
-    var args: [2]std::formatter = (:[2]std::formatter)[
-        std::formatter::init[[:person]](&alice),
-        std::formatter::init[[:person]](&bob)
+    var args: [1]std::formatter = (:[1]std::formatter)[
+        std::formatter::init[[:person]](&alice)
     ];
     var res: std::result[[:usize, :[]byte]] =
-        std::write_format(std::out(), "{} is alone", args[0:countof(args)]);
+        std::write_format(std::out(), "{}}}\n", args[0:countof(args)]);
 }
 ################################################################################
-# Alice is alonepanic: invalid format argument count
+# panic: invalid format string "{}}}\n"

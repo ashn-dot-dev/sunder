@@ -1,4 +1,4 @@
-import "std/int.sunder";
+import "std/core.sunder";
 
 func format_test0() void {
     var a: std::int[[:u32]] = std::int[[:u32]]::init(0xDEADBEEF);

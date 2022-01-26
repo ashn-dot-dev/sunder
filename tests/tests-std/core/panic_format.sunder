@@ -1,5 +1,4 @@
-import "std/io.sunder";
-import "std/int.sunder";
+import "std/core.sunder";
 
 func main() void {
     var int: std::int[[:usize]] = std::int[[:usize]]::init(42);

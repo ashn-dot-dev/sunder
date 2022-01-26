@@ -1,5 +1,4 @@
 # Writes input from stdin to stdout until an end-of-file condition is reached.
-
 import "std";
 
 func main() void {

@@ -3,7 +3,6 @@
 # See https://esolangs.org/wiki/Brainfuck for an overview of the brainfuck
 # language. This implementation uses a 30,000 cell tape with 8-bit wrapping
 # cells. No cell update is performed upon reading EOF with the , operation.
-
 import "std";
 import "sys/sys.sunder";
 

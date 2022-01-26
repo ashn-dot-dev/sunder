@@ -1,6 +1,5 @@
-import "std/io.sunder";
+import "std/core.sunder";
 import "std/mem.sunder";
-import "std/panic.sunder";
 
 struct name {
     var first: []byte;
@@ -12,7 +11,7 @@ struct name {
 
     func format(self: *name, writer: std::writer, fmt: []byte) std::result[[:usize, :[]byte]] {
         if countof(fmt) != 0 {
-            std::panic_invalid_format_specifier(fmt);
+            std::formatter::invalid_format_specifier(fmt);
         }
 
         var written: usize = 0;
@@ -54,7 +53,7 @@ struct int {
         if c == 'x' {
             return std::write_all(writer, "hexadecimal\n");
         }
-        std::panic_invalid_format_specifier(fmt);
+        std::formatter::invalid_format_specifier(fmt);
     }
 }
 

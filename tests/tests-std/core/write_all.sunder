@@ -1,4 +1,4 @@
-import "std/io.sunder";
+import "std/core.sunder";
 
 func main() void {
     var out_res: std::result[[:usize, :[]byte]] =

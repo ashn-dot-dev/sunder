@@ -1,4 +1,4 @@
-import "std/mem.sunder";
+import "std/core.sunder";
 
 struct foo {
     var x: byte;  # 1 byte
@@ -8,12 +8,12 @@ struct foo {
 }
 
 func main() void {
-    dump std::mem::zeroed[[:u8]]();
-    dump std::mem::zeroed[[:u16]]();
-    dump std::mem::zeroed[[:u32]]();
-    dump std::mem::zeroed[[:u64]]();
-    dump std::mem::zeroed[[:func(usize, ssize) void]]();
-    dump std::mem::zeroed[[:foo]]();
+    dump std::zeroed[[:u8]]();
+    dump std::zeroed[[:u16]]();
+    dump std::zeroed[[:u32]]();
+    dump std::zeroed[[:u64]]();
+    dump std::zeroed[[:func(usize, ssize) void]]();
+    dump std::zeroed[[:foo]]();
 }
 ################################################################################
 # 00

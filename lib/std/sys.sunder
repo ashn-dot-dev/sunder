@@ -1,5 +1,5 @@
 namespace std::sys;
-import "std/io.sunder";
+import "std/core.sunder";
 import "sys/sys.sunder";
 
 struct error {
@@ -15,7 +15,7 @@ struct error {
         fmt: []byte
     ) std::result[[:usize, :[]byte]] {
         if countof(fmt) != 0 {
-            std::panic_invalid_format_specifier(fmt);
+            std::formatter::invalid_format_specifier(fmt);
         }
         return std::write_all(writer, self.*.message());
     }

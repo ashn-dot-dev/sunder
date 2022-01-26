@@ -1,5 +1,5 @@
 namespace std::mem;
-import "std/panic.sunder";
+import "std/core.sunder";
 
 func copy[[:T]](dest: []T, source: []T) void {
     if countof(dest) < countof(source) {
@@ -61,9 +61,4 @@ func set[[:T]](buf: []T, value: T) void {
     for i in 0:countof(buf) {
         buf[i] = value;
     }
-}
-
-func zeroed[[:T]]() T {
-    var mem: [sizeof(:T)]byte = (:[sizeof(:T)]byte)[0...];
-    return *(:*T)&mem;
 }

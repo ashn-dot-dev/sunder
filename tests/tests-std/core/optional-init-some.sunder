@@ -1,4 +1,4 @@
-import "std/optional.sunder";
+import "std/core.sunder";
 
 func main() void {
     var a: std::optional[[:u16]] = std::optional[[:u16]]::init_some(0xBEEF);

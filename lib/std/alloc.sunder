@@ -1,15 +1,31 @@
 namespace std;
+import "std/core.sunder";
 import "std/mem.sunder";
 import "sys/sys.sunder";
 
 struct allocator_vtable {
-    # func allocate(self: *any, align: usize, size: usize) *byte
+    #   func allocate(
+    #       self: *any,
+    #       align: usize,
+    #       size: usize
+    #   ) *byte
     var allocate: func(*any, usize, usize) *byte;
 
-    # func reallocate(self: *any, ptr: *byte, align: usize, old_size: usize, new_size: usize) *byte
+    #   func reallocate(
+    #       self: *any,
+    #       ptr: *byte,
+    #       align: usize,
+    #       old_size: usize,
+    #       new_size: usize
+    #   ) *byte
     var reallocate: func(*any, *byte, usize, usize, usize) *byte;
 
-    # func deallocate(self: *any, ptr: *byte, align: usize, size: usize) void
+    #   func deallocate(
+    #       self: *any,
+    #       ptr: *byte,
+    #       align: usize,
+    #       size: usize
+    #   ) void
     var deallocate: func(*any, *byte, usize, usize) void;
 }
 
@@ -40,10 +56,16 @@ struct allocator {
         old_size: usize,
         new_size: usize
     ) *byte {
-        return self.*.vtable.*.reallocate(self.*.object, ptr, align, old_size, new_size);
+        return self.*.vtable.*.reallocate(
+            self.*.object, ptr, align, old_size, new_size);
     }
 
-    func deallocate(self: *allocator, ptr: *byte, align: usize, size: usize) void {
+    func deallocate(
+        self: *allocator,
+        ptr: *byte,
+        align: usize,
+        size: usize
+    ) void {
         self.*.vtable.*.deallocate(self.*.object, ptr, align, size);
     }
 }
@@ -67,7 +89,11 @@ func new_slice[[:T]](allocator: *std::allocator, count: usize) []T {
     return (:[]T){pointer, count};
 }
 
-func resize_slice[[:T]](allocator: *std::allocator, slice: []T, new_count: usize) []T {
+func resize_slice[[:T]](
+    allocator: *std::allocator,
+    slice: []T,
+    new_count: usize
+) []T {
     var cur_count: usize = countof(slice);
     var cur_size: usize = cur_count * sizeof(:T);
     var new_size: usize = new_count * sizeof(:T);
@@ -187,7 +213,12 @@ struct page_allocator {
         return new;
     }
 
-    func deallocate(self: *page_allocator, ptr: *byte, align: usize, size: usize) void {
+    func deallocate(
+        self: *page_allocator,
+        ptr: *byte,
+        align: usize,
+        size: usize
+    ) void {
         const MSG_INVALID_ALIGNMENT: []byte =
             "deallocation request with invalid alignment";
         const MSG_INVALID_POINTER: []byte =

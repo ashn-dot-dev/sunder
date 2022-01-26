@@ -1,11 +1,11 @@
-import "std/io.sunder";
+import "std/core.sunder";
 
 struct person {
     var name: []byte;
 
     func format(self: *person, writer: std::writer, fmt: []byte) std::result[[:usize, :[]byte]] {
         if countof(fmt) != 0 {
-            std::panic_invalid_format_specifier(fmt);
+            std::formatter::invalid_format_specifier(fmt);
         }
         return std::write_all(writer, self.*.name);
     }
@@ -30,7 +30,7 @@ struct int {
         if c == 'x' {
             return std::write_all(writer, "hexadecimal");
         }
-        std::panic_invalid_format_specifier(fmt);
+        std::formatter::invalid_format_specifier(fmt);
     }
 }
 
@@ -44,7 +44,7 @@ func test0() void {
     ];
     var res: std::result[[:usize, :[]byte]] =
         std::write_format(std::out(), "{} and {}", args[0:countof(args)]);
-    std::OUT.write("\n"); # Separate '\n' to test format string ending in "{}".
+    std::print(std::out(), "\n"); # Separate '\n' to test format string ending in "{}".
     dump res.value();
 }
 

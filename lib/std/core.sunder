@@ -1,0 +1,741 @@
+namespace std;
+import "sys/sys.sunder";
+
+struct result[[:T, :E]] {
+    var _value: T;
+    var _error: E;
+    var _is_value: bool;
+
+    func init_value(value: T) result[[:T, :E]] {
+        return (:result[[:T, :E]]){
+            ._value = value,
+            ._error = std::zeroed[[:E]](),
+            ._is_value = true
+        };
+    }
+
+    func init_error(error: E) result[[:T, :E]] {
+        return (:result[[:T, :E]]){
+            ._value = std::zeroed[[:T]](),
+            ._error = error,
+            ._is_value = false
+        };
+    }
+
+    func is_value(self: *result[[:T, :E]]) bool {
+        return self.*._is_value;
+    }
+
+    func is_error(self: *result[[:T, :E]]) bool {
+        return not self.*._is_value;
+    }
+
+    func value(self: *result[[:T, :E]]) T {
+        if not self.*._is_value {
+            std::panic(
+                "attempted to retrieve value from std::result in the `error` state");
+        }
+        return self.*._value;
+    }
+
+    func error(self: *result[[:T, :E]]) E {
+        if self.*._is_value {
+            std::panic(
+                "attempted to retrieve error from std::result in the `value` state");
+        }
+        return self.*._error;
+    }
+}
+
+struct optional[[:T]] {
+    var _wrapped: T;
+    var _is_some: bool;
+
+    func init_some(some: T) optional[[:T]] {
+        return (:optional[[:T]]){
+            ._wrapped = some,
+            ._is_some = true
+        };
+    }
+
+    func init_none() optional[[:T]] {
+        return (:optional[[:T]]){
+            ._wrapped = std::zeroed[[:T]](),
+            ._is_some = false
+        };
+    }
+
+    func is_some(self: *optional[[:T]]) bool {
+        return self.*._is_some;
+    }
+
+    func is_none(self: *optional[[:T]]) bool {
+        return not self.*._is_some;
+    }
+
+    func unwrap(self: *optional[[:T]]) T {
+        if not self.*._is_some {
+            std::panic("attempted to unwrap std::optional with `none` value");
+        }
+        return self.*._wrapped;
+    }
+}
+
+struct reader_vtable {
+    #   func read(self: *any, buf: []byte) std::result[[:usize, :[]byte]]
+    #
+    # Attempt to read `countof(buf)` bytes using the provided reader. The read
+    # operation may mutate any portion of `buf`, even if less than
+    # `countof(buf)` bytes are read.
+    #
+    # On success, this function returns the number of bytes read, which must be
+    # less than or equal to `countof(buf)`, and which may be less than
+    # `countof(buf)` in the event of a partial read. A successful read of size
+    # zero indicates an end-of-input condition for non-zero `countof(buf)`
+    # buffer sizes.
+    #
+    # On error, this function returns a static string describing the error.
+    var read: func(*any, []byte) std::result[[:usize, :[]byte]];
+}
+
+struct reader {
+    var vtable: *std::reader_vtable;
+    var object: *any;
+
+    func init[[:T]](object: *T) std::reader {
+        const vtable: std::reader_vtable = (:std::reader_vtable){
+            .read = T::read
+        };
+        return (:std::reader){
+            .vtable = &vtable,
+            .object = object
+        };
+    }
+
+    func read(self: *reader, buf: []byte) std::result[[:usize, :[]byte]] {
+        return self.*.vtable.*.read(self.*.object, buf);
+    }
+}
+
+struct writer_vtable {
+    #   func write(self: *any, buf: []byte) std::result[[:usize, :[]byte]]
+    #
+    # Attempt to write `countof(buf)` using the provided writer. The write
+    # operation must not mutate the contents of `buf`.
+    #
+    # On success, this function returns the number of bytes written, which may
+    # be less than `countof(buf)` in the event of a partial write.
+    #
+    # On error, this function returns a static string describing the error.
+    var write: func(*any, []byte) std::result[[:usize, :[]byte]];
+}
+
+struct writer {
+    var vtable: *std::writer_vtable;
+    var object: *any;
+
+    func init[[:T]](object: *T) std::writer {
+        const vtable: std::writer_vtable = (:std::writer_vtable){
+            .write = T::write
+        };
+        return (:std::writer){
+            .vtable = &vtable,
+            .object = object
+        };
+    }
+
+    func write(self: *writer, buf: []byte) std::result[[:usize, :[]byte]] {
+        return self.*.vtable.*.write(self.*.object, buf);
+    }
+}
+
+func write_all(
+    writer: std::writer,
+    buf: []byte
+) std::result[[:usize, :[]byte]] {
+    var written: usize = 0;
+    for written < countof(buf) {
+        var result: std::result[[:usize, :[]byte]] =
+            writer.write(buf[written:countof(buf)]);
+        if result.is_error() {
+            return result;
+        }
+        written = written + result.value();
+    }
+    return std::result[[:usize, :[]byte]]::init_value(written);
+}
+
+struct formatter_vtable {
+    #   func format(
+    #       self: *any,
+    #       writer: std::writer,
+    #       fmt: []byte
+    #   ) std::result[[:usize, :[]byte]]
+    #
+    # Write a formatted string representation of `self` to the provided writer.
+    # The format specifier `fmt` describes *how* to format `self`. Generally
+    # each type will implement its own type-specific format specifier(s).
+    # However, the empty format specifier `""` should always be handled as a
+    # "default formatting" case.
+    #
+    # On success, this function returns the number of bytes written to the
+    # provided writer. Types implementing this function should ensure that all
+    # bytes are written to the provided writer.
+    #
+    # On error, this function returns a static string describing the error. In
+    # the event of a write error, the erroneous write result should be
+    # returned. If the provided format specifier does not match a format
+    # specifier implemented by the type then the format function should call
+    #
+    #     std::formatter::invalid_format_specifier(fmt);
+    #
+    # which will cause the application to terminate with failure status.
+    var format: func(*any, std::writer, []byte) std::result[[:usize, :[]byte]];
+}
+
+struct formatter {
+    var vtable: *std::formatter_vtable;
+    var object: *any;
+
+    func init[[:T]](object: *T) std::formatter {
+        const vtable: std::formatter_vtable = (:std::formatter_vtable){
+            .format = T::format
+        };
+        return (:std::formatter){
+            .vtable = &vtable,
+            .object = object
+        };
+    }
+
+    func format(
+        self: *formatter,
+        writer: std::writer,
+        fmt: []byte
+    ) std::result[[:usize, :[]byte]] {
+        return self.*.vtable.*.format(self.*.object, writer, fmt);
+    }
+
+    func invalid_format_string(format: []byte) void {
+        var str: std::str = std::str::init(format);
+        std::panic_format(
+            "invalid format string \"{e}\"\n",
+            (:[]std::formatter)[std::formatter::init[[:std::str]](&str)]);
+    }
+
+    func invalid_format_specifier(fmt: []byte) void {
+        var str: std::str = std::str::init(fmt);
+        std::panic_format(
+            "invalid format specifier \"{e}\"\n",
+            (:[]std::formatter)[std::formatter::init[[:std::str]](&str)]);
+    }
+}
+
+func write_format(
+    writer: std::writer,
+    format: []byte,
+    args: []std::formatter
+) std::result[[:usize, :[]byte]] {
+    # Current format argument index.
+    var arg: usize = 0;
+
+    # Total number of bytes written.
+    var written: usize = 0;
+
+    # Walking along the format string accumulating bytes to be written verbatim.
+    #   "some{fmt}text"
+    #    ^^^^     ^^^^ Walking along either of the byte spans "some" or "text".
+    const STATE_WALKING: ssize = 0;
+
+    # Inside of a `fmt` string.
+    #   "some{fmt}text"
+    #         ^^^-- Walking (fmtting) along the text between the '{' '}' bytes.
+    const STATE_FMTTING: ssize = 1;
+
+    # Current state.
+    var state: ssize = STATE_WALKING;
+
+    # Start and end indices of the current state.
+    var start: usize = 0;
+    var end: usize = start;
+
+    for end < countof(format) {
+        if state == STATE_WALKING {
+            if format[end] != '{' and format[end] != '}' {
+                # "some{fmt}text"
+                #  ^^^^     ^^^^ Any non-'{' non-'}' character.
+                end = end + 1;
+                continue;
+            }
+
+            if (end + 1) == countof(format) {
+                # "some{"
+                #      ^
+                # "some}"
+                #      ^ End-of-format-string '{' or '}' character.
+                std::formatter::invalid_format_string(format);
+            }
+
+            if format[end] == format[end + 1] {
+                # "some{{text"
+                #      ^^
+                # "some}}text"
+                #      ^^ Escaped '{' or '}' character.
+                var res: std::result[[:usize, :[]byte]] =
+                    std::write_all(writer, format[start:end+1]);
+                if res.is_error() {
+                    return res;
+                }
+                written = written + res.value();
+                start = end + 2;
+                end = start;
+                continue;
+            }
+
+            if format[end] == '}' {
+                # "some}text"
+                #      ^ End-of-fmt when we are not in the fmt-parsing state.
+                std::formatter::invalid_format_string(format);
+            }
+
+            # "some{fmt}text"
+            #      ^ Start of format specifier.
+            var res: std::result[[:usize, :[]byte]] =
+                std::write_all(writer, format[start:end]);
+            if res.is_error() {
+                return res;
+            }
+            written = written + res.value();
+            start = end + 1;
+            end = start;
+            state = STATE_FMTTING;
+            if arg == countof(args) {
+                std::panic("invalid format argument count");
+            }
+            continue;
+        }
+
+        if state == STATE_FMTTING {
+            if format[end] != '{' and format[end] != '}' {
+                # "some{fmt}text"
+                #       ^^^ Any non-'{' non-'}' character.
+                end = end + 1;
+                continue;
+            }
+
+            if (end + 1) < countof(format) and format[end] == format[end + 1] {
+                # "some{f{{t}text"
+                #        ^^
+                # "some{f}}t}text"
+                #        ^^ Escaped '{' or '}' character is not allowed inside
+                #           a fmt string.
+                std::formatter::invalid_format_string(format);
+            }
+
+            # "some{fmt}text"
+            #          ^ End of format specifier.
+            var res: std::result[[:usize, :[]byte]] =
+                args[arg].format(writer, format[start:end]);
+            if res.is_error() {
+                return res;
+            }
+            written = written + res.value();
+            start = end + 1;
+            end = start;
+            arg = arg + 1;
+            state = STATE_WALKING;
+            continue;
+        }
+
+        std::panic("unreachable");
+    }
+
+    # "some{fmt"
+    #          ^ End-of-format-string reached while in the formatting state.
+    if state == STATE_FMTTING {
+        std::formatter::invalid_format_string(format);
+    }
+
+    # "some{fmt}text"
+    #           ^^^^ Write the remaining walked text.
+    var res: std::result[[:usize, :[]byte]] =
+        std::write_all(writer, format[start:end]);
+    if res.is_error() {
+        return res;
+    }
+    written = written + res.value();
+
+    # Call with a format string "some {fmt} text" (N format specifiers) and N+M
+    # format arguments for some non-zero M. Passing extra format arguments is a
+    # hard error, but we specifically check for this error *after* the rest of
+    # the walked text has been written so that users will be able to observe
+    # that an error occurred even though the full formatted string was written.
+    if arg != countof(args) {
+        std::panic("invalid format argument count");
+    }
+
+    # Formatting was successful. Return the total number of bytes written.
+    return std::result[[:usize, :[]byte]]::init_value(written);
+}
+
+# Discontinue program execution due to an irrecoverable error. This function
+# currently operates by making a call to `sys::exit` with failure status, but
+# this behavior may change in the future. This function does not return.
+func terminate() void {
+    sys::exit(1);
+}
+
+# Print the provided string to standard error, followed by a newline, before
+# making a call to `std::terminate`. This function does not return.
+func panic(why: []byte) void {
+    var str: std::str = std::str::init(why);
+    std::panic_format(
+        "{}",
+        (:[]std::formatter)[std::formatter::init[[:std::str]](&str)]);
+}
+
+# Print the provided formatted string to standard error, followed by a newline,
+# before making a call to `std::terminate`. This function does not return.
+func panic_format(format: []byte, args: []std::formatter) void {
+    const PANIC_PREAMBLE: []byte = "panic: ";
+    std::print(std::err(), PANIC_PREAMBLE);
+    std::print_format(std::err(), format, args);
+    std::print(std::err(), "\n");
+    std::terminate();
+}
+
+func print(writer: std::writer, bytes: []byte) void {
+    var result: std::result[[:usize, :[]byte]] = std::write_all(writer, bytes);
+    if result.is_error() {
+        std::panic(result.error());
+    }
+}
+
+func print_line(writer: std::writer, bytes: []byte) void {
+    std::print(writer, bytes);
+    std::print(writer, "\n");
+}
+
+func print_format(
+    writer: std::writer,
+    format: []byte,
+    args: []std::formatter
+) void {
+    var result: std::result[[:usize, :[]byte]] =
+        std::write_format(writer, format, args);
+    if result.is_error() {
+        std::panic(result.error());
+    }
+}
+
+func print_format_line(
+    writer: std::writer,
+    format: []byte,
+    args: []std::formatter
+) void {
+    std::print_format(writer, format, args);
+    std::print(writer, "\n");
+}
+
+struct input_reader {
+    func read(
+        self: *std::input_reader,
+        buf: []byte
+    ) std::result[[:usize, :[]byte]] {
+        if countof(buf) == 0 {
+            return std::result[[:usize, :[]byte]]::init_value(0);
+        }
+
+        var sysret: ssize =
+            sys::read(sys::STDIN_FILENO, &buf[0u], countof(buf));
+        if sysret < 0 {
+            return std::result[[:usize, :[]byte]]::init_error(
+                sys::ERRNO_STRINGS[(:usize)-sysret]);
+        }
+
+        return std::result[[:usize, :[]byte]]::init_value((:usize)sysret);
+    }
+}
+
+func input() std::reader {
+    const input: input_reader = (:input_reader){};
+    const input_vtable: reader_vtable = (:reader_vtable){
+        .read = std::input_reader::read
+    };
+    const input_reader: reader = (:std::reader){
+        .vtable = &input_vtable,
+        .object = &input
+    };
+    return input_reader;
+}
+
+struct out_writer {
+    func write(
+        self: *std::out_writer,
+        buf: []byte
+    ) std::result[[:usize, :[]byte]] {
+        if countof(buf) == 0 {
+            return std::result[[:usize, :[]byte]]::init_value(0);
+        }
+
+        var sysret: ssize =
+            sys::write(sys::STDOUT_FILENO, &buf[0u], countof(buf));
+        if sysret < 0 {
+            return std::result[[:usize, :[]byte]]::init_error(
+                sys::ERRNO_STRINGS[(:usize)-sysret]);
+        }
+
+        return std::result[[:usize, :[]byte]]::init_value((:usize)sysret);
+    }
+}
+
+func out() std::writer {
+    const out: out_writer = (:out_writer){};
+    const out_vtable: writer_vtable = (:writer_vtable){
+        .write = std::out_writer::write
+    };
+    const out_writer: writer = (:std::writer){
+        .vtable = &out_vtable,
+        .object = &out
+    };
+    return out_writer;
+}
+
+struct err_writer {
+    func write(
+        self: *std::err_writer,
+        buf: []byte
+    ) std::result[[:usize, :[]byte]] {
+        if countof(buf) == 0 {
+            return std::result[[:usize, :[]byte]]::init_value(0);
+        }
+
+        var sysret: ssize =
+            sys::write(sys::STDERR_FILENO, &buf[0u], countof(buf));
+        if sysret < 0 {
+            return std::result[[:usize, :[]byte]]::init_error(
+                sys::ERRNO_STRINGS[(:usize)-sysret]);
+        }
+
+        return std::result[[:usize, :[]byte]]::init_value((:usize)sysret);
+    }
+}
+
+func err() std::writer {
+    const err: err_writer = (:err_writer){};
+    const err_vtable: writer_vtable = (:writer_vtable){
+        .write = std::err_writer::write
+    };
+    const err_writer: writer = (:std::writer){
+        .vtable = &err_vtable,
+        .object = &err
+    };
+    return err_writer;
+}
+
+struct int[[:T]] {
+    var value: T;
+
+    func init(value: T) int[[:T]] {
+        return (:int[[:T]]){.value = value};
+    }
+
+    # Accepted format specifiers:
+    #   ""  => decimal (default)
+    #   "d" => decimal
+    #   "b" => binary
+    #   "o" => octal
+    #   "x" => hexadecimal (lower)
+    #   "X" => hexadecimal (upper)
+    func format(
+        self: *std::int[[:T]],
+        writer: std::writer,
+        fmt: []byte
+    ) std::result[[:usize, :[]byte]] {
+        # All non-default format specifiers have a length of one byte.
+        if countof(fmt) > 1 {
+            std::formatter::invalid_format_specifier(fmt);
+        }
+
+        const DIGITS_TABLE_COUNT: usize = 16;
+        const DIGITS_TABLE_LOWER: [DIGITS_TABLE_COUNT]byte =
+            (:[DIGITS_TABLE_COUNT]byte)[
+                '0', '1', '2', '3', '4', '5', '6', '7',
+                '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'];
+        const DIGITS_TABLE_UPPER: [DIGITS_TABLE_COUNT]byte =
+            (:[DIGITS_TABLE_COUNT]byte)[
+                '0', '1', '2', '3', '4', '5', '6', '7',
+                '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'];
+
+        var radix: T = 10;
+        var digits_prefix: []byte = "";
+        var digits_table: []byte = DIGITS_TABLE_LOWER[0:DIGITS_TABLE_COUNT];
+
+        if countof(fmt) != 0 {
+            var c: byte = fmt[0];
+            if c == 'd' {
+                # Decimal defaults already set.
+            }
+            elif c == 'b' {
+                radix = 2;
+                digits_prefix = "0b";
+            }
+            elif c == 'o' {
+                radix = 8;
+                digits_prefix = "0o";
+            }
+            elif c == 'x' {
+                radix = 16;
+                digits_prefix = "0x";
+            }
+            elif c == 'X' {
+                radix = 16;
+                digits_prefix = "0x";
+                digits_table = DIGITS_TABLE_UPPER[0:DIGITS_TABLE_COUNT];
+            }
+            else {
+                std::formatter::invalid_format_specifier(fmt);
+            }
+        }
+
+        var written: usize = 0;
+        var value: T = self.*.value;
+
+        var is_negative: bool = value < 0;
+        if is_negative {
+            value = value * (:T)-1s;
+        }
+
+        # More than enough bytes to store the sign & digits of any number with
+        # a size less than or equal to 64 bits.
+        const OUTPUT_COUNT: usize = countof("-0b") + 64;
+        var output: [OUTPUT_COUNT]byte = (:[OUTPUT_COUNT]byte)[0...];
+        var output_index: usize = countof(output) - 1;
+
+        for value != 0 {
+            var div: T = value / radix;
+            var rem: T = value - radix * (value / radix);
+
+            var digit: byte = digits_table[(:usize)rem];
+            output[output_index] = digit;
+            output_index = output_index - 1;
+
+            value = div;
+        }
+        for i in 0:countof(digits_prefix) {
+            output[output_index] =
+                digits_prefix[countof(digits_prefix) - i - 1];
+            output_index = output_index - 1;
+        }
+        if is_negative {
+            output[output_index] = '-';
+            output_index = output_index - 1;
+        }
+
+        var res: std::result[[:usize, :[]byte]] =
+            std::write_all(writer, output[output_index+1:countof(output)]);
+        if res.is_error() {
+            return res;
+        }
+        written = written + res.value();
+
+        return std::result[[:usize, :[]byte]]::init_value(written);
+    }
+}
+
+struct str {
+    var bytes: []byte;
+
+    func init(bytes: []byte) str {
+        return (:str){.bytes = bytes};
+    }
+
+    # Accepted format specifiers:
+    #   ""  => verbatim (default)
+    #   "e" => escaped
+    func format(
+        self: *std::str,
+        writer: std::writer,
+        fmt: []byte
+    ) std::result[[:usize, :[]byte]] {
+        # Format specifier: ""
+        if countof(fmt) == 0 {
+            return std::write_all(writer, self.*.bytes);
+        }
+
+        # Format specifier: "e"
+        if countof(fmt) == 1 and fmt[0] == 'e' {
+            var written: usize = 0;
+            var write_result: std::result[[:usize, :[]byte]] =
+                std::zeroed[[:std::result[[:usize, :[]byte]]]]();
+            for i in 0:countof(self.*.bytes) {
+                var c: byte = self.*.bytes[i];
+                if c == '\0' {
+                    write_result = std::write_all(writer, "\\0");
+                    if write_result.is_error() {
+                        return write_result;
+                    }
+                    written = written + write_result.value();
+                    continue;
+                }
+                if c == '\t' {
+                    write_result = std::write_all(writer, "\\t");
+                    if write_result.is_error() {
+                        return write_result;
+                    }
+                    written = written + write_result.value();
+                    continue;
+                }
+                if c == '\n' {
+                    write_result = std::write_all(writer, "\\n");
+                    if write_result.is_error() {
+                        return write_result;
+                    }
+                    written = written + write_result.value();
+                    continue;
+                }
+                if c == '\'' {
+                    write_result = std::write_all(writer, "\\\'");
+                    if write_result.is_error() {
+                        return write_result;
+                    }
+                    written = written + write_result.value();
+                    continue;
+                }
+                if c == '\"' {
+                    write_result = std::write_all(writer, "\\\"");
+                    if write_result.is_error() {
+                        return write_result;
+                    }
+                    written = written + write_result.value();
+                    continue;
+                }
+                if c == '\\' {
+                    write_result = std::write_all(writer, "\\\\");
+                    if write_result.is_error() {
+                        return write_result;
+                    }
+                    written = written + write_result.value();
+                    continue;
+                }
+                write_result = std::write_all(writer, (:[]byte){&c, 1});
+                if write_result.is_error() {
+                    return write_result;
+                }
+                written = written + write_result.value();
+            }
+            return std::result[[:usize, :[]byte]]::init_value(written);
+        }
+
+        std::formatter::invalid_format_specifier(fmt);
+    }
+}
+
+func zeroed[[:T]]() T {
+    # TODO: Ensure that `object` is aligned to `alignof(:T)` once alignment
+    # specification is added to variable & constant declarations. The x64
+    # architecture allows unaligned memory access, so this current
+    # implementation is a non-issue for the Linux x64 OS/ARCH target. However,
+    # this function is not necessarily portable across other architectures.
+    const object: [sizeof(:T)]byte = (:[sizeof(:T)]byte)[0...];
+    return *(:*T)&object;
+}

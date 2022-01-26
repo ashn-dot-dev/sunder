@@ -4,8 +4,8 @@ import "sys/sys.sunder";
 func cat(filename: *byte) void {
     var filename_str: std::str = std::str::init(std::cstr::to_bytes(filename));
 
-    var open_result: std::result[[:std::stream, :std::sys::error]] =
-        std::fs::open_file(filename_str.bytes, std::fs::MODE_READ);
+    var open_result: std::result[[:std::fs::file, :std::sys::error]] =
+        std::fs::file::open(filename_str.bytes, std::fs::MODE_READ);
     if open_result.is_error() {
         var error: std::sys::error = open_result.error();
         std::print_format_line(
@@ -17,12 +17,12 @@ func cat(filename: *byte) void {
         std::sys::exit(std::sys::EXIT_FAILURE);
     }
 
-    var stream: std::stream = open_result.value();
+    var file: std::fs::file = open_result.value();
 
     var buf: [512]byte = (:[512]byte)[0...];
     for true {
         var read_result: std::result[[:usize, :[]byte]] =
-            stream.read(buf[0:countof(buf)]);
+            file.read(buf[0:countof(buf)]);
         if read_result.is_error() {
             var error: std::sys::error = open_result.error();
             std::print_format_line(
@@ -41,7 +41,7 @@ func cat(filename: *byte) void {
         std::print(std::out(), buf[0:countof(buf)]);
     }
 
-    std::fs::close_file(stream);
+    file.close();
 }
 
 func main() void {

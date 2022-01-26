@@ -173,14 +173,18 @@ order_tldecl(struct orderer* orderer, struct tldecl* tldecl)
             switch (member->kind) {
             case CST_MEMBER_VARIABLE: {
                 order_typespec(orderer, member->data.variable.typespec);
-                return;
+                continue;
             }
             case CST_MEMBER_CONSTANT: {
                 order_decl(orderer, member->data.constant.decl);
-                return;
+                continue;
             }
             case CST_MEMBER_FUNCTION: {
-                order_decl(orderer, members[i]->data.function.decl);
+                order_decl(orderer, member->data.function.decl);
+                continue;
+            }
+            default: {
+                UNREACHABLE();
             }
             }
         }
