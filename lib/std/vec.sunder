@@ -1,6 +1,6 @@
 namespace std;
 import "std/alloc.sunder";
-import "std/mem.sunder";
+import "std/core.sunder";
 
 struct vec[[:T]] {
     var _allocator: *std::allocator;
@@ -86,7 +86,7 @@ struct vec[[:T]] {
         var mem: []T = (:[]T){self.*._start, self.*._capacity};
         var src: []T = mem[index     : index + n];
         var dst: []T = mem[index + 1 : index + n + 1];
-        std::mem::copy[[:T]](dst, src);
+        std::copy_slice[[:T]](dst, src);
         self.*._count = self.*._count + 1;
 
         # [A][B][ ][C][D][E]
@@ -105,7 +105,7 @@ struct vec[[:T]] {
         var mem: []T = (:[]T){self.*._start, self.*._capacity};
         var src: []T = mem[index + 1 : index + n + 1];
         var dst: []T = mem[index     : index + n];
-        std::mem::copy[[:T]](dst, src);
+        std::copy_slice[[:T]](dst, src);
         self.*._count = self.*._count - 1;
     }
 

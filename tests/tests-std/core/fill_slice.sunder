@@ -1,15 +1,15 @@
-import "std/mem.sunder";
+import "std/core.sunder";
 
 func main() void {
     var a: [5]byte = (:[5]byte)[0xAA, 0xBB, 0xCC, 0xDD, 0xEE];
-    std::mem::set[[:byte]](a[0:countof(a)], 0xFF);
+    std::fill_slice[[:byte]](a[0:countof(a)], 0xFF);
     dump a;
-    std::mem::set[[:byte]](a[0:countof(a)], 0xAA);
+    std::fill_slice[[:byte]](a[0:countof(a)], 0xAA);
     dump a;
 
     # Test with non-8-bit type.
     var b: [5]u16 = (:[5]u16)[0xAAAA, 0xBBBB, 0xCCCC, 0xDDDD, 0xEEEE];
-    std::mem::set[[:u16]](b[0:countof(b)], 0xFFFF);
+    std::fill_slice[[:u16]](b[0:countof(b)], 0xFFFF);
     dump b;
 }
 ################################################################################

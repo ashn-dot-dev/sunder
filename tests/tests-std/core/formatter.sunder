@@ -1,5 +1,4 @@
 import "std/core.sunder";
-import "std/mem.sunder";
 
 struct name {
     var first: []byte;
@@ -15,7 +14,7 @@ struct name {
         }
 
         var written: usize = 0;
-        var result: std::result[[:usize, :[]byte]] = std::mem::zeroed[[:std::result[[:usize, :[]byte]]]]();
+        var result: std::result[[:usize, :[]byte]] = std::zeroed[[:std::result[[:usize, :[]byte]]]]();
 
         # Just assume all these writes will succeed lmao.
         result = std::write_all(writer, self.*.first);

@@ -1,7 +1,6 @@
 namespace std::fs;
 import "std/alloc.sunder";
 import "std/core.sunder";
-import "std/mem.sunder";
 import "std/sys.sunder";
 import "sys/sys.sunder";
 
@@ -57,7 +56,7 @@ struct file {
         }
 
         var path_cstr: [::sys::PATH_MAX]byte = (:[::sys::PATH_MAX]byte)[0...];
-        std::mem::copy[[:byte]](path_cstr[0:countof(path_cstr)], path);
+        std::copy_slice[[:byte]](path_cstr[0:countof(path_cstr)], path);
 
         var sysret: ssize = ::sys::open(&path_cstr[0], flags, 0o666);
         if sysret < 0 {
@@ -77,7 +76,7 @@ struct file {
         }
 
         return std::result[[:void, :std::sys::error]]::init_value(
-            std::mem::zeroed[[:void]]());
+            std::zeroed[[:void]]());
     }
 
     func read(

@@ -1,6 +1,5 @@
 namespace std;
 import "std/core.sunder";
-import "std/mem.sunder";
 import "sys/sys.sunder";
 
 struct allocator_vtable {
@@ -104,10 +103,7 @@ func resize_slice[[:T]](
     }
 
     var new_pointer: *T = (:*T)allocator.*.reallocate(
-        cur_pointer,
-        alignof(:T),
-        cur_size,
-        new_size);
+        cur_pointer, alignof(:T), cur_size, new_size);
 
     return (:[]T){new_pointer, new_count};
 }
@@ -200,13 +196,13 @@ struct page_allocator {
         # Number of bytes that will need to by copied from the old buffer to the
         # new buffer. If the new buffer has a smaller size then the old buffer
         # then we should only copy that smaller number of bytes.
-        var src_size: usize = old_size;
+        var copy_size: usize = old_size;
         if (new_size < old_size) {
-            src_size = new_size;
+            copy_size = new_size;
         }
-        std::mem::copy[[:byte]](
-            (:[]byte){new, new_size},
-            (:[]byte){ptr, src_size});
+        std::copy_slice[[:byte]](
+            (:[]byte){new, copy_size},
+            (:[]byte){ptr, copy_size});
 
         self.*.deallocate(ptr, align, old_size);
 

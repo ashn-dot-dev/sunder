@@ -7,7 +7,7 @@ func main() void {
     var r: std::reader = std::input();
     var w: std::writer = std::out();
     var res: std::result[[:usize, :[]byte]] =
-        std::mem::zeroed[[:std::result[[:usize, :[]byte]]]]();
+        std::zeroed[[:std::result[[:usize, :[]byte]]]]();
     for true {
         res = r.read(buf[0:countof(buf)]);
         if res.is_error() {
