@@ -370,8 +370,11 @@ parse_decl_variable(struct parser* parser)
     struct source_location const* const location =
         &expect_current(parser, TOKEN_VAR)->location;
     struct cst_identifier const* const identifier = parse_identifier(parser);
-    expect_current(parser, TOKEN_COLON);
-    struct cst_typespec const* const typespec = parse_typespec(parser);
+    struct cst_typespec const* typespec = NULL;
+    if (check_current(parser, TOKEN_COLON)) {
+        expect_current(parser, TOKEN_COLON);
+        typespec = parse_typespec(parser);
+    }
     expect_current(parser, TOKEN_ASSIGN);
     struct cst_expr const* const expr = parse_expr(parser);
     expect_current(parser, TOKEN_SEMICOLON);
@@ -391,8 +394,11 @@ parse_decl_constant(struct parser* parser)
     struct source_location const* const location =
         &expect_current(parser, TOKEN_CONST)->location;
     struct cst_identifier const* const identifier = parse_identifier(parser);
-    expect_current(parser, TOKEN_COLON);
-    struct cst_typespec const* const typespec = parse_typespec(parser);
+    struct cst_typespec const* typespec = NULL;
+    if (check_current(parser, TOKEN_COLON)) {
+        expect_current(parser, TOKEN_COLON);
+        typespec = parse_typespec(parser);
+    }
     expect_current(parser, TOKEN_ASSIGN);
     struct cst_expr const* const expr = parse_expr(parser);
     expect_current(parser, TOKEN_SEMICOLON);

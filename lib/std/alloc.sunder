@@ -32,7 +32,7 @@ struct allocator {
     var object: *any;
 
     func init[[:T]](object: *T) std::allocator {
-        const vtable: std::allocator_vtable = (:std::allocator_vtable){
+        const vtable = (:std::allocator_vtable){
             .allocate = T::allocate,
             .reallocate = T::reallocate,
             .deallocate = T::deallocate

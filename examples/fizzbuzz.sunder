@@ -15,7 +15,7 @@ func main() void {
             std::print(std::out(), "Buzz\n");
             continue;
         }
-        var int: std::int[[:usize]] = std::int[[:usize]]::init(i);
+        var int = std::int[[:usize]]::init(i);
         std::print_format_line(
             std::out(),
             "{}",

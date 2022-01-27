@@ -85,10 +85,10 @@ struct file {
             return std::result[[:std::fs::file, :std::fs::error]]::init_error(
                 (:std::fs::error){.code = sys::EINVAL});
         }
-        var path_cstr: [sys::PATH_MAX]byte = (:[sys::PATH_MAX]byte)[0...];
+        var path_cstr = (:[sys::PATH_MAX]byte)[0...];
         std::copy_slice[[:byte]](path_cstr[0:countof(path)], path);
 
-        var sysret: ssize = sys::open(&path_cstr[0], flags, 0o666);
+        var sysret = sys::open(&path_cstr[0], flags, 0o666);
         if sysret < 0 {
             return std::result[[:std::fs::file, :std::fs::error]]::init_error(
                 (:std::fs::error){.code = -sysret});
@@ -99,7 +99,7 @@ struct file {
     }
 
     func close(self: *std::fs::file) std::result[[:void, :std::fs::error]] {
-        var sysret: ssize = sys::close((:u32)self.*.fd);
+        var sysret = sys::close((:u32)self.*.fd);
         if sysret < 0 {
             return std::result[[:void, :std::fs::error]]::init_error(
                 (:std::fs::error){.code = -sysret});
@@ -117,8 +117,7 @@ struct file {
             return std::result[[:usize, :[]byte]]::init_value(0);
         }
 
-        var sysret: ssize =
-            sys::read((:u32)self.*.fd, &buf[0u], countof(buf));
+        var sysret = sys::read((:u32)self.*.fd, &buf[0u], countof(buf));
         if sysret < 0 {
             return std::result[[:usize, :[]byte]]::init_error(
                 sys::ERRNO_STRINGS[(:usize)-sysret]);
@@ -135,11 +134,10 @@ struct file {
             return std::result[[:usize, :[]byte]]::init_value(0);
         }
 
-        var sysret: ssize =
-            ::sys::write((:u32)self.*.fd, &buf[0u], countof(buf));
+        var sysret = sys::write((:u32)self.*.fd, &buf[0u], countof(buf));
         if sysret < 0 {
             return std::result[[:usize, :[]byte]]::init_error(
-                ::sys::ERRNO_STRINGS[(:usize)-sysret]);
+                sys::ERRNO_STRINGS[(:usize)-sysret]);
         }
 
         return std::result[[:usize, :[]byte]]::init_value((:usize)sysret);
@@ -158,7 +156,7 @@ struct file {
         # whatever the underlying system implementation does, but this drifts
         # into the realm of non-portable/undefined behavior. Consider
         # explicitly defining the behavior when seeking past the end of a file.
-        var sysret: ssize = sys::lseek((:u32)self.*.fd, offset, (:u32)from);
+        var sysret = sys::lseek((:u32)self.*.fd, offset, (:u32)from);
         if sysret < 0 {
             return std::result[[:void, :std::fs::error]]::init_error(
                 (:std::fs::error){.code = -sysret});
@@ -169,7 +167,7 @@ struct file {
     }
 
     func tell(self: *std::fs::file) std::result[[:usize, :std::fs::error]] {
-        var sysret: ssize = sys::lseek((:u32)self.*.fd, 0, sys::SEEK_CUR);
+        var sysret = sys::lseek((:u32)self.*.fd, 0, sys::SEEK_CUR);
         if sysret < 0 {
             return std::result[[:usize, :std::fs::error]]::init_error(
                 (:std::fs::error){.code = -sysret});

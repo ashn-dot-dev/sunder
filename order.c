@@ -199,12 +199,16 @@ order_decl(struct orderer* orderer, struct cst_decl const* decl)
 
     switch (decl->kind) {
     case CST_DECL_VARIABLE: {
-        order_typespec(orderer, decl->data.variable.typespec);
+        if (decl->data.variable.typespec != NULL) {
+            order_typespec(orderer, decl->data.variable.typespec);
+        }
         order_expr(orderer, decl->data.variable.expr);
         return;
     }
     case CST_DECL_CONSTANT: {
-        order_typespec(orderer, decl->data.constant.typespec);
+        if (decl->data.constant.typespec != NULL) {
+            order_typespec(orderer, decl->data.constant.typespec);
+        }
         order_expr(orderer, decl->data.constant.expr);
         return;
     }

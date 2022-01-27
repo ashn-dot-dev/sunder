@@ -46,9 +46,7 @@ struct vec[[:T]] {
 
         var cur: []T = (:[]T){self.*._start, self.*._capacity};
         var new: []T = std::resize_slice[[:T]](
-            self.*._allocator,
-            cur,
-            capacity);
+            self.*._allocator, cur, capacity);
 
         self.*._start = &new[0];
         self.*._capacity = capacity;

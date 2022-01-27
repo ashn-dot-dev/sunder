@@ -103,7 +103,7 @@ struct reader {
     var object: *any;
 
     func init[[:T]](object: *T) std::reader {
-        const vtable: std::reader_vtable = (:std::reader_vtable){
+        const vtable = (:std::reader_vtable){
             .read = T::read
         };
         return (:std::reader){
@@ -135,7 +135,7 @@ struct writer {
     var object: *any;
 
     func init[[:T]](object: *T) std::writer {
-        const vtable: std::writer_vtable = (:std::writer_vtable){
+        const vtable = (:std::writer_vtable){
             .write = T::write
         };
         return (:std::writer){
@@ -155,8 +155,7 @@ func write_all(
 ) std::result[[:usize, :[]byte]] {
     var written: usize = 0;
     for written < countof(buf) {
-        var result: std::result[[:usize, :[]byte]] =
-            writer.write(buf[written:countof(buf)]);
+        var result = writer.write(buf[written:countof(buf)]);
         if result.is_error() {
             return result;
         }
@@ -198,7 +197,7 @@ struct formatter {
     var object: *any;
 
     func init[[:T]](object: *T) std::formatter {
-        const vtable: std::formatter_vtable = (:std::formatter_vtable){
+        const vtable = (:std::formatter_vtable){
             .format = T::format
         };
         return (:std::formatter){
@@ -216,14 +215,14 @@ struct formatter {
     }
 
     func invalid_format_string(format: []byte) void {
-        var str: std::str = std::str::init(format);
+        var str = std::str::init(format);
         std::panic_format(
             "invalid format string \"{e}\"\n",
             (:[]std::formatter)[std::formatter::init[[:std::str]](&str)]);
     }
 
     func invalid_format_specifier(fmt: []byte) void {
-        var str: std::str = std::str::init(fmt);
+        var str = std::str::init(fmt);
         std::panic_format(
             "invalid format specifier \"{e}\"\n",
             (:[]std::formatter)[std::formatter::init[[:std::str]](&str)]);
@@ -280,8 +279,7 @@ func write_format(
                 #      ^^
                 # "some}}text"
                 #      ^^ Escaped '{' or '}' character.
-                var res: std::result[[:usize, :[]byte]] =
-                    std::write_all(writer, format[start:end+1]);
+                var res = std::write_all(writer, format[start:end+1]);
                 if res.is_error() {
                     return res;
                 }
@@ -299,8 +297,7 @@ func write_format(
 
             # "some{fmt}text"
             #      ^ Start of format specifier.
-            var res: std::result[[:usize, :[]byte]] =
-                std::write_all(writer, format[start:end]);
+            var res = std::write_all(writer, format[start:end]);
             if res.is_error() {
                 return res;
             }
@@ -333,8 +330,7 @@ func write_format(
 
             # "some{fmt}text"
             #          ^ End of format specifier.
-            var res: std::result[[:usize, :[]byte]] =
-                args[arg].format(writer, format[start:end]);
+            var res = args[arg].format(writer, format[start:end]);
             if res.is_error() {
                 return res;
             }
@@ -357,8 +353,7 @@ func write_format(
 
     # "some{fmt}text"
     #           ^^^^ Write the remaining walked text.
-    var res: std::result[[:usize, :[]byte]] =
-        std::write_all(writer, format[start:end]);
+    var res = std::write_all(writer, format[start:end]);
     if res.is_error() {
         return res;
     }
@@ -395,7 +390,7 @@ func terminate() void {
 # Print the provided string to standard error, followed by a newline, before
 # making a call to `std::terminate`. This function does not return.
 func panic(why: []byte) void {
-    var str: std::str = std::str::init(why);
+    var str = std::str::init(why);
     std::panic_format(
         "{}",
         (:[]std::formatter)[std::formatter::init[[:std::str]](&str)]);
@@ -404,7 +399,7 @@ func panic(why: []byte) void {
 # Print the provided formatted string to standard error, followed by a newline,
 # before making a call to `std::terminate`. This function does not return.
 func panic_format(format: []byte, args: []std::formatter) void {
-    const PANIC_PREAMBLE: []byte = "panic: ";
+    const PANIC_PREAMBLE = "panic: ";
     std::print(std::err(), PANIC_PREAMBLE);
     std::print_format(std::err(), format, args);
     std::print(std::err(), "\n");
@@ -412,7 +407,7 @@ func panic_format(format: []byte, args: []std::formatter) void {
 }
 
 func print(writer: std::writer, bytes: []byte) void {
-    var result: std::result[[:usize, :[]byte]] = std::write_all(writer, bytes);
+    var result = std::write_all(writer, bytes);
     if result.is_error() {
         std::panic(result.error());
     }
@@ -428,8 +423,7 @@ func print_format(
     format: []byte,
     args: []std::formatter
 ) void {
-    var result: std::result[[:usize, :[]byte]] =
-        std::write_format(writer, format, args);
+    var result = std::write_format(writer, format, args);
     if result.is_error() {
         std::panic(result.error());
     }
@@ -453,8 +447,7 @@ struct input_reader {
             return std::result[[:usize, :[]byte]]::init_value(0);
         }
 
-        var sysret: ssize =
-            sys::read(sys::STDIN_FILENO, &buf[0u], countof(buf));
+        var sysret = sys::read(sys::STDIN_FILENO, &buf[0u], countof(buf));
         if sysret < 0 {
             return std::result[[:usize, :[]byte]]::init_error(
                 sys::ERRNO_STRINGS[(:usize)-sysret]);
@@ -465,11 +458,11 @@ struct input_reader {
 }
 
 func input() std::reader {
-    const input: input_reader = (:input_reader){};
-    const input_vtable: reader_vtable = (:reader_vtable){
+    const input = (:input_reader){};
+    const input_vtable = (:reader_vtable){
         .read = std::input_reader::read
     };
-    const input_reader: reader = (:std::reader){
+    const input_reader = (:std::reader){
         .vtable = &input_vtable,
         .object = &input
     };
@@ -485,8 +478,7 @@ struct out_writer {
             return std::result[[:usize, :[]byte]]::init_value(0);
         }
 
-        var sysret: ssize =
-            sys::write(sys::STDOUT_FILENO, &buf[0u], countof(buf));
+        var sysret = sys::write(sys::STDOUT_FILENO, &buf[0u], countof(buf));
         if sysret < 0 {
             return std::result[[:usize, :[]byte]]::init_error(
                 sys::ERRNO_STRINGS[(:usize)-sysret]);
@@ -497,11 +489,11 @@ struct out_writer {
 }
 
 func out() std::writer {
-    const out: out_writer = (:out_writer){};
-    const out_vtable: writer_vtable = (:writer_vtable){
+    const out = (:out_writer){};
+    const out_vtable = (:writer_vtable){
         .write = std::out_writer::write
     };
-    const out_writer: writer = (:std::writer){
+    const out_writer = (:std::writer){
         .vtable = &out_vtable,
         .object = &out
     };
@@ -517,8 +509,7 @@ struct err_writer {
             return std::result[[:usize, :[]byte]]::init_value(0);
         }
 
-        var sysret: ssize =
-            sys::write(sys::STDERR_FILENO, &buf[0u], countof(buf));
+        var sysret = sys::write(sys::STDERR_FILENO, &buf[0u], countof(buf));
         if sysret < 0 {
             return std::result[[:usize, :[]byte]]::init_error(
                 sys::ERRNO_STRINGS[(:usize)-sysret]);
@@ -529,11 +520,11 @@ struct err_writer {
 }
 
 func err() std::writer {
-    const err: err_writer = (:err_writer){};
-    const err_vtable: writer_vtable = (:writer_vtable){
+    const err = (:err_writer){};
+    const err_vtable = (:writer_vtable){
         .write = std::err_writer::write
     };
-    const err_writer: writer = (:std::writer){
+    const err_writer = (:std::writer){
         .vtable = &err_vtable,
         .object = &err
     };
@@ -565,14 +556,12 @@ struct int[[:T]] {
         }
 
         const DIGITS_TABLE_COUNT: usize = 16;
-        const DIGITS_TABLE_LOWER: [DIGITS_TABLE_COUNT]byte =
-            (:[DIGITS_TABLE_COUNT]byte)[
-                '0', '1', '2', '3', '4', '5', '6', '7',
-                '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'];
-        const DIGITS_TABLE_UPPER: [DIGITS_TABLE_COUNT]byte =
-            (:[DIGITS_TABLE_COUNT]byte)[
-                '0', '1', '2', '3', '4', '5', '6', '7',
-                '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'];
+        const DIGITS_TABLE_LOWER = (:[DIGITS_TABLE_COUNT]byte)[
+            '0', '1', '2', '3', '4', '5', '6', '7',
+            '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'];
+        const DIGITS_TABLE_UPPER = (:[DIGITS_TABLE_COUNT]byte)[
+            '0', '1', '2', '3', '4', '5', '6', '7',
+            '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'];
 
         var radix: T = 10;
         var digits_prefix: []byte = "";
@@ -616,7 +605,7 @@ struct int[[:T]] {
         # More than enough bytes to store the sign & digits of any number with
         # a size less than or equal to 64 bits.
         const OUTPUT_COUNT: usize = countof("-0b") + 64;
-        var output: [OUTPUT_COUNT]byte = (:[OUTPUT_COUNT]byte)[0...];
+        var output = (:[OUTPUT_COUNT]byte)[0...];
         var output_index: usize = countof(output) - 1;
 
         if value == 0 {
@@ -645,7 +634,7 @@ struct int[[:T]] {
             output_index = output_index - 1;
         }
 
-        var res: std::result[[:usize, :[]byte]] =
+        var res =
             std::write_all(writer, output[output_index+1:countof(output)]);
         if res.is_error() {
             return res;
@@ -679,8 +668,7 @@ struct str {
         # Format specifier: "e"
         if countof(fmt) == 1 and fmt[0] == 'e' {
             var written: usize = 0;
-            var write_result: std::result[[:usize, :[]byte]] =
-                std::zeroed[[:std::result[[:usize, :[]byte]]]]();
+            var write_result = std::zeroed[[:std::result[[:usize, :[]byte]]]]();
             for i in 0:countof(self.*.bytes) {
                 var c: byte = self.*.bytes[i];
                 if c == '\0' {

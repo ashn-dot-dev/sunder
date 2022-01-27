@@ -54,7 +54,6 @@ cst_decl_new_variable(
 {
     assert(location != NULL);
     assert(identifier != NULL);
-    assert(typespec != NULL);
     assert(expr != NULL);
 
     struct cst_decl* const self = autil_xalloc(NULL, sizeof(*self));
@@ -77,7 +76,6 @@ cst_decl_new_constant(
 {
     assert(location != NULL);
     assert(identifier != NULL);
-    assert(typespec != NULL);
     assert(expr != NULL);
 
     struct cst_decl* const self = autil_xalloc(NULL, sizeof(*self));

@@ -424,12 +424,12 @@ struct cst_decl {
     union {
         struct {
             struct cst_identifier const* identifier;
-            struct cst_typespec const* typespec;
+            struct cst_typespec const* typespec; // optional
             struct cst_expr const* expr;
         } variable;
         struct {
             struct cst_identifier const* identifier;
-            struct cst_typespec const* typespec;
+            struct cst_typespec const* typespec; // optional
             struct cst_expr const* expr;
         } constant;
         struct {

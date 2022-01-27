@@ -1,0 +1,28 @@
+struct s {
+    var foo: u32;
+    var bar: u32;
+}
+
+var a = 0xAAu8;
+var b = 0xBBBBu16;
+var c = 0xCCCCCCCCu32;
+var d = 0xDDDDDDDDDDDDDDDDu64;
+var e = (:s){.foo = 0xDEADBEEF, .bar = 0xCAFEF00D};
+
+func main() void {
+    var f = (:s32)0xFFFFu16;
+
+    dump a;
+    dump b;
+    dump c;
+    dump d;
+    dump e;
+    dump f;
+}
+################################################################################
+# AA
+# BB BB
+# CC CC CC CC
+# DD DD DD DD DD DD DD DD
+# EF BE AD DE 0D F0 FE CA
+# FF FF 00 00

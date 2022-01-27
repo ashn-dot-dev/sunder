@@ -1259,8 +1259,9 @@ resolve_decl_variable(
 
     struct expr const* expr = resolve_expr(resolver, decl->data.variable.expr);
 
-    struct type const* const type =
-        resolve_typespec(resolver, decl->data.variable.typespec);
+    struct type const* const type = decl->data.variable.typespec != NULL
+        ? resolve_typespec(resolver, decl->data.variable.typespec)
+        : expr->type;
     if (type->size == SIZEOF_UNSIZED) {
         fatal(
             decl->data.variable.typespec->location,
@@ -1317,8 +1318,9 @@ resolve_decl_constant(struct resolver* resolver, struct cst_decl const* decl)
 
     struct expr const* expr = resolve_expr(resolver, decl->data.constant.expr);
 
-    struct type const* const type =
-        resolve_typespec(resolver, decl->data.constant.typespec);
+    struct type const* const type = decl->data.variable.typespec != NULL
+        ? resolve_typespec(resolver, decl->data.constant.typespec)
+        : expr->type;
     if (type->size == SIZEOF_UNSIZED) {
         fatal(
             decl->data.constant.typespec->location,

@@ -8,21 +8,19 @@ import "sys/sys.sunder";
 
 # A buffer size of 0x10000 is large enough to fit both GitHub user rdebath's
 # bitwidth.b, Erik Bosman's mandelbrot.b, and Linus Akesson's life.b.
-var source: [0x10000]byte = (:[0x10000]byte)[0...];
+var source = (:[0x10000]byte)[0...];
 
-var cells: [30000]u8 = (:[30000]u8)[0...];
-var stack: [4096]usize = (:[4096]usize)[0...];
+var cells = (:[30000]u8)[0...];
+var stack = (:[4096]usize)[0...];
 
 var cells_index: usize = 0;
 var stack_index: usize = 0;
 
 func main() void {
     if sys::argc != 2 {
-        var progname: std::str =
-            std::str::init(std::cstr::to_bytes(*sys::argv));
-        var expected: std::int[[:usize]] = std::int[[:usize]]::init(1);
-        var received: std::int[[:usize]] =
-            std::int[[:usize]]::init(sys::argc - 1);
+        var progname = std::str::init(std::cstr::to_bytes(*sys::argv));
+        var expected = std::int[[:usize]]::init(1);
+        var received = std::int[[:usize]]::init(sys::argc - 1);
         std::print_format_line(
             std::err(),
             "{}: invalid number of arguments (expected {}, received {})",
@@ -34,11 +32,11 @@ func main() void {
     }
 
     var path: *byte = *std::cptr::add[[:*byte]](sys::argv, 1);
-    var open_result: std::result[[:std::fs::file, :std::fs::error]] =
+    var open_result =
         std::fs::file::open(std::cstr::to_bytes(path), std::fs::OPEN_READ);
     if open_result.is_error() {
-        var p: std::str = std::str::init(std::cstr::to_bytes(path));
-        var e: std::fs::error = open_result.error();
+        var p = std::str::init(std::cstr::to_bytes(path));
+        var e = open_result.error();
         std::print_format_line(
             std::err(),
             "{}: {}",
@@ -47,14 +45,14 @@ func main() void {
                 std::formatter::init[[:std::fs::error]](&e)]);
         std::exit(std::EXIT_FAILURE);
     }
-    var file: std::fs::file = open_result.value();
+    var file = open_result.value();
 
     # Assume the user-provided source will fit into countof(source) bytes.
     var read_result: std::result[[:usize, :[]byte]] =
         file.read(source[0:countof(source)]);
     if read_result.is_error() {
-        var p: std::str = std::str::init(std::cstr::to_bytes(path));
-        var e: std::str = std::str::init(read_result.error());
+        var p = std::str::init(std::cstr::to_bytes(path));
+        var e = std::str::init(read_result.error());
         std::print_format_line(
             std::err(),
             "{}: {}",
@@ -66,7 +64,7 @@ func main() void {
     }
     var source_size: usize = read_result.value();
 
-    var reader: std::reader = std::input();
+    var reader = std::input();
     var source_index: usize = 0;
     for source_index < source_size {
         var cur: byte = source[source_index];
