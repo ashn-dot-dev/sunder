@@ -31,6 +31,15 @@ const OPEN_WRITE: usize = 0b010;
 # Data is appended to the end of the file when written.
 const OPEN_APPEND: usize = 0b100;
 
+# Seek from the start of the file.
+const SEEK_START: usize = (:usize)sys::SEEK_SET;
+
+# Seek from the current position of the file position indicator.
+const SEEK_CURRENT: usize = (:usize)sys::SEEK_CUR;
+
+# Seek from the end of the file.
+const SEEK_END: usize = (:usize)sys::SEEK_END;
+
 struct file {
     var fd: ssize;
 
@@ -69,8 +78,15 @@ struct file {
             std::panic("unreachable");
         }
 
+        if countof(path) >= sys::PATH_MAX {
+            # Path is too long. The path must be less than sys::PATH_MAX bytes
+            # so that a NUL-terminated buffer of of sys::PATH_MAX bytes may be
+            # constructed without a buffer overflow.
+            return std::result[[:std::fs::file, :std::fs::error]]::init_error(
+                (:std::fs::error){.code = sys::EINVAL});
+        }
         var path_cstr: [sys::PATH_MAX]byte = (:[sys::PATH_MAX]byte)[0...];
-        std::copy_slice[[:byte]](path_cstr[0:countof(path_cstr)], path);
+        std::copy_slice[[:byte]](path_cstr[0:countof(path)], path);
 
         var sysret: ssize = sys::open(&path_cstr[0], flags, 0o666);
         if sysret < 0 {
@@ -127,5 +143,39 @@ struct file {
         }
 
         return std::result[[:usize, :[]byte]]::init_value((:usize)sysret);
+    }
+
+    func seek(
+        self: *std::fs::file,
+        offset: ssize,
+        from: usize
+    ) std::result[[:void, :std::fs::error]] {
+        # TODO: Seeking past the end of a file with `lseek` on Linux and then
+        # writing to that position will create a "hole" that is read as NUL
+        # bytes by subsequent read operations until the hole is filled in.
+        #
+        # The Sunder standard library can continue handle this case by matching
+        # whatever the underlying system implementation does, but this drifts
+        # into the realm of non-portable/undefined behavior. Consider
+        # explicitly defining the behavior when seeking past the end of a file.
+        var sysret: ssize = sys::lseek((:u32)self.*.fd, offset, (:u32)from);
+        if sysret < 0 {
+            return std::result[[:void, :std::fs::error]]::init_error(
+                (:std::fs::error){.code = -sysret});
+        }
+
+        return std::result[[:void, :std::fs::error]]::init_value(
+            std::zeroed[[:void]]());
+    }
+
+    func tell(self: *std::fs::file) std::result[[:usize, :std::fs::error]] {
+        var sysret: ssize = sys::lseek((:u32)self.*.fd, 0, sys::SEEK_CUR);
+        if sysret < 0 {
+            return std::result[[:usize, :std::fs::error]]::init_error(
+                (:std::fs::error){.code = -sysret});
+        }
+
+        return std::result[[:usize, :std::fs::error]]::init_value(
+            (:usize)sysret);
     }
 }

@@ -18,15 +18,22 @@
 #
 # linux/include/linux/types.h:
 # typedef unsigned short        umode_t;
+# typedef __kernel_off_t        off_t;
+#
+# linux/include/uapi/asm-generic/posix_types.h:
+# typedef long              __kernel_long_t;
+# typedef unsigned long     __kernel_ulong_t;
+# typedef __kernel_long_t   __kernel_off_t;
 namespace sys;
 
-const SYS_READ:   ssize = 0s;
-const SYS_WRITE:  ssize = 1s;
-const SYS_OPEN:   ssize = 2s;
-const SYS_CLOSE:  ssize = 3s;
-const SYS_MMAP:   ssize = 9s;
-const SYS_MUNMAP: ssize = 11s;
-const SYS_EXIT:   ssize = 60s;
+const SYS_READ:   ssize = 0;
+const SYS_WRITE:  ssize = 1;
+const SYS_OPEN:   ssize = 2;
+const SYS_CLOSE:  ssize = 3;
+const SYS_LSEEK:  ssize = 8;
+const SYS_MMAP:   ssize = 9;
+const SYS_MUNMAP: ssize = 11;
+const SYS_EXIT:   ssize = 60;
 
 const EPERM:           ssize = 1;
 const ENOENT:          ssize = 2;
@@ -297,50 +304,54 @@ const ERRNO_STRINGS: [134][]byte = (:[134][]byte)[
     "Memory page has hardware error"                     # EHWPOISON (133)
 ];
 
-const STDIN_FILENO:  u32 = 0u32;
-const STDOUT_FILENO: u32 = 1u32;
-const STDERR_FILENO: u32 = 2u32;
+const STDIN_FILENO:  u32 = 0;
+const STDOUT_FILENO: u32 = 1;
+const STDERR_FILENO: u32 = 2;
 
-const O_RDONLY:    s32 = 0x00000000s32;
-const O_WRONLY:    s32 = 0x00000001s32;
-const O_RDWR:      s32 = 0x00000002s32;
-const O_CREAT:     s32 = 0x00000040s32;
-const O_EXCL:      s32 = 0x00000080s32;
-const O_NOCTTY:    s32 = 0x00000100s32;
-const O_TRUNC:     s32 = 0x00000200s32;
-const O_APPEND:    s32 = 0x00000400s32;
-const O_CLOEXEC:   s32 = 0x00080000s32;
-const O_DIRECTORY: s32 = 0x00010000s32;
-const O_NOFOLLOW:  s32 = 0x00020000s32;
-const O_NONBLOCK:  s32 = 0x00000800s32;
-const O_DSYNC:     s32 = 0x00001000s32;
-const O_RSYNC:     s32 = 0x00101000s32;
-const O_SYNC:      s32 = 0x00101000s32;
+const O_RDONLY:    s32 = 0x00000000;
+const O_WRONLY:    s32 = 0x00000001;
+const O_RDWR:      s32 = 0x00000002;
+const O_CREAT:     s32 = 0x00000040;
+const O_EXCL:      s32 = 0x00000080;
+const O_NOCTTY:    s32 = 0x00000100;
+const O_TRUNC:     s32 = 0x00000200;
+const O_APPEND:    s32 = 0x00000400;
+const O_CLOEXEC:   s32 = 0x00080000;
+const O_DIRECTORY: s32 = 0x00010000;
+const O_NOFOLLOW:  s32 = 0x00020000;
+const O_NONBLOCK:  s32 = 0x00000800;
+const O_DSYNC:     s32 = 0x00001000;
+const O_RSYNC:     s32 = 0x00101000;
+const O_SYNC:      s32 = 0x00101000;
 
-const S_IRWXU: u16 = 0o700u16;
-const S_IRUSR: u16 = 0o400u16;
-const S_IWUSR: u16 = 0o200u16;
-const S_IXUSR: u16 = 0o100u16;
+const S_IRWXU: u16 = 0o700;
+const S_IRUSR: u16 = 0o400;
+const S_IWUSR: u16 = 0o200;
+const S_IXUSR: u16 = 0o100;
 
-const S_IRWXG: u16 = 0o070u16;
-const S_IRGRP: u16 = 0o040u16;
-const S_IWGRP: u16 = 0o020u16;
-const S_IXGRP: u16 = 0o010u16;
+const S_IRWXG: u16 = 0o070;
+const S_IRGRP: u16 = 0o040;
+const S_IWGRP: u16 = 0o020;
+const S_IXGRP: u16 = 0o010;
 
-const S_IRWXO: u16 = 0o007u16;
-const S_IROTH: u16 = 0o004u16;
-const S_IWOTH: u16 = 0o002u16;
-const S_IXOTH: u16 = 0o001u16;
+const S_IRWXO: u16 = 0o007;
+const S_IROTH: u16 = 0o004;
+const S_IWOTH: u16 = 0o002;
+const S_IXOTH: u16 = 0o001;
 
-const PROT_NONE:  ssize = 0x0s;
-const PROT_READ:  ssize = 0x1s;
-const PROT_WRITE: ssize = 0x2s;
-const PROT_EXEC:  ssize = 0x4s;
+const SEEK_SET: u32 = 0x0;
+const SEEK_CUR: u32 = 0x1;
+const SEEK_END: u32 = 0x2;
 
-const MAP_SHARED:    ssize = 0x01s;
-const MAP_PRIVATE:   ssize = 0x02s;
-const MAP_FIXED:     ssize = 0x10s;
-const MAP_ANONYMOUS: ssize = 0x20s;
+const PROT_NONE:  ssize = 0x0;
+const PROT_READ:  ssize = 0x1;
+const PROT_WRITE: ssize = 0x2;
+const PROT_EXEC:  ssize = 0x4;
+
+const MAP_SHARED:    ssize = 0x01;
+const MAP_PRIVATE:   ssize = 0x02;
+const MAP_FIXED:     ssize = 0x10;
+const MAP_ANONYMOUS: ssize = 0x20;
 
 # linux/include/uapi/linux/limits.h:
 const NGROUPS_MAX:    usize =  65536; # supplemental group IDs are available
@@ -381,6 +392,12 @@ func open(filename: *byte, flags: s32, mode: u16) ssize {
 # SYSCALL_DEFINE1(close, unsigned int, fd)
 func close(fd: u32) ssize {
     return syscall(SYS_CLOSE, fd);
+}
+
+# linux/fs/read_write.c:
+# SYSCALL_DEFINE3(lseek, unsigned int, fd, off_t, offset, unsigned int, whence)
+func lseek(fd: u32, offset: ssize, whence: u32) ssize {
+    return syscall(SYS_LSEEK, fd, offset, whence);
 }
 
 # arch/x86/kernel/sys_x86_64.c

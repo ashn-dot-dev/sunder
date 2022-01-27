@@ -1,0 +1,60 @@
+import "std/core.sunder";
+import "std/fs.sunder";
+import "sys/sys.sunder";
+
+func main() void {
+    var open_result: std::result[[:std::fs::file, :std::fs::error]] =
+        std::fs::file::open("data.tmp", std::fs::OPEN_READ | std::fs::OPEN_WRITE);
+    var file: std::fs::file = open_result.value();
+    var tell_result: std::result[[:usize, :std::fs::error]] =
+        std::zeroed[[:std::result[[:usize, :std::fs::error]]]]();
+
+    file.write("ABCD");
+    tell_result = file.tell();
+    dump tell_result.value();
+
+    file.write("EFGH");
+    tell_result = file.tell();
+    dump tell_result.value();
+
+    file.seek(0, std::fs::SEEK_START);
+    tell_result = file.tell();
+    dump tell_result.value();
+
+    file.seek(1, std::fs::SEEK_START);
+    tell_result = file.tell();
+    dump tell_result.value();
+
+    file.seek(0, std::fs::SEEK_END);
+    tell_result = file.tell();
+    dump tell_result.value();
+
+    file.seek(-1, std::fs::SEEK_END);
+    tell_result = file.tell();
+    dump tell_result.value();
+
+    file.seek(-3, std::fs::SEEK_CURRENT);
+    tell_result = file.tell();
+    dump tell_result.value();
+
+    file.write("1234");
+    tell_result = file.tell();
+    dump tell_result.value();
+
+    file.seek(0, std::fs::SEEK_START);
+    var buf: [512]byte = (:[512]byte)[0...];
+    var read_result: std::result[[:usize, :[]byte]] = file.read(buf[0:countof(buf)]);
+    std::print_line(std::out(), buf[0:read_result.value()]);
+
+    file.close();
+}
+################################################################################
+# 04 00 00 00 00 00 00 00
+# 08 00 00 00 00 00 00 00
+# 00 00 00 00 00 00 00 00
+# 01 00 00 00 00 00 00 00
+# 08 00 00 00 00 00 00 00
+# 07 00 00 00 00 00 00 00
+# 04 00 00 00 00 00 00 00
+# 08 00 00 00 00 00 00 00
+# ABCD1234

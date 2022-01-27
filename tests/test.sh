@@ -31,7 +31,9 @@ fi
 TEST_FILE="$1"
 
 echo "[= RUN ${TEST_FILE} =]"
-RECEIVED=$("${SUNDER_HOME}/bin/sunder-run" "${TEST_FILE}" 2>&1)
+RECEIVED=$(\
+    cd $(dirname "${TEST_FILE}") && \
+    "${SUNDER_HOME}/bin/sunder-run" $(basename "${TEST_FILE}") 2>&1)
 EXPECTED=$(\
     sed -n '/^########\(########\)*/,$p' "${TEST_FILE}" |\
     sed '1d' |\

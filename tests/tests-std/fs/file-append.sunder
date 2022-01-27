@@ -1,0 +1,31 @@
+import "std/core.sunder";
+import "std/fs.sunder";
+
+const path: []byte = "data.tmp";
+
+func main() void {
+    var open_result: std::result[[:std::fs::file, :std::fs::error]] =
+        std::fs::file::open(path, std::fs::OPEN_WRITE);
+    var file: std::fs::file = open_result.value();
+    var writer: std::writer = std::writer::init[[:std::fs::file]](&file);
+    std::print_line(writer, "OPENED WITH WRITE");
+    file.close();
+
+    open_result = std::fs::file::open(path, std::fs::OPEN_APPEND);
+    file = open_result.value();
+    writer = std::writer::init[[:std::fs::file]](&file);
+    std::print_line(writer, "OPENED WITH APPEND");
+    file.close();
+
+    open_result = std::fs::file::open(path, std::fs::OPEN_READ);
+    file = open_result.value();
+    var reader: std::reader = std::reader::init[[:std::fs::file]](&file);
+    var buf: [512]byte = (:[512]byte)[0...];
+    var read_result: std::result[[:usize, :[]byte]] =
+        reader.read(buf[0:countof(buf)]);
+    std::print_line(std::out(), buf[0:read_result.value()]);
+    file.close();
+}
+################################################################################
+# OPENED WITH WRITE
+# OPENED WITH APPEND

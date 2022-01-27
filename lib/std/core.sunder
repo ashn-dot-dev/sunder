@@ -738,8 +738,10 @@ struct str {
     }
 }
 
-func copy_slice[[:T]](dest: []T, source: []T) void {
-    if countof(dest) != countof(source) {
+# Copy the elements of `source` into `destination`.The source and destination
+# buffers must contain the same number of elements.
+func copy_slice[[:T]](destination: []T, source: []T) void {
+    if countof(destination) != countof(source) {
         std::panic("source and destination buffers have different sizes");
     }
 
@@ -779,17 +781,17 @@ func copy_slice[[:T]](dest: []T, source: []T) void {
     # copy forwards, and when the start of source appears before the start of
     # dest then we need to copy backwards. When the start of dest and the start
     # of source are the same, we arbitrarily choose to copy forwards.
-    if &dest[0] <= &source[0] {
+    if &destination[0] <= &source[0] {
         # Copy forwards.
         for i in 0:countof(source) {
-            dest[i] = source[i];
+            destination[i] = source[i];
         }
     }
     else {
         # Copy backwards.
         for i in 0:countof(source) {
             var index: usize = countof(source) - 1 - i;
-            dest[index] = source[index];
+            destination[index] = source[index];
         }
     }
 }
