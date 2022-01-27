@@ -158,6 +158,13 @@ order_tldecl(struct orderer* orderer, struct tldecl* tldecl)
 
     order_decl(orderer, tldecl->decl);
     tldecl->state = TLDECL_ORDERED;
+    // TODO: There is a bug here. If top-level declaration A is a struct which
+    // depends on B (perhaps as a member variable type), then the struct will
+    // fail to resolve as we insert A into the topological order list *before*
+    // any of of the member dependencies added in the special case below. The
+    // combinarion of this ordering bug, plus the need for the special struct
+    // case below, is an indicator that we should re-examine the ordering
+    // algorithm.
     autil_sbuf_push(orderer->tldecls.topological_order, tldecl->decl->name);
     // Special case for structs. Struct members may self-reference the struct
     // that they are defined within (e.g. the return type of init functions).
