@@ -619,6 +619,11 @@ struct int[[:T]] {
         var output: [OUTPUT_COUNT]byte = (:[OUTPUT_COUNT]byte)[0...];
         var output_index: usize = countof(output) - 1;
 
+        if value == 0 {
+            # Write a single zero digit.
+            output[output_index] = '0';
+            output_index = output_index - 1;
+        }
         for value != 0 {
             var div: T = value / radix;
             var rem: T = value - radix * (value / radix);
@@ -629,6 +634,7 @@ struct int[[:T]] {
 
             value = div;
         }
+
         for i in 0:countof(digits_prefix) {
             output[output_index] =
                 digits_prefix[countof(digits_prefix) - i - 1];

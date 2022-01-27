@@ -18,28 +18,57 @@ var stack_index: usize = 0;
 
 func main() void {
     if sys::argc != 2 {
-        std::print_line(std::err(), "invalid number of arguments");
-        sys::exit(1);
+        var progname: std::str =
+            std::str::init(std::cstr::to_bytes(*sys::argv));
+        var expected: std::int[[:usize]] = std::int[[:usize]]::init(1);
+        var received: std::int[[:usize]] =
+            std::int[[:usize]]::init(sys::argc - 1);
+        std::print_format_line(
+            std::err(),
+            "{}: invalid number of arguments (expected {}, received {})",
+            (:[]std::formatter)[
+                std::formatter::init[[:std::str]](&progname),
+                std::formatter::init[[:std::int[[:usize]]]](&expected),
+                std::formatter::init[[:std::int[[:usize]]]](&received)]);
+        std::exit(std::EXIT_FAILURE);
     }
 
     var path: *byte = *std::cptr::add[[:*byte]](sys::argv, 1);
-
-    var fd: ssize = sys::open(path, sys::O_RDONLY, 0);
-    if fd < 0 {
-        std::print_line(std::err(), "failed to open file");
-        sys::exit(1);
+    var open_result: std::result[[:std::fs::file, :std::fs::error]] =
+        std::fs::file::open(std::cstr::to_bytes(path), std::fs::OPEN_READ);
+    if open_result.is_error() {
+        var p: std::str = std::str::init(std::cstr::to_bytes(path));
+        var e: std::fs::error = open_result.error();
+        std::print_format_line(
+            std::err(),
+            "{}: {}",
+            (:[]std::formatter)[
+                std::formatter::init[[:std::str]](&p),
+                std::formatter::init[[:std::fs::error]](&e)]);
+        std::exit(std::EXIT_FAILURE);
     }
+    var file: std::fs::file = open_result.value();
 
     # Assume the user-provided source will fit into countof(source) bytes.
-    var source_size: ssize = sys::read((:u32)fd, &source[0], countof(source));
-    if source_size < 0 {
-        std::print_line(std::err(), "read error");
-        sys::exit(1);
+    var read_result: std::result[[:usize, :[]byte]] =
+        file.read(source[0:countof(source)]);
+    if read_result.is_error() {
+        var p: std::str = std::str::init(std::cstr::to_bytes(path));
+        var e: std::str = std::str::init(read_result.error());
+        std::print_format_line(
+            std::err(),
+            "{}: {}",
+            (:[]std::formatter)[
+                std::formatter::init[[:std::str]](&p),
+                std::formatter::init[[:std::str]](&e)]);
+        file.close();
+        std::exit(std::EXIT_FAILURE);
     }
-    sys::close((:u32)fd);
+    var source_size: usize = read_result.value();
 
+    var reader: std::reader = std::input();
     var source_index: usize = 0;
-    for source_index < (:usize)source_size {
+    for source_index < source_size {
         var cur: byte = source[source_index];
 
         if cur == '>' {
@@ -69,12 +98,13 @@ func main() void {
             source_index = source_index + 1;
         }
         elif cur == '.' {
-            sys::write(sys::STDOUT_FILENO, (:*byte)&cells[cells_index], 1);
+            std::print(std::out(), (:[]byte){(:*byte)&cells[cells_index], 1});
             source_index = source_index + 1;
         }
         elif cur == ',' {
             var b: byte = 0;
-            if sys::read(sys::STDIN_FILENO, &b, 1) != 0 {
+            read_result = reader.read((:[]byte){&b, 1});
+            if read_result.value() != 0 { # Only update on non-EOF.
                cells[cells_index] = (:u8)b;
             }
             source_index = source_index + 1;
@@ -106,4 +136,6 @@ func main() void {
             source_index = source_index + 1;
         }
     }
+
+    file.close();
 }
