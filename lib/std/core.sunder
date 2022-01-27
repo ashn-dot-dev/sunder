@@ -48,36 +48,36 @@ struct result[[:T, :E]] {
 }
 
 struct optional[[:T]] {
-    var _wrapped: T;
-    var _is_some: bool;
+    var _value: T;
+    var _is_value: bool;
 
-    func init_some(some: T) optional[[:T]] {
+    func init_value(value: T) optional[[:T]] {
         return (:optional[[:T]]){
-            ._wrapped = some,
-            ._is_some = true
+            ._value = value,
+            ._is_value = true
         };
     }
 
-    func init_none() optional[[:T]] {
+    func init_empty() optional[[:T]] {
         return (:optional[[:T]]){
-            ._wrapped = std::zeroed[[:T]](),
-            ._is_some = false
+            ._value = std::zeroed[[:T]](),
+            ._is_value = false
         };
     }
 
-    func is_some(self: *optional[[:T]]) bool {
-        return self.*._is_some;
+    func is_value(self: *optional[[:T]]) bool {
+        return self.*._is_value;
     }
 
-    func is_none(self: *optional[[:T]]) bool {
-        return not self.*._is_some;
+    func is_empty(self: *optional[[:T]]) bool {
+        return not self.*._is_value;
     }
 
-    func unwrap(self: *optional[[:T]]) T {
-        if not self.*._is_some {
-            std::panic("attempted to unwrap std::optional with `none` value");
+    func value(self: *optional[[:T]]) T {
+        if not self.*._is_value {
+            std::panic("attempted to retrieve value from empty std::optional");
         }
-        return self.*._wrapped;
+        return self.*._value;
     }
 }
 
