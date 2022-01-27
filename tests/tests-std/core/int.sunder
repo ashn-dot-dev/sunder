@@ -80,7 +80,20 @@ func format_test7() void {
     dump res.value();
 }
 
+# Test that zero is properly printed in all formats.
 func format_test8() void {
+    var a: std::int[[:s32]] = std::int[[:s32]]::init(0);
+    var a_fmtr: std::formatter = std::formatter::init[[:std::int[[:s32]]]](&a);
+
+    var res: std::result[[:usize, :[]byte]] = std::write_format(
+        std::out(),
+        "{} {d} {b} {o} {x}\n",
+        (:[]std::formatter)[a_fmtr, a_fmtr, a_fmtr, a_fmtr, a_fmtr]);
+
+    dump res.value();
+}
+
+func format_test9() void {
     var a: std::int[[:u32]] = std::int[[:u32]]::init(0xDEADBEEF);
     var a_fmtr: std::formatter = std::formatter::init[[:std::int[[:u32]]]](&a);
 
@@ -108,6 +121,7 @@ func main() void {
     format_test6();
     format_test7();
     format_test8();
+    format_test9();
 }
 ################################################################################
 # 00
@@ -131,4 +145,6 @@ func main() void {
 # 0B 00 00 00 00 00 00 00
 # -0xBEEF
 # 08 00 00 00 00 00 00 00
+# 0 0 0b0 0o0 0x0
+# 10 00 00 00 00 00 00 00
 # panic: invalid format specifier "l"
