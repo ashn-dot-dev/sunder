@@ -2,12 +2,12 @@ namespace std;
 import "std/core.sunder";
 
 struct vec[[:T]] {
-    var _allocator: *std::allocator;
+    var _allocator: std::allocator;
     var _start: *T;
     var _count: usize;
     var _capacity: usize;
 
-    func init(allocator: *std::allocator) std::vec[[:T]] {
+    func init(allocator: std::allocator) std::vec[[:T]] {
         return (:std::vec[[:T]]){
             ._allocator = allocator,
             ._start = (:*T)0u,

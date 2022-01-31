@@ -139,7 +139,7 @@ struct page_allocator {
         }
     }
 
-    func the() *std::allocator {
+    func the() std::allocator {
         const the = (:page_allocator){};
         const the_vtable = (:allocator_vtable){
             .allocate = std::page_allocator::allocate,
@@ -150,7 +150,7 @@ struct page_allocator {
             .vtable = &the_vtable,
             .object = &the
         };
-        return &the_allocator;
+        return the_allocator;
     }
 }
 
