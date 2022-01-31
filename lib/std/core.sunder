@@ -120,8 +120,8 @@ struct reader {
 struct writer_vtable {
     #   func write(self: *any, buf: []byte) std::result[[:usize, :[]byte]]
     #
-    # Attempt to write `countof(buf)` using the provided writer. The write
-    # operation must not mutate the contents of `buf`.
+    # Attempt to write `countof(buf)` bytes using the provided writer. The
+    # write operation must not mutate the contents of `buf`.
     #
     # On success, this function returns the number of bytes written, which may
     # be less than `countof(buf)` in the event of a partial write.
@@ -539,6 +539,7 @@ struct err_writer {
     }
 }
 
+# Returns the reader interface associated with the standard input stream.
 func input() std::reader {
     const input = (:input_reader){};
     const input_vtable = (:reader_vtable){
@@ -551,6 +552,7 @@ func input() std::reader {
     return input_reader;
 }
 
+# Returns the writer interface associated with the standard output stream.
 func out() std::writer {
     const out = (:out_writer){};
     const out_vtable = (:writer_vtable){
@@ -563,6 +565,7 @@ func out() std::writer {
     return out_writer;
 }
 
+# Returns the writer interface associated with the standard error stream.
 func err() std::writer {
     const err = (:err_writer){};
     const err_vtable = (:writer_vtable){
@@ -575,6 +578,9 @@ func err() std::writer {
     return err_writer;
 }
 
+# Write `countof(buf)` bytes using the provided writer, invoking the writer's
+# `write` function repeatedly until either all bytes have been written or an
+# error occurs.
 func write_all(
     writer: std::writer,
     buf: []byte
@@ -872,6 +878,7 @@ func copy_slice[[:T]](destination: []T, source: []T) void {
     }
 }
 
+# Set every element of the provided source to the provided value.
 func fill_slice[[:T]](slice: []T, value: T) void {
     for i in 0:countof(slice) {
         slice[i] = value;
@@ -911,6 +918,7 @@ func panic_format(format: []byte, args: []std::formatter) void {
     std::terminate();
 }
 
+# Return an object of type `T` with all bytes (including padding) zeroed.
 func zeroed[[:T]]() T {
     # TODO: Ensure that `object` is aligned to `alignof(:T)` once alignment
     # specification is added to variable & constant declarations. The x64
