@@ -156,11 +156,11 @@ struct formatter_vtable {
     #       fmt: []byte
     #   ) std::result[[:usize, :[]byte]]
     #
-    # Write a formatted string representation of `self` to the provided writer.
-    # The format specifier `fmt` describes *how* to format `self`. Generally
-    # each type will implement its own type-specific format specifier(s).
-    # However, the empty format specifier, `""`, should always be handled as a
-    # "default formatting" case.
+    # Write a formatted representation of `self` to the provided writer. The
+    # format specifier `fmt` describes *how* to format `self`. Generally, each
+    # type will implement its own type-specific format specifier(s). However,
+    # the empty format specifier, `""`, should always be handled as a "default
+    # formatting" case.
     #
     # On success, this function returns the number of bytes written to the
     # provided writer. Types implementing this function should ensure that all
@@ -852,10 +852,11 @@ func copy_slice[[:T]](destination: []T, source: []T) void {
     #   [A][D][D][D][E] <- copy second element
     #   [D][D][D][D][E] <- copy third element
     #
-    # So when the start of dest appears before the start of source we need to
-    # copy forwards, and when the start of source appears before the start of
-    # dest then we need to copy backwards. When the start of dest and the start
-    # of source are the same, we arbitrarily choose to copy forwards.
+    # So when the start of `destination` appears before the start of `source`
+    # the copy must be performed forwards, and when the start of `source`
+    # appears before the start of `destination` then copy must be performed
+    # backwards. When the start of `destination` and the start of `source` are
+    # the same, the copy is arbitrarily chosen to be performed forwards.
     if &destination[0] <= &source[0] {
         # Copy forwards.
         for i in 0:countof(source) {
@@ -886,7 +887,7 @@ func exit(status: ssize) void {
 }
 
 # Discontinue program execution due to an irrecoverable error. This function
-# currently operates by making a call to `sys::exit` with failure status, but
+# currently operates by making a call to `std::exit` with failure status, but
 # this behavior may change in the future. This function does not return.
 func terminate() void {
     std::exit(std::EXIT_FAILURE);
@@ -897,8 +898,7 @@ func terminate() void {
 func panic(why: []byte) void {
     var str = std::str::init(why);
     std::panic_format(
-        "{}",
-        (:[]std::formatter)[std::formatter::init[[:std::str]](&str)]);
+        "{}", (:[]std::formatter)[std::formatter::init[[:std::str]](&str)]);
 }
 
 # Print the provided formatted string to standard error, followed by a newline,
