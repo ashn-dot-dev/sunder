@@ -214,6 +214,73 @@ struct formatter {
     }
 }
 
+struct allocator_vtable {
+    #   func allocate(
+    #       self: *any,
+    #       align: usize,
+    #       size: usize
+    #   ) *byte
+    var allocate: func(*any, usize, usize) *byte;
+
+    #   func reallocate(
+    #       self: *any,
+    #       ptr: *byte,
+    #       align: usize,
+    #       old_size: usize,
+    #       new_size: usize
+    #   ) *byte
+    var reallocate: func(*any, *byte, usize, usize, usize) *byte;
+
+    #   func deallocate(
+    #       self: *any,
+    #       ptr: *byte,
+    #       align: usize,
+    #       size: usize
+    #   ) void
+    var deallocate: func(*any, *byte, usize, usize) void;
+}
+
+struct allocator {
+    var vtable: *std::allocator_vtable;
+    var object: *any;
+
+    func init[[:T]](object: *T) std::allocator {
+        const vtable = (:std::allocator_vtable){
+            .allocate = T::allocate,
+            .reallocate = T::reallocate,
+            .deallocate = T::deallocate
+        };
+        return (:std::allocator){
+            .vtable = &vtable,
+            .object = object
+        };
+    }
+
+    func allocate(self: *allocator, align: usize, size: usize) *byte {
+        return self.*.vtable.*.allocate(self.*.object, align, size);
+    }
+
+    func reallocate(
+        self: *allocator,
+        ptr: *byte,
+        align: usize,
+        old_size: usize,
+        new_size: usize
+    ) *byte {
+        return self.*.vtable.*.reallocate(
+            self.*.object, ptr, align, old_size, new_size);
+    }
+
+    func deallocate(
+        self: *allocator,
+        ptr: *byte,
+        align: usize,
+        size: usize
+    ) void {
+        self.*.vtable.*.deallocate(self.*.object, ptr, align, size);
+    }
+}
+
 func write_all(
     writer: std::writer,
     buf: []byte
@@ -705,6 +772,55 @@ func zeroed[[:T]]() T {
     # this function is not necessarily portable across other architectures.
     const object: [sizeof(:T)]byte = (:[sizeof(:T)]byte)[0...];
     return *(:*T)&object;
+}
+
+func new[[:T]](allocator: *std::allocator) *T {
+    return (:*T)allocator.*.allocate(alignof(:T), sizeof(:T));
+}
+
+func delete[[:T]](allocator: *std::allocator, object: *T) void {
+    allocator.*.deallocate((:*byte)object, alignof(:T), sizeof(:T));
+}
+
+func new_slice[[:T]](allocator: *std::allocator, count: usize) []T {
+    if (count == 0) {
+        # Slices with length zero will canonically use the NULL pointer.
+        return (:[]T){(:*T)0u, 0};
+    }
+
+    var size: usize = count * sizeof(:T);
+    var pointer: *T = (:*T)allocator.*.allocate(alignof(:T), size);
+    return (:[]T){pointer, count};
+}
+
+func resize_slice[[:T]](
+    allocator: *std::allocator,
+    slice: []T,
+    new_count: usize
+) []T {
+    var cur_count: usize = countof(slice);
+    var cur_size: usize = cur_count * sizeof(:T);
+    var new_size: usize = new_count * sizeof(:T);
+
+    var cur_pointer: *byte = (:*byte)0u;
+    if countof(slice) != 0 {
+        cur_pointer = (:*byte)&slice[0];
+    }
+
+    var new_pointer: *T = (:*T)allocator.*.reallocate(
+        cur_pointer, alignof(:T), cur_size, new_size);
+
+    return (:[]T){new_pointer, new_count};
+}
+
+func delete_slice[[:T]](allocator: *std::allocator, slice: []T) void {
+    if (countof(slice) == 0) {
+        # Nothing to deallocate.
+        return;
+    }
+
+    var size: usize = countof(slice) * sizeof(:T);
+    allocator.*.deallocate((:*byte)&slice[0], alignof(:T), size);
 }
 
 # Copy the elements of `source` into `destination`.The source and destination

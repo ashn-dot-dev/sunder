@@ -1,5 +1,4 @@
 namespace std;
-import "std/alloc.sunder";
 import "std/core.sunder";
 
 struct vec[[:T]] {
