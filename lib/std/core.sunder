@@ -580,8 +580,12 @@ func err() std::writer {
 
 # Read from the provided reader, invoking the reader's `read` function
 # repeatedly until either an end-of-input condition is reached or an error
-# occurs. The non-error result is returned as a slice of bytes allocated by the
-# provied allocator.
+# occurs.
+#
+# On success, this function returns a slice of bytes containing the read data,
+# allocated using the provided allocator.
+#
+# On error, this function returns a static string describing the error.
 func read_all(
     reader: std::reader,
     allocator: std::allocator
@@ -597,11 +601,11 @@ func read_all(
                 read_result.error());
         }
 
-        if read_result.value() == 0 {
+        var read_size = read_result.value();
+        if read_size == 0 {
             break;
         }
 
-        var read_size = read_result.value();
         var cur_count = countof(bytes);
         var new_count = cur_count + read_size;
         bytes = std::resize_slice[[:byte]](allocator, bytes, new_count);
@@ -609,6 +613,56 @@ func read_all(
     }
 
     return std::result[[:[]byte, :[]byte]]::init_value(bytes);
+}
+
+# Read from the provided reader, invoking the reader's `read` function
+# repeatedly until a newline is encountered, an end-of-input condition is
+# reached, or an error occurs. If an end-of-input condition is encountered
+# while reading a line, and the line is  empty, an empty optional is returned.
+# If an end-of-input condition is encountered while reading a non-empty line,
+# it is treated as a newline.
+#
+# On success, this function returns a non-empty optional slice of bytes
+# containing the read line without the ending newline, allocated using the
+# provided allocator. If an end-of-input condition is encountered while reading
+# an empty line, then an empty optional is returned.
+#
+# On error, this function returns a static string describing the error.
+func read_line(
+    reader: std::reader,
+    allocator: std::allocator
+) std::result[[:std::optional[[:[]byte]], :[]byte]] {
+    var bytes = std::new_slice[[:byte]](allocator, 0);
+
+    var c: byte = '\0';
+    for true {
+        var read_result = reader.read((:[]byte){&c, 1});
+        if read_result.is_error() {
+            std::delete_slice[[:byte]](allocator, bytes);
+            return std::result[[:std::optional[[:[]byte]], :[]byte]]::init_error(
+                read_result.error());
+        }
+
+        var read_size = read_result.value();
+        if read_size == 0 {
+            if countof(bytes) == 0 {
+                # End-of-input encountered while reading an empty line.
+                std::delete_slice[[:byte]](allocator, bytes);
+                return std::result[[:std::optional[[:[]byte]], :[]byte]]::init_value(
+                    std::optional[[:[]byte]]::init_empty());
+            }
+            # End-of-input encountered while reading a non-empty line.
+            break;
+        }
+
+        var cur_count = countof(bytes);
+        var new_count = cur_count + read_size;
+        bytes = std::resize_slice[[:byte]](allocator, bytes, new_count);
+        std::copy_slice[[:byte]](bytes[cur_count:new_count], (:[]byte){&c, 1});
+    }
+
+    return std::result[[:std::optional[[:[]byte]], :[]byte]]::init_value(
+        std::optional[[:[]byte]]::init_value(bytes));
 }
 
 # Write `countof(buf)` bytes using the provided writer, invoking the writer's
