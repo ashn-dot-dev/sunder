@@ -918,6 +918,32 @@ func fill_slice[[:T]](slice: []T, value: T) void {
     }
 }
 
+# Returns the maximum value of x and y.
+func min[[:T]](x: T, y: T) T {
+    if x < y {
+        return x;
+    }
+    return y;
+}
+
+# Returns the minimum value of x and y.
+func max[[:T]](x: T, y: T) T {
+    if x > y {
+        return x;
+    }
+    return y;
+}
+
+# Calculates the remainder of x and y (truncated towards zero).
+# The remainder will have the same sign as the dividend.
+#   std::rem[[:ssize]](+7, +3) => +1
+#   std::rem[[:ssize]](+7, -3) => +1
+#   std::rem[[:ssize]](-7, +3) => -1
+#   std::rem[[:ssize]](-7, -3) => -1
+func rem[[:T]](x: T, y: T) T {
+    return x - y * (x / y);
+}
+
 const EXIT_SUCCESS: ssize = 0;
 const EXIT_FAILURE: ssize = 1;
 

@@ -1,5 +1,3 @@
-import "std/math.sunder";
-
 func max[[:T]](lhs: T, rhs: T) T {
     if lhs > rhs {
         return lhs;
@@ -36,7 +34,6 @@ func main() void {
     dump max[[:u16]](123u16, 456u16); # Should reuse the first instantiation.
     dump max[[:s16]](+42s16, -42s16);
     dump max[[:u32]](0xDEADBEEFu32, 0xCAFEF00Du32);
-    dump std::max[[:u32]](0xDEADBEEFu32, 0xCAFEF00Du32);
 
     dump fib[[:u16]](0);
     dump fib[[:u16]](1);
@@ -61,7 +58,6 @@ func main() void {
 # C8 01
 # C8 01
 # 2A 00
-# EF BE AD DE
 # EF BE AD DE
 # 00 00
 # 01 00

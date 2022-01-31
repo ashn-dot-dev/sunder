@@ -1,4 +1,4 @@
-import "std/math.sunder";
+import "std/core.sunder";
 
 func main() void {
     dump std::min[[:u16]](0xBEEF, 0xCAFE);

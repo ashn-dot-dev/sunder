@@ -1,4 +1,4 @@
-import "std/math.sunder";
+import "std/core.sunder";
 
 func u_pos_rem_pos() void {
     dump std::rem[[:u8]] (3, 1);
