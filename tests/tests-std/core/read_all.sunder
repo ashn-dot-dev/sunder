@@ -1,0 +1,21 @@
+import "std/core.sunder";
+import "std/fs.sunder";
+import "std/page_allocator.sunder";
+
+func main() void {
+    var open_result = std::fs::file::open("data.txt", std::fs::OPEN_READ);
+    var file: std::fs::file = open_result.value();
+
+    var reader = std::reader::init[[:std::fs::file]](&file);
+    var allocator = std::page_allocator::the();
+
+    var read_result = std::read_all(reader, allocator);
+    var bytes = read_result.value();
+    std::print(std::out(), bytes);
+
+    std::delete_slice[[:byte]](allocator, bytes);
+    file.close();
+}
+################################################################################
+# TEST DATA FILE LINE 1
+# TEST DATA FILE LINE 2

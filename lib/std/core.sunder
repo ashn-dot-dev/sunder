@@ -578,6 +578,39 @@ func err() std::writer {
     return err_writer;
 }
 
+# Read from the provided reader, invoking the reader's `read` function
+# repeatedly until either an end-of-input condition is reached or an error
+# occurs. The non-error result is returned as a slice of bytes allocated by the
+# provied allocator.
+func read_all(
+    reader: std::reader,
+    allocator: std::allocator
+) std::result[[:[]byte, :[]byte]] {
+    var bytes = std::new_slice[[:byte]](allocator, 0);
+
+    var buf = (:[4096]byte)[0...];
+    for true {
+        var read_result = reader.read(buf[0:countof(buf)]);
+        if read_result.is_error() {
+            std::delete_slice[[:byte]](allocator, bytes);
+            return std::result[[:[]byte, :[]byte]]::init_error(
+                read_result.error());
+        }
+
+        if read_result.value() == 0 {
+            break;
+        }
+
+        var read_size = read_result.value();
+        var cur_count = countof(bytes);
+        var new_count = cur_count + read_size;
+        bytes = std::resize_slice[[:byte]](allocator, bytes, new_count);
+        std::copy_slice[[:byte]](bytes[cur_count:new_count], buf[0:read_size]);
+    }
+
+    return std::result[[:[]byte, :[]byte]]::init_value(bytes);
+}
+
 # Write `countof(buf)` bytes using the provided writer, invoking the writer's
 # `write` function repeatedly until either all bytes have been written or an
 # error occurs.
