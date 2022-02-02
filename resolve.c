@@ -1264,7 +1264,7 @@ resolve_decl_variable(
         : expr->type;
     if (type->size == SIZEOF_UNSIZED) {
         fatal(
-            decl->data.variable.typespec->location,
+            decl->location,
             "declaration of variable with unsized type `%s`",
             type->name);
     }
@@ -1323,7 +1323,7 @@ resolve_decl_constant(struct resolver* resolver, struct cst_decl const* decl)
         : expr->type;
     if (type->size == SIZEOF_UNSIZED) {
         fatal(
-            decl->data.constant.typespec->location,
+            decl->location,
             "declaration of constant with unsized type `%s`",
             type->name);
     }
