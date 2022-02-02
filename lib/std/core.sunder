@@ -288,6 +288,131 @@ struct int[[:T]] {
         return (:int[[:T]]){.value = value};
     }
 
+    func parse_from_bytes(
+        bytes: []byte,
+        radix: usize
+    ) std::result[[:std::int[[:T]], :[]byte]] {
+        if radix != 0 and (radix < 2 or radix > 36) {
+            return std::result[[:std::int[[:T]], :[]byte]]::init_error(
+                "invalid radix");
+        }
+
+        var cur: usize = 0;
+        var end: usize = countof(bytes);
+
+        # Parse optional sign (+ or -).
+        var sign: ssize = +1;
+        if (end - cur) > countof("+") and bytes[cur] == '+' {
+            sign = +1;
+            cur = cur + 1;
+        }
+        if (end - cur) > countof("-") and bytes[cur] == '-' {
+            sign = -1;
+            cur = cur + 1;
+        }
+
+        # Parse radix.
+        if radix == 0 {
+            var is_bin = (end - cur) >= countof("0b") and
+                bytes[cur+0] == '0' and
+                bytes[cur+1] == 'b';
+            var is_oct = (end - cur) >= countof("0o") and
+                bytes[cur+0] == '0' and
+                bytes[cur+1] == 'o';
+            var is_hex = (end - cur) >= countof("0x") and
+                bytes[cur+0] == '0' and
+                bytes[cur+1] == 'x';
+
+            if is_bin {
+                radix = 2;
+                cur = cur + countof("0b");
+            }
+            elif is_oct {
+                radix = 8;
+                cur = cur + countof("0o");
+            }
+            elif is_hex {
+                radix = 16;
+                cur = cur + countof("0x");
+            }
+            else {
+                radix = 10;
+            }
+        }
+
+        # Parse digits.
+        if cur == end {
+            return std::result[[:std::int[[:T]], :[]byte]]::init_error(
+                "integer contains no digits");
+        }
+        var accum: u64 = 0; # Digit accumulator (`u64` acting as `uintmax_t`).
+        var ACCUM_MAX: u64 = 0xFFFFFFFFFFFFFFFF;
+        for cur != end {
+            var c = bytes[cur];
+            cur = cur + 1;
+
+            var digit: usize = 0;
+            if '0' <= c and c <= '9' {
+                digit = (:usize)c - '0';
+            }
+            elif 'A' <= c and c <= 'F' {
+                digit = (:usize)c - 'A' + 0xA;
+            }
+            elif 'a' <= c and c <= 'f' {
+                digit = (:usize)c - 'a' + 0xA;
+            }
+            else {
+                return std::result[[:std::int[[:T]], :[]byte]]::init_error(
+                    "integer contains invalid digit");
+            }
+
+            if digit >= radix {
+                return std::result[[:std::int[[:T]], :[]byte]]::init_error(
+                    "integer contains invalid digit");
+            }
+
+            if accum != 0 and ACCUM_MAX / accum < (:typeof(accum))radix {
+                return std::result[[:std::int[[:T]], :[]byte]]::init_error(
+                    "integer out-of-range");
+            }
+            accum = accum * (:typeof(accum))radix;
+
+            if ACCUM_MAX - accum < (:typeof(accum))digit {
+                return std::result[[:std::int[[:T]], :[]byte]]::init_error(
+                    "integer out-of-range");
+            }
+            accum = accum + (:typeof(accum))digit;
+        }
+
+        const IS_UINT = (:T)-1s > 0;
+        const IS_SINT = (:T)-1s < 0;
+        var is_out_of_range =
+            IS_UINT and sizeof(:T) == sizeof(:u8)  and accum > 0xFF or
+            IS_UINT and sizeof(:T) == sizeof(:u16) and accum > 0xFFFF or
+            IS_UINT and sizeof(:T) == sizeof(:u32) and accum > 0xFFFFFFFF or
+            IS_UINT and sizeof(:T) == sizeof(:u64) and accum > 0xFFFFFFFFFFFFFFFF or
+            IS_SINT and sizeof(:T) == sizeof(:s8)  and sign == +1 and accum > 0x7F or
+            IS_SINT and sizeof(:T) == sizeof(:s16) and sign == +1 and accum > 0x7FFF or
+            IS_SINT and sizeof(:T) == sizeof(:s32) and sign == +1 and accum > 0x7FFFFFFF or
+            IS_SINT and sizeof(:T) == sizeof(:s64) and sign == +1 and accum > 0x7FFFFFFFFFFFFFFF or
+            IS_SINT and sizeof(:T) == sizeof(:s8)  and sign == -1 and accum > 0x80 or
+            IS_SINT and sizeof(:T) == sizeof(:s16) and sign == -1 and accum > 0x8000 or
+            IS_SINT and sizeof(:T) == sizeof(:s32) and sign == -1 and accum > 0x80000000 or
+            IS_SINT and sizeof(:T) == sizeof(:s64) and sign == -1 and accum > 0x8000000000000000;
+        if IS_UINT and sign == -1 or is_out_of_range {
+            return std::result[[:std::int[[:T]], :[]byte]]::init_error(
+                "integer out-of-range");
+        }
+
+        var value: T = (:T)accum;
+        if sign == -1 {
+            value = value * (:T)-1s;
+        }
+
+        return std::result[[:std::int[[:T]], :[]byte]]::init_value(
+            std::int[[:T]]::init(value));
+    }
+
     # Accepted format specifiers:
     #   ""  => decimal (default)
     #   "d" => decimal
@@ -634,7 +759,7 @@ func read_line(
 ) std::result[[:std::optional[[:[]byte]], :[]byte]] {
     var bytes = std::new_slice[[:byte]](allocator, 0);
 
-    var c: byte = '\0';
+    var c = std::zeroed[[:byte]]();
     for true {
         var read_result = reader.read((:[]byte){&c, 1});
         if read_result.is_error() {
@@ -655,10 +780,16 @@ func read_line(
             break;
         }
 
+        if c == '\n' {
+            # End-of-line reached.
+            break;
+        }
+
         var cur_count = countof(bytes);
         var new_count = cur_count + read_size;
         bytes = std::resize_slice[[:byte]](allocator, bytes, new_count);
         std::copy_slice[[:byte]](bytes[cur_count:new_count], (:[]byte){&c, 1});
+
     }
 
     return std::result[[:std::optional[[:[]byte]], :[]byte]]::init_value(

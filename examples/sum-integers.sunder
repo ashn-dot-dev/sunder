@@ -1,0 +1,34 @@
+# Sum ssize integers from standard input an end-of-file condition is reached.
+import "std";
+
+func main() void {
+    var reader = std::input();
+
+    var sum = std::int[[:ssize]]::init(0);
+    for true {
+        var read_line_result = std::read_line(std::input(), std::page_allocator::the());
+        if read_line_result.is_error() {
+            std::print_line(std::err(), read_line_result.error());
+            std::exit(std::EXIT_FAILURE);
+        }
+
+        var line = read_line_result.value();
+        if line.is_empty() {
+            break;
+        }
+
+        var parse_result = std::int[[:ssize]]::parse_from_bytes(line.value(), 0);
+        if parse_result.is_error() {
+            std::print_line(std::err(), parse_result.error());
+            std::exit(std::EXIT_FAILURE);
+        }
+
+        var int = parse_result.value();
+        sum.value = sum.value + int.value;
+    }
+    std::print_format_line(
+        std::out(),
+        "{}",
+        (:[]std::formatter)[
+            std::formatter::init[[:std::int[[:ssize]]]](&sum)]);
+}
