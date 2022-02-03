@@ -2,6 +2,7 @@
 .SUFFIXES:
 .PHONY: \
 	all \
+	build \
 	test \
 	examples \
 	install \
@@ -31,7 +32,7 @@ INCS = -Ideps
 
 SUNDER_HOME="$$HOME/.sunder"
 
-all: bin/sunder-compile test examples
+all: build test examples
 
 SUNDER_COMPILE_OBJS = \
 	sunder-compile.o \
@@ -47,13 +48,15 @@ SUNDER_COMPILE_OBJS = \
 bin/sunder-compile: $(SUNDER_COMPILE_OBJS)
 	$(CC) -o $@ $(INCS) $(CFLAGS) $(SUNDER_COMPILE_OBJS)
 
-test: bin/sunder-compile
+build: bin/sunder-compile
+
+test: build
 	(cd tests/ && sh test-all.sh)
 
-examples: bin/sunder-compile
+examples: build
 	(cd examples/ && sh examples.build.sh)
 
-install: bin/sunder-compile
+install: build
 	mkdir -p $(SUNDER_HOME)
 	cp -r bin/ $(SUNDER_HOME)
 	cp -r lib/ $(SUNDER_HOME)

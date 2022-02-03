@@ -24,7 +24,7 @@ To rebuild from scratch run `make clean all`.
 ### Long Version
 The top-level `Makefile` contains the following important targets:
 
-+ `bin/sunder-compile` => Build the compiler.
++ `build` => Build the compiler.
 + `test` => Run the test suite for the language and standard library.
 + `examples` => Build the example programs under the `examples` directory.
 + `format` => Run `clang-format` over the compiler sources.
