@@ -1,8 +1,11 @@
 // Copyright 2021 The Sunder Project Authors
 // SPDX-License-Identifier: Apache-2.0
+#define _XOPEN_SOURCE /* getopt */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+#include <unistd.h> /* getopt */
 
 #include "sunder.h"
 
@@ -36,19 +39,12 @@ usage(void)
 {
     // clang-format off
     char const* const lines[] = {
-    // Exactly 72 '=' characters surrounded by '/*' and '*/'. The starting '"'
-    // is just before column 1 of the resulting string literal. The ending '",'
-    // is just after column 72 of the resulting string literal when vertically
-    // aligned with the '*/'. Keeping text within the horizontal range of the
-    // '=' characters will make sure that the resulting usage text is at most
-    // 72 characters wide.
-    /*========================================================================*/
-     "Usage: sunder-compile [OPTION]... FILE",
-     "",
-     "Options:",
-     "  -h, --help        Display usage information and exit.",
-     "  -k, --keep        Keep intermediate files (.o and .asm).",
-     "  -o FILE           Write output to FILE.",
+   "Usage: sunder-compile [OPTION]... FILE",
+   "",
+   "Options:",
+   "  -h        Display usage information and exit.",
+   "  -k        Keep intermediate files (.o and .asm).",
+   "  -o OUT    Write output excutable to OUT (default a.out).",
     };
     // clang-format on
     for (size_t i = 0; i < AUTIL_ARRAY_COUNT(lines); ++i) {
@@ -59,29 +55,30 @@ usage(void)
 static void
 argparse(int argc, char** argv)
 {
-    for (int i = 1; i < argc; ++i) {
-        if (strcmp(argv[i], "-h") == 0 || strcmp(argv[i], "--help") == 0) {
+    int c = 0;
+    while ((c = getopt(argc, argv, "hko:")) != -1) {
+        switch (c) {
+        case 'h': {
             usage();
             exit(EXIT_SUCCESS);
+            break;
         }
-        if (strcmp(argv[i], "-k") == 0 || strcmp(argv[i], "--keep") == 0) {
+        case 'k': {
             opt_k = true;
-            continue;
+            break;
         }
-        if (strcmp(argv[i], "-o") == 0) {
-            if (++i == argc) {
-                fatal(NULL, "-o FILE, FILE argument not specified");
-            }
-            if (autil_cstr_ends_with(argv[i], "/")) {
-                fatal(NULL, "-o FILE, invalid FILE path");
-            }
-            opt_o = argv[i];
-            continue;
+        case 'o': {
+            opt_o = optarg;
+            break;
         }
-        if (strncmp(argv[i], "-", 1) == 0 || strncmp(argv[i], "--", 2) == 0) {
-            fatal(NULL, "unrecognized command line option `%s`", argv[i]);
+        case '?': {
+            exit(EXIT_FAILURE);
+            break;
         }
+        }
+    }
 
+    for (int i = optind; i < argc; ++i) {
         if (path != NULL) {
             fatal(NULL, "multiple input files");
         }
