@@ -1562,7 +1562,8 @@ parse_typespec(struct parser* parser)
 {
     assert(parser != NULL);
 
-    if (check_current(parser, TOKEN_IDENTIFIER)) {
+    if (check_current(parser, TOKEN_IDENTIFIER)
+        || check_current(parser, TOKEN_COLON_COLON)) {
         return parse_typespec_symbol(parser);
     }
 

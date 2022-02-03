@@ -1,0 +1,4 @@
+func main() void {
+    var a: ::bool = true;
+    var b: ::u32 = 123;
+}
