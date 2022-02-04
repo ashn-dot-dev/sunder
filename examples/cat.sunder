@@ -1,5 +1,5 @@
 import "std";
-import "sys/sys.sunder";
+import "sys";
 
 func cat(filename: *byte) void {
     var filename_str: std::str = std::str::init(std::cstr::to_bytes(filename));

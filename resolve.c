@@ -1175,7 +1175,8 @@ static void
 resolve_import_file(
     struct resolver* resolver,
     struct source_location const* location,
-    char const* file_name)
+    char const* file_name,
+    bool from_directory)
 {
     assert(resolver != NULL);
     assert(file_name != NULL);
@@ -1194,9 +1195,18 @@ resolve_import_file(
             char const* const interned = autil_sipool_intern_cstr(
                 context()->sipool, autil_string_start(string));
             autil_string_del(string);
-            resolve_import_file(resolver, location, interned);
+            resolve_import_file(resolver, location, interned, true);
         }
         autil_sbuf_fini(dir_contents);
+        return;
+    }
+
+    if (!autil_cstr_ends_with(file_name, ".sunder") && from_directory) {
+        // Ignore files imported via a directory import if they do not end in a
+        // `.sunder` extension. This will allow directories containing
+        // non-sunder files to be imported without the compiler producing an
+        // error from trying to load something like `.txt` file as a sunder
+        // module.
         return;
     }
 
@@ -1216,7 +1226,7 @@ resolve_import(struct resolver* resolver, struct cst_import const* import)
     assert(resolver != NULL);
     assert(import != NULL);
 
-    resolve_import_file(resolver, import->location, import->path);
+    resolve_import_file(resolver, import->location, import->path, false);
 }
 
 static struct symbol const*

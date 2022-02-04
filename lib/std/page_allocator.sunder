@@ -1,6 +1,6 @@
 namespace std;
 import "std/core.sunder";
-import "sys/sys.sunder";
+import "sys";
 
 struct page_allocator {
     func allocate(self: *page_allocator, align: usize, size: usize) *byte {

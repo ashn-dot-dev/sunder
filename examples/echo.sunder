@@ -1,5 +1,5 @@
 import "std";
-import "sys/sys.sunder";
+import "sys";
 
 func main() void {
     for i in 1:sys::argc {

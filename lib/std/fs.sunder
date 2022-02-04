@@ -1,6 +1,6 @@
 namespace std::fs;
 import "std/core.sunder";
-import "sys/sys.sunder";
+import "sys";
 
 struct error {
     var code: ssize;

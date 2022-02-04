@@ -4,7 +4,7 @@
 # language. This implementation uses a 30,000 cell tape with 8-bit wrapping
 # cells. No cell update is performed upon reading EOF with the , operation.
 import "std";
-import "sys/sys.sunder";
+import "sys";
 
 var cells = (:[30000]u8)[0...];
 var stack = (:[4096]usize)[0...];
