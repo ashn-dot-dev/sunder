@@ -5,7 +5,7 @@ usage() {
 Usage: $(basename $0) FILE ARGS...
 
 Options:
-  -h, --help        Print this help message and exit.
+  -h        Display usage information and exit.
 EOF
 }
 
@@ -15,7 +15,7 @@ while test "$#" -eq 0; do
 done
 
 case "$1" in
-    -h|--help)
+    -h)
         usage
         exit 0
         ;;
