@@ -413,6 +413,16 @@ struct int[[:T]] {
             std::int[[:T]]::init(value));
     }
 
+    func compare(lhs: *int[[:T]], rhs: *int[[:T]]) ssize {
+        if lhs.*.value < rhs.*.value {
+            return -1;
+        }
+        if lhs.*.value > rhs.*.value {
+            return +1;
+        }
+        return 0;
+    }
+
     # Accepted format specifiers:
     #   ""  => decimal (default)
     #   "d" => decimal
@@ -525,6 +535,18 @@ struct str {
 
     func init(bytes: []byte) str {
         return (:str){.bytes = bytes};
+    }
+
+    func compare(lhs: *str, rhs: *str) ssize {
+        var lhs_bytes = lhs.*.bytes;
+        var rhs_bytes = rhs.*.bytes;
+        var count = std::min[[:usize]](countof(lhs_bytes), countof(rhs_bytes));
+        for i in 0:count {
+            if lhs_bytes[i] != rhs_bytes[i] {
+                return (:ssize)lhs_bytes[i] - (:ssize)rhs_bytes[i];
+            }
+        }
+        return (:ssize)countof(lhs_bytes) - (:ssize)countof(rhs_bytes);
     }
 
     # Accepted format specifiers:
@@ -1101,6 +1123,42 @@ func fill_slice[[:T]](slice: []T, value: T) void {
     for i in 0:countof(slice) {
         slice[i] = value;
     }
+}
+
+# Returns a signed integer less than, equal to, or greater than zero if `lhs`
+# is found, respectively, to be less than, equal to, or greater than `rhs`.
+func compare[[:T]](lhs: *T, rhs: *T) ssize {
+    return T::compare(lhs, rhs);
+}
+
+# Returns true if `lhs` is found to be equal to `rhs`.
+func eq[[:T]](lhs: *T, rhs: *T) bool {
+    return T::compare(lhs, rhs) == 0;
+}
+
+# Returns true if `lhs` is found to be equal to `rhs`.
+func ne[[:T]](lhs: *T, rhs: *T) bool {
+    return T::compare(lhs, rhs) != 0;
+}
+
+# Returns true if `lhs` is found to be less than `rhs`.
+func lt[[:T]](lhs: *T, rhs: *T) bool {
+    return T::compare(lhs, rhs) < 0;
+}
+
+# Returns true if `lhs` is found to be less than or equal to `rhs`.
+func le[[:T]](lhs: *T, rhs: *T) bool {
+    return T::compare(lhs, rhs) <= 0;
+}
+
+# Returns true if `lhs` is found to be greater than `rhs`.
+func gt[[:T]](lhs: *T, rhs: *T) bool {
+    return T::compare(lhs, rhs) > 0;
+}
+
+# Returns true if `lhs` is found to be greater than or equal to `rhs`.
+func ge[[:T]](lhs: *T, rhs: *T) bool {
+    return T::compare(lhs, rhs) >= 0;
 }
 
 # Returns the maximum value of x and y.
