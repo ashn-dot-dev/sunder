@@ -42,9 +42,9 @@ usage(void)
    "Usage: sunder-compile [OPTION]... FILE",
    "",
    "Options:",
-   "  -h        Display usage information and exit.",
    "  -k        Keep intermediate files (.o and .asm).",
    "  -o OUT    Write output excutable to OUT (default a.out).",
+   "  -h        Display usage information and exit.",
     };
     // clang-format on
     for (size_t i = 0; i < AUTIL_ARRAY_COUNT(lines); ++i) {
@@ -56,19 +56,19 @@ static void
 argparse(int argc, char** argv)
 {
     int c = 0;
-    while ((c = getopt(argc, argv, "hko:")) != -1) {
+    while ((c = getopt(argc, argv, "ko:h")) != -1) {
         switch (c) {
-        case 'h': {
-            usage();
-            exit(EXIT_SUCCESS);
-            break;
-        }
         case 'k': {
             opt_k = true;
             break;
         }
         case 'o': {
             opt_o = optarg;
+            break;
+        }
+        case 'h': {
+            usage();
+            exit(EXIT_SUCCESS);
             break;
         }
         case '?': {
