@@ -220,6 +220,9 @@ struct allocator_vtable {
     #       align: usize,
     #       size: usize
     #   ) *byte
+    #
+    # Allocate a chunk of memory with the provided size and alignment. This
+    # function panics if the allocation request cannot be fulfilled.
     var allocate: func(*any, usize, usize) *byte;
 
     #   func reallocate(
@@ -229,6 +232,10 @@ struct allocator_vtable {
     #       old_size: usize,
     #       new_size: usize
     #   ) *byte
+    #
+    # Reallocate a chunk of memory starting with the provided size and alignment
+    # starting at `ptr` which was previously allocated by this allocator. This
+    # function panics if the allocation request cannot be fulfilled.
     var reallocate: func(*any, *byte, usize, usize, usize) *byte;
 
     #   func deallocate(
@@ -237,6 +244,9 @@ struct allocator_vtable {
     #       align: usize,
     #       size: usize
     #   ) void
+    #
+    # Deallocate a chunk of memory with the provided size and alignment starting
+    # at `ptr` which was previously allocated by this allocator.
     var deallocate: func(*any, *byte, usize, usize) void;
 }
 
