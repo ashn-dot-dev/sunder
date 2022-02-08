@@ -5,8 +5,9 @@ func main() void {
     var allocator: std::allocator = std::page_allocator::the();
 
     # 2048 * sizeof(:u16) should allocate one page.
-    var buf: *u16 = (:*u16)allocator.allocate(alignof(:u16), 2048 * sizeof(:u16));
-    var slice: []u16 = (:[]u16){buf, 2048};
+    var res = allocator.allocate(alignof(:u16), 2048 * sizeof(:u16));
+    var ptr = (:*u16)res.value();
+    var slice: []u16 = (:[]u16){ptr, 2048};
 
     # Make sure we can write to all the elements.
     for i in 0:countof(slice) {
@@ -14,12 +15,13 @@ func main() void {
     }
 
     # 4096 * sizeof(:u16) should allocate two pages.
-    buf = (:*u16)allocator.reallocate(
-        (:*byte)buf,
+    res = allocator.reallocate(
+        (:*byte)ptr,
         alignof(:u16),
         2048 * sizeof(:u16),
         4096 * sizeof(:u16));
-    slice = (:[]u16){buf, 4096};
+    ptr = (:*u16)res.value();
+    slice = (:[]u16){ptr, 4096};
 
     # Again make sure we can write to all the elements.
     for i in 0:countof(slice) {
@@ -27,12 +29,13 @@ func main() void {
     }
 
     # Shrink the buffer down.
-    buf = (:*u16)allocator.reallocate(
-        (:*byte)buf,
+    res = allocator.reallocate(
+        (:*byte)ptr,
         alignof(:u16),
         4096 * sizeof(:u16),
         1000 * sizeof(:u16));
-    slice = (:[]u16){buf, 1000};
+    ptr = (:*u16)res.value();
+    slice = (:[]u16){ptr, 1000};
 
     # And yet again make sure we can write to all the elements.
     for i in 0:countof(slice) {
@@ -40,5 +43,5 @@ func main() void {
     }
 
     # Deallocate the buffer.
-    allocator.deallocate((:*byte)buf, alignof(:u16), 1000);
+    allocator.deallocate((:*byte)ptr, alignof(:u16), 1000);
 }

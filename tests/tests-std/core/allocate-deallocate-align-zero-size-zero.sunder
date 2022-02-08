@@ -10,6 +10,6 @@ func main() void {
         std::panic("unreachable");
     }
 
-    var buf: *void = (:*void)allocator.allocate(alignof(:void), sizeof(:void));
-    allocator.deallocate((:*byte)buf, alignof(:void), sizeof(:void));
+    var res = allocator.allocate(alignof(:void), sizeof(:void));
+    allocator.deallocate((:*byte)res.value(), alignof(:void), sizeof(:void));
 }

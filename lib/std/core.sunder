@@ -94,7 +94,7 @@ struct reader_vtable {
     # zero indicates an end-of-input condition for non-zero `countof(buf)`
     # buffer sizes.
     #
-    # On error, this function returns a static string describing the error.
+    # On failure, this function returns a static string describing the failure.
     var read: func(*any, []byte) std::result[[:usize, :[]byte]];
 }
 
@@ -126,7 +126,7 @@ struct writer_vtable {
     # On success, this function returns the number of bytes written, which may
     # be less than `countof(buf)` in the event of a partial write.
     #
-    # On error, this function returns a static string describing the error.
+    # On failure, this function returns a static string describing the failure.
     var write: func(*any, []byte) std::result[[:usize, :[]byte]];
 }
 
@@ -166,8 +166,8 @@ struct formatter_vtable {
     # provided writer. Types implementing this function should ensure that all
     # bytes are written to the provided writer.
     #
-    # On error, this function returns a static string describing the error. In
-    # the event of a write error, the erroneous write result should be
+    # On failure, this function returns a static string describing the failure.
+    # In the event of a write error, the erroneous write result should be
     # returned. If the provided format specifier does not match a format
     # specifier implemented by the type then the format function should call
     #
@@ -219,11 +219,16 @@ struct allocator_vtable {
     #       self: *any,
     #       align: usize,
     #       size: usize
-    #   ) *byte
+    #   ) std::result[[:*byte, :[]byte]]
     #
-    # Allocate a chunk of memory with the provided size and alignment. This
-    # function panics if the allocation request cannot be fulfilled.
-    var allocate: func(*any, usize, usize) *byte;
+    # Attempt to allocate a chunk of memory with the provided size and
+    # alignment.
+    #
+    # On success, this function returns a pointer to the start of the allocated
+    # chunk.
+    #
+    # On failure, this function returns a static string describing the failure.
+    var allocate: func(*any, usize, usize) std::result[[:*byte, :[]byte]];
 
     #   func reallocate(
     #       self: *any,
@@ -231,12 +236,12 @@ struct allocator_vtable {
     #       align: usize,
     #       old_size: usize,
     #       new_size: usize
-    #   ) *byte
+    #   ) std::result[[:*byte, :[]byte]]
     #
     # Reallocate a chunk of memory starting with the provided size and alignment
     # starting at `ptr` which was previously allocated by this allocator. This
     # function panics if the allocation request cannot be fulfilled.
-    var reallocate: func(*any, *byte, usize, usize, usize) *byte;
+    var reallocate: func(*any, *byte, usize, usize, usize) std::result[[:*byte, :[]byte]];
 
     #   func deallocate(
     #       self: *any,
@@ -251,6 +256,10 @@ struct allocator_vtable {
 }
 
 struct allocator {
+    const ERROR_INVALID_POINTER = "invalid pointer";
+    const ERROR_INVALID_ALIGNMENT = "invalid alignment";
+    const ERROR_INVALID_SIZE = "invalid size";
+
     var vtable: *std::allocator_vtable;
     var object: *any;
 
@@ -266,7 +275,11 @@ struct allocator {
         };
     }
 
-    func allocate(self: *allocator, align: usize, size: usize) *byte {
+    func allocate(
+        self: *allocator,
+        align: usize,
+        size: usize
+    ) std::result[[:*byte, :[]byte]] {
         return self.*.vtable.*.allocate(self.*.object, align, size);
     }
 
@@ -276,7 +289,7 @@ struct allocator {
         align: usize,
         old_size: usize,
         new_size: usize
-    ) *byte {
+    )  std::result[[:*byte, :[]byte]] {
         return self.*.vtable.*.reallocate(
             self.*.object, ptr, align, old_size, new_size);
     }
@@ -742,7 +755,7 @@ func err() std::writer {
 # On success, this function returns a slice of bytes containing the read data,
 # allocated using the provided allocator.
 #
-# On error, this function returns a static string describing the error.
+# On failure, this function returns a static string describing the failure.
 func read_all(
     reader: std::reader,
     allocator: std::allocator
@@ -784,7 +797,7 @@ func read_all(
 # provided allocator. If an end-of-input condition is encountered while reading
 # an empty line, then an empty optional is returned.
 #
-# On error, this function returns a static string describing the error.
+# On failure, this function returns a static string describing the failure.
 func read_line(
     reader: std::reader,
     allocator: std::allocator
@@ -1021,7 +1034,11 @@ func print_format_line(
 }
 
 func new[[:T]](allocator: std::allocator) *T {
-    return (:*T)allocator.allocate(alignof(:T), sizeof(:T));
+    var allocate_result = allocator.allocate(alignof(:T), sizeof(:T));
+    if allocate_result.is_error() {
+        std::panic(allocate_result.error());
+    }
+    return (:*T)allocate_result.value();
 }
 
 func delete[[:T]](allocator: std::allocator, object: *T) void {
@@ -1029,14 +1046,11 @@ func delete[[:T]](allocator: std::allocator, object: *T) void {
 }
 
 func new_slice[[:T]](allocator: std::allocator, count: usize) []T {
-    if (count == 0) {
-        # Slices with length zero will canonically use the NULL pointer.
-        return (:[]T){(:*T)0u, 0};
+    var allocate_result = allocator.allocate(alignof(:T), count * sizeof(:T));
+    if allocate_result.is_error() {
+        std::panic(allocate_result.error());
     }
-
-    var size: usize = count * sizeof(:T);
-    var pointer: *T = (:*T)allocator.allocate(alignof(:T), size);
-    return (:[]T){pointer, count};
+    return (:[]T){(:*T)allocate_result.value(), count};
 }
 
 func resize_slice[[:T]](
@@ -1048,25 +1062,20 @@ func resize_slice[[:T]](
     var cur_size: usize = cur_count * sizeof(:T);
     var new_size: usize = new_count * sizeof(:T);
 
-    var cur_pointer: *byte = (:*byte)0u;
-    if countof(slice) != 0 {
-        cur_pointer = (:*byte)&slice[0];
+    var cur_pointer: *byte = *((:**byte)&slice);
+    var reallocate_result =
+        allocator.reallocate(cur_pointer, alignof(:T), cur_size, new_size);
+    if reallocate_result.is_error() {
+        std::panic(reallocate_result.error());
     }
 
-    var new_pointer: *T = (:*T)allocator.reallocate(
-        cur_pointer, alignof(:T), cur_size, new_size);
-
-    return (:[]T){new_pointer, new_count};
+    return (:[]T){(:*T)reallocate_result.value(), new_count};
 }
 
 func delete_slice[[:T]](allocator: std::allocator, slice: []T) void {
-    if (countof(slice) == 0) {
-        # Nothing to deallocate.
-        return;
-    }
-
+    var pointer: *byte = *((:**byte)&slice);
     var size: usize = countof(slice) * sizeof(:T);
-    allocator.deallocate((:*byte)&slice[0], alignof(:T), size);
+    allocator.deallocate(pointer, alignof(:T), size);
 }
 
 # Copy the elements of `source` into `destination`.The source and destination
