@@ -81,7 +81,7 @@ struct optional[[:T]] {
     }
 }
 
-struct reader_vtable {
+struct reader_itable {
     #   func read(self: *any, buf: []byte) std::result[[:usize, :[]byte]]
     #
     # Attempt to read `countof(buf)` bytes using the provided reader. The read
@@ -99,11 +99,11 @@ struct reader_vtable {
 }
 
 struct reader {
-    var vtable: *std::reader_vtable;
+    var vtable: *std::reader_itable;
     var object: *any;
 
     func init[[:T]](object: *T) std::reader {
-        const vtable = (:std::reader_vtable){
+        const vtable = (:std::reader_itable){
             .read = T::read
         };
         return (:std::reader){
@@ -117,7 +117,7 @@ struct reader {
     }
 }
 
-struct writer_vtable {
+struct writer_itable {
     #   func write(self: *any, buf: []byte) std::result[[:usize, :[]byte]]
     #
     # Attempt to write `countof(buf)` bytes using the provided writer. The
@@ -131,11 +131,11 @@ struct writer_vtable {
 }
 
 struct writer {
-    var vtable: *std::writer_vtable;
+    var vtable: *std::writer_itable;
     var object: *any;
 
     func init[[:T]](object: *T) std::writer {
-        const vtable = (:std::writer_vtable){
+        const vtable = (:std::writer_itable){
             .write = T::write
         };
         return (:std::writer){
@@ -149,7 +149,7 @@ struct writer {
     }
 }
 
-struct formatter_vtable {
+struct formatter_itable {
     #   func format(
     #       self: *any,
     #       writer: std::writer,
@@ -178,11 +178,11 @@ struct formatter_vtable {
 }
 
 struct formatter {
-    var vtable: *std::formatter_vtable;
+    var vtable: *std::formatter_itable;
     var object: *any;
 
     func init[[:T]](object: *T) std::formatter {
-        const vtable = (:std::formatter_vtable){
+        const vtable = (:std::formatter_itable){
             .format = T::format
         };
         return (:std::formatter){
@@ -214,7 +214,7 @@ struct formatter {
     }
 }
 
-struct allocator_vtable {
+struct allocator_itable {
     #   func allocate(
     #       self: *any,
     #       align: usize,
@@ -260,11 +260,11 @@ struct allocator {
     const ERROR_INVALID_ALIGNMENT = "invalid alignment";
     const ERROR_INVALID_SIZE = "invalid size";
 
-    var vtable: *std::allocator_vtable;
+    var vtable: *std::allocator_itable;
     var object: *any;
 
     func init[[:T]](object: *T) std::allocator {
-        const vtable = (:std::allocator_vtable){
+        const vtable = (:std::allocator_itable){
             .allocate = T::allocate,
             .reallocate = T::reallocate,
             .deallocate = T::deallocate
@@ -712,11 +712,11 @@ struct err_writer {
 # Returns the reader interface associated with the standard input stream.
 func input() std::reader {
     const input = (:input_reader){};
-    const input_vtable = (:reader_vtable){
+    const input_itable = (:reader_itable){
         .read = std::input_reader::read
     };
     const input_reader = (:std::reader){
-        .vtable = &input_vtable,
+        .vtable = &input_itable,
         .object = &input
     };
     return input_reader;
@@ -725,11 +725,11 @@ func input() std::reader {
 # Returns the writer interface associated with the standard output stream.
 func out() std::writer {
     const out = (:out_writer){};
-    const out_vtable = (:writer_vtable){
+    const out_itable = (:writer_itable){
         .write = std::out_writer::write
     };
     const out_writer = (:std::writer){
-        .vtable = &out_vtable,
+        .vtable = &out_itable,
         .object = &out
     };
     return out_writer;
@@ -738,11 +738,11 @@ func out() std::writer {
 # Returns the writer interface associated with the standard error stream.
 func err() std::writer {
     const err = (:err_writer){};
-    const err_vtable = (:writer_vtable){
+    const err_itable = (:writer_itable){
         .write = std::err_writer::write
     };
     const err_writer = (:std::writer){
-        .vtable = &err_vtable,
+        .vtable = &err_itable,
         .object = &err
     };
     return err_writer;
