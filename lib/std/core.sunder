@@ -1111,7 +1111,7 @@ func copy_slice[[:T]](destination: []T, source: []T) void {
     }
 }
 
-# Set every element of the provided source to the provided value.
+# Set every element of the provided slice to the provided value.
 func fill_slice[[:T]](slice: []T, value: T) void {
     for i in 0:countof(slice) {
         slice[i] = value;
@@ -1154,7 +1154,7 @@ func ge[[:T]](lhs: *T, rhs: *T) bool {
     return T::compare(lhs, rhs) >= 0;
 }
 
-# Returns the maximum value of x and y.
+# Returns the minimum value of `x` and `y`, both of primitive type `T`.
 func min[[:T]](x: T, y: T) T {
     if x < y {
         return x;
@@ -1162,7 +1162,7 @@ func min[[:T]](x: T, y: T) T {
     return y;
 }
 
-# Returns the minimum value of x and y.
+# Returns the maximum value of `x` and `y`, both of primitive type `T`.
 func max[[:T]](x: T, y: T) T {
     if x > y {
         return x;
