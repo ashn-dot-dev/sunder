@@ -145,13 +145,13 @@ struct page_allocator {
 
     func the() std::allocator {
         const the = (:page_allocator){};
-        const the_vtable = (:allocator_vtable){
+        const the_itable = (:allocator_itable){
             .allocate = std::page_allocator::allocate,
             .reallocate = std::page_allocator::reallocate,
             .deallocate = std::page_allocator::deallocate
         };
         const the_allocator = (:std::allocator){
-            .vtable = &the_vtable,
+            .vtable = &the_itable,
             .object = &the
         };
         return the_allocator;

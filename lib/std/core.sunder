@@ -82,19 +82,6 @@ struct optional[[:T]] {
 }
 
 struct reader_itable {
-    #   func read(self: *any, buf: []byte) std::result[[:usize, :[]byte]]
-    #
-    # Attempt to read `countof(buf)` bytes using the provided reader. The read
-    # operation may mutate any portion of `buf`, even if less than
-    # `countof(buf)` bytes are read.
-    #
-    # On success, this function returns the number of bytes read, which must be
-    # less than or equal to `countof(buf)`, and which may be less than
-    # `countof(buf)` in the event of a partial read. A successful read of size
-    # zero indicates an end-of-input condition for non-zero `countof(buf)`
-    # buffer sizes.
-    #
-    # On failure, this function returns a static string describing the failure.
     var read: func(*any, []byte) std::result[[:usize, :[]byte]];
 }
 
@@ -112,21 +99,23 @@ struct reader {
         };
     }
 
+    # Attempt to read `countof(buf)` bytes using the provided reader. The read
+    # operation may mutate any portion of `buf`, even if less than
+    # `countof(buf)` bytes are read.
+    #
+    # On success, this function returns the number of bytes read, which must be
+    # less than or equal to `countof(buf)`, and which may be less than
+    # `countof(buf)` in the event of a partial read. A successful read of size
+    # zero indicates an end-of-input condition for non-zero `countof(buf)`
+    # buffer sizes.
+    #
+    # On failure, this function returns a static string describing the failure.
     func read(self: *reader, buf: []byte) std::result[[:usize, :[]byte]] {
         return self.*.vtable.*.read(self.*.object, buf);
     }
 }
 
 struct writer_itable {
-    #   func write(self: *any, buf: []byte) std::result[[:usize, :[]byte]]
-    #
-    # Attempt to write `countof(buf)` bytes using the provided writer. The
-    # write operation must not mutate the contents of `buf`.
-    #
-    # On success, this function returns the number of bytes written, which may
-    # be less than `countof(buf)` in the event of a partial write.
-    #
-    # On failure, this function returns a static string describing the failure.
     var write: func(*any, []byte) std::result[[:usize, :[]byte]];
 }
 
@@ -144,36 +133,19 @@ struct writer {
         };
     }
 
+    # Attempt to write `countof(buf)` bytes using the provided writer. The
+    # write operation must not mutate the contents of `buf`.
+    #
+    # On success, this function returns the number of bytes written, which may
+    # be less than `countof(buf)` in the event of a partial write.
+    #
+    # On failure, this function returns a static string describing the failure.
     func write(self: *writer, buf: []byte) std::result[[:usize, :[]byte]] {
         return self.*.vtable.*.write(self.*.object, buf);
     }
 }
 
 struct formatter_itable {
-    #   func format(
-    #       self: *any,
-    #       writer: std::writer,
-    #       fmt: []byte
-    #   ) std::result[[:usize, :[]byte]]
-    #
-    # Write a formatted representation of `self` to the provided writer. The
-    # format specifier `fmt` describes *how* to format `self`. Generally, each
-    # type will implement its own type-specific format specifier(s). However,
-    # the empty format specifier, `""`, should always be handled as a "default
-    # formatting" case.
-    #
-    # On success, this function returns the number of bytes written to the
-    # provided writer. Types implementing this function should ensure that all
-    # bytes are written to the provided writer.
-    #
-    # On failure, this function returns a static string describing the failure.
-    # In the event of a write error, the erroneous write result should be
-    # returned. If the provided format specifier does not match a format
-    # specifier implemented by the type then the format function should call
-    #
-    #   std::formatter::invalid_format_specifier(fmt);
-    #
-    # which will cause the application to terminate with failure status.
     var format: func(*any, std::writer, []byte) std::result[[:usize, :[]byte]];
 }
 
@@ -191,6 +163,24 @@ struct formatter {
         };
     }
 
+    # Write a formatted representation of `self` to the provided writer. The
+    # format specifier `fmt` describes *how* to format `self`. Generally, each
+    # type will implement its own type-specific format specifier(s). However,
+    # the empty format specifier, `""`, should always be handled as a default
+    # formatting case.
+    #
+    # On success, this function returns the number of bytes written to the
+    # provided writer. Types implementing this function should ensure that all
+    # bytes are written to the provided writer.
+    #
+    # On failure, this function returns a static string describing the failure.
+    # In the event of a write error, the erroneous write result should be
+    # returned. If the provided format specifier does not match a format
+    # specifier implemented by the type then the format function should call
+    #
+    #   std::formatter::invalid_format_specifier(fmt);
+    #
+    # which will cause the application to terminate with failure status.
     func format(
         self: *formatter,
         writer: std::writer,
@@ -215,43 +205,8 @@ struct formatter {
 }
 
 struct allocator_itable {
-    #   func allocate(
-    #       self: *any,
-    #       align: usize,
-    #       size: usize
-    #   ) std::result[[:*byte, :[]byte]]
-    #
-    # Attempt to allocate a chunk of memory with the provided size and
-    # alignment.
-    #
-    # On success, this function returns a pointer to the start of the allocated
-    # chunk.
-    #
-    # On failure, this function returns a static string describing the failure.
     var allocate: func(*any, usize, usize) std::result[[:*byte, :[]byte]];
-
-    #   func reallocate(
-    #       self: *any,
-    #       ptr: *byte,
-    #       align: usize,
-    #       old_size: usize,
-    #       new_size: usize
-    #   ) std::result[[:*byte, :[]byte]]
-    #
-    # Reallocate a chunk of memory starting with the provided size and alignment
-    # starting at `ptr` which was previously allocated by this allocator. This
-    # function panics if the allocation request cannot be fulfilled.
     var reallocate: func(*any, *byte, usize, usize, usize) std::result[[:*byte, :[]byte]];
-
-    #   func deallocate(
-    #       self: *any,
-    #       ptr: *byte,
-    #       align: usize,
-    #       size: usize
-    #   ) void
-    #
-    # Deallocate a chunk of memory with the provided size and alignment starting
-    # at `ptr` which was previously allocated by this allocator.
     var deallocate: func(*any, *byte, usize, usize) void;
 }
 
@@ -275,6 +230,13 @@ struct allocator {
         };
     }
 
+    # Attempt to allocate a chunk of memory with the provided size and
+    # alignment.
+    #
+    # On success, this function returns a pointer to the start of the allocated
+    # chunk.
+    #
+    # On failure, this function returns a static string describing the failure.
     func allocate(
         self: *allocator,
         align: usize,
@@ -283,6 +245,15 @@ struct allocator {
         return self.*.vtable.*.allocate(self.*.object, align, size);
     }
 
+    # Reallocate a chunk of memory with the provided size and alignment,
+    # starting at the address `ptr`, which was previously allocated by this
+    # allocator.
+    #
+    # On success, this function returns a pointer to the start of the
+    # reallocated block, which may have same address as the input `ptr` argument
+    # in the event of a no-op reallocation.
+    #
+    # On failure, this function returns a static string describing the failure.
     func reallocate(
         self: *allocator,
         ptr: *byte,
@@ -294,6 +265,9 @@ struct allocator {
             self.*.object, ptr, align, old_size, new_size);
     }
 
+    # Deallocate a chunk of memory with the provided size and alignment,
+    # starting at the address `ptr`, which was previously allocated by this
+    # allocator.
     func deallocate(
         self: *allocator,
         ptr: *byte,
