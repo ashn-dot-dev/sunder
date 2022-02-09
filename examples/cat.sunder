@@ -4,8 +4,7 @@ import "sys";
 func cat(filename: *byte) void {
     var filename_str: std::str = std::str::init(std::cstr::to_bytes(filename));
 
-    var open_result =
-        std::fs::file::open(filename_str.bytes, std::fs::OPEN_READ);
+    var open_result = std::fs::file::open(filename_str.bytes, std::fs::OPEN_READ);
     if open_result.is_error() {
         var error = open_result.error();
         std::print_format_line(

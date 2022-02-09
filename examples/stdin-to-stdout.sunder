@@ -6,18 +6,19 @@ func main() void {
 
     var reader = std::input();
     var writer = std::out();
-    var result = std::zeroed[[:std::result[[:usize, :[]byte]]]]();
     for true {
-        result = reader.read(buf[0:countof(buf)]);
-        if result.is_error() {
-            std::print_line(std::err(), result.error());
+        var read_result = reader.read(buf[0:countof(buf)]);
+        if read_result.is_error() {
+            std::print_line(std::err(), read_result.error());
         }
-        if result.value() == 0 {
+
+        if read_result.value() == 0 {
             break;
         }
-        result = writer.write(buf[0:result.value()]);
-        if result.is_error() {
-            std::print_line(std::err(), result.error());
+
+        var write_result = writer.write(buf[0:read_result.value()]);
+        if write_result.is_error() {
+            std::print_line(std::err(), write_result.error());
         }
     }
 }

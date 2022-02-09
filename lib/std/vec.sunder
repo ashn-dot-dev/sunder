@@ -17,9 +17,7 @@ struct vec[[:T]] {
     }
 
     func fini(self: *std::vec[[:T]]) void {
-        std::delete_slice[[:T]](
-            self.*._allocator,
-            (:[]T){self.*._start, self.*._capacity});
+        std::delete_slice[[:T]](self.*._allocator, (:[]T){self.*._start, self.*._capacity});
     }
 
     func start(self: *std::vec[[:T]]) *T {
