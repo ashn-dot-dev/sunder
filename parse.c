@@ -792,8 +792,9 @@ token_kind_nud(enum token_kind kind)
     case TOKEN_AMPERSAND: {
         return parse_expr_nud_unary;
     }
-    default:
+    default: {
         break;
+    }
     }
 
     return NULL;
