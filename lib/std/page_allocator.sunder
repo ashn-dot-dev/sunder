@@ -129,7 +129,7 @@ struct page_allocator {
             .deallocate = std::page_allocator::deallocate
         };
         const the_allocator = (:std::allocator){
-            .vtable = &the_itable,
+            .itable = &the_itable,
             .object = &the
         };
         return the_allocator;

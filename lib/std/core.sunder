@@ -84,15 +84,15 @@ struct reader_itable {
 }
 
 struct reader {
-    var vtable: *std::reader_itable;
+    var itable: *std::reader_itable;
     var object: *any;
 
     func init[[:T]](object: *T) std::reader {
-        const vtable = (:std::reader_itable){
+        const itable = (:std::reader_itable){
             .read = T::read
         };
         return (:std::reader){
-            .vtable = &vtable,
+            .itable = &itable,
             .object = object
         };
     }
@@ -109,7 +109,7 @@ struct reader {
     #
     # On failure, this function returns a static string describing the failure.
     func read(self: *reader, buf: []byte) std::result[[:usize, :[]byte]] {
-        return self.*.vtable.*.read(self.*.object, buf);
+        return self.*.itable.*.read(self.*.object, buf);
     }
 }
 
@@ -118,15 +118,15 @@ struct writer_itable {
 }
 
 struct writer {
-    var vtable: *std::writer_itable;
+    var itable: *std::writer_itable;
     var object: *any;
 
     func init[[:T]](object: *T) std::writer {
-        const vtable = (:std::writer_itable){
+        const itable = (:std::writer_itable){
             .write = T::write
         };
         return (:std::writer){
-            .vtable = &vtable,
+            .itable = &itable,
             .object = object
         };
     }
@@ -139,7 +139,7 @@ struct writer {
     #
     # On failure, this function returns a static string describing the failure.
     func write(self: *writer, buf: []byte) std::result[[:usize, :[]byte]] {
-        return self.*.vtable.*.write(self.*.object, buf);
+        return self.*.itable.*.write(self.*.object, buf);
     }
 }
 
@@ -148,15 +148,15 @@ struct formatter_itable {
 }
 
 struct formatter {
-    var vtable: *std::formatter_itable;
+    var itable: *std::formatter_itable;
     var object: *any;
 
     func init[[:T]](object: *T) std::formatter {
-        const vtable = (:std::formatter_itable){
+        const itable = (:std::formatter_itable){
             .format = T::format
         };
         return (:std::formatter){
-            .vtable = &vtable,
+            .itable = &itable,
             .object = object
         };
     }
@@ -180,7 +180,7 @@ struct formatter {
     #
     # which will cause the application to terminate with failure status.
     func format(self: *formatter, writer: std::writer, fmt: []byte) std::result[[:usize, :[]byte]] {
-        return self.*.vtable.*.format(self.*.object, writer, fmt);
+        return self.*.itable.*.format(self.*.object, writer, fmt);
     }
 
     func invalid_format_string(format: []byte) void {
@@ -209,17 +209,17 @@ struct allocator {
     const ERROR_INVALID_ALIGNMENT = "invalid alignment";
     const ERROR_INVALID_SIZE = "invalid size";
 
-    var vtable: *std::allocator_itable;
+    var itable: *std::allocator_itable;
     var object: *any;
 
     func init[[:T]](object: *T) std::allocator {
-        const vtable = (:std::allocator_itable){
+        const itable = (:std::allocator_itable){
             .allocate = T::allocate,
             .reallocate = T::reallocate,
             .deallocate = T::deallocate
         };
         return (:std::allocator){
-            .vtable = &vtable,
+            .itable = &itable,
             .object = object
         };
     }
@@ -232,7 +232,7 @@ struct allocator {
     #
     # On failure, this function returns a static string describing the failure.
     func allocate(self: *allocator, align: usize, size: usize) std::result[[:*byte, :[]byte]] {
-        return self.*.vtable.*.allocate(self.*.object, align, size);
+        return self.*.itable.*.allocate(self.*.object, align, size);
     }
 
     # Reallocate a chunk of memory with the provided size and alignment,
@@ -245,14 +245,14 @@ struct allocator {
     #
     # On failure, this function returns a static string describing the failure.
     func reallocate(self: *allocator, ptr: *byte, align: usize, old_size: usize, new_size: usize) std::result[[:*byte, :[]byte]] {
-        return self.*.vtable.*.reallocate(self.*.object, ptr, align, old_size, new_size);
+        return self.*.itable.*.reallocate(self.*.object, ptr, align, old_size, new_size);
     }
 
     # Deallocate a chunk of memory with the provided size and alignment,
     # starting at the address `ptr`, which was previously allocated by this
     # allocator.
     func deallocate(self: *allocator, ptr: *byte, align: usize, size: usize) void {
-        self.*.vtable.*.deallocate(self.*.object, ptr, align, size);
+        self.*.itable.*.deallocate(self.*.object, ptr, align, size);
     }
 }
 
@@ -633,7 +633,7 @@ func input() std::reader {
         .read = std::input_reader::read
     };
     const input_reader = (:std::reader){
-        .vtable = &input_itable,
+        .itable = &input_itable,
         .object = &input
     };
     return input_reader;
@@ -646,7 +646,7 @@ func out() std::writer {
         .write = std::out_writer::write
     };
     const out_writer = (:std::writer){
-        .vtable = &out_itable,
+        .itable = &out_itable,
         .object = &out
     };
     return out_writer;
@@ -659,7 +659,7 @@ func err() std::writer {
         .write = std::err_writer::write
     };
     const err_writer = (:std::writer){
-        .vtable = &err_itable,
+        .itable = &err_itable,
         .object = &err
     };
     return err_writer;
