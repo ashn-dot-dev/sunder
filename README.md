@@ -46,20 +46,6 @@ $ make <targets> CC=clang CFLAGS='$(GNU_DBG) $(SANITIZE)'  # clang/gcc (debug wi
 $ make <targets> CC=clang CFLAGS='$(GNU_REL)'              # clang/gcc (release)
 ```
 
-The script `build.sh` will perform the full build/test cycle with stricter
-checks and with address santizer enabled. Compiling the test suite using a
-compiler built with address sanitizer enabled is *much slower* than the default
-`make test`, but will catch a lot of memory safety and undefined behavior bugs.
-When working on the compiler it is generally most efficient to use `make all`
-while iterating and `sh build.sh` just before committing a changeset.
-
-```sh
-$ sh build.sh
-```
-
-By default `build.sh` will run the `clean` and `all` make targets, but this can
-be overridden. See `sh build.sh --help` for details.
-
 ## Installing
 The `install` target will install the Sunder toolchain into the directory
 specified by `$SUNDER_HOME` (default `$HOME/.sunder`). Run `make install` with
