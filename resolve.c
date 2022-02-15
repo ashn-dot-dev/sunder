@@ -1246,7 +1246,9 @@ resolve_decl(struct resolver* resolver, struct cst_decl const* decl)
         return resolve_decl_function(resolver, decl);
     }
     case CST_DECL_STRUCT: {
-        return resolve_decl_struct(resolver, decl);
+        // Should have already been resolved in the initial pre-declaration of
+        // all top-level structs.
+        UNREACHABLE();
     }
     case CST_DECL_EXTERN_VARIABLE: {
         return resolve_decl_extern_variable(resolver, decl);
@@ -1254,6 +1256,7 @@ resolve_decl(struct resolver* resolver, struct cst_decl const* decl)
     }
 
     UNREACHABLE();
+    return NULL;
 }
 
 static struct symbol const*
@@ -3913,15 +3916,54 @@ resolve(struct module* module)
         resolver->current_static_addr_prefix = nsaddr;
     }
 
-    // Imports.
+    // Resolve imports.
     for (size_t i = 0; i < autil_sbuf_count(module->cst->imports); ++i) {
         resolve_import(resolver, module->cst->imports[i]);
     }
 
-    // Top-level declarations.
+    // Resolve top-level declarations.
     autil_sbuf(struct cst_decl const* const) const ordered = module->ordered;
     for (size_t i = 0; i < autil_sbuf_count(ordered); ++i) {
+        // Structs have their symbols created before all other declarations to
+        // allow for self referential and cross referential struct
+        // declarations. These structs are then completed as needed based on
+        // their topological order. This is roughly equivalent to forward
+        // declaring structs in C.
         struct cst_decl const* const decl = module->ordered[i];
+        if (decl->kind != CST_DECL_STRUCT) {
+            continue;
+        }
+
+        struct symbol const* const symbol = resolve_decl_struct(resolver, decl);
+        // If this module declares a namespace then top-level declarations will
+        // have been added under the (exported) module namespace and should
+        // *not* be added to the module export table or global symbol table
+        // using their unqualified names.
+        if (module->cst->namespace == NULL) {
+            symbol_table_insert(
+                resolver->current_export_table, symbol->name, symbol);
+            symbol_table_insert(
+                context()->global_symbol_table, symbol->name, symbol);
+        }
+    }
+    for (size_t i = 0; i < autil_sbuf_count(ordered); ++i) {
+        struct cst_decl const* const decl = module->ordered[i];
+
+        // If the declaration was a non-template struct then it has already been
+        // resolved and must now be completed.
+        if (decl->kind == CST_DECL_STRUCT) {
+            struct symbol const* const symbol = symbol_table_lookup_local(
+                resolver->current_symbol_table, decl->name);
+            assert(symbol != NULL);
+            if (symbol->kind != SYMBOL_TYPE) {
+                assert(symbol->kind == SYMBOL_TEMPLATE);
+                continue;
+            }
+
+            complete_struct(resolver, symbol, decl);
+            continue;
+        }
+
         struct symbol const* const symbol =
             resolve_decl(resolver, module->ordered[i]);
         // If this module declares a namespace then top-level declarations will
@@ -3933,14 +3975,6 @@ resolve(struct module* module)
                 resolver->current_export_table, symbol->name, symbol);
             symbol_table_insert(
                 context()->global_symbol_table, symbol->name, symbol);
-        }
-
-        // Complete the struct if needed (i.e. for a struct declaration that is
-        // *not* a template).
-        bool const need_to_complete_struct =
-            decl->kind == CST_DECL_STRUCT && symbol->kind == SYMBOL_TYPE;
-        if (need_to_complete_struct) {
-            complete_struct(resolver, symbol, decl);
         }
     }
 

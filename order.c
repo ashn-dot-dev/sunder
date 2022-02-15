@@ -153,49 +153,14 @@ order_tldecl(struct orderer* orderer, struct tldecl* tldecl)
 
     // Change the state from UNORDERED to ORDERING so that cyclic dependencies
     // will be detected if another attempt is made to order this declaration.
-    assert(tldecl->state == TLDECL_UNORDERED);
     tldecl->state = TLDECL_ORDERING;
-
+    // Perform ordering on the top level declaration.
     order_decl(orderer, tldecl->decl);
+    // Change the state from ORDERING TO ORDERED after ordering the top level
+    // declaration as well as all of top level declaration's dependencies.
     tldecl->state = TLDECL_ORDERED;
-    // TODO: There is a bug here. If top-level declaration A is a struct which
-    // depends on B (perhaps as a member variable type), then the struct will
-    // fail to resolve as we insert A into the topological order list *before*
-    // any of of the member dependencies added in the special case below. The
-    // combinarion of this ordering bug, plus the need for the special struct
-    // case below, is an indicator that we should re-examine the ordering
-    // algorithm.
+
     autil_sbuf_push(orderer->tldecls.topological_order, tldecl->decl->name);
-    // Special case for structs. Struct members may self-reference the struct
-    // that they are defined within (e.g. the return type of init functions).
-    // Members have their ordering deferred until after the struct has been
-    // ordered (here), mirroring the behavior of the resolve phase where the
-    // struct is completed after the struct symbol has been added to the
-    // relevant symbol table.
-    if (tldecl->decl->kind == CST_DECL_STRUCT) {
-        autil_sbuf(struct cst_member const* const) const members =
-            tldecl->decl->data.struct_.members;
-        for (size_t i = 0; i < autil_sbuf_count(members); ++i) {
-            struct cst_member const* const member = members[i];
-            switch (member->kind) {
-            case CST_MEMBER_VARIABLE: {
-                order_typespec(orderer, member->data.variable.typespec);
-                continue;
-            }
-            case CST_MEMBER_CONSTANT: {
-                order_decl(orderer, member->data.constant.decl);
-                continue;
-            }
-            case CST_MEMBER_FUNCTION: {
-                order_decl(orderer, member->data.function.decl);
-                continue;
-            }
-            default: {
-                UNREACHABLE();
-            }
-            }
-        }
-    }
 }
 
 static void
@@ -223,11 +188,12 @@ order_decl(struct orderer* orderer, struct cst_decl const* decl)
         struct cst_template_parameter const* const* const template_parameters =
             decl->data.function.template_parameters;
         if (autil_sbuf_count(template_parameters) != 0) {
-            // TODO: Not sure how we want to handle ordering of generics yet.
-            // Since the MVP of generics will be used to implement
-            // dependency-free functions like std::min and std::max we will
-            // ignore this ordering problem for now and circle back to it at
-            // some point in the future.
+            // TODO: Not sure how we want to handle ordering of generic
+            // functions. Ignoring the ordering of generic functions is fine
+            // for now since the MVP of generics has been used to implement
+            // dependency-free functions such as std::min and std::max. At some
+            // point in the future we should and circle back to this and
+            // re-evaluate the ordering of generics in general.
             //
             // See also => comment under CST_DECL_STRUCT case.
             return;
@@ -244,18 +210,49 @@ order_decl(struct orderer* orderer, struct cst_decl const* decl)
         struct cst_template_parameter const* const* const template_parameters =
             decl->data.struct_.template_parameters;
         if (autil_sbuf_count(template_parameters) != 0) {
-            // TODO: Not sure how we want to handle ordering of generics yet.
-            // Since the MVP of generics will be used to implement
-            // dependency-free functions like std::primitive and std::vec we
-            // will ignore this ordering problem for now and circle back to it
-            // at some point in the future.
+            // TODO: Not sure how we want to handle ordering of generic
+            // structs. Ignoring the ordering of generic structs is fine for
+            // now since the MVP of generics has been used to implement
+            // dependency-free structs such as std::int. At some point in the
+            // future we should and circle back to this and re-evaluate the
+            // ordering of generics in general.
             //
             // See also => comment under CST_DECL_FUNCTION case.
             return;
         }
-        // Defer ordering of members until the struct decl has been ordered to
-        // account for self-referential members. There is a special case to
-        // handle this logic in the order_tldecl function.
+
+        // Set this struct's state to ordered to allow for self-referential
+        // members. This behavior mirrors the behavior of the resolve phase
+        // where all structs are completed after the struct symbol has been
+        // added to the relevant symbol table.
+        struct tldecl* const tldecl =
+            orderer_tldecl_lookup(orderer, decl->name);
+        assert(tldecl != NULL);
+        tldecl->state = TLDECL_ORDERED;
+
+        // Order the struct's members.
+        autil_sbuf(struct cst_member const* const) const members =
+            decl->data.struct_.members;
+        for (size_t i = 0; i < autil_sbuf_count(members); ++i) {
+            struct cst_member const* const member = members[i];
+            switch (member->kind) {
+            case CST_MEMBER_VARIABLE: {
+                order_typespec(orderer, member->data.variable.typespec);
+                continue;
+            }
+            case CST_MEMBER_CONSTANT: {
+                order_decl(orderer, member->data.constant.decl);
+                continue;
+            }
+            case CST_MEMBER_FUNCTION: {
+                order_decl(orderer, member->data.function.decl);
+                continue;
+            }
+            default: {
+                UNREACHABLE();
+            }
+            }
+        }
         return;
     }
     case CST_DECL_EXTERN_VARIABLE: {
