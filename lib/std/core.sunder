@@ -174,11 +174,11 @@ struct formatter {
     # On failure, this function returns a static string describing the failure.
     # In the event of a write error, the erroneous write result should be
     # returned. If the provided format specifier does not match a format
-    # specifier implemented by the type then the format function should call
+    # specifier implemented by the type, then the format function should call
     #
     #   std::formatter::invalid_format_specifier(fmt);
     #
-    # which will cause the application to terminate with failure status.
+    # which will terminate the program with failure status.
     func format(self: *formatter, writer: std::writer, fmt: []byte) std::result[[:usize, :[]byte]] {
         return self.*.itable.*.format(self.*.object, writer, fmt);
     }
@@ -445,7 +445,7 @@ struct int[[:T]] {
             value = value * (:T)-1s;
         }
 
-        # More than enough bytes to store the sign & digits of any number with
+        # More than enough bytes to store the sign and digits of any number with
         # a size less than or equal to 64 bits.
         const OUTPUT_COUNT: usize = countof("-0b") + 64;
         var output = (:[OUTPUT_COUNT]byte)[0...];
@@ -700,10 +700,10 @@ func read_all(reader: std::reader, allocator: std::allocator) std::result[[:[]by
 
 # Read from the provided reader, invoking the reader's `read` function
 # repeatedly until a newline is encountered, an end-of-input condition is
-# reached, or an error occurs. If an end-of-input condition is encountered
-# while reading a line, and the line is  empty, an empty optional is returned.
-# If an end-of-input condition is encountered while reading a non-empty line,
-# it is treated as a newline.
+# reached, or an error occurs. If an end-of-input condition is encountered while
+# reading a line, and the line is empty, an empty optional is returned. If an
+# end-of-input condition is encountered while reading a non-empty line, it is
+# treated as a newline.
 #
 # On success, this function returns a non-empty optional slice of bytes
 # containing the read line without the ending newline, allocated using the
@@ -821,7 +821,7 @@ func write_format(writer: std::writer, format: []byte, args: []std::formatter) s
 
             if format[end] == '}' {
                 # "some}text"
-                #      ^ End-of-fmt when we are not in the fmt-parsing state.
+                #      ^ End-of-fmt when not in the fmt-parsing state.
                 std::formatter::invalid_format_string(format);
             }
 
@@ -891,8 +891,8 @@ func write_format(writer: std::writer, format: []byte, args: []std::formatter) s
 
     # Call with a format string "some {fmt} text" (N format specifiers) and N+M
     # format arguments for some non-zero M. Passing extra format arguments is a
-    # hard error, but we specifically check for this error *after* the rest of
-    # the walked text has been written so that users will be able to observe
+    # hard error, but there is a specific check for this error *after* the rest
+    # of the walked text has been written so that users will be able to observe
     # that an error occurred even though the full formatted string was written.
     if arg != countof(args) {
         std::panic("invalid format argument count");
@@ -978,17 +978,17 @@ func copy_slice[[:T]](destination: []T, source: []T) void {
     }
 
     # If the copy operation is being performed on two slices into the same
-    # buffer then the direction in which we copy matters. Say we have some
-    # buffer:
+    # buffer then the direction in which the copy is performed does matter. Say
+    # there is some buffer:
     #
     #    0  1  2  3  4
     #   [A][B][C][D][E]
     #
-    # and we perform the copy operation:
+    # and the following copy operation is performed:
     #
     #   std::copy_slice(buf[0:3], buf[1:4]);
     #
-    # With a forwards copy we get the correct result:
+    # With a forwards copy one gets the correct result:
     #
     #    0  1  2  3  4
     #   [A][B][C][D][E] <- initial buffer
@@ -996,7 +996,7 @@ func copy_slice[[:T]](destination: []T, source: []T) void {
     #   [B][C][C][D][E] <- copy second element
     #   [B][C][D][D][E] <- copy third element
     #
-    # But with a backwards copy we get an incorrect result.
+    # But with a backwards copy one gets an incorrect result:
     #
     #    0  1  2  3  4
     #   [A][B][C][D][E] <- initial buffer
