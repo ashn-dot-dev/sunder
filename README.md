@@ -87,9 +87,9 @@ $ ./hello
 Hello, world!
 ```
 
-The `-o OUT` option determines the name of the output executable. If this
-option is not provided then the output executable will default to the name
-`a.out`.
+The `-o OUT` option may be used to specify the name of the output executable.
+If this option is not provided then the output executable will default to the
+name `a.out`.
 
 The intermediate files `OUT.asm` and `OUT.o` (output executable name plus
 `.asm` and `.o` extensions) are generated during compilation and then
