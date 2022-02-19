@@ -1,6 +1,5 @@
 # The Sunder Programming Language
-Sunder is a work-in-progress C-like systems programming language and compiler
-for x86-64 Linux.
+Sunder is a C-like systems programming language and compiler for x86-64 Linux.
 
 ## Dependencies
 + POSIX-compatible `make`
