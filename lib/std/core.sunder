@@ -437,7 +437,6 @@ struct int[[:T]] {
             }
         }
 
-        var written: usize = 0;
         var value: T = self.*.value;
 
         var is_negative: bool = value < 0;
@@ -476,13 +475,7 @@ struct int[[:T]] {
             output_index = output_index - 1;
         }
 
-        var write_result = std::write_all(writer, output[output_index+1:countof(output)]);
-        if write_result.is_error() {
-            return write_result;
-        }
-        written = written + write_result.value();
-
-        return std::result[[:usize, :[]byte]]::init_value(written);
+        return std::write_all(writer, output[output_index+1:countof(output)]);
     }
 }
 
@@ -521,58 +514,51 @@ struct str {
             for i in 0:countof(self.*.bytes) {
                 var c: byte = self.*.bytes[i];
                 if c == '\0' {
-                    write_result = std::write_all(writer, "\\0");
+                    write_result = std::write_all_accumulate(writer, "\\0", &written);
                     if write_result.is_error() {
                         return write_result;
                     }
-                    written = written + write_result.value();
                     continue;
                 }
                 if c == '\t' {
-                    write_result = std::write_all(writer, "\\t");
+                    write_result = std::write_all_accumulate(writer, "\\t", &written);
                     if write_result.is_error() {
                         return write_result;
                     }
-                    written = written + write_result.value();
                     continue;
                 }
                 if c == '\n' {
-                    write_result = std::write_all(writer, "\\n");
+                    write_result = std::write_all_accumulate(writer, "\\n", &written);
                     if write_result.is_error() {
                         return write_result;
                     }
-                    written = written + write_result.value();
                     continue;
                 }
                 if c == '\'' {
-                    write_result = std::write_all(writer, "\\\'");
+                    write_result = std::write_all_accumulate(writer, "\\\'", &written);
                     if write_result.is_error() {
                         return write_result;
                     }
-                    written = written + write_result.value();
                     continue;
                 }
                 if c == '\"' {
-                    write_result = std::write_all(writer, "\\\"");
+                    write_result = std::write_all_accumulate(writer, "\\\"", &written);
                     if write_result.is_error() {
                         return write_result;
                     }
-                    written = written + write_result.value();
                     continue;
                 }
                 if c == '\\' {
-                    write_result = std::write_all(writer, "\\\\");
+                    write_result = std::write_all_accumulate(writer, "\\\\", &written);
                     if write_result.is_error() {
                         return write_result;
                     }
-                    written = written + write_result.value();
                     continue;
                 }
-                write_result = std::write_all(writer, (:[]byte){&c, 1});
+                write_result = std::write_all_accumulate(writer, (:[]byte){&c, 1}, &written);
                 if write_result.is_error() {
                     return write_result;
                 }
-                written = written + write_result.value();
             }
             return std::result[[:usize, :[]byte]]::init_value(written);
         }
@@ -763,6 +749,21 @@ func write_all(writer: std::writer, buf: []byte) std::result[[:usize, :[]byte]] 
     return std::result[[:usize, :[]byte]]::init_value(written);
 }
 
+# Write `countof(buf)` bytes using the provided writer, invoking the writer's
+# `write` function repeatedly until either all bytes have been written or an
+# error occurs. This function behaves identically to `std::write_all`, but will
+# additionally add the number of written bytes to the value at `written` on
+# success. This behavior is useful when defining `format` member functions that
+# require multiple `std::write_all` calls.
+func write_all_accumulate(writer: std::writer, buf: []byte, written: *usize) std::result[[:usize, :[]byte]] {
+    var result = std::write_all(writer, buf);
+    if result.is_value() {
+        *written = *written + result.value();
+    }
+    return result;
+}
+
+
 func write_format(writer: std::writer, format: []byte, args: []std::formatter) std::result[[:usize, :[]byte]] {
     # Current format argument index.
     var arg: usize = 0;
@@ -809,11 +810,10 @@ func write_format(writer: std::writer, format: []byte, args: []std::formatter) s
                 #      ^^
                 # "some}}text"
                 #      ^^ Escaped '{' or '}' character.
-                var res = std::write_all(writer, format[start:end+1]);
+                var res = std::write_all_accumulate(writer, format[start:end+1], &written);
                 if res.is_error() {
                     return res;
                 }
-                written = written + res.value();
                 start = end + 2;
                 end = start;
                 continue;
@@ -827,11 +827,10 @@ func write_format(writer: std::writer, format: []byte, args: []std::formatter) s
 
             # "some{fmt}text"
             #      ^ Start of format specifier.
-            var res = std::write_all(writer, format[start:end]);
+            var res = std::write_all_accumulate(writer, format[start:end], &written);
             if res.is_error() {
                 return res;
             }
-            written = written + res.value();
             start = end + 1;
             end = start;
             state = STATE_FMTTING;
@@ -883,11 +882,10 @@ func write_format(writer: std::writer, format: []byte, args: []std::formatter) s
 
     # "some{fmt}text"
     #           ^^^^ Write the remaining walked text.
-    var res = std::write_all(writer, format[start:end]);
+    var res = std::write_all_accumulate(writer, format[start:end], &written);
     if res.is_error() {
         return res;
     }
-    written = written + res.value();
 
     # Call with a format string "some {fmt} text" (N format specifiers) and N+M
     # format arguments for some non-zero M. Passing extra format arguments is a
