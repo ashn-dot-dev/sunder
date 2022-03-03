@@ -1,15 +1,15 @@
-const a: usize = sizeof(:void);
-const b: usize = sizeof(:u8);
-const c: usize = sizeof(:u16);
-const d: usize = sizeof(:u32);
-const e: usize = sizeof(:u64);
-const f: usize = sizeof(:usize);
+const a: usize = sizeof(void);
+const b: usize = sizeof(u8);
+const c: usize = sizeof(u16);
+const d: usize = sizeof(u32);
+const e: usize = sizeof(u64);
+const f: usize = sizeof(usize);
 
-const g: usize = sizeof(:[5u]u8);
-const h: usize = sizeof(:[2u]u64);
+const g: usize = sizeof([5u]u8);
+const h: usize = sizeof([2u]u64);
 
 const i: u16 = 0xABCDu16;
-const j: usize = sizeof(:typeof(i));
+const j: usize = sizeof(typeof(i));
 
 func main() void {
     dump a;
@@ -22,8 +22,8 @@ func main() void {
     dump h;
     dump j;
 
-    dump sizeof(:u16);
-    dump sizeof(:typeof(i));
+    dump sizeof(u16);
+    dump sizeof(typeof(i));
 }
 ################################################################################
 # 00 00 00 00 00 00 00 00

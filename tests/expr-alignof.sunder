@@ -1,15 +1,15 @@
-const a: usize = alignof(:void);
-const b: usize = alignof(:u8);
-const c: usize = alignof(:u16);
-const d: usize = alignof(:u32);
-const e: usize = alignof(:u64);
-const f: usize = alignof(:usize);
+const a: usize = alignof(void);
+const b: usize = alignof(u8);
+const c: usize = alignof(u16);
+const d: usize = alignof(u32);
+const e: usize = alignof(u64);
+const f: usize = alignof(usize);
 
-const g: usize = alignof(:[5u]u8);
-const h: usize = alignof(:[2u]u64);
+const g: usize = alignof([5u]u8);
+const h: usize = alignof([2u]u64);
 
 const i: u16 = 0xABCDu16;
-const j: usize = alignof(:typeof(i));
+const j: usize = alignof(typeof(i));
 
 func main() void {
     dump a;
@@ -22,8 +22,8 @@ func main() void {
     dump h;
     dump j;
 
-    dump alignof(:u16);
-    dump alignof(:typeof(i));
+    dump alignof(u16);
+    dump alignof(typeof(i));
 }
 ################################################################################
 # 00 00 00 00 00 00 00 00

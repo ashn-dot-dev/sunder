@@ -6,9 +6,9 @@ func is_null[[:T]](ptr: *T) bool {
 }
 
 func add[[:T]](ptr: *T, n: usize) *T {
-    return (:*T)((:usize)ptr + n * sizeof(:typeof(*ptr)));
+    return (:*T)((:usize)ptr + n * sizeof(typeof(*ptr)));
 }
 
 func sub[[:T]](ptr: *T, n: usize) *T {
-    return (:*T)((:usize)ptr - n * sizeof(:typeof(*ptr)));
+    return (:*T)((:usize)ptr - n * sizeof(typeof(*ptr)));
 }

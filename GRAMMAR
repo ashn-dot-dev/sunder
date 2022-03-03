@@ -104,9 +104,9 @@
 
 <expr-access-dereference> ::= <expr> ".*"
 
-<expr-sizeof> ::= "sizeof" "(" ":" <typespec> ")"
+<expr-sizeof> ::= "sizeof" "(" <typespec> ")"
 
-<expr-alignof> ::= "alignof" "(" ":" <typespec> ")"
+<expr-alignof> ::= "alignof" "(" <typespec> ")"
 
 <expr-unary> ::= "not" <expr>
                | "+" <expr>

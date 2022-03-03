@@ -347,18 +347,18 @@ struct int[[:T]] {
         const IS_UINT = (:T)-1s > 0;
         const IS_SINT = (:T)-1s < 0;
         var is_out_of_range =
-            IS_UINT and sizeof(:T) == sizeof(:u8)  and accum > 0xFF or
-            IS_UINT and sizeof(:T) == sizeof(:u16) and accum > 0xFFFF or
-            IS_UINT and sizeof(:T) == sizeof(:u32) and accum > 0xFFFFFFFF or
-            IS_UINT and sizeof(:T) == sizeof(:u64) and accum > 0xFFFFFFFFFFFFFFFF or
-            IS_SINT and sizeof(:T) == sizeof(:s8)  and sign == +1 and accum > 0x7F or
-            IS_SINT and sizeof(:T) == sizeof(:s16) and sign == +1 and accum > 0x7FFF or
-            IS_SINT and sizeof(:T) == sizeof(:s32) and sign == +1 and accum > 0x7FFFFFFF or
-            IS_SINT and sizeof(:T) == sizeof(:s64) and sign == +1 and accum > 0x7FFFFFFFFFFFFFFF or
-            IS_SINT and sizeof(:T) == sizeof(:s8)  and sign == -1 and accum > 0x80 or
-            IS_SINT and sizeof(:T) == sizeof(:s16) and sign == -1 and accum > 0x8000 or
-            IS_SINT and sizeof(:T) == sizeof(:s32) and sign == -1 and accum > 0x80000000 or
-            IS_SINT and sizeof(:T) == sizeof(:s64) and sign == -1 and accum > 0x8000000000000000;
+            IS_UINT and sizeof(T) == sizeof(u8)  and accum > 0xFF or
+            IS_UINT and sizeof(T) == sizeof(u16) and accum > 0xFFFF or
+            IS_UINT and sizeof(T) == sizeof(u32) and accum > 0xFFFFFFFF or
+            IS_UINT and sizeof(T) == sizeof(u64) and accum > 0xFFFFFFFFFFFFFFFF or
+            IS_SINT and sizeof(T) == sizeof(s8)  and sign == +1 and accum > 0x7F or
+            IS_SINT and sizeof(T) == sizeof(s16) and sign == +1 and accum > 0x7FFF or
+            IS_SINT and sizeof(T) == sizeof(s32) and sign == +1 and accum > 0x7FFFFFFF or
+            IS_SINT and sizeof(T) == sizeof(s64) and sign == +1 and accum > 0x7FFFFFFFFFFFFFFF or
+            IS_SINT and sizeof(T) == sizeof(s8)  and sign == -1 and accum > 0x80 or
+            IS_SINT and sizeof(T) == sizeof(s16) and sign == -1 and accum > 0x8000 or
+            IS_SINT and sizeof(T) == sizeof(s32) and sign == -1 and accum > 0x80000000 or
+            IS_SINT and sizeof(T) == sizeof(s64) and sign == -1 and accum > 0x8000000000000000;
         if IS_UINT and sign == -1 or is_out_of_range {
             return std::result[[:std::int[[:T]], :[]byte]]::init_error("integer out-of-range");
         }
@@ -924,7 +924,7 @@ func print_format_line(writer: std::writer, format: []byte, args: []std::formatt
 }
 
 func new[[:T]](allocator: std::allocator) *T {
-    var allocate_result = allocator.allocate(alignof(:T), sizeof(:T));
+    var allocate_result = allocator.allocate(alignof(T), sizeof(T));
     if allocate_result.is_error() {
         std::panic(allocate_result.error());
     }
@@ -932,11 +932,11 @@ func new[[:T]](allocator: std::allocator) *T {
 }
 
 func delete[[:T]](allocator: std::allocator, object: *T) void {
-    allocator.deallocate((:*byte)object, alignof(:T), sizeof(:T));
+    allocator.deallocate((:*byte)object, alignof(T), sizeof(T));
 }
 
 func new_slice[[:T]](allocator: std::allocator, count: usize) []T {
-    var allocate_result = allocator.allocate(alignof(:T), count * sizeof(:T));
+    var allocate_result = allocator.allocate(alignof(T), count * sizeof(T));
     if allocate_result.is_error() {
         std::panic(allocate_result.error());
     }
@@ -945,11 +945,11 @@ func new_slice[[:T]](allocator: std::allocator, count: usize) []T {
 
 func resize_slice[[:T]](allocator: std::allocator, slice: []T, new_count: usize) []T {
     var cur_count: usize = countof(slice);
-    var cur_size: usize = cur_count * sizeof(:T);
-    var new_size: usize = new_count * sizeof(:T);
+    var cur_size: usize = cur_count * sizeof(T);
+    var new_size: usize = new_count * sizeof(T);
 
     var cur_pointer: *byte = *((:**byte)&slice);
-    var reallocate_result = allocator.reallocate(cur_pointer, alignof(:T), cur_size, new_size);
+    var reallocate_result = allocator.reallocate(cur_pointer, alignof(T), cur_size, new_size);
     if reallocate_result.is_error() {
         std::panic(reallocate_result.error());
     }
@@ -959,8 +959,8 @@ func resize_slice[[:T]](allocator: std::allocator, slice: []T, new_count: usize)
 
 func delete_slice[[:T]](allocator: std::allocator, slice: []T) void {
     var pointer: *byte = *((:**byte)&slice);
-    var size: usize = countof(slice) * sizeof(:T);
-    allocator.deallocate(pointer, alignof(:T), size);
+    var size: usize = countof(slice) * sizeof(T);
+    allocator.deallocate(pointer, alignof(T), size);
 }
 
 # Copy the elements of `source` into `destination`.The source and destination
@@ -1118,11 +1118,11 @@ func panic_format(format: []byte, args: []std::formatter) void {
 
 # Return an object of type `T` with all bytes (including padding) zeroed.
 func zeroed[[:T]]() T {
-    # TODO: Ensure that `object` is aligned to `alignof(:T)` once alignment
+    # TODO: Ensure that `object` is aligned to `alignof(T)` once alignment
     # specification is added to variable & constant declarations. The x64
     # architecture allows unaligned memory access, so this current
     # implementation is a non-issue for the Linux x64 OS/ARCH target. However,
     # this function is not necessarily portable across other architectures.
-    const object: [sizeof(:T)]byte = (:[sizeof(:T)]byte)[0...];
+    const object: [sizeof(T)]byte = (:[sizeof(T)]byte)[0...];
     return *(:*T)&object;
 }

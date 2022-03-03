@@ -4,8 +4,8 @@ import "std/page_allocator.sunder";
 func main() void {
     var allocator: std::allocator = std::page_allocator::the();
 
-    # 2048 * sizeof(:u16) should allocate one page.
-    var res = allocator.allocate(alignof(:u16), 2048 * sizeof(:u16));
+    # 2048 * sizeof(u16) should allocate one page.
+    var res = allocator.allocate(alignof(u16), 2048 * sizeof(u16));
     var ptr = (:*u16)res.value();
     var slice: []u16 = (:[]u16){ptr, 2048};
 
@@ -14,12 +14,12 @@ func main() void {
         slice[i] = 0xBEEF;
     }
 
-    # 4096 * sizeof(:u16) should allocate two pages.
+    # 4096 * sizeof(u16) should allocate two pages.
     res = allocator.reallocate(
         (:*byte)ptr,
-        alignof(:u16),
-        2048 * sizeof(:u16),
-        4096 * sizeof(:u16));
+        alignof(u16),
+        2048 * sizeof(u16),
+        4096 * sizeof(u16));
     ptr = (:*u16)res.value();
     slice = (:[]u16){ptr, 4096};
 
@@ -31,9 +31,9 @@ func main() void {
     # Shrink the buffer down.
     res = allocator.reallocate(
         (:*byte)ptr,
-        alignof(:u16),
-        4096 * sizeof(:u16),
-        1000 * sizeof(:u16));
+        alignof(u16),
+        4096 * sizeof(u16),
+        1000 * sizeof(u16));
     ptr = (:*u16)res.value();
     slice = (:[]u16){ptr, 1000};
 
@@ -43,5 +43,5 @@ func main() void {
     }
 
     # Deallocate the buffer.
-    allocator.deallocate((:*byte)ptr, alignof(:u16), 1000);
+    allocator.deallocate((:*byte)ptr, alignof(u16), 1000);
 }

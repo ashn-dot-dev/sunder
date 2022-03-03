@@ -1200,7 +1200,6 @@ parse_expr_sizeof(struct parser* parser)
     struct source_location const* const location =
         &expect_current(parser, TOKEN_SIZEOF)->location;
     expect_current(parser, TOKEN_LPAREN);
-    expect_current(parser, TOKEN_COLON);
     struct cst_typespec const* const rhs = parse_typespec(parser);
     expect_current(parser, TOKEN_RPAREN);
 
@@ -1218,7 +1217,6 @@ parse_expr_alignof(struct parser* parser)
     struct source_location const* const location =
         &expect_current(parser, TOKEN_ALIGNOF)->location;
     expect_current(parser, TOKEN_LPAREN);
-    expect_current(parser, TOKEN_COLON);
     struct cst_typespec const* const rhs = parse_typespec(parser);
     expect_current(parser, TOKEN_RPAREN);
 

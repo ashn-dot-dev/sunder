@@ -1,7 +1,7 @@
 func main() void {
-    sizeof(:typeof(123));
+    sizeof(typeof(123));
 }
 ################################################################################
 # [error-expr-sizeof-type-unsized.sunder:2] error: type `integer` has no defined size
-#     sizeof(:typeof(123));
+#     sizeof(typeof(123));
 #     ^
