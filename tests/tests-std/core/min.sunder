@@ -1,13 +1,13 @@
 import "std/core.sunder";
 
 func main() void {
-    dump std::min[[:u16]](0xBEEF, 0xCAFE);
-    dump std::min[[:u16]](0xCAFE, 0xBEEF);
-    dump std::min[[:s16]](-123, +123);
-    dump std::min[[:s16]](+123, -123);
-    dump std::min[[:ssize]](-123, +123);
-    dump std::min[[:ssize]](+123, -123);
-    dump std::min[[:ssize]](0, 0);
+    dump std::min[[u16]](0xBEEF, 0xCAFE);
+    dump std::min[[u16]](0xCAFE, 0xBEEF);
+    dump std::min[[s16]](-123, +123);
+    dump std::min[[s16]](+123, -123);
+    dump std::min[[ssize]](-123, +123);
+    dump std::min[[ssize]](+123, -123);
+    dump std::min[[ssize]](0, 0);
 }
 ################################################################################
 # EF BE

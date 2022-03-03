@@ -1,13 +1,13 @@
 import "std/core.sunder";
 
 func main() void {
-    dump std::max[[:u16]](0xBEEF, 0xCAFE);
-    dump std::max[[:u16]](0xCAFE, 0xBEEF);
-    dump std::max[[:s16]](-123, +123);
-    dump std::max[[:s16]](+123, -123);
-    dump std::max[[:ssize]](-123, +123);
-    dump std::max[[:ssize]](+123, -123);
-    dump std::max[[:ssize]](0, 0);
+    dump std::max[[u16]](0xBEEF, 0xCAFE);
+    dump std::max[[u16]](0xCAFE, 0xBEEF);
+    dump std::max[[s16]](-123, +123);
+    dump std::max[[s16]](+123, -123);
+    dump std::max[[ssize]](-123, +123);
+    dump std::max[[ssize]](+123, -123);
+    dump std::max[[ssize]](0, 0);
 }
 ################################################################################
 # FE CA

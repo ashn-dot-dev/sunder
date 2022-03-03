@@ -1,14 +1,14 @@
 # Routines for pointers that represent array-like data and may be NULL.
 namespace std::cptr;
 
-func is_null[[:T]](ptr: *T) bool {
+func is_null[[T]](ptr: *T) bool {
     return (:usize)ptr == 0;
 }
 
-func add[[:T]](ptr: *T, n: usize) *T {
+func add[[T]](ptr: *T, n: usize) *T {
     return (:*T)((:usize)ptr + n * sizeof(typeof(*ptr)));
 }
 
-func sub[[:T]](ptr: *T, n: usize) *T {
+func sub[[T]](ptr: *T, n: usize) *T {
     return (:*T)((:usize)ptr - n * sizeof(typeof(*ptr)));
 }

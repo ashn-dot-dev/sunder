@@ -3,23 +3,23 @@ import "std";
 func main() void {
     const N: usize = 100;
     for i in 1:N+1 {
-        if std::rem[[:usize]](i, 3) == 0 and std::rem[[:usize]](i, 5) == 0 {
+        if std::rem[[usize]](i, 3) == 0 and std::rem[[usize]](i, 5) == 0 {
             std::print(std::out(), "FizzBuzz\n");
             continue;
         }
-        if std::rem[[:usize]](i, 3) == 0 {
+        if std::rem[[usize]](i, 3) == 0 {
             std::print(std::out(), "Fizz\n");
             continue;
         }
-        if std::rem[[:usize]](i, 5) == 0 {
+        if std::rem[[usize]](i, 5) == 0 {
             std::print(std::out(), "Buzz\n");
             continue;
         }
-        var int = std::int[[:usize]]::init(i);
+        var int = std::int[[usize]]::init(i);
         std::print_format_line(
             std::out(),
             "{}",
             (:[]std::formatter)[
-                std::formatter::init[[:std::int[[:usize]]]](&int)]);
+                std::formatter::init[[std::int[[usize]]]](&int)]);
     }
 }

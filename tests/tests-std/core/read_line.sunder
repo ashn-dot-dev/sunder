@@ -6,7 +6,7 @@ func test0() void {
     var open_result = std::fs::file::open("data.txt", std::fs::OPEN_READ);
     var file: std::fs::file = open_result.value();
 
-    var reader = std::reader::init[[:std::fs::file]](&file);
+    var reader = std::reader::init[[std::fs::file]](&file);
     var allocator = std::page_allocator::the();
 
     for true {
@@ -17,7 +17,7 @@ func test0() void {
         }
         var bytes = optional.value();
         std::print_line(std::out(), bytes);
-        std::delete_slice[[:byte]](allocator, bytes);
+        std::delete_slice[[byte]](allocator, bytes);
     }
 
     file.close();
@@ -27,7 +27,7 @@ func test1() void {
     var open_result = std::fs::file::open("data-no-ending-newline.txt", std::fs::OPEN_READ);
     var file: std::fs::file = open_result.value();
 
-    var reader = std::reader::init[[:std::fs::file]](&file);
+    var reader = std::reader::init[[std::fs::file]](&file);
     var allocator = std::page_allocator::the();
 
     for true {
@@ -38,7 +38,7 @@ func test1() void {
         }
         var bytes = optional.value();
         std::print_line(std::out(), bytes);
-        std::delete_slice[[:byte]](allocator, bytes);
+        std::delete_slice[[byte]](allocator, bytes);
     }
 
     file.close();
@@ -49,14 +49,14 @@ func test2() void {
     var open_result = std::fs::file::open("data.txt", std::fs::OPEN_READ);
     var file: std::fs::file = open_result.value();
 
-    var reader = std::reader::init[[:std::fs::file]](&file);
+    var reader = std::reader::init[[std::fs::file]](&file);
     var allocator = std::page_allocator::the();
 
     var read_result = std::read_line(reader, allocator);
     var optional = read_result.value();
     var bytes = optional.value();
     std::print_line(std::out(), bytes);
-    std::delete_slice[[:byte]](allocator, bytes);
+    std::delete_slice[[byte]](allocator, bytes);
 
     file.close();
 }

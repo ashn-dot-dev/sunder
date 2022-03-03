@@ -144,11 +144,11 @@
 
 <template-parameter-list> ::= "[[" <template-parameter> ("," <template-parameter>)* "]]"
 
-<template-parameter> ::= ":" <identifier>
+<template-parameter> ::= <identifier>
 
 <template-argument-list> ::= <template-argument>+
 
-<template-argument> ::= ":" <typespec>
+<template-argument> ::= <typespec>
 
 <function-parameter-list> ::= ( <function-parameter> ("," <function-parameter>)* )?
 

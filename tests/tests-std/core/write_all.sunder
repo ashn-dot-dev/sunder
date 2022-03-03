@@ -1,11 +1,11 @@
 import "std/core.sunder";
 
 func main() void {
-    var out_res: std::result[[:usize, :[]byte]] =
+    var out_res: std::result[[usize, []byte]] =
         std::write_all(std::out(), "Call to write_all (stdout)!\n");
     dump out_res.value();
 
-    var err_res: std::result[[:usize, :[]byte]] =
+    var err_res: std::result[[usize, []byte]] =
         std::write_all(std::err(), "Call to write_all (stderr)!\n");
     dump err_res.value();
 }

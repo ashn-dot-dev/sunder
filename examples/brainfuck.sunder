@@ -15,19 +15,19 @@ var stack_index: usize = 0;
 func main() void {
     if sys::argc != 2 {
         var progname = std::str::init(std::cstr::to_bytes(*sys::argv));
-        var expected = std::int[[:usize]]::init(1);
-        var received = std::int[[:usize]]::init(sys::argc - 1);
+        var expected = std::int[[usize]]::init(1);
+        var received = std::int[[usize]]::init(sys::argc - 1);
         std::print_format_line(
             std::err(),
             "{}: invalid number of arguments (expected {}, received {})",
             (:[]std::formatter)[
-                std::formatter::init[[:std::str]](&progname),
-                std::formatter::init[[:std::int[[:usize]]]](&expected),
-                std::formatter::init[[:std::int[[:usize]]]](&received)]);
+                std::formatter::init[[std::str]](&progname),
+                std::formatter::init[[std::int[[usize]]]](&expected),
+                std::formatter::init[[std::int[[usize]]]](&received)]);
         std::exit(std::EXIT_FAILURE);
     }
 
-    var path = *std::cptr::add[[:*byte]](sys::argv, 1);
+    var path = *std::cptr::add[[*byte]](sys::argv, 1);
     var open_result = std::fs::file::open(std::cstr::to_bytes(path), std::fs::OPEN_READ);
     if open_result.is_error() {
         var p = std::str::init(std::cstr::to_bytes(path));
@@ -36,12 +36,12 @@ func main() void {
             std::err(),
             "{}: {}",
             (:[]std::formatter)[
-                std::formatter::init[[:std::str]](&p),
-                std::formatter::init[[:std::str]](&e)]);
+                std::formatter::init[[std::str]](&p),
+                std::formatter::init[[std::str]](&e)]);
         std::exit(std::EXIT_FAILURE);
     }
     var file = open_result.value();
-    var file_reader = std::reader::init[[:std::fs::file]](&file);
+    var file_reader = std::reader::init[[std::fs::file]](&file);
     var read_result = std::read_all(file_reader, std::page_allocator::the());
     if read_result.is_error() {
         var p = std::str::init(std::cstr::to_bytes(path));
@@ -50,8 +50,8 @@ func main() void {
             std::err(),
             "{}: {}",
             (:[]std::formatter)[
-                std::formatter::init[[:std::str]](&p),
-                std::formatter::init[[:std::str]](&e)]);
+                std::formatter::init[[std::str]](&p),
+                std::formatter::init[[std::str]](&e)]);
         file.close();
         std::exit(std::EXIT_FAILURE);
     }
@@ -129,6 +129,6 @@ func main() void {
         }
     }
 
-    std::delete_slice[[:byte]](std::page_allocator::the(), source);
+    std::delete_slice[[byte]](std::page_allocator::the(), source);
     file.close();
 }

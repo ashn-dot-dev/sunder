@@ -3,7 +3,7 @@ import "std/core.sunder";
 struct person {
     var name: []byte;
 
-    func format(self: *person, writer: std::writer, fmt: []byte) std::result[[:usize, :[]byte]] {
+    func format(self: *person, writer: std::writer, fmt: []byte) std::result[[usize, []byte]] {
         if countof(fmt) != 0 {
             std::formatter::invalid_format_specifier(fmt);
         }
@@ -15,9 +15,9 @@ func main() void {
     var alice: person = (:person){.name = "Alice"};
 
     var args: [1]std::formatter = (:[1]std::formatter)[
-        std::formatter::init[[:person]](&alice)
+        std::formatter::init[[person]](&alice)
     ];
-    var res: std::result[[:usize, :[]byte]] =
+    var res: std::result[[usize, []byte]] =
         std::write_format(std::out(), "baz}qux", args[0:countof(args)]);
 }
 ################################################################################

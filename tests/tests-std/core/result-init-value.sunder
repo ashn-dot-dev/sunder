@@ -1,7 +1,7 @@
 import "std/core.sunder";
 
 func main() void {
-    var a: std::result[[:u16, :void]] = std::result[[:u16, :void]]::init_value(0xBEEF);
+    var a: std::result[[u16, void]] = std::result[[u16, void]]::init_value(0xBEEF);
     dump a.is_value();
     dump a.is_error();
     dump a.value();

@@ -8,13 +8,13 @@ struct name {
         return (:name){.first = first, .last = last};
     }
 
-    func format(self: *name, writer: std::writer, fmt: []byte) std::result[[:usize, :[]byte]] {
+    func format(self: *name, writer: std::writer, fmt: []byte) std::result[[usize, []byte]] {
         if countof(fmt) != 0 {
             std::formatter::invalid_format_specifier(fmt);
         }
 
         var written: usize = 0;
-        var result: std::result[[:usize, :[]byte]] = std::zeroed[[:std::result[[:usize, :[]byte]]]]();
+        var result: std::result[[usize, []byte]] = std::zeroed[[std::result[[usize, []byte]]]]();
 
         # Just assume all these writes will succeed lmao.
         result = std::write_all(writer, self.*.first);
@@ -24,7 +24,7 @@ struct name {
         result = std::write_all(writer, self.*.last);
         written = written + result.value();
 
-        return std::result[[:usize, :[]byte]]::init_value(written);
+        return std::result[[usize, []byte]]::init_value(written);
     }
 }
 
@@ -34,7 +34,7 @@ struct int {
     # printed in octal, or "x" to be printed in hexadecimal. For not we'll
     # avoid the actual int->bytes conversion part and just print the specifier
     # choice.
-    func format(self: *int, writer: std::writer, fmt: []byte) std::result[[:usize, :[]byte]] {
+    func format(self: *int, writer: std::writer, fmt: []byte) std::result[[usize, []byte]] {
         if countof(fmt) == 0 {
             return std::write_all(writer, "decimal\n");
         }
@@ -62,8 +62,8 @@ func main() void {
     var a: name = name::init("Nona", "Gaprindashvili");
     var b: name = name::init("Judit", "Polgar");
 
-    var a_formatter: std::formatter = std::formatter::init[[:name]](&a);
-    var b_formatter: std::formatter = std::formatter::init[[:name]](&b);
+    var a_formatter: std::formatter = std::formatter::init[[name]](&a);
+    var b_formatter: std::formatter = std::formatter::init[[name]](&b);
 
     a_formatter.format(writer, "");
     writer.write(" and ");
@@ -71,13 +71,13 @@ func main() void {
     writer.write(" are amazing players!\n");
 
     var i: int = (:int){};
-    var i_formatter: std::formatter = std::formatter::init[[:int]](&i);
+    var i_formatter: std::formatter = std::formatter::init[[int]](&i);
     i_formatter.format(writer, "");
     i_formatter.format(writer, "d");
     i_formatter.format(writer, "b");
     i_formatter.format(writer, "o");
     i_formatter.format(writer, "x");
-    var result: std::result[[:usize, :[]byte]] = i_formatter.format(writer, "nope");
+    var result: std::result[[usize, []byte]] = i_formatter.format(writer, "nope");
     std::print_line(std::err(), result.error());
 }
 ################################################################################

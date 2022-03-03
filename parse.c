@@ -1345,12 +1345,9 @@ parse_template_parameter(struct parser* parser)
 {
     assert(parser != NULL);
 
-    struct source_location const* const location =
-        &expect_current(parser, TOKEN_COLON)->location;
     struct cst_identifier const* const identifier = parse_identifier(parser);
-
     struct cst_template_parameter* const product =
-        cst_template_parameter_new(location, identifier);
+        cst_template_parameter_new(identifier->location, identifier);
 
     autil_freezer_register(context()->freezer, product);
     return product;
@@ -1388,12 +1385,9 @@ parse_template_argument(struct parser* parser)
 {
     assert(parser != NULL);
 
-    struct source_location const* const location =
-        &expect_current(parser, TOKEN_COLON)->location;
     struct cst_typespec const* const typespec = parse_typespec(parser);
-
     struct cst_template_argument* const product =
-        cst_template_argument_new(location, typespec);
+        cst_template_argument_new(typespec->location, typespec);
 
     autil_freezer_register(context()->freezer, product);
     return product;

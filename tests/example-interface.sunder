@@ -7,7 +7,7 @@ struct foo {
     var interface: *foo_interface;
     var instance: *void;
 
-    func init[[:T]](instance: *T) foo {
+    func init[[T]](instance: *T) foo {
         const interface: foo_interface = (:foo_interface){
             .aa = (:func(*void) void)T::aa,
             .bb = (:func(*void) void)T::bb
@@ -55,14 +55,14 @@ func main() void {
     var mybar: bar = (:bar){.x = 0xDEADBEEF, .y = 0xCAFEF00D};
     mybar.aa();
     mybar.bb();
-    var bar_impl: foo = foo::init[[:bar]](&mybar);
+    var bar_impl: foo = foo::init[[bar]](&mybar);
     (*bar_impl.interface).aa(bar_impl.instance);
     (*bar_impl.interface).bb(bar_impl.instance);
 
     const mybaz: baz = (:baz){.x = 0xFBAD, .y = 0xDECA};
     mybaz.aa();
     mybaz.bb();
-    var baz_impl: foo = foo::init[[:baz]](&mybaz);
+    var baz_impl: foo = foo::init[[baz]](&mybaz);
     (*baz_impl.interface).aa(baz_impl.instance);
     (*baz_impl.interface).bb(baz_impl.instance);
 }

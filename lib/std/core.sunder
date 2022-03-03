@@ -1,43 +1,43 @@
 namespace std;
 import "sys";
 
-struct result[[:T, :E]] {
+struct result[[T, E]] {
     var _value: T;
     var _error: E;
     var _is_value: bool;
 
-    func init_value(value: T) result[[:T, :E]] {
-        return (:result[[:T, :E]]){
+    func init_value(value: T) result[[T, E]] {
+        return (:result[[T, E]]){
             ._value = value,
-            ._error = std::zeroed[[:E]](),
+            ._error = std::zeroed[[E]](),
             ._is_value = true
         };
     }
 
-    func init_error(error: E) result[[:T, :E]] {
-        return (:result[[:T, :E]]){
-            ._value = std::zeroed[[:T]](),
+    func init_error(error: E) result[[T, E]] {
+        return (:result[[T, E]]){
+            ._value = std::zeroed[[T]](),
             ._error = error,
             ._is_value = false
         };
     }
 
-    func is_value(self: *result[[:T, :E]]) bool {
+    func is_value(self: *result[[T, E]]) bool {
         return self.*._is_value;
     }
 
-    func is_error(self: *result[[:T, :E]]) bool {
+    func is_error(self: *result[[T, E]]) bool {
         return not self.*._is_value;
     }
 
-    func value(self: *result[[:T, :E]]) T {
+    func value(self: *result[[T, E]]) T {
         if not self.*._is_value {
             std::panic("attempted to retrieve value from std::result in the `error` state");
         }
         return self.*._value;
     }
 
-    func error(self: *result[[:T, :E]]) E {
+    func error(self: *result[[T, E]]) E {
         if self.*._is_value {
             std::panic("attempted to retrieve error from std::result in the `value` state");
         }
@@ -45,33 +45,33 @@ struct result[[:T, :E]] {
     }
 }
 
-struct optional[[:T]] {
+struct optional[[T]] {
     var _value: T;
     var _is_value: bool;
 
-    func init_value(value: T) optional[[:T]] {
-        return (:optional[[:T]]){
+    func init_value(value: T) optional[[T]] {
+        return (:optional[[T]]){
             ._value = value,
             ._is_value = true
         };
     }
 
-    func init_empty() optional[[:T]] {
-        return (:optional[[:T]]){
-            ._value = std::zeroed[[:T]](),
+    func init_empty() optional[[T]] {
+        return (:optional[[T]]){
+            ._value = std::zeroed[[T]](),
             ._is_value = false
         };
     }
 
-    func is_value(self: *optional[[:T]]) bool {
+    func is_value(self: *optional[[T]]) bool {
         return self.*._is_value;
     }
 
-    func is_empty(self: *optional[[:T]]) bool {
+    func is_empty(self: *optional[[T]]) bool {
         return not self.*._is_value;
     }
 
-    func value(self: *optional[[:T]]) T {
+    func value(self: *optional[[T]]) T {
         if not self.*._is_value {
             std::panic("attempted to retrieve value from empty std::optional");
         }
@@ -80,14 +80,14 @@ struct optional[[:T]] {
 }
 
 struct reader_itable {
-    var read: func(*any, []byte) std::result[[:usize, :[]byte]];
+    var read: func(*any, []byte) std::result[[usize, []byte]];
 }
 
 struct reader {
     var itable: *std::reader_itable;
     var object: *any;
 
-    func init[[:T]](object: *T) std::reader {
+    func init[[T]](object: *T) std::reader {
         const itable = (:std::reader_itable){
             .read = T::read
         };
@@ -108,20 +108,20 @@ struct reader {
     # buffer sizes.
     #
     # On failure, this function returns a static string describing the failure.
-    func read(self: *reader, buf: []byte) std::result[[:usize, :[]byte]] {
+    func read(self: *reader, buf: []byte) std::result[[usize, []byte]] {
         return self.*.itable.*.read(self.*.object, buf);
     }
 }
 
 struct writer_itable {
-    var write: func(*any, []byte) std::result[[:usize, :[]byte]];
+    var write: func(*any, []byte) std::result[[usize, []byte]];
 }
 
 struct writer {
     var itable: *std::writer_itable;
     var object: *any;
 
-    func init[[:T]](object: *T) std::writer {
+    func init[[T]](object: *T) std::writer {
         const itable = (:std::writer_itable){
             .write = T::write
         };
@@ -138,20 +138,20 @@ struct writer {
     # be less than `countof(buf)` in the event of a partial write.
     #
     # On failure, this function returns a static string describing the failure.
-    func write(self: *writer, buf: []byte) std::result[[:usize, :[]byte]] {
+    func write(self: *writer, buf: []byte) std::result[[usize, []byte]] {
         return self.*.itable.*.write(self.*.object, buf);
     }
 }
 
 struct formatter_itable {
-    var format: func(*any, std::writer, []byte) std::result[[:usize, :[]byte]];
+    var format: func(*any, std::writer, []byte) std::result[[usize, []byte]];
 }
 
 struct formatter {
     var itable: *std::formatter_itable;
     var object: *any;
 
-    func init[[:T]](object: *T) std::formatter {
+    func init[[T]](object: *T) std::formatter {
         const itable = (:std::formatter_itable){
             .format = T::format
         };
@@ -179,7 +179,7 @@ struct formatter {
     #   std::formatter::invalid_format_specifier(fmt);
     #
     # which will terminate the program with failure status.
-    func format(self: *formatter, writer: std::writer, fmt: []byte) std::result[[:usize, :[]byte]] {
+    func format(self: *formatter, writer: std::writer, fmt: []byte) std::result[[usize, []byte]] {
         return self.*.itable.*.format(self.*.object, writer, fmt);
     }
 
@@ -187,20 +187,20 @@ struct formatter {
         var str = std::str::init(format);
         std::panic_format(
             "invalid format string \"{e}\"\n",
-            (:[]std::formatter)[std::formatter::init[[:std::str]](&str)]);
+            (:[]std::formatter)[std::formatter::init[[std::str]](&str)]);
     }
 
     func invalid_format_specifier(fmt: []byte) void {
         var str = std::str::init(fmt);
         std::panic_format(
             "invalid format specifier \"{e}\"\n",
-            (:[]std::formatter)[std::formatter::init[[:std::str]](&str)]);
+            (:[]std::formatter)[std::formatter::init[[std::str]](&str)]);
     }
 }
 
 struct allocator_itable {
-    var allocate: func(*any, usize, usize) std::result[[:*byte, :[]byte]];
-    var reallocate: func(*any, *byte, usize, usize, usize) std::result[[:*byte, :[]byte]];
+    var allocate: func(*any, usize, usize) std::result[[*byte, []byte]];
+    var reallocate: func(*any, *byte, usize, usize, usize) std::result[[*byte, []byte]];
     var deallocate: func(*any, *byte, usize, usize) void;
 }
 
@@ -212,7 +212,7 @@ struct allocator {
     var itable: *std::allocator_itable;
     var object: *any;
 
-    func init[[:T]](object: *T) std::allocator {
+    func init[[T]](object: *T) std::allocator {
         const itable = (:std::allocator_itable){
             .allocate = T::allocate,
             .reallocate = T::reallocate,
@@ -231,7 +231,7 @@ struct allocator {
     # chunk.
     #
     # On failure, this function returns a static string describing the failure.
-    func allocate(self: *allocator, align: usize, size: usize) std::result[[:*byte, :[]byte]] {
+    func allocate(self: *allocator, align: usize, size: usize) std::result[[*byte, []byte]] {
         return self.*.itable.*.allocate(self.*.object, align, size);
     }
 
@@ -244,7 +244,7 @@ struct allocator {
     # in the event of a no-op reallocation.
     #
     # On failure, this function returns a static string describing the failure.
-    func reallocate(self: *allocator, ptr: *byte, align: usize, old_size: usize, new_size: usize) std::result[[:*byte, :[]byte]] {
+    func reallocate(self: *allocator, ptr: *byte, align: usize, old_size: usize, new_size: usize) std::result[[*byte, []byte]] {
         return self.*.itable.*.reallocate(self.*.object, ptr, align, old_size, new_size);
     }
 
@@ -256,16 +256,16 @@ struct allocator {
     }
 }
 
-struct int[[:T]] {
+struct int[[T]] {
     var value: T;
 
-    func init(value: T) int[[:T]] {
-        return (:int[[:T]]){.value = value};
+    func init(value: T) int[[T]] {
+        return (:int[[T]]){.value = value};
     }
 
-    func parse_from_bytes(bytes: []byte, radix: usize) std::result[[:std::int[[:T]], :[]byte]] {
+    func parse_from_bytes(bytes: []byte, radix: usize) std::result[[std::int[[T]], []byte]] {
         if radix != 0 and (radix < 2 or radix > 36) {
-            return std::result[[:std::int[[:T]], :[]byte]]::init_error("invalid radix");
+            return std::result[[std::int[[T]], []byte]]::init_error("invalid radix");
         }
 
         var cur: usize = 0;
@@ -307,7 +307,7 @@ struct int[[:T]] {
 
         # Parse digits.
         if cur == end {
-            return std::result[[:std::int[[:T]], :[]byte]]::init_error("integer contains no digits");
+            return std::result[[std::int[[T]], []byte]]::init_error("integer contains no digits");
         }
         var accum: u64 = 0; # Digit accumulator (`u64` acting as `uintmax_t`).
         var ACCUM_MAX: u64 = 0xFFFFFFFFFFFFFFFF;
@@ -326,20 +326,20 @@ struct int[[:T]] {
                 digit = (:usize)c - 'a' + 0xA;
             }
             else {
-                return std::result[[:std::int[[:T]], :[]byte]]::init_error("integer contains invalid digit");
+                return std::result[[std::int[[T]], []byte]]::init_error("integer contains invalid digit");
             }
 
             if digit >= radix {
-                return std::result[[:std::int[[:T]], :[]byte]]::init_error("integer contains invalid digit");
+                return std::result[[std::int[[T]], []byte]]::init_error("integer contains invalid digit");
             }
 
             if accum != 0 and ACCUM_MAX / accum < (:typeof(accum))radix {
-                return std::result[[:std::int[[:T]], :[]byte]]::init_error("integer out-of-range");
+                return std::result[[std::int[[T]], []byte]]::init_error("integer out-of-range");
             }
             accum = accum * (:typeof(accum))radix;
 
             if ACCUM_MAX - accum < (:typeof(accum))digit {
-                return std::result[[:std::int[[:T]], :[]byte]]::init_error("integer out-of-range");
+                return std::result[[std::int[[T]], []byte]]::init_error("integer out-of-range");
             }
             accum = accum + (:typeof(accum))digit;
         }
@@ -360,7 +360,7 @@ struct int[[:T]] {
             IS_SINT and sizeof(T) == sizeof(s32) and sign == -1 and accum > 0x80000000 or
             IS_SINT and sizeof(T) == sizeof(s64) and sign == -1 and accum > 0x8000000000000000;
         if IS_UINT and sign == -1 or is_out_of_range {
-            return std::result[[:std::int[[:T]], :[]byte]]::init_error("integer out-of-range");
+            return std::result[[std::int[[T]], []byte]]::init_error("integer out-of-range");
         }
 
         var value: T = (:T)accum;
@@ -368,10 +368,10 @@ struct int[[:T]] {
             value = value * (:T)-1s;
         }
 
-        return std::result[[:std::int[[:T]], :[]byte]]::init_value(std::int[[:T]]::init(value));
+        return std::result[[std::int[[T]], []byte]]::init_value(std::int[[T]]::init(value));
     }
 
-    func compare(lhs: *int[[:T]], rhs: *int[[:T]]) ssize {
+    func compare(lhs: *int[[T]], rhs: *int[[T]]) ssize {
         if lhs.*.value < rhs.*.value {
             return -1;
         }
@@ -389,10 +389,10 @@ struct int[[:T]] {
     #   "x" => hexadecimal (lower)
     #   "X" => hexadecimal (upper)
     func format(
-        self: *std::int[[:T]],
+        self: *std::int[[T]],
         writer: std::writer,
         fmt: []byte
-    ) std::result[[:usize, :[]byte]] {
+    ) std::result[[usize, []byte]] {
         # All non-default format specifiers have a length of one byte.
         if countof(fmt) > 1 {
             std::formatter::invalid_format_specifier(fmt);
@@ -489,7 +489,7 @@ struct str {
     func compare(lhs: *str, rhs: *str) ssize {
         var lhs_bytes = lhs.*.bytes;
         var rhs_bytes = rhs.*.bytes;
-        var count = std::min[[:usize]](countof(lhs_bytes), countof(rhs_bytes));
+        var count = std::min[[usize]](countof(lhs_bytes), countof(rhs_bytes));
         for i in 0:count {
             if lhs_bytes[i] != rhs_bytes[i] {
                 return (:ssize)lhs_bytes[i] - (:ssize)rhs_bytes[i];
@@ -501,7 +501,7 @@ struct str {
     # Accepted format specifiers:
     #   ""  => verbatim (default)
     #   "e" => escaped
-    func format(self: *std::str, writer: std::writer, fmt: []byte) std::result[[:usize, :[]byte]] {
+    func format(self: *std::str, writer: std::writer, fmt: []byte) std::result[[usize, []byte]] {
         # Format specifier: ""
         if countof(fmt) == 0 {
             return std::write_all(writer, self.*.bytes);
@@ -510,7 +510,7 @@ struct str {
         # Format specifier: "e"
         if countof(fmt) == 1 and fmt[0] == 'e' {
             var written: usize = 0;
-            var write_result = std::zeroed[[:std::result[[:usize, :[]byte]]]]();
+            var write_result = std::zeroed[[std::result[[usize, []byte]]]]();
             for i in 0:countof(self.*.bytes) {
                 var c: byte = self.*.bytes[i];
                 if c == '\0' {
@@ -560,7 +560,7 @@ struct str {
                     return write_result;
                 }
             }
-            return std::result[[:usize, :[]byte]]::init_value(written);
+            return std::result[[usize, []byte]]::init_value(written);
         }
 
         std::formatter::invalid_format_specifier(fmt);
@@ -568,47 +568,47 @@ struct str {
 }
 
 struct input_reader {
-    func read(self: *std::input_reader, buf: []byte) std::result[[:usize, :[]byte]] {
+    func read(self: *std::input_reader, buf: []byte) std::result[[usize, []byte]] {
         if countof(buf) == 0 {
-            return std::result[[:usize, :[]byte]]::init_value(0);
+            return std::result[[usize, []byte]]::init_value(0);
         }
 
         var sysret = sys::read(sys::STDIN_FILENO, &buf[0u], countof(buf));
         if sysret < 0 {
-            return std::result[[:usize, :[]byte]]::init_error(sys::ERRNO_STRINGS[(:usize)-sysret]);
+            return std::result[[usize, []byte]]::init_error(sys::ERRNO_STRINGS[(:usize)-sysret]);
         }
 
-        return std::result[[:usize, :[]byte]]::init_value((:usize)sysret);
+        return std::result[[usize, []byte]]::init_value((:usize)sysret);
     }
 }
 
 struct out_writer {
-    func write(self: *std::out_writer, buf: []byte) std::result[[:usize, :[]byte]] {
+    func write(self: *std::out_writer, buf: []byte) std::result[[usize, []byte]] {
         if countof(buf) == 0 {
-            return std::result[[:usize, :[]byte]]::init_value(0);
+            return std::result[[usize, []byte]]::init_value(0);
         }
 
         var sysret = sys::write(sys::STDOUT_FILENO, &buf[0u], countof(buf));
         if sysret < 0 {
-            return std::result[[:usize, :[]byte]]::init_error(sys::ERRNO_STRINGS[(:usize)-sysret]);
+            return std::result[[usize, []byte]]::init_error(sys::ERRNO_STRINGS[(:usize)-sysret]);
         }
 
-        return std::result[[:usize, :[]byte]]::init_value((:usize)sysret);
+        return std::result[[usize, []byte]]::init_value((:usize)sysret);
     }
 }
 
 struct err_writer {
-    func write(self: *std::err_writer, buf: []byte) std::result[[:usize, :[]byte]] {
+    func write(self: *std::err_writer, buf: []byte) std::result[[usize, []byte]] {
         if countof(buf) == 0 {
-            return std::result[[:usize, :[]byte]]::init_value(0);
+            return std::result[[usize, []byte]]::init_value(0);
         }
 
         var sysret = sys::write(sys::STDERR_FILENO, &buf[0u], countof(buf));
         if sysret < 0 {
-            return std::result[[:usize, :[]byte]]::init_error(sys::ERRNO_STRINGS[(:usize)-sysret]);
+            return std::result[[usize, []byte]]::init_error(sys::ERRNO_STRINGS[(:usize)-sysret]);
         }
 
-        return std::result[[:usize, :[]byte]]::init_value((:usize)sysret);
+        return std::result[[usize, []byte]]::init_value((:usize)sysret);
     }
 }
 
@@ -659,15 +659,15 @@ func err() std::writer {
 # allocated using the provided allocator.
 #
 # On failure, this function returns a static string describing the failure.
-func read_all(reader: std::reader, allocator: std::allocator) std::result[[:[]byte, :[]byte]] {
-    var bytes = std::new_slice[[:byte]](allocator, 0);
+func read_all(reader: std::reader, allocator: std::allocator) std::result[[[]byte, []byte]] {
+    var bytes = std::new_slice[[byte]](allocator, 0);
 
     var buf = (:[4096]byte)[0...];
     for true {
         var read_result = reader.read(buf[0:countof(buf)]);
         if read_result.is_error() {
-            std::delete_slice[[:byte]](allocator, bytes);
-            return std::result[[:[]byte, :[]byte]]::init_error(read_result.error());
+            std::delete_slice[[byte]](allocator, bytes);
+            return std::result[[[]byte, []byte]]::init_error(read_result.error());
         }
 
         var read_size = read_result.value();
@@ -677,11 +677,11 @@ func read_all(reader: std::reader, allocator: std::allocator) std::result[[:[]by
 
         var cur_count = countof(bytes);
         var new_count = cur_count + read_size;
-        bytes = std::resize_slice[[:byte]](allocator, bytes, new_count);
-        std::copy_slice[[:byte]](bytes[cur_count:new_count], buf[0:read_size]);
+        bytes = std::resize_slice[[byte]](allocator, bytes, new_count);
+        std::copy_slice[[byte]](bytes[cur_count:new_count], buf[0:read_size]);
     }
 
-    return std::result[[:[]byte, :[]byte]]::init_value(bytes);
+    return std::result[[[]byte, []byte]]::init_value(bytes);
 }
 
 # Read from the provided reader, invoking the reader's `read` function
@@ -697,23 +697,23 @@ func read_all(reader: std::reader, allocator: std::allocator) std::result[[:[]by
 # an empty line, then an empty optional is returned.
 #
 # On failure, this function returns a static string describing the failure.
-func read_line(reader: std::reader, allocator: std::allocator) std::result[[:std::optional[[:[]byte]], :[]byte]] {
-    var bytes = std::new_slice[[:byte]](allocator, 0);
+func read_line(reader: std::reader, allocator: std::allocator) std::result[[std::optional[[[]byte]], []byte]] {
+    var bytes = std::new_slice[[byte]](allocator, 0);
 
-    var c = std::zeroed[[:byte]]();
+    var c = std::zeroed[[byte]]();
     for true {
         var read_result = reader.read((:[]byte){&c, 1});
         if read_result.is_error() {
-            std::delete_slice[[:byte]](allocator, bytes);
-            return std::result[[:std::optional[[:[]byte]], :[]byte]]::init_error(read_result.error());
+            std::delete_slice[[byte]](allocator, bytes);
+            return std::result[[std::optional[[[]byte]], []byte]]::init_error(read_result.error());
         }
 
         var read_size = read_result.value();
         if read_size == 0 {
             if countof(bytes) == 0 {
                 # End-of-input encountered while reading an empty line.
-                std::delete_slice[[:byte]](allocator, bytes);
-                return std::result[[:std::optional[[:[]byte]], :[]byte]]::init_value(std::optional[[:[]byte]]::init_empty());
+                std::delete_slice[[byte]](allocator, bytes);
+                return std::result[[std::optional[[[]byte]], []byte]]::init_value(std::optional[[[]byte]]::init_empty());
             }
             # End-of-input encountered while reading a non-empty line.
             break;
@@ -726,18 +726,18 @@ func read_line(reader: std::reader, allocator: std::allocator) std::result[[:std
 
         var cur_count = countof(bytes);
         var new_count = cur_count + read_size;
-        bytes = std::resize_slice[[:byte]](allocator, bytes, new_count);
-        std::copy_slice[[:byte]](bytes[cur_count:new_count], (:[]byte){&c, 1});
+        bytes = std::resize_slice[[byte]](allocator, bytes, new_count);
+        std::copy_slice[[byte]](bytes[cur_count:new_count], (:[]byte){&c, 1});
 
     }
 
-    return std::result[[:std::optional[[:[]byte]], :[]byte]]::init_value(std::optional[[:[]byte]]::init_value(bytes));
+    return std::result[[std::optional[[[]byte]], []byte]]::init_value(std::optional[[[]byte]]::init_value(bytes));
 }
 
 # Write `countof(buf)` bytes using the provided writer, invoking the writer's
 # `write` function repeatedly until either all bytes have been written or an
 # error occurs.
-func write_all(writer: std::writer, buf: []byte) std::result[[:usize, :[]byte]] {
+func write_all(writer: std::writer, buf: []byte) std::result[[usize, []byte]] {
     var written: usize = 0;
     for written < countof(buf) {
         var result = writer.write(buf[written:countof(buf)]);
@@ -746,7 +746,7 @@ func write_all(writer: std::writer, buf: []byte) std::result[[:usize, :[]byte]] 
         }
         written = written + result.value();
     }
-    return std::result[[:usize, :[]byte]]::init_value(written);
+    return std::result[[usize, []byte]]::init_value(written);
 }
 
 # Write `countof(buf)` bytes using the provided writer, invoking the writer's
@@ -755,7 +755,7 @@ func write_all(writer: std::writer, buf: []byte) std::result[[:usize, :[]byte]] 
 # additionally add the number of written bytes to the value at `written` on
 # success. This behavior is useful when defining `format` member functions that
 # require multiple `std::write_all` calls.
-func write_all_accumulate(writer: std::writer, buf: []byte, written: *usize) std::result[[:usize, :[]byte]] {
+func write_all_accumulate(writer: std::writer, buf: []byte, written: *usize) std::result[[usize, []byte]] {
     var result = std::write_all(writer, buf);
     if result.is_value() {
         *written = *written + result.value();
@@ -764,7 +764,7 @@ func write_all_accumulate(writer: std::writer, buf: []byte, written: *usize) std
 }
 
 
-func write_format(writer: std::writer, format: []byte, args: []std::formatter) std::result[[:usize, :[]byte]] {
+func write_format(writer: std::writer, format: []byte, args: []std::formatter) std::result[[usize, []byte]] {
     # Current format argument index.
     var arg: usize = 0;
 
@@ -896,7 +896,7 @@ func write_format(writer: std::writer, format: []byte, args: []std::formatter) s
         std::panic("invalid format argument count");
     }
 
-    return std::result[[:usize, :[]byte]]::init_value(written);
+    return std::result[[usize, []byte]]::init_value(written);
 }
 
 func print(writer: std::writer, bytes: []byte) void {
@@ -923,7 +923,7 @@ func print_format_line(writer: std::writer, format: []byte, args: []std::formatt
     std::print(writer, "\n");
 }
 
-func new[[:T]](allocator: std::allocator) *T {
+func new[[T]](allocator: std::allocator) *T {
     var allocate_result = allocator.allocate(alignof(T), sizeof(T));
     if allocate_result.is_error() {
         std::panic(allocate_result.error());
@@ -931,11 +931,11 @@ func new[[:T]](allocator: std::allocator) *T {
     return (:*T)allocate_result.value();
 }
 
-func delete[[:T]](allocator: std::allocator, object: *T) void {
+func delete[[T]](allocator: std::allocator, object: *T) void {
     allocator.deallocate((:*byte)object, alignof(T), sizeof(T));
 }
 
-func new_slice[[:T]](allocator: std::allocator, count: usize) []T {
+func new_slice[[T]](allocator: std::allocator, count: usize) []T {
     var allocate_result = allocator.allocate(alignof(T), count * sizeof(T));
     if allocate_result.is_error() {
         std::panic(allocate_result.error());
@@ -943,7 +943,7 @@ func new_slice[[:T]](allocator: std::allocator, count: usize) []T {
     return (:[]T){(:*T)allocate_result.value(), count};
 }
 
-func resize_slice[[:T]](allocator: std::allocator, slice: []T, new_count: usize) []T {
+func resize_slice[[T]](allocator: std::allocator, slice: []T, new_count: usize) []T {
     var cur_count: usize = countof(slice);
     var cur_size: usize = cur_count * sizeof(T);
     var new_size: usize = new_count * sizeof(T);
@@ -957,7 +957,7 @@ func resize_slice[[:T]](allocator: std::allocator, slice: []T, new_count: usize)
     return (:[]T){(:*T)reallocate_result.value(), new_count};
 }
 
-func delete_slice[[:T]](allocator: std::allocator, slice: []T) void {
+func delete_slice[[T]](allocator: std::allocator, slice: []T) void {
     var pointer: *byte = *((:**byte)&slice);
     var size: usize = countof(slice) * sizeof(T);
     allocator.deallocate(pointer, alignof(T), size);
@@ -965,7 +965,7 @@ func delete_slice[[:T]](allocator: std::allocator, slice: []T) void {
 
 # Copy the elements of `source` into `destination`.The source and destination
 # buffers must contain the same number of elements.
-func copy_slice[[:T]](destination: []T, source: []T) void {
+func copy_slice[[T]](destination: []T, source: []T) void {
     if countof(destination) != countof(source) {
         std::panic("source and destination buffers have different sizes");
     }
@@ -1023,7 +1023,7 @@ func copy_slice[[:T]](destination: []T, source: []T) void {
 }
 
 # Set every element of the provided slice to the provided value.
-func fill_slice[[:T]](slice: []T, value: T) void {
+func fill_slice[[T]](slice: []T, value: T) void {
     for i in 0:countof(slice) {
         slice[i] = value;
     }
@@ -1031,42 +1031,42 @@ func fill_slice[[:T]](slice: []T, value: T) void {
 
 # Returns a signed integer less than, equal to, or greater than zero if `lhs`
 # is found, respectively, to be less than, equal to, or greater than `rhs`.
-func compare[[:T]](lhs: *T, rhs: *T) ssize {
+func compare[[T]](lhs: *T, rhs: *T) ssize {
     return T::compare(lhs, rhs);
 }
 
 # Returns true if `lhs` is found to be equal to `rhs`.
-func eq[[:T]](lhs: *T, rhs: *T) bool {
+func eq[[T]](lhs: *T, rhs: *T) bool {
     return T::compare(lhs, rhs) == 0;
 }
 
 # Returns true if `lhs` is found to be equal to `rhs`.
-func ne[[:T]](lhs: *T, rhs: *T) bool {
+func ne[[T]](lhs: *T, rhs: *T) bool {
     return T::compare(lhs, rhs) != 0;
 }
 
 # Returns true if `lhs` is found to be less than `rhs`.
-func lt[[:T]](lhs: *T, rhs: *T) bool {
+func lt[[T]](lhs: *T, rhs: *T) bool {
     return T::compare(lhs, rhs) < 0;
 }
 
 # Returns true if `lhs` is found to be less than or equal to `rhs`.
-func le[[:T]](lhs: *T, rhs: *T) bool {
+func le[[T]](lhs: *T, rhs: *T) bool {
     return T::compare(lhs, rhs) <= 0;
 }
 
 # Returns true if `lhs` is found to be greater than `rhs`.
-func gt[[:T]](lhs: *T, rhs: *T) bool {
+func gt[[T]](lhs: *T, rhs: *T) bool {
     return T::compare(lhs, rhs) > 0;
 }
 
 # Returns true if `lhs` is found to be greater than or equal to `rhs`.
-func ge[[:T]](lhs: *T, rhs: *T) bool {
+func ge[[T]](lhs: *T, rhs: *T) bool {
     return T::compare(lhs, rhs) >= 0;
 }
 
 # Returns the minimum value of `x` and `y`, both of primitive type `T`.
-func min[[:T]](x: T, y: T) T {
+func min[[T]](x: T, y: T) T {
     if x < y {
         return x;
     }
@@ -1074,7 +1074,7 @@ func min[[:T]](x: T, y: T) T {
 }
 
 # Returns the maximum value of `x` and `y`, both of primitive type `T`.
-func max[[:T]](x: T, y: T) T {
+func max[[T]](x: T, y: T) T {
     if x > y {
         return x;
     }
@@ -1083,11 +1083,11 @@ func max[[:T]](x: T, y: T) T {
 
 # Calculates the remainder of x and y (truncated towards zero).
 # The remainder will have the same sign as the dividend.
-#   std::rem[[:ssize]](+7, +3) => +1
-#   std::rem[[:ssize]](+7, -3) => +1
-#   std::rem[[:ssize]](-7, +3) => -1
-#   std::rem[[:ssize]](-7, -3) => -1
-func rem[[:T]](x: T, y: T) T {
+#   std::rem[[ssize]](+7, +3) => +1
+#   std::rem[[ssize]](+7, -3) => +1
+#   std::rem[[ssize]](-7, +3) => -1
+#   std::rem[[ssize]](-7, -3) => -1
+func rem[[T]](x: T, y: T) T {
     return x - y * (x / y);
 }
 
@@ -1103,7 +1103,7 @@ func exit(status: ssize) void {
 # making a call to `std::terminate`. This function does not return.
 func panic(why: []byte) void {
     var str = std::str::init(why);
-    std::panic_format("{}", (:[]std::formatter)[std::formatter::init[[:std::str]](&str)]);
+    std::panic_format("{}", (:[]std::formatter)[std::formatter::init[[std::str]](&str)]);
 }
 
 # Print the provided formatted string to standard error, followed by a newline,
@@ -1117,7 +1117,7 @@ func panic_format(format: []byte, args: []std::formatter) void {
 }
 
 # Return an object of type `T` with all bytes (including padding) zeroed.
-func zeroed[[:T]]() T {
+func zeroed[[T]]() T {
     # TODO: Ensure that `object` is aligned to `alignof(T)` once alignment
     # specification is added to variable & constant declarations. The x64
     # architecture allows unaligned memory access, so this current

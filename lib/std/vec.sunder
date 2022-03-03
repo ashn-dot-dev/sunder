@@ -1,14 +1,14 @@
 namespace std;
 import "std/core.sunder";
 
-struct vec[[:T]] {
+struct vec[[T]] {
     var _allocator: std::allocator;
     var _start: *T;
     var _count: usize;
     var _capacity: usize;
 
-    func init(allocator: std::allocator) std::vec[[:T]] {
-        return (:std::vec[[:T]]){
+    func init(allocator: std::allocator) std::vec[[T]] {
+        return (:std::vec[[T]]){
             ._allocator = allocator,
             ._start = (:*T)0u,
             ._count = 0,
@@ -16,45 +16,45 @@ struct vec[[:T]] {
         };
     }
 
-    func fini(self: *std::vec[[:T]]) void {
-        std::delete_slice[[:T]](self.*._allocator, (:[]T){self.*._start, self.*._capacity});
+    func fini(self: *std::vec[[T]]) void {
+        std::delete_slice[[T]](self.*._allocator, (:[]T){self.*._start, self.*._capacity});
     }
 
-    func start(self: *std::vec[[:T]]) *T {
+    func start(self: *std::vec[[T]]) *T {
         return self.*._start;
     }
 
-    func count(self: *std::vec[[:T]]) usize {
+    func count(self: *std::vec[[T]]) usize {
         return self.*._count;
     }
 
-    func capacity(self: *std::vec[[:T]]) usize {
+    func capacity(self: *std::vec[[T]]) usize {
         return self.*._capacity;
     }
 
-    func data(self: *std::vec[[:T]]) []T {
+    func data(self: *std::vec[[T]]) []T {
         return (:[]T){self.*._start, self.*._count};
     }
 
-    func reserve(self: *std::vec[[:T]], capacity: usize) void {
+    func reserve(self: *std::vec[[T]], capacity: usize) void {
         if capacity <= self.*._capacity {
             return;
         }
 
         if self.*._capacity == 0 {
-            var new = std::new_slice[[:T]](self.*._allocator, capacity);
+            var new = std::new_slice[[T]](self.*._allocator, capacity);
             self.*._start = &new[0];
             self.*._capacity = capacity;
             return;
         }
 
         var cur = (:[]T){self.*._start, self.*._capacity};
-        var new = std::resize_slice[[:T]](self.*._allocator, cur, capacity);
+        var new = std::resize_slice[[T]](self.*._allocator, cur, capacity);
         self.*._start = &new[0];
         self.*._capacity = capacity;
     }
 
-    func resize(self: *std::vec[[:T]], count: usize) void {
+    func resize(self: *std::vec[[T]], count: usize) void {
         if count > self.*._capacity {
             self.*.reserve(count);
         }
@@ -62,7 +62,7 @@ struct vec[[:T]] {
         self.*._count = count;
     }
 
-    func insert(self: *std::vec[[:T]], index: usize, value: T) void {
+    func insert(self: *std::vec[[T]], index: usize, value: T) void {
         if index > self.*._count {
             std::panic("invalid index");
         }
@@ -86,7 +86,7 @@ struct vec[[:T]] {
         var mem: []T = (:[]T){self.*._start, self.*._capacity};
         var src: []T = mem[index     : index + n];
         var dst: []T = mem[index + 1 : index + n + 1];
-        std::copy_slice[[:T]](dst, src);
+        std::copy_slice[[T]](dst, src);
         self.*._count = self.*._count + 1;
 
         # [A][B][ ][C][D][E]
@@ -94,7 +94,7 @@ struct vec[[:T]] {
         self.*.data()[index] = value;
     }
 
-    func remove(self: *std::vec[[:T]], index: usize) void {
+    func remove(self: *std::vec[[T]], index: usize) void {
         if index >= self.*._count {
             std::panic("invalid index");
         }
@@ -105,15 +105,15 @@ struct vec[[:T]] {
         var mem: []T = (:[]T){self.*._start, self.*._capacity};
         var src: []T = mem[index + 1 : index + n + 1];
         var dst: []T = mem[index     : index + n];
-        std::copy_slice[[:T]](dst, src);
+        std::copy_slice[[T]](dst, src);
         self.*._count = self.*._count - 1;
     }
 
-    func push(self: *std::vec[[:T]], value: T) void {
+    func push(self: *std::vec[[T]], value: T) void {
         self.*.insert(self.*._count, value);
     }
 
-    func pop(self: *std::vec[[:T]]) void {
+    func pop(self: *std::vec[[T]]) void {
         if self.*._count == 0 {
             std::panic("attempted to pop empty vec");
         }

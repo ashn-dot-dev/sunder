@@ -6,7 +6,7 @@ func main() void {
     var file: std::fs::file = (:std::fs::file){.fd = (:ssize)sys::STDOUT_FILENO};
     file.write("Hello, file!\n");
 
-    var writer: std::writer = std::writer::init[[:std::fs::file]](&file);
+    var writer: std::writer = std::writer::init[[std::fs::file]](&file);
     writer.write("Hello, file_writer!\n");
 }
 ################################################################################

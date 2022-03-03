@@ -84,8 +84,8 @@ qualified_addr(char const* prefix, char const* name);
 // identifier appended to the normalized symbol (matches gcc behavior for
 // multiple local static symbols defined with the same name within the same
 // function).
-// If the provided name contains template information (e.g. foo[[:u64]]) then
-// the template information will be discarded (e.g. foo[[:u64]] is truncated to
+// If the provided name contains template information (e.g. foo[[u64]]) then
+// the template information will be discarded (e.g. foo[[u64]] is truncated to
 // foo in the example above).
 // Returns the normalized name as an interned string.
 static char const* // interned
@@ -453,7 +453,7 @@ normalize(char const* prefix, char const* name, unsigned unique_id)
     assert(name != NULL);
 
     // Search the provided name for template information and discard that
-    // information if found (e.g foo[[:u16]] -> foo).
+    // information if found (e.g foo[[u16]] -> foo).
     char const* search = name;
     while (autil_isalnum(*search) || *search == '_') {
         search += 1;
@@ -539,7 +539,7 @@ xget_symbol(struct resolver* resolver, struct cst_symbol const* target)
 
     // Single symbol element:
     //      foo
-    //      foo[[:u16]]
+    //      foo[[u16]]
     size_t const element_count = autil_sbuf_count(target->elements);
     if (element_count == 1) {
         return lhs;
@@ -547,9 +547,9 @@ xget_symbol(struct resolver* resolver, struct cst_symbol const* target)
 
     // Qualified symbol:
     //      foo::bar
-    //      foo::bar[[:u16]]
-    //      foo::bar[[:u16]]::baz
-    //      foo::bar[[:u16]]::baz::qux[[u32]]
+    //      foo::bar[[u16]]
+    //      foo::bar[[u16]]::baz
+    //      foo::bar[[u16]]::baz::qux[[u32]]
     struct symbol const* symbol = NULL;
     for (size_t i = 1; i < element_count; ++i) {
         struct cst_symbol_element const* const element = target->elements[i];

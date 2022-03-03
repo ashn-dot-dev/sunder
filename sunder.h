@@ -797,6 +797,10 @@ cst_symbol_element_new(
     struct cst_identifier const* identifier,
     struct cst_template_argument const* const* template_arguments);
 
+// TODO: After removing the colon from the <template-parameter> production, a
+// template parameter just an <identifier>. Can cst_template_parameter be
+// removed completely? If constant values (i.e. non-type template parameters)
+// are ever added then this production would still be needed.
 struct cst_template_parameter {
     struct source_location const* location;
     struct cst_identifier const* identifier;
@@ -806,6 +810,10 @@ cst_template_parameter_new(
     struct source_location const* location,
     struct cst_identifier const* identifier);
 
+// TODO: After removing the colon from the <template-argument> production, a
+// template argument just a <typespec>. Can cst_template_argument be removed
+// completely? If constant values (i.e. non-type template parameters) are ever
+// added then this production would still be needed.
 struct cst_template_argument {
     struct source_location const* location;
     struct cst_typespec const* typespec;

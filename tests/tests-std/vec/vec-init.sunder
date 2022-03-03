@@ -2,7 +2,7 @@ import "std/page_allocator.sunder";
 import "std/vec.sunder";
 
 func main() void {
-    var vec: std::vec[[:u32]] = std::vec[[:u32]]::init(std::page_allocator::the());
+    var vec: std::vec[[u32]] = std::vec[[u32]]::init(std::page_allocator::the());
     dump vec.start();
     dump vec.count();
     dump vec.capacity();

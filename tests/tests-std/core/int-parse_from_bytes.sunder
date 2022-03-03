@@ -1,183 +1,183 @@
 import "std/core.sunder";
 
 func nominal_dec() void {
-    var result = std::int[[:ssize]]::parse_from_bytes("123456", 0);
+    var result = std::int[[ssize]]::parse_from_bytes("123456", 0);
     var int = result.value();
     std::print_format_line(
         std::out(),
         "{}",
         (:[]std::formatter)[
-            std::formatter::init[[:std::int[[:ssize]]]](&int)]);
+            std::formatter::init[[std::int[[ssize]]]](&int)]);
 
-    result = std::int[[:ssize]]::parse_from_bytes("123456", 10);
+    result = std::int[[ssize]]::parse_from_bytes("123456", 10);
     int = result.value();
     std::print_format_line(
         std::out(),
         "{}",
         (:[]std::formatter)[
-            std::formatter::init[[:std::int[[:ssize]]]](&int)]);
+            std::formatter::init[[std::int[[ssize]]]](&int)]);
 }
 
 func nominal_dec_pos() void {
-    var result = std::int[[:ssize]]::parse_from_bytes("+123456", 0);
+    var result = std::int[[ssize]]::parse_from_bytes("+123456", 0);
     var int = result.value();
     std::print_format_line(
         std::out(),
         "{}",
         (:[]std::formatter)[
-            std::formatter::init[[:std::int[[:ssize]]]](&int)]);
+            std::formatter::init[[std::int[[ssize]]]](&int)]);
 }
 
 func nominal_dec_neg() void {
-    var result = std::int[[:ssize]]::parse_from_bytes("-123456", 0);
+    var result = std::int[[ssize]]::parse_from_bytes("-123456", 0);
     var int = result.value();
     std::print_format_line(
         std::out(),
         "{}",
         (:[]std::formatter)[
-            std::formatter::init[[:std::int[[:ssize]]]](&int)]);
+            std::formatter::init[[std::int[[ssize]]]](&int)]);
 }
 
 func nominal_bin() void {
-    var result = std::int[[:ssize]]::parse_from_bytes("0b10010101", 0);
+    var result = std::int[[ssize]]::parse_from_bytes("0b10010101", 0);
     var int = result.value();
     std::print_format_line(
         std::out(),
         "{b}",
         (:[]std::formatter)[
-            std::formatter::init[[:std::int[[:ssize]]]](&int)]);
+            std::formatter::init[[std::int[[ssize]]]](&int)]);
 
-    result = std::int[[:ssize]]::parse_from_bytes("10010101", 2);
+    result = std::int[[ssize]]::parse_from_bytes("10010101", 2);
     int = result.value();
     std::print_format_line(
         std::out(),
         "{b}",
         (:[]std::formatter)[
-            std::formatter::init[[:std::int[[:ssize]]]](&int)]);
+            std::formatter::init[[std::int[[ssize]]]](&int)]);
 }
 
 func nominal_oct() void {
-    var result = std::int[[:ssize]]::parse_from_bytes("0o666", 0);
+    var result = std::int[[ssize]]::parse_from_bytes("0o666", 0);
     var int = result.value();
     std::print_format_line(
         std::out(),
         "{o}",
         (:[]std::formatter)[
-            std::formatter::init[[:std::int[[:ssize]]]](&int)]);
+            std::formatter::init[[std::int[[ssize]]]](&int)]);
 
-    result = std::int[[:ssize]]::parse_from_bytes("666", 8);
+    result = std::int[[ssize]]::parse_from_bytes("666", 8);
     int = result.value();
     std::print_format_line(
         std::out(),
         "{o}",
         (:[]std::formatter)[
-            std::formatter::init[[:std::int[[:ssize]]]](&int)]);
+            std::formatter::init[[std::int[[ssize]]]](&int)]);
 }
 
 func nominal_hex() void {
-    var result = std::int[[:ssize]]::parse_from_bytes("0xDEADbeef", 0);
+    var result = std::int[[ssize]]::parse_from_bytes("0xDEADbeef", 0);
     var int = result.value();
     std::print_format_line(
         std::out(),
         "{X}",
         (:[]std::formatter)[
-            std::formatter::init[[:std::int[[:ssize]]]](&int)]);
+            std::formatter::init[[std::int[[ssize]]]](&int)]);
 
-    result = std::int[[:ssize]]::parse_from_bytes("deadBEEF", 16);
+    result = std::int[[ssize]]::parse_from_bytes("deadBEEF", 16);
     int = result.value();
     std::print_format_line(
         std::out(),
         "{X}",
         (:[]std::formatter)[
-            std::formatter::init[[:std::int[[:ssize]]]](&int)]);
+            std::formatter::init[[std::int[[ssize]]]](&int)]);
 }
 
 func error_invalid_radix() void {
-    var result = std::int[[:ssize]]::parse_from_bytes("0", 1);
+    var result = std::int[[ssize]]::parse_from_bytes("0", 1);
     std::print_line(std::out(), result.error());
 
-    result = std::int[[:ssize]]::parse_from_bytes("0", 37);
+    result = std::int[[ssize]]::parse_from_bytes("0", 37);
     std::print_line(std::out(), result.error());
 
-    result = std::int[[:ssize]]::parse_from_bytes("0", 1000);
+    result = std::int[[ssize]]::parse_from_bytes("0", 1000);
     std::print_line(std::out(), result.error());
 }
 
 func error_integer_contains_no_digits() void {
-    var result = std::int[[:ssize]]::parse_from_bytes("", 0);
+    var result = std::int[[ssize]]::parse_from_bytes("", 0);
     std::print_line(std::out(), result.error());
 
-    result = std::int[[:ssize]]::parse_from_bytes("0b", 0);
+    result = std::int[[ssize]]::parse_from_bytes("0b", 0);
     std::print_line(std::out(), result.error());
 
-    result = std::int[[:ssize]]::parse_from_bytes("0o", 0);
+    result = std::int[[ssize]]::parse_from_bytes("0o", 0);
     std::print_line(std::out(), result.error());
 
-    result = std::int[[:ssize]]::parse_from_bytes("0x", 0);
+    result = std::int[[ssize]]::parse_from_bytes("0x", 0);
     std::print_line(std::out(), result.error());
 }
 
 func error_integer_contains_invalid_digit() void {
-    var result = std::int[[:ssize]]::parse_from_bytes("123A", 0);
+    var result = std::int[[ssize]]::parse_from_bytes("123A", 0);
     std::print_line(std::out(), result.error());
 
-    result = std::int[[:ssize]]::parse_from_bytes("0b12", 0);
+    result = std::int[[ssize]]::parse_from_bytes("0b12", 0);
     std::print_line(std::out(), result.error());
 
-    result = std::int[[:ssize]]::parse_from_bytes("0o1239", 0);
+    result = std::int[[ssize]]::parse_from_bytes("0o1239", 0);
     std::print_line(std::out(), result.error());
 
-    result = std::int[[:ssize]]::parse_from_bytes("0x123G", 0);
+    result = std::int[[ssize]]::parse_from_bytes("0x123G", 0);
     std::print_line(std::out(), result.error());
 }
 
 func error_integer_out_of_range() void {
-    var result_u8 = std::int[[:u8]]::parse_from_bytes("0x100", 0);
+    var result_u8 = std::int[[u8]]::parse_from_bytes("0x100", 0);
     std::print_line(std::out(), result_u8.error());
 
-    var result_u16 = std::int[[:u16]]::parse_from_bytes("0x10000", 0);
+    var result_u16 = std::int[[u16]]::parse_from_bytes("0x10000", 0);
     std::print_line(std::out(), result_u16.error());
 
-    var result_u32 = std::int[[:u32]]::parse_from_bytes("0x100000000", 0);
+    var result_u32 = std::int[[u32]]::parse_from_bytes("0x100000000", 0);
     std::print_line(std::out(), result_u32.error());
 
-    var result_u64 = std::int[[:u64]]::parse_from_bytes("0x10000000000000000", 0);
+    var result_u64 = std::int[[u64]]::parse_from_bytes("0x10000000000000000", 0);
     std::print_line(std::out(), result_u64.error());
 
     # Specifically trigger overflow that would occur when adding the last digit
     # in a left->right decimal parse with a "uintmax_t" u64 value. This is a
     # white-box test case.
-    var result_u64_addition_overflow = std::int[[:u64]]::parse_from_bytes("18446744073709551616", 0);
+    var result_u64_addition_overflow = std::int[[u64]]::parse_from_bytes("18446744073709551616", 0);
     std::print_line(std::out(), result_u64_addition_overflow.error());
 
-    var result_s8_overflow = std::int[[:s8]]::parse_from_bytes("0x80", 0);
+    var result_s8_overflow = std::int[[s8]]::parse_from_bytes("0x80", 0);
     std::print_line(std::out(), result_s8_overflow.error());
 
-    var result_s16_overflow = std::int[[:s16]]::parse_from_bytes("0x8000", 0);
+    var result_s16_overflow = std::int[[s16]]::parse_from_bytes("0x8000", 0);
     std::print_line(std::out(), result_s16_overflow.error());
 
-    var result_s32_overflow = std::int[[:s32]]::parse_from_bytes("0x80000000", 0);
+    var result_s32_overflow = std::int[[s32]]::parse_from_bytes("0x80000000", 0);
     std::print_line(std::out(), result_s32_overflow.error());
 
-    var result_s64_overflow = std::int[[:s64]]::parse_from_bytes("0x8000000000000000", 0);
+    var result_s64_overflow = std::int[[s64]]::parse_from_bytes("0x8000000000000000", 0);
     std::print_line(std::out(), result_s64_overflow.error());
 
-    var result_s8_underflow = std::int[[:s8]]::parse_from_bytes("-129", 0);
+    var result_s8_underflow = std::int[[s8]]::parse_from_bytes("-129", 0);
     std::print_line(std::out(), result_s8_underflow.error());
 
-    var result_s16_underflow = std::int[[:s16]]::parse_from_bytes("-32769", 0);
+    var result_s16_underflow = std::int[[s16]]::parse_from_bytes("-32769", 0);
     std::print_line(std::out(), result_s16_underflow.error());
 
-    var result_s32_underflow = std::int[[:s32]]::parse_from_bytes("-2147483649", 0);
+    var result_s32_underflow = std::int[[s32]]::parse_from_bytes("-2147483649", 0);
     std::print_line(std::out(), result_s32_underflow.error());
 
-    var result_s64_underflow = std::int[[:s64]]::parse_from_bytes("-9223372036854775809", 0);
+    var result_s64_underflow = std::int[[s64]]::parse_from_bytes("-9223372036854775809", 0);
     std::print_line(std::out(), result_s64_underflow.error());
 
-    var result_ssize_huge_overflow = std::int[[:ssize]]::parse_from_bytes("+1234567890123456789012345678901234567890", 0);
+    var result_ssize_huge_overflow = std::int[[ssize]]::parse_from_bytes("+1234567890123456789012345678901234567890", 0);
     std::print_line(std::out(), result_ssize_huge_overflow.error());
 
-    var result_ssize_huge_underflow = std::int[[:ssize]]::parse_from_bytes("-1234567890123456789012345678901234567890", 0);
+    var result_ssize_huge_underflow = std::int[[ssize]]::parse_from_bytes("-1234567890123456789012345678901234567890", 0);
     std::print_line(std::out(), result_ssize_huge_underflow.error());
 }
 

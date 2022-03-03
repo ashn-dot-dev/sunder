@@ -1,113 +1,113 @@
 import "std/core.sunder";
 
 func u_pos_rem_pos() void {
-    dump std::rem[[:u8]] (3, 1);
-    dump std::rem[[:u16]](3, 1);
-    dump std::rem[[:u32]](3, 1);
-    dump std::rem[[:u64]](3, 1);
+    dump std::rem[[u8]] (3, 1);
+    dump std::rem[[u16]](3, 1);
+    dump std::rem[[u32]](3, 1);
+    dump std::rem[[u64]](3, 1);
 
-    dump std::rem[[:u8]] (3, 2);
-    dump std::rem[[:u16]](3, 2);
-    dump std::rem[[:u32]](3, 2);
-    dump std::rem[[:u64]](3, 2);
+    dump std::rem[[u8]] (3, 2);
+    dump std::rem[[u16]](3, 2);
+    dump std::rem[[u32]](3, 2);
+    dump std::rem[[u64]](3, 2);
 
-    dump std::rem[[:u8]] (3, 3);
-    dump std::rem[[:u16]](3, 3);
-    dump std::rem[[:u32]](3, 3);
-    dump std::rem[[:u64]](3, 3);
+    dump std::rem[[u8]] (3, 3);
+    dump std::rem[[u16]](3, 3);
+    dump std::rem[[u32]](3, 3);
+    dump std::rem[[u64]](3, 3);
 
-    dump std::rem[[:u8]] (3, 4);
-    dump std::rem[[:u16]](3, 4);
-    dump std::rem[[:u32]](3, 4);
-    dump std::rem[[:u64]](3, 4);
+    dump std::rem[[u8]] (3, 4);
+    dump std::rem[[u16]](3, 4);
+    dump std::rem[[u32]](3, 4);
+    dump std::rem[[u64]](3, 4);
 }
 
 func s_pos_rem_pos() void {
-    dump std::rem[[:s8]] (+3, +1);
-    dump std::rem[[:s16]](+3, +1);
-    dump std::rem[[:s32]](+3, +1);
-    dump std::rem[[:s64]](+3, +1);
+    dump std::rem[[s8]] (+3, +1);
+    dump std::rem[[s16]](+3, +1);
+    dump std::rem[[s32]](+3, +1);
+    dump std::rem[[s64]](+3, +1);
 
-    dump std::rem[[:s8]] (+3, +2);
-    dump std::rem[[:s16]](+3, +2);
-    dump std::rem[[:s32]](+3, +2);
-    dump std::rem[[:s64]](+3, +2);
+    dump std::rem[[s8]] (+3, +2);
+    dump std::rem[[s16]](+3, +2);
+    dump std::rem[[s32]](+3, +2);
+    dump std::rem[[s64]](+3, +2);
 
-    dump std::rem[[:s8]] (+3, +3);
-    dump std::rem[[:s16]](+3, +3);
-    dump std::rem[[:s32]](+3, +3);
-    dump std::rem[[:s64]](+3, +3);
+    dump std::rem[[s8]] (+3, +3);
+    dump std::rem[[s16]](+3, +3);
+    dump std::rem[[s32]](+3, +3);
+    dump std::rem[[s64]](+3, +3);
 
-    dump std::rem[[:s8]] (+3, +4);
-    dump std::rem[[:s16]](+3, +4);
-    dump std::rem[[:s32]](+3, +4);
-    dump std::rem[[:s64]](+3, +4);
+    dump std::rem[[s8]] (+3, +4);
+    dump std::rem[[s16]](+3, +4);
+    dump std::rem[[s32]](+3, +4);
+    dump std::rem[[s64]](+3, +4);
 }
 
 func s_neg_rem_pos() void {
-    dump std::rem[[:s8]] (-3, +1);
-    dump std::rem[[:s16]](-3, +1);
-    dump std::rem[[:s32]](-3, +1);
-    dump std::rem[[:s64]](-3, +1);
+    dump std::rem[[s8]] (-3, +1);
+    dump std::rem[[s16]](-3, +1);
+    dump std::rem[[s32]](-3, +1);
+    dump std::rem[[s64]](-3, +1);
 
-    dump std::rem[[:s8]] (-3, +2);
-    dump std::rem[[:s16]](-3, +2);
-    dump std::rem[[:s32]](-3, +2);
-    dump std::rem[[:s64]](-3, +2);
+    dump std::rem[[s8]] (-3, +2);
+    dump std::rem[[s16]](-3, +2);
+    dump std::rem[[s32]](-3, +2);
+    dump std::rem[[s64]](-3, +2);
 
-    dump std::rem[[:s8]] (-3, +3);
-    dump std::rem[[:s16]](-3, +3);
-    dump std::rem[[:s32]](-3, +3);
-    dump std::rem[[:s64]](-3, +3);
+    dump std::rem[[s8]] (-3, +3);
+    dump std::rem[[s16]](-3, +3);
+    dump std::rem[[s32]](-3, +3);
+    dump std::rem[[s64]](-3, +3);
 
-    dump std::rem[[:s8]] (-3, +4);
-    dump std::rem[[:s16]](-3, +4);
-    dump std::rem[[:s32]](-3, +4);
-    dump std::rem[[:s64]](-3, +4);
+    dump std::rem[[s8]] (-3, +4);
+    dump std::rem[[s16]](-3, +4);
+    dump std::rem[[s32]](-3, +4);
+    dump std::rem[[s64]](-3, +4);
 }
 
 func s_pos_rem_neg() void {
-    dump std::rem[[:s8]] (+3, -1);
-    dump std::rem[[:s16]](+3, -1);
-    dump std::rem[[:s32]](+3, -1);
-    dump std::rem[[:s64]](+3, -1);
+    dump std::rem[[s8]] (+3, -1);
+    dump std::rem[[s16]](+3, -1);
+    dump std::rem[[s32]](+3, -1);
+    dump std::rem[[s64]](+3, -1);
 
-    dump std::rem[[:s8]] (+3, -2);
-    dump std::rem[[:s16]](+3, -2);
-    dump std::rem[[:s32]](+3, -2);
-    dump std::rem[[:s64]](+3, -2);
+    dump std::rem[[s8]] (+3, -2);
+    dump std::rem[[s16]](+3, -2);
+    dump std::rem[[s32]](+3, -2);
+    dump std::rem[[s64]](+3, -2);
 
-    dump std::rem[[:s8]] (+3, -3);
-    dump std::rem[[:s16]](+3, -3);
-    dump std::rem[[:s32]](+3, -3);
-    dump std::rem[[:s64]](+3, -3);
+    dump std::rem[[s8]] (+3, -3);
+    dump std::rem[[s16]](+3, -3);
+    dump std::rem[[s32]](+3, -3);
+    dump std::rem[[s64]](+3, -3);
 
-    dump std::rem[[:s8]] (+3, -4);
-    dump std::rem[[:s16]](+3, -4);
-    dump std::rem[[:s32]](+3, -4);
-    dump std::rem[[:s64]](+3, -4);
+    dump std::rem[[s8]] (+3, -4);
+    dump std::rem[[s16]](+3, -4);
+    dump std::rem[[s32]](+3, -4);
+    dump std::rem[[s64]](+3, -4);
 }
 
 func s_neg_rem_neg() void {
-    dump std::rem[[:s8]] (-3, -1);
-    dump std::rem[[:s16]](-3, -1);
-    dump std::rem[[:s32]](-3, -1);
-    dump std::rem[[:s64]](-3, -1);
+    dump std::rem[[s8]] (-3, -1);
+    dump std::rem[[s16]](-3, -1);
+    dump std::rem[[s32]](-3, -1);
+    dump std::rem[[s64]](-3, -1);
 
-    dump std::rem[[:s8]] (-3, -2);
-    dump std::rem[[:s16]](-3, -2);
-    dump std::rem[[:s32]](-3, -2);
-    dump std::rem[[:s64]](-3, -2);
+    dump std::rem[[s8]] (-3, -2);
+    dump std::rem[[s16]](-3, -2);
+    dump std::rem[[s32]](-3, -2);
+    dump std::rem[[s64]](-3, -2);
 
-    dump std::rem[[:s8]] (-3, -3);
-    dump std::rem[[:s16]](-3, -3);
-    dump std::rem[[:s32]](-3, -3);
-    dump std::rem[[:s64]](-3, -3);
+    dump std::rem[[s8]] (-3, -3);
+    dump std::rem[[s16]](-3, -3);
+    dump std::rem[[s32]](-3, -3);
+    dump std::rem[[s64]](-3, -3);
 
-    dump std::rem[[:s8]] (-3, -4);
-    dump std::rem[[:s16]](-3, -4);
-    dump std::rem[[:s32]](-3, -4);
-    dump std::rem[[:s64]](-3, -4);
+    dump std::rem[[s8]] (-3, -4);
+    dump std::rem[[s16]](-3, -4);
+    dump std::rem[[s32]](-3, -4);
+    dump std::rem[[s64]](-3, -4);
 }
 
 func main() void {
@@ -118,10 +118,10 @@ func main() void {
     s_neg_rem_neg();
 
     # Documentation examples.
-    dump std::rem[[:ssize]](+7, +3); # +1
-    dump std::rem[[:ssize]](+7, -3); # +1
-    dump std::rem[[:ssize]](-7, +3); # -1
-    dump std::rem[[:ssize]](-7, -3); # -1
+    dump std::rem[[ssize]](+7, +3); # +1
+    dump std::rem[[ssize]](+7, -3); # +1
+    dump std::rem[[ssize]](-7, +3); # -1
+    dump std::rem[[ssize]](-7, -3); # -1
 }
 ################################################################################
 # 00

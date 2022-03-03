@@ -6,7 +6,7 @@ func main() void {
         if i != 1 {
             std::print(std::out(), " ");
         }
-        var arg: *byte = *std::cptr::add[[:*byte]](sys::argv, i);
+        var arg: *byte = *std::cptr::add[[*byte]](sys::argv, i);
         std::print(std::out(), std::cstr::to_bytes(arg));
     }
     std::print(std::out(), "\n");

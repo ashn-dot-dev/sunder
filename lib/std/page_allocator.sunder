@@ -3,22 +3,22 @@ import "std/core.sunder";
 import "sys";
 
 struct page_allocator {
-    func allocate(self: *page_allocator, align: usize, size: usize) std::result[[:*byte, :[]byte]] {
+    func allocate(self: *page_allocator, align: usize, size: usize) std::result[[*byte, []byte]] {
         if align == 0 {
             if size == 0 {
                 # Allocating zero bytes with an alignment of zero is a valid use
                 # case when allocating for any zero-sized type:
                 #   allocate(alignof(:void), sizeof(:void));
                 # Use NULL as the canonical address for this situation.
-                return std::result[[:*byte, :[]byte]]::init_value((:*byte)0u);
+                return std::result[[*byte, []byte]]::init_value((:*byte)0u);
             }
-            return std::result[[:*byte, :[]byte]]::init_error(std::allocator::ERROR_INVALID_ALIGNMENT);
+            return std::result[[*byte, []byte]]::init_error(std::allocator::ERROR_INVALID_ALIGNMENT);
         }
 
         # If the requested alignment is larger than the page size then there is
         # no way for the kernel to map arbitrary page(s) for the allocation.
         if align > sys::PAGE_SIZE {
-            return std::result[[:*byte, :[]byte]]::init_error(std::allocator::ERROR_INVALID_ALIGNMENT);
+            return std::result[[*byte, []byte]]::init_error(std::allocator::ERROR_INVALID_ALIGNMENT);
         }
 
         # The requested alignment must be a power of two. The expression:
@@ -29,7 +29,7 @@ struct page_allocator {
         # be present in an correct is_power_of_two function.
         var is_power_of_two: bool = (align & (align - 1)) == 0;
         if not is_power_of_two {
-            return std::result[[:*byte, :[]byte]]::init_error(std::allocator::ERROR_INVALID_ALIGNMENT);
+            return std::result[[*byte, []byte]]::init_error(std::allocator::ERROR_INVALID_ALIGNMENT);
         }
 
         # According to POSIX, a call to mmap with a len argument of zero shall
@@ -38,7 +38,7 @@ struct page_allocator {
         # buffer), so we choose to return the NULL pointer as the "valid" memory
         # location.
         if size == 0 {
-            return std::result[[:*byte, :[]byte]]::init_value((:*byte)0u);
+            return std::result[[*byte, []byte]]::init_value((:*byte)0u);
         }
 
         # NULL addr indicates no address hint.
@@ -59,13 +59,13 @@ struct page_allocator {
 
         var sysret: ssize = sys::mmap(addr, size, prot, flags, fd, off);
         if sysret < 0 {
-            return std::result[[:*byte, :[]byte]]::init_error("mmap error");
+            return std::result[[*byte, []byte]]::init_error("mmap error");
         }
 
-        return std::result[[:*byte, :[]byte]]::init_value((:*byte)(:usize)sysret);
+        return std::result[[*byte, []byte]]::init_value((:*byte)(:usize)sysret);
     }
 
-    func reallocate(self: *page_allocator, ptr: *byte, align: usize, old_size: usize, new_size: usize) std::result[[:*byte, :[]byte]] {
+    func reallocate(self: *page_allocator, ptr: *byte, align: usize, old_size: usize, new_size: usize) std::result[[*byte, []byte]] {
         var allocate_result = self.*.allocate(align, new_size);
         if allocate_result.is_error() {
             return allocate_result;
@@ -80,9 +80,9 @@ struct page_allocator {
             copy_size = new_size;
         }
 
-        std::copy_slice[[:byte]]((:[]byte){new, copy_size}, (:[]byte){ptr, copy_size});
+        std::copy_slice[[byte]]((:[]byte){new, copy_size}, (:[]byte){ptr, copy_size});
         self.*.deallocate(ptr, align, old_size);
-        return std::result[[:*byte, :[]byte]]::init_value(new);
+        return std::result[[*byte, []byte]]::init_value(new);
     }
 
     func deallocate(self: *page_allocator, ptr: *byte, align: usize, size: usize) void {
