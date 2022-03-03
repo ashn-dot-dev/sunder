@@ -3,8 +3,7 @@ import "std/fs.sunder";
 import "sys/sys.sunder";
 
 func main() void {
-    var file: std::fs::file =
-        (:std::fs::file){.fd = (:ssize)sys::STDOUT_FILENO};
+    var file: std::fs::file = (:std::fs::file){.fd = (:ssize)sys::STDOUT_FILENO};
     file.write("Hello, file!\n");
 
     var writer: std::writer = std::writer::init[[:std::fs::file]](&file);

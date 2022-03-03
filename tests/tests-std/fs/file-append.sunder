@@ -4,8 +4,7 @@ import "std/fs.sunder";
 const path: []byte = "data.tmp";
 
 func main() void {
-    var open_result: std::result[[:std::fs::file, :std::fs::error]] =
-        std::fs::file::open(path, std::fs::OPEN_WRITE);
+    var open_result: std::result[[:std::fs::file, :[]byte]] = std::fs::file::open(path, std::fs::OPEN_WRITE);
     var file: std::fs::file = open_result.value();
     var writer: std::writer = std::writer::init[[:std::fs::file]](&file);
     std::print_line(writer, "OPENED WITH WRITE");

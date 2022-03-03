@@ -31,13 +31,13 @@ func main() void {
     var open_result = std::fs::file::open(std::cstr::to_bytes(path), std::fs::OPEN_READ);
     if open_result.is_error() {
         var p = std::str::init(std::cstr::to_bytes(path));
-        var e = open_result.error();
+        var e = std::str::init(open_result.error());
         std::print_format_line(
             std::err(),
             "{}: {}",
             (:[]std::formatter)[
                 std::formatter::init[[:std::str]](&p),
-                std::formatter::init[[:std::fs::error]](&e)]);
+                std::formatter::init[[:std::str]](&e)]);
         std::exit(std::EXIT_FAILURE);
     }
     var file = open_result.value();

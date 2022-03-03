@@ -6,13 +6,13 @@ func cat(filename: *byte) void {
 
     var open_result = std::fs::file::open(filename_str.bytes, std::fs::OPEN_READ);
     if open_result.is_error() {
-        var error = open_result.error();
+        var error = std::str::init(open_result.error());
         std::print_format_line(
             std::err(),
             "{}: {}",
             (:[]std::formatter)[
                 std::formatter::init[[:std::str]](&filename_str),
-                std::formatter::init[[:std::fs::error]](&error)]);
+                std::formatter::init[[:std::str]](&error)]);
         std::exit(std::EXIT_FAILURE);
     }
 

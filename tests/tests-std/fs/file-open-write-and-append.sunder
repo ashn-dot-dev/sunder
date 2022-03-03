@@ -4,13 +4,8 @@ import "std/fs.sunder";
 const path: []byte = "data.tmp";
 
 func main() void {
-    var result: std::result[[:std::fs::file, :std::fs::error]] =
-        std::fs::file::open(path, std::fs::OPEN_WRITE | std::fs::OPEN_APPEND);
-    var error: std::fs::error = result.error();
-    std::print_format_line(
-        std::err(),
-        "{}",
-        (:[]std::formatter)[std::formatter::init[[:std::fs::error]](&error)]);
+    var result: std::result[[:std::fs::file, :[]byte]] = std::fs::file::open(path, std::fs::OPEN_WRITE | std::fs::OPEN_APPEND);
+    std::print_line(std::err(), result.error());
 }
 ################################################################################
 # Invalid argument
