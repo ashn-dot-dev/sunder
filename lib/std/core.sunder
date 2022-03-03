@@ -1099,19 +1099,11 @@ func exit(status: ssize) void {
     sys::exit((:s32)status);
 }
 
-# Discontinue program execution due to an irrecoverable error. This function
-# currently operates by making a call to `std::exit` with failure status, but
-# this behavior may change in the future. This function does not return.
-func terminate() void {
-    std::exit(std::EXIT_FAILURE);
-}
-
 # Print the provided string to standard error, followed by a newline, before
 # making a call to `std::terminate`. This function does not return.
 func panic(why: []byte) void {
     var str = std::str::init(why);
-    std::panic_format(
-        "{}", (:[]std::formatter)[std::formatter::init[[:std::str]](&str)]);
+    std::panic_format("{}", (:[]std::formatter)[std::formatter::init[[:std::str]](&str)]);
 }
 
 # Print the provided formatted string to standard error, followed by a newline,
@@ -1121,7 +1113,7 @@ func panic_format(format: []byte, args: []std::formatter) void {
     std::print(std::err(), PANIC_PREAMBLE);
     std::print_format(std::err(), format, args);
     std::print(std::err(), "\n");
-    std::terminate();
+    std::exit(std::EXIT_FAILURE);
 }
 
 # Return an object of type `T` with all bytes (including padding) zeroed.
