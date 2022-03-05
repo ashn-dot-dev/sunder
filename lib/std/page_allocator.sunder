@@ -45,11 +45,11 @@ struct page_allocator {
         const addr: usize = 0u;
 
         # Give the page(s) read and write permissions.
-        const prot: ssize = sys::PROT_READ | sys::PROT_WRITE;
+        const prot = sys::PROT_READ | sys::PROT_WRITE;
 
         # Create a private mapping not backed by a file.
         # The contents of the mapped region are initialized to zero.
-        const flags: ssize = sys::MAP_PRIVATE | sys::MAP_ANONYMOUS;
+        const flags = sys::MAP_PRIVATE | sys::MAP_ANONYMOUS;
 
         # Should be -1 when MAP_ANONYMOUS is specified.
         const fd: usize = (:usize)-1s;

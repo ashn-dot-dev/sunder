@@ -138,6 +138,26 @@ cst_decl_new_struct(
 }
 
 struct cst_decl*
+cst_decl_new_alias(
+    struct source_location const* location,
+    struct cst_identifier const* identifier,
+    struct cst_symbol const* symbol)
+{
+    assert(location != NULL);
+    assert(identifier != NULL);
+    assert(symbol != NULL);
+
+    struct cst_decl* const self = autil_xalloc(NULL, sizeof(*self));
+    memset(self, 0x00, sizeof(*self));
+    self->kind = CST_DECL_ALIAS;
+    self->location = location;
+    self->name = identifier->name;
+    self->data.alias.identifier = identifier;
+    self->data.alias.symbol = symbol;
+    return self;
+}
+
+struct cst_decl*
 cst_decl_new_extern_variable(
     struct source_location const* location,
     struct cst_identifier const* identifier,

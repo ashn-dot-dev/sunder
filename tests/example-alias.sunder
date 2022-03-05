@@ -1,0 +1,27 @@
+import "std";
+
+alias i32 = s32;
+var a: i32 = 123;
+var b: i32 = 123s32;
+
+alias signed32 = std::int[[s32]];
+const c = (:signed32){.value = 123};
+
+alias standard = std;
+alias bytes = standard::str;
+
+alias printfln = standard::print_format_line;
+
+func main() void {
+    dump a;
+    dump b;
+    dump c;
+
+    var e = bytes::init("foo");
+    printfln(std::out(), "{}", (:[]std::formatter)[std::formatter::init[[std::str]](&e)]);
+}
+################################################################################
+# 7B 00 00 00
+# 7B 00 00 00
+# 7B 00 00 00
+# foo

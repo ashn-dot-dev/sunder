@@ -48,6 +48,8 @@ parse_decl_function(struct parser* parser);
 static struct cst_decl const*
 parse_decl_struct(struct parser* parser);
 static struct cst_decl const*
+parse_decl_alias(struct parser* parser);
+static struct cst_decl const*
 parse_decl_extern_variable(struct parser* parser);
 
 static struct cst_stmt const*
@@ -351,6 +353,10 @@ parse_decl(struct parser* parser)
         return parse_decl_struct(parser);
     }
 
+    if (check_current(parser, TOKEN_ALIAS)) {
+        return parse_decl_alias(parser);
+    }
+
     if (check_current(parser, TOKEN_EXTERN) && check_peek(parser, TOKEN_VAR)) {
         return parse_decl_extern_variable(parser);
     }
@@ -456,6 +462,25 @@ parse_decl_struct(struct parser* parser)
 
     struct cst_decl* const product =
         cst_decl_new_struct(location, identifier, template_parameters, members);
+
+    autil_freezer_register(context()->freezer, product);
+    return product;
+}
+
+static struct cst_decl const*
+parse_decl_alias(struct parser* parser)
+{
+    assert(parser != NULL);
+
+    struct source_location const* const location =
+        &expect_current(parser, TOKEN_ALIAS)->location;
+    struct cst_identifier const* const identifier = parse_identifier(parser);
+    expect_current(parser, TOKEN_ASSIGN);
+    struct cst_symbol const* const symbol = parse_symbol(parser);
+    expect_current(parser, TOKEN_SEMICOLON);
+
+    struct cst_decl* const product =
+        cst_decl_new_alias(location, identifier, symbol);
 
     autil_freezer_register(context()->freezer, product);
     return product;

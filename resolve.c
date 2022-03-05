@@ -164,6 +164,8 @@ resolve_decl_function(struct resolver* resolver, struct cst_decl const* decl);
 static struct symbol const*
 resolve_decl_struct(struct resolver* resolver, struct cst_decl const* decl);
 static struct symbol const*
+resolve_decl_alias(struct resolver* resolver, struct cst_decl const* decl);
+static struct symbol const*
 resolve_decl_extern_variable(
     struct resolver* resolver, struct cst_decl const* decl);
 
@@ -1250,6 +1252,9 @@ resolve_decl(struct resolver* resolver, struct cst_decl const* decl)
         // all top-level structs.
         UNREACHABLE();
     }
+    case CST_DECL_ALIAS: {
+        return resolve_decl_alias(resolver, decl);
+    }
     case CST_DECL_EXTERN_VARIABLE: {
         return resolve_decl_extern_variable(resolver, decl);
     }
@@ -1578,6 +1583,19 @@ resolve_decl_struct(struct resolver* resolver, struct cst_decl const* decl)
             }
         }
     }
+
+    return symbol;
+}
+
+static struct symbol const*
+resolve_decl_alias(struct resolver* resolver, struct cst_decl const* decl)
+{
+    assert(resolver != NULL);
+    assert(decl != NULL);
+    assert(decl->kind == CST_DECL_ALIAS);
+
+    struct symbol const* const symbol = xget_symbol(resolver, decl->data.alias.symbol);
+    symbol_table_insert(resolver->current_symbol_table, decl->name, symbol);
 
     return symbol;
 }
@@ -3972,9 +3990,9 @@ resolve(struct module* module)
         // using their unqualified names.
         if (module->cst->namespace == NULL) {
             symbol_table_insert(
-                resolver->current_export_table, symbol->name, symbol);
+                resolver->current_export_table, decl->name, symbol);
             symbol_table_insert(
-                context()->global_symbol_table, symbol->name, symbol);
+                context()->global_symbol_table, decl->name, symbol);
         }
     }
 

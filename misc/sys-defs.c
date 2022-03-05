@@ -15,7 +15,7 @@ int
 main(void)
 {
 #define PRINT_O_VALUE(o_value) \
-    printf("const %-12s s32 = 0x%08xs32;\n", #o_value ":", o_value)
+    printf("const %-12s sint = 0x%08xs32;\n", #o_value ":", o_value)
     // Applications shall specify exactly one of the first five values (file access modes) below in the value of oflag:
     /* not in glibc
     PRINT_O_VALUE(O_EXEC);   // Open for execute only (non-directory files). The result is unspecified if this flag is applied to a directory.
@@ -48,7 +48,7 @@ main(void)
     fputc('\n', stdout);
 
 #define PRINT_S_VALUE(s_value) \
-    printf("const %-8s u16 = 0o%03o;\n", #s_value ":", s_value)
+    printf("const %-8s umode_t = 0o%03o;\n", #s_value ":", s_value)
     // The <sys/stat.h> header shall define the following symbolic constants for the file mode bits encoded in type mode_t, with the indicated numeric values. These macros shall expand to an expression which has a type that allows them to be used, either singly or OR'ed together, as the third argument to open() without the need for a mode_t cast. The values shall be suitable for use in #if preprocessing directives.
     PRINT_S_VALUE(S_IRWXU); // Read, write, execute/search by owner.
     PRINT_S_VALUE(S_IRUSR); // Read permission, owner.
@@ -84,7 +84,7 @@ main(void)
     fputc('\n', stdout);
 
 #define PRINT_SEEK_VALUE(seek_value) \
-    printf("const %-8s u32 = 0x%01x;\n", #seek_value ":", seek_value)
+    printf("const %-8s uint = 0x%01x;\n", #seek_value ":", seek_value)
     PRINT_SEEK_VALUE(SEEK_SET);
     PRINT_SEEK_VALUE(SEEK_CUR);
     PRINT_SEEK_VALUE(SEEK_END);
@@ -93,7 +93,7 @@ main(void)
     fputc('\n', stdout);
 
 #define PRINT_PROT_VALUE(prot_value) \
-    printf("const %-11s sssize = 0x%01x;\n", #prot_value ":", prot_value)
+    printf("const %-11s ulong = 0x%01x;\n", #prot_value ":", prot_value)
     // The parameter prot determines whether read, write, execute, or some combination of accesses are permitted to the data being mapped. The prot shall be either PROT_NONE or the bitwise-inclusive OR of one or more of the other flags in the following table, defined in the <sys/mman.h> header.
     PRINT_PROT_VALUE(PROT_NONE);  // Data cannot be accessed.
     PRINT_PROT_VALUE(PROT_READ);  // Data can be read.
@@ -104,7 +104,7 @@ main(void)
     fputc('\n', stdout);
 
 #define PRINT_MAP_VALUE(map_value) \
-    printf("const %-14s ssize = 0x%02x;\n", #map_value ":", map_value)
+    printf("const %-14s ulong = 0x%02x;\n", #map_value ":", map_value)
     // The parameter flags provides other information about the handling of the mapped data. The value of flags is the bitwise-inclusive OR of these options, defined in <sys/mman.h>:
     PRINT_MAP_VALUE(MAP_SHARED);  // Changes are shared.
     PRINT_MAP_VALUE(MAP_PRIVATE); // Changes are private.

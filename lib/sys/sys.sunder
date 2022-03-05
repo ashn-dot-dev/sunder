@@ -1,6 +1,6 @@
 # Linux Kernel x86-64 System Interface
-# ====================================
-#
+namespace sys;
+
 # System V x86-64 (LP64) ABI:
 # C Type             | Size | Alignment | Sunder Type
 # -------------------+------+-----------+------------
@@ -24,7 +24,20 @@
 # typedef long              __kernel_long_t;
 # typedef unsigned long     __kernel_ulong_t;
 # typedef __kernel_long_t   __kernel_off_t;
-namespace sys;
+alias char      = byte;
+alias schar     = s8;
+alias uchar     = u8;
+alias sshort    = s16;
+alias ushort    = u16;
+alias sint      = s32;
+alias uint      = u32;
+alias slong     = ssize;
+alias ulong     = usize;
+alias slonglong = s64;
+alias ulonglong = u64;
+
+alias umode_t = ushort;
+alias off_t   = slong;
 
 const SYS_READ:   ssize = 0;
 const SYS_WRITE:  ssize = 1;
@@ -304,54 +317,54 @@ const ERRNO_STRINGS: [134][]byte = (:[134][]byte)[
     "Memory page has hardware error"                     # EHWPOISON (133)
 ];
 
-const STDIN_FILENO:  u32 = 0;
-const STDOUT_FILENO: u32 = 1;
-const STDERR_FILENO: u32 = 2;
+const STDIN_FILENO:  uint = 0;
+const STDOUT_FILENO: uint = 1;
+const STDERR_FILENO: uint = 2;
 
-const O_RDONLY:    s32 = 0x00000000;
-const O_WRONLY:    s32 = 0x00000001;
-const O_RDWR:      s32 = 0x00000002;
-const O_CREAT:     s32 = 0x00000040;
-const O_EXCL:      s32 = 0x00000080;
-const O_NOCTTY:    s32 = 0x00000100;
-const O_TRUNC:     s32 = 0x00000200;
-const O_APPEND:    s32 = 0x00000400;
-const O_CLOEXEC:   s32 = 0x00080000;
-const O_DIRECTORY: s32 = 0x00010000;
-const O_NOFOLLOW:  s32 = 0x00020000;
-const O_NONBLOCK:  s32 = 0x00000800;
-const O_DSYNC:     s32 = 0x00001000;
-const O_RSYNC:     s32 = 0x00101000;
-const O_SYNC:      s32 = 0x00101000;
+const O_RDONLY:    sint = 0x00000000;
+const O_WRONLY:    sint = 0x00000001;
+const O_RDWR:      sint = 0x00000002;
+const O_CREAT:     sint = 0x00000040;
+const O_EXCL:      sint = 0x00000080;
+const O_NOCTTY:    sint = 0x00000100;
+const O_TRUNC:     sint = 0x00000200;
+const O_APPEND:    sint = 0x00000400;
+const O_CLOEXEC:   sint = 0x00080000;
+const O_DIRECTORY: sint = 0x00010000;
+const O_NOFOLLOW:  sint = 0x00020000;
+const O_NONBLOCK:  sint = 0x00000800;
+const O_DSYNC:     sint = 0x00001000;
+const O_RSYNC:     sint = 0x00101000;
+const O_SYNC:      sint = 0x00101000;
 
-const S_IRWXU: u16 = 0o700;
-const S_IRUSR: u16 = 0o400;
-const S_IWUSR: u16 = 0o200;
-const S_IXUSR: u16 = 0o100;
+const S_IRWXU: umode_t = 0o700;
+const S_IRUSR: umode_t = 0o400;
+const S_IWUSR: umode_t = 0o200;
+const S_IXUSR: umode_t = 0o100;
 
-const S_IRWXG: u16 = 0o070;
-const S_IRGRP: u16 = 0o040;
-const S_IWGRP: u16 = 0o020;
-const S_IXGRP: u16 = 0o010;
+const S_IRWXG: umode_t = 0o070;
+const S_IRGRP: umode_t = 0o040;
+const S_IWGRP: umode_t = 0o020;
+const S_IXGRP: umode_t = 0o010;
 
-const S_IRWXO: u16 = 0o007;
-const S_IROTH: u16 = 0o004;
-const S_IWOTH: u16 = 0o002;
-const S_IXOTH: u16 = 0o001;
+const S_IRWXO: umode_t = 0o007;
+const S_IROTH: umode_t = 0o004;
+const S_IWOTH: umode_t = 0o002;
+const S_IXOTH: umode_t = 0o001;
 
-const SEEK_SET: u32 = 0x0;
-const SEEK_CUR: u32 = 0x1;
-const SEEK_END: u32 = 0x2;
+const SEEK_SET: uint = 0x0;
+const SEEK_CUR: uint = 0x1;
+const SEEK_END: uint = 0x2;
 
-const PROT_NONE:  ssize = 0x0;
-const PROT_READ:  ssize = 0x1;
-const PROT_WRITE: ssize = 0x2;
-const PROT_EXEC:  ssize = 0x4;
+const PROT_NONE:  ulong = 0x0;
+const PROT_READ:  ulong = 0x1;
+const PROT_WRITE: ulong = 0x2;
+const PROT_EXEC:  ulong = 0x4;
 
-const MAP_SHARED:    ssize = 0x01;
-const MAP_PRIVATE:   ssize = 0x02;
-const MAP_FIXED:     ssize = 0x10;
-const MAP_ANONYMOUS: ssize = 0x20;
+const MAP_SHARED:    ulong = 0x01;
+const MAP_PRIVATE:   ulong = 0x02;
+const MAP_FIXED:     ulong = 0x10;
+const MAP_ANONYMOUS: ulong = 0x20;
 
 # linux/include/uapi/linux/limits.h:
 const NGROUPS_MAX:    usize =  65536; # supplemental group IDs are available
@@ -372,49 +385,49 @@ const PAGE_SIZE: usize = 4096;
 
 # linux/fs/read_write.c:
 # SYSCALL_DEFINE3(read, unsigned int, fd, char __user *, buf, size_t, count)
-func read(fd: u32, buf: *byte, count: usize) ssize {
+func read(fd: uint, buf: *char, count: usize) ssize {
     return syscall(SYS_READ, fd, buf, count);
 }
 
 # linux/fs/read_write.c:
 # SYSCALL_DEFINE3(write, unsigned int, fd, const char __user *, buf, size_t, count)
-func write(fd: u32, buf: *byte, count: usize) ssize {
+func write(fd: uint, buf: *char, count: usize) ssize {
     return syscall(SYS_WRITE, fd, buf, count);
 }
 
 # linux/fs/open.c:
 # SYSCALL_DEFINE3(open, const char __user *, filename, int, flags, umode_t, mode)
-func open(filename: *byte, flags: s32, mode: u16) ssize {
+func open(filename: *char, flags: sint, mode: umode_t) ssize {
     return syscall(SYS_OPEN, filename, flags, mode);
 }
 
 # linux/fs/open.c:
 # SYSCALL_DEFINE1(close, unsigned int, fd)
-func close(fd: u32) ssize {
+func close(fd: uint) ssize {
     return syscall(SYS_CLOSE, fd);
 }
 
 # linux/fs/read_write.c:
 # SYSCALL_DEFINE3(lseek, unsigned int, fd, off_t, offset, unsigned int, whence)
-func lseek(fd: u32, offset: ssize, whence: u32) ssize {
+func lseek(fd: uint, offset: off_t, whence: uint) ssize {
     return syscall(SYS_LSEEK, fd, offset, whence);
 }
 
 # arch/x86/kernel/sys_x86_64.c
 # SYSCALL_DEFINE6(mmap, unsigned long, addr, unsigned long, len, unsigned long, prot, unsigned long, flags, unsigned long, fd, unsigned long, off)
-func mmap(addr: usize, len: usize, prot: ssize, flags: ssize, fd: usize, off: usize) ssize {
+func mmap(addr: ulong, len: ulong, prot: ulong, flags: ulong, fd: ulong, off: ulong) ssize {
     return syscall(SYS_MMAP, addr, len, prot, flags, fd, off);
 }
 
 # linux/mm/mmap.c
 # SYSCALL_DEFINE2(munmap, unsigned long, addr, size_t, len)
-func munmap(addr: usize, len: usize) ssize {
+func munmap(addr: ulong, len: usize) ssize {
     return syscall(SYS_MUNMAP, addr, len);
 }
 
 # linux/kernel/exit.c:
 # SYSCALL_DEFINE1(exit, int, error_code)
-func exit(error_code: s32) void {
+func exit(error_code: sint) void {
     syscall(SYS_EXIT, error_code);
 }
 

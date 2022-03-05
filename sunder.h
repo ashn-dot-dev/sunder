@@ -293,6 +293,7 @@ enum token_kind {
     TOKEN_CONST,
     TOKEN_FUNC,
     TOKEN_STRUCT,
+    TOKEN_ALIAS,
     TOKEN_EXTERN,
     TOKEN_DUMP,
     TOKEN_RETURN,
@@ -419,6 +420,7 @@ struct cst_decl {
         CST_DECL_CONSTANT,
         CST_DECL_FUNCTION,
         CST_DECL_STRUCT,
+        CST_DECL_ALIAS,
         CST_DECL_EXTERN_VARIABLE,
     } kind;
     union {
@@ -453,6 +455,10 @@ struct cst_decl {
         } struct_;
         struct {
             struct cst_identifier const* identifier;
+            struct cst_symbol const* symbol;
+        } alias;
+        struct {
+            struct cst_identifier const* identifier;
             struct cst_typespec const* typespec;
         } extern_variable;
     } data;
@@ -483,6 +489,11 @@ cst_decl_new_struct(
     struct cst_identifier const* identifier,
     struct cst_template_parameter const* const* template_parameters,
     struct cst_member const* const* members);
+struct cst_decl*
+cst_decl_new_alias(
+    struct source_location const* location,
+    struct cst_identifier const* identifier,
+    struct cst_symbol const* symbol);
 struct cst_decl*
 cst_decl_new_extern_variable(
     struct source_location const* location,

@@ -255,6 +255,10 @@ order_decl(struct orderer* orderer, struct cst_decl const* decl)
         }
         return;
     }
+    case CST_DECL_ALIAS: {
+        order_symbol(orderer, decl->data.alias.symbol);
+        return;
+    }
     case CST_DECL_EXTERN_VARIABLE: {
         order_typespec(orderer, decl->data.extern_variable.typespec);
         return;
