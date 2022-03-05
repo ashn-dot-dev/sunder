@@ -1594,7 +1594,8 @@ resolve_decl_alias(struct resolver* resolver, struct cst_decl const* decl)
     assert(decl != NULL);
     assert(decl->kind == CST_DECL_ALIAS);
 
-    struct symbol const* const symbol = xget_symbol(resolver, decl->data.alias.symbol);
+    struct symbol const* const symbol =
+        xget_symbol(resolver, decl->data.alias.symbol);
     symbol_table_insert(resolver->current_symbol_table, decl->name, symbol);
 
     return symbol;
