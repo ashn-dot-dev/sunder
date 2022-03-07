@@ -384,8 +384,7 @@ type_struct_member_function(struct type const* self, char const* name)
         return NULL;
     }
 
-    assert(symbol->data.function->type->kind == TYPE_FUNCTION);
-    return symbol->data.function->data.function;
+    return symbol->data.function;
 }
 
 struct type const*
@@ -621,7 +620,7 @@ symbol_new_constant(
 
 struct symbol*
 symbol_new_function(
-    struct source_location const* location, struct value const* function)
+    struct source_location const* location, struct function const* function)
 {
     assert(location != NULL);
     assert(function != NULL);
@@ -631,7 +630,7 @@ symbol_new_function(
     memset(self, 0x00, sizeof(*self));
     self->kind = SYMBOL_FUNCTION;
     self->location = location;
-    self->name = function->data.function->name;
+    self->name = function->name;
     self->data.function = function;
     return self;
 }
@@ -695,7 +694,6 @@ symbol_xget_type(struct symbol const* self)
         return self->data.constant.type;
     }
     case SYMBOL_FUNCTION: {
-        assert(self->data.function->type->kind == TYPE_FUNCTION);
         return self->data.function->type;
     }
     case SYMBOL_TEMPLATE: /* fallthrough */
@@ -720,7 +718,7 @@ symbol_xget_address(struct symbol const* self)
         return self->data.constant.address;
     }
     case SYMBOL_FUNCTION: {
-        return self->data.function->data.function->address;
+        return self->data.function->address;
     }
     case SYMBOL_TYPE: /* fallthrough */
     case SYMBOL_TEMPLATE: /* fallthrough */
@@ -746,7 +744,7 @@ symbol_xget_value(struct symbol const* self)
         return self->data.constant.value;
     }
     case SYMBOL_FUNCTION: {
-        return self->data.function;
+        return self->data.function->value;
     }
     case SYMBOL_TYPE: /* fallthrough */
     case SYMBOL_TEMPLATE: /* fallthrough */

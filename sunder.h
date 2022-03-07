@@ -1227,7 +1227,7 @@ struct symbol {
             struct address const* address; // Always ADDRESS_STATIC.
             struct value const* value;
         } constant;
-        struct value const* function; // Always of TYPE_FUNCTION.
+        struct function const* function;
         struct {
             // Original CST of this template.
             struct cst_decl const* decl;
@@ -1261,7 +1261,7 @@ symbol_new_constant(
     struct value const* value);
 struct symbol*
 symbol_new_function(
-    struct source_location const* location, struct value const* value);
+    struct source_location const* location, struct function const* function);
 struct symbol*
 symbol_new_template(
     struct source_location const* location,
@@ -1596,6 +1596,11 @@ struct function {
     char const* name; // interned
     struct type const* type; // TYPE_FUNCTION
     struct address const* address; // ADDRESS_STATIC
+    // The value associated with this function. Self-referential, this member
+    // points to a value that contains a pointer to the address of this struct.
+    // Initially NULL, but set shortly after the allocation and initialization
+    // of this object during the resolve phase.
+    struct value const* value;
 
     // Outermost symbol table containing symbols for function parameters, local
     // variables, and local constants in the outermost scope (i.e. body) of the

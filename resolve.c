@@ -1456,11 +1456,12 @@ resolve_decl_function(struct resolver* resolver, struct cst_decl const* decl)
 
     struct value* const value = value_new_function(function);
     value_freeze(value, context()->freezer);
+    function->value = value;
 
     // Add the function/value to the symbol table now so that recursive
     // functions may reference themselves.
     struct symbol* const function_symbol =
-        symbol_new_function(decl->location, value);
+        symbol_new_function(decl->location, function);
     autil_freezer_register(context()->freezer, function_symbol);
     symbol_table_insert(
         resolver->current_symbol_table, function_symbol->name, function_symbol);
