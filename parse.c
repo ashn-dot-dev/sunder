@@ -512,7 +512,8 @@ parse_stmt(struct parser* parser)
     assert(parser != NULL);
 
     if (check_current(parser, TOKEN_VAR) || check_current(parser, TOKEN_CONST)
-        || check_current(parser, TOKEN_FUNC)) {
+        || check_current(parser, TOKEN_FUNC)
+        || check_current(parser, TOKEN_ALIAS)) {
         return parse_stmt_decl(parser);
     }
 

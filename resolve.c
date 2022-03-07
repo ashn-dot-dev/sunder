@@ -1824,6 +1824,10 @@ resolve_stmt_decl(struct resolver* resolver, struct cst_stmt const* stmt)
         fatal(decl->location, "local declaration of struct `%s`", decl->name);
         return NULL;
     }
+    case CST_DECL_ALIAS: {
+        resolve_decl_alias(resolver, stmt->data.decl);
+        return NULL;
+    }
     case CST_DECL_EXTERN_VARIABLE: {
         fatal(
             decl->location,

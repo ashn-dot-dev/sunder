@@ -12,10 +12,14 @@ alias bytes = standard::str;
 
 alias printfln = standard::print_format_line;
 
+alias foo = s64;
+
 func main() void {
     dump a;
     dump b;
     dump c;
+
+    alias foo = s32;
 
     var e = bytes::init("foo");
     printfln(std::out(), "{}", (:[]std::formatter)[std::formatter::init[[std::str]](&e)]);
