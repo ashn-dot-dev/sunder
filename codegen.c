@@ -925,8 +925,8 @@ codegen_stmt(struct stmt const* stmt)
 
     size_t const id = unique_id++;
     char const* const cstr = table[stmt->kind].kind_cstr;
-    appendli_location(stmt->location, "%s (ID %zu)", cstr, id);
     appendln("%s%zu_bgn:", LABEL_STMT, id);
+    appendli_location(stmt->location, "%s (ID %zu)", cstr, id);
     table[stmt->kind].codegen_fn(stmt, id);
     appendln("%s%zu_end:", LABEL_STMT, id);
 }
@@ -1222,8 +1222,8 @@ codegen_rvalue(struct expr const* expr)
 
     size_t const id = unique_id++;
     char const* const cstr = table[expr->kind].kind_cstr;
-    appendli_location(expr->location, "%s (ID %zu, RVALUE)", cstr, id);
     appendln("%s%zu_bgn:", LABEL_EXPR, id);
+    appendli_location(expr->location, "%s (ID %zu, RVALUE)", cstr, id);
     assert(table[expr->kind].codegen_fn != NULL);
     table[expr->kind].codegen_fn(expr, id);
     appendln("%s%zu_end:", LABEL_EXPR, id);
@@ -2469,8 +2469,8 @@ codegen_lvalue(struct expr const* expr)
 
     size_t const id = unique_id++;
     char const* const cstr = table[expr->kind].kind_cstr;
-    appendli_location(expr->location, "%s (ID %zu, LVALUE)", cstr, id);
     appendln("%s%zu_bgn:", LABEL_EXPR, id);
+    appendli_location(expr->location, "%s (ID %zu, LVALUE)", cstr, id);
     assert(table[expr->kind].codegen_fn != NULL);
     table[expr->kind].codegen_fn(expr, id);
     appendln("%s%zu_end:", LABEL_EXPR, id);
