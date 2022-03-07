@@ -1229,6 +1229,13 @@ struct symbol {
     // SYMBOL_NAMESPACE => NULL.
     struct address const* address;
     // SYMBOL_TYPE      => NULL.
+    // SYMBOL_VARIABLE  => NULL.
+    // SYMBOL_CONSTANT  => NULL.
+    // SYMBOL_FUNCTION  => NULL.
+    // SYMBOL_TEMPLATE  => Prefix used when instantiating the template.
+    // SYMBOL_NAMESPACE => NULL.
+    char const* symbol_addr_prefix; // Optional (NULL => no prefix).
+    // SYMBOL_TYPE      => NULL.
     // SYMBOL_VARIABLE  => Compile-type-value of the variable
     //                     (non-extern globals only).
     // SYMBOL_CONSTANT  => Compile-time value of the constant.
@@ -1279,6 +1286,7 @@ struct symbol*
 symbol_new_template(
     struct source_location const* location,
     char const* name,
+    char const* symbol_addr_prefix,
     struct cst_decl const* decl,
     struct symbol_table* symbols);
 struct symbol*

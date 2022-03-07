@@ -781,11 +781,15 @@ xget_template_instance(
         autil_freezer_register(context()->freezer, instance_decl);
 
         // Resolve the actual template instance.
+        char const* const save_static_addr_prefix =
+            resolver->current_static_addr_prefix;
         struct symbol_table* const save_symbol_table =
             resolver->current_symbol_table;
+        resolver->current_static_addr_prefix = symbol->symbol_addr_prefix;
         resolver->current_symbol_table = instance_symbol_table;
         struct symbol const* resolved_symbol =
             resolve_decl_function(resolver, instance_decl);
+        resolver->current_static_addr_prefix = save_static_addr_prefix;
         resolver->current_symbol_table = save_symbol_table;
 
         // Add the unique instance to the cache of instances for the template.
@@ -887,11 +891,15 @@ xget_template_instance(
         autil_freezer_register(context()->freezer, instance_decl);
 
         // Resolve the actual template instance.
+        char const* const save_static_addr_prefix =
+            resolver->current_static_addr_prefix;
         struct symbol_table* const save_symbol_table =
             resolver->current_symbol_table;
+        resolver->current_static_addr_prefix = symbol->symbol_addr_prefix;
         resolver->current_symbol_table = instance_symbol_table;
         struct symbol const* resolved_symbol =
             resolve_decl_struct(resolver, instance_decl);
+        resolver->current_static_addr_prefix = save_static_addr_prefix;
         resolver->current_symbol_table = save_symbol_table;
 
         // Add the unique instance to the cache of instances for the template.
@@ -1383,8 +1391,12 @@ resolve_decl_function(struct resolver* resolver, struct cst_decl const* decl)
     if (autil_sbuf_count(template_parameters) != 0) {
         struct symbol_table* const symbols =
             symbol_table_new(resolver->current_symbol_table);
-        struct symbol* const template_symbol =
-            symbol_new_template(decl->location, decl->name, decl, symbols);
+        struct symbol* const template_symbol = symbol_new_template(
+            decl->location,
+            decl->name,
+            resolver->current_static_addr_prefix,
+            decl,
+            symbols);
 
         autil_freezer_register(context()->freezer, template_symbol);
         autil_sbuf_push(context()->template_symbol_tables, symbols);
@@ -1535,8 +1547,12 @@ resolve_decl_struct(struct resolver* resolver, struct cst_decl const* decl)
     if (autil_sbuf_count(template_parameters) != 0) {
         struct symbol_table* const symbols =
             symbol_table_new(resolver->current_symbol_table);
-        struct symbol* const template_symbol =
-            symbol_new_template(decl->location, decl->name, decl, symbols);
+        struct symbol* const template_symbol = symbol_new_template(
+            decl->location,
+            decl->name,
+            resolver->current_static_addr_prefix,
+            decl,
+            symbols);
 
         autil_freezer_register(context()->freezer, template_symbol);
         autil_sbuf_push(context()->template_symbol_tables, symbols);

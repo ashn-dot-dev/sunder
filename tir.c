@@ -561,6 +561,7 @@ symbol_new(
     char const* name,
     struct type const* type,
     struct address const* address,
+    char const* symbol_addr_prefix,
     struct value const* value,
     struct cst_decl const* decl,
     struct symbol_table* symbols)
@@ -575,6 +576,7 @@ symbol_new(
     self->name = name;
     self->type = type;
     self->address = address;
+    self->symbol_addr_prefix = symbol_addr_prefix;
     self->value = value;
     self->decl = decl;
     self->symbols = symbols;
@@ -588,7 +590,7 @@ symbol_new_type(struct source_location const* location, struct type const* type)
     assert(type != NULL);
 
     struct symbol* const self = symbol_new(
-        SYMBOL_TYPE, location, type->name, type, NULL, NULL, NULL, NULL);
+        SYMBOL_TYPE, location, type->name, type, NULL, NULL, NULL, NULL, NULL);
     return self;
 }
 
@@ -610,7 +612,15 @@ symbol_new_variable(
     //assert(address->kind != ADDRESS_STATIC || value != NULL);
 
     struct symbol* const self = symbol_new(
-        SYMBOL_VARIABLE, location, name, type, address, value, NULL, NULL);
+        SYMBOL_VARIABLE,
+        location,
+        name,
+        type,
+        address,
+        NULL,
+        value,
+        NULL,
+        NULL);
     return self;
 }
 
@@ -629,7 +639,15 @@ symbol_new_constant(
     assert(value != NULL);
 
     struct symbol* const self = symbol_new(
-        SYMBOL_CONSTANT, location, name, type, address, value, NULL, NULL);
+        SYMBOL_CONSTANT,
+        location,
+        name,
+        type,
+        address,
+        NULL,
+        value,
+        NULL,
+        NULL);
     return self;
 }
 
@@ -648,7 +666,15 @@ symbol_new_function(
     assert(value != NULL);
 
     struct symbol* const self = symbol_new(
-        SYMBOL_FUNCTION, location, name, type, address, value, NULL, NULL);
+        SYMBOL_FUNCTION,
+        location,
+        name,
+        type,
+        address,
+        NULL,
+        value,
+        NULL,
+        NULL);
     return self;
 }
 
@@ -656,6 +682,7 @@ struct symbol*
 symbol_new_template(
     struct source_location const* location,
     char const* name,
+    char const* symbol_addr_prefix,
     struct cst_decl const* decl,
     struct symbol_table* symbols)
 {
@@ -665,7 +692,15 @@ symbol_new_template(
     assert(symbols != NULL);
 
     struct symbol* const self = symbol_new(
-        SYMBOL_TEMPLATE, location, name, NULL, NULL, NULL, decl, symbols);
+        SYMBOL_TEMPLATE,
+        location,
+        name,
+        NULL,
+        NULL,
+        symbol_addr_prefix,
+        NULL,
+        decl,
+        symbols);
     return self;
 }
 
@@ -680,7 +715,15 @@ symbol_new_namespace(
     assert(symbols != NULL);
 
     struct symbol* const self = symbol_new(
-        SYMBOL_NAMESPACE, location, name, NULL, NULL, NULL, NULL, symbols);
+        SYMBOL_NAMESPACE,
+        location,
+        name,
+        NULL,
+        NULL,
+        NULL,
+        NULL,
+        NULL,
+        symbols);
     return self;
 }
 
