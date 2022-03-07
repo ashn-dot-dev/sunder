@@ -145,8 +145,7 @@ eval_rvalue_symbol(struct expr const* expr)
     enum symbol_kind const kind = symbol->kind;
 
     if (kind == SYMBOL_CONSTANT || kind == SYMBOL_FUNCTION) {
-        assert(expr->data.symbol->value != NULL);
-        return value_clone(symbol->value);
+        return value_clone(symbol_xget_value(symbol));
     }
 
     fatal(expr->location, "identifier `%s` is not a constant", symbol->name);
@@ -240,7 +239,7 @@ eval_rvalue_array_slice(struct expr const* expr)
     assert(expr->type->kind == TYPE_SLICE);
 
     struct address const* const address =
-        expr->data.array_slice.array_symbol->address;
+        symbol_xget_address(expr->data.array_slice.array_symbol);
     assert(address->kind == ADDRESS_STATIC);
     struct value* const pointer = value_new_pointer(
         type_unique_pointer(expr->type->data.slice.base), *address);
@@ -986,13 +985,14 @@ eval_lvalue_symbol(struct expr const* expr)
     assert(expr->kind == EXPR_SYMBOL);
 
     struct symbol const* const symbol = expr->data.symbol;
-    if (symbol->address->kind != ADDRESS_STATIC) {
+    if (symbol_xget_address(symbol)->kind != ADDRESS_STATIC) {
         fatal(
             expr->location,
             "addressof operator applied to non-static object in compile-time expression");
     }
-    struct type const* const type = type_unique_pointer(symbol->type);
-    return value_new_pointer(type, *symbol->address);
+    struct type const* const type =
+        type_unique_pointer(symbol_xget_type(symbol));
+    return value_new_pointer(type, *symbol_xget_address(symbol));
 }
 
 static struct value*

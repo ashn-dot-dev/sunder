@@ -500,12 +500,12 @@ static void
 register_static_symbol(struct symbol const* symbol)
 {
     assert(symbol != NULL);
-    assert(symbol->address != NULL);
-    assert(symbol->address->kind == ADDRESS_STATIC);
+    assert(symbol_xget_address(symbol) != NULL);
+    assert(symbol_xget_address(symbol)->kind == ADDRESS_STATIC);
 
     int const exists = autil_map_insert(
         context()->static_symbols,
-        &symbol->address->data.static_.name,
+        &symbol_xget_address(symbol)->data.static_.name,
         &symbol,
         NULL,
         NULL);
@@ -514,7 +514,7 @@ register_static_symbol(struct symbol const* symbol)
             symbol->location,
             "[%s] normalized symbol name `%s` already exists",
             __func__,
-            symbol->address->data.static_.name);
+            symbol_xget_address(symbol)->data.static_.name);
     }
 }
 
@@ -558,7 +558,7 @@ xget_symbol(struct resolver* resolver, struct cst_symbol const* target)
         char const* const name = element->identifier->name;
 
         if (lhs->kind == SYMBOL_NAMESPACE) {
-            symbol = symbol_table_lookup(lhs->symbols, name);
+            symbol = symbol_table_lookup(lhs->data.namespace.symbols, name);
             if (symbol == NULL) {
                 fatal(
                     element->location,
@@ -577,9 +577,10 @@ xget_symbol(struct resolver* resolver, struct cst_symbol const* target)
             continue;
         }
 
-        if (lhs->kind == SYMBOL_TYPE && lhs->type->kind == TYPE_STRUCT) {
+        if (lhs->kind == SYMBOL_TYPE
+            && symbol_xget_type(lhs)->kind == TYPE_STRUCT) {
             symbol = symbol_table_lookup_local(
-                lhs->type->data.struct_.symbols, name);
+                symbol_xget_type(lhs)->data.struct_.symbols, name);
             if (symbol == NULL) {
                 fatal(
                     element->location,
@@ -671,7 +672,7 @@ xget_template_instance(
     // To instantiate the function template we replace the template parameters
     // of the template declaration with the template arguments from the current
     // instantiation.
-    struct cst_decl const* const decl = symbol->decl;
+    struct cst_decl const* const decl = symbol->data.template.decl;
     assert(decl != NULL);
 
     // Currently, functions and structs are the only declarations that can be
@@ -742,7 +743,7 @@ xget_template_instance(
         // Check if a symbol corresponding to these template arguments has
         // already been created. If so then we reuse the cached symbol.
         struct symbol const* const existing_instance =
-            symbol_table_lookup(symbol->symbols, name_interned);
+            symbol_table_lookup(symbol->data.template.symbols, name_interned);
         if (existing_instance != NULL) {
             return existing_instance;
         }
@@ -785,7 +786,8 @@ xget_template_instance(
             resolver->current_static_addr_prefix;
         struct symbol_table* const save_symbol_table =
             resolver->current_symbol_table;
-        resolver->current_static_addr_prefix = symbol->symbol_addr_prefix;
+        resolver->current_static_addr_prefix =
+            symbol->data.template.symbol_addr_prefix;
         resolver->current_symbol_table = instance_symbol_table;
         struct symbol const* resolved_symbol =
             resolve_decl_function(resolver, instance_decl);
@@ -794,7 +796,8 @@ xget_template_instance(
 
         // Add the unique instance to the cache of instances for the template.
         assert(resolved_symbol->kind == SYMBOL_FUNCTION);
-        symbol_table_insert(symbol->symbols, name_interned, resolved_symbol);
+        symbol_table_insert(
+            symbol->data.template.symbols, name_interned, resolved_symbol);
 
         return resolved_symbol;
     }
@@ -854,7 +857,7 @@ xget_template_instance(
         // Check if a symbol corresponding to these template arguments has
         // already been created. If so then we reuse the cached symbol.
         struct symbol const* const existing_instance =
-            symbol_table_lookup(symbol->symbols, name_interned);
+            symbol_table_lookup(symbol->data.template.symbols, name_interned);
         if (existing_instance != NULL) {
             return existing_instance;
         }
@@ -895,7 +898,8 @@ xget_template_instance(
             resolver->current_static_addr_prefix;
         struct symbol_table* const save_symbol_table =
             resolver->current_symbol_table;
-        resolver->current_static_addr_prefix = symbol->symbol_addr_prefix;
+        resolver->current_static_addr_prefix =
+            symbol->data.template.symbol_addr_prefix;
         resolver->current_symbol_table = instance_symbol_table;
         struct symbol const* resolved_symbol =
             resolve_decl_struct(resolver, instance_decl);
@@ -904,7 +908,8 @@ xget_template_instance(
 
         // Add the unique instance to the cache of instances for the template.
         assert(resolved_symbol->kind == SYMBOL_TYPE);
-        symbol_table_insert(symbol->symbols, name_interned, resolved_symbol);
+        symbol_table_insert(
+            symbol->data.template.symbols, name_interned, resolved_symbol);
 
         // Now that the instance is in the cache we can complete the struct. If
         // we did not add the instance to the cache first then any self
@@ -1116,7 +1121,10 @@ merge_symbol_table(
                 symbol_table_insert(self, *iter, symbol);
             }
 
-            merge_symbol_table(resolver, existing->symbols, symbol->symbols);
+            merge_symbol_table(
+                resolver,
+                existing->data.namespace.symbols,
+                symbol->data.namespace.symbols);
             continue;
         }
 
@@ -1394,8 +1402,8 @@ resolve_decl_function(struct resolver* resolver, struct cst_decl const* decl)
         struct symbol* const template_symbol = symbol_new_template(
             decl->location,
             decl->name,
-            resolver->current_static_addr_prefix,
             decl,
+            resolver->current_static_addr_prefix,
             symbols);
 
         autil_freezer_register(context()->freezer, template_symbol);
@@ -1451,8 +1459,8 @@ resolve_decl_function(struct resolver* resolver, struct cst_decl const* decl)
 
     // Add the function/value to the symbol table now so that recursive
     // functions may reference themselves.
-    struct symbol* const function_symbol = symbol_new_function(
-        decl->location, decl->name, function_type, address, value);
+    struct symbol* const function_symbol =
+        symbol_new_function(decl->location, value);
     autil_freezer_register(context()->freezer, function_symbol);
     symbol_table_insert(
         resolver->current_symbol_table, function_symbol->name, function_symbol);
@@ -1550,8 +1558,8 @@ resolve_decl_struct(struct resolver* resolver, struct cst_decl const* decl)
         struct symbol* const template_symbol = symbol_new_template(
             decl->location,
             decl->name,
-            resolver->current_static_addr_prefix,
             decl,
+            resolver->current_static_addr_prefix,
             symbols);
 
         autil_freezer_register(context()->freezer, template_symbol);
@@ -1657,7 +1665,7 @@ complete_struct(
     assert(resolver != NULL);
     assert(symbol != NULL);
     assert(symbol->kind == SYMBOL_TYPE);
-    assert(symbol->type->kind == TYPE_STRUCT);
+    assert(symbol_xget_type(symbol)->kind == TYPE_STRUCT);
     assert(decl != NULL);
     assert(decl->kind == CST_DECL_STRUCT);
     assert(symbol->name == decl->name);
@@ -1667,10 +1675,10 @@ complete_struct(
     size_t const members_count = autil_sbuf_count(members);
 
     // XXX: Evil const cast.
-    struct type* type = (struct type*)symbol->type;
+    struct type* type = (struct type*)symbol_xget_type(symbol);
     // XXX: Evil const cast.
     struct symbol_table* const struct_symbols =
-        (struct symbol_table*)symbol->type->data.struct_.symbols;
+        (struct symbol_table*)symbol_xget_type(symbol)->data.struct_.symbols;
 
     // XXX: A "direct leak" is detected if we encounter a fatal error while
     // resolving the member constants and declarations below even though we hold
@@ -1686,10 +1694,13 @@ complete_struct(
         resolver->current_static_addr_prefix;
     struct symbol_table* const save_symbol_table =
         resolver->current_symbol_table;
+    // TODO: This current symbol name prefix and addr prefix do not take into
+    // account the namespace prefix! Adjust this so that the prefixes use
+    // <namespace>.<typename> instead just <typename>.
     resolver->current_symbol_name_prefix =
-        normalize(NULL, symbol->type->name, 0);
+        normalize(NULL, symbol_xget_type(symbol)->name, 0);
     resolver->current_static_addr_prefix =
-        normalize(NULL, symbol->type->name, 0);
+        normalize(NULL, symbol_xget_type(symbol)->name, 0);
     resolver->current_symbol_table = struct_symbols;
     for (size_t i = 0; i < members_count; ++i) {
         struct cst_member const* const member = members[i];
@@ -3808,7 +3819,7 @@ resolve_typespec_symbol(
             typespec->location, "identifier `%s` is not a type", symbol->name);
     }
 
-    return symbol->type;
+    return symbol_xget_type(symbol);
 }
 
 static struct type const*

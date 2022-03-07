@@ -736,8 +736,7 @@ codegen_static_constants(void)
             autil_map_lookup_const(context()->static_symbols, iter);
         struct symbol const* const symbol = *psymbol;
         assert(symbol != NULL);
-        assert(symbol->address != NULL);
-        assert(symbol->address->kind == ADDRESS_STATIC);
+        assert(symbol_xget_address(symbol)->kind == ADDRESS_STATIC);
         if (symbol->kind != SYMBOL_CONSTANT) {
             continue;
         }
@@ -760,8 +759,7 @@ codegen_static_variables(void)
             autil_map_lookup_const(context()->static_symbols, iter);
         struct symbol const* const symbol = *psymbol;
         assert(symbol != NULL);
-        assert(symbol->address != NULL);
-        assert(symbol->address->kind == ADDRESS_STATIC);
+        assert(symbol_xget_address(symbol)->kind == ADDRESS_STATIC);
         if (symbol->kind != SYMBOL_VARIABLE) {
             continue;
         }
@@ -784,8 +782,7 @@ codegen_static_functions(void)
             autil_map_lookup_const(context()->static_symbols, iter);
         struct symbol const* const symbol = *psymbol;
         assert(symbol != NULL);
-        assert(symbol->address != NULL);
-        assert(symbol->address->kind == ADDRESS_STATIC);
+        assert(symbol_xget_address(symbol)->kind == ADDRESS_STATIC);
         if (symbol->kind != SYMBOL_FUNCTION) {
             continue;
         }
@@ -823,15 +820,15 @@ codegen_static_object(struct symbol const* symbol)
 {
     assert(symbol != NULL);
     assert(symbol->kind == SYMBOL_VARIABLE || symbol->kind == SYMBOL_CONSTANT);
-    assert(symbol->address->kind == ADDRESS_STATIC);
+    assert(symbol_xget_address(symbol)->kind == ADDRESS_STATIC);
 
-    if (symbol->value == NULL) {
+    if (symbol->kind == SYMBOL_VARIABLE
+        && symbol->data.variable.value == NULL) {
         // Symbol is defined externally.
         return;
     }
 
-    struct value const* const value = symbol->value;
-    struct type const* const type = value->type;
+    struct type const* const type = symbol_xget_type(symbol);
     if (type->size == 0) {
         // Zero-sized objects should take up zero space. Attempting to take the
         // address of a zero-sized symbol should always produce a pointer with
@@ -839,9 +836,9 @@ codegen_static_object(struct symbol const* symbol)
         return;
     }
 
-    assert(symbol->address->data.static_.offset == 0);
-    append("%s:", symbol->address->data.static_.name);
-    if (value->type->kind != TYPE_ARRAY && value->type->kind != TYPE_STRUCT) {
+    assert(symbol_xget_address(symbol)->data.static_.offset == 0);
+    append("%s:", symbol_xget_address(symbol)->data.static_.name);
+    if (type->kind != TYPE_ARRAY && type->kind != TYPE_STRUCT) {
         // Only genreate the dx type for non-arrays / non-structs as
         // arrays/struct have thir own special way of initializing data from a
         // combination of explicitly specified data.
@@ -851,10 +848,10 @@ codegen_static_object(struct symbol const* symbol)
         // append_dx_type and append_dx_data were planned out. Look into
         // alternative designs that provide a better abstraction.
         appendch(' ');
-        append_dx_type(symbol->value->type);
+        append_dx_type(symbol_xget_type(symbol));
         appendch(' ');
     }
-    append_dx_data(symbol->value);
+    append_dx_data(symbol_xget_value(symbol));
     appendch('\n');
     return;
 }
@@ -864,14 +861,14 @@ codegen_static_function(struct symbol const* symbol)
 {
     assert(symbol != NULL);
     assert(symbol->kind == SYMBOL_FUNCTION);
-    assert(symbol->value != NULL);
 
-    assert(symbol->value->type->kind == TYPE_FUNCTION);
-    struct function const* const function = symbol->value->data.function;
+    assert(symbol_xget_value(symbol)->type->kind == TYPE_FUNCTION);
+    struct function const* const function =
+        symbol_xget_value(symbol)->data.function;
 
-    assert(symbol->address->data.static_.offset == 0);
-    appendln("global %s", symbol->address->data.static_.name);
-    appendln("%s:", symbol->address->data.static_.name);
+    assert(symbol_xget_address(symbol)->data.static_.offset == 0);
+    appendln("global %s", symbol_xget_address(symbol)->data.static_.name);
+    appendln("%s:", symbol_xget_address(symbol)->data.static_.name);
     appendli("; PROLOGUE");
     // Save previous frame pointer.
     // With this push, the stack should now be 16-byte aligned.
@@ -981,23 +978,26 @@ codegen_stmt_for_range(struct stmt const* stmt, size_t id)
     assert(stmt->kind == STMT_FOR_RANGE);
 
     assert(
-        stmt->data.for_range.loop_variable->type == context()->builtin.usize);
+        symbol_xget_type(stmt->data.for_range.loop_variable)
+        == context()->builtin.usize);
     assert(stmt->data.for_range.begin->type == context()->builtin.usize);
     assert(stmt->data.for_range.end->type == context()->builtin.usize);
-    assert(stmt->data.for_range.loop_variable->address->kind == ADDRESS_LOCAL);
+    assert(
+        symbol_xget_address(stmt->data.for_range.loop_variable)->kind
+        == ADDRESS_LOCAL);
 
     size_t const save_current_loop_id = current_loop_id;
     current_loop_id = id;
 
-    push_address(stmt->data.for_range.loop_variable->address);
+    push_address(symbol_xget_address(stmt->data.for_range.loop_variable));
     codegen_rvalue(stmt->data.for_range.begin);
     appendli("pop rbx"); // begin
     appendli("pop rax"); // addr of loop variable
     appendli("mov [rax], rbx");
     appendln("%s%zu_condition:", LABEL_STMT, id);
     push_at_address(
-        stmt->data.for_range.loop_variable->type->size,
-        stmt->data.for_range.loop_variable->address);
+        symbol_xget_type(stmt->data.for_range.loop_variable)->size,
+        symbol_xget_address(stmt->data.for_range.loop_variable));
     codegen_rvalue(stmt->data.for_range.end);
     appendli("pop rbx"); // end
     appendli("pop rax"); // loop variable
@@ -1012,7 +1012,8 @@ codegen_stmt_for_range(struct stmt const* stmt, size_t id)
     appendln("%s%zu_body_end:", LABEL_STMT, id);
     appendli(
         "inc qword [rbp + %d]",
-        stmt->data.for_range.loop_variable->address->data.local.rbp_offset);
+        symbol_xget_address(stmt->data.for_range.loop_variable)
+            ->data.local.rbp_offset);
     appendli("jmp %s%zu_condition", LABEL_STMT, id);
 
     current_loop_id = save_current_loop_id;
@@ -1104,12 +1105,12 @@ codegen_stmt_return(struct stmt const* stmt, size_t id)
         struct symbol const* const return_symbol = symbol_table_lookup(
             current_function->symbol_table, context()->interned.return_);
         // rbx := destination
-        assert(return_symbol->address->kind == ADDRESS_LOCAL);
+        assert(symbol_xget_address(return_symbol)->kind == ADDRESS_LOCAL);
         appendli("mov rbx, rbp");
         appendli(
             "add rbx, %d ; return symbol rbp offset",
-            return_symbol->address->data.local.rbp_offset);
-        copy_rsp_rbx_via_rcx(return_symbol->type->size);
+            symbol_xget_address(return_symbol)->data.local.rbp_offset);
+        copy_rsp_rbx_via_rcx(symbol_xget_type(return_symbol)->size);
     }
 
     appendli("; STMT_RETURN EPILOGUE");
@@ -1244,11 +1245,12 @@ codegen_rvalue_symbol(struct expr const* expr, size_t id)
     }
     case SYMBOL_VARIABLE: /* fallthrough */
     case SYMBOL_CONSTANT: {
-        push_at_address(symbol->type->size, symbol->address);
+        push_at_address(
+            symbol_xget_type(symbol)->size, symbol_xget_address(symbol));
         return;
     }
     case SYMBOL_FUNCTION: {
-        push_address(symbol->address);
+        push_address(symbol_xget_address(symbol));
         return;
     }
     }
@@ -1397,20 +1399,21 @@ codegen_rvalue_array_slice(struct expr const* expr, size_t id)
     // the array-slice.
     struct expr* const array_expr = expr_new_array(
         expr->location,
-        expr->data.array_slice.array_symbol->type,
+        symbol_xget_type(expr->data.array_slice.array_symbol),
         expr->data.array_slice.elements,
         NULL);
     codegen_rvalue_array(array_expr, id);
     autil_xalloc(array_expr, AUTIL_XALLOC_FREE);
 
-    push_address(expr->data.array_slice.array_symbol->address);
+    push_address(symbol_xget_address(expr->data.array_slice.array_symbol));
     appendli("pop rbx ; address of the array-slice backing array");
-    copy_rsp_rbx_via_rcx(expr->data.array_slice.array_symbol->type->size);
-    pop(expr->data.array_slice.array_symbol->type->size);
+    copy_rsp_rbx_via_rcx(
+        symbol_xget_type(expr->data.array_slice.array_symbol)->size);
+    pop(symbol_xget_type(expr->data.array_slice.array_symbol)->size);
 
     // Evaluate a slice constructed from the backing array.
     appendli("push %zu", autil_sbuf_count(expr->data.array_slice.elements));
-    push_address(expr->data.array_slice.array_symbol->address);
+    push_address(symbol_xget_address(expr->data.array_slice.array_symbol));
 }
 
 static void
@@ -2489,7 +2492,7 @@ codegen_lvalue_symbol(struct expr const* expr, size_t id)
             expr->type->name);
         return;
     }
-    push_address(expr->data.symbol->address);
+    push_address(symbol_xget_address(expr->data.symbol));
 }
 
 static void

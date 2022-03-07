@@ -1203,6 +1203,8 @@ struct address*
 address_new(struct address from);
 
 struct symbol {
+    struct source_location const* location;
+    char const* name; // interned
     enum symbol_kind {
         SYMBOL_TYPE,
         SYMBOL_VARIABLE,
@@ -1211,51 +1213,34 @@ struct symbol {
         SYMBOL_TEMPLATE,
         SYMBOL_NAMESPACE,
     } kind;
-    struct source_location const* location;
-    char const* name; // interned
-    // SYMBOL_TYPE      => The type itself.
-    // SYMBOL_VARIABLE  => The type of the variable.
-    // SYMBOL_CONSTANT  => The type of the constant.
-    // SYMBOL_FUNCTION  => The type of the function (always TYPE_FUNCTION).
-    // SYMBOL_TEMPLATE  => NULL.
-    // SYMBOL_NAMESPACE => NULL.
-    struct type const* type;
-    // SYMBOL_TYPE      => NULL.
-    // SYMBOL_VARIABLE  => ADDRESS_STATIC or ADDRESS_LOCAL.
-    // SYMBOL_CONSTANT  => ADDRESS_STATIC or ADDRESS_LOCAL.
-    // SYMBOL_FUNCTION  => ADDRESS_STATIC.
-    // SYMBOL_TEMPLATE  => NULL.
-    // SYMBOL_NAMESPACE => NULL.
-    struct address const* address;
-    // SYMBOL_TYPE      => NULL.
-    // SYMBOL_VARIABLE  => NULL.
-    // SYMBOL_CONSTANT  => NULL.
-    // SYMBOL_FUNCTION  => NULL.
-    // SYMBOL_TEMPLATE  => Prefix used when instantiating the template.
-    // SYMBOL_NAMESPACE => NULL.
-    char const* symbol_addr_prefix; // Optional (NULL => no prefix).
-    // SYMBOL_TYPE      => NULL.
-    // SYMBOL_VARIABLE  => Compile-type-value of the variable
-    //                     (non-extern globals only).
-    // SYMBOL_CONSTANT  => Compile-time value of the constant.
-    // SYMBOL_FUNCTION  => Compile-time value of the function.
-    // SYMBOL_TEMPLATE  => NULL.
-    // SYMBOL_NAMESPACE => NULL.
-    struct value const* value;
-    // SYMBOL_TYPE      => NULL.
-    // SYMBOL_VARIABLE  => NULL.
-    // SYMBOL_CONSTANT  => NULL.
-    // SYMBOL_FUNCTION  => NULL.
-    // SYMBOL_TEMPLATE  => Original CST of this template.
-    // SYMBOL_NAMESPACE => NULL.
-    struct cst_decl const* decl;
-    // SYMBOL_TYPE      => NULL.
-    // SYMBOL_VARIABLE  => NULL.
-    // SYMBOL_CONSTANT  => NULL.
-    // SYMBOL_FUNCTION  => NULL.
-    // SYMBOL_TEMPLATE  => Symbols corresponding to instances of this template.
-    // SYMBOL_NAMESPACE => Symbols under the namespace.
-    struct symbol_table* symbols;
+    union {
+        struct type const* type;
+        struct {
+            struct type const* type;
+            struct address const* address;
+            // Compile-time value of the variable. Non-NULL for non-extern
+            // global variables. NULL for extern global and local variables.
+            struct value const* value; // Optional.
+        } variable;
+        struct {
+            struct type const* type;
+            struct address const* address; // Always ADDRESS_STATIC.
+            struct value const* value;
+        } constant;
+        struct value const* function; // Always of TYPE_FUNCTION.
+        struct {
+            // Original CST of this template.
+            struct cst_decl const* decl;
+            // Prefix used when instantiating the template.
+            char const* symbol_addr_prefix;
+            // Symbols corresponding to instances of this template.
+            struct symbol_table* symbols;
+        } template;
+        struct {
+            // Symbols under the namespace.
+            struct symbol_table* symbols;
+        } namespace;
+    } data;
 };
 struct symbol*
 symbol_new_type(
@@ -1276,23 +1261,26 @@ symbol_new_constant(
     struct value const* value);
 struct symbol*
 symbol_new_function(
-    struct source_location const* location,
-    char const* name,
-    struct type const* type,
-    struct address const* address,
-    struct value const* value);
+    struct source_location const* location, struct value const* value);
 struct symbol*
 symbol_new_template(
     struct source_location const* location,
     char const* name,
-    char const* symbol_addr_prefix,
     struct cst_decl const* decl,
+    char const* symbol_addr_prefix,
     struct symbol_table* symbols);
 struct symbol*
 symbol_new_namespace(
     struct source_location const* location,
     char const* name,
     struct symbol_table* symbols);
+
+struct type const*
+symbol_xget_type(struct symbol const* self);
+struct address const*
+symbol_xget_address(struct symbol const* self);
+struct value const*
+symbol_xget_value(struct symbol const* self);
 
 struct symbol_table {
     struct symbol_table const* parent; // optional (NULL => global scope)
