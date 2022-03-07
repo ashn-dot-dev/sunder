@@ -1640,7 +1640,6 @@ resolve_decl_extern_variable(
 
     struct symbol* const symbol =
         symbol_new_variable(decl->location, decl->name, type, address, NULL);
-    symbol->is_extern = true;
     autil_freezer_register(context()->freezer, symbol);
 
     symbol_table_insert(resolver->current_symbol_table, symbol->name, symbol);

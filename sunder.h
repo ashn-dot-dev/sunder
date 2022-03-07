@@ -1213,7 +1213,6 @@ struct symbol {
     } kind;
     struct source_location const* location;
     char const* name; // interned
-    bool is_extern;
     // SYMBOL_TYPE      => The type itself.
     // SYMBOL_VARIABLE  => The type of the variable.
     // SYMBOL_CONSTANT  => The type of the constant.
