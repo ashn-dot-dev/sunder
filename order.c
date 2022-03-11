@@ -20,19 +20,22 @@ struct orderer {
     struct module* module;
     struct {
         // Mapping from each top-level declaration name to its corresponding
-        // tldecl structure. Initialized & populated in orderer_new.
+        // tldecl structure. Initialized & populated in orderer_new. Addresses
+        // of tldecl structs should remain stable for the duration of ordering,
+        // so no entries should be added, removed, or updated after the
+        // initialization of this map in orderer_new.
 #define TLDECL_MAP_KEY_TYPE char const*
 #define TLDECL_MAP_VAL_TYPE struct tldecl
 #define TLDECL_MAP_CMP_FUNC autil_cstr_vpcmp
         struct autil_map* map; // Populated in orderer_new.
         // Names of each top-level declaration in the order seen by the parser.
         // Initialized & populated in orderer_new.
-        autil_sbuf(char const*) declaration_order;
+        autil_sbuf(struct cst_decl const*) declaration_order;
         // Names of each top-level declaration, topologically sorted such that
         // any declaration with index k does not depend on any declaration with
         // index k+n for all n. Initialized as an empty sbuf in orderer_new and
         // populated during the order phase.
-        autil_sbuf(char const*) topological_order;
+        autil_sbuf(struct cst_decl const*) topological_order;
     } tldecls;
 };
 static struct orderer*
@@ -43,6 +46,10 @@ static void
 orderer_tldecl_insert(struct orderer* orderer, struct cst_decl const* decl);
 static struct tldecl*
 orderer_tldecl_lookup(struct orderer* orderer, char const* name);
+// Convert a declaration name into a key for the tldecl map. Used to translate
+// extend declaration names into a unique "name" key.
+static char const*
+orderer_tldecl_map_key_name(struct cst_decl const* decl, size_t declaration_order_index);
 
 static void
 order_tldecl(struct orderer* orderer, struct tldecl* tldecl);
@@ -109,9 +116,11 @@ orderer_tldecl_insert(struct orderer* orderer, struct cst_decl const* decl)
 
     struct tldecl const tldecl = {TLDECL_UNORDERED, decl};
 
-    autil_sbuf_push(orderer->tldecls.declaration_order, decl->name);
+    autil_sbuf_push(orderer->tldecls.declaration_order, decl);
+
+    char const* const name = orderer_tldecl_map_key_name(decl, autil_map_count(orderer->tldecls.map));
     struct tldecl const* existing =
-        autil_map_lookup_const(orderer->tldecls.map, &decl->name);
+        autil_map_lookup_const(orderer->tldecls.map, &name);
     if (existing != NULL) {
         fatal(
             decl->location,
@@ -121,7 +130,7 @@ orderer_tldecl_insert(struct orderer* orderer, struct cst_decl const* decl)
             existing->decl->location->line);
     }
 
-    autil_map_insert(orderer->tldecls.map, &decl->name, &tldecl, NULL, NULL);
+    autil_map_insert(orderer->tldecls.map, &name, &tldecl, NULL, NULL);
 }
 
 static struct tldecl*
@@ -131,6 +140,37 @@ orderer_tldecl_lookup(struct orderer* orderer, char const* name)
     assert(name != NULL);
 
     return autil_map_lookup(orderer->tldecls.map, &name);
+}
+
+static char const*
+orderer_tldecl_map_key_name(struct cst_decl const* decl, size_t declaration_order_index)
+{
+    assert(decl != NULL);
+
+    if (decl->kind == CST_DECL_EXTEND) {
+        // XXX: Extend declarations are not true top-level declarations as they
+        // are not turned into a module-level symbol during the resolve phase.
+        // It is possible to have multiple extend statements with the same
+        // declaration name, so here we say the "name" of the extend
+        // declaration takes the form "declaration N" where N is the index of
+        // the declaration in the declaration-order-list.
+        //
+        // TODO: This strategy "works" in the sense that it allows for multiple
+        // extend declarations to be created with the same name and not pollute
+        // the module symbol table, but it means that extend declarations are
+        // not truly order-independent since other top-level declarations that
+        // may depend on an extended declaration are unable to look up that
+        // declaration by name during ordering.
+        struct autil_string* s = autil_string_new_fmt("declaration %zu", declaration_order_index);
+        char const* const name = autil_sipool_intern(
+                context()->sipool,
+                autil_string_start(s),
+                autil_string_count(s));
+        autil_string_del(s);
+        return name;
+    }
+
+    return decl->name;
 }
 
 static void
@@ -160,7 +200,7 @@ order_tldecl(struct orderer* orderer, struct tldecl* tldecl)
     // declaration as well as all of top level declaration's dependencies.
     tldecl->state = TLDECL_ORDERED;
 
-    autil_sbuf_push(orderer->tldecls.topological_order, tldecl->decl->name);
+    autil_sbuf_push(orderer->tldecls.topological_order, tldecl->decl);
 }
 
 static void
@@ -222,12 +262,17 @@ order_decl(struct orderer* orderer, struct cst_decl const* decl)
         }
 
         // Set this struct's state to ordered to allow for self-referential
-        // members. This behavior mirrors the behavior of the resolve phase
+        // members. This behavior mimics the behavior of the resolve phase
         // where all structs are completed after the struct symbol has been
         // added to the relevant symbol table.
         struct tldecl* const tldecl =
             orderer_tldecl_lookup(orderer, decl->name);
-        assert(tldecl != NULL);
+        if (tldecl == NULL) {
+            // XXX: The returned tldecl may be NULL if this struct declaration
+            // is part of an extend declaration. We return early here as the
+            // will report this error when the extend declaration is resolved.
+            return;
+        }
         tldecl->state = TLDECL_ORDERED;
 
         // Order the struct's members.
@@ -584,15 +629,13 @@ order(struct module* module)
 
     assert(decl_count == autil_sbuf_count(orderer->tldecls.declaration_order));
     for (size_t i = 0; i < decl_count; ++i) {
-        char const* const name = orderer->tldecls.declaration_order[i];
-        order_tldecl(orderer, orderer_tldecl_lookup(orderer, name));
+        struct cst_decl const* const decl = orderer->tldecls.declaration_order[i];
+        order_tldecl(orderer, orderer_tldecl_lookup(orderer, orderer_tldecl_map_key_name(decl, i)));
     }
 
     assert(decl_count == autil_sbuf_count(orderer->tldecls.topological_order));
     for (size_t i = 0; i < decl_count; ++i) {
-        char const* const name = orderer->tldecls.topological_order[i];
-        struct cst_decl const* const decl =
-            orderer_tldecl_lookup(orderer, name)->decl;
+        struct cst_decl const* const decl = orderer->tldecls.topological_order[i];
         autil_sbuf_push(module->ordered, decl);
     }
 
