@@ -8,6 +8,7 @@
          | <decl-constant>
          | <decl-function>
          | <decl-struct>
+         | <decl-extend>
          | <decl-alias>
          | <decl-extern-variable>
 
@@ -18,6 +19,8 @@
 <decl-function> ::= "func" <identifier> <template-parameter-list>? "(" <parameter-list> ")" <typespec> <block>
 
 <decl-struct> ::= "struct" <identifier> <template-parameter-list>? "{" <member-list> "}"
+
+<decl-extend> ::= "extend" <typespec> <decl>
 
 <decl-alias> ::= "alias" <identifier> "=" <symbol> ";"
 

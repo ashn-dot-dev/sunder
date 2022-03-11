@@ -138,6 +138,27 @@ cst_decl_new_struct(
 }
 
 struct cst_decl*
+cst_decl_new_extend(
+    struct source_location const* location,
+    struct cst_typespec const* typespec,
+    struct cst_decl const* decl)
+{
+    assert(location != NULL);
+    assert(typespec != NULL);
+    assert(decl != NULL);
+
+    struct cst_decl* const self = autil_xalloc(NULL, sizeof(*self));
+    memset(self, 0x00, sizeof(*self));
+    self->kind = CST_DECL_EXTEND;
+    self->location = location;
+    self->name = decl->name;
+    self->data.extend.typespec = typespec;
+    self->data.extend.decl = decl;
+    return self;
+}
+
+
+struct cst_decl*
 cst_decl_new_alias(
     struct source_location const* location,
     struct cst_identifier const* identifier,

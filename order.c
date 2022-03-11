@@ -255,6 +255,11 @@ order_decl(struct orderer* orderer, struct cst_decl const* decl)
         }
         return;
     }
+    case CST_DECL_EXTEND: {
+        order_typespec(orderer, decl->data.extend.typespec);
+        order_decl(orderer, decl->data.extend.decl);
+        return;
+    }
     case CST_DECL_ALIAS: {
         order_symbol(orderer, decl->data.alias.symbol);
         return;

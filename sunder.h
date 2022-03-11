@@ -255,15 +255,15 @@ struct context {
     // TODO: Maybe make this a map from realpath to module?
     autil_sbuf(struct module*) modules;
 
-    // Symbol tables belonging to templates. These symbol tables cannot be
-    // frozen until after all modules have been resolved as template
-    // instantiations may be defined in modules other than the module where the
-    // template is defined.
+    // Symbol tables belonging to types and templates. These symbol tables
+    // cannot be frozen until after all modules have been resolved as type
+    // extensions template instantiations may be defined in modules other than
+    // the module where a declaration is defined.
     //
     // TODO: We have have a chilling_symbol_tables on the resolver struct. Can
     // we merge that functionality into this context member variable and have a
     // single "chilling symbol tables" member for all symbol tables?
-    autil_sbuf(struct symbol_table*) template_symbol_tables;
+    autil_sbuf(struct symbol_table*) chilling_symbol_tables;
 };
 void
 context_init(void);
@@ -293,6 +293,7 @@ enum token_kind {
     TOKEN_CONST,
     TOKEN_FUNC,
     TOKEN_STRUCT,
+    TOKEN_EXTEND,
     TOKEN_ALIAS,
     TOKEN_EXTERN,
     TOKEN_DUMP,
@@ -420,6 +421,7 @@ struct cst_decl {
         CST_DECL_CONSTANT,
         CST_DECL_FUNCTION,
         CST_DECL_STRUCT,
+        CST_DECL_EXTEND,
         CST_DECL_ALIAS,
         CST_DECL_EXTERN_VARIABLE,
     } kind;
@@ -453,6 +455,10 @@ struct cst_decl {
                 template_parameters;
             autil_sbuf(struct cst_member const* const) members;
         } struct_;
+        struct {
+            struct cst_typespec const* typespec;
+            struct cst_decl const* decl;
+        } extend;
         struct {
             struct cst_identifier const* identifier;
             struct cst_symbol const* symbol;
@@ -489,6 +495,11 @@ cst_decl_new_struct(
     struct cst_identifier const* identifier,
     struct cst_template_parameter const* const* template_parameters,
     struct cst_member const* const* members);
+struct cst_decl*
+cst_decl_new_extend(
+    struct source_location const* location,
+    struct cst_typespec const* typespec,
+    struct cst_decl const* decl);
 struct cst_decl*
 cst_decl_new_alias(
     struct source_location const* location,
@@ -992,6 +1003,10 @@ struct type {
     char const* name; // Canonical human-readable type-name (interned)
     size_t size; // sizeof
     size_t align; // alignof
+    // Symbol table corresponding to static symbols belonging to the type. This
+    // symbol table does *NOT* contain symbols for struct member variables as
+    // member variables are defined only on instances of a struct.
+    struct symbol_table* symbols;
 
     enum type_kind {
         TYPE_ANY,
@@ -1077,11 +1092,6 @@ struct type {
                 struct type const* type;
                 size_t offset;
             } /*sbuf*/ * member_variables;
-            // Symbol table corresponding to static symbols belonging to the
-            // struct. This symbol table does *NOT* contain symbols for member
-            // variables as member variables are defined only on instances of a
-            // struct.
-            struct symbol_table const* symbols;
         } struct_;
     } data;
 };
@@ -1126,7 +1136,7 @@ struct type*
 type_new_slice(struct type const* base);
 // Create a new struct with no members (size zero and alignment zero).
 struct type*
-type_new_struct(char const* name, struct symbol_table const* symbols);
+type_new_struct(char const* name, struct symbol_table* symbols);
 // Add a member variable definition to the end of the provided struct type.
 void
 type_struct_add_member_variable(
@@ -1141,16 +1151,6 @@ type_struct_member_variable_index(struct type const* self, char const* name);
 // Returns NULL on failure.
 struct member_variable const*
 type_struct_member_variable(struct type const* self, char const* name);
-// Returns the symbol of the member function `name` of the provided struct type.
-// Returns a symbol pointer for the member function on success.
-// Returns NULL on failure.
-struct symbol const*
-type_struct_member_function_symbol(struct type const* self, char const* name);
-// Returns a pointer to the member function `name` of the provided struct type.
-// Returns a pointer to the member function on success.
-// Returns NULL on failure.
-struct function const*
-type_struct_member_function(struct type const* self, char const* name);
 
 struct type const*
 type_unique_function(
@@ -1161,6 +1161,17 @@ struct type const*
 type_unique_array(size_t count, struct type const* base);
 struct type const*
 type_unique_slice(struct type const* base);
+
+// Returns the symbol of the member function `name` of the provided type.
+// Returns a symbol pointer for the member function on success.
+// Returns NULL on failure.
+struct symbol const*
+type_member_function_symbol(struct type const* self, char const* name);
+// Returns a pointer to the member function `name` of the provided type.
+// Returns a pointer to the member function on success.
+// Returns NULL on failure.
+struct function const*
+type_member_function(struct type const* self, char const* name);
 
 bool
 type_is_any_integer(struct type const* self);

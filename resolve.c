@@ -164,6 +164,8 @@ resolve_decl_function(struct resolver* resolver, struct cst_decl const* decl);
 static struct symbol const*
 resolve_decl_struct(struct resolver* resolver, struct cst_decl const* decl);
 static struct symbol const*
+resolve_decl_extend(struct resolver* resolver, struct cst_decl const* decl);
+static struct symbol const*
 resolve_decl_alias(struct resolver* resolver, struct cst_decl const* decl);
 static struct symbol const*
 resolve_decl_extern_variable(
@@ -577,10 +579,9 @@ xget_symbol(struct resolver* resolver, struct cst_symbol const* target)
             continue;
         }
 
-        if (lhs->kind == SYMBOL_TYPE
-            && symbol_xget_type(lhs)->kind == TYPE_STRUCT) {
+        if (lhs->kind == SYMBOL_TYPE) {
             symbol = symbol_table_lookup_local(
-                symbol_xget_type(lhs)->data.struct_.symbols, name);
+                symbol_xget_type(lhs)->symbols, name);
             if (symbol == NULL) {
                 fatal(
                     element->location,
@@ -613,7 +614,7 @@ xget_symbol(struct resolver* resolver, struct cst_symbol const* target)
 
         fatal(
             element->location,
-            "`%s` is not a namespace or struct or template",
+            "`%s` is not a namespace or type",
             lhs->name);
     }
 
@@ -1268,6 +1269,9 @@ resolve_decl(struct resolver* resolver, struct cst_decl const* decl)
         // all top-level structs.
         UNREACHABLE();
     }
+    case CST_DECL_EXTEND: {
+        return resolve_decl_extend(resolver, decl);
+    }
     case CST_DECL_ALIAS: {
         return resolve_decl_alias(resolver, decl);
     }
@@ -1407,7 +1411,7 @@ resolve_decl_function(struct resolver* resolver, struct cst_decl const* decl)
             symbols);
 
         autil_freezer_register(context()->freezer, template_symbol);
-        autil_sbuf_push(context()->template_symbol_tables, symbols);
+        autil_sbuf_push(context()->chilling_symbol_tables, symbols);
         symbol_table_insert(
             resolver->current_symbol_table,
             template_symbol->name,
@@ -1564,7 +1568,7 @@ resolve_decl_struct(struct resolver* resolver, struct cst_decl const* decl)
             symbols);
 
         autil_freezer_register(context()->freezer, template_symbol);
-        autil_sbuf_push(context()->template_symbol_tables, symbols);
+        autil_sbuf_push(context()->chilling_symbol_tables, symbols);
         symbol_table_insert(
             resolver->current_symbol_table,
             template_symbol->name,
@@ -1608,6 +1612,49 @@ resolve_decl_struct(struct resolver* resolver, struct cst_decl const* decl)
             }
         }
     }
+
+    return symbol;
+}
+
+static struct symbol const*
+resolve_decl_extend(struct resolver* resolver, struct cst_decl const* decl)
+{
+    assert(resolver != NULL);
+    assert(decl != NULL);
+    assert(decl->kind == CST_DECL_EXTEND);
+
+    if (decl->data.extend.decl->kind != CST_DECL_CONSTANT && decl->data.extend.decl->kind != CST_DECL_FUNCTION) {
+        fatal(
+            decl->location,
+            "type extension declaration must be a constant or function");
+    }
+
+    struct type const* const type = resolve_typespec(resolver, decl->data.extend.typespec);
+
+    // TODO: This current symbol name prefix and addr prefix do not take into
+    // account the namespace prefix! Adjust this so that the prefixes use
+    // <namespace>.<typename> instead just <typename>.
+    //
+    // Look for a similar comment under complete_struct which also shares this
+    // problem.
+    char const* const save_symbol_name_prefix =
+        resolver->current_symbol_name_prefix;
+    char const* const save_static_addr_prefix =
+        resolver->current_static_addr_prefix;
+    struct symbol_table* const save_symbol_table =
+        resolver->current_symbol_table;
+    resolver->current_symbol_name_prefix =
+        normalize(NULL, type->name, 0);
+    resolver->current_static_addr_prefix =
+        normalize(NULL, type->name, 0);
+    resolver->current_symbol_table = type->symbols;
+
+    struct symbol const* symbol =
+        resolve_decl(resolver, decl->data.extend.decl);
+
+    resolver->current_symbol_name_prefix = save_symbol_name_prefix;
+    resolver->current_static_addr_prefix = save_static_addr_prefix;
+    resolver->current_symbol_table = save_symbol_table;
 
     return symbol;
 }
@@ -1679,7 +1726,7 @@ complete_struct(
     struct type* type = (struct type*)symbol_xget_type(symbol);
     // XXX: Evil const cast.
     struct symbol_table* const struct_symbols =
-        (struct symbol_table*)symbol_xget_type(symbol)->data.struct_.symbols;
+        (struct symbol_table*)symbol_xget_type(symbol)->symbols;
 
     // XXX: A "direct leak" is detected if we encounter a fatal error while
     // resolving the member constants and declarations below even though we hold
@@ -1698,6 +1745,9 @@ complete_struct(
     // TODO: This current symbol name prefix and addr prefix do not take into
     // account the namespace prefix! Adjust this so that the prefixes use
     // <namespace>.<typename> instead just <typename>.
+    //
+    // Look for a similar comment under resolve_decl_extend which also shares
+    // this problem.
     resolver->current_symbol_name_prefix =
         normalize(NULL, symbol_xget_type(symbol)->name, 0);
     resolver->current_static_addr_prefix =
@@ -1833,6 +1883,10 @@ resolve_stmt_decl(struct resolver* resolver, struct cst_stmt const* stmt)
     }
     case CST_DECL_STRUCT: {
         fatal(decl->location, "local declaration of struct `%s`", decl->name);
+        return NULL;
+    }
+    case CST_DECL_EXTEND: {
+        fatal(decl->location, "local declaration of type extension `%s`", decl->name);
         return NULL;
     }
     case CST_DECL_ALIAS: {
@@ -2823,12 +2877,6 @@ resolve_expr_call(struct resolver* resolver, struct cst_expr const* expr)
         char const* const name = dot->data.access_member.identifier->name;
 
         struct expr const* const instance = resolve_expr(resolver, lhs);
-        if (instance->type->kind != TYPE_STRUCT) {
-            fatal(
-                instance->location,
-                "attempted member function access on non-struct type `%s`",
-                instance->type->name);
-        }
         if (!expr_is_lvalue(instance)) {
             fatal(
                 instance->location,
@@ -2837,17 +2885,19 @@ resolve_expr_call(struct resolver* resolver, struct cst_expr const* expr)
                 instance->type->name);
         }
 
-        struct member_variable const* const variable =
-            type_struct_member_variable(instance->type, name);
-        if (variable != NULL) {
-            // Actually this is *not* a member function call - this is a normal
-            // function invocation of a member variable that just happens to
-            // have a function type.
-            goto regular_function_call;
+        if (instance->type->kind == TYPE_STRUCT) {
+            struct member_variable const* const variable =
+                type_struct_member_variable(instance->type, name);
+            if (variable != NULL) {
+                // Actually this is *not* a member function call - this is a
+                // normal function invocation of a member variable that just
+                // happens to have a function type.
+                goto regular_function_call;
+            }
         }
 
         struct function const* const function =
-            type_struct_member_function(instance->type, name);
+            type_member_function(instance->type, name);
         if (function == NULL) {
             fatal(
                 instance->location,
@@ -2923,7 +2973,7 @@ resolve_expr_call(struct resolver* resolver, struct cst_expr const* expr)
         }
 
         struct symbol const* const member_function_symbol =
-            type_struct_member_function_symbol(instance->type, name);
+            type_member_function_symbol(instance->type, name);
         assert(member_function_symbol != NULL);
         struct expr* member_function_expr = member_function_expr =
             expr_new_symbol(
@@ -3105,7 +3155,7 @@ resolve_expr_access_member(
     }
 
     struct function const* const member_function_def =
-        type_struct_member_function(lhs->type, member_name);
+        type_member_function(lhs->type, member_name);
     if (member_function_def != NULL) {
         fatal(
             expr->location,

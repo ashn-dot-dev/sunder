@@ -1,0 +1,10 @@
+extend u16 func dumpme(self: *u16) void {
+    dump *self;
+}
+
+func main() void {
+    var a = 0xAAAAu16;
+    a.dumpme();
+}
+################################################################################
+# AA AA

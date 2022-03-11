@@ -703,12 +703,12 @@ context_fini(void)
     autil_map_del(self->static_symbols);
     symbol_table_freeze(self->global_symbol_table, self->freezer);
 
-    autil_sbuf(struct symbol_table*) const template_symbol_tables =
-        self->template_symbol_tables;
-    for (size_t i = 0; i < autil_sbuf_count(template_symbol_tables); ++i) {
-        symbol_table_freeze(template_symbol_tables[i], self->freezer);
+    autil_sbuf(struct symbol_table*) const chilling_symbol_tables =
+        self->chilling_symbol_tables;
+    for (size_t i = 0; i < autil_sbuf_count(chilling_symbol_tables); ++i) {
+        symbol_table_freeze(chilling_symbol_tables[i], self->freezer);
     }
-    autil_sbuf_fini(self->template_symbol_tables);
+    autil_sbuf_fini(self->chilling_symbol_tables);
 
     autil_freezer_del(self->freezer);
 

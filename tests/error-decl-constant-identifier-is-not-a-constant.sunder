@@ -4,4 +4,3 @@ const y: ssize = x;
 # [error-decl-constant-identifier-is-not-a-constant.sunder:2] error: identifier `x` is not a constant
 # const y: ssize = x;
 #                  ^
-
