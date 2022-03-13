@@ -1,3 +1,5 @@
+import "std";
+
 extend s32 func square(value: s32) s32 {
     return value * value;
 }
@@ -29,8 +31,17 @@ func main() void {
     dump p;
     p.zero();
     dump p;
+
+    dump u32::MIN;
+    dump u32::MAX;
+    dump s32::MIN;
+    dump s32::MAX;
 }
 ################################################################################
 # 01
 # AA AA BB BB
 # 00 00 00 00
+# 00 00 00 00
+# FF FF FF FF
+# 00 00 00 80
+# FF FF FF 7F

@@ -1631,31 +1631,36 @@ resolve_decl_extend(struct resolver* resolver, struct cst_decl const* decl)
 
     struct type const* const type = resolve_typespec(resolver, decl->data.extend.typespec);
 
+    // PLAN: Create the decl in a sub-symbol table of the module namespace that
+    // is created specifically for this one symbol so that name collisions don't
+    // happen. Then add the symbol to the type.
+
+    // Create a symbol table for this declaration only in order to prevent name
+    // collisions and hide the created symbol from the rest of the module.
+    struct symbol_table* const symbol_table = symbol_table_new(resolver->current_symbol_table);
+
     // TODO: This current symbol name prefix and addr prefix do not take into
     // account the namespace prefix! Adjust this so that the prefixes use
     // <namespace>.<typename> instead just <typename>.
     //
     // Look for a similar comment under complete_struct which also shares this
     // problem.
-    char const* const save_symbol_name_prefix =
-        resolver->current_symbol_name_prefix;
-    char const* const save_static_addr_prefix =
-        resolver->current_static_addr_prefix;
-    struct symbol_table* const save_symbol_table =
-        resolver->current_symbol_table;
-    resolver->current_symbol_name_prefix =
-        normalize(NULL, type->name, 0);
-    resolver->current_static_addr_prefix =
-        normalize(NULL, type->name, 0);
-    resolver->current_symbol_table = type->symbols;
+    char const* const save_symbol_name_prefix = resolver->current_symbol_name_prefix;
+    char const* const save_static_addr_prefix = resolver->current_static_addr_prefix;
+    struct symbol_table* const save_symbol_table = resolver->current_symbol_table;
+    resolver->current_symbol_name_prefix = normalize(NULL, type->name, 0);
+    resolver->current_static_addr_prefix = normalize(NULL, type->name, 0);
+    resolver->current_symbol_table = symbol_table;
 
-    struct symbol const* symbol =
+    struct symbol const* const symbol =
         resolve_decl(resolver, decl->data.extend.decl);
+    symbol_table_insert(type->symbols, decl->name, symbol);
 
     resolver->current_symbol_name_prefix = save_symbol_name_prefix;
     resolver->current_static_addr_prefix = save_static_addr_prefix;
     resolver->current_symbol_table = save_symbol_table;
 
+    symbol_table_freeze(symbol_table, context()->freezer);
     return symbol;
 }
 
