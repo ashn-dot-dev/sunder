@@ -1,62 +1,59 @@
 import "std";
 
 func check[[T]](lhs: T, rhs: T) void {
-    var lhs_int = std::int[[T]]::init(lhs);
-    var rhs_int = std::int[[T]]::init(rhs);
-
-    var eq = std::int[[u8]]::init((:u8)std::eq[[std::int[[T]]]](&lhs_int, &rhs_int));
+    var eq = (:u8)std::eq[[T]](&lhs, &rhs);
     std::print_format_line(
         std::out(),
         "{} == {} => {}",
         (:[]std::formatter)[
-            std::formatter::init[[std::int[[T]]]](&lhs_int),
-            std::formatter::init[[std::int[[T]]]](&rhs_int),
-            std::formatter::init[[std::int[[u8]]]](&eq)]);
+            std::formatter::init[[T]](&lhs),
+            std::formatter::init[[T]](&rhs),
+            std::formatter::init[[u8]](&eq)]);
 
-    var ne = std::int[[u8]]::init((:u8)std::ne[[std::int[[T]]]](&lhs_int, &rhs_int));
+    var ne = (:u8)std::ne[[T]](&lhs, &rhs);
     std::print_format_line(
         std::out(),
         "{} != {} => {}",
         (:[]std::formatter)[
-            std::formatter::init[[std::int[[T]]]](&lhs_int),
-            std::formatter::init[[std::int[[T]]]](&rhs_int),
-            std::formatter::init[[std::int[[u8]]]](&ne)]);
+            std::formatter::init[[T]](&lhs),
+            std::formatter::init[[T]](&rhs),
+            std::formatter::init[[u8]](&ne)]);
 
-    var lt = std::int[[u8]]::init((:u8)std::lt[[std::int[[T]]]](&lhs_int, &rhs_int));
+    var lt = (:u8)std::lt[[T]](&lhs, &rhs);
     std::print_format_line(
         std::out(),
         "{} <  {} => {}",
         (:[]std::formatter)[
-            std::formatter::init[[std::int[[T]]]](&lhs_int),
-            std::formatter::init[[std::int[[T]]]](&rhs_int),
-            std::formatter::init[[std::int[[u8]]]](&lt)]);
+            std::formatter::init[[T]](&lhs),
+            std::formatter::init[[T]](&rhs),
+            std::formatter::init[[u8]](&lt)]);
 
-    var le = std::int[[u8]]::init((:u8)std::le[[std::int[[T]]]](&lhs_int, &rhs_int));
+    var le = (:u8)std::le[[T]](&lhs, &rhs);
     std::print_format_line(
         std::out(),
         "{} <= {} => {}",
         (:[]std::formatter)[
-            std::formatter::init[[std::int[[T]]]](&lhs_int),
-            std::formatter::init[[std::int[[T]]]](&rhs_int),
-            std::formatter::init[[std::int[[u8]]]](&le)]);
+            std::formatter::init[[T]](&lhs),
+            std::formatter::init[[T]](&rhs),
+            std::formatter::init[[u8]](&le)]);
 
-    var gt = std::int[[u8]]::init((:u8)std::gt[[std::int[[T]]]](&lhs_int, &rhs_int));
+    var gt = (:u8)std::gt[[T]](&lhs, &rhs);
     std::print_format_line(
         std::out(),
         "{} >  {} => {}",
         (:[]std::formatter)[
-            std::formatter::init[[std::int[[T]]]](&lhs_int),
-            std::formatter::init[[std::int[[T]]]](&rhs_int),
-            std::formatter::init[[std::int[[u8]]]](&gt)]);
+            std::formatter::init[[T]](&lhs),
+            std::formatter::init[[T]](&rhs),
+            std::formatter::init[[u8]](&gt)]);
 
-    var ge = std::int[[u8]]::init((:u8)std::ge[[std::int[[T]]]](&lhs_int, &rhs_int));
+    var ge = (:u8)std::ge[[T]](&lhs, &rhs);
     std::print_format_line(
         std::out(),
         "{} >= {} => {}",
         (:[]std::formatter)[
-            std::formatter::init[[std::int[[T]]]](&lhs_int),
-            std::formatter::init[[std::int[[T]]]](&rhs_int),
-            std::formatter::init[[std::int[[u8]]]](&ge)]);
+            std::formatter::init[[T]](&lhs),
+            std::formatter::init[[T]](&rhs),
+            std::formatter::init[[u8]](&ge)]);
 }
 
 func main() void {

@@ -15,15 +15,15 @@ var stack_index: usize = 0;
 func main() void {
     if sys::argc != 2 {
         var progname = std::str::init(std::cstr::to_bytes(*sys::argv));
-        var expected = std::int[[usize]]::init(1);
-        var received = std::int[[usize]]::init(sys::argc - 1);
+        var expected: usize = 1;
+        var received: usize = sys::argc - 1;
         std::print_format_line(
             std::err(),
             "{}: invalid number of arguments (expected {}, received {})",
             (:[]std::formatter)[
                 std::formatter::init[[std::str]](&progname),
-                std::formatter::init[[std::int[[usize]]]](&expected),
-                std::formatter::init[[std::int[[usize]]]](&received)]);
+                std::formatter::init[[usize]](&expected),
+                std::formatter::init[[usize]](&received)]);
         std::exit(std::EXIT_FAILURE);
     }
 

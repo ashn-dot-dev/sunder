@@ -429,37 +429,6 @@ struct allocator {
     }
 }
 
-struct int[[T]] {
-    var value: T;
-
-    func init(value: T) int[[T]] {
-        return (:int[[T]]){.value = value};
-    }
-
-    func parse_from_bytes(bytes: []byte, radix: usize) std::result[[std::int[[T]], []byte]] {
-        var result = T::parse_from_bytes(bytes, radix);
-        if result.is_error() {
-            return std::result[[std::int[[T]], []byte]]::init_error(result.error());
-        }
-        return std::result[[std::int[[T]], []byte]]::init_value(std::int[[T]]::init(result.value()));
-    }
-
-    func compare(lhs: *int[[T]], rhs: *int[[T]]) ssize {
-        return T::compare(&lhs.*.value, &rhs.*.value);
-    }
-
-    # Accepted format specifiers:
-    #   ""  => decimal (default)
-    #   "d" => decimal
-    #   "b" => binary
-    #   "o" => octal
-    #   "x" => hexadecimal (lower)
-    #   "X" => hexadecimal (upper)
-    func format(self: *std::int[[T]], writer: std::writer, fmt: []byte) std::result[[usize, []byte]] {
-        return T::format(&self.*.value, writer, fmt);
-    }
-}
-
 struct str {
     var bytes: []byte;
 

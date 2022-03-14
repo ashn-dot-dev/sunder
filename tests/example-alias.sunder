@@ -4,8 +4,8 @@ alias i32 = s32;
 var a: i32 = 123;
 var b: i32 = 123s32;
 
-alias signed32 = std::int[[s32]];
-const c = (:signed32){.value = 123};
+alias signed32 = s32;
+const c = (:signed32)123s;
 
 alias standard = std;
 alias bytes = standard::str;

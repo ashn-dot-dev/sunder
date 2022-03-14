@@ -15,11 +15,10 @@ func main() void {
             std::print(std::out(), "Buzz\n");
             continue;
         }
-        var int = std::int[[usize]]::init(i);
         std::print_format_line(
             std::out(),
             "{}",
             (:[]std::formatter)[
-                std::formatter::init[[std::int[[usize]]]](&int)]);
+                std::formatter::init[[usize]](&i)]);
     }
 }
