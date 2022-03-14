@@ -1,6 +1,179 @@
 namespace std;
 import "sys";
 
+alias umax = sys::umax;
+alias smax = sys::smax;
+
+extend u8 const MIN: u8 = 0x00;
+extend u8 const MAX: u8 = 0xFF;
+extend u8 func parse_from_bytes(bytes: []byte, radix: usize) std::result[[u8, []byte]] {
+    var result = _int_common_parse_from_bytes(bytes, radix, false, (:umax)u8::MAX);
+    if result.is_error() {
+        return std::result[[u8, []byte]]::init_error(result.error());
+    }
+    return std::result[[u8, []byte]]::init_value((:u8)result.value());
+}
+extend u8 func compare(lhs: *u8, rhs: *u8) ssize {
+    return _int_common_compare[[umax]]((:umax)*lhs, (:umax)*rhs);
+}
+extend u8 func format(self: *u8, writer: std::writer, fmt: []byte) std::result[[usize, []byte]] {
+    return _int_common_format((:umax)*self, false, writer, fmt);
+}
+
+extend u16 const MIN: u16 = 0x0000;
+extend u16 const MAX: u16 = 0xFFFF;
+extend u16 func parse_from_bytes(bytes: []byte, radix: usize) std::result[[u16, []byte]] {
+    var result = _int_common_parse_from_bytes(bytes, radix, false, (:umax)u16::MAX);
+    if result.is_error() {
+        return std::result[[u16, []byte]]::init_error(result.error());
+    }
+    return std::result[[u16, []byte]]::init_value((:u16)result.value());
+}
+extend u16 func compare(lhs: *u16, rhs: *u16) ssize {
+    return _int_common_compare[[umax]]((:umax)*lhs, (:umax)*rhs);
+}
+extend u16 func format(self: *u16, writer: std::writer, fmt: []byte) std::result[[usize, []byte]] {
+    return _int_common_format((:umax)*self, false, writer, fmt);
+}
+
+extend u32 const MIN: u32 = 0x00000000;
+extend u32 const MAX: u32 = 0xFFFFFFFF;
+extend u32 func parse_from_bytes(bytes: []byte, radix: usize) std::result[[u32, []byte]] {
+    var result = _int_common_parse_from_bytes(bytes, radix, false, (:umax)u32::MAX);
+    if result.is_error() {
+        return std::result[[u32, []byte]]::init_error(result.error());
+    }
+    return std::result[[u32, []byte]]::init_value((:u32)result.value());
+}
+extend u32 func compare(lhs: *u32, rhs: *u32) ssize {
+    return _int_common_compare[[umax]]((:umax)*lhs, (:umax)*rhs);
+}
+extend u32 func format(self: *u32, writer: std::writer, fmt: []byte) std::result[[usize, []byte]] {
+    return _int_common_format((:umax)*self, false, writer, fmt);
+}
+
+extend u64 const MIN: u64 = 0x0000000000000000;
+extend u64 const MAX: u64 = 0xFFFFFFFFFFFFFFFF;
+extend u64 func parse_from_bytes(bytes: []byte, radix: usize) std::result[[u64, []byte]] {
+    var result = _int_common_parse_from_bytes(bytes, radix, false, (:umax)u64::MAX);
+    if result.is_error() {
+        return std::result[[u64, []byte]]::init_error(result.error());
+    }
+    return std::result[[u64, []byte]]::init_value((:u64)result.value());
+}
+extend u64 func compare(lhs: *u64, rhs: *u64) ssize {
+    return _int_common_compare[[umax]]((:umax)*lhs, (:umax)*rhs);
+}
+extend u64 func format(self: *u64, writer: std::writer, fmt: []byte) std::result[[usize, []byte]] {
+    return _int_common_format((:umax)*self, false, writer, fmt);
+}
+
+extend usize const MIN: usize = (:usize)u64::MIN;
+extend usize const MAX: usize = (:usize)u64::MAX;
+extend usize func parse_from_bytes(bytes: []byte, radix: usize) std::result[[usize, []byte]] {
+    var result = _int_common_parse_from_bytes(bytes, radix, false, (:umax)usize::MAX);
+    if result.is_error() {
+        return std::result[[usize, []byte]]::init_error(result.error());
+    }
+    return std::result[[usize, []byte]]::init_value((:usize)result.value());
+}
+extend usize func compare(lhs: *usize, rhs: *usize) ssize {
+    return _int_common_compare[[umax]]((:umax)*lhs, (:umax)*rhs);
+}
+extend usize func format(self: *usize, writer: std::writer, fmt: []byte) std::result[[usize, []byte]] {
+    return _int_common_format((:umax)*self, false, writer, fmt);
+}
+
+extend s8 const MIN: s8 = (:s8)0x80u8;
+extend s8 const MAX: s8 = (:s8)0x7Fu8;
+extend s8 func parse_from_bytes(bytes: []byte, radix: usize) std::result[[s8, []byte]] {
+    var result = _int_common_parse_from_bytes(bytes, radix, true, (:umax)s8::MAX);
+    if result.is_error() {
+        return std::result[[s8, []byte]]::init_error(result.error());
+    }
+    return std::result[[s8, []byte]]::init_value((:s8)result.value());
+}
+extend s8 func compare(lhs: *s8, rhs: *s8) ssize {
+    return _int_common_compare[[smax]]((:smax)*lhs, (:smax)*rhs);
+}
+extend s8 func format(self: *s8, writer: std::writer, fmt: []byte) std::result[[usize, []byte]] {
+    var value = _int_common_absolute_value[[s8]](*self);
+    var is_negative = *self < 0;
+    return _int_common_format(value, is_negative, writer, fmt);
+}
+
+extend s16 const MIN: s16 = (:s16)0x8000u16;
+extend s16 const MAX: s16 = (:s16)0x7FFFu16;
+extend s16 func parse_from_bytes(bytes: []byte, radix: usize) std::result[[s16, []byte]] {
+    var result = _int_common_parse_from_bytes(bytes, radix, true, (:umax)s16::MAX);
+    if result.is_error() {
+        return std::result[[s16, []byte]]::init_error(result.error());
+    }
+    return std::result[[s16, []byte]]::init_value((:s16)result.value());
+}
+extend s16 func compare(lhs: *s16, rhs: *s16) ssize {
+    return _int_common_compare[[smax]]((:smax)*lhs, (:smax)*rhs);
+}
+extend s16 func format(self: *s16, writer: std::writer, fmt: []byte) std::result[[usize, []byte]] {
+    var value = _int_common_absolute_value[[s16]](*self);
+    var is_negative = *self < 0;
+    return _int_common_format(value, is_negative, writer, fmt);
+}
+
+extend s32 const MIN: s32 = (:s32)0x80000000u32;
+extend s32 const MAX: s32 = (:s32)0x7FFFFFFFu32;
+extend s32 func parse_from_bytes(bytes: []byte, radix: usize) std::result[[s32, []byte]] {
+    var result = _int_common_parse_from_bytes(bytes, radix, true, (:umax)s32::MAX);
+    if result.is_error() {
+        return std::result[[s32, []byte]]::init_error(result.error());
+    }
+    return std::result[[s32, []byte]]::init_value((:s32)result.value());
+}
+extend s32 func compare(lhs: *s32, rhs: *s32) ssize {
+    return _int_common_compare[[smax]]((:smax)*lhs, (:smax)*rhs);
+}
+extend s32 func format(self: *s32, writer: std::writer, fmt: []byte) std::result[[usize, []byte]] {
+    var value = _int_common_absolute_value[[s32]](*self);
+    var is_negative = *self < 0;
+    return _int_common_format(value, is_negative, writer, fmt);
+}
+
+extend s64 const MIN: s64 = (:s64)0x8000000000000000u64;
+extend s64 const MAX: s64 = (:s64)0x7FFFFFFFFFFFFFFFu64;
+extend s64 func parse_from_bytes(bytes: []byte, radix: usize) std::result[[s64, []byte]] {
+    var result = _int_common_parse_from_bytes(bytes, radix, true, (:umax)s64::MAX);
+    if result.is_error() {
+        return std::result[[s64, []byte]]::init_error(result.error());
+    }
+    return std::result[[s64, []byte]]::init_value((:s64)result.value());
+}
+extend s64 func compare(lhs: *s64, rhs: *s64) ssize {
+    return _int_common_compare[[smax]]((:smax)*lhs, (:smax)*rhs);
+}
+extend s64 func format(self: *s64, writer: std::writer, fmt: []byte) std::result[[usize, []byte]] {
+    var value = _int_common_absolute_value[[s64]](*self);
+    var is_negative = *self < 0;
+    return _int_common_format(value, is_negative, writer, fmt);
+}
+
+extend ssize const MIN: ssize = (:ssize)s64::MIN;
+extend ssize const MAX: ssize = (:ssize)s64::MAX;
+extend ssize func parse_from_bytes(bytes: []byte, radix: usize) std::result[[ssize, []byte]] {
+    var result = _int_common_parse_from_bytes(bytes, radix, true, (:umax)ssize::MAX);
+    if result.is_error() {
+        return std::result[[ssize, []byte]]::init_error(result.error());
+    }
+    return std::result[[ssize, []byte]]::init_value((:ssize)result.value());
+}
+extend ssize func compare(lhs: *ssize, rhs: *ssize) ssize {
+    return _int_common_compare[[smax]]((:smax)*lhs, (:smax)*rhs);
+}
+extend ssize func format(self: *ssize, writer: std::writer, fmt: []byte) std::result[[usize, []byte]] {
+    var value = _int_common_absolute_value[[ssize]](*self);
+    var is_negative = *self < 0;
+    return _int_common_format(value, is_negative, writer, fmt);
+}
+
 struct result[[T, E]] {
     var _value: T;
     var _error: E;
@@ -256,174 +429,6 @@ struct allocator {
     }
 }
 
-func int_parse_from_bytes[[T]](bytes: []byte, radix: usize) std::result[[T, []byte]] {
-    if radix != 0 and (radix < 2 or radix > 36) {
-        return std::result[[T, []byte]]::init_error("invalid radix");
-    }
-
-    var cur: usize = 0;
-    var end: usize = countof(bytes);
-
-    # Parse optional sign (+ or -).
-    var sign: ssize = +1;
-    if (end - cur) > countof("+") and bytes[cur] == '+' {
-        sign = +1;
-        cur = cur + 1;
-    }
-    if (end - cur) > countof("-") and bytes[cur] == '-' {
-        sign = -1;
-        cur = cur + 1;
-    }
-
-    # Parse radix.
-    if radix == 0 {
-        var is_bin = (end - cur) >= countof("0b") and bytes[cur] == '0' and bytes[cur+1] == 'b';
-        var is_oct = (end - cur) >= countof("0o") and bytes[cur] == '0' and bytes[cur+1] == 'o';
-        var is_hex = (end - cur) >= countof("0x") and bytes[cur] == '0' and bytes[cur+1] == 'x';
-
-        if is_bin {
-            radix = 2;
-            cur = cur + countof("0b");
-        }
-        elif is_oct {
-            radix = 8;
-            cur = cur + countof("0o");
-        }
-        elif is_hex {
-            radix = 16;
-            cur = cur + countof("0x");
-        }
-        else {
-            radix = 10;
-        }
-    }
-
-    # Parse digits.
-    if cur == end {
-        return std::result[[T, []byte]]::init_error("integer contains no digits");
-    }
-    var accum: u64 = 0; # Digit accumulator (`u64` acting as `uintmax_t`).
-    var ACCUM_MAX: u64 = 0xFFFFFFFFFFFFFFFF;
-    for cur != end {
-        var c = bytes[cur];
-        cur = cur + 1;
-
-        var digit: usize = 0;
-        if '0' <= c and c <= '9' {
-            digit = (:usize)c - '0';
-        }
-        elif 'A' <= c and c <= 'F' {
-            digit = (:usize)c - 'A' + 0xA;
-        }
-        elif 'a' <= c and c <= 'f' {
-            digit = (:usize)c - 'a' + 0xA;
-        }
-        else {
-            return std::result[[T, []byte]]::init_error("integer contains invalid digit");
-        }
-
-        if digit >= radix {
-            return std::result[[T, []byte]]::init_error("integer contains invalid digit");
-        }
-
-        if accum != 0 and ACCUM_MAX / accum < (:typeof(accum))radix {
-            return std::result[[T, []byte]]::init_error("integer out-of-range");
-        }
-        accum = accum * (:typeof(accum))radix;
-
-        if ACCUM_MAX - accum < (:typeof(accum))digit {
-            return std::result[[T, []byte]]::init_error("integer out-of-range");
-        }
-        accum = accum + (:typeof(accum))digit;
-    }
-
-    const IS_UINT = (:T)-1s > 0;
-    const IS_SINT = (:T)-1s < 0;
-    var is_out_of_range =
-        IS_UINT and sizeof(T) == sizeof(u8)  and accum > 0xFF or
-        IS_UINT and sizeof(T) == sizeof(u16) and accum > 0xFFFF or
-        IS_UINT and sizeof(T) == sizeof(u32) and accum > 0xFFFFFFFF or
-        IS_UINT and sizeof(T) == sizeof(u64) and accum > 0xFFFFFFFFFFFFFFFF or
-        IS_SINT and sizeof(T) == sizeof(s8)  and sign == +1 and accum > 0x7F or
-        IS_SINT and sizeof(T) == sizeof(s16) and sign == +1 and accum > 0x7FFF or
-        IS_SINT and sizeof(T) == sizeof(s32) and sign == +1 and accum > 0x7FFFFFFF or
-        IS_SINT and sizeof(T) == sizeof(s64) and sign == +1 and accum > 0x7FFFFFFFFFFFFFFF or
-        IS_SINT and sizeof(T) == sizeof(s8)  and sign == -1 and accum > 0x80 or
-        IS_SINT and sizeof(T) == sizeof(s16) and sign == -1 and accum > 0x8000 or
-        IS_SINT and sizeof(T) == sizeof(s32) and sign == -1 and accum > 0x80000000 or
-        IS_SINT and sizeof(T) == sizeof(s64) and sign == -1 and accum > 0x8000000000000000;
-    if IS_UINT and sign == -1 or is_out_of_range {
-        return std::result[[T, []byte]]::init_error("integer out-of-range");
-    }
-
-    var value: T = (:T)accum;
-    if sign == -1 {
-        value = value * (:T)-1s;
-    }
-
-    return std::result[[T, []byte]]::init_value(value);
-}
-
-extend u8 const MIN: u8 = 0x00;
-extend u8 const MAX: u8 = 0xFF;
-extend u8 func parse_from_bytes(bytes: []byte, radix: usize) std::result[[u8, []byte]] {
-    return int_parse_from_bytes[[u8]](bytes, radix);
-}
-
-extend u16 const MIN: u16 = 0x0000;
-extend u16 const MAX: u16 = 0xFFFF;
-extend u16 func parse_from_bytes(bytes: []byte, radix: usize) std::result[[u16, []byte]] {
-    return int_parse_from_bytes[[u16]](bytes, radix);
-}
-
-extend u32 const MIN: u32 = 0x00000000;
-extend u32 const MAX: u32 = 0xFFFFFFFF;
-extend u32 func parse_from_bytes(bytes: []byte, radix: usize) std::result[[u32, []byte]] {
-    return int_parse_from_bytes[[u32]](bytes, radix);
-}
-
-extend u64 const MIN: u64 = 0x0000000000000000;
-extend u64 const MAX: u64 = 0xFFFFFFFFFFFFFFFF;
-extend u64 func parse_from_bytes(bytes: []byte, radix: usize) std::result[[u64, []byte]] {
-    return int_parse_from_bytes[[u64]](bytes, radix);
-}
-
-extend usize const MIN: usize = (:usize)u64::MIN;
-extend usize const MAX: usize = (:usize)u64::MAX;
-extend usize func parse_from_bytes(bytes: []byte, radix: usize) std::result[[usize, []byte]] {
-    return int_parse_from_bytes[[usize]](bytes, radix);
-}
-
-extend s8 const MIN: s8 = (:s8)0x80u8;
-extend s8 const MAX: s8 = (:s8)0x7Fu8;
-extend s8 func parse_from_bytes(bytes: []byte, radix: usize) std::result[[s8, []byte]] {
-    return int_parse_from_bytes[[s8]](bytes, radix);
-}
-
-extend s16 const MIN: s16 = (:s16)0x8000u16;
-extend s16 const MAX: s16 = (:s16)0x7FFFu16;
-extend s16 func parse_from_bytes(bytes: []byte, radix: usize) std::result[[s16, []byte]] {
-    return int_parse_from_bytes[[s16]](bytes, radix);
-}
-
-extend s32 const MIN: s32 = (:s32)0x80000000u32;
-extend s32 const MAX: s32 = (:s32)0x7FFFFFFFu32;
-extend s32 func parse_from_bytes(bytes: []byte, radix: usize) std::result[[s32, []byte]] {
-    return int_parse_from_bytes[[s32]](bytes, radix);
-}
-
-extend s64 const MIN: s64 = (:s64)0x8000000000000000u64;
-extend s64 const MAX: s64 = (:s64)0x7FFFFFFFFFFFFFFFu64;
-extend s64 func parse_from_bytes(bytes: []byte, radix: usize) std::result[[s64, []byte]] {
-    return int_parse_from_bytes[[s64]](bytes, radix);
-}
-
-extend ssize const MIN: ssize = (:ssize)s64::MIN;
-extend ssize const MAX: ssize = (:ssize)s64::MAX;
-extend ssize func parse_from_bytes(bytes: []byte, radix: usize) std::result[[ssize, []byte]] {
-    return int_parse_from_bytes[[ssize]](bytes, radix);
-}
-
 struct int[[T]] {
     var value: T;
 
@@ -432,121 +437,15 @@ struct int[[T]] {
     }
 
     func parse_from_bytes(bytes: []byte, radix: usize) std::result[[std::int[[T]], []byte]] {
-        if radix != 0 and (radix < 2 or radix > 36) {
-            return std::result[[std::int[[T]], []byte]]::init_error("invalid radix");
+        var result = T::parse_from_bytes(bytes, radix);
+        if result.is_error() {
+            return std::result[[std::int[[T]], []byte]]::init_error(result.error());
         }
-
-        var cur: usize = 0;
-        var end: usize = countof(bytes);
-
-        # Parse optional sign (+ or -).
-        var sign: ssize = +1;
-        if (end - cur) > countof("+") and bytes[cur] == '+' {
-            sign = +1;
-            cur = cur + 1;
-        }
-        if (end - cur) > countof("-") and bytes[cur] == '-' {
-            sign = -1;
-            cur = cur + 1;
-        }
-
-        # Parse radix.
-        if radix == 0 {
-            var is_bin = (end - cur) >= countof("0b") and bytes[cur] == '0' and bytes[cur+1] == 'b';
-            var is_oct = (end - cur) >= countof("0o") and bytes[cur] == '0' and bytes[cur+1] == 'o';
-            var is_hex = (end - cur) >= countof("0x") and bytes[cur] == '0' and bytes[cur+1] == 'x';
-
-            if is_bin {
-                radix = 2;
-                cur = cur + countof("0b");
-            }
-            elif is_oct {
-                radix = 8;
-                cur = cur + countof("0o");
-            }
-            elif is_hex {
-                radix = 16;
-                cur = cur + countof("0x");
-            }
-            else {
-                radix = 10;
-            }
-        }
-
-        # Parse digits.
-        if cur == end {
-            return std::result[[std::int[[T]], []byte]]::init_error("integer contains no digits");
-        }
-        var accum: u64 = 0; # Digit accumulator (`u64` acting as `uintmax_t`).
-        var ACCUM_MAX: u64 = 0xFFFFFFFFFFFFFFFF;
-        for cur != end {
-            var c = bytes[cur];
-            cur = cur + 1;
-
-            var digit: usize = 0;
-            if '0' <= c and c <= '9' {
-                digit = (:usize)c - '0';
-            }
-            elif 'A' <= c and c <= 'F' {
-                digit = (:usize)c - 'A' + 0xA;
-            }
-            elif 'a' <= c and c <= 'f' {
-                digit = (:usize)c - 'a' + 0xA;
-            }
-            else {
-                return std::result[[std::int[[T]], []byte]]::init_error("integer contains invalid digit");
-            }
-
-            if digit >= radix {
-                return std::result[[std::int[[T]], []byte]]::init_error("integer contains invalid digit");
-            }
-
-            if accum != 0 and ACCUM_MAX / accum < (:typeof(accum))radix {
-                return std::result[[std::int[[T]], []byte]]::init_error("integer out-of-range");
-            }
-            accum = accum * (:typeof(accum))radix;
-
-            if ACCUM_MAX - accum < (:typeof(accum))digit {
-                return std::result[[std::int[[T]], []byte]]::init_error("integer out-of-range");
-            }
-            accum = accum + (:typeof(accum))digit;
-        }
-
-        const IS_UINT = (:T)-1s > 0;
-        const IS_SINT = (:T)-1s < 0;
-        var is_out_of_range =
-            IS_UINT and sizeof(T) == sizeof(u8)  and accum > 0xFF or
-            IS_UINT and sizeof(T) == sizeof(u16) and accum > 0xFFFF or
-            IS_UINT and sizeof(T) == sizeof(u32) and accum > 0xFFFFFFFF or
-            IS_UINT and sizeof(T) == sizeof(u64) and accum > 0xFFFFFFFFFFFFFFFF or
-            IS_SINT and sizeof(T) == sizeof(s8)  and sign == +1 and accum > 0x7F or
-            IS_SINT and sizeof(T) == sizeof(s16) and sign == +1 and accum > 0x7FFF or
-            IS_SINT and sizeof(T) == sizeof(s32) and sign == +1 and accum > 0x7FFFFFFF or
-            IS_SINT and sizeof(T) == sizeof(s64) and sign == +1 and accum > 0x7FFFFFFFFFFFFFFF or
-            IS_SINT and sizeof(T) == sizeof(s8)  and sign == -1 and accum > 0x80 or
-            IS_SINT and sizeof(T) == sizeof(s16) and sign == -1 and accum > 0x8000 or
-            IS_SINT and sizeof(T) == sizeof(s32) and sign == -1 and accum > 0x80000000 or
-            IS_SINT and sizeof(T) == sizeof(s64) and sign == -1 and accum > 0x8000000000000000;
-        if IS_UINT and sign == -1 or is_out_of_range {
-            return std::result[[std::int[[T]], []byte]]::init_error("integer out-of-range");
-        }
-
-        var value: T = (:T)accum;
-        if sign == -1 {
-            value = value * (:T)-1s;
-        }
-
-        return std::result[[std::int[[T]], []byte]]::init_value(std::int[[T]]::init(value));
+        return std::result[[std::int[[T]], []byte]]::init_value(std::int[[T]]::init(result.value()));
     }
 
     func compare(lhs: *int[[T]], rhs: *int[[T]]) ssize {
-        if lhs.*.value < rhs.*.value {
-            return -1;
-        }
-        if lhs.*.value > rhs.*.value {
-            return +1;
-        }
-        return 0;
+        return T::compare(&lhs.*.value, &rhs.*.value);
     }
 
     # Accepted format specifiers:
@@ -556,94 +455,8 @@ struct int[[T]] {
     #   "o" => octal
     #   "x" => hexadecimal (lower)
     #   "X" => hexadecimal (upper)
-    func format(
-        self: *std::int[[T]],
-        writer: std::writer,
-        fmt: []byte
-    ) std::result[[usize, []byte]] {
-        # All non-default format specifiers have a length of one byte.
-        if countof(fmt) > 1 {
-            std::formatter::invalid_format_specifier(fmt);
-        }
-
-        const DIGITS_TABLE_COUNT: usize = 16;
-        const DIGITS_TABLE_LOWER = (:[DIGITS_TABLE_COUNT]byte)[
-            '0', '1', '2', '3', '4', '5', '6', '7',
-            '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'];
-        const DIGITS_TABLE_UPPER = (:[DIGITS_TABLE_COUNT]byte)[
-            '0', '1', '2', '3', '4', '5', '6', '7',
-            '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'];
-
-        var radix: T = 10;
-        var digits_prefix: []byte = "";
-        var digits_table: []byte = DIGITS_TABLE_LOWER[0:DIGITS_TABLE_COUNT];
-
-        if countof(fmt) != 0 {
-            var c: byte = fmt[0];
-            if c == 'd' {
-                # Decimal defaults already set.
-            }
-            elif c == 'b' {
-                radix = 2;
-                digits_prefix = "0b";
-            }
-            elif c == 'o' {
-                radix = 8;
-                digits_prefix = "0o";
-            }
-            elif c == 'x' {
-                radix = 16;
-                digits_prefix = "0x";
-            }
-            elif c == 'X' {
-                radix = 16;
-                digits_prefix = "0x";
-                digits_table = DIGITS_TABLE_UPPER[0:DIGITS_TABLE_COUNT];
-            }
-            else {
-                std::formatter::invalid_format_specifier(fmt);
-            }
-        }
-
-        var value: T = self.*.value;
-
-        var is_negative: bool = value < 0;
-        if is_negative {
-            value = value * (:T)-1s;
-        }
-
-        # More than enough bytes to store the sign and digits of any number with
-        # a size less than or equal to 64 bits.
-        const OUTPUT_COUNT: usize = countof("-0b") + 64;
-        var output = (:[OUTPUT_COUNT]byte)[0...];
-        var output_index: usize = countof(output) - 1;
-
-        if value == 0 {
-            # Write a single zero digit.
-            output[output_index] = '0';
-            output_index = output_index - 1;
-        }
-        for value != 0 {
-            var div: T = value / radix;
-            var rem: T = value - radix * (value / radix);
-
-            var digit: byte = digits_table[(:usize)rem];
-            output[output_index] = digit;
-            output_index = output_index - 1;
-
-            value = div;
-        }
-
-        for i in 0:countof(digits_prefix) {
-            output[output_index] = digits_prefix[countof(digits_prefix) - i - 1];
-            output_index = output_index - 1;
-        }
-        if is_negative {
-            output[output_index] = '-';
-            output_index = output_index - 1;
-        }
-
-        return std::write_all(writer, output[output_index+1:countof(output)]);
+    func format(self: *std::int[[T]], writer: std::writer, fmt: []byte) std::result[[usize, []byte]] {
+        return T::format(&self.*.value, writer, fmt);
     }
 }
 
@@ -1293,4 +1106,225 @@ func zeroed[[T]]() T {
     # this function is not necessarily portable across other architectures.
     const object: [sizeof(T)]byte = (:[sizeof(T)]byte)[0...];
     return *(:*T)&object;
+}
+
+# INTERNAL
+# Uses lhs and rhs of template type T instead of *T to allow for umax and smax
+# casting, requiring only two template instantiations for all integer types.
+func _int_common_compare[[T]](lhs: T, rhs: T) ssize {
+    if lhs < rhs {
+        return -1;
+    }
+    if lhs > rhs {
+        return +1;
+    }
+    return 0;
+}
+
+# INTERNAL
+func _int_common_absolute_value[[T]](value: T) umax {
+    if value >= 0 {
+        # Absolute value of a non-negative integer is itself.
+        return (:umax)value;
+    }
+
+    # Special case for the minimum value of a two's complement signed integer
+    # which will produce an integer out-of-range error when multiplied by
+    # negative one, as the negated (positive) value is un-representable as a
+    # two's complement signed type T.
+    if value == T::MIN {
+        return (:umax)T::MAX + 1;
+    }
+
+    return (:umax)((:T)-1s * value);
+}
+
+# INTERNAL
+# Accepted format specifiers:
+#   ""  => decimal (default)
+#   "d" => decimal
+#   "b" => binary
+#   "o" => octal
+#   "x" => hexadecimal (lower)
+#   "X" => hexadecimal (upper)
+#
+# Parameter `value` is the absolute value of the integer.
+# Parameter `is_negative` is true if the original value of the integer was a
+# negative signed integer. This parameter is false for unsigned integers.
+func _int_common_format(value: umax, is_negative: bool, writer: std::writer, fmt: []byte) std::result[[usize, []byte]] {
+    # All non-default format specifiers have a length of one byte.
+    if countof(fmt) > 1 {
+        std::formatter::invalid_format_specifier(fmt);
+    }
+
+    const DIGITS_TABLE_COUNT: usize = 16;
+    const DIGITS_TABLE_LOWER = (:[DIGITS_TABLE_COUNT]byte)[
+        '0', '1', '2', '3', '4', '5', '6', '7',
+        '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'];
+    const DIGITS_TABLE_UPPER = (:[DIGITS_TABLE_COUNT]byte)[
+        '0', '1', '2', '3', '4', '5', '6', '7',
+        '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'];
+
+    var radix: umax = 10;
+    var digits_prefix: []byte = "";
+    var digits_table: []byte = DIGITS_TABLE_LOWER[0:DIGITS_TABLE_COUNT];
+
+    if countof(fmt) != 0 {
+        var c: byte = fmt[0];
+        if c == 'd' {
+            # Decimal defaults already set.
+        }
+        elif c == 'b' {
+            radix = 2;
+            digits_prefix = "0b";
+        }
+        elif c == 'o' {
+            radix = 8;
+            digits_prefix = "0o";
+        }
+        elif c == 'x' {
+            radix = 16;
+            digits_prefix = "0x";
+        }
+        elif c == 'X' {
+            radix = 16;
+            digits_prefix = "0x";
+            digits_table = DIGITS_TABLE_UPPER[0:DIGITS_TABLE_COUNT];
+        }
+        else {
+            std::formatter::invalid_format_specifier(fmt);
+        }
+    }
+
+    # Enough bytes to store the sign, digit-prefix, and digits of any integer
+    # with size less than or equal to the size of the max integer type.
+    const OUTPUT_COUNT: usize = countof("-0b") + sizeof(umax) * 8;
+    var output = (:[OUTPUT_COUNT]byte)[0...];
+    var output_index: usize = countof(output) - 1;
+
+    if value == 0 {
+        # Write a single zero digit.
+        output[output_index] = '0';
+        output_index = output_index - 1;
+    }
+    for value != 0 {
+        var div: umax = value / radix;
+        var rem: umax = value - radix * (value / radix);
+
+        var digit: byte = digits_table[(:usize)rem];
+        output[output_index] = digit;
+        output_index = output_index - 1;
+
+        value = div;
+    }
+
+    for i in 0:countof(digits_prefix) {
+        output[output_index] = digits_prefix[countof(digits_prefix) - i - 1];
+        output_index = output_index - 1;
+    }
+    if is_negative {
+        output[output_index] = '-';
+        output_index = output_index - 1;
+    }
+
+    return std::write_all(writer, output[output_index+1:countof(output)]);
+}
+
+# INTERNAL
+func _int_common_parse_from_bytes(bytes: []byte, radix: usize, is_signed: bool, max: umax) std::result[[umax, []byte]] {
+    if radix != 0 and (radix < 2 or radix > 36) {
+        return std::result[[umax, []byte]]::init_error("invalid radix");
+    }
+
+    var cur: usize = 0;
+    var end: usize = countof(bytes);
+
+    # Parse optional sign (+ or -).
+    var sign: ssize = +1;
+    if (end - cur) > countof("+") and bytes[cur] == '+' {
+        cur = cur + 1;
+    }
+    if (end - cur) > countof("-") and bytes[cur] == '-' {
+        if not is_signed {
+            return std::result[[umax, []byte]]::init_error("integer out-of-range");
+        }
+        sign = -1;
+        cur = cur + 1;
+    }
+
+    # Parse radix.
+    if radix == 0 {
+        var is_bin = (end - cur) >= countof("0b") and bytes[cur] == '0' and bytes[cur+1] == 'b';
+        var is_oct = (end - cur) >= countof("0o") and bytes[cur] == '0' and bytes[cur+1] == 'o';
+        var is_hex = (end - cur) >= countof("0x") and bytes[cur] == '0' and bytes[cur+1] == 'x';
+
+        if is_bin {
+            radix = 2;
+            cur = cur + countof("0b");
+        }
+        elif is_oct {
+            radix = 8;
+            cur = cur + countof("0o");
+        }
+        elif is_hex {
+            radix = 16;
+            cur = cur + countof("0x");
+        }
+        else {
+            radix = 10;
+        }
+    }
+
+    # Parse digits.
+    if cur == end {
+        return std::result[[umax, []byte]]::init_error("integer contains no digits");
+    }
+    var accum: umax = 0;
+    for cur != end {
+        var c = bytes[cur];
+        cur = cur + 1;
+
+        var digit: usize = 0;
+        if '0' <= c and c <= '9' {
+            digit = (:usize)c - '0';
+        }
+        elif 'A' <= c and c <= 'F' {
+            digit = (:usize)c - 'A' + 0xA;
+        }
+        elif 'a' <= c and c <= 'f' {
+            digit = (:usize)c - 'a' + 0xA;
+        }
+        else {
+            return std::result[[umax, []byte]]::init_error("integer contains invalid digit");
+        }
+
+        if digit >= radix {
+            return std::result[[umax, []byte]]::init_error("integer contains invalid digit");
+        }
+
+        if accum != 0 and umax::MAX / accum < (:typeof(accum))radix {
+            return std::result[[umax, []byte]]::init_error("integer out-of-range");
+        }
+        accum = accum * (:typeof(accum))radix;
+
+        if umax::MAX - accum < (:typeof(accum))digit {
+            return std::result[[umax, []byte]]::init_error("integer out-of-range");
+        }
+        accum = accum + (:typeof(accum))digit;
+    }
+
+
+    var is_out_of_range =
+        sign == +1 and accum > max or
+        sign == -1 and accum > max + 1;
+    if is_out_of_range {
+        return std::result[[umax, []byte]]::init_error("integer out-of-range");
+    }
+
+    if sign == -1 {
+        var value = (:umax)(-1 * (:smax)accum);
+        return std::result[[umax, []byte]]::init_value(value);
+    }
+
+    return std::result[[umax, []byte]]::init_value(accum);
 }

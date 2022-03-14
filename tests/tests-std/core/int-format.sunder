@@ -93,7 +93,18 @@ func format_test8() void {
     dump res.value();
 }
 
+# Test for minimum negative number (subject to integer out-of-range if negated).
 func format_test9() void {
+    var a: std::int[[s8]] = std::int[[s8]]::init(-128);
+    var a_fmtr: std::formatter = std::formatter::init[[std::int[[s8]]]](&a);
+
+    var args: [1]std::formatter = (:[1]std::formatter)[a_fmtr];
+    var res: std::result[[usize, []byte]] = std::write_format(std::out(), "{}\n", args[0:countof(args)]);
+
+    dump res.value();
+}
+
+func format_test10() void {
     var a: std::int[[u32]] = std::int[[u32]]::init(0xDEADBEEF);
     var a_fmtr: std::formatter = std::formatter::init[[std::int[[u32]]]](&a);
 
@@ -122,6 +133,7 @@ func main() void {
     format_test7();
     format_test8();
     format_test9();
+    format_test10();
 }
 ################################################################################
 # 00
@@ -147,4 +159,6 @@ func main() void {
 # 08 00 00 00 00 00 00 00
 # 0 0 0b0 0o0 0x0
 # 10 00 00 00 00 00 00 00
+# -128
+# 05 00 00 00 00 00 00 00
 # panic: invalid format specifier "l"
