@@ -34,7 +34,7 @@ func cat(filename: []byte) void {
             break;
         }
 
-        std::print(std::out(), buf[0:countof(buf)]);
+        std::print(std::out(), buf[0:read_result.value()]);
     }
 
     file.close();
