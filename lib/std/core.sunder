@@ -7,11 +7,7 @@ alias smax = sys::smax;
 extend u8 const MIN: u8 = 0x00;
 extend u8 const MAX: u8 = 0xFF;
 extend u8 func parse_from_str(str: []byte, radix: usize) std::result[[u8, []byte]] {
-    var result = _int_common_parse_from_str(str, radix, false, (:umax)u8::MAX);
-    if result.is_error() {
-        return std::result[[u8, []byte]]::init_error(result.error());
-    }
-    return std::result[[u8, []byte]]::init_value((:u8)result.value());
+    return _int_parse_from_str[[u8]](str, radix);
 }
 extend u8 func compare(lhs: *u8, rhs: *u8) ssize {
     return _int_common_compare[[umax]]((:umax)*lhs, (:umax)*rhs);
@@ -23,11 +19,7 @@ extend u8 func format(self: *u8, writer: std::writer, fmt: []byte) std::result[[
 extend u16 const MIN: u16 = 0x0000;
 extend u16 const MAX: u16 = 0xFFFF;
 extend u16 func parse_from_str(str: []byte, radix: usize) std::result[[u16, []byte]] {
-    var result = _int_common_parse_from_str(str, radix, false, (:umax)u16::MAX);
-    if result.is_error() {
-        return std::result[[u16, []byte]]::init_error(result.error());
-    }
-    return std::result[[u16, []byte]]::init_value((:u16)result.value());
+    return _int_parse_from_str[[u16]](str, radix);
 }
 extend u16 func compare(lhs: *u16, rhs: *u16) ssize {
     return _int_common_compare[[umax]]((:umax)*lhs, (:umax)*rhs);
@@ -39,11 +31,7 @@ extend u16 func format(self: *u16, writer: std::writer, fmt: []byte) std::result
 extend u32 const MIN: u32 = 0x00000000;
 extend u32 const MAX: u32 = 0xFFFFFFFF;
 extend u32 func parse_from_str(str: []byte, radix: usize) std::result[[u32, []byte]] {
-    var result = _int_common_parse_from_str(str, radix, false, (:umax)u32::MAX);
-    if result.is_error() {
-        return std::result[[u32, []byte]]::init_error(result.error());
-    }
-    return std::result[[u32, []byte]]::init_value((:u32)result.value());
+    return _int_parse_from_str[[u32]](str, radix);
 }
 extend u32 func compare(lhs: *u32, rhs: *u32) ssize {
     return _int_common_compare[[umax]]((:umax)*lhs, (:umax)*rhs);
@@ -55,11 +43,7 @@ extend u32 func format(self: *u32, writer: std::writer, fmt: []byte) std::result
 extend u64 const MIN: u64 = 0x0000000000000000;
 extend u64 const MAX: u64 = 0xFFFFFFFFFFFFFFFF;
 extend u64 func parse_from_str(str: []byte, radix: usize) std::result[[u64, []byte]] {
-    var result = _int_common_parse_from_str(str, radix, false, (:umax)u64::MAX);
-    if result.is_error() {
-        return std::result[[u64, []byte]]::init_error(result.error());
-    }
-    return std::result[[u64, []byte]]::init_value((:u64)result.value());
+    return _int_parse_from_str[[u64]](str, radix);
 }
 extend u64 func compare(lhs: *u64, rhs: *u64) ssize {
     return _int_common_compare[[umax]]((:umax)*lhs, (:umax)*rhs);
@@ -71,11 +55,7 @@ extend u64 func format(self: *u64, writer: std::writer, fmt: []byte) std::result
 extend usize const MIN: usize = (:usize)u64::MIN;
 extend usize const MAX: usize = (:usize)u64::MAX;
 extend usize func parse_from_str(str: []byte, radix: usize) std::result[[usize, []byte]] {
-    var result = _int_common_parse_from_str(str, radix, false, (:umax)usize::MAX);
-    if result.is_error() {
-        return std::result[[usize, []byte]]::init_error(result.error());
-    }
-    return std::result[[usize, []byte]]::init_value((:usize)result.value());
+    return _int_parse_from_str[[usize]](str, radix);
 }
 extend usize func compare(lhs: *usize, rhs: *usize) ssize {
     return _int_common_compare[[umax]]((:umax)*lhs, (:umax)*rhs);
@@ -87,91 +67,61 @@ extend usize func format(self: *usize, writer: std::writer, fmt: []byte) std::re
 extend s8 const MIN: s8 = (:s8)0x80u8;
 extend s8 const MAX: s8 = (:s8)0x7Fu8;
 extend s8 func parse_from_str(str: []byte, radix: usize) std::result[[s8, []byte]] {
-    var result = _int_common_parse_from_str(str, radix, true, (:umax)s8::MAX);
-    if result.is_error() {
-        return std::result[[s8, []byte]]::init_error(result.error());
-    }
-    return std::result[[s8, []byte]]::init_value((:s8)result.value());
+    return _int_parse_from_str[[s8]](str, radix);
 }
 extend s8 func compare(lhs: *s8, rhs: *s8) ssize {
     return _int_common_compare[[smax]]((:smax)*lhs, (:smax)*rhs);
 }
 extend s8 func format(self: *s8, writer: std::writer, fmt: []byte) std::result[[usize, []byte]] {
-    var value = _int_common_absolute_value[[s8]](*self);
-    var is_negative = *self < 0;
-    return _int_common_format(value, is_negative, writer, fmt);
+    return _int_common_format(_int_common_absolute_value[[s8]](*self), *self < 0, writer, fmt);
 }
 
 extend s16 const MIN: s16 = (:s16)0x8000u16;
 extend s16 const MAX: s16 = (:s16)0x7FFFu16;
 extend s16 func parse_from_str(str: []byte, radix: usize) std::result[[s16, []byte]] {
-    var result = _int_common_parse_from_str(str, radix, true, (:umax)s16::MAX);
-    if result.is_error() {
-        return std::result[[s16, []byte]]::init_error(result.error());
-    }
-    return std::result[[s16, []byte]]::init_value((:s16)result.value());
+    return _int_parse_from_str[[s16]](str, radix);
 }
 extend s16 func compare(lhs: *s16, rhs: *s16) ssize {
     return _int_common_compare[[smax]]((:smax)*lhs, (:smax)*rhs);
 }
 extend s16 func format(self: *s16, writer: std::writer, fmt: []byte) std::result[[usize, []byte]] {
-    var value = _int_common_absolute_value[[s16]](*self);
-    var is_negative = *self < 0;
-    return _int_common_format(value, is_negative, writer, fmt);
+    return _int_common_format(_int_common_absolute_value[[s16]](*self), *self < 0, writer, fmt);
 }
 
 extend s32 const MIN: s32 = (:s32)0x80000000u32;
 extend s32 const MAX: s32 = (:s32)0x7FFFFFFFu32;
 extend s32 func parse_from_str(str: []byte, radix: usize) std::result[[s32, []byte]] {
-    var result = _int_common_parse_from_str(str, radix, true, (:umax)s32::MAX);
-    if result.is_error() {
-        return std::result[[s32, []byte]]::init_error(result.error());
-    }
-    return std::result[[s32, []byte]]::init_value((:s32)result.value());
+    return _int_parse_from_str[[s32]](str, radix);
 }
 extend s32 func compare(lhs: *s32, rhs: *s32) ssize {
     return _int_common_compare[[smax]]((:smax)*lhs, (:smax)*rhs);
 }
 extend s32 func format(self: *s32, writer: std::writer, fmt: []byte) std::result[[usize, []byte]] {
-    var value = _int_common_absolute_value[[s32]](*self);
-    var is_negative = *self < 0;
-    return _int_common_format(value, is_negative, writer, fmt);
+    return _int_common_format(_int_common_absolute_value[[s32]](*self), *self < 0, writer, fmt);
 }
 
 extend s64 const MIN: s64 = (:s64)0x8000000000000000u64;
 extend s64 const MAX: s64 = (:s64)0x7FFFFFFFFFFFFFFFu64;
 extend s64 func parse_from_str(str: []byte, radix: usize) std::result[[s64, []byte]] {
-    var result = _int_common_parse_from_str(str, radix, true, (:umax)s64::MAX);
-    if result.is_error() {
-        return std::result[[s64, []byte]]::init_error(result.error());
-    }
-    return std::result[[s64, []byte]]::init_value((:s64)result.value());
+    return _int_parse_from_str[[s64]](str, radix);
 }
 extend s64 func compare(lhs: *s64, rhs: *s64) ssize {
     return _int_common_compare[[smax]]((:smax)*lhs, (:smax)*rhs);
 }
 extend s64 func format(self: *s64, writer: std::writer, fmt: []byte) std::result[[usize, []byte]] {
-    var value = _int_common_absolute_value[[s64]](*self);
-    var is_negative = *self < 0;
-    return _int_common_format(value, is_negative, writer, fmt);
+    return _int_common_format(_int_common_absolute_value[[s64]](*self), *self < 0, writer, fmt);
 }
 
 extend ssize const MIN: ssize = (:ssize)s64::MIN;
 extend ssize const MAX: ssize = (:ssize)s64::MAX;
 extend ssize func parse_from_str(str: []byte, radix: usize) std::result[[ssize, []byte]] {
-    var result = _int_common_parse_from_str(str, radix, true, (:umax)ssize::MAX);
-    if result.is_error() {
-        return std::result[[ssize, []byte]]::init_error(result.error());
-    }
-    return std::result[[ssize, []byte]]::init_value((:ssize)result.value());
+    return _int_parse_from_str[[ssize]](str, radix);
 }
 extend ssize func compare(lhs: *ssize, rhs: *ssize) ssize {
     return _int_common_compare[[smax]]((:smax)*lhs, (:smax)*rhs);
 }
 extend ssize func format(self: *ssize, writer: std::writer, fmt: []byte) std::result[[usize, []byte]] {
-    var value = _int_common_absolute_value[[ssize]](*self);
-    var is_negative = *self < 0;
-    return _int_common_format(value, is_negative, writer, fmt);
+    return _int_common_format(_int_common_absolute_value[[ssize]](*self), *self < 0, writer, fmt);
 }
 
 extend []byte func compare(lhs: *[]byte, rhs: *[]byte) ssize {
@@ -1186,6 +1136,16 @@ func _int_common_format(value: umax, is_negative: bool, writer: std::writer, fmt
     }
 
     return std::write_all(writer, output[output_index+1:countof(output)]);
+}
+
+# INTERNAL
+func _int_parse_from_str[[T]](str: []byte, radix: usize) std::result[[T, []byte]] {
+    const IS_SIGNED = T::MIN < 0;
+    var result = _int_common_parse_from_str(str, radix, IS_SIGNED, (:umax)T::MAX);
+    if result.is_error() {
+        return std::result[[T, []byte]]::init_error(result.error());
+    }
+    return std::result[[T, []byte]]::init_value((:T)result.value());
 }
 
 # INTERNAL
