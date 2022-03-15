@@ -8,9 +8,9 @@ alias signed32 = s32;
 const c = (:signed32)123s;
 
 alias standard = std;
-alias bytes = standard::str;
+alias writer_result = standard::result[[usize, []byte]];
 
-alias printfln = standard::print_format_line;
+alias println = standard::print_line;
 
 alias foo = s64;
 
@@ -21,8 +21,8 @@ func main() void {
 
     alias foo = s32;
 
-    var e = bytes::init("foo");
-    printfln(std::out(), "{}", (:[]std::formatter)[std::formatter::init[[std::str]](&e)]);
+    var r = writer_result::init_error("foo");
+    println(std::out(), r.error());
 }
 ################################################################################
 # 7B 00 00 00

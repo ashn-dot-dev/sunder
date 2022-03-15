@@ -1,61 +1,58 @@
 import "std";
 
 func check(lhs: []byte, rhs: []byte) void {
-    var lhs_str = std::str::init(lhs);
-    var rhs_str = std::str::init(rhs);
-
-    var eq = (:u8)std::eq[[std::str]](&lhs_str, &rhs_str);
+    var eq = (:u8)std::eq[[[]byte]](&lhs, &rhs);
     std::print_format_line(
         std::out(),
         "\"{e}\" == \"{e}\" => {}",
         (:[]std::formatter)[
-            std::formatter::init[[std::str]](&lhs_str),
-            std::formatter::init[[std::str]](&rhs_str),
+            std::formatter::init[[[]byte]](&lhs),
+            std::formatter::init[[[]byte]](&rhs),
             std::formatter::init[[u8]](&eq)]);
 
-    var ne = (:u8)std::ne[[std::str]](&lhs_str, &rhs_str);
+    var ne = (:u8)std::ne[[[]byte]](&lhs, &rhs);
     std::print_format_line(
         std::out(),
         "\"{e}\" != \"{e}\" => {}",
         (:[]std::formatter)[
-            std::formatter::init[[std::str]](&lhs_str),
-            std::formatter::init[[std::str]](&rhs_str),
+            std::formatter::init[[[]byte]](&lhs),
+            std::formatter::init[[[]byte]](&rhs),
             std::formatter::init[[u8]](&ne)]);
 
-    var lt = (:u8)std::lt[[std::str]](&lhs_str, &rhs_str);
+    var lt = (:u8)std::lt[[[]byte]](&lhs, &rhs);
     std::print_format_line(
         std::out(),
         "\"{e}\" <  \"{e}\" => {}",
         (:[]std::formatter)[
-            std::formatter::init[[std::str]](&lhs_str),
-            std::formatter::init[[std::str]](&rhs_str),
+            std::formatter::init[[[]byte]](&lhs),
+            std::formatter::init[[[]byte]](&rhs),
             std::formatter::init[[u8]](&lt)]);
 
-    var le = (:u8)std::le[[std::str]](&lhs_str, &rhs_str);
+    var le = (:u8)std::le[[[]byte]](&lhs, &rhs);
     std::print_format_line(
         std::out(),
         "\"{e}\" <= \"{e}\" => {}",
         (:[]std::formatter)[
-            std::formatter::init[[std::str]](&lhs_str),
-            std::formatter::init[[std::str]](&rhs_str),
+            std::formatter::init[[[]byte]](&lhs),
+            std::formatter::init[[[]byte]](&rhs),
             std::formatter::init[[u8]](&le)]);
 
-    var gt = (:u8)std::gt[[std::str]](&lhs_str, &rhs_str);
+    var gt = (:u8)std::gt[[[]byte]](&lhs, &rhs);
     std::print_format_line(
         std::out(),
         "\"{e}\" >  \"{e}\" => {}",
         (:[]std::formatter)[
-            std::formatter::init[[std::str]](&lhs_str),
-            std::formatter::init[[std::str]](&rhs_str),
+            std::formatter::init[[[]byte]](&lhs),
+            std::formatter::init[[[]byte]](&rhs),
             std::formatter::init[[u8]](&gt)]);
 
-    var ge = (:u8)std::ge[[std::str]](&lhs_str, &rhs_str);
+    var ge = (:u8)std::ge[[[]byte]](&lhs, &rhs);
     std::print_format_line(
         std::out(),
         "\"{e}\" >= \"{e}\" => {}",
         (:[]std::formatter)[
-            std::formatter::init[[std::str]](&lhs_str),
-            std::formatter::init[[std::str]](&rhs_str),
+            std::formatter::init[[[]byte]](&lhs),
+            std::formatter::init[[[]byte]](&rhs),
             std::formatter::init[[u8]](&ge)]);
 }
 

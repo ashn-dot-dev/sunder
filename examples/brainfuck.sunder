@@ -14,14 +14,14 @@ var stack_index: usize = 0;
 
 func main() void {
     if sys::argc != 2 {
-        var progname = std::str::init(std::cstr::to_bytes(*sys::argv));
+        var progname = std::cstr::to_bytes(*sys::argv);
         var expected: usize = 1;
         var received: usize = sys::argc - 1;
         std::print_format_line(
             std::err(),
             "{}: invalid number of arguments (expected {}, received {})",
             (:[]std::formatter)[
-                std::formatter::init[[std::str]](&progname),
+                std::formatter::init[[[]byte]](&progname),
                 std::formatter::init[[usize]](&expected),
                 std::formatter::init[[usize]](&received)]);
         std::exit(std::EXIT_FAILURE);
@@ -30,28 +30,28 @@ func main() void {
     var path = *std::cptr::add[[*byte]](sys::argv, 1);
     var open_result = std::fs::file::open(std::cstr::to_bytes(path), std::fs::OPEN_READ);
     if open_result.is_error() {
-        var p = std::str::init(std::cstr::to_bytes(path));
-        var e = std::str::init(open_result.error());
+        var p = std::cstr::to_bytes(path);
+        var e = open_result.error();
         std::print_format_line(
             std::err(),
             "{}: {}",
             (:[]std::formatter)[
-                std::formatter::init[[std::str]](&p),
-                std::formatter::init[[std::str]](&e)]);
+                std::formatter::init[[[]byte]](&p),
+                std::formatter::init[[[]byte]](&e)]);
         std::exit(std::EXIT_FAILURE);
     }
     var file = open_result.value();
     var file_reader = std::reader::init[[std::fs::file]](&file);
     var read_result = std::read_all(file_reader, std::page_allocator::the());
     if read_result.is_error() {
-        var p = std::str::init(std::cstr::to_bytes(path));
-        var e = std::str::init(read_result.error());
+        var p = std::cstr::to_bytes(path);
+        var e = read_result.error();
         std::print_format_line(
             std::err(),
             "{}: {}",
             (:[]std::formatter)[
-                std::formatter::init[[std::str]](&p),
-                std::formatter::init[[std::str]](&e)]);
+                std::formatter::init[[[]byte]](&p),
+                std::formatter::init[[[]byte]](&e)]);
         file.close();
         std::exit(std::EXIT_FAILURE);
     }

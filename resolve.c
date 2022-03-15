@@ -456,14 +456,19 @@ normalize(char const* prefix, char const* name, unsigned unique_id)
 {
     assert(name != NULL);
 
-    // Search the provided name for template information and discard that
-    // information if found (e.g foo[[u16]] -> foo).
-    char const* search = name;
-    while (autil_isalnum(*search) || *search == '_') {
-        search += 1;
+    // Substitute invalid assembly character symbols with replacement
+    // characters within the provided name.
+    struct autil_string* const name_string = autil_string_new(NULL, 0);
+    for (char const* search = name; *search != '\0'; ++search) {
+        if (autil_isalnum(*search) || *search == '_') {
+            autil_string_append_fmt(name_string, "%c", *search);
+            continue;
+        }
+
+        // Replace all non valid identifier characters with an underscore.
+        autil_string_append_cstr(name_string, "_");
     }
-    size_t const name_count = (size_t)(search - name);
-    assert(name_count != 0);
+    assert(autil_string_count(name_string) != 0);
 
     struct autil_string* const s = autil_string_new(NULL, 0);
 
@@ -472,7 +477,7 @@ normalize(char const* prefix, char const* name, unsigned unique_id)
         autil_string_append_fmt(s, "%s.", prefix);
     }
     // <prefix>.<name>
-    autil_string_append(s, name, name_count);
+    autil_string_append_fmt(s, "%.*s", (int)autil_string_count(name_string), autil_string_start(name_string));
     // <prefix>.<name>.<unique-id>
     if (unique_id != 0) {
         autil_string_append_fmt(s, ".%u", unique_id);
@@ -482,6 +487,7 @@ normalize(char const* prefix, char const* name, unsigned unique_id)
         context()->sipool, autil_string_start(s), autil_string_count(s));
 
     autil_string_del(s);
+    autil_string_del(name_string);
     return interned;
 }
 
@@ -716,7 +722,7 @@ xget_template_instance(
                 autil_string_append_cstr(name_string, ", ");
             }
             autil_string_append_fmt(
-                name_string, ":%s", template_types[i]->name);
+                name_string, "%s", template_types[i]->name);
         }
         autil_string_append_cstr(name_string, "]]");
         char const* const name_interned = autil_sipool_intern_cstr(
@@ -836,7 +842,7 @@ xget_template_instance(
                 autil_string_append_cstr(name_string, ", ");
             }
             autil_string_append_fmt(
-                name_string, ":%s", template_types[i]->name);
+                name_string, "%s", template_types[i]->name);
         }
         autil_string_append_cstr(name_string, "]]");
         char const* const name_interned = autil_sipool_intern_cstr(

@@ -174,6 +174,86 @@ extend ssize func format(self: *ssize, writer: std::writer, fmt: []byte) std::re
     return _int_common_format(value, is_negative, writer, fmt);
 }
 
+extend []byte func compare(lhs: *[]byte, rhs: *[]byte) ssize {
+    var lhs_data = *lhs;
+    var rhs_data = *rhs;
+    var count = std::min[[usize]](countof(lhs_data), countof(rhs_data));
+    for i in 0:count {
+        if lhs_data[i] != rhs_data[i] {
+            return (:ssize)lhs_data[i] - (:ssize)rhs_data[i];
+        }
+    }
+    return (:ssize)countof(lhs_data) - (:ssize)countof(rhs_data);
+}
+
+# Accepted format specifiers:
+#   ""  => verbatim (default)
+#   "e" => escaped
+extend []byte func format(self: *[]byte, writer: std::writer, fmt: []byte) std::result[[usize, []byte]] {
+    # Format specifier: ""
+    if countof(fmt) == 0 {
+        return std::write_all(writer, *self);
+    }
+
+    # Format specifier: "e"
+    if countof(fmt) == 1 and fmt[0] == 'e' {
+        var written: usize = 0;
+        var write_result = std::zeroed[[std::result[[usize, []byte]]]]();
+        for i in 0:countof(*self) {
+            var c: byte = self.*[i];
+            if c == '\0' {
+                write_result = std::write_all_accumulate(writer, "\\0", &written);
+                if write_result.is_error() {
+                    return write_result;
+                }
+                continue;
+            }
+            if c == '\t' {
+                write_result = std::write_all_accumulate(writer, "\\t", &written);
+                if write_result.is_error() {
+                    return write_result;
+                }
+                continue;
+            }
+            if c == '\n' {
+                write_result = std::write_all_accumulate(writer, "\\n", &written);
+                if write_result.is_error() {
+                    return write_result;
+                }
+                continue;
+            }
+            if c == '\'' {
+                write_result = std::write_all_accumulate(writer, "\\\'", &written);
+                if write_result.is_error() {
+                    return write_result;
+                }
+                continue;
+            }
+            if c == '\"' {
+                write_result = std::write_all_accumulate(writer, "\\\"", &written);
+                if write_result.is_error() {
+                    return write_result;
+                }
+                continue;
+            }
+            if c == '\\' {
+                write_result = std::write_all_accumulate(writer, "\\\\", &written);
+                if write_result.is_error() {
+                    return write_result;
+                }
+                continue;
+            }
+            write_result = std::write_all_accumulate(writer, (:[]byte){&c, 1}, &written);
+            if write_result.is_error() {
+                return write_result;
+            }
+        }
+        return std::result[[usize, []byte]]::init_value(written);
+    }
+
+    std::formatter::invalid_format_specifier(fmt);
+}
+
 struct result[[T, E]] {
     var _value: T;
     var _error: E;
@@ -357,17 +437,15 @@ struct formatter {
     }
 
     func invalid_format_string(format: []byte) void {
-        var str = std::str::init(format);
         std::panic_format(
             "invalid format string \"{e}\"\n",
-            (:[]std::formatter)[std::formatter::init[[std::str]](&str)]);
+            (:[]std::formatter)[std::formatter::init[[[]byte]](&format)]);
     }
 
     func invalid_format_specifier(fmt: []byte) void {
-        var str = std::str::init(fmt);
         std::panic_format(
             "invalid format specifier \"{e}\"\n",
-            (:[]std::formatter)[std::formatter::init[[std::str]](&str)]);
+            (:[]std::formatter)[std::formatter::init[[[]byte]](&fmt)]);
     }
 }
 
@@ -426,94 +504,6 @@ struct allocator {
     # allocator.
     func deallocate(self: *allocator, ptr: *byte, align: usize, size: usize) void {
         self.*.itable.*.deallocate(self.*.object, ptr, align, size);
-    }
-}
-
-struct str {
-    var bytes: []byte;
-
-    func init(bytes: []byte) str {
-        return (:str){.bytes = bytes};
-    }
-
-    func compare(lhs: *str, rhs: *str) ssize {
-        var lhs_bytes = lhs.*.bytes;
-        var rhs_bytes = rhs.*.bytes;
-        var count = std::min[[usize]](countof(lhs_bytes), countof(rhs_bytes));
-        for i in 0:count {
-            if lhs_bytes[i] != rhs_bytes[i] {
-                return (:ssize)lhs_bytes[i] - (:ssize)rhs_bytes[i];
-            }
-        }
-        return (:ssize)countof(lhs_bytes) - (:ssize)countof(rhs_bytes);
-    }
-
-    # Accepted format specifiers:
-    #   ""  => verbatim (default)
-    #   "e" => escaped
-    func format(self: *std::str, writer: std::writer, fmt: []byte) std::result[[usize, []byte]] {
-        # Format specifier: ""
-        if countof(fmt) == 0 {
-            return std::write_all(writer, self.*.bytes);
-        }
-
-        # Format specifier: "e"
-        if countof(fmt) == 1 and fmt[0] == 'e' {
-            var written: usize = 0;
-            var write_result = std::zeroed[[std::result[[usize, []byte]]]]();
-            for i in 0:countof(self.*.bytes) {
-                var c: byte = self.*.bytes[i];
-                if c == '\0' {
-                    write_result = std::write_all_accumulate(writer, "\\0", &written);
-                    if write_result.is_error() {
-                        return write_result;
-                    }
-                    continue;
-                }
-                if c == '\t' {
-                    write_result = std::write_all_accumulate(writer, "\\t", &written);
-                    if write_result.is_error() {
-                        return write_result;
-                    }
-                    continue;
-                }
-                if c == '\n' {
-                    write_result = std::write_all_accumulate(writer, "\\n", &written);
-                    if write_result.is_error() {
-                        return write_result;
-                    }
-                    continue;
-                }
-                if c == '\'' {
-                    write_result = std::write_all_accumulate(writer, "\\\'", &written);
-                    if write_result.is_error() {
-                        return write_result;
-                    }
-                    continue;
-                }
-                if c == '\"' {
-                    write_result = std::write_all_accumulate(writer, "\\\"", &written);
-                    if write_result.is_error() {
-                        return write_result;
-                    }
-                    continue;
-                }
-                if c == '\\' {
-                    write_result = std::write_all_accumulate(writer, "\\\\", &written);
-                    if write_result.is_error() {
-                        return write_result;
-                    }
-                    continue;
-                }
-                write_result = std::write_all_accumulate(writer, (:[]byte){&c, 1}, &written);
-                if write_result.is_error() {
-                    return write_result;
-                }
-            }
-            return std::result[[usize, []byte]]::init_value(written);
-        }
-
-        std::formatter::invalid_format_specifier(fmt);
     }
 }
 
@@ -1052,8 +1042,7 @@ func exit(status: ssize) void {
 # Print the provided string to standard error, followed by a newline, before
 # making a call to `std::terminate`. This function does not return.
 func panic(why: []byte) void {
-    var str = std::str::init(why);
-    std::panic_format("{}", (:[]std::formatter)[std::formatter::init[[std::str]](&str)]);
+    std::panic_format("{}", (:[]std::formatter)[std::formatter::init[[[]byte]](&why)]);
 }
 
 # Print the provided formatted string to standard error, followed by a newline,
@@ -1281,7 +1270,6 @@ func _int_common_parse_from_bytes(bytes: []byte, radix: usize, is_signed: bool, 
         }
         accum = accum + (:typeof(accum))digit;
     }
-
 
     var is_out_of_range =
         sign == +1 and accum > max or

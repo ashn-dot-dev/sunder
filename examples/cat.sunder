@@ -1,18 +1,16 @@
 import "std";
 import "sys";
 
-func cat(filename: *byte) void {
-    var filename_str: std::str = std::str::init(std::cstr::to_bytes(filename));
-
-    var open_result = std::fs::file::open(filename_str.bytes, std::fs::OPEN_READ);
+func cat(filename: []byte) void {
+    var open_result = std::fs::file::open(filename, std::fs::OPEN_READ);
     if open_result.is_error() {
-        var error = std::str::init(open_result.error());
+        var error = open_result.error();
         std::print_format_line(
             std::err(),
             "{}: {}",
             (:[]std::formatter)[
-                std::formatter::init[[std::str]](&filename_str),
-                std::formatter::init[[std::str]](&error)]);
+                std::formatter::init[[[]byte]](&filename),
+                std::formatter::init[[[]byte]](&error)]);
         std::exit(std::EXIT_FAILURE);
     }
 
@@ -22,13 +20,13 @@ func cat(filename: *byte) void {
     for true {
         var read_result = file.read(buf[0:countof(buf)]);
         if read_result.is_error() {
-            var error = std::str::init(read_result.error());
+            var error = read_result.error();
             std::print_format_line(
                 std::err(),
                 "{}: {}",
                 (:[]std::formatter)[
-                    std::formatter::init[[std::str]](&filename_str),
-                    std::formatter::init[[std::str]](&error)]);
+                    std::formatter::init[[[]byte]](&filename),
+                    std::formatter::init[[[]byte]](&error)]);
             std::exit(std::EXIT_FAILURE);
         }
 
@@ -44,7 +42,7 @@ func cat(filename: *byte) void {
 
 func main() void {
     for i in 1:sys::argc {
-        var filename: *byte = *std::cptr::add[[*byte]](sys::argv, i);
-        cat(filename);
+        var arg: *byte = *std::cptr::add[[*byte]](sys::argv, i);
+        cat(std::cstr::to_bytes(arg));
     }
 }
