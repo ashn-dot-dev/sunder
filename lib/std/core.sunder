@@ -73,7 +73,7 @@ extend s8 func compare(lhs: *s8, rhs: *s8) ssize {
     return _int_common_compare[[smax]]((:smax)*lhs, (:smax)*rhs);
 }
 extend s8 func format(self: *s8, writer: std::writer, fmt: []byte) std::result[[usize, []byte]] {
-    return _int_common_format(_int_common_absolute_value[[s8]](*self), *self < 0, writer, fmt);
+    return _int_common_format(_int_absolute_value[[s8]](*self), *self < 0, writer, fmt);
 }
 
 extend s16 const MIN: s16 = (:s16)0x8000u16;
@@ -85,7 +85,7 @@ extend s16 func compare(lhs: *s16, rhs: *s16) ssize {
     return _int_common_compare[[smax]]((:smax)*lhs, (:smax)*rhs);
 }
 extend s16 func format(self: *s16, writer: std::writer, fmt: []byte) std::result[[usize, []byte]] {
-    return _int_common_format(_int_common_absolute_value[[s16]](*self), *self < 0, writer, fmt);
+    return _int_common_format(_int_absolute_value[[s16]](*self), *self < 0, writer, fmt);
 }
 
 extend s32 const MIN: s32 = (:s32)0x80000000u32;
@@ -97,7 +97,7 @@ extend s32 func compare(lhs: *s32, rhs: *s32) ssize {
     return _int_common_compare[[smax]]((:smax)*lhs, (:smax)*rhs);
 }
 extend s32 func format(self: *s32, writer: std::writer, fmt: []byte) std::result[[usize, []byte]] {
-    return _int_common_format(_int_common_absolute_value[[s32]](*self), *self < 0, writer, fmt);
+    return _int_common_format(_int_absolute_value[[s32]](*self), *self < 0, writer, fmt);
 }
 
 extend s64 const MIN: s64 = (:s64)0x8000000000000000u64;
@@ -109,7 +109,7 @@ extend s64 func compare(lhs: *s64, rhs: *s64) ssize {
     return _int_common_compare[[smax]]((:smax)*lhs, (:smax)*rhs);
 }
 extend s64 func format(self: *s64, writer: std::writer, fmt: []byte) std::result[[usize, []byte]] {
-    return _int_common_format(_int_common_absolute_value[[s64]](*self), *self < 0, writer, fmt);
+    return _int_common_format(_int_absolute_value[[s64]](*self), *self < 0, writer, fmt);
 }
 
 extend ssize const MIN: ssize = (:ssize)s64::MIN;
@@ -121,7 +121,7 @@ extend ssize func compare(lhs: *ssize, rhs: *ssize) ssize {
     return _int_common_compare[[smax]]((:smax)*lhs, (:smax)*rhs);
 }
 extend ssize func format(self: *ssize, writer: std::writer, fmt: []byte) std::result[[usize, []byte]] {
-    return _int_common_format(_int_common_absolute_value[[ssize]](*self), *self < 0, writer, fmt);
+    return _int_common_format(_int_absolute_value[[ssize]](*self), *self < 0, writer, fmt);
 }
 
 extend []byte func compare(lhs: *[]byte, rhs: *[]byte) ssize {
@@ -1017,128 +1017,6 @@ func zeroed[[T]]() T {
 }
 
 # INTERNAL
-# Uses lhs and rhs of template type T instead of *T to allow for umax and smax
-# casting, requiring only two template instantiations for all integer types.
-func _int_common_compare[[T]](lhs: T, rhs: T) ssize {
-    if lhs < rhs {
-        return -1;
-    }
-    if lhs > rhs {
-        return +1;
-    }
-    return 0;
-}
-
-# INTERNAL
-func _int_common_absolute_value[[T]](value: T) umax {
-    if value >= 0 {
-        # Absolute value of a non-negative integer is itself.
-        return (:umax)value;
-    }
-
-    # Special case for the minimum value of a two's complement signed integer
-    # which will produce an integer out-of-range error when multiplied by
-    # negative one, as the negated (positive) value is un-representable as a
-    # two's complement signed type T.
-    if value == T::MIN {
-        return (:umax)T::MAX + 1;
-    }
-
-    return (:umax)((:T)-1s * value);
-}
-
-# INTERNAL
-# Accepted format specifiers:
-#   ""  => decimal (default)
-#   "d" => decimal
-#   "b" => binary
-#   "o" => octal
-#   "x" => hexadecimal (lower)
-#   "X" => hexadecimal (upper)
-#
-# Parameter `value` is the absolute value of the integer.
-# Parameter `is_negative` is true if the original value of the integer was a
-# negative signed integer. This parameter is false for unsigned integers.
-func _int_common_format(value: umax, is_negative: bool, writer: std::writer, fmt: []byte) std::result[[usize, []byte]] {
-    # All non-default format specifiers have a length of one byte.
-    if countof(fmt) > 1 {
-        std::formatter::invalid_format_specifier(fmt);
-    }
-
-    const DIGITS_TABLE_COUNT: usize = 16;
-    const DIGITS_TABLE_LOWER = (:[DIGITS_TABLE_COUNT]byte)[
-        '0', '1', '2', '3', '4', '5', '6', '7',
-        '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'];
-    const DIGITS_TABLE_UPPER = (:[DIGITS_TABLE_COUNT]byte)[
-        '0', '1', '2', '3', '4', '5', '6', '7',
-        '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'];
-
-    var radix: umax = 10;
-    var digits_prefix: []byte = "";
-    var digits_table: []byte = DIGITS_TABLE_LOWER[0:DIGITS_TABLE_COUNT];
-
-    if countof(fmt) != 0 {
-        var c: byte = fmt[0];
-        if c == 'd' {
-            # Decimal defaults already set.
-        }
-        elif c == 'b' {
-            radix = 2;
-            digits_prefix = "0b";
-        }
-        elif c == 'o' {
-            radix = 8;
-            digits_prefix = "0o";
-        }
-        elif c == 'x' {
-            radix = 16;
-            digits_prefix = "0x";
-        }
-        elif c == 'X' {
-            radix = 16;
-            digits_prefix = "0x";
-            digits_table = DIGITS_TABLE_UPPER[0:DIGITS_TABLE_COUNT];
-        }
-        else {
-            std::formatter::invalid_format_specifier(fmt);
-        }
-    }
-
-    # Enough bytes to store the sign, digit-prefix, and digits of any integer
-    # with size less than or equal to the size of the max integer type.
-    const OUTPUT_COUNT: usize = countof("-0b") + sizeof(umax) * 8;
-    var output = (:[OUTPUT_COUNT]byte)[0...];
-    var output_index: usize = countof(output) - 1;
-
-    if value == 0 {
-        # Write a single zero digit.
-        output[output_index] = '0';
-        output_index = output_index - 1;
-    }
-    for value != 0 {
-        var div: umax = value / radix;
-        var rem: umax = value - radix * (value / radix);
-
-        var digit: byte = digits_table[(:usize)rem];
-        output[output_index] = digit;
-        output_index = output_index - 1;
-
-        value = div;
-    }
-
-    for i in 0:countof(digits_prefix) {
-        output[output_index] = digits_prefix[countof(digits_prefix) - i - 1];
-        output_index = output_index - 1;
-    }
-    if is_negative {
-        output[output_index] = '-';
-        output_index = output_index - 1;
-    }
-
-    return std::write_all(writer, output[output_index+1:countof(output)]);
-}
-
-# INTERNAL
 func _int_parse_from_str[[T]](str: []byte, radix: usize) std::result[[T, []byte]] {
     const IS_SIGNED = T::MIN < 0;
     var result = _int_common_parse_from_str(str, radix, IS_SIGNED, (:umax)T::MAX);
@@ -1244,4 +1122,126 @@ func _int_common_parse_from_str(str: []byte, radix: usize, is_signed: bool, max:
     }
 
     return std::result[[umax, []byte]]::init_value(accum);
+}
+
+# INTERNAL
+# Uses lhs and rhs of template type T instead of *T to allow for umax and smax
+# casting, requiring only two template instantiations for all integer types.
+func _int_common_compare[[T]](lhs: T, rhs: T) ssize {
+    if lhs < rhs {
+        return -1;
+    }
+    if lhs > rhs {
+        return +1;
+    }
+    return 0;
+}
+
+# INTERNAL
+func _int_absolute_value[[T]](value: T) umax {
+    if value >= 0 {
+        # Absolute value of a non-negative integer is itself.
+        return (:umax)value;
+    }
+
+    # Special case for the minimum value of a two's complement signed integer
+    # which will produce an integer out-of-range error when multiplied by
+    # negative one, as the negated (positive) value is un-representable as a
+    # two's complement signed type T.
+    if value == T::MIN {
+        return (:umax)T::MAX + 1;
+    }
+
+    return (:umax)((:T)-1s * value);
+}
+
+# INTERNAL
+# Accepted format specifiers:
+#   ""  => decimal (default)
+#   "d" => decimal
+#   "b" => binary
+#   "o" => octal
+#   "x" => hexadecimal (lower)
+#   "X" => hexadecimal (upper)
+#
+# Parameter `value` is the absolute value of the integer.
+# Parameter `is_negative` is true if the original value of the integer was a
+# negative signed integer. This parameter is false for unsigned integers.
+func _int_common_format(value: umax, is_negative: bool, writer: std::writer, fmt: []byte) std::result[[usize, []byte]] {
+    # All non-default format specifiers have a length of one byte.
+    if countof(fmt) > 1 {
+        std::formatter::invalid_format_specifier(fmt);
+    }
+
+    const DIGITS_TABLE_COUNT: usize = 16;
+    const DIGITS_TABLE_LOWER = (:[DIGITS_TABLE_COUNT]byte)[
+        '0', '1', '2', '3', '4', '5', '6', '7',
+        '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'];
+    const DIGITS_TABLE_UPPER = (:[DIGITS_TABLE_COUNT]byte)[
+        '0', '1', '2', '3', '4', '5', '6', '7',
+        '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'];
+
+    var radix: umax = 10;
+    var digits_prefix: []byte = "";
+    var digits_table: []byte = DIGITS_TABLE_LOWER[0:DIGITS_TABLE_COUNT];
+
+    if countof(fmt) != 0 {
+        var c: byte = fmt[0];
+        if c == 'd' {
+            # Decimal defaults already set.
+        }
+        elif c == 'b' {
+            radix = 2;
+            digits_prefix = "0b";
+        }
+        elif c == 'o' {
+            radix = 8;
+            digits_prefix = "0o";
+        }
+        elif c == 'x' {
+            radix = 16;
+            digits_prefix = "0x";
+        }
+        elif c == 'X' {
+            radix = 16;
+            digits_prefix = "0x";
+            digits_table = DIGITS_TABLE_UPPER[0:DIGITS_TABLE_COUNT];
+        }
+        else {
+            std::formatter::invalid_format_specifier(fmt);
+        }
+    }
+
+    # Enough bytes to store the sign, digit-prefix, and digits of any integer
+    # with size less than or equal to the size of the max integer type.
+    const OUTPUT_COUNT: usize = countof("-0b") + sizeof(umax) * 8;
+    var output = (:[OUTPUT_COUNT]byte)[0...];
+    var output_index: usize = countof(output) - 1;
+
+    if value == 0 {
+        # Write a single zero digit.
+        output[output_index] = '0';
+        output_index = output_index - 1;
+    }
+    for value != 0 {
+        var div: umax = value / radix;
+        var rem: umax = value - radix * (value / radix);
+
+        var digit: byte = digits_table[(:usize)rem];
+        output[output_index] = digit;
+        output_index = output_index - 1;
+
+        value = div;
+    }
+
+    for i in 0:countof(digits_prefix) {
+        output[output_index] = digits_prefix[countof(digits_prefix) - i - 1];
+        output_index = output_index - 1;
+    }
+    if is_negative {
+        output[output_index] = '-';
+        output_index = output_index - 1;
+    }
+
+    return std::write_all(writer, output[output_index+1:countof(output)]);
 }
