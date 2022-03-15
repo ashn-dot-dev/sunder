@@ -6,8 +6,8 @@ alias smax = sys::smax;
 
 extend u8 const MIN: u8 = 0x00;
 extend u8 const MAX: u8 = 0xFF;
-extend u8 func parse_from_bytes(bytes: []byte, radix: usize) std::result[[u8, []byte]] {
-    var result = _int_common_parse_from_bytes(bytes, radix, false, (:umax)u8::MAX);
+extend u8 func parse_from_str(str: []byte, radix: usize) std::result[[u8, []byte]] {
+    var result = _int_common_parse_from_str(str, radix, false, (:umax)u8::MAX);
     if result.is_error() {
         return std::result[[u8, []byte]]::init_error(result.error());
     }
@@ -22,8 +22,8 @@ extend u8 func format(self: *u8, writer: std::writer, fmt: []byte) std::result[[
 
 extend u16 const MIN: u16 = 0x0000;
 extend u16 const MAX: u16 = 0xFFFF;
-extend u16 func parse_from_bytes(bytes: []byte, radix: usize) std::result[[u16, []byte]] {
-    var result = _int_common_parse_from_bytes(bytes, radix, false, (:umax)u16::MAX);
+extend u16 func parse_from_str(str: []byte, radix: usize) std::result[[u16, []byte]] {
+    var result = _int_common_parse_from_str(str, radix, false, (:umax)u16::MAX);
     if result.is_error() {
         return std::result[[u16, []byte]]::init_error(result.error());
     }
@@ -38,8 +38,8 @@ extend u16 func format(self: *u16, writer: std::writer, fmt: []byte) std::result
 
 extend u32 const MIN: u32 = 0x00000000;
 extend u32 const MAX: u32 = 0xFFFFFFFF;
-extend u32 func parse_from_bytes(bytes: []byte, radix: usize) std::result[[u32, []byte]] {
-    var result = _int_common_parse_from_bytes(bytes, radix, false, (:umax)u32::MAX);
+extend u32 func parse_from_str(str: []byte, radix: usize) std::result[[u32, []byte]] {
+    var result = _int_common_parse_from_str(str, radix, false, (:umax)u32::MAX);
     if result.is_error() {
         return std::result[[u32, []byte]]::init_error(result.error());
     }
@@ -54,8 +54,8 @@ extend u32 func format(self: *u32, writer: std::writer, fmt: []byte) std::result
 
 extend u64 const MIN: u64 = 0x0000000000000000;
 extend u64 const MAX: u64 = 0xFFFFFFFFFFFFFFFF;
-extend u64 func parse_from_bytes(bytes: []byte, radix: usize) std::result[[u64, []byte]] {
-    var result = _int_common_parse_from_bytes(bytes, radix, false, (:umax)u64::MAX);
+extend u64 func parse_from_str(str: []byte, radix: usize) std::result[[u64, []byte]] {
+    var result = _int_common_parse_from_str(str, radix, false, (:umax)u64::MAX);
     if result.is_error() {
         return std::result[[u64, []byte]]::init_error(result.error());
     }
@@ -70,8 +70,8 @@ extend u64 func format(self: *u64, writer: std::writer, fmt: []byte) std::result
 
 extend usize const MIN: usize = (:usize)u64::MIN;
 extend usize const MAX: usize = (:usize)u64::MAX;
-extend usize func parse_from_bytes(bytes: []byte, radix: usize) std::result[[usize, []byte]] {
-    var result = _int_common_parse_from_bytes(bytes, radix, false, (:umax)usize::MAX);
+extend usize func parse_from_str(str: []byte, radix: usize) std::result[[usize, []byte]] {
+    var result = _int_common_parse_from_str(str, radix, false, (:umax)usize::MAX);
     if result.is_error() {
         return std::result[[usize, []byte]]::init_error(result.error());
     }
@@ -86,8 +86,8 @@ extend usize func format(self: *usize, writer: std::writer, fmt: []byte) std::re
 
 extend s8 const MIN: s8 = (:s8)0x80u8;
 extend s8 const MAX: s8 = (:s8)0x7Fu8;
-extend s8 func parse_from_bytes(bytes: []byte, radix: usize) std::result[[s8, []byte]] {
-    var result = _int_common_parse_from_bytes(bytes, radix, true, (:umax)s8::MAX);
+extend s8 func parse_from_str(str: []byte, radix: usize) std::result[[s8, []byte]] {
+    var result = _int_common_parse_from_str(str, radix, true, (:umax)s8::MAX);
     if result.is_error() {
         return std::result[[s8, []byte]]::init_error(result.error());
     }
@@ -104,8 +104,8 @@ extend s8 func format(self: *s8, writer: std::writer, fmt: []byte) std::result[[
 
 extend s16 const MIN: s16 = (:s16)0x8000u16;
 extend s16 const MAX: s16 = (:s16)0x7FFFu16;
-extend s16 func parse_from_bytes(bytes: []byte, radix: usize) std::result[[s16, []byte]] {
-    var result = _int_common_parse_from_bytes(bytes, radix, true, (:umax)s16::MAX);
+extend s16 func parse_from_str(str: []byte, radix: usize) std::result[[s16, []byte]] {
+    var result = _int_common_parse_from_str(str, radix, true, (:umax)s16::MAX);
     if result.is_error() {
         return std::result[[s16, []byte]]::init_error(result.error());
     }
@@ -122,8 +122,8 @@ extend s16 func format(self: *s16, writer: std::writer, fmt: []byte) std::result
 
 extend s32 const MIN: s32 = (:s32)0x80000000u32;
 extend s32 const MAX: s32 = (:s32)0x7FFFFFFFu32;
-extend s32 func parse_from_bytes(bytes: []byte, radix: usize) std::result[[s32, []byte]] {
-    var result = _int_common_parse_from_bytes(bytes, radix, true, (:umax)s32::MAX);
+extend s32 func parse_from_str(str: []byte, radix: usize) std::result[[s32, []byte]] {
+    var result = _int_common_parse_from_str(str, radix, true, (:umax)s32::MAX);
     if result.is_error() {
         return std::result[[s32, []byte]]::init_error(result.error());
     }
@@ -140,8 +140,8 @@ extend s32 func format(self: *s32, writer: std::writer, fmt: []byte) std::result
 
 extend s64 const MIN: s64 = (:s64)0x8000000000000000u64;
 extend s64 const MAX: s64 = (:s64)0x7FFFFFFFFFFFFFFFu64;
-extend s64 func parse_from_bytes(bytes: []byte, radix: usize) std::result[[s64, []byte]] {
-    var result = _int_common_parse_from_bytes(bytes, radix, true, (:umax)s64::MAX);
+extend s64 func parse_from_str(str: []byte, radix: usize) std::result[[s64, []byte]] {
+    var result = _int_common_parse_from_str(str, radix, true, (:umax)s64::MAX);
     if result.is_error() {
         return std::result[[s64, []byte]]::init_error(result.error());
     }
@@ -158,8 +158,8 @@ extend s64 func format(self: *s64, writer: std::writer, fmt: []byte) std::result
 
 extend ssize const MIN: ssize = (:ssize)s64::MIN;
 extend ssize const MAX: ssize = (:ssize)s64::MAX;
-extend ssize func parse_from_bytes(bytes: []byte, radix: usize) std::result[[ssize, []byte]] {
-    var result = _int_common_parse_from_bytes(bytes, radix, true, (:umax)ssize::MAX);
+extend ssize func parse_from_str(str: []byte, radix: usize) std::result[[ssize, []byte]] {
+    var result = _int_common_parse_from_str(str, radix, true, (:umax)ssize::MAX);
     if result.is_error() {
         return std::result[[ssize, []byte]]::init_error(result.error());
     }
@@ -839,15 +839,15 @@ func write_format(writer: std::writer, format: []byte, args: []std::formatter) s
     return std::result[[usize, []byte]]::init_value(written);
 }
 
-func print(writer: std::writer, bytes: []byte) void {
-    var result = std::write_all(writer, bytes);
+func print(writer: std::writer, str: []byte) void {
+    var result = std::write_all(writer, str);
     if result.is_error() {
         std::panic(result.error());
     }
 }
 
-func print_line(writer: std::writer, bytes: []byte) void {
-    std::print(writer, bytes);
+func print_line(writer: std::writer, str: []byte) void {
+    std::print(writer, str);
     std::print(writer, "\n");
 }
 
@@ -1189,20 +1189,20 @@ func _int_common_format(value: umax, is_negative: bool, writer: std::writer, fmt
 }
 
 # INTERNAL
-func _int_common_parse_from_bytes(bytes: []byte, radix: usize, is_signed: bool, max: umax) std::result[[umax, []byte]] {
+func _int_common_parse_from_str(str: []byte, radix: usize, is_signed: bool, max: umax) std::result[[umax, []byte]] {
     if radix != 0 and (radix < 2 or radix > 36) {
         return std::result[[umax, []byte]]::init_error("invalid radix");
     }
 
     var cur: usize = 0;
-    var end: usize = countof(bytes);
+    var end: usize = countof(str);
 
     # Parse optional sign (+ or -).
     var sign: ssize = +1;
-    if (end - cur) > countof("+") and bytes[cur] == '+' {
+    if (end - cur) > countof("+") and str[cur] == '+' {
         cur = cur + 1;
     }
-    if (end - cur) > countof("-") and bytes[cur] == '-' {
+    if (end - cur) > countof("-") and str[cur] == '-' {
         if not is_signed {
             return std::result[[umax, []byte]]::init_error("integer out-of-range");
         }
@@ -1212,9 +1212,9 @@ func _int_common_parse_from_bytes(bytes: []byte, radix: usize, is_signed: bool, 
 
     # Parse radix.
     if radix == 0 {
-        var is_bin = (end - cur) >= countof("0b") and bytes[cur] == '0' and bytes[cur+1] == 'b';
-        var is_oct = (end - cur) >= countof("0o") and bytes[cur] == '0' and bytes[cur+1] == 'o';
-        var is_hex = (end - cur) >= countof("0x") and bytes[cur] == '0' and bytes[cur+1] == 'x';
+        var is_bin = (end - cur) >= countof("0b") and str[cur] == '0' and str[cur+1] == 'b';
+        var is_oct = (end - cur) >= countof("0o") and str[cur] == '0' and str[cur+1] == 'o';
+        var is_hex = (end - cur) >= countof("0x") and str[cur] == '0' and str[cur+1] == 'x';
 
         if is_bin {
             radix = 2;
@@ -1239,7 +1239,7 @@ func _int_common_parse_from_bytes(bytes: []byte, radix: usize, is_signed: bool, 
     }
     var accum: umax = 0;
     for cur != end {
-        var c = bytes[cur];
+        var c = str[cur];
         cur = cur + 1;
 
         var digit: usize = 0;

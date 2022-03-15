@@ -17,7 +17,7 @@ func main() void {
             break;
         }
 
-        var parse_result = ssize::parse_from_bytes(line.value(), 0);
+        var parse_result = ssize::parse_from_str(line.value(), 0);
         if parse_result.is_error() {
             std::print_line(std::err(), parse_result.error());
             std::exit(std::EXIT_FAILURE);
