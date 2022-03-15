@@ -59,7 +59,7 @@ struct file {
 
         if countof(path) >= sys::PATH_MAX {
             # Path is too long. The path must be less than sys::PATH_MAX bytes
-            # so that a NUL-terminated buffer of of sys::PATH_MAX bytes may be
+            # so that a NUL-terminated buffer of sys::PATH_MAX bytes may be
             # constructed without a buffer overflow.
             return std::result[[std::fs::file, []byte]]::init_error(sys::ERRNO_STRINGS[(:usize)sys::EINVAL]);
         }
