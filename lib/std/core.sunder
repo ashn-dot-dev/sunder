@@ -10,7 +10,7 @@ extend u8 func parse_from_str(str: []byte, radix: usize) std::result[[u8, []byte
     return _int_parse_from_str[[u8]](str, radix);
 }
 extend u8 func compare(lhs: *u8, rhs: *u8) ssize {
-    return _int_common_compare[[umax]]((:umax)*lhs, (:umax)*rhs);
+    return _int_compare_value[[umax]]((:umax)*lhs, (:umax)*rhs);
 }
 extend u8 func format(self: *u8, writer: std::writer, fmt: []byte) std::result[[usize, []byte]] {
     return _int_common_format((:umax)*self, false, writer, fmt);
@@ -22,7 +22,7 @@ extend u16 func parse_from_str(str: []byte, radix: usize) std::result[[u16, []by
     return _int_parse_from_str[[u16]](str, radix);
 }
 extend u16 func compare(lhs: *u16, rhs: *u16) ssize {
-    return _int_common_compare[[umax]]((:umax)*lhs, (:umax)*rhs);
+    return _int_compare_value[[umax]]((:umax)*lhs, (:umax)*rhs);
 }
 extend u16 func format(self: *u16, writer: std::writer, fmt: []byte) std::result[[usize, []byte]] {
     return _int_common_format((:umax)*self, false, writer, fmt);
@@ -34,7 +34,7 @@ extend u32 func parse_from_str(str: []byte, radix: usize) std::result[[u32, []by
     return _int_parse_from_str[[u32]](str, radix);
 }
 extend u32 func compare(lhs: *u32, rhs: *u32) ssize {
-    return _int_common_compare[[umax]]((:umax)*lhs, (:umax)*rhs);
+    return _int_compare_value[[umax]]((:umax)*lhs, (:umax)*rhs);
 }
 extend u32 func format(self: *u32, writer: std::writer, fmt: []byte) std::result[[usize, []byte]] {
     return _int_common_format((:umax)*self, false, writer, fmt);
@@ -46,7 +46,7 @@ extend u64 func parse_from_str(str: []byte, radix: usize) std::result[[u64, []by
     return _int_parse_from_str[[u64]](str, radix);
 }
 extend u64 func compare(lhs: *u64, rhs: *u64) ssize {
-    return _int_common_compare[[umax]]((:umax)*lhs, (:umax)*rhs);
+    return _int_compare_value[[umax]]((:umax)*lhs, (:umax)*rhs);
 }
 extend u64 func format(self: *u64, writer: std::writer, fmt: []byte) std::result[[usize, []byte]] {
     return _int_common_format((:umax)*self, false, writer, fmt);
@@ -58,7 +58,7 @@ extend usize func parse_from_str(str: []byte, radix: usize) std::result[[usize, 
     return _int_parse_from_str[[usize]](str, radix);
 }
 extend usize func compare(lhs: *usize, rhs: *usize) ssize {
-    return _int_common_compare[[umax]]((:umax)*lhs, (:umax)*rhs);
+    return _int_compare_value[[umax]]((:umax)*lhs, (:umax)*rhs);
 }
 extend usize func format(self: *usize, writer: std::writer, fmt: []byte) std::result[[usize, []byte]] {
     return _int_common_format((:umax)*self, false, writer, fmt);
@@ -70,7 +70,7 @@ extend s8 func parse_from_str(str: []byte, radix: usize) std::result[[s8, []byte
     return _int_parse_from_str[[s8]](str, radix);
 }
 extend s8 func compare(lhs: *s8, rhs: *s8) ssize {
-    return _int_common_compare[[smax]]((:smax)*lhs, (:smax)*rhs);
+    return _int_compare_value[[smax]]((:smax)*lhs, (:smax)*rhs);
 }
 extend s8 func format(self: *s8, writer: std::writer, fmt: []byte) std::result[[usize, []byte]] {
     return _int_common_format(_int_absolute_value[[s8]](*self), *self < 0, writer, fmt);
@@ -82,7 +82,7 @@ extend s16 func parse_from_str(str: []byte, radix: usize) std::result[[s16, []by
     return _int_parse_from_str[[s16]](str, radix);
 }
 extend s16 func compare(lhs: *s16, rhs: *s16) ssize {
-    return _int_common_compare[[smax]]((:smax)*lhs, (:smax)*rhs);
+    return _int_compare_value[[smax]]((:smax)*lhs, (:smax)*rhs);
 }
 extend s16 func format(self: *s16, writer: std::writer, fmt: []byte) std::result[[usize, []byte]] {
     return _int_common_format(_int_absolute_value[[s16]](*self), *self < 0, writer, fmt);
@@ -94,7 +94,7 @@ extend s32 func parse_from_str(str: []byte, radix: usize) std::result[[s32, []by
     return _int_parse_from_str[[s32]](str, radix);
 }
 extend s32 func compare(lhs: *s32, rhs: *s32) ssize {
-    return _int_common_compare[[smax]]((:smax)*lhs, (:smax)*rhs);
+    return _int_compare_value[[smax]]((:smax)*lhs, (:smax)*rhs);
 }
 extend s32 func format(self: *s32, writer: std::writer, fmt: []byte) std::result[[usize, []byte]] {
     return _int_common_format(_int_absolute_value[[s32]](*self), *self < 0, writer, fmt);
@@ -106,7 +106,7 @@ extend s64 func parse_from_str(str: []byte, radix: usize) std::result[[s64, []by
     return _int_parse_from_str[[s64]](str, radix);
 }
 extend s64 func compare(lhs: *s64, rhs: *s64) ssize {
-    return _int_common_compare[[smax]]((:smax)*lhs, (:smax)*rhs);
+    return _int_compare_value[[smax]]((:smax)*lhs, (:smax)*rhs);
 }
 extend s64 func format(self: *s64, writer: std::writer, fmt: []byte) std::result[[usize, []byte]] {
     return _int_common_format(_int_absolute_value[[s64]](*self), *self < 0, writer, fmt);
@@ -118,7 +118,7 @@ extend ssize func parse_from_str(str: []byte, radix: usize) std::result[[ssize, 
     return _int_parse_from_str[[ssize]](str, radix);
 }
 extend ssize func compare(lhs: *ssize, rhs: *ssize) ssize {
-    return _int_common_compare[[smax]]((:smax)*lhs, (:smax)*rhs);
+    return _int_compare_value[[smax]]((:smax)*lhs, (:smax)*rhs);
 }
 extend ssize func format(self: *ssize, writer: std::writer, fmt: []byte) std::result[[usize, []byte]] {
     return _int_common_format(_int_absolute_value[[ssize]](*self), *self < 0, writer, fmt);
@@ -1127,7 +1127,7 @@ func _int_common_parse_from_str(str: []byte, radix: usize, is_signed: bool, max:
 # INTERNAL
 # Uses lhs and rhs of template type T instead of *T to allow for umax and smax
 # casting, requiring only two template instantiations for all integer types.
-func _int_common_compare[[T]](lhs: T, rhs: T) ssize {
+func _int_compare_value[[T]](lhs: T, rhs: T) ssize {
     if lhs < rhs {
         return -1;
     }
