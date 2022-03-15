@@ -7,7 +7,12 @@
 #include "sunder.h"
 
 static struct type*
-type_new(char const* name, size_t size, size_t align, struct symbol_table* symbols, enum type_kind kind)
+type_new(
+    char const* name,
+    size_t size,
+    size_t align,
+    struct symbol_table* symbols,
+    enum type_kind kind)
 {
     assert(name != NULL);
 
@@ -24,17 +29,23 @@ type_new(char const* name, size_t size, size_t align, struct symbol_table* symbo
 struct type*
 type_new_any(void)
 {
-    struct symbol_table* const symbols = symbol_table_new(context()->global_symbol_table);
+    struct symbol_table* const symbols =
+        symbol_table_new(context()->global_symbol_table);
     autil_sbuf_push(context()->chilling_symbol_tables, symbols);
 
     return type_new(
-        context()->interned.any, SIZEOF_UNSIZED, ALIGNOF_UNSIZED, symbols, TYPE_ANY);
+        context()->interned.any,
+        SIZEOF_UNSIZED,
+        ALIGNOF_UNSIZED,
+        symbols,
+        TYPE_ANY);
 }
 
 struct type*
 type_new_void(void)
 {
-    struct symbol_table* const symbols = symbol_table_new(context()->global_symbol_table);
+    struct symbol_table* const symbols =
+        symbol_table_new(context()->global_symbol_table);
     autil_sbuf_push(context()->chilling_symbol_tables, symbols);
 
     return type_new(context()->interned.void_, 0u, 0u, symbols, TYPE_VOID);
@@ -43,7 +54,8 @@ type_new_void(void)
 struct type*
 type_new_bool(void)
 {
-    struct symbol_table* const symbols = symbol_table_new(context()->global_symbol_table);
+    struct symbol_table* const symbols =
+        symbol_table_new(context()->global_symbol_table);
     autil_sbuf_push(context()->chilling_symbol_tables, symbols);
 
     return type_new(context()->interned.bool_, 1u, 1u, symbols, TYPE_BOOL);
@@ -52,7 +64,8 @@ type_new_bool(void)
 struct type*
 type_new_byte(void)
 {
-    struct symbol_table* const symbols = symbol_table_new(context()->global_symbol_table);
+    struct symbol_table* const symbols =
+        symbol_table_new(context()->global_symbol_table);
     autil_sbuf_push(context()->chilling_symbol_tables, symbols);
 
     return type_new(context()->interned.byte, 1u, 1u, symbols, TYPE_BYTE);
@@ -61,10 +74,12 @@ type_new_byte(void)
 struct type*
 type_new_u8(void)
 {
-    struct symbol_table* const symbols = symbol_table_new(context()->global_symbol_table);
+    struct symbol_table* const symbols =
+        symbol_table_new(context()->global_symbol_table);
     autil_sbuf_push(context()->chilling_symbol_tables, symbols);
 
-    struct type* const self = type_new(context()->interned.u8, 1u, 1u, symbols, TYPE_U8);
+    struct type* const self =
+        type_new(context()->interned.u8, 1u, 1u, symbols, TYPE_U8);
     self->data.integer.min = context()->u8_min;
     self->data.integer.max = context()->u8_max;
     return self;
@@ -73,10 +88,12 @@ type_new_u8(void)
 struct type*
 type_new_s8(void)
 {
-    struct symbol_table* const symbols = symbol_table_new(context()->global_symbol_table);
+    struct symbol_table* const symbols =
+        symbol_table_new(context()->global_symbol_table);
     autil_sbuf_push(context()->chilling_symbol_tables, symbols);
 
-    struct type* const self = type_new(context()->interned.s8, 1u, 1u, symbols, TYPE_S8);
+    struct type* const self =
+        type_new(context()->interned.s8, 1u, 1u, symbols, TYPE_S8);
     self->data.integer.min = context()->s8_min;
     self->data.integer.max = context()->s8_max;
     return self;
@@ -85,7 +102,8 @@ type_new_s8(void)
 struct type*
 type_new_u16(void)
 {
-    struct symbol_table* const symbols = symbol_table_new(context()->global_symbol_table);
+    struct symbol_table* const symbols =
+        symbol_table_new(context()->global_symbol_table);
     autil_sbuf_push(context()->chilling_symbol_tables, symbols);
 
     struct type* const self =
@@ -98,7 +116,8 @@ type_new_u16(void)
 struct type*
 type_new_s16(void)
 {
-    struct symbol_table* const symbols = symbol_table_new(context()->global_symbol_table);
+    struct symbol_table* const symbols =
+        symbol_table_new(context()->global_symbol_table);
     autil_sbuf_push(context()->chilling_symbol_tables, symbols);
 
     struct type* const self =
@@ -111,7 +130,8 @@ type_new_s16(void)
 struct type*
 type_new_u32(void)
 {
-    struct symbol_table* const symbols = symbol_table_new(context()->global_symbol_table);
+    struct symbol_table* const symbols =
+        symbol_table_new(context()->global_symbol_table);
     autil_sbuf_push(context()->chilling_symbol_tables, symbols);
 
     struct type* const self =
@@ -124,7 +144,8 @@ type_new_u32(void)
 struct type*
 type_new_s32(void)
 {
-    struct symbol_table* const symbols = symbol_table_new(context()->global_symbol_table);
+    struct symbol_table* const symbols =
+        symbol_table_new(context()->global_symbol_table);
     autil_sbuf_push(context()->chilling_symbol_tables, symbols);
 
     struct type* const self =
@@ -137,7 +158,8 @@ type_new_s32(void)
 struct type*
 type_new_u64(void)
 {
-    struct symbol_table* const symbols = symbol_table_new(context()->global_symbol_table);
+    struct symbol_table* const symbols =
+        symbol_table_new(context()->global_symbol_table);
     autil_sbuf_push(context()->chilling_symbol_tables, symbols);
 
     struct type* const self =
@@ -150,7 +172,8 @@ type_new_u64(void)
 struct type*
 type_new_s64(void)
 {
-    struct symbol_table* const symbols = symbol_table_new(context()->global_symbol_table);
+    struct symbol_table* const symbols =
+        symbol_table_new(context()->global_symbol_table);
     autil_sbuf_push(context()->chilling_symbol_tables, symbols);
 
     struct type* const self =
@@ -163,7 +186,8 @@ type_new_s64(void)
 struct type*
 type_new_usize(void)
 {
-    struct symbol_table* const symbols = symbol_table_new(context()->global_symbol_table);
+    struct symbol_table* const symbols =
+        symbol_table_new(context()->global_symbol_table);
     autil_sbuf_push(context()->chilling_symbol_tables, symbols);
 
     struct type* const self =
@@ -176,7 +200,8 @@ type_new_usize(void)
 struct type*
 type_new_ssize(void)
 {
-    struct symbol_table* const symbols = symbol_table_new(context()->global_symbol_table);
+    struct symbol_table* const symbols =
+        symbol_table_new(context()->global_symbol_table);
     autil_sbuf_push(context()->chilling_symbol_tables, symbols);
 
     struct type* const self =
@@ -189,7 +214,8 @@ type_new_ssize(void)
 struct type*
 type_new_integer(void)
 {
-    struct symbol_table* const symbols = symbol_table_new(context()->global_symbol_table);
+    struct symbol_table* const symbols =
+        symbol_table_new(context()->global_symbol_table);
     autil_sbuf_push(context()->chilling_symbol_tables, symbols);
 
     struct type* const self = type_new(
@@ -223,7 +249,8 @@ type_new_function(
         autil_string_count(name_string));
     autil_string_del(name_string);
 
-    struct symbol_table* const symbols = symbol_table_new(context()->global_symbol_table);
+    struct symbol_table* const symbols =
+        symbol_table_new(context()->global_symbol_table);
     autil_sbuf_push(context()->chilling_symbol_tables, symbols);
 
     struct type* const self = type_new(name, 8u, 8u, symbols, TYPE_FUNCTION);
@@ -245,7 +272,8 @@ type_new_pointer(struct type const* base)
         autil_string_count(name_string));
     autil_string_del(name_string);
 
-    struct symbol_table* const symbols = symbol_table_new(context()->global_symbol_table);
+    struct symbol_table* const symbols =
+        symbol_table_new(context()->global_symbol_table);
     autil_sbuf_push(context()->chilling_symbol_tables, symbols);
 
     struct type* const self = type_new(name, 8u, 8u, symbols, TYPE_POINTER);
@@ -274,7 +302,8 @@ type_new_array(size_t count, struct type const* base)
     // > the array element type.
     size_t const align = base->align;
 
-    struct symbol_table* const symbols = symbol_table_new(context()->global_symbol_table);
+    struct symbol_table* const symbols =
+        symbol_table_new(context()->global_symbol_table);
     autil_sbuf_push(context()->chilling_symbol_tables, symbols);
 
     struct type* const self = type_new(name, size, align, symbols, TYPE_ARRAY);
@@ -296,7 +325,8 @@ type_new_slice(struct type const* base)
         autil_string_count(name_string));
     autil_string_del(name_string);
 
-    struct symbol_table* const symbols = symbol_table_new(context()->global_symbol_table);
+    struct symbol_table* const symbols =
+        symbol_table_new(context()->global_symbol_table);
     autil_sbuf_push(context()->chilling_symbol_tables, symbols);
 
     struct type* const self = type_new(name, 8u * 2u, 8u, symbols, TYPE_SLICE);
@@ -516,8 +546,7 @@ type_member_function(struct type const* self, char const* name)
     assert(self != NULL);
     assert(name != NULL);
 
-    struct symbol const* const symbol =
-        type_member_function_symbol(self, name);
+    struct symbol const* const symbol = type_member_function_symbol(self, name);
     if (symbol == NULL) {
         return NULL;
     }

@@ -477,7 +477,11 @@ normalize(char const* prefix, char const* name, unsigned unique_id)
         autil_string_append_fmt(s, "%s.", prefix);
     }
     // <prefix>.<name>
-    autil_string_append_fmt(s, "%.*s", (int)autil_string_count(name_string), autil_string_start(name_string));
+    autil_string_append_fmt(
+        s,
+        "%.*s",
+        (int)autil_string_count(name_string),
+        autil_string_start(name_string));
     // <prefix>.<name>.<unique-id>
     if (unique_id != 0) {
         autil_string_append_fmt(s, ".%u", unique_id);
@@ -586,8 +590,8 @@ xget_symbol(struct resolver* resolver, struct cst_symbol const* target)
         }
 
         if (lhs->kind == SYMBOL_TYPE) {
-            symbol = symbol_table_lookup_local(
-                symbol_xget_type(lhs)->symbols, name);
+            symbol =
+                symbol_table_lookup_local(symbol_xget_type(lhs)->symbols, name);
             if (symbol == NULL) {
                 fatal(
                     element->location,
@@ -618,10 +622,7 @@ xget_symbol(struct resolver* resolver, struct cst_symbol const* target)
             continue;
         }
 
-        fatal(
-            element->location,
-            "`%s` is not a namespace or type",
-            lhs->name);
+        fatal(element->location, "`%s` is not a namespace or type", lhs->name);
     }
 
     assert(symbol != NULL);
@@ -721,8 +722,7 @@ xget_template_instance(
             if (i != 0) {
                 autil_string_append_cstr(name_string, ", ");
             }
-            autil_string_append_fmt(
-                name_string, "%s", template_types[i]->name);
+            autil_string_append_fmt(name_string, "%s", template_types[i]->name);
         }
         autil_string_append_cstr(name_string, "]]");
         char const* const name_interned = autil_sipool_intern_cstr(
@@ -841,8 +841,7 @@ xget_template_instance(
             if (i != 0) {
                 autil_string_append_cstr(name_string, ", ");
             }
-            autil_string_append_fmt(
-                name_string, "%s", template_types[i]->name);
+            autil_string_append_fmt(name_string, "%s", template_types[i]->name);
         }
         autil_string_append_cstr(name_string, "]]");
         char const* const name_interned = autil_sipool_intern_cstr(
@@ -1629,13 +1628,15 @@ resolve_decl_extend(struct resolver* resolver, struct cst_decl const* decl)
     assert(decl != NULL);
     assert(decl->kind == CST_DECL_EXTEND);
 
-    if (decl->data.extend.decl->kind != CST_DECL_CONSTANT && decl->data.extend.decl->kind != CST_DECL_FUNCTION) {
+    if (decl->data.extend.decl->kind != CST_DECL_CONSTANT
+        && decl->data.extend.decl->kind != CST_DECL_FUNCTION) {
         fatal(
             decl->location,
             "type extension declaration must be a constant or function");
     }
 
-    struct type const* const type = resolve_typespec(resolver, decl->data.extend.typespec);
+    struct type const* const type =
+        resolve_typespec(resolver, decl->data.extend.typespec);
 
     // PLAN: Create the decl in a sub-symbol table of the module namespace that
     // is created specifically for this one symbol so that name collisions don't
@@ -1643,7 +1644,8 @@ resolve_decl_extend(struct resolver* resolver, struct cst_decl const* decl)
 
     // Create a symbol table for this declaration only in order to prevent name
     // collisions and hide the created symbol from the rest of the module.
-    struct symbol_table* const symbol_table = symbol_table_new(resolver->current_symbol_table);
+    struct symbol_table* const symbol_table =
+        symbol_table_new(resolver->current_symbol_table);
 
     // TODO: This current symbol name prefix and addr prefix do not take into
     // account the namespace prefix! Adjust this so that the prefixes use
@@ -1651,9 +1653,12 @@ resolve_decl_extend(struct resolver* resolver, struct cst_decl const* decl)
     //
     // Look for a similar comment under complete_struct which also shares this
     // problem.
-    char const* const save_symbol_name_prefix = resolver->current_symbol_name_prefix;
-    char const* const save_static_addr_prefix = resolver->current_static_addr_prefix;
-    struct symbol_table* const save_symbol_table = resolver->current_symbol_table;
+    char const* const save_symbol_name_prefix =
+        resolver->current_symbol_name_prefix;
+    char const* const save_static_addr_prefix =
+        resolver->current_static_addr_prefix;
+    struct symbol_table* const save_symbol_table =
+        resolver->current_symbol_table;
     resolver->current_symbol_name_prefix = normalize(NULL, type->name, 0);
     resolver->current_static_addr_prefix = normalize(NULL, type->name, 0);
     resolver->current_symbol_table = symbol_table;
@@ -1897,7 +1902,10 @@ resolve_stmt_decl(struct resolver* resolver, struct cst_stmt const* stmt)
         return NULL;
     }
     case CST_DECL_EXTEND: {
-        fatal(decl->location, "local declaration of type extension `%s`", decl->name);
+        fatal(
+            decl->location,
+            "local declaration of type extension `%s`",
+            decl->name);
         return NULL;
     }
     case CST_DECL_ALIAS: {

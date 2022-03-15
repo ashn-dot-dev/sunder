@@ -49,7 +49,8 @@ orderer_tldecl_lookup(struct orderer* orderer, char const* name);
 // Convert a declaration name into a key for the tldecl map. Used to translate
 // extend declaration names into a unique "name" key.
 static char const*
-orderer_tldecl_map_key_name(struct cst_decl const* decl, size_t declaration_order_index);
+orderer_tldecl_map_key_name(
+    struct cst_decl const* decl, size_t declaration_order_index);
 
 static void
 order_tldecl(struct orderer* orderer, struct tldecl* tldecl);
@@ -118,7 +119,8 @@ orderer_tldecl_insert(struct orderer* orderer, struct cst_decl const* decl)
 
     autil_sbuf_push(orderer->tldecls.declaration_order, decl);
 
-    char const* const name = orderer_tldecl_map_key_name(decl, autil_map_count(orderer->tldecls.map));
+    char const* const name = orderer_tldecl_map_key_name(
+        decl, autil_map_count(orderer->tldecls.map));
     struct tldecl const* existing =
         autil_map_lookup_const(orderer->tldecls.map, &name);
     if (existing != NULL) {
@@ -143,7 +145,8 @@ orderer_tldecl_lookup(struct orderer* orderer, char const* name)
 }
 
 static char const*
-orderer_tldecl_map_key_name(struct cst_decl const* decl, size_t declaration_order_index)
+orderer_tldecl_map_key_name(
+    struct cst_decl const* decl, size_t declaration_order_index)
 {
     assert(decl != NULL);
 
@@ -161,11 +164,10 @@ orderer_tldecl_map_key_name(struct cst_decl const* decl, size_t declaration_orde
         // not truly order-independent since other top-level declarations that
         // may depend on an extended declaration are unable to look up that
         // declaration by name during ordering.
-        struct autil_string* s = autil_string_new_fmt("declaration %zu", declaration_order_index);
+        struct autil_string* s =
+            autil_string_new_fmt("declaration %zu", declaration_order_index);
         char const* const name = autil_sipool_intern(
-                context()->sipool,
-                autil_string_start(s),
-                autil_string_count(s));
+            context()->sipool, autil_string_start(s), autil_string_count(s));
         autil_string_del(s);
         return name;
     }
@@ -629,13 +631,18 @@ order(struct module* module)
 
     assert(decl_count == autil_sbuf_count(orderer->tldecls.declaration_order));
     for (size_t i = 0; i < decl_count; ++i) {
-        struct cst_decl const* const decl = orderer->tldecls.declaration_order[i];
-        order_tldecl(orderer, orderer_tldecl_lookup(orderer, orderer_tldecl_map_key_name(decl, i)));
+        struct cst_decl const* const decl =
+            orderer->tldecls.declaration_order[i];
+        order_tldecl(
+            orderer,
+            orderer_tldecl_lookup(
+                orderer, orderer_tldecl_map_key_name(decl, i)));
     }
 
     assert(decl_count == autil_sbuf_count(orderer->tldecls.topological_order));
     for (size_t i = 0; i < decl_count; ++i) {
-        struct cst_decl const* const decl = orderer->tldecls.topological_order[i];
+        struct cst_decl const* const decl =
+            orderer->tldecls.topological_order[i];
         autil_sbuf_push(module->ordered, decl);
     }
 

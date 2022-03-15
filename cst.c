@@ -157,7 +157,6 @@ cst_decl_new_extend(
     return self;
 }
 
-
 struct cst_decl*
 cst_decl_new_alias(
     struct source_location const* location,
