@@ -1,7 +1,7 @@
 import "std/page_allocator.sunder";
-import "std/vec.sunder";
+import "std/vector.sunder";
 
-func dump_elements[[T]](pvec: *std::vec[[T]]) void {
+func dump_elements[[T]](pvec: *std::vector[[T]]) void {
     var slice: []T = pvec.*.data();
     for i in 0:countof(slice) {
         dump slice[i];
@@ -10,7 +10,7 @@ func dump_elements[[T]](pvec: *std::vec[[T]]) void {
 
 
 func main() void {
-    var vec: std::vec[[u8]] = std::vec[[u8]]::init(std::page_allocator::the());
+    var vec: std::vector[[u8]] = std::vector[[u8]]::init(std::page_allocator::the());
     const A: u8 = 0xAA;
     const B: u8 = 0xBB;
     const C: u8 = 0xCC;

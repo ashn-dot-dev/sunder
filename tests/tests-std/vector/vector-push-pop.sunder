@@ -1,7 +1,7 @@
 import "std/page_allocator.sunder";
-import "std/vec.sunder";
+import "std/vector.sunder";
 
-func dump_elements[[T]](pvec: *std::vec[[T]]) void {
+func dump_elements[[T]](pvec: *std::vector[[T]]) void {
     var slice: []T = pvec.*.data();
     for i in 0:countof(slice) {
         dump slice[i];
@@ -9,39 +9,45 @@ func dump_elements[[T]](pvec: *std::vec[[T]]) void {
 }
 
 func main() void {
-    var vec: std::vec[[u8]] = std::vec[[u8]]::init(std::page_allocator::the());
+    var vec: std::vector[[u8]] = std::vector[[u8]]::init(std::page_allocator::the());
     const A: u8 = 0xAA;
     const B: u8 = 0xBB;
     const C: u8 = 0xCC;
-    const D: u8 = 0xDD;
-    const E: u8 = 0xEE;
 
     # [A]
-    vec.insert(0, A);
+    vec.push(A);
     dump vec.count();
     dump_elements[[u8]](&vec);
 
     # [A][B]
-    vec.insert(1, B);
+    vec.push(B);
     dump vec.count();
     dump_elements[[u8]](&vec);
 
-    # [C][A][B]
-    vec.insert(0, C);
+    # [A][B][C]
+    vec.push(C);
     dump vec.count();
     dump_elements[[u8]](&vec);
 
-    # [C][D][A][B]
-    vec.insert(1, D);
+    # [A][B]
+    vec.pop();
     dump vec.count();
     dump_elements[[u8]](&vec);
 
-    #  0  1  2  3  4  5
-    # [C][D][A][B][!][E]
-    #              ^  ^
-    #              |  + Inserting here should cause an error.
-    #              + Missing element.
-    vec.insert(5, E);
+    # [A]
+    vec.pop();
+    dump vec.count();
+    dump_elements[[u8]](&vec);
+
+    # Empty
+    vec.pop();
+    dump vec.count();
+    dump_elements[[u8]](&vec);
+
+    # Attempt to pop empty vec.
+    vec.pop();
+    dump vec.count();
+    dump_elements[[u8]](&vec);
 }
 ################################################################################
 # 01 00 00 00 00 00 00 00
@@ -50,12 +56,13 @@ func main() void {
 # AA
 # BB
 # 03 00 00 00 00 00 00 00
-# CC
 # AA
 # BB
-# 04 00 00 00 00 00 00 00
 # CC
-# DD
+# 02 00 00 00 00 00 00 00
 # AA
 # BB
-# panic: invalid index
+# 01 00 00 00 00 00 00 00
+# AA
+# 00 00 00 00 00 00 00 00
+# panic: attempted to pop empty vec

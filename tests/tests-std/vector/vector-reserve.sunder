@@ -1,8 +1,8 @@
 import "std/page_allocator.sunder";
-import "std/vec.sunder";
+import "std/vector.sunder";
 
 func main() void {
-    var vec: std::vec[[u8]] = std::vec[[u8]]::init(std::page_allocator::the());
+    var vec: std::vector[[u8]] = std::vector[[u8]]::init(std::page_allocator::the());
     dump vec.count();
     dump vec.capacity();
 
