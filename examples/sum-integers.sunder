@@ -6,7 +6,7 @@ func main() void {
 
     var sum: ssize = 0;
     for true {
-        var read_line_result = std::read_line(std::input(), std::page_allocator::the());
+        var read_line_result = std::read_line(std::input(), std::allocator::init[[std::page_allocator]](std::page_allocator::the()));
         if read_line_result.is_error() {
             std::print_line(std::err(), read_line_result.error());
             std::exit(std::EXIT_FAILURE);
