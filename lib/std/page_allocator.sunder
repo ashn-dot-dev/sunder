@@ -26,7 +26,7 @@ struct page_allocator {
         # will evaluate as true for any non-zero x that is a power of two. We
         # check for an alignment of zero above, so it is safe to perform this
         # check here without the `x == 0 or ...` component that would normally
-        # be present in an correct is_power_of_two function.
+        # be required to prevent underflow.
         var is_power_of_two: bool = (align & (align - 1)) == 0;
         if not is_power_of_two {
             return std::result[[*byte, []byte]]::init_error(std::allocator::ERROR_INVALID_ALIGNMENT);
@@ -93,7 +93,7 @@ struct page_allocator {
             # Calls to allocate with align of zero and size of zero are always
             # handed the NULL pointer as a result.
             if (:usize)ptr != 0 {
-                std::panic(std::allocator::ERROR_INVALID_POINTER);
+                std::panic("invalid pointer");
             }
             # Nothing to deallocate.
             return;

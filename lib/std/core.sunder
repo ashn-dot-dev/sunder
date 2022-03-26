@@ -406,9 +406,10 @@ struct allocator_itable {
 }
 
 struct allocator {
-    const ERROR_INVALID_POINTER = "invalid pointer";
+    # Attempted allocation with an alignment not supported by the allocator.
     const ERROR_INVALID_ALIGNMENT = "invalid alignment";
-    const ERROR_INVALID_SIZE = "invalid size";
+    # Attempted allocation that could not be fulfilled.
+    const ERROR_ALLOCATION_FAILURE = "allocation failure";
 
     var itable: *std::allocator_itable;
     var object: *any;
@@ -811,6 +812,36 @@ func print_format(writer: std::writer, format: []byte, args: []std::formatter) v
 func print_format_line(writer: std::writer, format: []byte, args: []std::formatter) void {
     std::print_format(writer, format, args);
     std::print(writer, "\n");
+}
+
+# Align the provided memory address up to the nearest the specified alignment.
+# The provided alignment must be zero or a power of two.
+func align_forward(addr: usize, align: usize) usize {
+    if align == 0 {
+        return addr;
+    }
+
+    # The expression:
+    #   (x & (x - 1)) == 0
+    # will evaluate as true for any non-zero x that is a power of two. We
+    # check for an alignment of zero above, so it is safe to perform this
+    # check here without the `x == 0 or ...` component that would normally
+    # be required to prevent underflow.
+    var align_is_power_of_two = (align & (align - 1)) == 0;
+    if not align_is_power_of_two {
+        std::panic("alignment is not a power of two");
+    }
+
+    # Same as (addr % align) but faster as `align` is a power of two.
+    var modulo = addr & (align - 1);
+
+    if modulo != 0 {
+        # If the address is not aligned, push the address to the next value
+        # which is aligned.
+        addr = addr + (align - modulo);
+    }
+
+    return addr;
 }
 
 func new[[T]](allocator: std::allocator) *T {

@@ -1,0 +1,84 @@
+namespace std;
+import "std/core.sunder";
+
+struct linear_allocator {
+    var _buf: []byte;
+    var _old_offset: usize; # Previous offset into the backing buffer.
+    var _cur_offset: usize; # Current offset into the backing buffer.
+
+    func init(buf: []byte) std::linear_allocator {
+        return (:std::linear_allocator){
+            ._buf = buf,
+            ._old_offset = 0,
+            ._cur_offset = 0
+        };
+    }
+
+    func allocate(self: *linear_allocator, align: usize, size: usize) std::result[[*byte, []byte]] {
+        if size == 0 {
+            # Nothing to allocate.
+            return std::result[[*byte, []byte]]::init_value((:*byte)0u);
+        }
+
+        var is_power_of_two: bool = (align & (align - 1)) == 0;
+        if not is_power_of_two {
+            return std::result[[*byte, []byte]]::init_error(std::allocator::ERROR_INVALID_ALIGNMENT);
+        }
+
+        var buf_addr: usize = (:usize)*((:**byte)&self.*._buf);
+        var cur_addr: usize = buf_addr + self.*._cur_offset;
+        var offset: usize = std::align_forward(cur_addr, align) - buf_addr;
+
+        if offset + size > countof(self.*._buf) {
+            return std::result[[*byte, []byte]]::init_error(std::allocator::ERROR_ALLOCATION_FAILURE);
+        }
+
+        self.*._old_offset = self.*._cur_offset;
+        self.*._cur_offset = offset + size;
+        return std::result[[*byte, []byte]]::init_value(&self.*._buf[offset]);
+    }
+
+    func reallocate(self: *linear_allocator, ptr: *byte, align: usize, old_size: usize, new_size: usize) std::result[[*byte, []byte]] {
+        var offset = (:usize)ptr - (:usize)*((:**byte)&self.*._buf);
+
+        # True if the provided block of memory came from the most recent
+        # allocation, in which case some or all of the already allocated memory
+        # may be reclaimed.
+        var is_tail_allocation = offset >= self.*._old_offset;
+
+        if new_size < old_size {
+            if is_tail_allocation {
+                self.*._cur_offset = self.*._cur_offset - (old_size - new_size);
+            }
+            return std::result[[*byte, []byte]]::init_value(ptr);
+        }
+
+        if is_tail_allocation {
+            if (new_size - old_size) > (countof(self.*._buf) - self.*._cur_offset) {
+                return std::result[[*byte, []byte]]::init_error(std::allocator::ERROR_ALLOCATION_FAILURE);
+            }
+            self.*._cur_offset = self.*._cur_offset + (new_size - old_size);
+            return std::result[[*byte, []byte]]::init_value(ptr);
+        }
+
+        # Reallocation of memory that did *not* come from the most recent
+        # allocation. The existing memory cannot be reclaimed, so it is left as
+        # is and a new chunk of memory is allocated from the backing buffer.
+        var result = self.*.allocate(align, new_size);
+        if result.is_error() {
+            return result;
+        }
+        var new: *byte = result.value();
+        std::copy_slice[[byte]]((:[]byte){new, old_size}, (:[]byte){ptr, old_size});
+        return std::result[[*byte, []byte]]::init_value(new);
+    }
+
+    func deallocate(self: *linear_allocator, ptr: *byte, align: usize, size: usize) void {
+        # no-op
+    }
+
+    func deallocate_all(self: *linear_allocator) void {
+        self.*._old_offset = 0;
+        self.*._cur_offset = 0;
+    }
+}
