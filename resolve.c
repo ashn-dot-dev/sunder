@@ -570,7 +570,7 @@ xget_symbol(struct resolver* resolver, struct cst_symbol const* target)
         char const* const name = element->identifier->name;
 
         if (lhs->kind == SYMBOL_NAMESPACE) {
-            symbol = symbol_table_lookup(lhs->data.namespace.symbols, name);
+            symbol = symbol_table_lookup_local(lhs->data.namespace.symbols, name);
             if (symbol == NULL) {
                 fatal(
                     element->location,
