@@ -1244,6 +1244,9 @@ struct symbol {
             struct cst_decl const* decl;
             // Prefix used when instantiating the template.
             char const* symbol_addr_prefix;
+            // Parent symbol table to be used when creating the instance symbol
+            // table for an instantiation of this template.
+            struct symbol_table* parent_symbol_table;
             // Symbols corresponding to instances of this template.
             struct symbol_table* symbols;
         } template;
@@ -1279,6 +1282,7 @@ symbol_new_template(
     char const* name,
     struct cst_decl const* decl,
     char const* symbol_addr_prefix,
+    struct symbol_table* parent_symbol_table,
     struct symbol_table* symbols);
 struct symbol*
 symbol_new_namespace(

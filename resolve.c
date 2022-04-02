@@ -570,7 +570,8 @@ xget_symbol(struct resolver* resolver, struct cst_symbol const* target)
         char const* const name = element->identifier->name;
 
         if (lhs->kind == SYMBOL_NAMESPACE) {
-            symbol = symbol_table_lookup_local(lhs->data.namespace.symbols, name);
+            symbol =
+                symbol_table_lookup_local(lhs->data.namespace.symbols, name);
             if (symbol == NULL) {
                 fatal(
                     element->location,
@@ -759,7 +760,7 @@ xget_template_instance(
         // instance. Then add each template argument type to the symbol table,
         // mapping from the template type name to the argument type.
         struct symbol_table* const instance_symbol_table =
-            symbol_table_new(resolver->current_symbol_table);
+            symbol_table_new(symbol->data.template.parent_symbol_table);
         for (size_t i = 0; i < template_parameters_count; ++i) {
             // TODO: Should we use the template parameter location or the
             // template argument location for the type symbol location?
@@ -793,11 +794,13 @@ xget_template_instance(
             resolver->current_static_addr_prefix;
         struct symbol_table* const save_symbol_table =
             resolver->current_symbol_table;
+
         resolver->current_static_addr_prefix =
             symbol->data.template.symbol_addr_prefix;
         resolver->current_symbol_table = instance_symbol_table;
         struct symbol const* resolved_symbol =
             resolve_decl_function(resolver, instance_decl);
+
         resolver->current_static_addr_prefix = save_static_addr_prefix;
         resolver->current_symbol_table = save_symbol_table;
 
@@ -872,7 +875,7 @@ xget_template_instance(
         // instance. Then add each template argument type to the symbol table,
         // mapping from the template type name to the argument type.
         struct symbol_table* const instance_symbol_table =
-            symbol_table_new(resolver->current_symbol_table);
+            symbol_table_new(symbol->data.template.parent_symbol_table);
         for (size_t i = 0; i < template_parameters_count; ++i) {
             // TODO: Should we use the template parameter location or the
             // template argument location for the type symbol location?
@@ -904,11 +907,13 @@ xget_template_instance(
             resolver->current_static_addr_prefix;
         struct symbol_table* const save_symbol_table =
             resolver->current_symbol_table;
+
         resolver->current_static_addr_prefix =
             symbol->data.template.symbol_addr_prefix;
         resolver->current_symbol_table = instance_symbol_table;
         struct symbol const* resolved_symbol =
             resolve_decl_struct(resolver, instance_decl);
+
         resolver->current_static_addr_prefix = save_static_addr_prefix;
         resolver->current_symbol_table = save_symbol_table;
 
@@ -1413,6 +1418,7 @@ resolve_decl_function(struct resolver* resolver, struct cst_decl const* decl)
             decl->name,
             decl,
             resolver->current_static_addr_prefix,
+            resolver->current_symbol_table,
             symbols);
 
         autil_freezer_register(context()->freezer, template_symbol);
@@ -1570,6 +1576,7 @@ resolve_decl_struct(struct resolver* resolver, struct cst_decl const* decl)
             decl->name,
             decl,
             resolver->current_static_addr_prefix,
+            resolver->current_symbol_table,
             symbols);
 
         autil_freezer_register(context()->freezer, template_symbol);

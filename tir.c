@@ -726,6 +726,7 @@ symbol_new_template(
     char const* name,
     struct cst_decl const* decl,
     char const* symbol_addr_prefix,
+    struct symbol_table* parent_symbol_table,
     struct symbol_table* symbols)
 {
     assert(location != NULL);
@@ -740,6 +741,7 @@ symbol_new_template(
     self->name = name;
     self->data.template.decl = decl;
     self->data.template.symbol_addr_prefix = symbol_addr_prefix;
+    self->data.template.parent_symbol_table = parent_symbol_table;
     self->data.template.symbols = symbols;
     return self;
 }

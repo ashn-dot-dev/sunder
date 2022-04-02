@@ -1,0 +1,19 @@
+struct foo[[T]] {
+    var x: T;
+
+    func init() foo[[T]] {
+        return (:foo[[T]]){.x = yikes};
+        #                       ^^^^^
+        #                       Yikes is not in scope! This should be an error.
+    }
+}
+
+func main() void {
+    var yikes = 0xABCDu16;
+    var bar = foo[[u16]]::init();
+    dump bar;
+}
+################################################################################
+# [github-issue-76.sunder:5] error: use of undeclared identifier `yikes`
+#         return (:foo[[T]]){.x = yikes};
+#                                 ^
