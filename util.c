@@ -908,12 +908,9 @@ sunder_vstr_ends_with(
 }
 
 struct sunder_sipool {
-    // List of heap-allocated strings interned within this pool. The key and val
+    // List of heap-allocated strings interned within this pool.
     // elements of the map member reference memory owned by this list.
     sunder_sbuf(char*) strings;
-    // KEY TYPE: struct sunder_vstr
-    // VAL TYPE: char const*
-    struct sunder_map* map;
 };
 
 struct sunder_sipool*
@@ -922,8 +919,6 @@ sunder_sipool_new(void)
     struct sunder_sipool* const self =
         sunder_xalloc(NULL, sizeof(struct sunder_sipool));
     self->strings = NULL;
-    self->map = sunder_map_new(
-        sizeof(struct sunder_vstr), sizeof(char const*), sunder_vstr_vpcmp);
     return self;
 }
 
@@ -938,7 +933,6 @@ sunder_sipool_del(struct sunder_sipool* self)
         sunder_xalloc(self->strings[i], SUNDER_XALLOC_FREE);
     }
     sunder_sbuf_fini(self->strings);
-    sunder_map_del(self->map);
 
     memset(self, 0x00, sizeof(*self)); // scrub
     sunder_xalloc(self, SUNDER_XALLOC_FREE);
@@ -950,16 +944,17 @@ sunder_sipool_intern(struct sunder_sipool* self, char const* start, size_t count
     assert(self != NULL);
     assert(start != NULL || count == 0);
 
-    char const* const* const pexisting =
-        sunder_map_lookup_const(self->map, SUNDER_VSTR_LOCAL_PTR(start, count));
-    if (pexisting != NULL) {
-        return *pexisting;
+    struct sunder_vstr const vstr = {start, count};
+    for (size_t i = 0; i < sunder_sbuf_count(self->strings); ++i) {
+        struct sunder_vstr const element = {self->strings[i], strlen(self->strings[i])};
+        if (sunder_vstr_cmp(&vstr, &element) == 0) {
+            return self->strings[i];
+        }
     }
 
-    char* str = sunder_cstr_new(start, count);
+    char* const str = sunder_cstr_new(start, count);
     sunder_sbuf_push(self->strings, str);
-    sunder_map_insert(
-        self->map, SUNDER_VSTR_LOCAL_PTR(str, count), &str, NULL, NULL);
+
     return str;
 }
 
@@ -2489,23 +2484,18 @@ sunder_string_append_vfmt(
     sunder_xalloc(buf, SUNDER_XALLOC_FREE);
 }
 
-void
-sunder_string_split_to_vec_on(
+struct sunder_string**
+sunder_string_split_on(
     struct sunder_string const* self,
     char const* separator,
-    size_t separator_size,
-    struct sunder_vec* res)
+    size_t separator_size)
 {
     assert(self != NULL);
-    assert(res != NULL);
-    assert(sunder_vec_elemsize(res) == sizeof(struct sunder_string*));
+    sunder_sbuf(struct sunder_string*) res = NULL;
 
-    sunder_vec_resize(res, 0);
     if (separator_size == 0) {
-        struct sunder_string* const s =
-            sunder_string_new(self->start, self->count);
-        sunder_vec_insert(res, sunder_vec_count(res), &s);
-        return;
+        sunder_sbuf_push(res, sunder_string_new(self->start, self->count));
+        return res;
     }
 
     char const* const end_of_string = self->start + self->count;
@@ -2516,458 +2506,12 @@ sunder_string_split_to_vec_on(
             end += 1;
             continue;
         }
-        struct sunder_string* const s =
-            sunder_string_new(beg, (size_t)(end - beg));
-        sunder_vec_insert(res, sunder_vec_count(res), &s);
+        sunder_sbuf_push(res, sunder_string_new(beg, (size_t)(end - beg)));
         beg = end + separator_size;
         end = beg;
     }
-    struct sunder_string* const s =
-        sunder_string_new(beg, (size_t)(end_of_string - beg));
-    sunder_vec_insert(res, sunder_vec_count(res), &s);
-}
-
-struct sunder_vec*
-sunder_vec_of_string_new(void)
-{
-    return sunder_vec_new(sizeof(struct sunder_string*));
-}
-
-void
-sunder_vec_of_string_del(struct sunder_vec* vec)
-{
-    for (size_t i = 0; i < sunder_vec_count(vec); ++i) {
-        struct sunder_string** const ref = sunder_vec_ref(vec, i);
-        sunder_string_del(*ref);
-    }
-    sunder_vec_del(vec);
-}
-
-// General purpose generic resizeable array.
-// A vec conceptually consists of the following components:
-// (1) data: An array containing the elements of the vec.
-// (2) count: The number of elements in the vec.
-// (3) capacity: The total number of elements allocated in the data array.
-//     This value is always greater than or equal to the count of the vec.
-struct sunder_vec {
-    void* start;
-    size_t count;
-    size_t capacity;
-    size_t elemsize;
-};
-
-struct sunder_vec*
-sunder_vec_new(size_t elemsize)
-{
-    struct sunder_vec* const self = sunder_xalloc(NULL, sizeof(struct sunder_vec));
-    self->start = NULL;
-    self->count = 0;
-    self->capacity = 0;
-    self->elemsize = elemsize;
-    return self;
-}
-
-void
-sunder_vec_del(struct sunder_vec* self)
-{
-    if (self == NULL) {
-        return;
-    }
-
-    sunder_xalloc(self->start, SUNDER_XALLOC_FREE);
-    memset(self, 0x00, sizeof(*self)); // scrub
-    sunder_xalloc(self, SUNDER_XALLOC_FREE);
-}
-
-void
-sunder_vec_freeze(struct sunder_vec* self, struct sunder_freezer* freezer)
-{
-    assert(self != NULL);
-    assert(freezer != NULL);
-
-    sunder_freezer_register(freezer, self);
-    sunder_freezer_register(freezer, self->start);
-}
-
-void const*
-sunder_vec_start(struct sunder_vec const* self)
-{
-    assert(self != NULL);
-
-    return self->start;
-}
-
-size_t
-sunder_vec_count(struct sunder_vec const* self)
-{
-    assert(self != NULL);
-
-    return self->count;
-}
-
-size_t
-sunder_vec_capacity(struct sunder_vec const* self)
-{
-    assert(self != NULL);
-
-    return self->capacity;
-}
-
-size_t
-sunder_vec_elemsize(struct sunder_vec const* self)
-{
-    assert(self != NULL);
-
-    return self->elemsize;
-}
-
-void
-sunder_vec_reserve(struct sunder_vec* self, size_t capacity)
-{
-    assert(self != NULL);
-
-    if (capacity <= self->capacity) {
-        return;
-    }
-
-    self->start = sunder_xallocn(self->start, capacity, self->elemsize);
-    self->capacity = capacity;
-}
-
-void
-sunder_vec_resize(struct sunder_vec* self, size_t count)
-{
-    assert(self != NULL);
-
-    if (count > self->capacity) {
-        sunder_vec_reserve(self, count);
-    }
-
-    self->count = count;
-}
-
-void
-sunder_vec_set(struct sunder_vec* self, size_t idx, void const* data)
-{
-    assert(self != NULL);
-
-    if (idx >= self->count) {
-        sunder_fatalf("[%s] Index out of bounds (%zu)", __func__, idx);
-    }
-    if (self->elemsize == 0) {
-        return;
-    }
-
-    void* const ref = ((char*)self->start) + (idx * self->elemsize);
-    memmove(ref, data, self->elemsize);
-}
-
-void*
-sunder_vec_ref(struct sunder_vec* self, size_t idx)
-{
-    assert(self != NULL);
-
-    if (idx >= self->count) {
-        sunder_fatalf("[%s] Index out of bounds (%zu)", __func__, idx);
-    }
-    if (self->elemsize == 0) {
-        return NULL;
-    }
-
-    return ((char*)self->start) + (idx * self->elemsize);
-}
-
-void const*
-sunder_vec_ref_const(struct sunder_vec const* self, size_t idx)
-{
-    assert(self != NULL);
-
-    if (idx >= self->count) {
-        sunder_fatalf("[%s] Index out of bounds (%zu)", __func__, idx);
-    }
-    if (self->elemsize == 0) {
-        return NULL;
-    }
-
-    return ((char*)self->start) + (idx * self->elemsize);
-}
-
-void
-sunder_vec_insert(struct sunder_vec* self, size_t idx, void const* data)
-{
-    assert(self != NULL);
-
-    if (idx > self->count) {
-        sunder_fatalf("[%s] Invalid index %zu", __func__, idx);
-    }
-    if (self->elemsize == 0) {
-        self->count += 1;
-        return;
-    }
-
-    // [A][B][C][D][E]
-    // [A][B][C][D][E][ ]
-    if (self->count == self->capacity) {
-        static size_t const GROWTH_FACTOR = 2;
-        static size_t const DEFAULT_CAPACITY = 32;
-        size_t const capacity =
-            self->count ? self->count * GROWTH_FACTOR : DEFAULT_CAPACITY;
-        sunder_vec_reserve(self, capacity);
-    }
-
-    // [A][B][C][D][E][ ]
-    // [A][B][ ][C][D][E]
-    size_t const move_count = self->count - idx;
-    size_t const move_size = move_count * self->elemsize;
-    void* const move_src = ((char*)self->start) + (idx * self->elemsize);
-    void* const move_dst = ((char*)move_src) + 1 * self->elemsize;
-    memmove(move_dst, move_src, move_size);
-    self->count += 1;
-
-    // [A][B][ ][C][D][E]
-    // [A][B][X][C][D][E]
-    sunder_vec_set(self, idx, data);
-}
-
-void
-sunder_vec_remove(struct sunder_vec* self, size_t idx, void* oldelem)
-{
-    assert(self != NULL);
-    if (idx >= self->count) {
-        sunder_fatalf("[%s] Invalid index %zu", __func__, idx);
-    }
-    if (self->elemsize == 0) {
-        self->count -= 1;
-        return;
-    }
-
-    if (oldelem != NULL) {
-        memcpy(oldelem, sunder_vec_ref(self, idx), self->elemsize);
-    }
-
-    // [A][B][X][C][D][E]
-    // [A][B][C][D][E][ ]
-    size_t const move_count = (self->count - 1) - idx;
-    size_t const move_size = move_count * self->elemsize;
-    void* const move_dst = ((char*)self->start) + (idx * self->elemsize);
-    void* const move_src = ((char*)move_dst) + 1 * self->elemsize;
-    memmove(move_dst, move_src, move_size);
-    self->count -= 1;
-}
-
-void*
-sunder_vec_next(struct sunder_vec* self, void const* iter)
-{
-    assert(self != NULL);
-
-    if (self->count == 0 || self->elemsize == 0) {
-        return NULL;
-    }
-
-    if (iter == NULL) {
-        return sunder_vec_ref(self, 0);
-    }
-
-    size_t const iter_idx =
-        ((size_t)((char*)iter - (char*)self->start)) / self->elemsize;
-    size_t const next_idx = iter_idx + 1;
-    assert(next_idx <= self->count);
-    return next_idx != self->count ? sunder_vec_ref(self, next_idx) : NULL;
-}
-
-void const*
-sunder_vec_next_const(struct sunder_vec const* self, void const* iter)
-{
-    assert(self != NULL);
-
-    if (self->count == 0 || self->elemsize == 0) {
-        return NULL;
-    }
-
-    if (iter == NULL) {
-        return sunder_vec_ref_const(self, 0);
-    }
-
-    size_t const iter_idx =
-        ((size_t)((char*)iter - (char*)self->start)) / self->elemsize;
-    size_t const next_idx = iter_idx + 1;
-    assert(next_idx <= self->count);
-    return next_idx != self->count ? sunder_vec_ref_const(self, next_idx) : NULL;
-}
-
-// General purpose generic ordered map.
-// Maps keys of some key-type to values of some value-type.
-struct sunder_map {
-    struct sunder_vec* keys;
-    struct sunder_vec* vals;
-    sunder_vpcmp_fn keycmp;
-};
-
-struct sunder_map*
-sunder_map_new(size_t keysize, size_t valsize, sunder_vpcmp_fn keycmp)
-{
-    struct sunder_map* const self = sunder_xalloc(NULL, sizeof(struct sunder_map));
-    self->keys = sunder_vec_new(keysize);
-    self->vals = sunder_vec_new(valsize);
-    self->keycmp = keycmp;
-    return self;
-}
-
-void
-sunder_map_del(struct sunder_map* self)
-{
-    if (self == NULL) {
-        return;
-    }
-
-    sunder_vec_del(self->keys);
-    sunder_vec_del(self->vals);
-    memset(self, 0x00, sizeof(*self)); // scrub
-    sunder_xalloc(self, SUNDER_XALLOC_FREE);
-}
-
-void
-sunder_map_freeze(struct sunder_map* self, struct sunder_freezer* freezer)
-{
-    assert(self != NULL);
-    assert(freezer != NULL);
-
-    sunder_freezer_register(freezer, self);
-    sunder_vec_freeze(self->keys, freezer);
-    sunder_vec_freeze(self->vals, freezer);
-}
-
-size_t
-sunder_map_count(struct sunder_map const* self)
-{
-    assert(self != NULL);
-
-    return sunder_vec_count(self->keys);
-}
-
-struct sunder_vec const*
-sunder_map_keys(struct sunder_map const* self)
-{
-    assert(self != NULL);
-
-    return self->keys;
-}
-
-struct sunder_vec const*
-sunder_map_vals(struct sunder_map const* self)
-{
-    assert(self != NULL);
-
-    return self->vals;
-}
-
-// Returns the (positive) index of key if it exists in self.
-// Returns a negative number that, if negated and subtracting one from, would be
-// the index of key if inserted (I.E -1 means insert at 0 and -42 means insert
-// at 41).
-static long
-sunder_map_find_(struct sunder_map const* self, void const* key)
-{
-    assert(self != NULL);
-    assert(sunder_map_count(self) <= LONG_MAX);
-
-    if (sunder_map_count(self) == 0) {
-        return -1;
-    }
-
-    long bot = 0;
-    long top = (long)sunder_map_count(self) - 1;
-    long mid;
-    while (bot <= top) {
-        mid = (bot + top) / 2;
-        void* const midkey = sunder_vec_ref(self->keys, (size_t)mid);
-        int const cmp = self->keycmp(midkey, key);
-        if (cmp == 0) {
-            return mid;
-        }
-        if (cmp < 0) {
-            bot = mid + 1;
-            continue;
-        }
-        if (cmp > 0) {
-            top = mid - 1;
-            continue;
-        }
-        sunder_fatalf("Unreachable!");
-    }
-
-    return (-1 * bot) - 1;
-}
-
-void*
-sunder_map_lookup(struct sunder_map* self, void const* key)
-{
-    assert(self != NULL);
-
-    long const location = sunder_map_find_(self, key);
-    if (location < 0) {
-        return NULL;
-    }
-    return sunder_vec_ref(self->vals, (size_t)location);
-}
-
-void const*
-sunder_map_lookup_const(struct sunder_map const* self, void const* key)
-{
-    assert(self != NULL);
-
-    long const location = sunder_map_find_(self, key);
-    if (location < 0) {
-        return NULL;
-    }
-    return sunder_vec_ref(self->vals, (size_t)location);
-}
-
-int
-sunder_map_insert(
-    struct sunder_map* self,
-    void const* key,
-    void const* val,
-    void* oldkey,
-    void* oldval)
-{
-    assert(self != NULL);
-
-    long const location = sunder_map_find_(self, key);
-    if (location < 0) {
-        size_t const idx = (size_t)(-1 * location) - 1;
-        sunder_vec_insert(self->keys, idx, key);
-        sunder_vec_insert(self->vals, idx, val);
-        return 0;
-    }
-
-    size_t const idx = (size_t)location;
-    if (oldkey != NULL) {
-        memcpy(oldkey, sunder_vec_ref(self->keys, idx), self->keys->elemsize);
-    }
-    if (oldval != NULL) {
-        memcpy(oldval, sunder_vec_ref(self->vals, idx), self->vals->elemsize);
-    }
-    sunder_vec_set(self->keys, idx, key);
-    sunder_vec_set(self->vals, idx, val);
-    return 1;
-}
-
-int
-sunder_map_remove(
-    struct sunder_map* self, void const* key, void* oldkey, void* oldval)
-{
-    assert(self != NULL);
-
-    long const location = sunder_map_find_(self, key);
-    if (location < 0) {
-        return 0;
-    }
-
-    size_t const idx = (size_t)location;
-    sunder_vec_remove(self->keys, idx, oldkey);
-    sunder_vec_remove(self->vals, idx, oldval);
-    return 1;
+    sunder_sbuf_push(res, sunder_string_new(beg, (size_t)(end - beg)));
+    return res;
 }
 
 struct sunder_freezer {

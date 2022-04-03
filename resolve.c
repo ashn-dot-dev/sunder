@@ -1204,14 +1204,14 @@ canonical_import_path(char const* module_path, char const* import_path)
     }
     sunder_string_resize(tmp, 0u);
     sunder_string_append_cstr(tmp, SUNDER_IMPORT_PATH);
-    struct sunder_vec* const vec = sunder_vec_of_string_new();
-    sunder_string_split_to_vec_on(tmp, ":", SUNDER_STR_LITERAL_COUNT(":"), vec);
-    for (size_t i = 0; i < sunder_vec_count(vec); ++i) {
-        struct sunder_string* const* const ps = sunder_vec_ref_const(vec, i);
+
+    sunder_sbuf(struct sunder_string*) const imp = sunder_string_split_on(tmp, ":", SUNDER_STR_LITERAL_COUNT(":"));
+    for (size_t i = 0; i < sunder_sbuf_count(imp); ++i) {
+        struct sunder_string* const s = imp[i];
 
         sunder_string_resize(tmp, 0u);
         sunder_string_append_fmt(
-            tmp, "%s/%s", sunder_string_start(*ps), import_path);
+            tmp, "%s/%s", sunder_string_start(s), import_path);
 
         if (!file_exists(sunder_string_start(tmp))) {
             continue;
@@ -1222,7 +1222,10 @@ canonical_import_path(char const* module_path, char const* import_path)
     }
 
     sunder_string_del(tmp);
-    sunder_vec_of_string_del(vec);
+    for (size_t i = 0; i < sunder_sbuf_count(imp); ++i) {
+        sunder_string_del(imp[i]);
+    }
+    sunder_sbuf_fini(imp);
     return result;
 }
 
