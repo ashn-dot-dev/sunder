@@ -662,10 +662,7 @@ context_init(void)
     s_context.ssize_max = s_context.s64_max;
 #undef INIT_BIGINT_CONSTANT
 
-    s_context.static_symbols = autil_map_new(
-        sizeof(CONTEXT_STATIC_SYMBOLS_MAP_KEY_TYPE),
-        sizeof(CONTEXT_STATIC_SYMBOLS_MAP_VAL_TYPE),
-        CONTEXT_STATIC_SYMBOLS_MAP_CMP_FUNC);
+    s_context.static_symbols = NULL;
     s_context.global_symbol_table = symbol_table_new(NULL);
     s_context.modules = NULL;
 
@@ -715,7 +712,7 @@ context_fini(void)
 
     autil_sipool_del(self->sipool);
 
-    autil_map_del(self->static_symbols);
+    autil_sbuf_fini(self->static_symbols);
     symbol_table_freeze(self->global_symbol_table, self->freezer);
 
     autil_sbuf(struct symbol_table*) const chilling_symbol_tables =

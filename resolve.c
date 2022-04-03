@@ -95,7 +95,7 @@ normalize(char const* prefix, char const* name, unsigned unique_id);
 // a unique ID is found that does not cause a name collision.
 static char const* // interned
 normalize_unique(char const* prefix, char const* name);
-// Add the provided static symbol to the map of static symbols within the
+// Add the provided static symbol to the list of static symbols within the
 // compilation context.
 static void
 register_static_symbol(struct symbol const* symbol);
@@ -502,9 +502,30 @@ normalize_unique(char const* prefix, char const* name)
 
     unsigned unique_id = 0u;
     char const* normalized = normalize(prefix, name, unique_id);
-    while (autil_map_lookup(context()->static_symbols, &normalized) != NULL) {
+    while (true) {
+        bool name_collision = false;
+        for (size_t i = 0; i < autil_sbuf_count(context()->static_symbols);
+             ++i) {
+            struct symbol const* const symbol = context()->static_symbols[i];
+            struct address const* const address = symbol_xget_address(symbol);
+            assert(address->kind == ADDRESS_STATIC);
+            assert(address->data.static_.offset == 0);
+
+            if (address->data.static_.name == normalized) {
+                name_collision = true;
+                break;
+            }
+        }
+
+        if (!name_collision) {
+            break; // Found a unique normalized name.
+        }
+
+        // Name collision was found. Try a different name with the next
+        // sequential unique ID.
         normalized = normalize(prefix, name, ++unique_id);
     }
+
     return normalized;
 }
 
@@ -515,19 +536,22 @@ register_static_symbol(struct symbol const* symbol)
     assert(symbol_xget_address(symbol) != NULL);
     assert(symbol_xget_address(symbol)->kind == ADDRESS_STATIC);
 
-    int const exists = autil_map_insert(
-        context()->static_symbols,
-        &symbol_xget_address(symbol)->data.static_.name,
-        &symbol,
-        NULL,
-        NULL);
-    if (exists) {
-        fatal(
-            symbol->location,
-            "[%s] normalized symbol name `%s` already exists",
-            __func__,
-            symbol_xget_address(symbol)->data.static_.name);
+    // Verify that a static symbol with the provided address does not already
+    // exists. This should never happen in practice, so this is a sanity check.
+    for (size_t i = 0; i < autil_sbuf_count(context()->static_symbols); ++i) {
+        bool const exists =
+            symbol_xget_address(context()->static_symbols[i])->data.static_.name
+            == symbol_xget_address(symbol)->data.static_.name;
+        if (exists) {
+            fatal(
+                symbol->location,
+                "[%s] normalized symbol name `%s` already exists",
+                __func__,
+                symbol_xget_address(symbol)->data.static_.name);
+        }
     }
+
+    autil_sbuf_push(context()->static_symbols, symbol);
 }
 
 static struct symbol const*

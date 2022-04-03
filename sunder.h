@@ -242,11 +242,8 @@ struct context {
         struct type const* integer;
     } builtin;
 
-    // Map containing all symbols with static storage duration.
-#define CONTEXT_STATIC_SYMBOLS_MAP_KEY_TYPE char const*
-#define CONTEXT_STATIC_SYMBOLS_MAP_VAL_TYPE struct symbol const*
-#define CONTEXT_STATIC_SYMBOLS_MAP_CMP_FUNC autil_cstr_vpcmp
-    struct autil_map* static_symbols;
+    // List of all symbols with static storage duration.
+    autil_sbuf(struct symbol const*) static_symbols;
 
     // Global symbol table.
     struct symbol_table* global_symbol_table;

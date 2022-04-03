@@ -727,15 +727,8 @@ codegen_static_constants(void)
     appendln("; STATIC CONSTANTS");
     appendln("section .rodata");
 
-    struct autil_vec const* const keys =
-        autil_map_keys(context()->static_symbols);
-    CONTEXT_STATIC_SYMBOLS_MAP_KEY_TYPE const* iter =
-        autil_vec_next_const(keys, NULL);
-    for (; iter != NULL; iter = autil_vec_next_const(keys, iter)) {
-        CONTEXT_STATIC_SYMBOLS_MAP_VAL_TYPE const* const psymbol =
-            autil_map_lookup_const(context()->static_symbols, iter);
-        struct symbol const* const symbol = *psymbol;
-        assert(symbol != NULL);
+    for (size_t i = 0; i < autil_sbuf_count(context()->static_symbols); ++i) {
+        struct symbol const* const symbol = context()->static_symbols[i];
         assert(symbol_xget_address(symbol)->kind == ADDRESS_STATIC);
         if (symbol->kind != SYMBOL_CONSTANT) {
             continue;
@@ -750,15 +743,8 @@ codegen_static_variables(void)
     appendln("; STATIC VARIABLES");
     appendln("section .data");
 
-    struct autil_vec const* const keys =
-        autil_map_keys(context()->static_symbols);
-    CONTEXT_STATIC_SYMBOLS_MAP_KEY_TYPE const* iter =
-        autil_vec_next_const(keys, NULL);
-    for (; iter != NULL; iter = autil_vec_next_const(keys, iter)) {
-        CONTEXT_STATIC_SYMBOLS_MAP_VAL_TYPE const* const psymbol =
-            autil_map_lookup_const(context()->static_symbols, iter);
-        struct symbol const* const symbol = *psymbol;
-        assert(symbol != NULL);
+    for (size_t i = 0; i < autil_sbuf_count(context()->static_symbols); ++i) {
+        struct symbol const* const symbol = context()->static_symbols[i];
         assert(symbol_xget_address(symbol)->kind == ADDRESS_STATIC);
         if (symbol->kind != SYMBOL_VARIABLE) {
             continue;
@@ -773,15 +759,8 @@ codegen_static_functions(void)
     appendln("; STATIC (GLOBAL) FUNCTIONS");
     appendln("section .text");
 
-    struct autil_vec const* const keys =
-        autil_map_keys(context()->static_symbols);
-    CONTEXT_STATIC_SYMBOLS_MAP_KEY_TYPE const* iter =
-        autil_vec_next_const(keys, NULL);
-    for (; iter != NULL; iter = autil_vec_next_const(keys, iter)) {
-        CONTEXT_STATIC_SYMBOLS_MAP_VAL_TYPE const* const psymbol =
-            autil_map_lookup_const(context()->static_symbols, iter);
-        struct symbol const* const symbol = *psymbol;
-        assert(symbol != NULL);
+    for (size_t i = 0; i < autil_sbuf_count(context()->static_symbols); ++i) {
+        struct symbol const* const symbol = context()->static_symbols[i];
         assert(symbol_xget_address(symbol)->kind == ADDRESS_STATIC);
         if (symbol->kind != SYMBOL_FUNCTION) {
             continue;
