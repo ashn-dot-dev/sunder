@@ -1297,17 +1297,16 @@ symbol_xget_address(struct symbol const* self);
 struct value const*
 symbol_xget_value(struct symbol const* self);
 
+struct symbol_table_element {
+    // Name associated with this name-to-symbol mapping within the symbol
+    // table. The name is not necessarily equal to the `name` member of the
+    // symbol, as multiple names may map to the same symbol via aliases.
+    char const* name; // interned
+    struct symbol const* symbol;
+};
 struct symbol_table {
     struct symbol_table const* parent; // optional (NULL => global scope)
-    // Mapping from cstring to symbol. The cstring key corresponding to the
-    // key-value pair (cstring, symbol) is not necessarily equal to the `name`
-    // member of the symbol, such as in the case of the symbol with name
-    // "foo.bar" with the mapping ("foo", symbol "foo.bar") in the namespace
-    // symbol table of `foo`.
-#define SYMBOL_MAP_KEY_TYPE char const*
-#define SYMBOL_MAP_VAL_TYPE struct symbol const*
-#define SYMBOL_MAP_CMP_FUNC autil_cstr_vpcmp
-    struct autil_map* symbols;
+    autil_sbuf(struct symbol_table_element) elements;
 };
 struct symbol_table*
 symbol_table_new(struct symbol_table const* parent);
@@ -1315,7 +1314,10 @@ void
 symbol_table_freeze(struct symbol_table* self, struct autil_freezer* freezer);
 void
 symbol_table_insert(
-    struct symbol_table* self, char const* name, struct symbol const* symbol);
+    struct symbol_table* self,
+    char const* name,
+    struct symbol const* symbol,
+    bool allow_redeclaration);
 // Lookup in this or any parent symbol table.
 struct symbol const*
 symbol_table_lookup(struct symbol_table const* self, char const* name);

@@ -2,9 +2,9 @@ import "std";
 import "sys";
 
 func cat(filename: []byte) void {
-    var open_result = std::fs::file::open(filename, std::fs::OPEN_READ);
-    if open_result.is_error() {
-        var error = open_result.error();
+    var result = std::fs::file::open(filename, std::fs::OPEN_READ);
+    if result.is_error() {
+        var error = result.error();
         std::print_format_line(
             std::err(),
             "{}: {}",
@@ -14,13 +14,13 @@ func cat(filename: []byte) void {
         std::exit(std::EXIT_FAILURE);
     }
 
-    var file = open_result.value();
+    var file = result.value();
 
     var buf: [512]byte = (:[512]byte)[0...];
     for true {
-        var read_result = file.read(buf[0:countof(buf)]);
-        if read_result.is_error() {
-            var error = read_result.error();
+        var result = file.read(buf[0:countof(buf)]);
+        if result.is_error() {
+            var error = result.error();
             std::print_format_line(
                 std::err(),
                 "{}: {}",
@@ -30,11 +30,11 @@ func cat(filename: []byte) void {
             std::exit(std::EXIT_FAILURE);
         }
 
-        if read_result.value() == 0 {
+        if result.value() == 0 {
             break;
         }
 
-        std::print(std::out(), buf[0:read_result.value()]);
+        std::print(std::out(), buf[0:result.value()]);
     }
 
     file.close();

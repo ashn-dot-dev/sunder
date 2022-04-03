@@ -462,7 +462,8 @@ type_unique_function(
 
     struct symbol* const symbol =
         symbol_new_type(&context()->builtin.location, type);
-    symbol_table_insert(context()->global_symbol_table, symbol->name, symbol);
+    symbol_table_insert(
+        context()->global_symbol_table, symbol->name, symbol, false);
     autil_freezer_register(context()->freezer, type);
     autil_freezer_register(context()->freezer, symbol);
     return type;
@@ -483,7 +484,8 @@ type_unique_pointer(struct type const* base)
 
     struct symbol* const symbol =
         symbol_new_type(&context()->builtin.location, type);
-    symbol_table_insert(context()->global_symbol_table, symbol->name, symbol);
+    symbol_table_insert(
+        context()->global_symbol_table, symbol->name, symbol, false);
     autil_freezer_register(context()->freezer, type);
     autil_freezer_register(context()->freezer, symbol);
     return type;
@@ -504,7 +506,8 @@ type_unique_array(size_t count, struct type const* base)
 
     struct symbol* const symbol =
         symbol_new_type(&context()->builtin.location, type);
-    symbol_table_insert(context()->global_symbol_table, symbol->name, symbol);
+    symbol_table_insert(
+        context()->global_symbol_table, symbol->name, symbol, false);
     autil_freezer_register(context()->freezer, type);
     autil_freezer_register(context()->freezer, symbol);
     return type;
@@ -525,7 +528,8 @@ type_unique_slice(struct type const* base)
 
     struct symbol* const symbol =
         symbol_new_type(&context()->builtin.location, type);
-    symbol_table_insert(context()->global_symbol_table, symbol->name, symbol);
+    symbol_table_insert(
+        context()->global_symbol_table, symbol->name, symbol, false);
     autil_freezer_register(context()->freezer, type);
     autil_freezer_register(context()->freezer, symbol);
     return type;
@@ -848,11 +852,10 @@ symbol_table_new(struct symbol_table const* parent)
 {
     struct symbol_table* const self = autil_xalloc(NULL, sizeof(*self));
     memset(self, 0x00, sizeof(*self));
+
     self->parent = parent;
-    self->symbols = autil_map_new(
-        sizeof(SYMBOL_MAP_KEY_TYPE),
-        sizeof(SYMBOL_MAP_VAL_TYPE),
-        SYMBOL_MAP_CMP_FUNC);
+    self->elements = NULL;
+
     return self;
 }
 
@@ -863,28 +866,36 @@ symbol_table_freeze(struct symbol_table* self, struct autil_freezer* freezer)
     assert(freezer != NULL);
 
     autil_freezer_register(freezer, self);
-    autil_map_freeze(self->symbols, freezer);
+    autil_sbuf_freeze(self->elements, freezer);
 }
 
 void
 symbol_table_insert(
-    struct symbol_table* self, char const* name, struct symbol const* symbol)
+    struct symbol_table* self,
+    char const* name,
+    struct symbol const* symbol,
+    bool allow_redeclaration)
 {
     assert(self != NULL);
+    assert(name != NULL);
     assert(symbol != NULL);
 
-    SYMBOL_MAP_KEY_TYPE const key = name;
-    struct symbol const* const local = symbol_table_lookup_local(self, key);
-    if (local != NULL) {
-        fatal(
-            symbol->location,
-            "redeclaration of `%s` previously declared at [%s:%zu]",
-            key,
-            local->location->path,
-            local->location->line);
+    if (!allow_redeclaration) {
+        struct symbol const* const local =
+            symbol_table_lookup_local(self, name);
+        if (local != NULL) {
+            fatal(
+                symbol->location,
+                "redeclaration of `%s` previously declared at [%s:%zu]",
+                name,
+                local->location->path,
+                local->location->line);
+        }
     }
-    SYMBOL_MAP_VAL_TYPE const val = symbol;
-    autil_map_insert(self->symbols, &key, &val, NULL, NULL);
+
+    autil_sbuf_push(
+        self->elements,
+        (struct symbol_table_element){.name = name, .symbol = symbol});
 }
 
 struct symbol const*
@@ -909,9 +920,13 @@ symbol_table_lookup_local(struct symbol_table const* self, char const* name)
     assert(self != NULL);
     assert(name != NULL);
 
-    SYMBOL_MAP_VAL_TYPE const* const existing =
-        autil_map_lookup_const(self->symbols, &name);
-    return existing != NULL ? *existing : NULL;
+    for (size_t i = autil_sbuf_count(self->elements); i--;) {
+        if (self->elements[i].name == name) {
+            return self->elements[i].symbol;
+        }
+    }
+
+    return NULL;
 }
 
 static struct stmt*

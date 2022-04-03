@@ -28,10 +28,10 @@ func main() void {
     }
 
     var path = *std::cptr::add[[*byte]](sys::argv, 1);
-    var open_result = std::fs::file::open(std::cstr::to_bytes(path), std::fs::OPEN_READ);
-    if open_result.is_error() {
+    var result = std::fs::file::open(std::cstr::to_bytes(path), std::fs::OPEN_READ);
+    if result.is_error() {
         var p = std::cstr::to_bytes(path);
-        var e = open_result.error();
+        var e = result.error();
         std::print_format_line(
             std::err(),
             "{}: {}",
@@ -40,12 +40,12 @@ func main() void {
                 std::formatter::init[[[]byte]](&e)]);
         std::exit(std::EXIT_FAILURE);
     }
-    var file = open_result.value();
+    var file = result.value();
     var file_reader = std::reader::init[[std::fs::file]](&file);
-    var read_result = std::read_all(file_reader, std::allocator::init[[std::page_allocator]](std::page_allocator::the()));
-    if read_result.is_error() {
+    var result = std::read_all(file_reader, std::allocator::init[[std::page_allocator]](std::page_allocator::the()));
+    if result.is_error() {
         var p = std::cstr::to_bytes(path);
-        var e = read_result.error();
+        var e = result.error();
         std::print_format_line(
             std::err(),
             "{}: {}",
@@ -55,7 +55,7 @@ func main() void {
         file.close();
         std::exit(std::EXIT_FAILURE);
     }
-    var source = read_result.value();
+    var source = result.value();
     var source_size: usize = countof(source);
 
     var reader = std::input();

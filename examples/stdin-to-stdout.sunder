@@ -7,18 +7,18 @@ func main() void {
     var reader = std::input();
     var writer = std::out();
     for true {
-        var read_result = reader.read(buf[0:countof(buf)]);
-        if read_result.is_error() {
-            std::print_line(std::err(), read_result.error());
+        var result = reader.read(buf[0:countof(buf)]);
+        if result.is_error() {
+            std::print_line(std::err(), result.error());
         }
 
-        if read_result.value() == 0 {
+        if result.value() == 0 {
             break;
         }
 
-        var write_result = writer.write(buf[0:read_result.value()]);
-        if write_result.is_error() {
-            std::print_line(std::err(), write_result.error());
+        var result = writer.write(buf[0:result.value()]);
+        if result.is_error() {
+            std::print_line(std::err(), result.error());
         }
     }
 }
