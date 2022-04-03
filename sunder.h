@@ -7,8 +7,7 @@
 #include <autil/autil.h>
 
 ////////////////////////////////////////////////////////////////////////////////
-//////// sunder.c //////////////////////////////////////////////////////////////
-// Global compiler state and miscellaneous utilities.
+//////// util.c ////////////////////////////////////////////////////////////////
 
 #if __STDC_VERSION__ >= 201112L /* C11+ */
 #    define NORETURN _Noreturn
@@ -18,12 +17,17 @@
 #    define NORETURN /* nothing */
 #endif
 
-// Returns a pointer to the first character of the line containing ptr in some
-// NUL-terminated source string.
+// Returns the string contents of a file with the provided path. The produced
+// string is NUL-prefixed and NUL-terminated. This function will cause a fatal
+// error if the file cannot be read.
+char*
+read_source(char const* path);
+// Returns a pointer to the first character of the line containing ptr in a
+// source string produced by read_source.
 char const*
 source_line_start(char const* ptr);
 // Returns a pointer to the end-of-line newline or NUL of the line containing
-// ptr in some NUL-terminated source string.
+// ptr in a source string produced by read_source.
 char const*
 source_line_end(char const* ptr);
 
@@ -32,16 +36,16 @@ source_line_end(char const* ptr);
 #define NO_PSRC ((char const*)NULL)
 #define NO_LOCATION ((struct source_location const*)NULL)
 struct source_location {
-    // Optional (NULL indicates no value).
-    // NOTE: Source locations produced by the lexing phase will use a module's
-    // `name` (i.e. non-canonical path) member for the source location path.
+    // Optional (NULL indicates no value). NOTE: Source locations produced by
+    // the lexing phase will use a module's `name` (i.e. non-canonical path)
+    // member for the source location path.
     char const* path;
     // Optional (zero indicates no value).
     size_t line;
-    // Optional (NULL indicates no value) pointer to the source character within
-    // the module specified by path. If non-NULL then a log-messages will
-    // display the line in question with a caret pointing to this character as
-    // such:
+    // Optional (NULL indicates no value) pointer to the source character
+    // within the module specified by path. If non-NULL then a log-messages
+    // will display the line in question with a caret pointing to this
+    // character as such:
     // ```
     // [file.sunder:3] error: foo is not properly frobnicated
     // var foo: usize = 123u;
@@ -51,9 +55,8 @@ struct source_location {
 };
 
 void
-debug(struct source_location const* location, char const* fmt, ...);
-void
 error(struct source_location const* location, char const* fmt, ...);
+
 NORETURN void
 fatal(struct source_location const* location, char const* fmt, ...);
 
@@ -130,6 +133,10 @@ directory_path(char const* path);
 // Excludes `.` and `..`
 char const* /* interned */* /* sbuf */
 directory_files(char const* path);
+
+////////////////////////////////////////////////////////////////////////////////
+//////// sunder.c //////////////////////////////////////////////////////////////
+// Global compiler state.
 
 struct module {
     // True if the module has been fully loaded/resolved.

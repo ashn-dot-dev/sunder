@@ -36,6 +36,7 @@ all: build test examples
 
 SUNDER_COMPILE_OBJS = \
 	sunder-compile.o \
+	util.o \
 	sunder.o \
 	lex.o \
 	cst.o \
