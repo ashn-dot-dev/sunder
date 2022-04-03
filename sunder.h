@@ -2,15 +2,15 @@
 // SPDX-License-Identifier: Apache-2.0
 #ifndef SUNDER_H_INCLUDED
 #define SUNDER_H_INCLUDED
+
+#include <stdarg.h> /* va_list */
 #include <stdbool.h>
+#include <stddef.h> /* size_t, NULL, offsetof */
 #include <stdint.h>
+#include <stdio.h> /* FILE*, printf-family */
 
 ////////////////////////////////////////////////////////////////////////////////
 //////// util.c ////////////////////////////////////////////////////////////////
-
-#include <stdarg.h> /* va_list */
-#include <stddef.h> /* size_t, NULL, offsetof */
-#include <stdio.h> /* FILE*, printf-family */
 
 struct sunder_vstr;
 struct sunder_sipool;
@@ -38,30 +38,11 @@ typedef union {
 } sunder_max_align_type;
 // clang-format on
 
-// Produce a pointer of type TYPE* whose contents is the scalar rvalue val.
-// This pointer has automatic storage duration associated with the enclosing
-// block.
-//
-// Example:
-//      int* pint = SUNDER_LOCAL_PTR(int, 42);
-//      char const** pstr = SUNDER_LOCAL_PTR(char const*, "FOO");
-//      printf("%d %s\n", *pint, *pstr); // 42 FOO
-#define SUNDER_LOCAL_PTR(TYPE, /*val*/...) (&((TYPE){__VA_ARGS__}))
-
-// Dereference ptr as if it were of type TYPE*.
-//
-// Example:
-//      void* ptr = some_func();
-//      int val = SUNDER_DEREF_PTR(int, ptr);
-#define SUNDER_DEREF_PTR(TYPE, /*ptr*/...) (*((TYPE*)(__VA_ARGS__)))
-
 // Number of elements in an array.
 #define SUNDER_ARRAY_COUNT(array) (sizeof(array) / sizeof((array)[0]))
 // Number of characters in a string literal, excluding the NUL-terminator.
-#define SUNDER_STR_LITERAL_COUNT(str_literal)                                   \
+#define SUNDER_STR_LITERAL_COUNT(str_literal)                                  \
     (SUNDER_ARRAY_COUNT(str_literal) - 1)
-// Number of characters in a formatted string.
-#define SUNDER_FMT_COUNT(fmt, ...) ((size_t)snprintf(NULL, 0, fmt, __VA_ARGS__))
 
 // C99 compatible _Alignof operator.
 // Produces an integer constant expression.
@@ -77,7 +58,7 @@ typedef union {
 //      // Assert that we are compiling on a 64-bit machine.
 //      SUNDER_STATIC_ASSERT(pointers_are_eight_bytes, sizeof(void*) == 8);
 // clang-format off
-#define SUNDER_STATIC_ASSERT(what, expr)                                        \
+#define SUNDER_STATIC_ASSERT(what, expr)                                       \
     enum {STATIC_ASSERT__ ## what = 1/!!(expr)}//;
 // clang-format on
 
@@ -86,11 +67,7 @@ typedef union {
 typedef int (*sunder_vpcmp_fn)(void const* lhs, void const* rhs);
 // Implementations of sunder_vpcmp_fn for builtin types.
 int
-sunder_void_vpcmp(void const* lhs, void const* rhs); // void (zero-sized object)
-int
 sunder_cstr_vpcmp(void const* lhs, void const* rhs); // char const*
-int
-sunder_int_vpcmp(void const* lhs, void const* rhs); // int
 
 // Alternatives to the C99 standard library functions in ctype.h.
 // These functions always use the "C" locale and will not result in undefined
@@ -123,20 +100,16 @@ void* sunder_memmove(void* dest, void const* src, size_t n);
 void* sunder_memset(void* s, int c, size_t n);
 // clang-format on
 
-// Zero out the memory under the provided pointer parameter. The number of bytes
-// to be zeroed is automatically determined by the sizeof(*ptr).
-#define SUNDER_MEMZERO(ptr) sunder_memset(ptr, 0x00, sizeof(*ptr))
-
-// General purpose allocator functions with out-of-memory error checking.
-// The behavior of sunder_xalloc and sunder_xallocn is similar to libc realloc and
+// General purpose allocator functions with out-of-memory error checking. The
+// behavior of sunder_xalloc and sunder_xallocn is similar to libc realloc and
 // *BSD reallocarray with the following exceptions:
 // (1) On allocation failure an error message will be printed followed by
 //     program termination with EXIT_FAILURE status.
 // (2) The call sunder_xalloc(ptr, 0) is guaranteed to free the memory backing
 //     ptr. A pointer returned by sunder_xalloc may be freed with
-//     sunder_xalloc(ptr, 0) or the equivalent
-//     sunder_xalloc(ptr, SUNDER_XALLOC_FREE). The calls sunder_xallocn(ptr, x, 0)
-//     and sunder_xallocn(ptr, 0, y) are equivalent to sunder_xalloc(ptr, 0).
+//     sunder_xalloc(ptr, 0) or the equivalent sunder_xalloc(ptr,
+//     SUNDER_XALLOC_FREE). The calls sunder_xallocn(ptr, x, 0) and
+//     sunder_xallocn(ptr, 0, y) are equivalent to sunder_xalloc(ptr, 0).
 // The macro SUNDER_XALLOC_FREE may be used in place of the constant zero to
 // indicate that a call sunder_xalloc(ptr, SUNDER_XALLOC_FREE) is intended as a
 // free operation.
@@ -146,14 +119,6 @@ void*
 sunder_xallocn(void* ptr, size_t nmemb, size_t size);
 #define SUNDER_XALLOC_FREE ((size_t)0)
 
-// Write a formatted info message to stderr.
-// A newline is automatically appended to the end of the formatted message.
-void
-sunder_infof(char const* fmt, ...);
-// Write a formatted error message to stderr.
-// A newline is automatically appended to the end of the formatted message.
-void
-sunder_errorf(char const* fmt, ...);
 // Write a formatted error message to stderr and exit with EXIT_FAILURE status.
 // A newline is automatically appended to the end of the formatted message.
 void
@@ -178,18 +143,6 @@ sunder_file_write(char const* path, void const* buf, size_t buf_size);
 int
 sunder_stream_read(FILE* stream, void** buf, size_t* buf_size);
 
-// Read the contents of the input stream specified by stream until a newline or
-// end-of-file is encountered.
-// The line buffer will *not* have NUL termination.
-// The line buffer will contain the end-of-line newline (if present).
-// Memory for the read content is allocated with sunder_xalloc.
-// Returns zero on success.
-int
-sunder_stream_read_line(FILE* stream, void** buf, size_t* buf_size);
-
-////////////////////////////////////////////////////////////////////////////////
-//////// CSTR //////////////////////////////////////////////////////////////////
-
 // Returns an sunder_xalloc-allocated cstring of the first count bytes of start.
 // This function behaves similarly to the POSIX strdupn function.
 char*
@@ -208,10 +161,6 @@ sunder_cstr_starts_with(char const* cstr, char const* target);
 int
 sunder_cstr_ends_with(char const* cstr, char const* target);
 
-////////////////////////////////////////////////////////////////////////////////
-//////// VSTR //////////////////////////////////////////////////////////////////
-// Byte string view.
-
 struct sunder_vstr {
     char const* start;
     size_t count;
@@ -224,7 +173,7 @@ struct sunder_vstr {
 // Produce a pointer of type struct sunder_vstr* from the provided cstring
 // literal. This pointer has automatic storage duration associated with the
 // enclosing block.
-#define SUNDER_VSTR_LOCAL_PTR_STR_LITERAL(str_literal)                          \
+#define SUNDER_VSTR_LOCAL_PTR_STR_LITERAL(str_literal)                         \
     SUNDER_VSTR_LOCAL_PTR(str_literal, SUNDER_STR_LITERAL_COUNT(str_literal))
 
 // Initializer for a vstring literal from a cstring literal.
@@ -258,9 +207,6 @@ int
 sunder_vstr_ends_with(
     struct sunder_vstr const* vstr, struct sunder_vstr const* target);
 
-////////////////////////////////////////////////////////////////////////////////
-//////// CSTR INTERN POOL //////////////////////////////////////////////////////
-
 // Allocate and initialize a string intern pool.
 struct sunder_sipool*
 sunder_sipool_new(void);
@@ -278,18 +224,17 @@ sunder_sipool_intern(struct sunder_sipool* self, char const* start, size_t count
 char const*
 sunder_sipool_intern_cstr(struct sunder_sipool* self, char const* cstr);
 
-////////////////////////////////////////////////////////////////////////////////
-//////// STRETCHY BUFFER ///////////////////////////////////////////////////////
 // General purpose type-safe dynamic array (a.k.a stretchy buffer).
 //
-// A stretchy buffer works by storing metadata about the number of allocated and
-// in-use elements in a header just before the address of the buffer's first
-// element. The ith element of a stretchy buffer may be accessed using the array
-// index operator, sbuf[i], and a stretchy buffer containing elements of type T
-// may be passed to subroutines as if it were regular array-like pointer of type
-// T* or T const*. The address of a stretchy buffer may change when a resizing
-// operation is performed, similar to resizing operations done with realloc, so
-// the address of a stretchy buffer should not be considered stable.
+// A stretchy buffer works by storing metadata about the number of allocated
+// and in-use elements in a header just before the address of the buffer's
+// first element. The ith element of a stretchy buffer may be accessed using
+// the array index operator, sbuf[i], and a stretchy buffer containing elements
+// of type T may be passed to subroutines as if it were regular array-like
+// pointer of type T* or T const*. The address of a stretchy buffer may change
+// when a resizing operation is performed, similar to resizing operations done
+// with realloc, so the address of a stretchy buffer should not be considered
+// stable.
 //
 // +--------+---------+---------+---------+--
 // | HEADER | SBUF[0] | SBUF[1] | SBUF[2] | ...
@@ -337,46 +282,46 @@ sunder_sipool_intern_cstr(struct sunder_sipool* self, char const* cstr);
 // ------------------------------------------------------------
 // Free resources associated with the stretchy buffer.
 // Macro parameter sbuf is evaluated multiple times.
-#define sunder_sbuf_fini(sbuf)                                                  \
+#define sunder_sbuf_fini(sbuf)                                                 \
     ((void)((sbuf) != NULL ? SUNDER__SBUF_FREE_NON_NULL_HEAD_(sbuf) : NULL))
 
 // void sunder_sbuf_freeze(TYPE* sbuf, struct sunder_freezer* freezer)
 // ------------------------------------------------------------
 // Register resources within bigint with the provided freezer.
-#define sunder_sbuf_freeze(sbuf, freezer)                                       \
+#define sunder_sbuf_freeze(sbuf, freezer)                                      \
     ((void)((sbuf) != NULL ? SUNDER__SBUF_FREEZE_NON_NULL_HEAD_(sbuf, freezer), NULL : NULL))
 
 // size_t sunder_sbuf_count(TYPE* sbuf)
 // ------------------------------------------------------------
 // The number of elements in the stretchy buffer.
 // Macro parameter sbuf is evaluated multiple times.
-#define sunder_sbuf_count(sbuf)                                                 \
+#define sunder_sbuf_count(sbuf)                                                \
     ((size_t)((sbuf) != NULL ? SUNDER__SBUF_PHEAD_CONST_(sbuf)->cnt_ : 0u))
 // size_t sunder_sbuf_capacity(TYPE* sbuf)
 // ------------------------------------------------------------
 // The number of elements the allocated in the sbuf.
 // Macro parameter sbuf is evaluated multiple times.
-#define sunder_sbuf_capacity(sbuf)                                              \
+#define sunder_sbuf_capacity(sbuf)                                             \
     ((size_t)((sbuf) != NULL ? SUNDER__SBUF_PHEAD_CONST_(sbuf)->cap_ : 0u))
 
 // void sunder_sbuf_reserve(TYPE* sbuf, size_t n)
 // ------------------------------------------------------------
 // Update the minimum capacity of the stretchy buffer to n elements.
 // Macro parameter sbuf is evaluated multiple times.
-#define sunder_sbuf_reserve(sbuf, /*n*/...)                                     \
+#define sunder_sbuf_reserve(sbuf, /*n*/...)                                    \
     ((void)((sbuf) = sunder__sbuf_rsv_(sizeof(*(sbuf)), sbuf, __VA_ARGS__)))
 // void sunder_sbuf_resize(TYPE* sbuf, size_t n)
 // ------------------------------------------------------------
 // Update the count of the stretchy buffer to n elements.
 // Macro parameter sbuf is evaluated multiple times.
-#define sunder_sbuf_resize(sbuf, /*n*/...)                                      \
+#define sunder_sbuf_resize(sbuf, /*n*/...)                                     \
     ((void)((sbuf) = sunder__sbuf_rsz_(sizeof(*(sbuf)), sbuf, __VA_ARGS__)))
 
 // void sunder_sbuf_push(TYPE* sbuf, TYPE val)
 // ------------------------------------------------------------
 // Append val as the last element of the stretchy buffer.
 // Macro parameter sbuf is evaluated multiple times.
-#define sunder_sbuf_push(sbuf, /*val*/...)                                      \
+#define sunder_sbuf_push(sbuf, /*val*/...)                                     \
     ((void)(SUNDER__SBUF_MAYBE_GROW_(sbuf), SUNDER__SBUF_APPEND_(sbuf, __VA_ARGS__)))
 // TYPE sunder_sbuf_pop(TYPE* sbuf)
 // ------------------------------------------------------------
@@ -391,18 +336,18 @@ sunder_sipool_intern_cstr(struct sunder_sipool* self, char const* cstr);
 struct sunder__sbuf_header_{size_t cnt_; size_t cap_; sunder_max_align_type _[];};
 enum{SUNDER__SBUF_HEADER_OFFSET_ = sizeof(struct sunder__sbuf_header_)};
 #define SUNDER__SBUF_PHEAD_MUTBL_(sbuf_)                                       \
-    ((struct sunder__sbuf_header_      *)                                       \
+    ((struct sunder__sbuf_header_      *)                                      \
      ((char      *)(sbuf_)-SUNDER__SBUF_HEADER_OFFSET_))
 #define SUNDER__SBUF_PHEAD_CONST_(sbuf_)                                       \
-    ((struct sunder__sbuf_header_ const*)                                       \
+    ((struct sunder__sbuf_header_ const*)                                      \
      ((char const*)(sbuf_)-SUNDER__SBUF_HEADER_OFFSET_))
 #define SUNDER__SBUF_FREE_NON_NULL_HEAD_(sbuf_)                                \
     (sunder_xalloc(SUNDER__SBUF_PHEAD_MUTBL_(sbuf_), SUNDER_XALLOC_FREE))
 #define SUNDER__SBUF_FREEZE_NON_NULL_HEAD_(sbuf_, freezer)                     \
     (sunder_freezer_register(freezer, SUNDER__SBUF_PHEAD_MUTBL_(sbuf_)))
 #define SUNDER__SBUF_MAYBE_GROW_(sbuf_)                                        \
-    ((sunder_sbuf_count(sbuf_) == sunder_sbuf_capacity(sbuf_))                   \
-         ? (sbuf_) = sunder__sbuf_grw_(sizeof(*(sbuf_)), sbuf_)                 \
+    ((sunder_sbuf_count(sbuf_) == sunder_sbuf_capacity(sbuf_))                 \
+         ? (sbuf_) = sunder__sbuf_grw_(sizeof(*(sbuf_)), sbuf_)                \
          : (sbuf_))
 #define SUNDER__SBUF_APPEND_(sbuf_, ...)                                       \
     ((sbuf_)[SUNDER__SBUF_PHEAD_MUTBL_(sbuf_)->cnt_++] = (__VA_ARGS__))
@@ -410,9 +355,6 @@ void* sunder__sbuf_rsv_(size_t elemsize, void* sbuf, size_t cap);
 void* sunder__sbuf_rsz_(size_t elemsize, void* sbuf, size_t cnt);
 void* sunder__sbuf_grw_(size_t elemsize, void* sbuf);
 // clang-format on
-
-////////////////////////////////////////////////////////////////////////////////
-//////// BIT ARRAY /////////////////////////////////////////////////////////////
 
 // Allocate and initialize a bit array with count bits.
 // The bit array is initially zeroed.
@@ -486,8 +428,6 @@ sunder_bitarr_or(
     struct sunder_bitarr const* lhs,
     struct sunder_bitarr const* rhs);
 
-////////////////////////////////////////////////////////////////////////////////
-//////// BIG INTEGER ///////////////////////////////////////////////////////////
 // Arbitrary precision integer.
 // A bigint conceptually consists of the following components:
 // (1) sign: The arithmetic sign of the integer (+, -, or 0).
@@ -644,10 +584,6 @@ sunder_bigint_magnitude_bit_set(struct sunder_bigint* self, size_t n, int value)
 char*
 sunder_bigint_to_new_cstr(struct sunder_bigint const* self, char const* fmt);
 
-////////////////////////////////////////////////////////////////////////////////
-//////// STRING ////////////////////////////////////////////////////////////////
-// Byte string with guaranteed NUL termination.
-
 // Allocate and initialize a string from the first count bytes of start.
 struct sunder_string*
 sunder_string_new(char const* start, size_t count);
@@ -719,21 +655,6 @@ void
 sunder_string_append_vfmt(
     struct sunder_string* self, char const* fmt, va_list args);
 
-// Trim leading and trailing whitespace from the string.
-// Bytes of the string are decoded using the "C" locale.
-void
-sunder_string_trim(struct sunder_string* self);
-
-// Split the string on all occurrences of whitespace.
-// Empty strings are removed from the result.
-// Bytes of the string are decoded using the "C" locale.
-// Parameter res will be populated with the collection of resulting strings.
-// Example:
-//      "A B\tC  D " ===split===> "A" "B" "C" "D"
-void
-sunder_string_split_to_vec(
-    struct sunder_string const* self,
-    struct sunder_vec /*<struct sunder_string*>*/* res);
 // Split the string on all occurrences of the provided separator.
 // Empty strings are *NOT* removed from the result.
 // Parameter res will be populated with the collection of resulting strings.
@@ -744,16 +665,6 @@ sunder_string_split_to_vec_on(
     char const* separator,
     size_t separator_size,
     struct sunder_vec /*<struct sunder_string*>*/* res);
-void
-sunder_string_split_to_vec_on_vstr(
-    struct sunder_string const* self,
-    struct sunder_vstr const* separator,
-    struct sunder_vec /*<struct sunder_string*>*/* res);
-void
-sunder_string_split_to_vec_on_cstr(
-    struct sunder_string const* self,
-    char const* separator,
-    struct sunder_vec /*<struct sunder_string*>*/* res);
 
 // Wrapper functions for an sunder_vec of sunder_string*.
 // Useful for initializing and deinitializing a vec passed to
@@ -762,15 +673,6 @@ struct sunder_vec /*<struct sunder_string*>*/*
 sunder_vec_of_string_new(void);
 void
 sunder_vec_of_string_del(struct sunder_vec /*<struct sunder_string*>*/* vec);
-
-////////////////////////////////////////////////////////////////////////////////
-//////// VEC ///////////////////////////////////////////////////////////////////
-// General purpose generic resizeable array.
-// A vec conceptually consists of the following components:
-// (1) data: An array containing the elements of the vec.
-// (2) count: The number of elements in the vec.
-// (3) capacity: The total number of elements allocated in the data array.
-//     This value is always greater than or equal to the count of the vec.
 
 // Allocate and initialize a vec holding elements of size elemsize.
 struct sunder_vec*
@@ -861,11 +763,6 @@ sunder_vec_next(struct sunder_vec* self, void const* iter);
 void const*
 sunder_vec_next_const(struct sunder_vec const* self, void const* iter);
 
-////////////////////////////////////////////////////////////////////////////////
-//////// MAP ///////////////////////////////////////////////////////////////////
-// General purpose generic ordered map.
-// Maps keys of some key-type to values of some value-type.
-
 // Allocate and initialize a map.
 // The map will hold keys of size keysize.
 // The map will hold values of size valsize.
@@ -920,9 +817,6 @@ sunder_map_insert(
 int
 sunder_map_remove(
     struct sunder_map* self, void const* key, void* oldkey, void* oldval);
-
-////////////////////////////////////////////////////////////////////////////////
-//////// FREEZER ///////////////////////////////////////////////////////////////
 
 // Allocate and initialize a freezer.
 struct sunder_freezer*

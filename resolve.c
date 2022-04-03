@@ -1205,7 +1205,7 @@ canonical_import_path(char const* module_path, char const* import_path)
     sunder_string_resize(tmp, 0u);
     sunder_string_append_cstr(tmp, SUNDER_IMPORT_PATH);
     struct sunder_vec* const vec = sunder_vec_of_string_new();
-    sunder_string_split_to_vec_on_cstr(tmp, ":", vec);
+    sunder_string_split_to_vec_on(tmp, ":", SUNDER_STR_LITERAL_COUNT(":"), vec);
     for (size_t i = 0; i < sunder_vec_count(vec); ++i) {
         struct sunder_string* const* const ps = sunder_vec_ref_const(vec, i);
 

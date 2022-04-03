@@ -1,20 +1,8 @@
 // Copyright 2021 The Sunder Project Authors
 // SPDX-License-Identifier: Apache-2.0
-#define _XOPEN_SOURCE 700 /* realpath */
 #include <assert.h>
-#include <errno.h>
-#include <limits.h> /* PATH_MAX */
-#include <inttypes.h>
-#include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
-
-#include <dirent.h> /* DIR, *dir-family */
-#include <libgen.h> /* dirname */
-#include <sys/stat.h> /* struct stat, stat */
-#include <sys/types.h> /* pid_t */
-#include <sys/wait.h> /* wait* */
-#include <unistd.h> /* exec*, isatty, fork */
 
 #include "sunder.h"
 

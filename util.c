@@ -21,9 +21,7 @@
 // clang-format off
 #define ANSI_ESC_DEFAULT "\x1b[0m"
 #define ANSI_ESC_BOLD    "\x1b[1m"
-
 #define ANSI_ESC_RED     "\x1b[31m"
-#define ANSI_ESC_YELLOW  "\x1b[33m"
 #define ANSI_ESC_CYAN    "\x1b[36m"
 
 #define ANSI_MSG_ERROR ANSI_ESC_BOLD ANSI_ESC_RED
@@ -486,37 +484,12 @@ directory_files(char const* path)
 SUNDER_STATIC_ASSERT(CHAR_BIT_IS_8, CHAR_BIT == 8);
 
 int
-sunder_void_vpcmp(void const* lhs, void const* rhs)
-{
-    (void)lhs;
-    (void)rhs;
-    return 0; // The void (i.e. zero-sized object) type acts as a unit type.
-}
-
-int
 sunder_cstr_vpcmp(void const* lhs, void const* rhs)
 {
     assert(lhs != NULL);
     assert(rhs != NULL);
 
     return strcmp(*(char const**)lhs, *(char const**)rhs);
-}
-
-int
-sunder_int_vpcmp(void const* lhs, void const* rhs)
-{
-    assert(lhs != NULL);
-    assert(rhs != NULL);
-
-    int const l = *(int*)lhs;
-    int const r = *(int*)rhs;
-    if (l < r) {
-        return -1;
-    }
-    if (l > r) {
-        return +1;
-    }
-    return 0;
 }
 
 int
@@ -681,32 +654,6 @@ sunder_xallocn(void* ptr, size_t nmemb, size_t size)
 }
 
 void
-sunder_infof(char const* fmt, ...)
-{
-    va_list args;
-    va_start(args, fmt);
-
-    fputs("info: ", stderr);
-    vfprintf(stderr, fmt, args);
-    fputs("\n", stderr);
-
-    va_end(args);
-}
-
-void
-sunder_errorf(char const* fmt, ...)
-{
-    va_list args;
-    va_start(args, fmt);
-
-    fputs("error: ", stderr);
-    vfprintf(stderr, fmt, args);
-    fputs("\n", stderr);
-
-    va_end(args);
-}
-
-void
 sunder_fatalf(char const* fmt, ...)
 {
     va_list args;
@@ -810,8 +757,8 @@ sunder_file_write(char const* path, void const* buf, size_t buf_size)
         // According to the C99 standard:
         // > Any unwritten buffered data for the stream are delivered to the
         // > host environment to be written to the file; any unread buffered
-        // > data are discarded. Whether or not the call succeeds, the stream is
-        // > disassociated from the file...
+        // > data are discarded. Whether or not the call succeeds, the stream
+        // > is disassociated from the file...
         // Cautiously assume that the buffer was not fully written to disk.
         return -1;
     }
@@ -836,37 +783,6 @@ sunder_stream_read(FILE* stream, void** buf, size_t* buf_size)
     }
     if (ferror(stream)) {
         sunder_xalloc(bf, SUNDER_XALLOC_FREE);
-        return -1;
-    }
-
-    *buf = bf;
-    *buf_size = sz;
-    return 0;
-}
-
-int
-sunder_stream_read_line(FILE* stream, void** buf, size_t* buf_size)
-{
-    assert(stream != NULL);
-    assert(buf != NULL);
-    assert(buf_size != NULL);
-
-    unsigned char* bf = NULL;
-    size_t sz = 0;
-
-    int c;
-    while ((c = fgetc(stream)) != EOF) {
-        bf = sunder_xalloc(bf, sz + 1);
-        bf[sz++] = (unsigned char)c;
-        if (c == '\n') {
-            break;
-        }
-    }
-    if (ferror(stream)) {
-        sunder_xalloc(bf, SUNDER_XALLOC_FREE);
-        return -1;
-    }
-    if (feof(stream) && sz == 0) {
         return -1;
     }
 
@@ -2348,6 +2264,7 @@ sunder_bigint_to_new_cstr(struct sunder_bigint const* self, char const* fmt)
     return cstr;
 }
 
+// Byte string with guaranteed NUL termination.
 struct sunder_string {
     char* start;
     size_t count;
@@ -2573,58 +2490,6 @@ sunder_string_append_vfmt(
 }
 
 void
-sunder_string_trim(struct sunder_string* self)
-{
-    assert(self != NULL);
-    size_t n;
-
-    // Trim leading characters.
-    n = 0;
-    while (n < self->count && sunder_isspace(self->start[n])) {
-        n += 1;
-    }
-    if (n != 0) {
-        sunder_string_remove(self, 0, n);
-    }
-
-    // Trim trailing characters.
-    n = self->count;
-    while (n > 0 && sunder_isspace(self->start[n - 1])) {
-        n -= 1;
-    }
-    sunder_string_resize(self, n);
-}
-
-// Should be equivalent to str.split(sep=None) from Python3.
-void
-sunder_string_split_to_vec(
-    struct sunder_string const* self, struct sunder_vec* res)
-{
-    assert(self != NULL);
-    assert(res != NULL);
-    assert(sunder_vec_elemsize(res) == sizeof(struct sunder_string*));
-
-    sunder_vec_resize(res, 0);
-
-    size_t first = 0;
-    while (first < self->count) {
-        if (sunder_isspace(self->start[first])) {
-            first += 1;
-            continue;
-        }
-
-        size_t end = first;
-        while (end < self->count && !sunder_isspace(self->start[end])) {
-            end += 1;
-        }
-        struct sunder_string* const s =
-            sunder_string_new(self->start + first, end - first);
-        sunder_vec_insert(res, sunder_vec_count(res), &s);
-        first = end;
-    }
-}
-
-void
 sunder_string_split_to_vec_on(
     struct sunder_string const* self,
     char const* separator,
@@ -2662,34 +2527,6 @@ sunder_string_split_to_vec_on(
     sunder_vec_insert(res, sunder_vec_count(res), &s);
 }
 
-void
-sunder_string_split_to_vec_on_vstr(
-    struct sunder_string const* self,
-    struct sunder_vstr const* separator,
-    struct sunder_vec /* struct sunder_string* */* res)
-{
-    assert(self != NULL);
-    assert(separator != NULL);
-    assert(res != NULL);
-    assert(sunder_vec_elemsize(res) == sizeof(struct sunder_string*));
-
-    sunder_string_split_to_vec_on(self, separator->start, separator->count, res);
-}
-
-void
-sunder_string_split_to_vec_on_cstr(
-    struct sunder_string const* self,
-    char const* separator,
-    struct sunder_vec* res)
-{
-    assert(self != NULL);
-    assert(separator != NULL);
-    assert(res != NULL);
-    assert(sunder_vec_elemsize(res) == sizeof(struct sunder_string*));
-
-    sunder_string_split_to_vec_on(self, separator, strlen(separator), res);
-}
-
 struct sunder_vec*
 sunder_vec_of_string_new(void)
 {
@@ -2706,6 +2543,12 @@ sunder_vec_of_string_del(struct sunder_vec* vec)
     sunder_vec_del(vec);
 }
 
+// General purpose generic resizeable array.
+// A vec conceptually consists of the following components:
+// (1) data: An array containing the elements of the vec.
+// (2) count: The number of elements in the vec.
+// (3) capacity: The total number of elements allocated in the data array.
+//     This value is always greater than or equal to the count of the vec.
 struct sunder_vec {
     void* start;
     size_t count;
@@ -2952,6 +2795,8 @@ sunder_vec_next_const(struct sunder_vec const* self, void const* iter)
     return next_idx != self->count ? sunder_vec_ref_const(self, next_idx) : NULL;
 }
 
+// General purpose generic ordered map.
+// Maps keys of some key-type to values of some value-type.
 struct sunder_map {
     struct sunder_vec* keys;
     struct sunder_vec* vals;
