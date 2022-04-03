@@ -7,7 +7,7 @@
 #include <string.h>
 #include "sunder.h"
 
-static struct autil_string* out = NULL;
+static struct sunder_string* out = NULL;
 static struct function const* current_function = NULL;
 static size_t current_loop_id; // Used for generating break & continue lables.
 static size_t unique_id = 0; // Used for generating unique names and labels.
@@ -95,7 +95,7 @@ append(char const* fmt, ...)
 
     va_list args;
     va_start(args, fmt);
-    autil_string_append_vfmt(out, fmt, args);
+    sunder_string_append_vfmt(out, fmt, args);
     va_end(args);
 }
 
@@ -107,10 +107,10 @@ appendln(char const* fmt, ...)
 
     va_list args;
     va_start(args, fmt);
-    autil_string_append_vfmt(out, fmt, args);
+    sunder_string_append_vfmt(out, fmt, args);
     va_end(args);
 
-    autil_string_append_cstr(out, "\n");
+    sunder_string_append_cstr(out, "\n");
 }
 
 static void
@@ -119,14 +119,14 @@ appendli(char const* fmt, ...)
     assert(out != NULL);
     assert(fmt != NULL);
 
-    autil_string_append_cstr(out, "    ");
+    sunder_string_append_cstr(out, "    ");
 
     va_list args;
     va_start(args, fmt);
-    autil_string_append_vfmt(out, fmt, args);
+    sunder_string_append_vfmt(out, fmt, args);
     va_end(args);
 
-    autil_string_append_cstr(out, "\n");
+    sunder_string_append_cstr(out, "\n");
 }
 
 static void
@@ -138,22 +138,22 @@ appendli_location(struct source_location const* location, char const* fmt, ...)
     assert(location->line != NO_LINE);
     assert(location->psrc != NO_PSRC);
 
-    autil_string_append_fmt(
+    sunder_string_append_fmt(
         out, "    ; [%s:%zu] ", location->path, location->line);
 
     va_list args;
     va_start(args, fmt);
-    autil_string_append_vfmt(out, fmt, args);
+    sunder_string_append_vfmt(out, fmt, args);
     va_end(args);
 
-    autil_string_append_cstr(out, "\n");
+    sunder_string_append_cstr(out, "\n");
 
     char const* const line_start = source_line_start(location->psrc);
     char const* const line_end = source_line_end(location->psrc);
 
-    autil_string_append_fmt(
+    sunder_string_append_fmt(
         out, "    ;%.*s\n", (int)(line_end - line_start), line_start);
-    autil_string_append_fmt(
+    sunder_string_append_fmt(
         out, "    ;%*s^\n", (int)(location->psrc - line_start), "");
 }
 
@@ -162,7 +162,7 @@ appendch(char ch)
 {
     assert(out != NULL);
 
-    autil_string_append(out, &ch, 1u);
+    sunder_string_append(out, &ch, 1u);
 }
 
 static void
@@ -243,14 +243,14 @@ append_dx_data(struct value const* value)
     case TYPE_S64: /* fallthrough */
     case TYPE_USIZE: /* fallthrough */
     case TYPE_SSIZE: {
-        autil_sbuf(uint8_t) const bytes = value_to_new_bytes(value);
-        for (size_t i = 0; i < autil_sbuf_count(bytes); ++i) {
+        sunder_sbuf(uint8_t) const bytes = value_to_new_bytes(value);
+        for (size_t i = 0; i < sunder_sbuf_count(bytes); ++i) {
             if (i != 0) {
                 append(", ");
             }
             append("%#x", (unsigned)bytes[i]);
         }
-        autil_sbuf_fini(bytes);
+        sunder_sbuf_fini(bytes);
         return;
     }
     case TYPE_INTEGER: {
@@ -277,7 +277,7 @@ append_dx_data(struct value const* value)
         return;
     }
     case TYPE_ARRAY: {
-        autil_sbuf(struct value*) const elements = value->data.array.elements;
+        sunder_sbuf(struct value*) const elements = value->data.array.elements;
         struct value* const ellipsis = value->data.array.ellipsis;
 
         // One dimensional arrays may use NASM's times prefix to repeat the
@@ -289,11 +289,11 @@ append_dx_data(struct value const* value)
         if (value->type->data.array.base->kind == TYPE_ARRAY) {
             size_t const count = value->type->data.array.count;
             for (size_t i = 0; i < count; ++i) {
-                if (i != 0 && i < autil_sbuf_count(elements)) {
+                if (i != 0 && i < sunder_sbuf_count(elements)) {
                     append(", ");
                 }
 
-                if (i < autil_sbuf_count(elements)) {
+                if (i < sunder_sbuf_count(elements)) {
                     append_dx_data(elements[i]);
                 }
                 else {
@@ -304,8 +304,8 @@ append_dx_data(struct value const* value)
             return;
         }
 
-        if (autil_sbuf_count(elements) != 0) {
-            for (size_t i = 0; i < autil_sbuf_count(elements); ++i) {
+        if (sunder_sbuf_count(elements) != 0) {
+            for (size_t i = 0; i < sunder_sbuf_count(elements); ++i) {
                 appendch('\n');
                 appendli("; element %zu", i);
                 append("    ");
@@ -316,7 +316,7 @@ append_dx_data(struct value const* value)
         }
         if (ellipsis != NULL) {
             size_t const times =
-                value->type->data.array.count - autil_sbuf_count(elements);
+                value->type->data.array.count - sunder_sbuf_count(elements);
             appendch('\n');
             appendli("; ellipsis element...");
             append("    times %zu", times);
@@ -337,17 +337,17 @@ append_dx_data(struct value const* value)
         // count need to be written in their qd representation, we manually
         // write the dq value of the count here instead of making a call to
         // append_dx_data.
-        char* const count_cstr = autil_bigint_to_new_cstr(
+        char* const count_cstr = sunder_bigint_to_new_cstr(
             value->data.slice.count->data.integer, NULL);
         append("%s", count_cstr);
-        autil_xalloc(count_cstr, AUTIL_XALLOC_FREE);
+        sunder_xalloc(count_cstr, SUNDER_XALLOC_FREE);
         return;
     }
     case TYPE_STRUCT: {
-        autil_sbuf(struct member_variable) const member_variable_defs =
+        sunder_sbuf(struct member_variable) const member_variable_defs =
             value->type->data.struct_.member_variables;
         size_t const member_variable_defs_count =
-            autil_sbuf_count(member_variable_defs);
+            sunder_sbuf_count(member_variable_defs);
         appendch('\n');
         for (size_t i = 0; i < member_variable_defs_count; ++i) {
             struct member_variable const* const def = member_variable_defs + i;
@@ -432,13 +432,13 @@ push_at_address(size_t size, struct address const* address)
     char* addr = NULL;
     switch (address->kind) {
     case ADDRESS_STATIC:
-        addr = autil_cstr_new_fmt(
+        addr = sunder_cstr_new_fmt(
             "(%s + %zu)",
             address->data.static_.name,
             address->data.static_.offset);
         break;
     case ADDRESS_LOCAL:
-        addr = autil_cstr_new_fmt("rbp + %d", address->data.local.rbp_offset);
+        addr = sunder_cstr_new_fmt("rbp + %d", address->data.local.rbp_offset);
         break;
     default:
         UNREACHABLE();
@@ -478,7 +478,7 @@ push_at_address(size_t size, struct address const* address)
     }
     */
 
-    autil_xalloc(addr, AUTIL_XALLOC_FREE);
+    sunder_xalloc(addr, SUNDER_XALLOC_FREE);
 }
 
 static void
@@ -727,7 +727,7 @@ codegen_static_constants(void)
     appendln("; STATIC CONSTANTS");
     appendln("section .rodata");
 
-    for (size_t i = 0; i < autil_sbuf_count(context()->static_symbols); ++i) {
+    for (size_t i = 0; i < sunder_sbuf_count(context()->static_symbols); ++i) {
         struct symbol const* const symbol = context()->static_symbols[i];
         assert(symbol_xget_address(symbol)->kind == ADDRESS_STATIC);
         if (symbol->kind != SYMBOL_CONSTANT) {
@@ -743,7 +743,7 @@ codegen_static_variables(void)
     appendln("; STATIC VARIABLES");
     appendln("section .data");
 
-    for (size_t i = 0; i < autil_sbuf_count(context()->static_symbols); ++i) {
+    for (size_t i = 0; i < sunder_sbuf_count(context()->static_symbols); ++i) {
         struct symbol const* const symbol = context()->static_symbols[i];
         assert(symbol_xget_address(symbol)->kind == ADDRESS_STATIC);
         if (symbol->kind != SYMBOL_VARIABLE) {
@@ -759,7 +759,7 @@ codegen_static_functions(void)
     appendln("; STATIC (GLOBAL) FUNCTIONS");
     appendln("section .text");
 
-    for (size_t i = 0; i < autil_sbuf_count(context()->static_symbols); ++i) {
+    for (size_t i = 0; i < sunder_sbuf_count(context()->static_symbols); ++i) {
         struct symbol const* const symbol = context()->static_symbols[i];
         assert(symbol_xget_address(symbol)->kind == ADDRESS_STATIC);
         if (symbol->kind != SYMBOL_FUNCTION) {
@@ -776,22 +776,22 @@ codegen_sys(void)
     if (SUNDER_HOME == NULL) {
         fatal(NULL, "missing environment variable SUNDER_HOME");
     }
-    struct autil_string* const core =
-        autil_string_new_fmt("%s/lib/sys/sys.asm", SUNDER_HOME);
+    struct sunder_string* const core =
+        sunder_string_new_fmt("%s/lib/sys/sys.asm", SUNDER_HOME);
 
     void* buf = NULL;
     size_t buf_size = 0;
-    if (autil_file_read(autil_string_start(core), &buf, &buf_size)) {
+    if (sunder_file_read(sunder_string_start(core), &buf, &buf_size)) {
         fatal(
             NULL,
             "failed to read '%s' with error '%s'",
-            autil_string_start(core),
+            sunder_string_start(core),
             strerror(errno));
     }
     append("%.*s", (int)buf_size, (char const*)buf);
 
-    autil_string_del(core);
-    autil_xalloc(buf, AUTIL_XALLOC_FREE);
+    sunder_string_del(core);
+    sunder_xalloc(buf, SUNDER_XALLOC_FREE);
 }
 
 static void
@@ -860,7 +860,7 @@ codegen_static_function(struct symbol const* symbol)
 
     assert(current_function == NULL);
     current_function = function;
-    for (size_t i = 0; i < autil_sbuf_count(function->body->stmts); ++i) {
+    for (size_t i = 0; i < sunder_sbuf_count(function->body->stmts); ++i) {
         struct stmt const* const stmt = function->body->stmts[i];
         codegen_stmt(stmt);
     }
@@ -916,10 +916,10 @@ codegen_stmt_if(struct stmt const* stmt, size_t id)
     assert(stmt != NULL);
     assert(stmt->kind == STMT_IF);
 
-    autil_sbuf(struct conditional const* const) const conditionals =
+    sunder_sbuf(struct conditional const* const) const conditionals =
         stmt->data.if_.conditionals;
-    for (size_t i = 0; i < autil_sbuf_count(conditionals); ++i) {
-        bool const is_last = i == (autil_sbuf_count(conditionals) - 1);
+    for (size_t i = 0; i < sunder_sbuf_count(conditionals); ++i) {
+        bool const is_last = i == (sunder_sbuf_count(conditionals) - 1);
 
         if (conditionals[i]->condition != NULL) {
             appendln("%s%zu_condition_%zu:", LABEL_STMT, id, i);
@@ -941,9 +941,9 @@ codegen_stmt_if(struct stmt const* stmt, size_t id)
         }
 
         appendln("%s%zu_body_%zu:", LABEL_STMT, id, i);
-        autil_sbuf(struct stmt const* const) const stmts =
+        sunder_sbuf(struct stmt const* const) const stmts =
             conditionals[i]->body->stmts;
-        for (size_t i = 0; i < autil_sbuf_count(stmts); ++i) {
+        for (size_t i = 0; i < sunder_sbuf_count(stmts); ++i) {
             codegen_stmt(stmts[i]);
         }
         appendli("jmp %s%zu_end", LABEL_STMT, id);
@@ -983,9 +983,9 @@ codegen_stmt_for_range(struct stmt const* stmt, size_t id)
     appendli("cmp rax, rbx");
     appendli("je %s%zu_end", LABEL_STMT, id);
     appendln("%s%zu_body_bgn:", LABEL_STMT, id);
-    autil_sbuf(struct stmt const* const) const stmts =
+    sunder_sbuf(struct stmt const* const) const stmts =
         stmt->data.for_range.body->stmts;
-    for (size_t i = 0; i < autil_sbuf_count(stmts); ++i) {
+    for (size_t i = 0; i < sunder_sbuf_count(stmts); ++i) {
         codegen_stmt(stmts[i]);
     }
     appendln("%s%zu_body_end:", LABEL_STMT, id);
@@ -1015,9 +1015,9 @@ codegen_stmt_for_expr(struct stmt const* stmt, size_t id)
     appendli("cmp al, bl");
     appendli("je %s%zu_end", LABEL_STMT, id);
     appendln("%s%zu_body_bgn:", LABEL_STMT, id);
-    autil_sbuf(struct stmt const* const) const stmts =
+    sunder_sbuf(struct stmt const* const) const stmts =
         stmt->data.for_expr.body->stmts;
-    for (size_t i = 0; i < autil_sbuf_count(stmts); ++i) {
+    for (size_t i = 0; i < sunder_sbuf_count(stmts); ++i) {
         codegen_stmt(stmts[i]);
     }
     appendln("%s%zu_body_end:", LABEL_STMT, id);
@@ -1255,14 +1255,14 @@ codegen_rvalue_integer(struct expr const* expr, size_t id)
     assert(expr->kind == EXPR_INTEGER);
     (void)id;
 
-    char* const cstr = autil_bigint_to_new_cstr(expr->data.integer, NULL);
+    char* const cstr = sunder_bigint_to_new_cstr(expr->data.integer, NULL);
 
     assert(expr->type->size >= 1u);
     assert(expr->type->size <= 8u);
     appendli("mov rax, %s", cstr);
     appendli("push rax");
 
-    autil_xalloc(cstr, AUTIL_XALLOC_FREE);
+    sunder_xalloc(cstr, SUNDER_XALLOC_FREE);
 }
 
 static void
@@ -1295,7 +1295,7 @@ codegen_rvalue_array(struct expr const* expr, size_t id)
     // array elements. Additionally pushing/popping to and from the stack uses
     // 8-byte alignment, but arrays may have element alignment that does not
     // cleanly match the stack alignment (e.g. [count]bool).
-    autil_sbuf(struct expr const* const) const elements =
+    sunder_sbuf(struct expr const* const) const elements =
         expr->data.array.elements;
     struct type const* const element_type = expr->type->data.array.base;
     size_t const element_size = element_type->size;
@@ -1305,7 +1305,7 @@ codegen_rvalue_array(struct expr const* expr, size_t id)
     // interpreter allocates an array 30000 zeroed bytes, which would cause the
     // equivalent of memcpy(&my_array[index], &my_zero, 0x8) inline thousands of
     // times.
-    for (size_t i = 0; i < autil_sbuf_count(elements); ++i) {
+    for (size_t i = 0; i < sunder_sbuf_count(elements); ++i) {
         assert(elements[i]->type == element_type);
         codegen_rvalue(elements[i]);
 
@@ -1318,14 +1318,14 @@ codegen_rvalue_array(struct expr const* expr, size_t id)
     }
 
     size_t const count = expr->type->data.array.count;
-    if (autil_sbuf_count(elements) < count) { // ellipsis
+    if (sunder_sbuf_count(elements) < count) { // ellipsis
         assert(expr->data.array.ellipsis != NULL);
         assert(expr->data.array.ellipsis->type == element_type);
 
         // Number of elements already filled in.
-        size_t const completed = autil_sbuf_count(elements);
+        size_t const completed = sunder_sbuf_count(elements);
         // Number of elements remaining to be filled in with the ellipsis.
-        size_t const remaining = count - autil_sbuf_count(elements);
+        size_t const remaining = count - sunder_sbuf_count(elements);
 
         appendln("%s%zu_ellipsis_bgn:", LABEL_EXPR, id);
         codegen_rvalue(expr->data.array.ellipsis);
@@ -1382,7 +1382,7 @@ codegen_rvalue_array_slice(struct expr const* expr, size_t id)
         expr->data.array_slice.elements,
         NULL);
     codegen_rvalue_array(array_expr, id);
-    autil_xalloc(array_expr, AUTIL_XALLOC_FREE);
+    sunder_xalloc(array_expr, SUNDER_XALLOC_FREE);
 
     push_address(symbol_xget_address(expr->data.array_slice.array_symbol));
     appendli("pop rbx ; address of the array-slice backing array");
@@ -1391,7 +1391,7 @@ codegen_rvalue_array_slice(struct expr const* expr, size_t id)
     pop(symbol_xget_type(expr->data.array_slice.array_symbol)->size);
 
     // Evaluate a slice constructed from the backing array.
-    appendli("push %zu", autil_sbuf_count(expr->data.array_slice.elements));
+    appendli("push %zu", sunder_sbuf_count(expr->data.array_slice.elements));
     push_address(symbol_xget_address(expr->data.array_slice.array_symbol));
 }
 
@@ -1423,14 +1423,14 @@ codegen_rvalue_struct(struct expr const* expr, size_t id)
     // Each member variable will be at the top of the stack after being
     // evaluated, so the member variable is manually memcpy-ed into the correct
     // position on the stack.
-    autil_sbuf(struct member_variable) const member_variable_defs =
+    sunder_sbuf(struct member_variable) const member_variable_defs =
         expr->type->data.struct_.member_variables;
-    autil_sbuf(struct expr const* const) const member_variable_exprs =
+    sunder_sbuf(struct expr const* const) const member_variable_exprs =
         expr->data.struct_.member_variables;
     assert(
-        autil_sbuf_count(member_variable_defs)
-        == autil_sbuf_count(member_variable_exprs));
-    for (size_t i = 0; i < autil_sbuf_count(member_variable_defs); ++i) {
+        sunder_sbuf_count(member_variable_defs)
+        == sunder_sbuf_count(member_variable_exprs));
+    for (size_t i = 0; i < sunder_sbuf_count(member_variable_defs); ++i) {
         assert(member_variable_exprs[i]->type == member_variable_defs[i].type);
         codegen_rvalue(member_variable_exprs[i]);
 
@@ -1530,7 +1530,7 @@ codegen_rvalue_syscall(struct expr const* expr, size_t id)
     (void)id;
 
     struct expr const* const* const arguments = expr->data.syscall.arguments;
-    size_t const count = autil_sbuf_count(arguments);
+    size_t const count = sunder_sbuf_count(arguments);
     for (size_t i = 0; i < count; ++i) {
         assert(arguments[i]->type->size <= 8);
         codegen_rvalue(arguments[i]);
@@ -1579,7 +1579,7 @@ codegen_rvalue_call(struct expr const* expr, size_t id)
 
     // Evaluate & push arguments from left to right.
     struct expr const* const* const arguments = expr->data.call.arguments;
-    for (size_t i = 0; i < autil_sbuf_count(arguments); ++i) {
+    for (size_t i = 0; i < sunder_sbuf_count(arguments); ++i) {
         appendli(
             "; push argument %zu of type `%s`",
             i + 1,
@@ -1594,7 +1594,7 @@ codegen_rvalue_call(struct expr const* expr, size_t id)
 
     // Pop arguments from right to left, leaving the return value as the top
     // element on the stack (for return values with non-zero size).
-    for (size_t i = autil_sbuf_count(arguments); i--;) {
+    for (size_t i = sunder_sbuf_count(arguments); i--;) {
         appendli(
             "; discard (pop) argument %zu of type `%s`",
             i + 1,
@@ -1960,9 +1960,9 @@ codegen_rvalue_unary(struct expr const* expr, size_t id)
         appendli("pop rax");
         if (type_is_signed_integer(rhs->type)) {
             char* const min_cstr =
-                autil_bigint_to_new_cstr(rhs->type->data.integer.min, NULL);
+                sunder_bigint_to_new_cstr(rhs->type->data.integer.min, NULL);
             appendli("mov rbx, %s", min_cstr);
-            autil_xalloc(min_cstr, AUTIL_XALLOC_FREE);
+            sunder_xalloc(min_cstr, SUNDER_XALLOC_FREE);
             appendli(
                 "cmp %s, %s", rhs_reg, reg_b(expr->data.unary.rhs->type->size));
             appendli("jne %s%zu_op", LABEL_EXPR, id);
@@ -2601,9 +2601,9 @@ codegen(char const* const opt_o, bool opt_k)
 {
     assert(opt_o != NULL);
 
-    out = autil_string_new(NULL, 0u);
-    struct autil_string* const asm_path = autil_string_new_fmt("%s.asm", opt_o);
-    struct autil_string* const obj_path = autil_string_new_fmt("%s.o", opt_o);
+    out = sunder_string_new(NULL, 0u);
+    struct sunder_string* const asm_path = sunder_string_new_fmt("%s.asm", opt_o);
+    struct sunder_string* const obj_path = sunder_string_new_fmt("%s.o", opt_o);
 
     codegen_sys();
     appendch('\n');
@@ -2614,14 +2614,14 @@ codegen(char const* const opt_o, bool opt_k)
     codegen_static_functions();
 
     int err = 0;
-    if ((err = autil_file_write(
-             autil_string_start(asm_path),
-             autil_string_start(out),
-             autil_string_count(out)))) {
+    if ((err = sunder_file_write(
+             sunder_string_start(asm_path),
+             sunder_string_start(out),
+             sunder_string_count(out)))) {
         error(
             NULL,
             "unable to write file `%s` with error '%s'",
-            autil_string_start(asm_path),
+            sunder_string_start(asm_path),
             strerror(errno));
         goto cleanup;
     }
@@ -2629,7 +2629,7 @@ codegen(char const* const opt_o, bool opt_k)
     // clang-format off
     char const* const nasm_argv[] = {
         "nasm", "-w+error=all", "-f", "elf64", "-O0", "-g", "-F", "dwarf",
-        autil_string_start(asm_path), (char const*)NULL
+        sunder_string_start(asm_path), (char const*)NULL
     };
     // clang-format on
     if ((err = spawnvpw(nasm_argv))) {
@@ -2638,7 +2638,7 @@ codegen(char const* const opt_o, bool opt_k)
 
     // clang-format off
     char const* const ld_argv[] = {
-        "ld", "-o",  opt_o, autil_string_start(obj_path), (char const*)NULL
+        "ld", "-o",  opt_o, sunder_string_start(obj_path), (char const*)NULL
     };
     // clang-format on
     if ((err = spawnvpw(ld_argv))) {
@@ -2647,12 +2647,12 @@ codegen(char const* const opt_o, bool opt_k)
 
 cleanup:
     if (!opt_k) {
-        (void)remove(autil_string_start(asm_path));
-        (void)remove(autil_string_start(obj_path));
+        (void)remove(sunder_string_start(asm_path));
+        (void)remove(sunder_string_start(obj_path));
     }
-    autil_string_del(asm_path);
-    autil_string_del(obj_path);
-    autil_string_del(out);
+    sunder_string_del(asm_path);
+    sunder_string_del(obj_path);
+    sunder_string_del(out);
     if (err) {
         exit(EXIT_FAILURE);
     }

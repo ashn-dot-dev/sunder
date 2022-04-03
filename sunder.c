@@ -24,14 +24,14 @@ module_new(char const* name, char const* path)
     assert(name != NULL);
     assert(path != NULL);
 
-    struct module* const self = autil_xalloc(NULL, sizeof(*self));
+    struct module* const self = sunder_xalloc(NULL, sizeof(*self));
     memset(self, 0x00, sizeof(*self));
 
-    self->name = autil_sipool_intern_cstr(context()->sipool, name);
-    self->path = autil_sipool_intern_cstr(context()->sipool, path);
+    self->name = sunder_sipool_intern_cstr(context()->sipool, name);
+    self->path = sunder_sipool_intern_cstr(context()->sipool, path);
 
     char* const source = read_source(self->path);
-    autil_freezer_register(context()->freezer, source - 1);
+    sunder_freezer_register(context()->freezer, source - 1);
     self->source = source;
     self->source_count = strlen(source);
 
@@ -140,9 +140,9 @@ module_del(struct module* self)
     symbol_table_freeze(self->symbols, context()->freezer);
     symbol_table_freeze(self->exports, context()->freezer);
 
-    autil_sbuf_fini(self->ordered);
+    sunder_sbuf_fini(self->ordered);
     memset(self, 0x00, sizeof(*self));
-    autil_xalloc(self, AUTIL_XALLOC_FREE);
+    sunder_xalloc(self, SUNDER_XALLOC_FREE);
 }
 
 static struct context s_context = {0};
@@ -150,11 +150,11 @@ static struct context s_context = {0};
 void
 context_init(void)
 {
-    s_context.freezer = autil_freezer_new();
+    s_context.freezer = sunder_freezer_new();
 
-    s_context.sipool = autil_sipool_new();
+    s_context.sipool = sunder_sipool_new();
 #define INTERN_STR_LITERAL(str_literal)                                        \
-    autil_sipool_intern_cstr(context()->sipool, str_literal)
+    sunder_sipool_intern_cstr(context()->sipool, str_literal)
     s_context.interned.empty = INTERN_STR_LITERAL("");
     s_context.interned.builtin = INTERN_STR_LITERAL("builtin");
     s_context.interned.return_ = INTERN_STR_LITERAL("return");
@@ -179,8 +179,8 @@ context_init(void)
 #undef INTERN_STR_LITERAL
 
 #define INIT_BIGINT_CONSTANT(ident, str_literal)                               \
-    struct autil_bigint* const ident = autil_bigint_new_cstr(str_literal);     \
-    autil_bigint_freeze(ident, s_context.freezer);                             \
+    struct sunder_bigint* const ident = sunder_bigint_new_cstr(str_literal);     \
+    sunder_bigint_freeze(ident, s_context.freezer);                             \
     s_context.ident = ident;
     INIT_BIGINT_CONSTANT(u8_min, "+0x00")
     INIT_BIGINT_CONSTANT(u8_max, "+0xFF")
@@ -216,10 +216,10 @@ context_init(void)
 #define INIT_BUILTIN_TYPE(builtin_lvalue, /* struct type* */ t)                \
     {                                                                          \
         struct type* const type = t;                                           \
-        autil_freezer_register(s_context.freezer, type);                       \
+        sunder_freezer_register(s_context.freezer, type);                       \
         struct symbol* const symbol =                                          \
             symbol_new_type(&s_context.builtin.location, type);                \
-        autil_freezer_register(s_context.freezer, symbol);                     \
+        sunder_freezer_register(s_context.freezer, symbol);                     \
         symbol_table_insert(                                                   \
             s_context.global_symbol_table, symbol->name, symbol, false);       \
         builtin_lvalue = type;                                                 \
@@ -247,24 +247,24 @@ context_fini(void)
 {
     struct context* const self = &s_context;
 
-    for (size_t i = 0; i < autil_sbuf_count(self->modules); ++i) {
+    for (size_t i = 0; i < sunder_sbuf_count(self->modules); ++i) {
         module_del(self->modules[i]);
     }
-    autil_sbuf_fini(self->modules);
+    sunder_sbuf_fini(self->modules);
 
-    autil_sipool_del(self->sipool);
+    sunder_sipool_del(self->sipool);
 
-    autil_sbuf_fini(self->static_symbols);
+    sunder_sbuf_fini(self->static_symbols);
     symbol_table_freeze(self->global_symbol_table, self->freezer);
 
-    autil_sbuf(struct symbol_table*) const chilling_symbol_tables =
+    sunder_sbuf(struct symbol_table*) const chilling_symbol_tables =
         self->chilling_symbol_tables;
-    for (size_t i = 0; i < autil_sbuf_count(chilling_symbol_tables); ++i) {
+    for (size_t i = 0; i < sunder_sbuf_count(chilling_symbol_tables); ++i) {
         symbol_table_freeze(chilling_symbol_tables[i], self->freezer);
     }
-    autil_sbuf_fini(self->chilling_symbol_tables);
+    sunder_sbuf_fini(self->chilling_symbol_tables);
 
-    autil_freezer_del(self->freezer);
+    sunder_freezer_del(self->freezer);
 
     memset(self, 0x00, sizeof(*self));
 }
@@ -282,7 +282,7 @@ load_module(char const* name, char const* path)
     assert(lookup_module(path) == NULL);
 
     struct module* const module = module_new(name, path);
-    autil_sbuf_push(s_context.modules, module);
+    sunder_sbuf_push(s_context.modules, module);
 
     parse(module);
     order(module);
@@ -297,7 +297,7 @@ lookup_module(char const* path)
 {
     assert(path != NULL);
 
-    for (size_t i = 0; i < autil_sbuf_count(context()->modules); ++i) {
+    for (size_t i = 0; i < sunder_sbuf_count(context()->modules); ++i) {
         if (context()->modules[i]->path == path) {
             return context()->modules[i];
         }

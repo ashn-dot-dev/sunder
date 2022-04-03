@@ -28,7 +28,7 @@ SANITIZE = -fsanitize=address -fsanitize=leak -fsanitize=undefined
 
 CC = c99
 CFLAGS = $(C99_DBG)
-INCS = -Ideps
+INCS =
 
 SUNDER_HOME="$$HOME/.sunder"
 

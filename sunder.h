@@ -4,10 +4,938 @@
 #define SUNDER_H_INCLUDED
 #include <stdbool.h>
 #include <stdint.h>
-#include <autil/autil.h>
 
 ////////////////////////////////////////////////////////////////////////////////
 //////// util.c ////////////////////////////////////////////////////////////////
+
+#include <stdarg.h> /* va_list */
+#include <stddef.h> /* size_t, NULL, offsetof */
+#include <stdio.h> /* FILE*, printf-family */
+
+struct sunder_vstr;
+struct sunder_sipool;
+struct sunder_bitarr;
+struct sunder_bigint;
+struct sunder_string;
+struct sunder_vec;
+struct sunder_map;
+struct sunder_freezer;
+
+// C99 compatible max_align_t.
+// clang-format off
+typedef union {
+    _Bool       bool_;
+    char        char_;
+    short       short_;
+    int         int_;
+    long        long_;
+    long long   long_long_;
+    float       float_;
+    double      double_;
+    long double long_double_;
+    void*       void_ptr_;
+    void        (*fn_ptr_)();
+} sunder_max_align_type;
+// clang-format on
+
+// Produce a pointer of type TYPE* whose contents is the scalar rvalue val.
+// This pointer has automatic storage duration associated with the enclosing
+// block.
+//
+// Example:
+//      int* pint = SUNDER_LOCAL_PTR(int, 42);
+//      char const** pstr = SUNDER_LOCAL_PTR(char const*, "FOO");
+//      printf("%d %s\n", *pint, *pstr); // 42 FOO
+#define SUNDER_LOCAL_PTR(TYPE, /*val*/...) (&((TYPE){__VA_ARGS__}))
+
+// Dereference ptr as if it were of type TYPE*.
+//
+// Example:
+//      void* ptr = some_func();
+//      int val = SUNDER_DEREF_PTR(int, ptr);
+#define SUNDER_DEREF_PTR(TYPE, /*ptr*/...) (*((TYPE*)(__VA_ARGS__)))
+
+// Number of elements in an array.
+#define SUNDER_ARRAY_COUNT(array) (sizeof(array) / sizeof((array)[0]))
+// Number of characters in a string literal, excluding the NUL-terminator.
+#define SUNDER_STR_LITERAL_COUNT(str_literal)                                   \
+    (SUNDER_ARRAY_COUNT(str_literal) - 1)
+// Number of characters in a formatted string.
+#define SUNDER_FMT_COUNT(fmt, ...) ((size_t)snprintf(NULL, 0, fmt, __VA_ARGS__))
+
+// C99 compatible _Alignof operator.
+// Produces an integer constant expression.
+// clang-format off
+#define SUNDER_ALIGNOF(type) offsetof(struct{char _; type ty;}, ty)
+// clang-format on
+
+// C99 compatible(ish) _Static_assert.
+// Macro parameter what should be a valid identifier describing the assertion.
+// Flips the order of arguments from C11's _Static_assert so that assertions
+// read as if they were a sentence.
+// Example:
+//      // Assert that we are compiling on a 64-bit machine.
+//      SUNDER_STATIC_ASSERT(pointers_are_eight_bytes, sizeof(void*) == 8);
+// clang-format off
+#define SUNDER_STATIC_ASSERT(what, expr)                                        \
+    enum {STATIC_ASSERT__ ## what = 1/!!(expr)}//;
+// clang-format on
+
+// Should return an int less than, equal to, or greater than zero if lhs is
+// semantically less than, equal to, or greater than rhs, respectively.
+typedef int (*sunder_vpcmp_fn)(void const* lhs, void const* rhs);
+// Implementations of sunder_vpcmp_fn for builtin types.
+int
+sunder_void_vpcmp(void const* lhs, void const* rhs); // void (zero-sized object)
+int
+sunder_cstr_vpcmp(void const* lhs, void const* rhs); // char const*
+int
+sunder_int_vpcmp(void const* lhs, void const* rhs); // int
+
+// Alternatives to the C99 standard library functions in ctype.h.
+// These functions always use the "C" locale and will not result in undefined
+// behavior if passed a value not representable by an unsigned char.
+// clang-format off
+int sunder_isalnum(int c);
+int sunder_isalpha(int c);
+int sunder_isblank(int c);
+int sunder_iscntrl(int c);
+int sunder_isdigit(int c);
+int sunder_isgraph(int c);
+int sunder_islower(int c);
+int sunder_isprint(int c);
+int sunder_ispunct(int c);
+int sunder_isspace(int c);
+int sunder_isupper(int c);
+int sunder_isbdigit(int c); // Not in C99. Binary digit.
+int sunder_isodigit(int c); // Not in C99. Octal digit.
+int sunder_isxdigit(int c);
+int sunder_tolower(int c);
+int sunder_toupper(int c);
+// clang-format on
+
+// Alternatives to the C99 standard library functions in string.h.
+// These functions do not result in undefined behavior when passed an invalid
+// pointer argument paired with a memory-size argument of zero.
+// clang-format off
+int sunder_memcmp(void const* s1, void const* s2, size_t n);
+void* sunder_memmove(void* dest, void const* src, size_t n);
+void* sunder_memset(void* s, int c, size_t n);
+// clang-format on
+
+// Zero out the memory under the provided pointer parameter. The number of bytes
+// to be zeroed is automatically determined by the sizeof(*ptr).
+#define SUNDER_MEMZERO(ptr) sunder_memset(ptr, 0x00, sizeof(*ptr))
+
+// General purpose allocator functions with out-of-memory error checking.
+// The behavior of sunder_xalloc and sunder_xallocn is similar to libc realloc and
+// *BSD reallocarray with the following exceptions:
+// (1) On allocation failure an error message will be printed followed by
+//     program termination with EXIT_FAILURE status.
+// (2) The call sunder_xalloc(ptr, 0) is guaranteed to free the memory backing
+//     ptr. A pointer returned by sunder_xalloc may be freed with
+//     sunder_xalloc(ptr, 0) or the equivalent
+//     sunder_xalloc(ptr, SUNDER_XALLOC_FREE). The calls sunder_xallocn(ptr, x, 0)
+//     and sunder_xallocn(ptr, 0, y) are equivalent to sunder_xalloc(ptr, 0).
+// The macro SUNDER_XALLOC_FREE may be used in place of the constant zero to
+// indicate that a call sunder_xalloc(ptr, SUNDER_XALLOC_FREE) is intended as a
+// free operation.
+void*
+sunder_xalloc(void* ptr, size_t size);
+void*
+sunder_xallocn(void* ptr, size_t nmemb, size_t size);
+#define SUNDER_XALLOC_FREE ((size_t)0)
+
+// Write a formatted info message to stderr.
+// A newline is automatically appended to the end of the formatted message.
+void
+sunder_infof(char const* fmt, ...);
+// Write a formatted error message to stderr.
+// A newline is automatically appended to the end of the formatted message.
+void
+sunder_errorf(char const* fmt, ...);
+// Write a formatted error message to stderr and exit with EXIT_FAILURE status.
+// A newline is automatically appended to the end of the formatted message.
+void
+sunder_fatalf(char const* fmt, ...);
+
+// Read the full contents of the file specified by path.
+// Memory for the read content is allocated with sunder_xalloc.
+// Returns zero on success.
+int
+sunder_file_read(char const* path, void** buf, size_t* buf_size);
+
+// Write the contents of a buffer into the file specified by path.
+// The file specified by path is created if it does not exist.
+// Returns zero on success.
+// On failure, the contents of the file specified by path is undefined.
+int
+sunder_file_write(char const* path, void const* buf, size_t buf_size);
+
+// Read the full contents of the input stream specified by stream.
+// Memory for the read content is allocated with sunder_xalloc.
+// Returns zero on success.
+int
+sunder_stream_read(FILE* stream, void** buf, size_t* buf_size);
+
+// Read the contents of the input stream specified by stream until a newline or
+// end-of-file is encountered.
+// The line buffer will *not* have NUL termination.
+// The line buffer will contain the end-of-line newline (if present).
+// Memory for the read content is allocated with sunder_xalloc.
+// Returns zero on success.
+int
+sunder_stream_read_line(FILE* stream, void** buf, size_t* buf_size);
+
+////////////////////////////////////////////////////////////////////////////////
+//////// CSTR //////////////////////////////////////////////////////////////////
+
+// Returns an sunder_xalloc-allocated cstring of the first count bytes of start.
+// This function behaves similarly to the POSIX strdupn function.
+char*
+sunder_cstr_new(char const* start, size_t count);
+// Returns an sunder_xalloc-allocated copy of the provided cstring.
+// This function behaves similarly to the POSIX strdup function.
+char*
+sunder_cstr_new_cstr(char const* cstr);
+// Returns an sunder_xalloc-allocated cstring from the provided formatted text.
+char*
+sunder_cstr_new_fmt(char const* fmt, ...);
+// Returns a non-zero value if cstr starts with target.
+int
+sunder_cstr_starts_with(char const* cstr, char const* target);
+// Returns a non-zero value if cstr ends with target.
+int
+sunder_cstr_ends_with(char const* cstr, char const* target);
+
+////////////////////////////////////////////////////////////////////////////////
+//////// VSTR //////////////////////////////////////////////////////////////////
+// Byte string view.
+
+struct sunder_vstr {
+    char const* start;
+    size_t count;
+};
+
+// Produce a pointer of type struct sunder_vstr* constructed from the provided
+// parameters. This pointer has automatic storage duration associated with the
+// enclosing block.
+#define SUNDER_VSTR_LOCAL_PTR(start, count) (&(struct sunder_vstr){start, count})
+// Produce a pointer of type struct sunder_vstr* from the provided cstring
+// literal. This pointer has automatic storage duration associated with the
+// enclosing block.
+#define SUNDER_VSTR_LOCAL_PTR_STR_LITERAL(str_literal)                          \
+    SUNDER_VSTR_LOCAL_PTR(str_literal, SUNDER_STR_LITERAL_COUNT(str_literal))
+
+// Initializer for a vstring literal from a cstring literal.
+// Example:
+//      static struct sunder_vstr const foo =
+//          SUNDER_VSTR_INIT_STR_LITERAL("foo");
+// Example:
+//      struct sunder_vstr bar = {0};
+//      // some time later...
+//      bar = (struct sunder_vstr)SUNDER_VSTR_INIT_STR_LITERAL("bar");
+// clang-format off
+#define SUNDER_VSTR_INIT_STR_LITERAL(str_literal)                              \
+    {str_literal, SUNDER_STR_LITERAL_COUNT(str_literal)}
+// clang-format on
+
+// Return an int less than, equal to, or greater than zero if lhs is
+// lexicographically less than, equal to, or greater than rhs, respectively.
+int
+sunder_vstr_cmp(struct sunder_vstr const* lhs, struct sunder_vstr const* rhs);
+// Comparison function satisfying sunder_vpcmp_fn.
+// Parameters lhs and rhs must be of type struct sunder_vstr const*.
+int
+sunder_vstr_vpcmp(void const* lhs, void const* rhs);
+
+// Returns a non-zero value if vstr starts with target.
+int
+sunder_vstr_starts_with(
+    struct sunder_vstr const* vstr, struct sunder_vstr const* target);
+// Returns a non-zero value if vstr ends with target.
+int
+sunder_vstr_ends_with(
+    struct sunder_vstr const* vstr, struct sunder_vstr const* target);
+
+////////////////////////////////////////////////////////////////////////////////
+//////// CSTR INTERN POOL //////////////////////////////////////////////////////
+
+// Allocate and initialize a string intern pool.
+struct sunder_sipool*
+sunder_sipool_new(void);
+// Deinitialize and free the string intern pool.
+// Does nothing if self == NULL.
+void
+sunder_sipool_del(struct sunder_sipool* self);
+
+// Intern the string specified by the first count bytes of start.
+// Returns the canonical NUL-terminated representation of the interned string.
+char const*
+sunder_sipool_intern(struct sunder_sipool* self, char const* start, size_t count);
+// Intern the string specified by the provided NUL-terminated cstring.
+// Returns the canonical NUL-terminated representation of the interned string.
+char const*
+sunder_sipool_intern_cstr(struct sunder_sipool* self, char const* cstr);
+
+////////////////////////////////////////////////////////////////////////////////
+//////// STRETCHY BUFFER ///////////////////////////////////////////////////////
+// General purpose type-safe dynamic array (a.k.a stretchy buffer).
+//
+// A stretchy buffer works by storing metadata about the number of allocated and
+// in-use elements in a header just before the address of the buffer's first
+// element. The ith element of a stretchy buffer may be accessed using the array
+// index operator, sbuf[i], and a stretchy buffer containing elements of type T
+// may be passed to subroutines as if it were regular array-like pointer of type
+// T* or T const*. The address of a stretchy buffer may change when a resizing
+// operation is performed, similar to resizing operations done with realloc, so
+// the address of a stretchy buffer should not be considered stable.
+//
+// +--------+---------+---------+---------+--
+// | HEADER | SBUF[0] | SBUF[1] | SBUF[2] | ...
+// +--------+---------+---------+---------+--
+//          ^
+//          Pointer manipulated by the user / sunder_sbuf_* macros.
+//
+// Example:
+//      // The declaration:
+//      //      TYPE* identifier = NULL;
+//      // creates an empty stretchy buffer holding TYPE values.
+//      // An equivalent declaration:
+//      //      sunder_sbuf(TYPE) identifier = NULL;
+//      // may also be used in most cases.
+//      int* vals = NULL;
+//      printf("count == %zu\n", sunder_sbuf_count(vals));  /* count == 0 */
+//
+//      for (int i = 0; i < 3; ++i) {
+//          sunder_sbuf_push(vals, (i + 1) * 2);
+//      }
+//      printf("count == %zu\n", sunder_sbuf_count(vals)); /* count == 3 */
+//      printf("vals[0] == %d\n", vals[0]); /* vals[0] == 2 */
+//      printf("vals[1] == %d\n", vals[1]); /* vals[1] == 4 */
+//      printf("vals[2] == %d\n", vals[2]); /* vals[2] == 6 */
+//
+//      printf("popped == %d\n", sunder_sbuf_pop(vals)); /* popped == 6 */
+//      printf("count == %zu\n", sunder_sbuf_count(vals)); /* count == 2 */
+//
+//      // Free memory allocated to the sbuf.
+//      // This is safe to call even if vals == NULL.
+//      sunder_sbuf_fini(vals);
+
+// Convenience macros used to explicitly annotate a pointer as a stretchy
+// buffer. Type annotations for types such as stack-allocated arrays and
+// function pointers are not supported by this macro due to the complicated
+// nature of C variable/type declarations.
+//
+// Example:
+//      sunder_sbuf(int) sbuf = NULL;
+//      sunder_sbuf_push(sbuf, 1);
+#define sunder_sbuf(TYPE) TYPE*
+#define sunder_sbuf_const(TYPE) TYPE const*
+
+// void sunder_sbuf_fini(TYPE* sbuf)
+// ------------------------------------------------------------
+// Free resources associated with the stretchy buffer.
+// Macro parameter sbuf is evaluated multiple times.
+#define sunder_sbuf_fini(sbuf)                                                  \
+    ((void)((sbuf) != NULL ? SUNDER__SBUF_FREE_NON_NULL_HEAD_(sbuf) : NULL))
+
+// void sunder_sbuf_freeze(TYPE* sbuf, struct sunder_freezer* freezer)
+// ------------------------------------------------------------
+// Register resources within bigint with the provided freezer.
+#define sunder_sbuf_freeze(sbuf, freezer)                                       \
+    ((void)((sbuf) != NULL ? SUNDER__SBUF_FREEZE_NON_NULL_HEAD_(sbuf, freezer), NULL : NULL))
+
+// size_t sunder_sbuf_count(TYPE* sbuf)
+// ------------------------------------------------------------
+// The number of elements in the stretchy buffer.
+// Macro parameter sbuf is evaluated multiple times.
+#define sunder_sbuf_count(sbuf)                                                 \
+    ((size_t)((sbuf) != NULL ? SUNDER__SBUF_PHEAD_CONST_(sbuf)->cnt_ : 0u))
+// size_t sunder_sbuf_capacity(TYPE* sbuf)
+// ------------------------------------------------------------
+// The number of elements the allocated in the sbuf.
+// Macro parameter sbuf is evaluated multiple times.
+#define sunder_sbuf_capacity(sbuf)                                              \
+    ((size_t)((sbuf) != NULL ? SUNDER__SBUF_PHEAD_CONST_(sbuf)->cap_ : 0u))
+
+// void sunder_sbuf_reserve(TYPE* sbuf, size_t n)
+// ------------------------------------------------------------
+// Update the minimum capacity of the stretchy buffer to n elements.
+// Macro parameter sbuf is evaluated multiple times.
+#define sunder_sbuf_reserve(sbuf, /*n*/...)                                     \
+    ((void)((sbuf) = sunder__sbuf_rsv_(sizeof(*(sbuf)), sbuf, __VA_ARGS__)))
+// void sunder_sbuf_resize(TYPE* sbuf, size_t n)
+// ------------------------------------------------------------
+// Update the count of the stretchy buffer to n elements.
+// Macro parameter sbuf is evaluated multiple times.
+#define sunder_sbuf_resize(sbuf, /*n*/...)                                      \
+    ((void)((sbuf) = sunder__sbuf_rsz_(sizeof(*(sbuf)), sbuf, __VA_ARGS__)))
+
+// void sunder_sbuf_push(TYPE* sbuf, TYPE val)
+// ------------------------------------------------------------
+// Append val as the last element of the stretchy buffer.
+// Macro parameter sbuf is evaluated multiple times.
+#define sunder_sbuf_push(sbuf, /*val*/...)                                      \
+    ((void)(SUNDER__SBUF_MAYBE_GROW_(sbuf), SUNDER__SBUF_APPEND_(sbuf, __VA_ARGS__)))
+// TYPE sunder_sbuf_pop(TYPE* sbuf)
+// ------------------------------------------------------------
+// Remove and return the last element of the stretchy buffer.
+// This macro does *not* perform bounds checking.
+// Macro parameter sbuf is evaluated multiple times.
+#define sunder_sbuf_pop(sbuf) ((sbuf)[--SUNDER__SBUF_PHEAD_MUTBL_(sbuf)->cnt_])
+
+// Internal utilities that must be visible to other header/source files that
+// wish to use the sunder_sbuf_* API. Do not use these directly!
+// clang-format off
+struct sunder__sbuf_header_{size_t cnt_; size_t cap_; sunder_max_align_type _[];};
+enum{SUNDER__SBUF_HEADER_OFFSET_ = sizeof(struct sunder__sbuf_header_)};
+#define SUNDER__SBUF_PHEAD_MUTBL_(sbuf_)                                       \
+    ((struct sunder__sbuf_header_      *)                                       \
+     ((char      *)(sbuf_)-SUNDER__SBUF_HEADER_OFFSET_))
+#define SUNDER__SBUF_PHEAD_CONST_(sbuf_)                                       \
+    ((struct sunder__sbuf_header_ const*)                                       \
+     ((char const*)(sbuf_)-SUNDER__SBUF_HEADER_OFFSET_))
+#define SUNDER__SBUF_FREE_NON_NULL_HEAD_(sbuf_)                                \
+    (sunder_xalloc(SUNDER__SBUF_PHEAD_MUTBL_(sbuf_), SUNDER_XALLOC_FREE))
+#define SUNDER__SBUF_FREEZE_NON_NULL_HEAD_(sbuf_, freezer)                     \
+    (sunder_freezer_register(freezer, SUNDER__SBUF_PHEAD_MUTBL_(sbuf_)))
+#define SUNDER__SBUF_MAYBE_GROW_(sbuf_)                                        \
+    ((sunder_sbuf_count(sbuf_) == sunder_sbuf_capacity(sbuf_))                   \
+         ? (sbuf_) = sunder__sbuf_grw_(sizeof(*(sbuf_)), sbuf_)                 \
+         : (sbuf_))
+#define SUNDER__SBUF_APPEND_(sbuf_, ...)                                       \
+    ((sbuf_)[SUNDER__SBUF_PHEAD_MUTBL_(sbuf_)->cnt_++] = (__VA_ARGS__))
+void* sunder__sbuf_rsv_(size_t elemsize, void* sbuf, size_t cap);
+void* sunder__sbuf_rsz_(size_t elemsize, void* sbuf, size_t cnt);
+void* sunder__sbuf_grw_(size_t elemsize, void* sbuf);
+// clang-format on
+
+////////////////////////////////////////////////////////////////////////////////
+//////// BIT ARRAY /////////////////////////////////////////////////////////////
+
+// Allocate and initialize a bit array with count bits.
+// The bit array is initially zeroed.
+struct sunder_bitarr*
+sunder_bitarr_new(size_t count);
+// Deinitialize and free the bit array.
+// Does nothing if self == NULL.
+void
+sunder_bitarr_del(struct sunder_bitarr* self);
+// Register resources within the bit array with the provided freezer.
+void
+sunder_bitarr_freeze(struct sunder_bitarr* self, struct sunder_freezer* freezer);
+
+// Returns the number of bits in this bit array.
+size_t
+sunder_bitarr_count(struct sunder_bitarr const* self);
+// Set the nth bit (zero indexed) of self to value.
+// Fatally exits after printing an error message if n is out of bounds.
+void
+sunder_bitarr_set(struct sunder_bitarr* self, size_t n, int value);
+// Returns the value (one or zero) of the nth bit (zero indexed) of self.
+// Fatally exits after printing an error message if n is out of bounds.
+int
+sunder_bitarr_get(struct sunder_bitarr const* self, size_t n);
+
+// self = othr
+// Fatally exits after printing an error message if the count of self is not
+// equal to the count of othr.
+void
+sunder_bitarr_assign(struct sunder_bitarr* self, struct sunder_bitarr const* othr);
+
+// res = ~rhs
+// Fatally exits after printing an error message if the count of res and rhs are
+// not equal.
+void
+sunder_bitarr_compl(struct sunder_bitarr* res, struct sunder_bitarr const* rhs);
+// res = lhs << nbits (logical shift left)
+// Fatally exits after printing an error message if the count of res and lhs are
+// not equal.
+void
+sunder_bitarr_shiftl(
+    struct sunder_bitarr* res, struct sunder_bitarr const* lhs, size_t nbits);
+// res = lhs >> nbits (logical shift right)
+// Fatally exits after printing an error message if the count of res and lhs are
+// not equal.
+void
+sunder_bitarr_shiftr(
+    struct sunder_bitarr* res, struct sunder_bitarr const* lhs, size_t nbits);
+// res = lhs & rhs
+// Fatally exits after printing an error message if the count of res, lhs, and
+// rhs are not equal.
+void
+sunder_bitarr_and(
+    struct sunder_bitarr* res,
+    struct sunder_bitarr const* lhs,
+    struct sunder_bitarr const* rhs);
+// res = lhs ^ rhs
+// Fatally exits after printing an error message if the count of res, lhs, and
+// rhs are not equal.
+void
+sunder_bitarr_xor(
+    struct sunder_bitarr* res,
+    struct sunder_bitarr const* lhs,
+    struct sunder_bitarr const* rhs);
+// res = lhs | rhs
+// Fatally exits after printing an error message if the count of res, lhs, and
+// rhs are not equal.
+void
+sunder_bitarr_or(
+    struct sunder_bitarr* res,
+    struct sunder_bitarr const* lhs,
+    struct sunder_bitarr const* rhs);
+
+////////////////////////////////////////////////////////////////////////////////
+//////// BIG INTEGER ///////////////////////////////////////////////////////////
+// Arbitrary precision integer.
+// A bigint conceptually consists of the following components:
+// (1) sign: The arithmetic sign of the integer (+, -, or 0).
+// (2) magnitude: The absolute value of the bigint, presented through this API
+//     as an infinitely long sequence of bits with little endian ordering.
+
+extern struct sunder_bigint const* const SUNDER_BIGINT_ZERO; // 0
+extern struct sunder_bigint const* const SUNDER_BIGINT_POS_ONE; // +1
+extern struct sunder_bigint const* const SUNDER_BIGINT_NEG_ONE; // -1
+
+// Allocate and initialize a bigint to the specified value.
+// The call sunder_bigint_new(SUNDER_BIGINT_ZERO) will zero-initialize a bigint.
+struct sunder_bigint*
+sunder_bigint_new(struct sunder_bigint const* othr);
+// Allocate and initialize a bigint from the provided NUL-terminated cstring.
+// Returns NULL if the cstring could not be parsed.
+//
+// The cstring may begin with a plus (+) or minus (-) sign.
+// In the absence of a plus or minus sign the cstring will interpreted as a
+// non-negative number.
+//
+// The digits of the cstring may be prefixed with a radix identifier:
+// 0b (binary), 0o (octal), or 0x (hexadecimal).
+// In the absence of a radix identifier, the digits of the cstring will decoded
+// with radix 10 (decimal).
+//
+// The cstring *must* not have any leading or trailing whitespace.
+struct sunder_bigint*
+sunder_bigint_new_cstr(char const* cstr);
+// Allocate and initialize a bigint from the provided string slice.
+// Returns NULL if the string could not be parsed.
+// This function uses the same string-grammar as sunder_bigint_new_cstr().
+struct sunder_bigint*
+sunder_bigint_new_text(char const* start, size_t count);
+// Deinitialize and free the bigint.
+// Does nothing if self == NULL.
+void
+sunder_bigint_del(struct sunder_bigint* self);
+// Register resources within the bigint with the provided freezer.
+void
+sunder_bigint_freeze(struct sunder_bigint* self, struct sunder_freezer* freezer);
+
+// Return an int less than, equal to, or greater than zero if lhs is
+// semantically less than, equal to, or greater than rhs, respectively.
+int
+sunder_bigint_cmp(
+    struct sunder_bigint const* lhs, struct sunder_bigint const* rhs);
+
+// self = othr
+void
+sunder_bigint_assign(struct sunder_bigint* self, struct sunder_bigint const* othr);
+
+// res = -rhs
+void
+sunder_bigint_neg(struct sunder_bigint* res, struct sunder_bigint const* rhs);
+// res = abs(rhs)
+void
+sunder_bigint_abs(struct sunder_bigint* res, struct sunder_bigint const* rhs);
+// res = lhs + rhs
+void
+sunder_bigint_add(
+    struct sunder_bigint* res,
+    struct sunder_bigint const* lhs,
+    struct sunder_bigint const* rhs);
+// res = lhs - rhs
+void
+sunder_bigint_sub(
+    struct sunder_bigint* res,
+    struct sunder_bigint const* lhs,
+    struct sunder_bigint const* rhs);
+// res  = lhs * rhs
+void
+sunder_bigint_mul(
+    struct sunder_bigint* res,
+    struct sunder_bigint const* lhs,
+    struct sunder_bigint const* rhs);
+// res  = lhs / rhs
+// rem  = lhs % rhs
+// If res is NULL then the result will not be written to res.
+// If rem is NULL then the remainder will not be written to rem.
+//
+// This function matches the behavior of the / and % operators as defined by the
+// C99 standard, satisfying the expression:
+//      (lhs/rhs)*rhs + lhs%rhs == lhs
+// where:
+//      lhs/rhs == res
+//      lhs%rhs == rem
+void
+sunder_bigint_divrem(
+    struct sunder_bigint* res,
+    struct sunder_bigint* rem,
+    struct sunder_bigint const* lhs,
+    struct sunder_bigint const* rhs);
+
+// self.magnitude = self.magnitude << nbits (logical shift left)
+// This function is sign-oblivious (the sign of self is not altered).
+void
+sunder_bigint_magnitude_shiftl(struct sunder_bigint* self, size_t nbits);
+// self.magnitude = self.magnitude >> nbits (logical shift right)
+// This function is sign-oblivious (the sign of self is not altered).
+void
+sunder_bigint_magnitude_shiftr(struct sunder_bigint* self, size_t nbits);
+// Returns the number of bits required to store the magnitude of self.
+// This function is sign-oblivious (the sign of self is not considered).
+size_t
+sunder_bigint_magnitude_bit_count(struct sunder_bigint const* self);
+// Returns the value (one or zero) of the nth bit (zero indexed) of the
+// magnitude of self.
+// This function is sign-oblivious (the sign of self is not considered).
+int
+sunder_bigint_magnitude_bit_get(struct sunder_bigint const* self, size_t n);
+// Set the nth bit (zero indexed) of the magnitude of self to value.
+// This function is sign-oblivious (the sign of self is not altered).
+void
+sunder_bigint_magnitude_bit_set(struct sunder_bigint* self, size_t n, int value);
+
+// Returns an sunder_xalloc-allocated cstring representation of the provided
+// bigint as specified by the provided format string.
+// If fmt is NULL then default formatting is used.
+//
+// Returns a NUL-terminated string on success.
+// Returns NULL if an invalid format string was provided.
+//
+// Format string grammar: "[flags][width][specifier]"
+// Note that the format directive character, %, is *NOT* used in the format
+// string grammar.
+//
+// Flags (optional):
+//   #      Prefix the digits of the output string with "0b", "0o", "0x", or
+//          "0x" when used in conjunction with the "b", "o", "x", or "X"
+//          specifiers, respectively. Note that "0x" is used for both the "x"
+//          and "X" specifiers.
+//   0      Left pad the output string up to the field width using zeros.
+//          Default behavior is to pad with spaces.
+//   +      Prefix the numeric representation of the output string with a plus
+//          or minus sign (+ or -), even for positive numbers.
+//          Default behavior is to only add the minus sign for negative numbers.
+//   -      Left justify the output string within the provided field width.
+//   space  Prefix the numeric representation of the output string with a space
+//          if no sign would be written otherwise.
+//
+// Width (optional):
+//   Decimal digit string with nonzero first digit specifying the minimum length
+//   of the output string.
+//
+// Specifier (required):
+//   d      The provided bigint will be represented using decimal notation.
+//   b      The provided bigint will be represented using binary notation.
+//   o      The provided bigint will be represented using octal notation.
+//   x      The provided bigint will be represented using hexadecimal notation
+//          with *lower case* alphanumeric digits.
+//   X      The provided bigint will be represented using hexadecimal notation
+//          with *UPPER CASE* alphanumeric digits.
+char*
+sunder_bigint_to_new_cstr(struct sunder_bigint const* self, char const* fmt);
+
+////////////////////////////////////////////////////////////////////////////////
+//////// STRING ////////////////////////////////////////////////////////////////
+// Byte string with guaranteed NUL termination.
+
+// Allocate and initialize a string from the first count bytes of start.
+struct sunder_string*
+sunder_string_new(char const* start, size_t count);
+// Allocate and initialize a string from the provided NUL-terminated cstring.
+// If cstr is NULL then string will be initialized to the empty string.
+struct sunder_string*
+sunder_string_new_cstr(char const* cstr);
+// Allocate and initialize a string from the provided formatted text.
+struct sunder_string*
+sunder_string_new_fmt(char const* fmt, ...);
+// Deinitialize and free the string.
+// Does nothing if self == NULL.
+void
+sunder_string_del(struct sunder_string* self);
+// Register resources within the string with the provided freezer.
+void
+sunder_string_freeze(struct sunder_string* self, struct sunder_freezer* freezer);
+
+// Pointer to the start of the underlying char array of the string.
+// Returns a pointer to a NUL terminator when the count of the string is zero.
+char const*
+sunder_string_start(struct sunder_string const* self);
+// The number of bytes in the string *NOT* including the NUL terminator.
+size_t
+sunder_string_count(struct sunder_string const* self);
+
+// Return an int less than, equal to, or greater than zero if lhs is
+// lexicographically less than, equal to, or greater than rhs, respectively.
+int
+sunder_string_cmp(
+    struct sunder_string const* lhs, struct sunder_string const* rhs);
+
+// Update the count of the string.
+// If count is greater than the current count of the string then additional
+// elements are initialized with garbage data.
+void
+sunder_string_resize(struct sunder_string* self, size_t count);
+
+// Return a pointer to the byte of the string at position idx.
+// Fatally exits after printing an error message if idx is out of bounds.
+char*
+sunder_string_ref(struct sunder_string* self, size_t idx);
+char const*
+sunder_string_ref_const(struct sunder_string const* self, size_t idx);
+
+// Insert count bytes of start into the string at position idx.
+// Bytes with position greater than idx are moved back count bytes.
+// Fatally exits after printing an error message if idx is out of bounds.
+void
+sunder_string_insert(
+    struct sunder_string* self, size_t idx, char const* start, size_t count);
+// Remove count bytes at position idx from the string.
+// Bytes with position greater than idx are moved forward count bytes.
+// Fatally exits after printing an error message if the slice to be removed
+// indexes out of bounds.
+void
+sunder_string_remove(struct sunder_string* self, size_t idx, size_t count);
+
+// Append count bytes of start onto the end of the string.
+void
+sunder_string_append(struct sunder_string* self, char const* start, size_t count);
+// Append the provided NUL-terminated cstring onto the end of the string.
+void
+sunder_string_append_cstr(struct sunder_string* self, char const* cstr);
+// Append the formatted text to the end of the string.
+void
+sunder_string_append_fmt(struct sunder_string* self, char const* fmt, ...);
+void
+sunder_string_append_vfmt(
+    struct sunder_string* self, char const* fmt, va_list args);
+
+// Trim leading and trailing whitespace from the string.
+// Bytes of the string are decoded using the "C" locale.
+void
+sunder_string_trim(struct sunder_string* self);
+
+// Split the string on all occurrences of whitespace.
+// Empty strings are removed from the result.
+// Bytes of the string are decoded using the "C" locale.
+// Parameter res will be populated with the collection of resulting strings.
+// Example:
+//      "A B\tC  D " ===split===> "A" "B" "C" "D"
+void
+sunder_string_split_to_vec(
+    struct sunder_string const* self,
+    struct sunder_vec /*<struct sunder_string*>*/* res);
+// Split the string on all occurrences of the provided separator.
+// Empty strings are *NOT* removed from the result.
+// Parameter res will be populated with the collection of resulting strings.
+//      "ABCBB" ===split on "B"===> "A" "C" "" ""
+void
+sunder_string_split_to_vec_on(
+    struct sunder_string const* self,
+    char const* separator,
+    size_t separator_size,
+    struct sunder_vec /*<struct sunder_string*>*/* res);
+void
+sunder_string_split_to_vec_on_vstr(
+    struct sunder_string const* self,
+    struct sunder_vstr const* separator,
+    struct sunder_vec /*<struct sunder_string*>*/* res);
+void
+sunder_string_split_to_vec_on_cstr(
+    struct sunder_string const* self,
+    char const* separator,
+    struct sunder_vec /*<struct sunder_string*>*/* res);
+
+// Wrapper functions for an sunder_vec of sunder_string*.
+// Useful for initializing and deinitializing a vec passed to
+// sunder_string_split_* functions.
+struct sunder_vec /*<struct sunder_string*>*/*
+sunder_vec_of_string_new(void);
+void
+sunder_vec_of_string_del(struct sunder_vec /*<struct sunder_string*>*/* vec);
+
+////////////////////////////////////////////////////////////////////////////////
+//////// VEC ///////////////////////////////////////////////////////////////////
+// General purpose generic resizeable array.
+// A vec conceptually consists of the following components:
+// (1) data: An array containing the elements of the vec.
+// (2) count: The number of elements in the vec.
+// (3) capacity: The total number of elements allocated in the data array.
+//     This value is always greater than or equal to the count of the vec.
+
+// Allocate and initialize a vec holding elements of size elemsize.
+struct sunder_vec*
+sunder_vec_new(size_t elemsize);
+// Deinitialize and free the vec.
+// Does nothing if self == NULL.
+void
+sunder_vec_del(struct sunder_vec* self);
+// Register resources within the vec with the provided freezer.
+void
+sunder_vec_freeze(struct sunder_vec* self, struct sunder_freezer* freezer);
+
+// Pointer to the start of the underlying array of the vec.
+// May return NULL when the count of the vec is zero.
+void const*
+sunder_vec_start(struct sunder_vec const* self);
+// The number of elements in the vec.
+size_t
+sunder_vec_count(struct sunder_vec const* self);
+// The number of elements allocated in the vec.
+size_t
+sunder_vec_capacity(struct sunder_vec const* self);
+// The sizeof of elements in the vec.
+size_t
+sunder_vec_elemsize(struct sunder_vec const* self);
+
+// Update the minimum capacity of the vec.
+// The count of the vec remains unchanged.
+void
+sunder_vec_reserve(struct sunder_vec* self, size_t capacity);
+// Update the count of the vec.
+// If count is greater than the current count of the vec then additional
+// elements are initialized with garbage data.
+void
+sunder_vec_resize(struct sunder_vec* self, size_t count);
+
+// Set the value of the vec *at* position idx to the value *at* data.
+// Fatally exits after printing an error message if idx is out of bounds.
+//
+// Example:
+//      struct sunder_vec* const v = sunder_vec_new(sizeof(int));
+//      // some time later...
+//      int const foo = 0xdeadbeef;
+//      sunder_vec_set(v, 42u, &val);
+void
+sunder_vec_set(struct sunder_vec* self, size_t idx, void const* data);
+// Get a pointer to the value of the vec *at* position idx.
+// Fatally exits after printing an error message if idx is out of bounds.
+//
+// Example:
+//      struct sunder_vec* const v = sunder_vec_new(sizeof(int));
+//      // some time later...
+//      int val = SUNDER_DEREF_PTR(int, sunder_vec_ref(v, 42u)
+void*
+sunder_vec_ref(struct sunder_vec* self, size_t idx);
+void const*
+sunder_vec_ref_const(struct sunder_vec const* self, size_t idx);
+
+// Insert a copy of the value at data into the vec at position idx.
+// Elements with position greater than or equal to idx are moved back one place.
+// Fatally exits after printing an error message if idx is greater than the
+// count of the vec.
+void
+sunder_vec_insert(struct sunder_vec* self, size_t idx, void const* data);
+// Remove the element at position idx from the vec.
+// Elements with position greater than idx are moved forward one place.
+// If oldelem is not NULL then the removed element will be copied into oldelem.
+// Fatally exits after printing an error message if idx is out of bounds.
+void
+sunder_vec_remove(struct sunder_vec* self, size_t idx, void* oldelem);
+
+// Create or advance an iterator over elements of a vec.
+// If parameter iter is NULL then a new iterator pointing to the first element
+// of the vec is returned. A NULL value signaling end-of-iteration will be
+// returned for a vec with no elements or a vec containing zero-sized elements.
+// If parameter iter is non-NULL then the element following iter is returned.
+// End-of-iteration is signaled by a NULL return value.
+//
+// Example (using a const-iterator):
+//      struct sunder_vec* const v = sunder_vec_new(sizeof(TYPE));
+//      // some time later...
+//      TYPE const* iter = sunder_vec_next_const(v, NULL);
+//      for (; iter != NULL; iter = sunder_vec_next_const(v, iter)) {
+//          do_thing(*iter);
+//      }
+void*
+sunder_vec_next(struct sunder_vec* self, void const* iter);
+void const*
+sunder_vec_next_const(struct sunder_vec const* self, void const* iter);
+
+////////////////////////////////////////////////////////////////////////////////
+//////// MAP ///////////////////////////////////////////////////////////////////
+// General purpose generic ordered map.
+// Maps keys of some key-type to values of some value-type.
+
+// Allocate and initialize a map.
+// The map will hold keys of size keysize.
+// The map will hold values of size valsize.
+// Keys-value pairs in the map are sorted by key using keycmp.
+struct sunder_map*
+sunder_map_new(size_t keysize, size_t valsize, sunder_vpcmp_fn keycmp);
+// Deinitialize and free the map.
+// Does nothing if self == NULL.
+void
+sunder_map_del(struct sunder_map* self);
+// Register resources within the map with the provided freezer.
+void
+sunder_map_freeze(struct sunder_map* self, struct sunder_freezer* freezer);
+
+// The number of key-value pairs in the map.
+size_t
+sunder_map_count(struct sunder_map const* self);
+// Reference to the ordered vec of keys in the map.
+struct sunder_vec const*
+sunder_map_keys(struct sunder_map const* self);
+// Reference to the ordered vec of values in the map.
+struct sunder_vec const*
+sunder_map_vals(struct sunder_map const* self);
+
+// Retrieve a pointer to the value associated with key.
+// Returns NULL if the map has no key-value pair associated with key.
+void*
+sunder_map_lookup(struct sunder_map* self, void const* key);
+void const*
+sunder_map_lookup_const(struct sunder_map const* self, void const* key);
+// Insert a copy of the key-value pair at key/val into the map.
+// If a key-value pair with key already exists in the map then the existing key
+// and value are replaced with the provided key and value.
+//
+// If oldkey is not NULL then the removed key will be copied into oldkey.
+// If oldval is not NULL then the removed value will be copied into oldval.
+// Returns a non-zero value if a key-value pair associated with key was replaced
+// by the provided key and value.
+int
+sunder_map_insert(
+    struct sunder_map* self,
+    void const* key,
+    void const* val,
+    void* oldkey,
+    void* oldval);
+// Remove the key-value pair associated with key.
+// If no such key-value pair exists in the map then the operation is a noop.
+//
+// If oldkey is not NULL then the removed key will be copied into oldkey.
+// If oldval is not NULL then the removed value will be copied into oldval.
+// Returns a non-zero value if a key-value pair associated with key was removed.
+int
+sunder_map_remove(
+    struct sunder_map* self, void const* key, void* oldkey, void* oldval);
+
+////////////////////////////////////////////////////////////////////////////////
+//////// FREEZER ///////////////////////////////////////////////////////////////
+
+// Allocate and initialize a freezer.
+struct sunder_freezer*
+sunder_freezer_new(void);
+// Deinitialize and free the freezer.
+// Does nothing if self == NULL.
+void
+sunder_freezer_del(struct sunder_freezer* self);
+
+// Register a pointer to sunder_xalloc-allocated memory to be freed when the
+// freezer is deinitialized.
+void
+sunder_freezer_register(struct sunder_freezer* self, void* ptr);
 
 #if __STDC_VERSION__ >= 201112L /* C11+ */
 #    define NORETURN _Noreturn
@@ -79,37 +1007,37 @@ ceil8zu(size_t x);
 // Returns non-zero if the provided bigint is out-of-range, in which case *res
 // is left unmodified.
 int
-bigint_to_u8(uint8_t* res, struct autil_bigint const* bigint);
+bigint_to_u8(uint8_t* res, struct sunder_bigint const* bigint);
 // Convert a bigint to a size_t.
 // Returns zero on success.
 // Returns non-zero if the provided bigint is out-of-range, in which case *res
 // is left unmodified.
 int
-bigint_to_uz(size_t* res, struct autil_bigint const* bigint);
+bigint_to_uz(size_t* res, struct sunder_bigint const* bigint);
 // Convert a bigint to a uintmax_t.
 // Returns zero on success.
 // Returns non-zero if the provided bigint is out-of-range, in which case *res
 // is left unmodified.
 int
-bigint_to_umax(uintmax_t* res, struct autil_bigint const* bigint);
+bigint_to_umax(uintmax_t* res, struct sunder_bigint const* bigint);
 // Convert a bigint into a two's complement bit array.
 // Returns zero on success.
 // Returns non-zero if the provided bigint is out-of-range would require more
-// than autil_bitarr_count(res) bits to express, in which case *res is left
+// than sunder_bitarr_count(res) bits to express, in which case *res is left
 // unmodified.
 int
-bigint_to_bitarr(struct autil_bitarr* res, struct autil_bigint const* bigint);
+bigint_to_bitarr(struct sunder_bitarr* res, struct sunder_bigint const* bigint);
 
 // Convert a size_t to a bigint.
 // The result bigint must be pre-initialized.
 void
-uz_to_bigint(struct autil_bigint* res, size_t uz);
+uz_to_bigint(struct sunder_bigint* res, size_t uz);
 // Convert a two's complement bit array into a bigint.
 // The result bigint must be pre-initialized.
 void
 bitarr_to_bigint(
-    struct autil_bigint* res,
-    struct autil_bitarr const* bitarr,
+    struct sunder_bigint* res,
+    struct sunder_bitarr const* bitarr,
     bool is_signed);
 
 // Spawn a subprocess and wait for it to complete.
@@ -168,7 +1096,7 @@ struct module {
     // List of top level declarations topologically ordered such that
     // declaration with index k does not depend on any declaration with index
     // k+n for all n. Initialized to NULL and populated during the order phase.
-    autil_sbuf(struct cst_decl const*) ordered;
+    sunder_sbuf(struct cst_decl const*) ordered;
 };
 struct module*
 module_new(char const* name, char const* path);
@@ -177,10 +1105,10 @@ module_del(struct module* self);
 
 struct context {
     // Context-owned automatically managed objects.
-    struct autil_freezer* freezer;
+    struct sunder_freezer* freezer;
 
     // Interned strings.
-    struct autil_sipool* sipool;
+    struct sunder_sipool* sipool;
     struct {
         // clang-format off
         char const* empty;   // ""
@@ -208,26 +1136,26 @@ struct context {
     } interned;
 
     // Integer (bigint) constants.
-    struct autil_bigint const* u8_min;
-    struct autil_bigint const* u8_max;
-    struct autil_bigint const* s8_min;
-    struct autil_bigint const* s8_max;
-    struct autil_bigint const* u16_min;
-    struct autil_bigint const* u16_max;
-    struct autil_bigint const* s16_min;
-    struct autil_bigint const* s16_max;
-    struct autil_bigint const* u32_min;
-    struct autil_bigint const* u32_max;
-    struct autil_bigint const* s32_min;
-    struct autil_bigint const* s32_max;
-    struct autil_bigint const* u64_min;
-    struct autil_bigint const* u64_max;
-    struct autil_bigint const* s64_min;
-    struct autil_bigint const* s64_max;
-    struct autil_bigint const* usize_min;
-    struct autil_bigint const* usize_max;
-    struct autil_bigint const* ssize_min;
-    struct autil_bigint const* ssize_max;
+    struct sunder_bigint const* u8_min;
+    struct sunder_bigint const* u8_max;
+    struct sunder_bigint const* s8_min;
+    struct sunder_bigint const* s8_max;
+    struct sunder_bigint const* u16_min;
+    struct sunder_bigint const* u16_max;
+    struct sunder_bigint const* s16_min;
+    struct sunder_bigint const* s16_max;
+    struct sunder_bigint const* u32_min;
+    struct sunder_bigint const* u32_max;
+    struct sunder_bigint const* s32_min;
+    struct sunder_bigint const* s32_max;
+    struct sunder_bigint const* u64_min;
+    struct sunder_bigint const* u64_max;
+    struct sunder_bigint const* s64_min;
+    struct sunder_bigint const* s64_max;
+    struct sunder_bigint const* usize_min;
+    struct sunder_bigint const* usize_max;
+    struct sunder_bigint const* ssize_min;
+    struct sunder_bigint const* ssize_max;
 
     // Language builtins.
     struct {
@@ -250,14 +1178,14 @@ struct context {
     } builtin;
 
     // List of all symbols with static storage duration.
-    autil_sbuf(struct symbol const*) static_symbols;
+    sunder_sbuf(struct symbol const*) static_symbols;
 
     // Global symbol table.
     struct symbol_table* global_symbol_table;
 
     // Currently loaded/loading modules.
     // TODO: Maybe make this a map from realpath to module?
-    autil_sbuf(struct module*) modules;
+    sunder_sbuf(struct module*) modules;
 
     // Symbol tables belonging to types and templates. These symbol tables
     // cannot be frozen until after all modules have been resolved as type
@@ -267,7 +1195,7 @@ struct context {
     // TODO: We have have a chilling_symbol_tables on the resolver struct. Can
     // we merge that functionality into this context member variable and have a
     // single "chilling symbol tables" member for all symbol tables?
-    autil_sbuf(struct symbol_table*) chilling_symbol_tables;
+    sunder_sbuf(struct symbol_table*) chilling_symbol_tables;
 };
 void
 context_init(void);
@@ -365,15 +1293,15 @@ struct token {
     union {
         // TOKEN_INTEGER
         struct {
-            struct autil_vstr number;
-            struct autil_vstr suffix;
+            struct sunder_vstr number;
+            struct sunder_vstr suffix;
         } integer;
         // TOKEN_CHARACTER
         // Contains the value of the character literal.
         int character;
         // TOKEN_BYTES
         // Contains the un-escaped contents of the bytes literal.
-        struct autil_string const* bytes;
+        struct sunder_string const* bytes;
     } data;
 };
 char*
@@ -392,8 +1320,8 @@ lexer_next_token(struct lexer* self);
 
 struct cst_module {
     struct cst_namespace const* namespace; // optional
-    autil_sbuf(struct cst_import const* const) imports;
-    autil_sbuf(struct cst_decl const* const) decls;
+    sunder_sbuf(struct cst_import const* const) imports;
+    sunder_sbuf(struct cst_decl const* const) decls;
 };
 struct cst_module*
 cst_module_new(
@@ -403,7 +1331,7 @@ cst_module_new(
 
 struct cst_namespace {
     struct source_location const* location;
-    autil_sbuf(struct cst_identifier const* const) identifiers;
+    sunder_sbuf(struct cst_identifier const* const) identifiers;
 };
 struct cst_namespace*
 cst_namespace_new(
@@ -444,9 +1372,9 @@ struct cst_decl {
             struct cst_identifier const* identifier;
             // A template parameter list with count zero indicates that this
             // function was declared without template parameters.
-            autil_sbuf(struct cst_template_parameter const* const)
+            sunder_sbuf(struct cst_template_parameter const* const)
                 template_parameters;
-            autil_sbuf(struct cst_function_parameter const* const)
+            sunder_sbuf(struct cst_function_parameter const* const)
                 function_parameters;
             struct cst_typespec const* return_typespec;
             struct cst_block const* body;
@@ -455,9 +1383,9 @@ struct cst_decl {
             struct cst_identifier const* identifier;
             // A template parameter list with count zero indicates that this
             // struct was declared without template parameters.
-            autil_sbuf(struct cst_template_parameter const* const)
+            sunder_sbuf(struct cst_template_parameter const* const)
                 template_parameters;
-            autil_sbuf(struct cst_member const* const) members;
+            sunder_sbuf(struct cst_member const* const) members;
         } struct_;
         struct {
             struct cst_typespec const* typespec;
@@ -532,7 +1460,7 @@ struct cst_stmt {
     union {
         struct cst_decl const* decl;
         struct {
-            autil_sbuf(struct cst_conditional const* const) conditionals;
+            sunder_sbuf(struct cst_conditional const* const) conditionals;
         } if_;
         struct {
             struct cst_identifier const* identifier;
@@ -625,10 +1553,10 @@ struct cst_expr {
         struct cst_boolean const* boolean;
         struct cst_integer const* integer;
         int character;
-        struct autil_string const* bytes;
+        struct sunder_string const* bytes;
         struct {
             struct cst_typespec const* typespec;
-            autil_sbuf(struct cst_expr const* const) elements;
+            sunder_sbuf(struct cst_expr const* const) elements;
             struct cst_expr const* ellipsis; // optional
         } array;
         struct {
@@ -638,11 +1566,11 @@ struct cst_expr {
         } slice;
         struct {
             struct cst_typespec const* typespec;
-            autil_sbuf(struct cst_expr const* const) elements;
+            sunder_sbuf(struct cst_expr const* const) elements;
         } array_slice;
         struct {
             struct cst_typespec const* typespec;
-            autil_sbuf(struct cst_member_initializer const* const) initializers;
+            sunder_sbuf(struct cst_member_initializer const* const) initializers;
         } struct_;
         struct {
             struct cst_typespec const* typespec;
@@ -652,11 +1580,11 @@ struct cst_expr {
             struct cst_expr const* expr;
         } grouped;
         struct cst_stmt_syscall {
-            autil_sbuf(struct cst_expr const* const) arguments;
+            sunder_sbuf(struct cst_expr const* const) arguments;
         } syscall;
         struct {
             struct cst_expr const* func;
-            autil_sbuf(struct cst_expr const* const) arguments;
+            sunder_sbuf(struct cst_expr const* const) arguments;
         } call;
         struct {
             struct cst_expr const* lhs;
@@ -701,7 +1629,7 @@ struct cst_expr*
 cst_expr_new_character(struct source_location const* location, int character);
 struct cst_expr*
 cst_expr_new_bytes(
-    struct source_location const* location, struct autil_string const* bytes);
+    struct source_location const* location, struct sunder_string const* bytes);
 struct cst_expr*
 cst_expr_new_array(
     struct source_location const* location,
@@ -789,7 +1717,7 @@ cst_conditional_new(
 
 struct cst_block {
     struct source_location const* location;
-    autil_sbuf(struct cst_stmt const* const) stmts;
+    sunder_sbuf(struct cst_stmt const* const) stmts;
 };
 struct cst_block*
 cst_block_new(
@@ -803,7 +1731,7 @@ struct cst_symbol {
     // scope symbol table.
     bool is_from_root;
     // Individual symbol elements separated by "::".
-    autil_sbuf(struct cst_symbol_element const* const) elements;
+    sunder_sbuf(struct cst_symbol_element const* const) elements;
 };
 struct cst_symbol*
 cst_symbol_new(
@@ -816,7 +1744,7 @@ struct cst_symbol_element {
     struct cst_identifier const* identifier;
     // Template argument count of zero indicates that this symbol element has no
     // template arguments.
-    autil_sbuf(struct cst_template_argument const* const) template_arguments;
+    sunder_sbuf(struct cst_template_argument const* const) template_arguments;
 };
 struct cst_symbol_element*
 cst_symbol_element_new(
@@ -917,7 +1845,7 @@ struct cst_typespec {
     union {
         struct cst_symbol const* symbol;
         struct {
-            autil_sbuf(struct cst_typespec const* const) parameter_typespecs;
+            sunder_sbuf(struct cst_typespec const* const) parameter_typespecs;
             struct cst_typespec const* return_typespec;
         } function;
         struct {
@@ -973,13 +1901,13 @@ cst_boolean_new(struct source_location const* location, bool value);
 
 struct cst_integer {
     struct source_location const* location;
-    struct autil_bigint const* value;
+    struct sunder_bigint const* value;
     char const* suffix; // interned
 };
 struct cst_integer*
 cst_integer_new(
     struct source_location const* location,
-    struct autil_bigint const* value,
+    struct sunder_bigint const* value,
     char const* suffix);
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -1040,11 +1968,11 @@ struct type {
             // they are not defined for all types satisfying the
             // type_is_any_integer function. The type kind TYPE_INTEGER will
             // have these as NULL as integers of this type have no defined size.
-            struct autil_bigint const* min; // optional
-            struct autil_bigint const* max; // optional
+            struct sunder_bigint const* min; // optional
+            struct sunder_bigint const* max; // optional
         } integer;
         struct {
-            autil_sbuf(struct type const* const) parameter_types;
+            sunder_sbuf(struct type const* const) parameter_types;
             struct type const* return_type;
         } function;
         struct {
@@ -1310,12 +2238,12 @@ struct symbol_table_element {
 };
 struct symbol_table {
     struct symbol_table const* parent; // optional (NULL => global scope)
-    autil_sbuf(struct symbol_table_element) elements;
+    sunder_sbuf(struct symbol_table_element) elements;
 };
 struct symbol_table*
 symbol_table_new(struct symbol_table const* parent);
 void
-symbol_table_freeze(struct symbol_table* self, struct autil_freezer* freezer);
+symbol_table_freeze(struct symbol_table* self, struct sunder_freezer* freezer);
 void
 symbol_table_insert(
     struct symbol_table* self,
@@ -1344,7 +2272,7 @@ struct stmt {
     } kind;
     union {
         struct {
-            autil_sbuf(struct conditional const* const) conditionals;
+            sunder_sbuf(struct conditional const* const) conditionals;
         } if_;
         struct {
             struct symbol const* loop_variable;
@@ -1432,13 +2360,13 @@ struct expr {
     union {
         struct symbol const* symbol;
         bool boolean;
-        struct autil_bigint const* integer;
+        struct sunder_bigint const* integer;
         struct {
             struct address const* address;
             size_t count;
         } bytes;
         struct {
-            autil_sbuf(struct expr const* const) elements;
+            sunder_sbuf(struct expr const* const) elements;
             struct expr const* ellipsis; // optional
         } array;
         struct {
@@ -1447,24 +2375,24 @@ struct expr {
         } slice;
         struct {
             struct symbol const* array_symbol;
-            autil_sbuf(struct expr const* const) elements;
+            sunder_sbuf(struct expr const* const) elements;
         } array_slice;
         struct {
             // List of elements corresponding the member variables defined by
             // the struct type.
-            autil_sbuf(struct expr const* const) member_variables;
+            sunder_sbuf(struct expr const* const) member_variables;
         } struct_;
         struct {
             struct expr const* expr;
         } cast;
         struct {
-            autil_sbuf(struct expr const* const) arguments;
+            sunder_sbuf(struct expr const* const) arguments;
         } syscall;
         struct {
             // Expression resulting in a callable function.
             struct expr const* function;
             // Arguments to the callable function.
-            autil_sbuf(struct expr const* const) arguments;
+            sunder_sbuf(struct expr const* const) arguments;
         } call;
         struct {
             struct expr const* lhs;
@@ -1531,7 +2459,7 @@ struct expr*
 expr_new_integer(
     struct source_location const* location,
     struct type const* type,
-    struct autil_bigint const* value);
+    struct sunder_bigint const* value);
 struct expr*
 expr_new_bytes(
     struct source_location const* location,
@@ -1628,7 +2556,7 @@ struct function {
     // function. Initialized to NULL on struct creation.
     struct symbol_table const* symbol_table;
     // Initialized to NULL on struct creation.
-    autil_sbuf(struct symbol const* const) symbol_parameters;
+    sunder_sbuf(struct symbol const* const) symbol_parameters;
     // Initialized to NULL on struct creation.
     struct symbol const* symbol_return;
     // Initialized to NULL on struct creation.
@@ -1663,7 +2591,7 @@ conditional_new(
 struct block {
     struct source_location const* location;
     struct symbol_table* symbol_table; // not owned
-    autil_sbuf(struct stmt const* const) stmts;
+    sunder_sbuf(struct stmt const* const) stmts;
 };
 struct block*
 block_new(
@@ -1676,18 +2604,18 @@ struct value {
     struct {
         bool boolean;
         uint8_t byte;
-        struct autil_bigint* integer;
+        struct sunder_bigint* integer;
         struct function const* function;
         struct address pointer;
         struct {
             // Concrete values specified for elements of the array value before
-            // the optional ellipsis element. The autil_sbuf_count of the
+            // the optional ellipsis element. The sunder_sbuf_count of the
             // elements member may be less than countof(array), in which case
             // the ellipsis value represents the rest of the elements upto
             // the countof(array)th element.
-            autil_sbuf(struct value*) elements;
+            sunder_sbuf(struct value*) elements;
             // Value representing elements from indices within the half-open
-            // range [autil_sbuf_count(elements), countof(array)) that are
+            // range [sunder_sbuf_count(elements), countof(array)) that are
             // initialized via an ellipsis element. NULL if no ellipsis element
             // was specified in the parse tree for the array value.
             struct value* ellipsis; // optional
@@ -1704,7 +2632,7 @@ struct value {
             // pointer in the member_variables array will be initialized to
             // NULL, and the values of each member variable must be explicitly
             // set before the value object may be used.
-            autil_sbuf(struct value*) member_variables;
+            sunder_sbuf(struct value*) member_variables;
         } struct_;
     } data;
 };
@@ -1713,7 +2641,7 @@ value_new_boolean(bool boolean);
 struct value*
 value_new_byte(uint8_t byte);
 struct value*
-value_new_integer(struct type const* type, struct autil_bigint* integer);
+value_new_integer(struct type const* type, struct sunder_bigint* integer);
 struct value*
 value_new_function(struct function const* function);
 struct value*
@@ -1729,7 +2657,7 @@ value_new_struct(struct type const* type);
 void
 value_del(struct value* self);
 void
-value_freeze(struct value* self, struct autil_freezer* freezer);
+value_freeze(struct value* self, struct sunder_freezer* freezer);
 struct value*
 value_clone(struct value const* self);
 

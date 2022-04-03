@@ -46,12 +46,12 @@ struct resolver {
     //
     // NOTE: This member must *NOT* be cached because template function
     // instantiations may resize the stretchy buffer.
-    autil_sbuf(struct incomplete_function const*) incomplete_functions;
+    sunder_sbuf(struct incomplete_function const*) incomplete_functions;
 
     // List of symbol tables that need to be frozen after the module has been
     // fully resolved, used for namespaces that may have many symbols added to
     // them over the course of the resolve phase.
-    autil_sbuf(struct symbol_table*) chilling_symbol_tables;
+    sunder_sbuf(struct symbol_table*) chilling_symbol_tables;
 };
 static struct resolver*
 resolver_new(struct module* module);
@@ -346,7 +346,7 @@ resolver_new(struct module* module)
 {
     assert(module != NULL);
 
-    struct resolver* const self = autil_xalloc(NULL, sizeof(*self));
+    struct resolver* const self = sunder_xalloc(NULL, sizeof(*self));
     memset(self, 0x00, sizeof(*self));
     self->module = module;
     self->current_static_addr_prefix = NULL;
@@ -363,10 +363,10 @@ resolver_del(struct resolver* self)
 {
     assert(self != NULL);
 
-    autil_sbuf_fini(self->incomplete_functions);
+    sunder_sbuf_fini(self->incomplete_functions);
 
     memset(self, 0x00, sizeof(*self));
-    autil_xalloc(self, AUTIL_XALLOC_FREE);
+    sunder_xalloc(self, SUNDER_XALLOC_FREE);
 }
 
 static bool
@@ -387,7 +387,7 @@ resolver_reserve_storage_static(struct resolver* self, char const* name)
         normalize_unique(self->current_static_addr_prefix, name);
     struct address* const address =
         address_new(address_init_static(name_normalized, 0u));
-    autil_freezer_register(context()->freezer, address);
+    sunder_freezer_register(context()->freezer, address);
     return address;
 }
 
@@ -405,7 +405,7 @@ resolver_reserve_storage_local(struct resolver* self, struct type const* type)
 
     struct address* const address =
         address_new(address_init_local(self->current_rbp_offset));
-    autil_freezer_register(context()->freezer, address);
+    sunder_freezer_register(context()->freezer, address);
     return address;
 }
 
@@ -414,19 +414,19 @@ qualified_name(char const* prefix, char const* name)
 {
     assert(name != NULL);
 
-    struct autil_string* const s = autil_string_new(NULL, 0);
+    struct sunder_string* const s = sunder_string_new(NULL, 0);
 
     // <prefix>::
     if (prefix != NULL) {
-        autil_string_append_fmt(s, "%s::", prefix);
+        sunder_string_append_fmt(s, "%s::", prefix);
     }
     // <prefix>::<name>
-    autil_string_append_cstr(s, name);
+    sunder_string_append_cstr(s, name);
 
-    char const* const interned = autil_sipool_intern(
-        context()->sipool, autil_string_start(s), autil_string_count(s));
+    char const* const interned = sunder_sipool_intern(
+        context()->sipool, sunder_string_start(s), sunder_string_count(s));
 
-    autil_string_del(s);
+    sunder_string_del(s);
     return interned;
 }
 
@@ -435,19 +435,19 @@ qualified_addr(char const* prefix, char const* name)
 {
     assert(name != NULL);
 
-    struct autil_string* const s = autil_string_new(NULL, 0);
+    struct sunder_string* const s = sunder_string_new(NULL, 0);
 
     // <prefix>.
     if (prefix != NULL) {
-        autil_string_append_fmt(s, "%s.", prefix);
+        sunder_string_append_fmt(s, "%s.", prefix);
     }
     // <prefix>.<name>
-    autil_string_append_cstr(s, name);
+    sunder_string_append_cstr(s, name);
 
-    char const* const interned = autil_sipool_intern(
-        context()->sipool, autil_string_start(s), autil_string_count(s));
+    char const* const interned = sunder_sipool_intern(
+        context()->sipool, sunder_string_start(s), sunder_string_count(s));
 
-    autil_string_del(s);
+    sunder_string_del(s);
     return interned;
 }
 
@@ -458,40 +458,40 @@ normalize(char const* prefix, char const* name, unsigned unique_id)
 
     // Substitute invalid assembly character symbols with replacement
     // characters within the provided name.
-    struct autil_string* const name_string = autil_string_new(NULL, 0);
+    struct sunder_string* const name_string = sunder_string_new(NULL, 0);
     for (char const* search = name; *search != '\0'; ++search) {
-        if (autil_isalnum(*search) || *search == '_') {
-            autil_string_append_fmt(name_string, "%c", *search);
+        if (sunder_isalnum(*search) || *search == '_') {
+            sunder_string_append_fmt(name_string, "%c", *search);
             continue;
         }
 
         // Replace all non valid identifier characters with an underscore.
-        autil_string_append_cstr(name_string, "_");
+        sunder_string_append_cstr(name_string, "_");
     }
-    assert(autil_string_count(name_string) != 0);
+    assert(sunder_string_count(name_string) != 0);
 
-    struct autil_string* const s = autil_string_new(NULL, 0);
+    struct sunder_string* const s = sunder_string_new(NULL, 0);
 
     // <prefix>.
     if (prefix != NULL) {
-        autil_string_append_fmt(s, "%s.", prefix);
+        sunder_string_append_fmt(s, "%s.", prefix);
     }
     // <prefix>.<name>
-    autil_string_append_fmt(
+    sunder_string_append_fmt(
         s,
         "%.*s",
-        (int)autil_string_count(name_string),
-        autil_string_start(name_string));
+        (int)sunder_string_count(name_string),
+        sunder_string_start(name_string));
     // <prefix>.<name>.<unique-id>
     if (unique_id != 0) {
-        autil_string_append_fmt(s, ".%u", unique_id);
+        sunder_string_append_fmt(s, ".%u", unique_id);
     }
 
-    char const* const interned = autil_sipool_intern(
-        context()->sipool, autil_string_start(s), autil_string_count(s));
+    char const* const interned = sunder_sipool_intern(
+        context()->sipool, sunder_string_start(s), sunder_string_count(s));
 
-    autil_string_del(s);
-    autil_string_del(name_string);
+    sunder_string_del(s);
+    sunder_string_del(name_string);
     return interned;
 }
 
@@ -504,7 +504,7 @@ normalize_unique(char const* prefix, char const* name)
     char const* normalized = normalize(prefix, name, unique_id);
     while (true) {
         bool name_collision = false;
-        for (size_t i = 0; i < autil_sbuf_count(context()->static_symbols);
+        for (size_t i = 0; i < sunder_sbuf_count(context()->static_symbols);
              ++i) {
             struct symbol const* const symbol = context()->static_symbols[i];
             struct address const* const address = symbol_xget_address(symbol);
@@ -538,7 +538,7 @@ register_static_symbol(struct symbol const* symbol)
 
     // Verify that a static symbol with the provided address does not already
     // exists. This should never happen in practice, so this is a sanity check.
-    for (size_t i = 0; i < autil_sbuf_count(context()->static_symbols); ++i) {
+    for (size_t i = 0; i < sunder_sbuf_count(context()->static_symbols); ++i) {
         bool const exists =
             symbol_xget_address(context()->static_symbols[i])->data.static_.name
             == symbol_xget_address(symbol)->data.static_.name;
@@ -551,7 +551,7 @@ register_static_symbol(struct symbol const* symbol)
         }
     }
 
-    autil_sbuf_push(context()->static_symbols, symbol);
+    sunder_sbuf_push(context()->static_symbols, symbol);
 }
 
 static struct symbol const*
@@ -560,7 +560,7 @@ xget_symbol(struct resolver* resolver, struct cst_symbol const* target)
     assert(resolver != NULL);
     assert(target != NULL);
 
-    assert(autil_sbuf_count(target->elements) != 0);
+    assert(sunder_sbuf_count(target->elements) != 0);
     struct cst_symbol_element const* const element = target->elements[0];
     char const* const name = element->identifier->name;
     struct symbol_table const* const symbol_table = target->is_from_root
@@ -570,7 +570,7 @@ xget_symbol(struct resolver* resolver, struct cst_symbol const* target)
     if (lhs == NULL) {
         fatal(target->location, "use of undeclared identifier `%s`", name);
     }
-    if (autil_sbuf_count(element->template_arguments) != 0) {
+    if (sunder_sbuf_count(element->template_arguments) != 0) {
         lhs = xget_template_instance(
             resolver, element->location, lhs, element->template_arguments);
     }
@@ -578,7 +578,7 @@ xget_symbol(struct resolver* resolver, struct cst_symbol const* target)
     // Single symbol element:
     //      foo
     //      foo[[u16]]
-    size_t const element_count = autil_sbuf_count(target->elements);
+    size_t const element_count = sunder_sbuf_count(target->elements);
     if (element_count == 1) {
         return lhs;
     }
@@ -603,7 +603,7 @@ xget_symbol(struct resolver* resolver, struct cst_symbol const* target)
                     name,
                     lhs->name);
             }
-            if (autil_sbuf_count(element->template_arguments) != 0) {
+            if (sunder_sbuf_count(element->template_arguments) != 0) {
                 symbol = xget_template_instance(
                     resolver,
                     element->location,
@@ -624,7 +624,7 @@ xget_symbol(struct resolver* resolver, struct cst_symbol const* target)
                     name,
                     lhs->name);
             }
-            if (autil_sbuf_count(element->template_arguments) != 0) {
+            if (sunder_sbuf_count(element->template_arguments) != 0) {
                 symbol = xget_template_instance(
                     resolver,
                     element->location,
@@ -636,7 +636,7 @@ xget_symbol(struct resolver* resolver, struct cst_symbol const* target)
         }
 
         if (lhs->kind == SYMBOL_TEMPLATE) {
-            if (autil_sbuf_count(element->template_arguments) == 0) {
+            if (sunder_sbuf_count(element->template_arguments) == 0) {
                 fatal(
                     element->location,
                     "template `%s` must be instantiated",
@@ -664,7 +664,7 @@ xget_template_instance(
     assert(resolver != NULL);
     assert(location != NULL);
     assert(symbol != NULL);
-    assert(autil_sbuf_count(template_arguments) != 0);
+    assert(sunder_sbuf_count(template_arguments) != 0);
 
     switch (symbol->kind) {
     case SYMBOL_TYPE: {
@@ -715,12 +715,12 @@ xget_template_instance(
     // the duplicate and/or redundant logic.
     assert(decl->kind == CST_DECL_FUNCTION || decl->kind == CST_DECL_STRUCT);
     if (decl->kind == CST_DECL_FUNCTION) {
-        autil_sbuf(struct cst_template_parameter const* const)
+        sunder_sbuf(struct cst_template_parameter const* const)
             const template_parameters = decl->data.function.template_parameters;
         size_t const template_parameters_count =
-            autil_sbuf_count(template_parameters);
+            sunder_sbuf_count(template_parameters);
         size_t const template_arguments_count =
-            autil_sbuf_count(template_arguments);
+            sunder_sbuf_count(template_arguments);
 
         if (template_parameters_count != template_arguments_count) {
             fatal(
@@ -731,39 +731,39 @@ xget_template_instance(
                 template_arguments_count);
         }
 
-        autil_sbuf(struct type const*) template_types = NULL;
+        sunder_sbuf(struct type const*) template_types = NULL;
         for (size_t i = 0; i < template_arguments_count; ++i) {
-            autil_sbuf_push(
+            sunder_sbuf_push(
                 template_types,
                 resolve_typespec(resolver, template_arguments[i]->typespec));
         }
-        autil_sbuf_freeze(template_types, context()->freezer);
+        sunder_sbuf_freeze(template_types, context()->freezer);
 
         // Replace function identifier (i.e. name).
-        struct autil_string* const name_string =
-            autil_string_new_cstr(symbol->name);
-        autil_string_append_cstr(name_string, "[[");
+        struct sunder_string* const name_string =
+            sunder_string_new_cstr(symbol->name);
+        sunder_string_append_cstr(name_string, "[[");
         for (size_t i = 0; i < template_arguments_count; ++i) {
             if (i != 0) {
-                autil_string_append_cstr(name_string, ", ");
+                sunder_string_append_cstr(name_string, ", ");
             }
-            autil_string_append_fmt(name_string, "%s", template_types[i]->name);
+            sunder_string_append_fmt(name_string, "%s", template_types[i]->name);
         }
-        autil_string_append_cstr(name_string, "]]");
-        char const* const name_interned = autil_sipool_intern_cstr(
-            context()->sipool, autil_string_start(name_string));
-        autil_string_del(name_string);
+        sunder_string_append_cstr(name_string, "]]");
+        char const* const name_interned = sunder_sipool_intern_cstr(
+            context()->sipool, sunder_string_start(name_string));
+        sunder_string_del(name_string);
         struct cst_identifier* const instance_identifier =
             cst_identifier_new(location, name_interned);
-        autil_freezer_register(context()->freezer, instance_identifier);
+        sunder_freezer_register(context()->freezer, instance_identifier);
         // Replace template parameters. Zero template parameters means this
         // function is no longer a template.
-        autil_sbuf(struct cst_template_parameter const* const)
+        sunder_sbuf(struct cst_template_parameter const* const)
             const instance_template_parameters = NULL;
         // Function parameters do not change. When the actual function is
         // resolved it will do so inside a symbol table where a template
         // parameter's name maps to the template instance's chosen type symbol.
-        autil_sbuf(struct cst_function_parameter const* const)
+        sunder_sbuf(struct cst_function_parameter const* const)
             const instance_function_parameters =
                 decl->data.function.function_parameters;
         // Same goes for the return type specification.
@@ -791,7 +791,7 @@ xget_template_instance(
             struct symbol* const symbol = symbol_new_type(
                 template_parameters[i]->identifier->location,
                 template_types[i]);
-            autil_freezer_register(context()->freezer, symbol);
+            sunder_freezer_register(context()->freezer, symbol);
             symbol_table_insert(
                 instance_symbol_table,
                 template_parameters[i]->identifier->name,
@@ -812,7 +812,7 @@ xget_template_instance(
             instance_function_parameters,
             instance_return_typespec,
             instance_body);
-        autil_freezer_register(context()->freezer, instance_decl);
+        sunder_freezer_register(context()->freezer, instance_decl);
 
         // Resolve the actual template instance.
         char const* const save_static_addr_prefix =
@@ -840,12 +840,12 @@ xget_template_instance(
         return resolved_symbol;
     }
     if (decl->kind == CST_DECL_STRUCT) {
-        autil_sbuf(struct cst_template_parameter const* const)
+        sunder_sbuf(struct cst_template_parameter const* const)
             const template_parameters = decl->data.struct_.template_parameters;
         size_t const template_parameters_count =
-            autil_sbuf_count(template_parameters);
+            sunder_sbuf_count(template_parameters);
         size_t const template_arguments_count =
-            autil_sbuf_count(template_arguments);
+            sunder_sbuf_count(template_arguments);
 
         if (template_parameters_count != template_arguments_count) {
             fatal(
@@ -856,39 +856,39 @@ xget_template_instance(
                 template_arguments_count);
         }
 
-        autil_sbuf(struct type const*) template_types = NULL;
+        sunder_sbuf(struct type const*) template_types = NULL;
         for (size_t i = 0; i < template_arguments_count; ++i) {
-            autil_sbuf_push(
+            sunder_sbuf_push(
                 template_types,
                 resolve_typespec(resolver, template_arguments[i]->typespec));
         }
-        autil_sbuf_freeze(template_types, context()->freezer);
+        sunder_sbuf_freeze(template_types, context()->freezer);
 
         // Replace struct identifier (i.e. name).
-        struct autil_string* const name_string =
-            autil_string_new_cstr(symbol->name);
-        autil_string_append_cstr(name_string, "[[");
+        struct sunder_string* const name_string =
+            sunder_string_new_cstr(symbol->name);
+        sunder_string_append_cstr(name_string, "[[");
         for (size_t i = 0; i < template_arguments_count; ++i) {
             if (i != 0) {
-                autil_string_append_cstr(name_string, ", ");
+                sunder_string_append_cstr(name_string, ", ");
             }
-            autil_string_append_fmt(name_string, "%s", template_types[i]->name);
+            sunder_string_append_fmt(name_string, "%s", template_types[i]->name);
         }
-        autil_string_append_cstr(name_string, "]]");
-        char const* const name_interned = autil_sipool_intern_cstr(
-            context()->sipool, autil_string_start(name_string));
-        autil_string_del(name_string);
+        sunder_string_append_cstr(name_string, "]]");
+        char const* const name_interned = sunder_sipool_intern_cstr(
+            context()->sipool, sunder_string_start(name_string));
+        sunder_string_del(name_string);
         struct cst_identifier* const instance_identifier =
             cst_identifier_new(location, name_interned);
-        autil_freezer_register(context()->freezer, instance_identifier);
+        sunder_freezer_register(context()->freezer, instance_identifier);
         // Replace template parameters. Zero template parameters means this
         // struct is no longer a template.
-        autil_sbuf(struct cst_template_parameter const* const)
+        sunder_sbuf(struct cst_template_parameter const* const)
             const instance_template_parameters = NULL;
         // Struct members do not change. When the actual struct is resolved it
         // will do so inside a symbol table where a template parameter's name
         // maps to the template instance's chosen type symbol.
-        autil_sbuf(struct cst_member const* const) const instance_members =
+        sunder_sbuf(struct cst_member const* const) const instance_members =
             decl->data.struct_.members;
 
         // Check if a symbol corresponding to these template arguments has
@@ -910,7 +910,7 @@ xget_template_instance(
             struct symbol* const symbol = symbol_new_type(
                 template_parameters[i]->identifier->location,
                 template_types[i]);
-            autil_freezer_register(context()->freezer, symbol);
+            sunder_freezer_register(context()->freezer, symbol);
             symbol_table_insert(
                 instance_symbol_table,
                 template_parameters[i]->identifier->name,
@@ -929,7 +929,7 @@ xget_template_instance(
             instance_identifier,
             instance_template_parameters,
             instance_members);
-        autil_freezer_register(context()->freezer, instance_decl);
+        sunder_freezer_register(context()->freezer, instance_decl);
 
         // Resolve the actual template instance.
         char const* const save_static_addr_prefix =
@@ -995,32 +995,32 @@ shallow_implicit_cast(struct type const* type, struct expr const* expr)
 
     // FROM untyped integer TO byte.
     if (type->kind == TYPE_BYTE && expr->type->kind == TYPE_INTEGER) {
-        struct autil_bigint const* const min = context()->u8_min;
-        struct autil_bigint const* const max = context()->u8_max;
+        struct sunder_bigint const* const min = context()->u8_min;
+        struct sunder_bigint const* const max = context()->u8_max;
 
-        if (autil_bigint_cmp(expr->data.integer, min) < 0) {
+        if (sunder_bigint_cmp(expr->data.integer, min) < 0) {
             fatal(
                 expr->location,
                 "out-of-range conversion from `%s` to `%s` (%s < %s)",
                 expr->type->name,
                 type->name,
-                autil_bigint_to_new_cstr(expr->data.integer, NULL),
-                autil_bigint_to_new_cstr(min, NULL));
+                sunder_bigint_to_new_cstr(expr->data.integer, NULL),
+                sunder_bigint_to_new_cstr(min, NULL));
         }
-        if (autil_bigint_cmp(expr->data.integer, max) > 0) {
+        if (sunder_bigint_cmp(expr->data.integer, max) > 0) {
             fatal(
                 expr->location,
                 "out-of-range conversion from `%s` to `%s` (%s > %s)",
                 expr->type->name,
                 type->name,
-                autil_bigint_to_new_cstr(expr->data.integer, NULL),
-                autil_bigint_to_new_cstr(max, NULL));
+                sunder_bigint_to_new_cstr(expr->data.integer, NULL),
+                sunder_bigint_to_new_cstr(max, NULL));
         }
 
         struct expr* const result =
             expr_new_integer(expr->location, type, expr->data.integer);
 
-        autil_freezer_register(context()->freezer, result);
+        sunder_freezer_register(context()->freezer, result);
         return result;
     }
 
@@ -1029,32 +1029,32 @@ shallow_implicit_cast(struct type const* type, struct expr const* expr)
         && expr->type->kind == TYPE_INTEGER) {
         assert(type->data.integer.min != NULL);
         assert(type->data.integer.max != NULL);
-        struct autil_bigint const* const min = type->data.integer.min;
-        struct autil_bigint const* const max = type->data.integer.max;
+        struct sunder_bigint const* const min = type->data.integer.min;
+        struct sunder_bigint const* const max = type->data.integer.max;
 
-        if (autil_bigint_cmp(expr->data.integer, min) < 0) {
+        if (sunder_bigint_cmp(expr->data.integer, min) < 0) {
             fatal(
                 expr->location,
                 "out-of-range conversion from `%s` to `%s` (%s < %s)",
                 expr->type->name,
                 type->name,
-                autil_bigint_to_new_cstr(expr->data.integer, NULL),
-                autil_bigint_to_new_cstr(min, NULL));
+                sunder_bigint_to_new_cstr(expr->data.integer, NULL),
+                sunder_bigint_to_new_cstr(min, NULL));
         }
-        if (autil_bigint_cmp(expr->data.integer, max) > 0) {
+        if (sunder_bigint_cmp(expr->data.integer, max) > 0) {
             fatal(
                 expr->location,
                 "out-of-range conversion from `%s` to `%s` (%s > %s)",
                 expr->type->name,
                 type->name,
-                autil_bigint_to_new_cstr(expr->data.integer, NULL),
-                autil_bigint_to_new_cstr(max, NULL));
+                sunder_bigint_to_new_cstr(expr->data.integer, NULL),
+                sunder_bigint_to_new_cstr(max, NULL));
         }
 
         struct expr* const result =
             expr_new_integer(expr->location, type, expr->data.integer);
 
-        autil_freezer_register(context()->freezer, result);
+        sunder_freezer_register(context()->freezer, result);
         return result;
     }
 
@@ -1065,20 +1065,20 @@ shallow_implicit_cast(struct type const* type, struct expr const* expr)
         struct expr* const result = expr_new_cast(
             expr->location, type_unique_pointer(context()->builtin.any), expr);
 
-        autil_freezer_register(context()->freezer, result);
+        sunder_freezer_register(context()->freezer, result);
         return result;
     }
 
     // FROM function with typed pointers TO function with any pointers.
     if (type->kind == TYPE_FUNCTION && expr->type->kind == TYPE_FUNCTION) {
         struct type const* const from = expr->type;
-        if (autil_sbuf_count(type->data.function.parameter_types)
-            != autil_sbuf_count(from->data.function.parameter_types)) {
+        if (sunder_sbuf_count(type->data.function.parameter_types)
+            != sunder_sbuf_count(from->data.function.parameter_types)) {
             // Mismatched parameter count. Cannot make an implicit conversion.
         }
 
         size_t const param_count =
-            autil_sbuf_count(type->data.function.parameter_types);
+            sunder_sbuf_count(type->data.function.parameter_types);
         for (size_t i = 0; i < param_count; ++i) {
             struct type const* const type_param =
                 type->data.function.parameter_types[i];
@@ -1110,7 +1110,7 @@ shallow_implicit_cast(struct type const* type, struct expr const* expr)
 
         struct expr* const result = expr_new_cast(expr->location, type, expr);
 
-        autil_freezer_register(context()->freezer, result);
+        sunder_freezer_register(context()->freezer, result);
         return result;
     }
 
@@ -1128,7 +1128,7 @@ merge_symbol_table(
     assert(self != NULL);
     assert(othr != NULL);
 
-    for (size_t i = 0; i < autil_sbuf_count(othr->elements); ++i) {
+    for (size_t i = 0; i < sunder_sbuf_count(othr->elements); ++i) {
         char const* const name = othr->elements[i].name;
         struct symbol const* const symbol = othr->elements[i].symbol;
 
@@ -1142,11 +1142,11 @@ merge_symbol_table(
                 // self. Create a new namespace symbol for this purpose and
                 // perform the merge.
                 struct symbol_table* const table = symbol_table_new(self);
-                autil_sbuf_push(resolver->chilling_symbol_tables, table);
+                sunder_sbuf_push(resolver->chilling_symbol_tables, table);
 
                 struct symbol* const namespace =
                     symbol_new_namespace(symbol->location, symbol->name, table);
-                autil_freezer_register(context()->freezer, namespace);
+                sunder_freezer_register(context()->freezer, namespace);
                 symbol_table_insert(self, name, namespace, false);
                 existing = namespace;
             }
@@ -1188,41 +1188,41 @@ canonical_import_path(char const* module_path, char const* import_path)
 
     // Path relative to the current module.
     char const* const module_dir = directory_path(module_path);
-    struct autil_string* const tmp =
-        autil_string_new_fmt("%s/%s", module_dir, import_path);
-    if (file_exists(autil_string_start(tmp))) {
-        result = canonical_path(autil_string_start(tmp));
-        autil_string_del(tmp);
+    struct sunder_string* const tmp =
+        sunder_string_new_fmt("%s/%s", module_dir, import_path);
+    if (file_exists(sunder_string_start(tmp))) {
+        result = canonical_path(sunder_string_start(tmp));
+        sunder_string_del(tmp);
         return result;
     }
 
     // Path relative to environment-defined import path-list.
     char const* SUNDER_IMPORT_PATH = getenv("SUNDER_IMPORT_PATH");
     if (SUNDER_IMPORT_PATH == NULL) {
-        autil_string_del(tmp);
+        sunder_string_del(tmp);
         return NULL;
     }
-    autil_string_resize(tmp, 0u);
-    autil_string_append_cstr(tmp, SUNDER_IMPORT_PATH);
-    struct autil_vec* const vec = autil_vec_of_string_new();
-    autil_string_split_to_vec_on_cstr(tmp, ":", vec);
-    for (size_t i = 0; i < autil_vec_count(vec); ++i) {
-        struct autil_string* const* const ps = autil_vec_ref_const(vec, i);
+    sunder_string_resize(tmp, 0u);
+    sunder_string_append_cstr(tmp, SUNDER_IMPORT_PATH);
+    struct sunder_vec* const vec = sunder_vec_of_string_new();
+    sunder_string_split_to_vec_on_cstr(tmp, ":", vec);
+    for (size_t i = 0; i < sunder_vec_count(vec); ++i) {
+        struct sunder_string* const* const ps = sunder_vec_ref_const(vec, i);
 
-        autil_string_resize(tmp, 0u);
-        autil_string_append_fmt(
-            tmp, "%s/%s", autil_string_start(*ps), import_path);
+        sunder_string_resize(tmp, 0u);
+        sunder_string_append_fmt(
+            tmp, "%s/%s", sunder_string_start(*ps), import_path);
 
-        if (!file_exists(autil_string_start(tmp))) {
+        if (!file_exists(sunder_string_start(tmp))) {
             continue;
         }
 
-        result = canonical_path(autil_string_start(tmp));
+        result = canonical_path(sunder_string_start(tmp));
         break; // Found the module.
     }
 
-    autil_string_del(tmp);
-    autil_vec_of_string_del(vec);
+    sunder_string_del(tmp);
+    sunder_vec_of_string_del(vec);
     return result;
 }
 
@@ -1243,20 +1243,20 @@ resolve_import_file(
     }
 
     if (file_is_directory(path)) {
-        autil_sbuf(char const*) dir_contents = directory_files(path);
-        for (size_t i = 0; i < autil_sbuf_count(dir_contents); ++i) {
-            struct autil_string* const string =
-                autil_string_new_fmt("%s/%s", file_name, dir_contents[i]);
-            char const* const interned = autil_sipool_intern_cstr(
-                context()->sipool, autil_string_start(string));
-            autil_string_del(string);
+        sunder_sbuf(char const*) dir_contents = directory_files(path);
+        for (size_t i = 0; i < sunder_sbuf_count(dir_contents); ++i) {
+            struct sunder_string* const string =
+                sunder_string_new_fmt("%s/%s", file_name, dir_contents[i]);
+            char const* const interned = sunder_sipool_intern_cstr(
+                context()->sipool, sunder_string_start(string));
+            sunder_string_del(string);
             resolve_import_file(resolver, location, interned, true);
         }
-        autil_sbuf_fini(dir_contents);
+        sunder_sbuf_fini(dir_contents);
         return;
     }
 
-    if (!autil_cstr_ends_with(file_name, ".sunder") && from_directory) {
+    if (!sunder_cstr_ends_with(file_name, ".sunder") && from_directory) {
         // Ignore files imported via a directory import if they do not end in a
         // `.sunder` extension. This will allow directories containing
         // non-sunder files to be imported without the compiler producing an
@@ -1362,7 +1362,7 @@ resolve_decl_variable(
 
     struct symbol* const symbol =
         symbol_new_variable(decl->location, decl->name, type, address, value);
-    autil_freezer_register(context()->freezer, symbol);
+    sunder_freezer_register(context()->freezer, symbol);
 
     symbol_table_insert(
         resolver->current_symbol_table,
@@ -1376,7 +1376,7 @@ resolve_decl_variable(
     if (lhs != NULL) {
         struct expr* const identifier =
             expr_new_symbol(decl->data.variable.identifier->location, symbol);
-        autil_freezer_register(context()->freezer, identifier);
+        sunder_freezer_register(context()->freezer, identifier);
         *lhs = identifier;
     }
     if (rhs != NULL) {
@@ -1420,7 +1420,7 @@ resolve_decl_constant(struct resolver* resolver, struct cst_decl const* decl)
 
     struct symbol* const symbol =
         symbol_new_constant(decl->location, decl->name, type, address, value);
-    autil_freezer_register(context()->freezer, symbol);
+    sunder_freezer_register(context()->freezer, symbol);
 
     symbol_table_insert(
         resolver->current_symbol_table,
@@ -1442,9 +1442,9 @@ resolve_decl_function(struct resolver* resolver, struct cst_decl const* decl)
     assert(decl->kind == CST_DECL_FUNCTION);
 
     // Check for declaration of a template function.
-    autil_sbuf(struct cst_template_parameter const* const)
+    sunder_sbuf(struct cst_template_parameter const* const)
         const template_parameters = decl->data.function.template_parameters;
-    if (autil_sbuf_count(template_parameters) != 0) {
+    if (sunder_sbuf_count(template_parameters) != 0) {
         struct symbol_table* const symbols =
             symbol_table_new(resolver->current_symbol_table);
         struct symbol* const template_symbol = symbol_new_template(
@@ -1455,8 +1455,8 @@ resolve_decl_function(struct resolver* resolver, struct cst_decl const* decl)
             resolver->current_symbol_table,
             symbols);
 
-        autil_freezer_register(context()->freezer, template_symbol);
-        autil_sbuf_push(context()->chilling_symbol_tables, symbols);
+        sunder_freezer_register(context()->freezer, template_symbol);
+        sunder_sbuf_push(context()->chilling_symbol_tables, symbols);
         symbol_table_insert(
             resolver->current_symbol_table,
             template_symbol->name,
@@ -1465,13 +1465,13 @@ resolve_decl_function(struct resolver* resolver, struct cst_decl const* decl)
         return template_symbol;
     }
 
-    autil_sbuf(struct cst_function_parameter const* const)
+    sunder_sbuf(struct cst_function_parameter const* const)
         const function_parameters = decl->data.function.function_parameters;
 
     // Create the type corresponding to the function.
     struct type const** parameter_types = NULL;
-    autil_sbuf_resize(parameter_types, autil_sbuf_count(function_parameters));
-    for (size_t i = 0; i < autil_sbuf_count(function_parameters); ++i) {
+    sunder_sbuf_resize(parameter_types, sunder_sbuf_count(function_parameters));
+    for (size_t i = 0; i < sunder_sbuf_count(function_parameters); ++i) {
         parameter_types[i] =
             resolve_typespec(resolver, function_parameters[i]->typespec);
         if (parameter_types[i]->size == SIZEOF_UNSIZED) {
@@ -1481,7 +1481,7 @@ resolve_decl_function(struct resolver* resolver, struct cst_decl const* decl)
                 parameter_types[i]->name);
         }
     }
-    autil_sbuf_freeze(parameter_types, context()->freezer);
+    sunder_sbuf_freeze(parameter_types, context()->freezer);
 
     struct type const* const return_type =
         resolve_typespec(resolver, decl->data.function.return_typespec);
@@ -1502,7 +1502,7 @@ resolve_decl_function(struct resolver* resolver, struct cst_decl const* decl)
     // function, and the address of that function/value.
     struct function* const function = function_new(
         decl->data.function.identifier->name, function_type, address);
-    autil_freezer_register(context()->freezer, function);
+    sunder_freezer_register(context()->freezer, function);
 
     struct value* const value = value_new_function(function);
     value_freeze(value, context()->freezer);
@@ -1512,7 +1512,7 @@ resolve_decl_function(struct resolver* resolver, struct cst_decl const* decl)
     // functions may reference themselves.
     struct symbol* const function_symbol =
         symbol_new_function(decl->location, function);
-    autil_freezer_register(context()->freezer, function_symbol);
+    sunder_freezer_register(context()->freezer, function_symbol);
     symbol_table_insert(
         resolver->current_symbol_table,
         function_symbol->name,
@@ -1531,25 +1531,25 @@ resolve_decl_function(struct resolver* resolver, struct cst_decl const* decl)
     // Resolve the function's parameters in order from lowest->highest on the
     // stack (i.e. right to left), adjusting the rbp_offset for each parameter
     // along the way.
-    autil_sbuf(struct symbol const*) symbol_parameters = NULL;
-    autil_sbuf_resize(symbol_parameters, autil_sbuf_count(function_parameters));
-    for (size_t i = autil_sbuf_count(function_parameters); i--;) {
+    sunder_sbuf(struct symbol const*) symbol_parameters = NULL;
+    sunder_sbuf_resize(symbol_parameters, sunder_sbuf_count(function_parameters));
+    for (size_t i = sunder_sbuf_count(function_parameters); i--;) {
         struct source_location const* const location =
             function_parameters[i]->location;
         char const* const name = function_parameters[i]->identifier->name;
         struct type const* const type = parameter_types[i];
         struct address* const address =
             address_new(address_init_local(rbp_offset));
-        autil_freezer_register(context()->freezer, address);
+        sunder_freezer_register(context()->freezer, address);
 
         rbp_offset += (int)ceil8zu(type->size);
         struct symbol* const symbol =
             symbol_new_variable(location, name, type, address, NULL);
-        autil_freezer_register(context()->freezer, symbol);
+        sunder_freezer_register(context()->freezer, symbol);
 
         symbol_parameters[i] = symbol;
     }
-    autil_sbuf_freeze(symbol_parameters, context()->freezer);
+    sunder_sbuf_freeze(symbol_parameters, context()->freezer);
     function->symbol_parameters = symbol_parameters;
 
     // Add the function's parameters to its outermost symbol table in order
@@ -1558,10 +1558,10 @@ resolve_decl_function(struct resolver* resolver, struct cst_decl const* decl)
     // added to the table.
     struct symbol_table* const symbol_table =
         symbol_table_new(resolver->current_symbol_table);
-    autil_sbuf_push(resolver->chilling_symbol_tables, symbol_table);
+    sunder_sbuf_push(resolver->chilling_symbol_tables, symbol_table);
     // The function references, but does not own, its outermost symbol table.
     function->symbol_table = symbol_table;
-    for (size_t i = 0; i < autil_sbuf_count(function_parameters); ++i) {
+    for (size_t i = 0; i < sunder_sbuf_count(function_parameters); ++i) {
         symbol_table_insert(
             symbol_table,
             function->symbol_parameters[i]->name,
@@ -1572,27 +1572,27 @@ resolve_decl_function(struct resolver* resolver, struct cst_decl const* decl)
     // Add the function's return value to its outermost symbol table.
     struct address* const return_value_address =
         address_new(address_init_local(rbp_offset));
-    autil_freezer_register(context()->freezer, return_value_address);
+    sunder_freezer_register(context()->freezer, return_value_address);
     struct symbol* const return_value_symbol = symbol_new_variable(
         decl->data.function.return_typespec->location,
         context()->interned.return_,
         return_type,
         return_value_address,
         NULL);
-    autil_freezer_register(context()->freezer, return_value_symbol);
+    sunder_freezer_register(context()->freezer, return_value_symbol);
     symbol_table_insert(
         symbol_table, return_value_symbol->name, return_value_symbol, false);
     function->symbol_return = return_value_symbol;
 
     struct incomplete_function* const incomplete =
-        autil_xalloc(NULL, sizeof(*incomplete));
+        sunder_xalloc(NULL, sizeof(*incomplete));
     *incomplete = (struct incomplete_function){
         decl,
         function,
         symbol_table,
     };
-    autil_freezer_register(context()->freezer, incomplete);
-    autil_sbuf_push(resolver->incomplete_functions, incomplete);
+    sunder_freezer_register(context()->freezer, incomplete);
+    sunder_sbuf_push(resolver->incomplete_functions, incomplete);
 
     return function_symbol;
 }
@@ -1605,9 +1605,9 @@ resolve_decl_struct(struct resolver* resolver, struct cst_decl const* decl)
     assert(decl->kind == CST_DECL_STRUCT);
 
     // Check for declaration of a template function.
-    autil_sbuf(struct cst_template_parameter const* const)
+    sunder_sbuf(struct cst_template_parameter const* const)
         const template_parameters = decl->data.struct_.template_parameters;
-    if (autil_sbuf_count(template_parameters) != 0) {
+    if (sunder_sbuf_count(template_parameters) != 0) {
         struct symbol_table* const symbols =
             symbol_table_new(resolver->current_symbol_table);
         struct symbol* const template_symbol = symbol_new_template(
@@ -1618,8 +1618,8 @@ resolve_decl_struct(struct resolver* resolver, struct cst_decl const* decl)
             resolver->current_symbol_table,
             symbols);
 
-        autil_freezer_register(context()->freezer, template_symbol);
-        autil_sbuf_push(context()->chilling_symbol_tables, symbols);
+        sunder_freezer_register(context()->freezer, template_symbol);
+        sunder_sbuf_push(context()->chilling_symbol_tables, symbols);
         symbol_table_insert(
             resolver->current_symbol_table,
             template_symbol->name,
@@ -1630,33 +1630,33 @@ resolve_decl_struct(struct resolver* resolver, struct cst_decl const* decl)
 
     struct symbol_table* const struct_symbols =
         symbol_table_new(resolver->current_symbol_table);
-    autil_sbuf_push(resolver->chilling_symbol_tables, struct_symbols);
+    sunder_sbuf_push(resolver->chilling_symbol_tables, struct_symbols);
     struct type* const type = type_new_struct(decl->name, struct_symbols);
-    autil_freezer_register(context()->freezer, type);
+    sunder_freezer_register(context()->freezer, type);
 
     struct symbol* const symbol = symbol_new_type(decl->location, type);
-    autil_freezer_register(context()->freezer, symbol);
+    sunder_freezer_register(context()->freezer, symbol);
 
     // Add the symbol to the current symbol table so that structs with
     // self-referential pointer and slice members may reference the type.
     symbol_table_insert(
         resolver->current_symbol_table, symbol->name, symbol, false);
 
-    autil_sbuf(struct cst_member const* const) const members =
+    sunder_sbuf(struct cst_member const* const) const members =
         decl->data.struct_.members;
-    size_t const members_count = autil_sbuf_count(members);
+    size_t const members_count = sunder_sbuf_count(members);
 
     // Check for duplicate member definitions.
     for (size_t i = 0; i < members_count; ++i) {
         for (size_t j = i + 1; j < members_count; ++j) {
             if (members[i]->name == members[j]->name) {
-                // XXX: Call to autil_sbuf_fini here because GCC 8.3 w/ ASAN
+                // XXX: Call to sunder_sbuf_fini here because GCC 8.3 w/ ASAN
                 // complains about a memory leak even though we hold a valid
                 // path to the buffer.
                 //
                 // TODO: See if maybe we can trick ASAN by holding a pointer to
                 // the head of the stretchy buffer here???
-                autil_sbuf_fini(type->data.struct_.member_variables);
+                sunder_sbuf_fini(type->data.struct_.member_variables);
 
                 fatal(
                     members[j]->location,
@@ -1761,7 +1761,7 @@ resolve_decl_extern_variable(
 
     struct symbol* const symbol =
         symbol_new_variable(decl->location, decl->name, type, address, NULL);
-    autil_freezer_register(context()->freezer, symbol);
+    sunder_freezer_register(context()->freezer, symbol);
 
     symbol_table_insert(
         resolver->current_symbol_table, symbol->name, symbol, false);
@@ -1784,9 +1784,9 @@ complete_struct(
     assert(decl->kind == CST_DECL_STRUCT);
     assert(symbol->name == decl->name);
 
-    autil_sbuf(struct cst_member const* const) const members =
+    sunder_sbuf(struct cst_member const* const) const members =
         decl->data.struct_.members;
-    size_t const members_count = autil_sbuf_count(members);
+    size_t const members_count = sunder_sbuf_count(members);
 
     // XXX: Evil const cast.
     struct type* type = (struct type*)symbol_xget_type(symbol);
@@ -1798,7 +1798,7 @@ complete_struct(
     // resolving the member constants and declarations below even though we hold
     // a valid path to the buffer through the `type` pointer. Always keep a
     // reference to the the stretchy buffer so that ASAN does not complain.
-    autil_sbuf(struct member_variable const) xxx_member_variables_ref = NULL;
+    sunder_sbuf(struct member_variable const) xxx_member_variables_ref = NULL;
     (void)xxx_member_variables_ref;
     // Add all member definitions to the struct in the order that they were
     // defined in.
@@ -1844,7 +1844,7 @@ complete_struct(
     resolver->current_static_addr_prefix = save_static_addr_prefix;
     resolver->current_symbol_table = save_symbol_table;
 
-    autil_sbuf_freeze(type->data.struct_.member_variables, context()->freezer);
+    sunder_sbuf_freeze(type->data.struct_.member_variables, context()->freezer);
 }
 
 static void
@@ -1936,7 +1936,7 @@ resolve_stmt_decl(struct resolver* resolver, struct cst_stmt const* stmt)
         resolve_decl_variable(resolver, decl, &lhs, &rhs);
         struct stmt* const resolved = stmt_new_assign(stmt->location, lhs, rhs);
 
-        autil_freezer_register(context()->freezer, resolved);
+        sunder_freezer_register(context()->freezer, resolved);
         return resolved;
     }
     case CST_DECL_CONSTANT: {
@@ -1983,14 +1983,14 @@ resolve_stmt_if(struct resolver* resolver, struct cst_stmt const* stmt)
     assert(stmt != NULL);
     assert(stmt->kind == CST_STMT_IF);
 
-    autil_sbuf(struct cst_conditional const* const) const conditionals =
+    sunder_sbuf(struct cst_conditional const* const) const conditionals =
         stmt->data.if_.conditionals;
-    autil_sbuf(struct conditional const*) resolved_conditionals = NULL;
-    autil_sbuf_resize(resolved_conditionals, autil_sbuf_count(conditionals));
-    for (size_t i = 0; i < autil_sbuf_count(conditionals); ++i) {
+    sunder_sbuf(struct conditional const*) resolved_conditionals = NULL;
+    sunder_sbuf_resize(resolved_conditionals, sunder_sbuf_count(conditionals));
+    for (size_t i = 0; i < sunder_sbuf_count(conditionals); ++i) {
         assert(
             (conditionals[i]->condition != NULL)
-            || (i == (autil_sbuf_count(conditionals) - 1)));
+            || (i == (sunder_sbuf_count(conditionals) - 1)));
 
         struct expr const* condition = NULL;
         if (conditionals[i]->condition != NULL) {
@@ -2013,14 +2013,14 @@ resolve_stmt_if(struct resolver* resolver, struct cst_stmt const* stmt)
 
         struct conditional* const resolved_conditional =
             conditional_new(conditionals[i]->location, condition, block);
-        autil_freezer_register(context()->freezer, resolved_conditional);
+        sunder_freezer_register(context()->freezer, resolved_conditional);
         resolved_conditionals[i] = resolved_conditional;
     }
 
-    autil_sbuf_freeze(resolved_conditionals, context()->freezer);
+    sunder_sbuf_freeze(resolved_conditionals, context()->freezer);
     struct stmt* const resolved = stmt_new_if(resolved_conditionals);
 
-    autil_freezer_register(context()->freezer, resolved);
+    sunder_freezer_register(context()->freezer, resolved);
     return resolved;
 }
 
@@ -2064,7 +2064,7 @@ resolve_stmt_for_range(struct resolver* resolver, struct cst_stmt const* stmt)
         loop_var_type,
         loop_var_address,
         NULL);
-    autil_freezer_register(context()->freezer, loop_var_symbol);
+    sunder_freezer_register(context()->freezer, loop_var_symbol);
 
     struct symbol_table* const symbol_table =
         symbol_table_new(resolver->current_symbol_table);
@@ -2084,7 +2084,7 @@ resolve_stmt_for_range(struct resolver* resolver, struct cst_stmt const* stmt)
 
     struct stmt* const resolved =
         stmt_new_for_range(stmt->location, loop_var_symbol, begin, end, body);
-    autil_freezer_register(context()->freezer, resolved);
+    sunder_freezer_register(context()->freezer, resolved);
     return resolved;
 }
 
@@ -2120,7 +2120,7 @@ resolve_stmt_for_expr(struct resolver* resolver, struct cst_stmt const* stmt)
 
     struct stmt* const resolved = stmt_new_for_expr(stmt->location, expr, body);
 
-    autil_freezer_register(context()->freezer, resolved);
+    sunder_freezer_register(context()->freezer, resolved);
     return resolved;
 }
 
@@ -2138,7 +2138,7 @@ resolve_stmt_break(struct resolver* resolver, struct cst_stmt const* stmt)
 
     struct stmt* const resolved = stmt_new_break(stmt->location);
 
-    autil_freezer_register(context()->freezer, resolved);
+    sunder_freezer_register(context()->freezer, resolved);
     return resolved;
 }
 
@@ -2156,7 +2156,7 @@ resolve_stmt_continue(struct resolver* resolver, struct cst_stmt const* stmt)
 
     struct stmt* const resolved = stmt_new_continue(stmt->location);
 
-    autil_freezer_register(context()->freezer, resolved);
+    sunder_freezer_register(context()->freezer, resolved);
     return resolved;
 }
 
@@ -2176,7 +2176,7 @@ resolve_stmt_dump(struct resolver* resolver, struct cst_stmt const* stmt)
 
     struct stmt* const resolved = stmt_new_dump(stmt->location, expr);
 
-    autil_freezer_register(context()->freezer, resolved);
+    sunder_freezer_register(context()->freezer, resolved);
     return resolved;
 }
 
@@ -2206,7 +2206,7 @@ resolve_stmt_return(struct resolver* resolver, struct cst_stmt const* stmt)
 
     struct stmt* const resolved = stmt_new_return(stmt->location, expr);
 
-    autil_freezer_register(context()->freezer, resolved);
+    sunder_freezer_register(context()->freezer, resolved);
     return resolved;
 }
 
@@ -2238,7 +2238,7 @@ resolve_stmt_assign(struct resolver* resolver, struct cst_stmt const* stmt)
 
     struct stmt* const resolved = stmt_new_assign(stmt->location, lhs, rhs);
 
-    autil_freezer_register(context()->freezer, resolved);
+    sunder_freezer_register(context()->freezer, resolved);
     return resolved;
 }
 
@@ -2260,7 +2260,7 @@ resolve_stmt_expr(struct resolver* resolver, struct cst_stmt const* stmt)
     }
     struct stmt* const resolved = stmt_new_expr(stmt->location, expr);
 
-    autil_freezer_register(context()->freezer, resolved);
+    sunder_freezer_register(context()->freezer, resolved);
     return resolved;
 }
 
@@ -2377,7 +2377,7 @@ resolve_expr_symbol(struct resolver* resolver, struct cst_expr const* expr)
 
     struct expr* const resolved = expr_new_symbol(expr->location, symbol);
 
-    autil_freezer_register(context()->freezer, resolved);
+    sunder_freezer_register(context()->freezer, resolved);
     return resolved;
 }
 
@@ -2392,7 +2392,7 @@ resolve_expr_boolean(struct resolver* resolver, struct cst_expr const* expr)
     bool const value = expr->data.boolean->value;
     struct expr* const resolved = expr_new_boolean(expr->location, value);
 
-    autil_freezer_register(context()->freezer, resolved);
+    sunder_freezer_register(context()->freezer, resolved);
     return resolved;
 }
 
@@ -2452,13 +2452,13 @@ resolve_expr_integer(struct resolver* resolver, struct cst_expr const* expr)
     (void)resolver;
 
     struct cst_integer const* const cst_integer = expr->data.integer;
-    struct autil_bigint const* const value = cst_integer->value;
+    struct sunder_bigint const* const value = cst_integer->value;
     struct type const* const type = integer_literal_suffix_to_type(
         cst_integer->location, cst_integer->suffix);
 
     struct expr* const resolved = expr_new_integer(expr->location, type, value);
 
-    autil_freezer_register(context()->freezer, resolved);
+    sunder_freezer_register(context()->freezer, resolved);
     return resolved;
 }
 
@@ -2470,7 +2470,7 @@ resolve_expr_character(struct resolver* resolver, struct cst_expr const* expr)
     assert(expr->kind == CST_EXPR_CHARACTER);
     (void)resolver;
 
-    // XXX: Hack to get around the autil_bigint API not having a constructor
+    // XXX: Hack to get around the sunder_bigint API not having a constructor
     // function that creates a bigint based of of an int input value.
     char buf[255] = {0};
     int const written = snprintf(buf, sizeof(buf), "%d", expr->data.character);
@@ -2478,11 +2478,11 @@ resolve_expr_character(struct resolver* resolver, struct cst_expr const* expr)
     (void)written;
 
     struct type const* const type = context()->builtin.integer;
-    struct autil_bigint* const value = autil_bigint_new_text(buf, strlen(buf));
-    autil_bigint_freeze(value, context()->freezer);
+    struct sunder_bigint* const value = sunder_bigint_new_text(buf, strlen(buf));
+    sunder_bigint_freeze(value, context()->freezer);
     struct expr* const resolved = expr_new_integer(expr->location, type, value);
 
-    autil_freezer_register(context()->freezer, resolved);
+    sunder_freezer_register(context()->freezer, resolved);
     return resolved;
 }
 
@@ -2497,36 +2497,36 @@ resolve_expr_bytes(struct resolver* resolver, struct cst_expr const* expr)
     struct address const* const address =
         resolver_reserve_storage_static(resolver, "__bytes");
 
-    size_t const count = autil_string_count(expr->data.bytes);
+    size_t const count = sunder_string_count(expr->data.bytes);
     struct type const* const type =
         type_unique_array(count + 1 /*NUL*/, context()->builtin.byte);
     // TODO: Allocating a value for each and every byte in the bytes literal
     // feels wasteful. It may be worth investigating some specific ascii or
-    // asciiz static object that would use the expr's autil_string directly and
+    // asciiz static object that would use the expr's sunder_string directly and
     // then generate a readable string in the output assembly during the codegen
     // phase.
-    autil_sbuf(struct value*) elements = NULL;
+    sunder_sbuf(struct value*) elements = NULL;
     for (size_t i = 0; i < count; ++i) {
         uint8_t const byte =
-            (uint8_t)*autil_string_ref_const(expr->data.bytes, i);
-        autil_sbuf_push(elements, value_new_byte(byte));
+            (uint8_t)*sunder_string_ref_const(expr->data.bytes, i);
+        sunder_sbuf_push(elements, value_new_byte(byte));
     }
     // Append a NUL byte to the end of every bytes literal. This NUL byte is not
     // included in the slice length, but will allow bytes literals to be
     // accessed as NUL-terminated arrays when interfacing with C code.
-    autil_sbuf_push(elements, value_new_byte(0x00));
+    sunder_sbuf_push(elements, value_new_byte(0x00));
     struct value* const value = value_new_array(type, elements, NULL);
     value_freeze(value, context()->freezer);
 
     struct symbol* const symbol = symbol_new_constant(
         expr->location, address->data.static_.name, type, address, value);
-    autil_freezer_register(context()->freezer, symbol);
+    sunder_freezer_register(context()->freezer, symbol);
     register_static_symbol(symbol);
 
     struct expr* const resolved =
         expr_new_bytes(expr->location, address, count);
 
-    autil_freezer_register(context()->freezer, resolved);
+    sunder_freezer_register(context()->freezer, resolved);
     return resolved;
 }
 
@@ -2546,10 +2546,10 @@ resolve_expr_array(struct resolver* resolver, struct cst_expr const* expr)
             type->name);
     }
 
-    autil_sbuf(struct cst_expr const* const) elements =
+    sunder_sbuf(struct cst_expr const* const) elements =
         expr->data.array.elements;
-    autil_sbuf(struct expr const*) resolved_elements = NULL;
-    for (size_t i = 0; i < autil_sbuf_count(elements); ++i) {
+    sunder_sbuf(struct expr const*) resolved_elements = NULL;
+    for (size_t i = 0; i < sunder_sbuf_count(elements); ++i) {
         struct expr const* resolved_element =
             resolve_expr(resolver, elements[i]);
         resolved_element =
@@ -2558,9 +2558,9 @@ resolve_expr_array(struct resolver* resolver, struct cst_expr const* expr)
             resolved_element->location,
             resolved_element->type,
             type->data.array.base);
-        autil_sbuf_push(resolved_elements, resolved_element);
+        sunder_sbuf_push(resolved_elements, resolved_element);
     }
-    autil_sbuf_freeze(resolved_elements, context()->freezer);
+    sunder_sbuf_freeze(resolved_elements, context()->freezer);
 
     struct expr const* resolved_ellipsis = NULL;
     if (expr->data.array.ellipsis != NULL) {
@@ -2573,20 +2573,20 @@ resolve_expr_array(struct resolver* resolver, struct cst_expr const* expr)
             type->data.array.base);
     }
 
-    if ((type->data.array.count != autil_sbuf_count(resolved_elements))
+    if ((type->data.array.count != sunder_sbuf_count(resolved_elements))
         && resolved_ellipsis == NULL) {
         fatal(
             expr->location,
             "array of type `%s` created with %zu elements (expected %zu)",
             type->name,
-            autil_sbuf_count(resolved_elements),
+            sunder_sbuf_count(resolved_elements),
             type->data.array.count);
     }
 
     struct expr* const resolved = expr_new_array(
         expr->location, type, resolved_elements, resolved_ellipsis);
 
-    autil_freezer_register(context()->freezer, resolved);
+    sunder_freezer_register(context()->freezer, resolved);
     return resolved;
 }
 
@@ -2627,7 +2627,7 @@ resolve_expr_slice(struct resolver* resolver, struct cst_expr const* expr)
     struct expr* const resolved =
         expr_new_slice(expr->location, type, pointer, count);
 
-    autil_freezer_register(context()->freezer, resolved);
+    sunder_freezer_register(context()->freezer, resolved);
     return resolved;
 }
 
@@ -2647,16 +2647,16 @@ resolve_expr_array_slice(struct resolver* resolver, struct cst_expr const* expr)
             type->name);
     }
 
-    autil_sbuf(struct cst_expr const* const) elements =
+    sunder_sbuf(struct cst_expr const* const) elements =
         expr->data.array_slice.elements;
-    size_t const elements_count = autil_sbuf_count(elements);
+    size_t const elements_count = sunder_sbuf_count(elements);
 
     static size_t id = 0;
-    struct autil_string* const array_name_string =
-        autil_string_new_fmt("__array_slice_elements_%zu", id++);
-    char const* const array_name = autil_sipool_intern_cstr(
-        context()->sipool, autil_string_start(array_name_string));
-    autil_string_del(array_name_string);
+    struct sunder_string* const array_name_string =
+        sunder_string_new_fmt("__array_slice_elements_%zu", id++);
+    char const* const array_name = sunder_sipool_intern_cstr(
+        context()->sipool, sunder_string_start(array_name_string));
+    sunder_string_del(array_name_string);
 
     struct type const* const array_type =
         type_unique_array(elements_count, type->data.slice.base);
@@ -2669,9 +2669,9 @@ resolve_expr_array_slice(struct resolver* resolver, struct cst_expr const* expr)
 
     struct value* array_value = NULL;
     if (is_static) {
-        autil_sbuf(struct expr const*) resolved_elements = NULL;
-        autil_sbuf(struct value*) resolved_values = NULL;
-        for (size_t i = 0; i < autil_sbuf_count(elements); ++i) {
+        sunder_sbuf(struct expr const*) resolved_elements = NULL;
+        sunder_sbuf(struct value*) resolved_values = NULL;
+        for (size_t i = 0; i < sunder_sbuf_count(elements); ++i) {
             struct expr const* resolved_element =
                 resolve_expr(resolver, elements[i]);
             resolved_element = shallow_implicit_cast(
@@ -2680,10 +2680,10 @@ resolve_expr_array_slice(struct resolver* resolver, struct cst_expr const* expr)
                 resolved_element->location,
                 resolved_element->type,
                 array_type->data.array.base);
-            autil_sbuf_push(resolved_elements, resolved_element);
-            autil_sbuf_push(resolved_values, eval_rvalue(resolved_element));
+            sunder_sbuf_push(resolved_elements, resolved_element);
+            sunder_sbuf_push(resolved_values, eval_rvalue(resolved_element));
         }
-        autil_sbuf_freeze(resolved_elements, context()->freezer);
+        sunder_sbuf_freeze(resolved_elements, context()->freezer);
         array_value = value_new_array(array_type, resolved_values, NULL);
         value_freeze(array_value, context()->freezer);
     }
@@ -2695,7 +2695,7 @@ resolve_expr_array_slice(struct resolver* resolver, struct cst_expr const* expr)
     if (is_static) {
         register_static_symbol(array_symbol);
     }
-    autil_freezer_register(context()->freezer, array_symbol);
+    sunder_freezer_register(context()->freezer, array_symbol);
 
     symbol_table_insert(
         resolver->current_symbol_table,
@@ -2703,7 +2703,7 @@ resolve_expr_array_slice(struct resolver* resolver, struct cst_expr const* expr)
         array_symbol,
         false);
 
-    autil_sbuf(struct expr const*) resolved_elements = NULL;
+    sunder_sbuf(struct expr const*) resolved_elements = NULL;
     for (size_t i = 0; i < elements_count; ++i) {
         struct expr const* resolved_element =
             resolve_expr(resolver, elements[i]);
@@ -2713,14 +2713,14 @@ resolve_expr_array_slice(struct resolver* resolver, struct cst_expr const* expr)
             resolved_element->location,
             resolved_element->type,
             type->data.slice.base);
-        autil_sbuf_push(resolved_elements, resolved_element);
+        sunder_sbuf_push(resolved_elements, resolved_element);
     }
-    autil_sbuf_freeze(resolved_elements, context()->freezer);
+    sunder_sbuf_freeze(resolved_elements, context()->freezer);
 
     struct expr* const resolved = expr_new_array_slice(
         expr->location, type, array_symbol, resolved_elements);
 
-    autil_freezer_register(context()->freezer, resolved);
+    sunder_freezer_register(context()->freezer, resolved);
     return resolved;
 }
 
@@ -2738,10 +2738,10 @@ resolve_expr_struct(struct resolver* resolver, struct cst_expr const* expr)
             expr->location, "expected struct type (received `%s`)", type->name);
     }
 
-    autil_sbuf(struct member_variable) const member_variable_defs =
+    sunder_sbuf(struct member_variable) const member_variable_defs =
         type->data.struct_.member_variables;
 
-    autil_sbuf(struct cst_member_initializer const* const) const initializers =
+    sunder_sbuf(struct cst_member_initializer const* const) const initializers =
         expr->data.struct_.initializers;
 
     // Resolve the expressions associated with each initializer element.
@@ -2750,9 +2750,9 @@ resolve_expr_struct(struct resolver* resolver, struct cst_expr const* expr)
     // variable, all so that the user can receive feedback about any malformed
     // expressions *before* feedback on how the initializer list does not match
     // the struct definition.
-    autil_sbuf(struct expr const*) initializer_exprs = NULL;
-    for (size_t i = 0; i < autil_sbuf_count(initializers); ++i) {
-        autil_sbuf_push(
+    sunder_sbuf(struct expr const*) initializer_exprs = NULL;
+    for (size_t i = 0; i < sunder_sbuf_count(initializers); ++i) {
+        sunder_sbuf_push(
             initializer_exprs, resolve_expr(resolver, initializers[i]->expr));
     }
 
@@ -2763,16 +2763,16 @@ resolve_expr_struct(struct resolver* resolver, struct cst_expr const* expr)
     // duplicate initializers can be detected when a non-NULL value would be
     // overwritten, and missing initializers can be detected by looking for
     // remaining NULLs after all initializer elements have been processed.
-    autil_sbuf(struct expr const*) member_variable_exprs = NULL;
-    for (size_t i = 0; i < autil_sbuf_count(member_variable_defs); ++i) {
-        autil_sbuf_push(member_variable_exprs, NULL);
+    sunder_sbuf(struct expr const*) member_variable_exprs = NULL;
+    for (size_t i = 0; i < sunder_sbuf_count(member_variable_defs); ++i) {
+        sunder_sbuf_push(member_variable_exprs, NULL);
     }
 
-    for (size_t i = 0; i < autil_sbuf_count(initializers); ++i) {
+    for (size_t i = 0; i < sunder_sbuf_count(initializers); ++i) {
         char const* const initializer_name = initializers[i]->identifier->name;
         bool found = false; // Did we find the member for this initializer?
 
-        for (size_t j = 0; j < autil_sbuf_count(member_variable_defs); ++j) {
+        for (size_t j = 0; j < sunder_sbuf_count(member_variable_defs); ++j) {
             if (initializer_name != member_variable_defs[j].name) {
                 continue;
             }
@@ -2804,7 +2804,7 @@ resolve_expr_struct(struct resolver* resolver, struct cst_expr const* expr)
         }
     }
 
-    for (size_t i = 0; i < autil_sbuf_count(member_variable_defs); ++i) {
+    for (size_t i = 0; i < sunder_sbuf_count(member_variable_defs); ++i) {
         if (member_variable_exprs[i] == NULL) {
             fatal(
                 expr->location,
@@ -2813,12 +2813,12 @@ resolve_expr_struct(struct resolver* resolver, struct cst_expr const* expr)
         }
     }
 
-    autil_sbuf_fini(initializer_exprs);
-    autil_sbuf_freeze(member_variable_exprs, context()->freezer);
+    sunder_sbuf_fini(initializer_exprs);
+    sunder_sbuf_freeze(member_variable_exprs, context()->freezer);
     struct expr* const resolved =
         expr_new_struct(expr->location, type, member_variable_exprs);
 
-    autil_freezer_register(context()->freezer, resolved);
+    sunder_freezer_register(context()->freezer, resolved);
     return resolved;
 }
 
@@ -2880,7 +2880,7 @@ resolve_expr_cast(struct resolver* resolver, struct cst_expr const* expr)
 
     struct expr* const resolved = expr_new_cast(expr->location, type, rhs);
 
-    autil_freezer_register(context()->freezer, resolved);
+    sunder_freezer_register(context()->freezer, resolved);
     return resolved;
 }
 
@@ -2891,9 +2891,9 @@ resolve_expr_syscall(struct resolver* resolver, struct cst_expr const* expr)
     assert(expr != NULL);
     assert(expr->kind == CST_EXPR_SYSCALL);
 
-    autil_sbuf(struct cst_expr const* const) arguments =
+    sunder_sbuf(struct cst_expr const* const) arguments =
         expr->data.syscall.arguments;
-    size_t const arguments_count = autil_sbuf_count(arguments);
+    size_t const arguments_count = sunder_sbuf_count(arguments);
 
     // Sanity-check assert. The parser should have reported a fatal error if
     // fewer than SYSCALL_ARGUMENTS_MIN were provided.
@@ -2907,8 +2907,8 @@ resolve_expr_syscall(struct resolver* resolver, struct cst_expr const* expr)
             SYSCALL_ARGUMENTS_MAX);
     }
 
-    autil_sbuf(struct expr const*) exprs = NULL;
-    for (size_t i = 0; i < autil_sbuf_count(arguments); ++i) {
+    sunder_sbuf(struct expr const*) exprs = NULL;
+    for (size_t i = 0; i < sunder_sbuf_count(arguments); ++i) {
         struct expr const* const arg = resolve_expr(resolver, arguments[i]);
         if (arg->type->size == SIZEOF_UNSIZED) {
             fatal(
@@ -2925,12 +2925,12 @@ resolve_expr_syscall(struct resolver* resolver, struct cst_expr const* expr)
                 "expected integer or pointer type (received `%s`)",
                 arg->type->name);
         }
-        autil_sbuf_push(exprs, arg);
+        sunder_sbuf_push(exprs, arg);
     }
-    autil_sbuf_freeze(exprs, context()->freezer);
+    sunder_sbuf_freeze(exprs, context()->freezer);
     struct expr* const resolved = expr_new_syscall(expr->location, exprs);
 
-    autil_freezer_register(context()->freezer, resolved);
+    sunder_freezer_register(context()->freezer, resolved);
     return resolved;
 }
 
@@ -2983,9 +2983,9 @@ resolve_expr_call(struct resolver* resolver, struct cst_expr const* expr)
         struct type const* const selfptr_type =
             type_unique_pointer(instance->type);
 
-        autil_sbuf(struct type const* const) const parameter_types =
+        sunder_sbuf(struct type const* const) const parameter_types =
             function_type->data.function.parameter_types;
-        if (autil_sbuf_count(parameter_types) == 0) {
+        if (sunder_sbuf_count(parameter_types) == 0) {
             fatal(
                 instance->location,
                 "expected type `%s` for the first parameter of member function `%s` of type `%s`",
@@ -3002,9 +3002,9 @@ resolve_expr_call(struct resolver* resolver, struct cst_expr const* expr)
                 instance->type->name,
                 parameter_types[0]->name);
         }
-        size_t const arg_count = autil_sbuf_count(expr->data.call.arguments);
+        size_t const arg_count = sunder_sbuf_count(expr->data.call.arguments);
         // Number of parameters minus one for the implicit pointer to self.
-        size_t const expected_arg_count = autil_sbuf_count(parameter_types) - 1;
+        size_t const expected_arg_count = sunder_sbuf_count(parameter_types) - 1;
         if (arg_count != expected_arg_count) {
             fatal(
                 expr->location,
@@ -3014,26 +3014,26 @@ resolve_expr_call(struct resolver* resolver, struct cst_expr const* expr)
                 arg_count);
         }
 
-        autil_sbuf(struct expr const*) arguments = NULL;
+        sunder_sbuf(struct expr const*) arguments = NULL;
         // Add the implicit pointer to self as the first argument.
         assert(expr_is_lvalue(instance));
         struct expr* const selfptr = expr_new_unary(
             expr->location, selfptr_type, UOP_ADDRESSOF, instance);
-        autil_freezer_register(context()->freezer, selfptr);
-        autil_sbuf_push(arguments, selfptr);
+        sunder_freezer_register(context()->freezer, selfptr);
+        sunder_sbuf_push(arguments, selfptr);
         for (size_t i = 0; i < arg_count; ++i) {
             struct expr const* arg =
                 resolve_expr(resolver, expr->data.call.arguments[i]);
-            autil_sbuf_push(arguments, arg);
+            sunder_sbuf_push(arguments, arg);
         }
-        autil_sbuf_freeze(arguments, context()->freezer);
+        sunder_sbuf_freeze(arguments, context()->freezer);
 
         // Type-check function arguments.
-        for (size_t i = 0; i < autil_sbuf_count(arguments); ++i) {
+        for (size_t i = 0; i < sunder_sbuf_count(arguments); ++i) {
             arguments[i] =
                 shallow_implicit_cast(parameter_types[i], arguments[i]);
         }
-        for (size_t i = 0; i < autil_sbuf_count(parameter_types); ++i) {
+        for (size_t i = 0; i < sunder_sbuf_count(parameter_types); ++i) {
             struct type const* const expected = parameter_types[i];
             struct type const* const received = arguments[i]->type;
             if (received != expected) {
@@ -3052,12 +3052,12 @@ resolve_expr_call(struct resolver* resolver, struct cst_expr const* expr)
             expr_new_symbol(
                 dot->data.access_member.identifier->location,
                 member_function_symbol);
-        autil_freezer_register(context()->freezer, member_function_expr);
+        sunder_freezer_register(context()->freezer, member_function_expr);
 
         struct expr* resolved =
             expr_new_call(expr->location, member_function_expr, arguments);
 
-        autil_freezer_register(context()->freezer, resolved);
+        sunder_freezer_register(context()->freezer, resolved);
         return resolved;
     }
 
@@ -3072,31 +3072,31 @@ regular_function_call:;
             function->type->name);
     }
 
-    if (autil_sbuf_count(expr->data.call.arguments)
-        != autil_sbuf_count(function->type->data.function.parameter_types)) {
+    if (sunder_sbuf_count(expr->data.call.arguments)
+        != sunder_sbuf_count(function->type->data.function.parameter_types)) {
         fatal(
             expr->location,
             "function with type `%s` expects %zu argument(s) (%zu provided)",
             function->type->name,
-            autil_sbuf_count(function->type->data.function.parameter_types),
-            autil_sbuf_count(expr->data.call.arguments));
+            sunder_sbuf_count(function->type->data.function.parameter_types),
+            sunder_sbuf_count(expr->data.call.arguments));
     }
 
-    autil_sbuf(struct expr const*) arguments = NULL;
-    for (size_t i = 0; i < autil_sbuf_count(expr->data.call.arguments); ++i) {
+    sunder_sbuf(struct expr const*) arguments = NULL;
+    for (size_t i = 0; i < sunder_sbuf_count(expr->data.call.arguments); ++i) {
         struct expr const* arg =
             resolve_expr(resolver, expr->data.call.arguments[i]);
-        autil_sbuf_push(arguments, arg);
+        sunder_sbuf_push(arguments, arg);
     }
-    autil_sbuf_freeze(arguments, context()->freezer);
+    sunder_sbuf_freeze(arguments, context()->freezer);
 
     // Type-check function arguments.
-    autil_sbuf(struct type const* const) const parameter_types =
+    sunder_sbuf(struct type const* const) const parameter_types =
         function->type->data.function.parameter_types;
-    for (size_t i = 0; i < autil_sbuf_count(arguments); ++i) {
+    for (size_t i = 0; i < sunder_sbuf_count(arguments); ++i) {
         arguments[i] = shallow_implicit_cast(parameter_types[i], arguments[i]);
     }
-    for (size_t i = 0; i < autil_sbuf_count(parameter_types); ++i) {
+    for (size_t i = 0; i < sunder_sbuf_count(parameter_types); ++i) {
         struct type const* const expected = parameter_types[i];
         struct type const* const received = arguments[i]->type;
         if (received != expected) {
@@ -3111,7 +3111,7 @@ regular_function_call:;
     struct expr* const resolved =
         expr_new_call(expr->location, function, arguments);
 
-    autil_freezer_register(context()->freezer, resolved);
+    sunder_freezer_register(context()->freezer, resolved);
     return resolved;
 }
 
@@ -3145,7 +3145,7 @@ resolve_expr_access_index(
     struct expr* const resolved =
         expr_new_access_index(expr->location, lhs, idx);
 
-    autil_freezer_register(context()->freezer, resolved);
+    sunder_freezer_register(context()->freezer, resolved);
     return resolved;
 }
 
@@ -3194,7 +3194,7 @@ resolve_expr_access_slice(
     struct expr* const resolved =
         expr_new_access_slice(expr->location, lhs, begin, end);
 
-    autil_freezer_register(context()->freezer, resolved);
+    sunder_freezer_register(context()->freezer, resolved);
     return resolved;
 }
 
@@ -3223,7 +3223,7 @@ resolve_expr_access_member(
         struct expr* const resolved = expr_new_access_member_variable(
             expr->location, lhs, member_variable_def);
 
-        autil_freezer_register(context()->freezer, resolved);
+        sunder_freezer_register(context()->freezer, resolved);
         return resolved;
     }
 
@@ -3268,7 +3268,7 @@ resolve_expr_access_dereference(
     struct expr* const resolved = expr_new_unary(
         expr->location, lhs->type->data.pointer.base, UOP_DEREFERENCE, lhs);
 
-    autil_freezer_register(context()->freezer, resolved);
+    sunder_freezer_register(context()->freezer, resolved);
     return resolved;
 }
 
@@ -3286,7 +3286,7 @@ resolve_expr_sizeof(struct resolver* resolver, struct cst_expr const* expr)
 
     struct expr* const resolved = expr_new_sizeof(expr->location, rhs);
 
-    autil_freezer_register(context()->freezer, resolved);
+    sunder_freezer_register(context()->freezer, resolved);
     return resolved;
 }
 
@@ -3304,7 +3304,7 @@ resolve_expr_alignof(struct resolver* resolver, struct cst_expr const* expr)
 
     struct expr* const resolved = expr_new_alignof(expr->location, rhs);
 
-    autil_freezer_register(context()->freezer, resolved);
+    sunder_freezer_register(context()->freezer, resolved);
     return resolved;
 }
 
@@ -3328,11 +3328,11 @@ resolve_expr_unary(struct resolver* resolver, struct cst_expr const* expr)
     struct cst_expr const* const cst_rhs = expr->data.unary.rhs;
     if (is_sign && cst_rhs->kind == CST_EXPR_INTEGER) {
         struct cst_integer const* const cst_integer = cst_rhs->data.integer;
-        struct autil_bigint const* value = cst_integer->value;
+        struct sunder_bigint const* value = cst_integer->value;
         if (op->kind == TOKEN_DASH) {
-            struct autil_bigint* const tmp = autil_bigint_new(value);
-            autil_bigint_neg(tmp, value);
-            autil_bigint_freeze(tmp, context()->freezer);
+            struct sunder_bigint* const tmp = sunder_bigint_new(value);
+            sunder_bigint_neg(tmp, value);
+            sunder_bigint_freeze(tmp, context()->freezer);
             value = tmp;
         }
         struct type const* const type = integer_literal_suffix_to_type(
@@ -3341,7 +3341,7 @@ resolve_expr_unary(struct resolver* resolver, struct cst_expr const* expr)
         struct expr* const resolved =
             expr_new_integer(&op->location, type, value);
 
-        autil_freezer_register(context()->freezer, resolved);
+        sunder_freezer_register(context()->freezer, resolved);
         return resolved;
     }
 
@@ -3407,7 +3407,7 @@ resolve_expr_unary_logical(
     struct expr* const resolved =
         expr_new_unary(&op->location, rhs->type, uop, rhs);
 
-    autil_freezer_register(context()->freezer, resolved);
+    sunder_freezer_register(context()->freezer, resolved);
     return resolved;
 }
 
@@ -3434,7 +3434,7 @@ resolve_expr_unary_arithmetic(
     struct expr* const resolved =
         expr_new_unary(&op->location, rhs->type, uop, rhs);
 
-    autil_freezer_register(context()->freezer, resolved);
+    sunder_freezer_register(context()->freezer, resolved);
     return resolved;
 }
 
@@ -3459,7 +3459,7 @@ resolve_expr_unary_bitwise(
     struct expr* const resolved =
         expr_new_unary(&op->location, rhs->type, uop, rhs);
 
-    autil_freezer_register(context()->freezer, resolved);
+    sunder_freezer_register(context()->freezer, resolved);
     return resolved;
 }
 
@@ -3482,7 +3482,7 @@ resolve_expr_unary_dereference(
     struct expr* const resolved = expr_new_unary(
         &op->location, rhs->type->data.pointer.base, UOP_DEREFERENCE, rhs);
 
-    autil_freezer_register(context()->freezer, resolved);
+    sunder_freezer_register(context()->freezer, resolved);
     return resolved;
 }
 
@@ -3503,7 +3503,7 @@ resolve_expr_unary_addressof(
     struct expr* const resolved = expr_new_unary(
         &op->location, type_unique_pointer(rhs->type), UOP_ADDRESSOF, rhs);
 
-    autil_freezer_register(context()->freezer, resolved);
+    sunder_freezer_register(context()->freezer, resolved);
     return resolved;
 }
 
@@ -3527,7 +3527,7 @@ resolve_expr_unary_countof(
     struct expr* const resolved = expr_new_unary(
         &op->location, context()->builtin.usize, UOP_COUNTOF, rhs);
 
-    autil_freezer_register(context()->freezer, resolved);
+    sunder_freezer_register(context()->freezer, resolved);
     return resolved;
 }
 
@@ -3633,7 +3633,7 @@ resolve_expr_binary_logical(
     struct expr* const resolved =
         expr_new_binary(&op->location, type, bop, lhs, rhs);
 
-    autil_freezer_register(context()->freezer, resolved);
+    sunder_freezer_register(context()->freezer, resolved);
     return resolved;
 }
 
@@ -3673,7 +3673,7 @@ resolve_expr_binary_compare_equality(
 
     struct expr* resolved =
         expr_new_binary(&op->location, context()->builtin.bool_, bop, lhs, rhs);
-    autil_freezer_register(context()->freezer, resolved);
+    sunder_freezer_register(context()->freezer, resolved);
 
     // Constant fold integer literal constant expression.
     if (lhs->kind == EXPR_INTEGER && rhs->kind == EXPR_INTEGER) {
@@ -3685,7 +3685,7 @@ resolve_expr_binary_compare_equality(
 
         assert(value->type->kind == TYPE_BOOL);
         resolved = expr_new_boolean(resolved->location, value->data.boolean);
-        autil_freezer_register(context()->freezer, resolved);
+        sunder_freezer_register(context()->freezer, resolved);
     }
 
     return resolved;
@@ -3728,7 +3728,7 @@ resolve_expr_binary_compare_order(
 
     struct expr* resolved =
         expr_new_binary(&op->location, context()->builtin.bool_, bop, lhs, rhs);
-    autil_freezer_register(context()->freezer, resolved);
+    sunder_freezer_register(context()->freezer, resolved);
 
     // Constant fold integer literal constant expression.
     if (lhs->kind == EXPR_INTEGER && rhs->kind == EXPR_INTEGER) {
@@ -3740,7 +3740,7 @@ resolve_expr_binary_compare_order(
 
         assert(value->type->kind == TYPE_BOOL);
         resolved = expr_new_boolean(resolved->location, value->data.boolean);
-        autil_freezer_register(context()->freezer, resolved);
+        sunder_freezer_register(context()->freezer, resolved);
     }
 
     return resolved;
@@ -3776,7 +3776,7 @@ resolve_expr_binary_arithmetic(
 
     struct type const* const type = lhs->type; // Arbitrarily use lhs.
     struct expr* resolved = expr_new_binary(&op->location, type, bop, lhs, rhs);
-    autil_freezer_register(context()->freezer, resolved);
+    sunder_freezer_register(context()->freezer, resolved);
 
     // Constant fold integer literal constant expression.
     if (lhs->kind == EXPR_INTEGER && rhs->kind == EXPR_INTEGER) {
@@ -3789,7 +3789,7 @@ resolve_expr_binary_arithmetic(
         assert(type_is_any_integer(value->type));
         resolved = expr_new_integer(
             resolved->location, resolved->type, value->data.integer);
-        autil_freezer_register(context()->freezer, resolved);
+        sunder_freezer_register(context()->freezer, resolved);
     }
 
     return resolved;
@@ -3831,7 +3831,7 @@ resolve_expr_binary_bitwise(
     }
 
     struct expr* resolved = expr_new_binary(&op->location, type, bop, lhs, rhs);
-    autil_freezer_register(context()->freezer, resolved);
+    sunder_freezer_register(context()->freezer, resolved);
 
     // Constant fold integer literal constant expression.
     if (lhs->kind == EXPR_INTEGER && rhs->kind == EXPR_INTEGER) {
@@ -3844,7 +3844,7 @@ resolve_expr_binary_bitwise(
         assert(type_is_any_integer(value->type));
         resolved = expr_new_integer(
             resolved->location, resolved->type, value->data.integer);
-        autil_freezer_register(context()->freezer, resolved);
+        sunder_freezer_register(context()->freezer, resolved);
     }
 
     return resolved;
@@ -3872,20 +3872,20 @@ resolve_block(
     resolver->current_symbol_table = symbol_table;
     int const save_rbp_offset = resolver->current_rbp_offset;
 
-    autil_sbuf(struct stmt const*) stmts = NULL;
-    for (size_t i = 0; i < autil_sbuf_count(block->stmts); ++i) {
+    sunder_sbuf(struct stmt const*) stmts = NULL;
+    for (size_t i = 0; i < sunder_sbuf_count(block->stmts); ++i) {
         struct stmt const* const resolved_stmt =
             resolve_stmt(resolver, block->stmts[i]);
         if (resolved_stmt != NULL) {
-            autil_sbuf_push(stmts, resolved_stmt);
+            sunder_sbuf_push(stmts, resolved_stmt);
         }
     }
-    autil_sbuf_freeze(stmts, context()->freezer);
+    sunder_sbuf_freeze(stmts, context()->freezer);
 
     struct block* const resolved =
         block_new(block->location, symbol_table, stmts);
 
-    autil_freezer_register(context()->freezer, resolved);
+    sunder_freezer_register(context()->freezer, resolved);
     resolver->current_symbol_table = save_symbol_table;
     resolver->current_rbp_offset = save_rbp_offset;
     return resolved;
@@ -3954,15 +3954,15 @@ resolve_typespec_function(
     assert(typespec != NULL);
     assert(typespec->kind == TYPESPEC_FUNCTION);
 
-    autil_sbuf(struct cst_typespec const* const) const parameter_typespecs =
+    sunder_sbuf(struct cst_typespec const* const) const parameter_typespecs =
         typespec->data.function.parameter_typespecs;
 
-    autil_sbuf(struct type const*) parameter_types = NULL;
-    autil_sbuf_resize(parameter_types, autil_sbuf_count(parameter_typespecs));
-    for (size_t i = 0; i < autil_sbuf_count(parameter_typespecs); ++i) {
+    sunder_sbuf(struct type const*) parameter_types = NULL;
+    sunder_sbuf_resize(parameter_types, sunder_sbuf_count(parameter_typespecs));
+    for (size_t i = 0; i < sunder_sbuf_count(parameter_typespecs); ++i) {
         parameter_types[i] = resolve_typespec(resolver, parameter_typespecs[i]);
     }
-    autil_sbuf_freeze(parameter_types, context()->freezer);
+    sunder_sbuf_freeze(parameter_types, context()->freezer);
 
     struct type const* const return_type =
         resolve_typespec(resolver, typespec->data.function.return_typespec);
@@ -4006,7 +4006,7 @@ resolve_typespec_array(
         fatal(
             count_expr->location,
             "array count too large (received %s)",
-            autil_bigint_to_new_cstr(count_value->data.integer, NULL));
+            sunder_bigint_to_new_cstr(count_value->data.integer, NULL));
     }
     value_del(count_value);
 
@@ -4050,12 +4050,12 @@ resolve(struct module* module)
 
     // Module namespace.
     if (module->cst->namespace != NULL) {
-        autil_sbuf(struct cst_identifier const* const) const identifiers =
+        sunder_sbuf(struct cst_identifier const* const) const identifiers =
             module->cst->namespace->identifiers;
 
         char const* nsname = NULL;
         char const* nsaddr = NULL;
-        for (size_t i = 0; i < autil_sbuf_count(identifiers); ++i) {
+        for (size_t i = 0; i < sunder_sbuf_count(identifiers); ++i) {
             char const* const name = identifiers[i]->name;
             struct source_location const* const location =
                 identifiers[i]->location;
@@ -4067,15 +4067,15 @@ resolve(struct module* module)
                 symbol_table_new(resolver->current_symbol_table);
             struct symbol_table* const export_table =
                 symbol_table_new(resolver->current_export_table);
-            autil_sbuf_push(resolver->chilling_symbol_tables, module_table);
-            autil_sbuf_push(resolver->chilling_symbol_tables, export_table);
+            sunder_sbuf_push(resolver->chilling_symbol_tables, module_table);
+            sunder_sbuf_push(resolver->chilling_symbol_tables, export_table);
 
             struct symbol* const module_nssymbol =
                 symbol_new_namespace(location, nsname, module_table);
             struct symbol* const export_nssymbol =
                 symbol_new_namespace(location, nsname, module_table);
-            autil_freezer_register(context()->freezer, module_nssymbol);
-            autil_freezer_register(context()->freezer, export_nssymbol);
+            sunder_freezer_register(context()->freezer, module_nssymbol);
+            sunder_freezer_register(context()->freezer, export_nssymbol);
 
             symbol_table_insert(
                 resolver->current_symbol_table, name, module_nssymbol, false);
@@ -4090,13 +4090,13 @@ resolve(struct module* module)
     }
 
     // Resolve imports.
-    for (size_t i = 0; i < autil_sbuf_count(module->cst->imports); ++i) {
+    for (size_t i = 0; i < sunder_sbuf_count(module->cst->imports); ++i) {
         resolve_import(resolver, module->cst->imports[i]);
     }
 
     // Resolve top-level declarations.
-    autil_sbuf(struct cst_decl const* const) const ordered = module->ordered;
-    for (size_t i = 0; i < autil_sbuf_count(ordered); ++i) {
+    sunder_sbuf(struct cst_decl const* const) const ordered = module->ordered;
+    for (size_t i = 0; i < sunder_sbuf_count(ordered); ++i) {
         // Structs have their symbols created before all other declarations to
         // allow for self referential and cross referential struct
         // declarations. These structs are then completed as needed based on
@@ -4119,7 +4119,7 @@ resolve(struct module* module)
                 context()->global_symbol_table, symbol->name, symbol, false);
         }
     }
-    for (size_t i = 0; i < autil_sbuf_count(ordered); ++i) {
+    for (size_t i = 0; i < sunder_sbuf_count(ordered); ++i) {
         struct cst_decl const* const decl = module->ordered[i];
 
         // If the declaration was a non-template struct then it has already been
@@ -4151,18 +4151,18 @@ resolve(struct module* module)
         }
     }
 
-    for (size_t i = 0; i < autil_sbuf_count(resolver->incomplete_functions);
+    for (size_t i = 0; i < sunder_sbuf_count(resolver->incomplete_functions);
          ++i) {
         complete_function(resolver, resolver->incomplete_functions[i]);
     }
 
     size_t const chilling_symbol_tables_count =
-        autil_sbuf_count(resolver->chilling_symbol_tables);
+        sunder_sbuf_count(resolver->chilling_symbol_tables);
     for (size_t i = 0; i < chilling_symbol_tables_count; ++i) {
         symbol_table_freeze(
             resolver->chilling_symbol_tables[i], context()->freezer);
     }
-    autil_sbuf_fini(resolver->chilling_symbol_tables);
+    sunder_sbuf_fini(resolver->chilling_symbol_tables);
 
     resolver_del(resolver);
 }

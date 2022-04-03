@@ -10,7 +10,7 @@ cst_module_new(
     struct cst_import const* const* imports,
     struct cst_decl const* const* decls)
 {
-    struct cst_module* const self = autil_xalloc(NULL, sizeof(*self));
+    struct cst_module* const self = sunder_xalloc(NULL, sizeof(*self));
     memset(self, 0x00, sizeof(*self));
     self->namespace = namespace;
     self->imports = imports;
@@ -25,7 +25,7 @@ cst_namespace_new(
 {
     assert(location != NULL);
 
-    struct cst_namespace* const self = autil_xalloc(NULL, sizeof(*self));
+    struct cst_namespace* const self = sunder_xalloc(NULL, sizeof(*self));
     memset(self, 0x00, sizeof(*self));
     self->location = location;
     self->identifiers = identifiers;
@@ -38,7 +38,7 @@ cst_import_new(struct source_location const* location, char const* path)
     assert(location != NULL);
     assert(path != NULL);
 
-    struct cst_import* const self = autil_xalloc(NULL, sizeof(*self));
+    struct cst_import* const self = sunder_xalloc(NULL, sizeof(*self));
     memset(self, 0x00, sizeof(*self));
     self->location = location;
     self->path = path;
@@ -56,7 +56,7 @@ cst_decl_new_variable(
     assert(identifier != NULL);
     assert(expr != NULL);
 
-    struct cst_decl* const self = autil_xalloc(NULL, sizeof(*self));
+    struct cst_decl* const self = sunder_xalloc(NULL, sizeof(*self));
     memset(self, 0x00, sizeof(*self));
     self->kind = CST_DECL_VARIABLE;
     self->location = location;
@@ -78,7 +78,7 @@ cst_decl_new_constant(
     assert(identifier != NULL);
     assert(expr != NULL);
 
-    struct cst_decl* const self = autil_xalloc(NULL, sizeof(*self));
+    struct cst_decl* const self = sunder_xalloc(NULL, sizeof(*self));
     memset(self, 0x00, sizeof(*self));
     self->kind = CST_DECL_CONSTANT;
     self->location = location;
@@ -103,7 +103,7 @@ cst_decl_new_function(
     assert(return_typespec != NULL);
     assert(body != NULL);
 
-    struct cst_decl* const self = autil_xalloc(NULL, sizeof(*self));
+    struct cst_decl* const self = sunder_xalloc(NULL, sizeof(*self));
     memset(self, 0x00, sizeof(*self));
     self->kind = CST_DECL_FUNCTION;
     self->location = location;
@@ -126,7 +126,7 @@ cst_decl_new_struct(
     assert(location != NULL);
     assert(identifier != NULL);
 
-    struct cst_decl* const self = autil_xalloc(NULL, sizeof(*self));
+    struct cst_decl* const self = sunder_xalloc(NULL, sizeof(*self));
     memset(self, 0x00, sizeof(*self));
     self->kind = CST_DECL_STRUCT;
     self->location = location;
@@ -147,7 +147,7 @@ cst_decl_new_extend(
     assert(typespec != NULL);
     assert(decl != NULL);
 
-    struct cst_decl* const self = autil_xalloc(NULL, sizeof(*self));
+    struct cst_decl* const self = sunder_xalloc(NULL, sizeof(*self));
     memset(self, 0x00, sizeof(*self));
     self->kind = CST_DECL_EXTEND;
     self->location = location;
@@ -167,7 +167,7 @@ cst_decl_new_alias(
     assert(identifier != NULL);
     assert(symbol != NULL);
 
-    struct cst_decl* const self = autil_xalloc(NULL, sizeof(*self));
+    struct cst_decl* const self = sunder_xalloc(NULL, sizeof(*self));
     memset(self, 0x00, sizeof(*self));
     self->kind = CST_DECL_ALIAS;
     self->location = location;
@@ -187,7 +187,7 @@ cst_decl_new_extern_variable(
     assert(identifier != NULL);
     assert(typespec != NULL);
 
-    struct cst_decl* const self = autil_xalloc(NULL, sizeof(*self));
+    struct cst_decl* const self = sunder_xalloc(NULL, sizeof(*self));
     memset(self, 0x00, sizeof(*self));
     self->kind = CST_DECL_EXTERN_VARIABLE;
     self->location = location;
@@ -200,7 +200,7 @@ cst_decl_new_extern_variable(
 static struct cst_stmt*
 cst_stmt_new(struct source_location const* location, enum cst_stmt_kind kind)
 {
-    struct cst_stmt* const self = autil_xalloc(NULL, sizeof(*self));
+    struct cst_stmt* const self = sunder_xalloc(NULL, sizeof(*self));
     memset(self, 0x00, sizeof(*self));
     self->location = location;
     self->kind = kind;
@@ -210,7 +210,7 @@ cst_stmt_new(struct source_location const* location, enum cst_stmt_kind kind)
 struct cst_stmt*
 cst_stmt_new_if(struct cst_conditional const* const* conditionals)
 {
-    assert(autil_sbuf_count(conditionals) > 0u);
+    assert(sunder_sbuf_count(conditionals) > 0u);
 
     struct source_location const* const location = conditionals[0]->location;
     struct cst_stmt* const self = cst_stmt_new(location, CST_STMT_IF);
@@ -336,7 +336,7 @@ cst_stmt_new_expr(struct cst_expr const* expr)
 static struct cst_expr*
 cst_expr_new(struct source_location const* location, enum cst_expr_kind kind)
 {
-    struct cst_expr* const self = autil_xalloc(NULL, sizeof(*self));
+    struct cst_expr* const self = sunder_xalloc(NULL, sizeof(*self));
     memset(self, 0x00, sizeof(*self));
     self->location = location;
     self->kind = kind;
@@ -388,7 +388,7 @@ cst_expr_new_character(struct source_location const* location, int character)
 
 struct cst_expr*
 cst_expr_new_bytes(
-    struct source_location const* location, struct autil_string const* bytes)
+    struct source_location const* location, struct sunder_string const* bytes)
 {
     assert(location != NULL);
     assert(bytes != NULL);
@@ -641,7 +641,7 @@ cst_conditional_new(
     assert(location != NULL);
     assert(body != NULL);
 
-    struct cst_conditional* const self = autil_xalloc(NULL, sizeof(*self));
+    struct cst_conditional* const self = sunder_xalloc(NULL, sizeof(*self));
     memset(self, 0x00, sizeof(*self));
     self->location = location;
     self->condition = condition;
@@ -655,7 +655,7 @@ cst_block_new(
 {
     assert(location != NULL);
 
-    struct cst_block* const self = autil_xalloc(NULL, sizeof(*self));
+    struct cst_block* const self = sunder_xalloc(NULL, sizeof(*self));
     memset(self, 0x00, sizeof(*self));
     self->location = location;
     self->stmts = stmts;
@@ -669,9 +669,9 @@ cst_symbol_new(
     struct cst_symbol_element const* const* elements)
 {
     assert(location != NULL);
-    assert(autil_sbuf_count(elements) > 0);
+    assert(sunder_sbuf_count(elements) > 0);
 
-    struct cst_symbol* const self = autil_xalloc(NULL, sizeof(*self));
+    struct cst_symbol* const self = sunder_xalloc(NULL, sizeof(*self));
     memset(self, 0x00, sizeof(*self));
     self->location = location;
     self->is_from_root = is_from_root;
@@ -686,7 +686,7 @@ cst_symbol_element_new(
 {
     assert(identifier != NULL);
 
-    struct cst_symbol_element* const self = autil_xalloc(NULL, sizeof(*self));
+    struct cst_symbol_element* const self = sunder_xalloc(NULL, sizeof(*self));
     memset(self, 0x00, sizeof(*self));
     self->location = identifier->location;
     self->identifier = identifier;
@@ -703,7 +703,7 @@ cst_template_parameter_new(
     assert(identifier != NULL);
 
     struct cst_template_parameter* const self =
-        autil_xalloc(NULL, sizeof(*self));
+        sunder_xalloc(NULL, sizeof(*self));
     memset(self, 0x00, sizeof(*self));
     self->location = location;
     self->identifier = identifier;
@@ -718,7 +718,7 @@ cst_template_argument_new(
     assert(typespec != NULL);
 
     struct cst_template_argument* const self =
-        autil_xalloc(NULL, sizeof(*self));
+        sunder_xalloc(NULL, sizeof(*self));
     memset(self, 0x00, sizeof(*self));
     self->location = location;
     self->typespec = typespec;
@@ -734,7 +734,7 @@ cst_function_parameter_new(
     assert(typespec != NULL);
 
     struct cst_function_parameter* const self =
-        autil_xalloc(NULL, sizeof(*self));
+        sunder_xalloc(NULL, sizeof(*self));
     memset(self, 0x00, sizeof(*self));
     self->location = identifier->location;
     self->identifier = identifier;
@@ -752,7 +752,7 @@ cst_member_new_variable(
     assert(identifier != NULL);
     assert(typespec != NULL);
 
-    struct cst_member* const self = autil_xalloc(NULL, sizeof(*self));
+    struct cst_member* const self = sunder_xalloc(NULL, sizeof(*self));
     memset(self, 0x00, sizeof(*self));
     self->location = location;
     self->name = identifier->name;
@@ -768,7 +768,7 @@ cst_member_new_constant(struct cst_decl const* decl)
     assert(decl != NULL);
     assert(decl->kind == CST_DECL_CONSTANT);
 
-    struct cst_member* const self = autil_xalloc(NULL, sizeof(*self));
+    struct cst_member* const self = sunder_xalloc(NULL, sizeof(*self));
     memset(self, 0x00, sizeof(*self));
     self->location = decl->location;
     self->name = decl->name;
@@ -783,7 +783,7 @@ cst_member_new_function(struct cst_decl const* decl)
     assert(decl != NULL);
     assert(decl->kind == CST_DECL_FUNCTION);
 
-    struct cst_member* const self = autil_xalloc(NULL, sizeof(*self));
+    struct cst_member* const self = sunder_xalloc(NULL, sizeof(*self));
     memset(self, 0x00, sizeof(*self));
     self->location = decl->location;
     self->name = decl->name;
@@ -803,7 +803,7 @@ cst_member_initializer_new(
     assert(expr != NULL);
 
     struct cst_member_initializer* const self =
-        autil_xalloc(NULL, sizeof(*self));
+        sunder_xalloc(NULL, sizeof(*self));
     memset(self, 0x00, sizeof(*self));
     self->location = location;
     self->identifier = identifier;
@@ -817,7 +817,7 @@ cst_typespec_new(
 {
     assert(location != NULL);
 
-    struct cst_typespec* const self = autil_xalloc(NULL, sizeof(*self));
+    struct cst_typespec* const self = sunder_xalloc(NULL, sizeof(*self));
     memset(self, 0x00, sizeof(*self));
     self->location = location;
     self->kind = kind;
@@ -913,7 +913,7 @@ cst_identifier_new(struct source_location const* location, char const* name)
     assert(location != NULL);
     assert(name != NULL);
 
-    struct cst_identifier* const self = autil_xalloc(NULL, sizeof(*self));
+    struct cst_identifier* const self = sunder_xalloc(NULL, sizeof(*self));
     memset(self, 0x00, sizeof(*self));
     self->location = location;
     self->name = name;
@@ -925,7 +925,7 @@ cst_boolean_new(struct source_location const* location, bool value)
 {
     assert(location != NULL);
 
-    struct cst_boolean* const self = autil_xalloc(NULL, sizeof(*self));
+    struct cst_boolean* const self = sunder_xalloc(NULL, sizeof(*self));
     memset(self, 0x00, sizeof(*self));
     self->location = location;
     self->value = value;
@@ -935,13 +935,13 @@ cst_boolean_new(struct source_location const* location, bool value)
 struct cst_integer*
 cst_integer_new(
     struct source_location const* location,
-    struct autil_bigint const* value,
+    struct sunder_bigint const* value,
     char const* suffix)
 {
     assert(location != NULL);
     assert(suffix != NULL);
 
-    struct cst_integer* const self = autil_xalloc(NULL, sizeof(*self));
+    struct cst_integer* const self = sunder_xalloc(NULL, sizeof(*self));
     memset(self, 0x00, sizeof(*self));
     self->location = location;
     self->value = value;

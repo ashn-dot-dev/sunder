@@ -23,12 +23,12 @@ struct orderer {
     // order new. This stretchy buffer is not resized after it is initialized,
     // so addresses of each element are stable for the duration of the ordering
     // phase.
-    autil_sbuf(struct tldecl) tldecls;
+    sunder_sbuf(struct tldecl) tldecls;
     // Top-level declarations, topologically sorted such that any declaration
     // with index k does not depend on any declaration with index k+n for all
     // n. Initialized as an empty sbuf in orderer_new and populated during the
     // order phase.
-    autil_sbuf(struct cst_decl const*) topological_order;
+    sunder_sbuf(struct cst_decl const*) topological_order;
 };
 static struct orderer*
 orderer_new(struct module* module);
@@ -73,16 +73,16 @@ orderer_new(struct module* module)
 {
     assert(module != NULL);
 
-    struct orderer* const self = autil_xalloc(NULL, sizeof(*self));
+    struct orderer* const self = sunder_xalloc(NULL, sizeof(*self));
     memset(self, 0x00, sizeof(*self));
 
     self->module = module;
-    for (size_t i = 0; i < autil_sbuf_count(module->cst->decls); ++i) {
+    for (size_t i = 0; i < sunder_sbuf_count(module->cst->decls); ++i) {
         struct tldecl const tldecl = {TLDECL_UNORDERED, module->cst->decls[i]};
         struct tldecl const* const existing = orderer_tldecl_lookup(
             self,
             orderer_tldecl_name(
-                module->cst->decls[i], autil_sbuf_count(self->tldecls)));
+                module->cst->decls[i], sunder_sbuf_count(self->tldecls)));
         if (existing != NULL) {
             fatal(
                 module->cst->decls[i]->location,
@@ -92,7 +92,7 @@ orderer_new(struct module* module)
                 existing->decl->location->line);
         }
 
-        autil_sbuf_push(self->tldecls, tldecl);
+        sunder_sbuf_push(self->tldecls, tldecl);
     }
 
     return self;
@@ -103,11 +103,11 @@ orderer_del(struct orderer* self)
 {
     assert(self != NULL);
 
-    autil_sbuf_fini(self->tldecls);
-    autil_sbuf_fini(self->topological_order);
+    sunder_sbuf_fini(self->tldecls);
+    sunder_sbuf_fini(self->topological_order);
 
     memset(self, 0x00, sizeof(*self));
-    autil_xalloc(self, AUTIL_XALLOC_FREE);
+    sunder_xalloc(self, SUNDER_XALLOC_FREE);
 }
 
 static struct tldecl*
@@ -116,7 +116,7 @@ orderer_tldecl_lookup(struct orderer* orderer, char const* name)
     assert(orderer != NULL);
     assert(name != NULL);
 
-    for (size_t i = 0; i < autil_sbuf_count(orderer->tldecls); ++i) {
+    for (size_t i = 0; i < sunder_sbuf_count(orderer->tldecls); ++i) {
         if (orderer_tldecl_name(orderer->tldecls[i].decl, i) == name) {
             return &orderer->tldecls[i];
         }
@@ -144,11 +144,11 @@ orderer_tldecl_name(struct cst_decl const* decl, size_t declaration_order_index)
         // not truly order-independent since other top-level declarations that
         // may depend on an extended declaration are unable to look up that
         // declaration by name during ordering.
-        struct autil_string* s =
-            autil_string_new_fmt("declaration %zu", declaration_order_index);
-        char const* const name = autil_sipool_intern(
-            context()->sipool, autil_string_start(s), autil_string_count(s));
-        autil_string_del(s);
+        struct sunder_string* s =
+            sunder_string_new_fmt("declaration %zu", declaration_order_index);
+        char const* const name = sunder_sipool_intern(
+            context()->sipool, sunder_string_start(s), sunder_string_count(s));
+        sunder_string_del(s);
         return name;
     }
 
@@ -182,7 +182,7 @@ order_tldecl(struct orderer* orderer, struct tldecl* tldecl)
     // declaration as well as all of top level declaration's dependencies.
     tldecl->state = TLDECL_ORDERED;
 
-    autil_sbuf_push(orderer->topological_order, tldecl->decl);
+    sunder_sbuf_push(orderer->topological_order, tldecl->decl);
 }
 
 static void
@@ -209,7 +209,7 @@ order_decl(struct orderer* orderer, struct cst_decl const* decl)
     case CST_DECL_FUNCTION: {
         struct cst_template_parameter const* const* const template_parameters =
             decl->data.function.template_parameters;
-        if (autil_sbuf_count(template_parameters) != 0) {
+        if (sunder_sbuf_count(template_parameters) != 0) {
             // TODO: Not sure how we want to handle ordering of generic
             // functions. Ignoring the ordering of generic functions is fine
             // for now since the MVP of generics has been used to implement
@@ -222,7 +222,7 @@ order_decl(struct orderer* orderer, struct cst_decl const* decl)
         }
         struct cst_function_parameter const* const* const function_parameters =
             decl->data.function.function_parameters;
-        for (size_t i = 0; i < autil_sbuf_count(function_parameters); ++i) {
+        for (size_t i = 0; i < sunder_sbuf_count(function_parameters); ++i) {
             order_function_parameter(orderer, function_parameters[i]);
         }
         order_typespec(orderer, decl->data.function.return_typespec);
@@ -231,7 +231,7 @@ order_decl(struct orderer* orderer, struct cst_decl const* decl)
     case CST_DECL_STRUCT: {
         struct cst_template_parameter const* const* const template_parameters =
             decl->data.struct_.template_parameters;
-        if (autil_sbuf_count(template_parameters) != 0) {
+        if (sunder_sbuf_count(template_parameters) != 0) {
             // TODO: Not sure how we want to handle ordering of generic
             // structs. Ignoring the ordering of generic structs is fine for
             // now since the MVP of generics has been used to implement
@@ -258,9 +258,9 @@ order_decl(struct orderer* orderer, struct cst_decl const* decl)
         tldecl->state = TLDECL_ORDERED;
 
         // Order the struct's members.
-        autil_sbuf(struct cst_member const* const) const members =
+        sunder_sbuf(struct cst_member const* const) const members =
             decl->data.struct_.members;
-        for (size_t i = 0; i < autil_sbuf_count(members); ++i) {
+        for (size_t i = 0; i < sunder_sbuf_count(members); ++i) {
             struct cst_member const* const member = members[i];
             switch (member->kind) {
             case CST_MEMBER_VARIABLE: {
@@ -318,9 +318,9 @@ order_expr(struct orderer* orderer, struct cst_expr const* expr)
         return;
     }
     case CST_EXPR_ARRAY: {
-        autil_sbuf(struct cst_expr const* const) const elements =
+        sunder_sbuf(struct cst_expr const* const) const elements =
             expr->data.array.elements;
-        for (size_t i = 0; i < autil_sbuf_count(elements); ++i) {
+        for (size_t i = 0; i < sunder_sbuf_count(elements); ++i) {
             order_expr(orderer, elements[i]);
         }
         if (expr->data.array.ellipsis != NULL) {
@@ -334,17 +334,17 @@ order_expr(struct orderer* orderer, struct cst_expr const* expr)
         return;
     }
     case CST_EXPR_ARRAY_SLICE: {
-        autil_sbuf(struct cst_expr const* const) const elements =
+        sunder_sbuf(struct cst_expr const* const) const elements =
             expr->data.array.elements;
-        for (size_t i = 0; i < autil_sbuf_count(elements); ++i) {
+        for (size_t i = 0; i < sunder_sbuf_count(elements); ++i) {
             order_expr(orderer, elements[i]);
         }
         return;
     }
     case CST_EXPR_STRUCT: {
-        autil_sbuf(struct cst_member_initializer const* const)
+        sunder_sbuf(struct cst_member_initializer const* const)
             const initializers = expr->data.struct_.initializers;
-        for (size_t i = 0; i < autil_sbuf_count(initializers); ++i) {
+        for (size_t i = 0; i < sunder_sbuf_count(initializers); ++i) {
             order_expr(orderer, initializers[i]->expr);
         }
         return;
@@ -359,18 +359,18 @@ order_expr(struct orderer* orderer, struct cst_expr const* expr)
         return;
     }
     case CST_EXPR_SYSCALL: {
-        autil_sbuf(struct cst_expr const* const) const arguments =
+        sunder_sbuf(struct cst_expr const* const) const arguments =
             expr->data.syscall.arguments;
-        for (size_t i = 0; i < autil_sbuf_count(arguments); ++i) {
+        for (size_t i = 0; i < sunder_sbuf_count(arguments); ++i) {
             order_expr(orderer, arguments[i]);
         }
         return;
     }
     case CST_EXPR_CALL: {
         order_expr(orderer, expr->data.call.func);
-        autil_sbuf(struct cst_expr const* const) const arguments =
+        sunder_sbuf(struct cst_expr const* const) const arguments =
             expr->data.call.arguments;
-        for (size_t i = 0; i < autil_sbuf_count(arguments); ++i) {
+        for (size_t i = 0; i < sunder_sbuf_count(arguments); ++i) {
             order_expr(orderer, arguments[i]);
         }
         return;
@@ -423,7 +423,7 @@ order_template_argument_list(
 {
     assert(orderer != NULL);
 
-    for (size_t i = 0; i < autil_sbuf_count(arguments); ++i) {
+    for (size_t i = 0; i < sunder_sbuf_count(arguments); ++i) {
         order_template_argument(orderer, arguments[i]);
     }
 }
@@ -460,9 +460,9 @@ order_typespec(struct orderer* orderer, struct cst_typespec const* typespec)
         return;
     }
     case TYPESPEC_FUNCTION: {
-        autil_sbuf(struct cst_typespec const* const) const parameter_typespecs =
+        sunder_sbuf(struct cst_typespec const* const) const parameter_typespecs =
             typespec->data.function.parameter_typespecs;
-        for (size_t i = 0; i < autil_sbuf_count(parameter_typespecs); ++i) {
+        for (size_t i = 0; i < sunder_sbuf_count(parameter_typespecs); ++i) {
             order_typespec(orderer, parameter_typespecs[i]);
         }
 
@@ -521,7 +521,7 @@ static void
 order_symbol(struct orderer* orderer, struct cst_symbol const* symbol)
 {
     assert(orderer != NULL);
-    assert(autil_sbuf_count(symbol->elements) > 0);
+    assert(sunder_sbuf_count(symbol->elements) > 0);
 
     // If the namespace prefix matches the module namespace then order the
     // non-prefix portion of the symbol. The eventual call to order_name will
@@ -545,9 +545,9 @@ order_symbol(struct orderer* orderer, struct cst_symbol const* symbol)
         return;
     }
 
-    size_t const namespace_count = autil_sbuf_count(namespace->identifiers);
+    size_t const namespace_count = sunder_sbuf_count(namespace->identifiers);
     assert(namespace_count >= 1);
-    if (autil_sbuf_count(symbol->elements) < namespace_count) {
+    if (sunder_sbuf_count(symbol->elements) < namespace_count) {
         // Current symbol refers to some declaration under a parent namespace or
         // the parent namespace itself. Let the resolution of the symbol occur
         // during the resolve phase.
@@ -607,7 +607,7 @@ order(struct module* module)
     assert(module != NULL);
 
     struct orderer* const orderer = orderer_new(module);
-    size_t const decl_count = autil_sbuf_count(orderer->tldecls);
+    size_t const decl_count = sunder_sbuf_count(orderer->tldecls);
 
     for (size_t i = 0; i < decl_count; ++i) {
         struct cst_decl const* const decl = orderer->tldecls[i].decl;
@@ -616,10 +616,10 @@ order(struct module* module)
             orderer_tldecl_lookup(orderer, orderer_tldecl_name(decl, i)));
     }
 
-    assert(decl_count == autil_sbuf_count(orderer->topological_order));
+    assert(decl_count == sunder_sbuf_count(orderer->topological_order));
     for (size_t i = 0; i < decl_count; ++i) {
         struct cst_decl const* const decl = orderer->topological_order[i];
-        autil_sbuf_push(module->ordered, decl);
+        sunder_sbuf_push(module->ordered, decl);
     }
 
     orderer_del(orderer);

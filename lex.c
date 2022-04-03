@@ -9,74 +9,74 @@ static enum token_kind const KEYWORDS_FIRST = TOKEN_TRUE;
 static enum token_kind const KEYWORDS_LAST = TOKEN_TYPEOF;
 static enum token_kind const SIGILS_FIRST = TOKEN_EQ;
 static enum token_kind const SIGILS_LAST = TOKEN_SEMICOLON;
-static struct autil_vstr token_kind_vstrs[TOKEN_EOF + 1u] = {
+static struct sunder_vstr token_kind_vstrs[TOKEN_EOF + 1u] = {
     // Keywords
-    [TOKEN_TRUE] = AUTIL_VSTR_INIT_STR_LITERAL("true"),
-    [TOKEN_FALSE] = AUTIL_VSTR_INIT_STR_LITERAL("false"),
-    [TOKEN_NOT] = AUTIL_VSTR_INIT_STR_LITERAL("not"),
-    [TOKEN_OR] = AUTIL_VSTR_INIT_STR_LITERAL("or"),
-    [TOKEN_AND] = AUTIL_VSTR_INIT_STR_LITERAL("and"),
-    [TOKEN_NAMESPACE] = AUTIL_VSTR_INIT_STR_LITERAL("namespace"),
-    [TOKEN_IMPORT] = AUTIL_VSTR_INIT_STR_LITERAL("import"),
-    [TOKEN_VAR] = AUTIL_VSTR_INIT_STR_LITERAL("var"),
-    [TOKEN_CONST] = AUTIL_VSTR_INIT_STR_LITERAL("const"),
-    [TOKEN_FUNC] = AUTIL_VSTR_INIT_STR_LITERAL("func"),
-    [TOKEN_STRUCT] = AUTIL_VSTR_INIT_STR_LITERAL("struct"),
-    [TOKEN_EXTEND] = AUTIL_VSTR_INIT_STR_LITERAL("extend"),
-    [TOKEN_ALIAS] = AUTIL_VSTR_INIT_STR_LITERAL("alias"),
-    [TOKEN_EXTERN] = AUTIL_VSTR_INIT_STR_LITERAL("extern"),
-    [TOKEN_DUMP] = AUTIL_VSTR_INIT_STR_LITERAL("dump"),
-    [TOKEN_RETURN] = AUTIL_VSTR_INIT_STR_LITERAL("return"),
-    [TOKEN_IF] = AUTIL_VSTR_INIT_STR_LITERAL("if"),
-    [TOKEN_ELIF] = AUTIL_VSTR_INIT_STR_LITERAL("elif"),
-    [TOKEN_ELSE] = AUTIL_VSTR_INIT_STR_LITERAL("else"),
-    [TOKEN_FOR] = AUTIL_VSTR_INIT_STR_LITERAL("for"),
-    [TOKEN_IN] = AUTIL_VSTR_INIT_STR_LITERAL("in"),
-    [TOKEN_BREAK] = AUTIL_VSTR_INIT_STR_LITERAL("break"),
-    [TOKEN_CONTINUE] = AUTIL_VSTR_INIT_STR_LITERAL("continue"),
-    [TOKEN_SYSCALL] = AUTIL_VSTR_INIT_STR_LITERAL("syscall"),
-    [TOKEN_ALIGNOF] = AUTIL_VSTR_INIT_STR_LITERAL("alignof"),
-    [TOKEN_COUNTOF] = AUTIL_VSTR_INIT_STR_LITERAL("countof"),
-    [TOKEN_SIZEOF] = AUTIL_VSTR_INIT_STR_LITERAL("sizeof"),
-    [TOKEN_TYPEOF] = AUTIL_VSTR_INIT_STR_LITERAL("typeof"),
+    [TOKEN_TRUE] = SUNDER_VSTR_INIT_STR_LITERAL("true"),
+    [TOKEN_FALSE] = SUNDER_VSTR_INIT_STR_LITERAL("false"),
+    [TOKEN_NOT] = SUNDER_VSTR_INIT_STR_LITERAL("not"),
+    [TOKEN_OR] = SUNDER_VSTR_INIT_STR_LITERAL("or"),
+    [TOKEN_AND] = SUNDER_VSTR_INIT_STR_LITERAL("and"),
+    [TOKEN_NAMESPACE] = SUNDER_VSTR_INIT_STR_LITERAL("namespace"),
+    [TOKEN_IMPORT] = SUNDER_VSTR_INIT_STR_LITERAL("import"),
+    [TOKEN_VAR] = SUNDER_VSTR_INIT_STR_LITERAL("var"),
+    [TOKEN_CONST] = SUNDER_VSTR_INIT_STR_LITERAL("const"),
+    [TOKEN_FUNC] = SUNDER_VSTR_INIT_STR_LITERAL("func"),
+    [TOKEN_STRUCT] = SUNDER_VSTR_INIT_STR_LITERAL("struct"),
+    [TOKEN_EXTEND] = SUNDER_VSTR_INIT_STR_LITERAL("extend"),
+    [TOKEN_ALIAS] = SUNDER_VSTR_INIT_STR_LITERAL("alias"),
+    [TOKEN_EXTERN] = SUNDER_VSTR_INIT_STR_LITERAL("extern"),
+    [TOKEN_DUMP] = SUNDER_VSTR_INIT_STR_LITERAL("dump"),
+    [TOKEN_RETURN] = SUNDER_VSTR_INIT_STR_LITERAL("return"),
+    [TOKEN_IF] = SUNDER_VSTR_INIT_STR_LITERAL("if"),
+    [TOKEN_ELIF] = SUNDER_VSTR_INIT_STR_LITERAL("elif"),
+    [TOKEN_ELSE] = SUNDER_VSTR_INIT_STR_LITERAL("else"),
+    [TOKEN_FOR] = SUNDER_VSTR_INIT_STR_LITERAL("for"),
+    [TOKEN_IN] = SUNDER_VSTR_INIT_STR_LITERAL("in"),
+    [TOKEN_BREAK] = SUNDER_VSTR_INIT_STR_LITERAL("break"),
+    [TOKEN_CONTINUE] = SUNDER_VSTR_INIT_STR_LITERAL("continue"),
+    [TOKEN_SYSCALL] = SUNDER_VSTR_INIT_STR_LITERAL("syscall"),
+    [TOKEN_ALIGNOF] = SUNDER_VSTR_INIT_STR_LITERAL("alignof"),
+    [TOKEN_COUNTOF] = SUNDER_VSTR_INIT_STR_LITERAL("countof"),
+    [TOKEN_SIZEOF] = SUNDER_VSTR_INIT_STR_LITERAL("sizeof"),
+    [TOKEN_TYPEOF] = SUNDER_VSTR_INIT_STR_LITERAL("typeof"),
     // Sigils
-    [TOKEN_EQ] = AUTIL_VSTR_INIT_STR_LITERAL("=="),
-    [TOKEN_NE] = AUTIL_VSTR_INIT_STR_LITERAL("!="),
-    [TOKEN_LE] = AUTIL_VSTR_INIT_STR_LITERAL("<="),
-    [TOKEN_LT] = AUTIL_VSTR_INIT_STR_LITERAL("<"),
-    [TOKEN_GE] = AUTIL_VSTR_INIT_STR_LITERAL(">="),
-    [TOKEN_GT] = AUTIL_VSTR_INIT_STR_LITERAL(">"),
-    [TOKEN_ASSIGN] = AUTIL_VSTR_INIT_STR_LITERAL("="),
-    [TOKEN_PLUS] = AUTIL_VSTR_INIT_STR_LITERAL("+"),
-    [TOKEN_DASH] = AUTIL_VSTR_INIT_STR_LITERAL("-"),
-    [TOKEN_STAR] = AUTIL_VSTR_INIT_STR_LITERAL("*"),
-    [TOKEN_FSLASH] = AUTIL_VSTR_INIT_STR_LITERAL("/"),
-    [TOKEN_TILDE] = AUTIL_VSTR_INIT_STR_LITERAL("~"),
-    [TOKEN_PIPE] = AUTIL_VSTR_INIT_STR_LITERAL("|"),
-    [TOKEN_CARET] = AUTIL_VSTR_INIT_STR_LITERAL("^"),
-    [TOKEN_AMPERSAND] = AUTIL_VSTR_INIT_STR_LITERAL("&"),
-    [TOKEN_LPAREN] = AUTIL_VSTR_INIT_STR_LITERAL("("),
-    [TOKEN_RPAREN] = AUTIL_VSTR_INIT_STR_LITERAL(")"),
-    [TOKEN_LBRACE] = AUTIL_VSTR_INIT_STR_LITERAL("{"),
-    [TOKEN_RBRACE] = AUTIL_VSTR_INIT_STR_LITERAL("}"),
-    [TOKEN_LBRACKET_LBRACKET] = AUTIL_VSTR_INIT_STR_LITERAL("[["),
-    [TOKEN_RBRACKET_RBRACKET] = AUTIL_VSTR_INIT_STR_LITERAL("]]"),
-    [TOKEN_LBRACKET] = AUTIL_VSTR_INIT_STR_LITERAL("["),
-    [TOKEN_RBRACKET] = AUTIL_VSTR_INIT_STR_LITERAL("]"),
-    [TOKEN_COMMA] = AUTIL_VSTR_INIT_STR_LITERAL(","),
-    [TOKEN_ELLIPSIS] = AUTIL_VSTR_INIT_STR_LITERAL("..."),
-    [TOKEN_DOT_STAR] = AUTIL_VSTR_INIT_STR_LITERAL(".*"),
-    [TOKEN_DOT] = AUTIL_VSTR_INIT_STR_LITERAL("."),
-    [TOKEN_COLON_COLON] = AUTIL_VSTR_INIT_STR_LITERAL("::"),
-    [TOKEN_COLON] = AUTIL_VSTR_INIT_STR_LITERAL(":"),
-    [TOKEN_SEMICOLON] = AUTIL_VSTR_INIT_STR_LITERAL(";"),
+    [TOKEN_EQ] = SUNDER_VSTR_INIT_STR_LITERAL("=="),
+    [TOKEN_NE] = SUNDER_VSTR_INIT_STR_LITERAL("!="),
+    [TOKEN_LE] = SUNDER_VSTR_INIT_STR_LITERAL("<="),
+    [TOKEN_LT] = SUNDER_VSTR_INIT_STR_LITERAL("<"),
+    [TOKEN_GE] = SUNDER_VSTR_INIT_STR_LITERAL(">="),
+    [TOKEN_GT] = SUNDER_VSTR_INIT_STR_LITERAL(">"),
+    [TOKEN_ASSIGN] = SUNDER_VSTR_INIT_STR_LITERAL("="),
+    [TOKEN_PLUS] = SUNDER_VSTR_INIT_STR_LITERAL("+"),
+    [TOKEN_DASH] = SUNDER_VSTR_INIT_STR_LITERAL("-"),
+    [TOKEN_STAR] = SUNDER_VSTR_INIT_STR_LITERAL("*"),
+    [TOKEN_FSLASH] = SUNDER_VSTR_INIT_STR_LITERAL("/"),
+    [TOKEN_TILDE] = SUNDER_VSTR_INIT_STR_LITERAL("~"),
+    [TOKEN_PIPE] = SUNDER_VSTR_INIT_STR_LITERAL("|"),
+    [TOKEN_CARET] = SUNDER_VSTR_INIT_STR_LITERAL("^"),
+    [TOKEN_AMPERSAND] = SUNDER_VSTR_INIT_STR_LITERAL("&"),
+    [TOKEN_LPAREN] = SUNDER_VSTR_INIT_STR_LITERAL("("),
+    [TOKEN_RPAREN] = SUNDER_VSTR_INIT_STR_LITERAL(")"),
+    [TOKEN_LBRACE] = SUNDER_VSTR_INIT_STR_LITERAL("{"),
+    [TOKEN_RBRACE] = SUNDER_VSTR_INIT_STR_LITERAL("}"),
+    [TOKEN_LBRACKET_LBRACKET] = SUNDER_VSTR_INIT_STR_LITERAL("[["),
+    [TOKEN_RBRACKET_RBRACKET] = SUNDER_VSTR_INIT_STR_LITERAL("]]"),
+    [TOKEN_LBRACKET] = SUNDER_VSTR_INIT_STR_LITERAL("["),
+    [TOKEN_RBRACKET] = SUNDER_VSTR_INIT_STR_LITERAL("]"),
+    [TOKEN_COMMA] = SUNDER_VSTR_INIT_STR_LITERAL(","),
+    [TOKEN_ELLIPSIS] = SUNDER_VSTR_INIT_STR_LITERAL("..."),
+    [TOKEN_DOT_STAR] = SUNDER_VSTR_INIT_STR_LITERAL(".*"),
+    [TOKEN_DOT] = SUNDER_VSTR_INIT_STR_LITERAL("."),
+    [TOKEN_COLON_COLON] = SUNDER_VSTR_INIT_STR_LITERAL("::"),
+    [TOKEN_COLON] = SUNDER_VSTR_INIT_STR_LITERAL(":"),
+    [TOKEN_SEMICOLON] = SUNDER_VSTR_INIT_STR_LITERAL(";"),
     // Identifiers and Non-Keyword Literals
-    [TOKEN_IDENTIFIER] = AUTIL_VSTR_INIT_STR_LITERAL("identifier"),
-    [TOKEN_INTEGER] = AUTIL_VSTR_INIT_STR_LITERAL("integer"),
-    [TOKEN_CHARACTER] = AUTIL_VSTR_INIT_STR_LITERAL("character"),
-    [TOKEN_BYTES] = AUTIL_VSTR_INIT_STR_LITERAL("bytes"),
+    [TOKEN_IDENTIFIER] = SUNDER_VSTR_INIT_STR_LITERAL("identifier"),
+    [TOKEN_INTEGER] = SUNDER_VSTR_INIT_STR_LITERAL("integer"),
+    [TOKEN_CHARACTER] = SUNDER_VSTR_INIT_STR_LITERAL("character"),
+    [TOKEN_BYTES] = SUNDER_VSTR_INIT_STR_LITERAL("bytes"),
     // Meta
-    [TOKEN_EOF] = AUTIL_VSTR_INIT_STR_LITERAL("end-of-file"),
+    [TOKEN_EOF] = SUNDER_VSTR_INIT_STR_LITERAL("end-of-file"),
 };
 
 char const*
@@ -92,15 +92,15 @@ token_to_new_cstr(struct token const* token)
     assert(token != NULL);
 
     if (token->kind == TOKEN_IDENTIFIER) {
-        return autil_cstr_new_fmt(
+        return sunder_cstr_new_fmt(
             "identifier(%.*s)", (int)token->count, token->start);
     }
     if (token->kind == TOKEN_INTEGER) {
-        return autil_cstr_new_fmt(
+        return sunder_cstr_new_fmt(
             "integer(%.*s)", (int)token->count, token->start);
     }
 
-    return autil_cstr_new_cstr(token_kind_to_cstr(token->kind));
+    return sunder_cstr_new_cstr(token_kind_to_cstr(token->kind));
 }
 
 struct lexer {
@@ -118,7 +118,7 @@ lexer_new(struct module* module)
 {
     assert(module != NULL);
 
-    struct lexer* const self = autil_xalloc(NULL, sizeof(*self));
+    struct lexer* const self = sunder_xalloc(NULL, sizeof(*self));
     memset(self, 0x00, sizeof(*self));
 
     self->module = module;
@@ -134,7 +134,7 @@ lexer_del(struct lexer* self)
     assert(self != NULL);
 
     memset(self, 0x00, sizeof(*self));
-    autil_xalloc(self, AUTIL_XALLOC_FREE);
+    sunder_xalloc(self, SUNDER_XALLOC_FREE);
 }
 
 static struct token*
@@ -147,14 +147,14 @@ token_new(
     assert(start != NULL || count == 0);
     assert(count != 0 || kind == TOKEN_EOF);
 
-    struct token* const self = autil_xalloc(NULL, sizeof(*self));
+    struct token* const self = sunder_xalloc(NULL, sizeof(*self));
     memset(self, 0x00, sizeof(*self));
     self->kind = kind;
     self->start = start;
     self->count = count;
     self->location = location;
 
-    autil_freezer_register(context()->freezer, self);
+    sunder_freezer_register(context()->freezer, self);
     return self;
 }
 
@@ -174,8 +174,8 @@ token_new_integer(
     char const* start,
     size_t count,
     struct source_location location,
-    struct autil_vstr number,
-    struct autil_vstr suffix)
+    struct sunder_vstr number,
+    struct sunder_vstr suffix)
 {
     assert(start != NULL && count != 0);
     assert(number.start != NULL && number.count != 0);
@@ -193,7 +193,7 @@ skip_whitespace(struct lexer* self)
 {
     assert(self != NULL);
 
-    while (autil_isspace(*self->current)) {
+    while (sunder_isspace(*self->current)) {
         self->current_line += *self->current == '\n';
         self->current += 1;
     }
@@ -211,7 +211,7 @@ skip_comment(struct lexer* self)
     while (*self->current != '\0' && *self->current != '\n') {
         self->current += 1;
     }
-    self->current += AUTIL_STR_LITERAL_COUNT("\n");
+    self->current += SUNDER_STR_LITERAL_COUNT("\n");
     self->current_line += 1;
 }
 
@@ -220,7 +220,7 @@ skip_whitespace_and_comments(struct lexer* self)
 {
     assert(self != NULL);
 
-    while (autil_isspace(*self->current) || (*self->current == '#')) {
+    while (sunder_isspace(*self->current) || (*self->current == '#')) {
         skip_whitespace(self);
         skip_comment(self);
     }
@@ -230,18 +230,18 @@ static struct token*
 lex_keyword_or_identifier(struct lexer* self)
 {
     assert(self != NULL);
-    assert(autil_isalpha(*self->current) || *self->current == '_');
+    assert(sunder_isalpha(*self->current) || *self->current == '_');
 
     char const* const start = self->current;
-    while (autil_isalnum(*self->current) || *self->current == '_') {
+    while (sunder_isalnum(*self->current) || *self->current == '_') {
         self->current += 1;
     }
     size_t const count = (size_t)(self->current - start);
-    struct autil_vstr const symbol = {start, count};
+    struct sunder_vstr const symbol = {start, count};
 
     for (int i = (int)KEYWORDS_FIRST; i <= (int)KEYWORDS_LAST; ++i) {
-        struct autil_vstr const* const keyword = &token_kind_vstrs[i];
-        if (autil_vstr_cmp(&symbol, keyword) == 0) {
+        struct sunder_vstr const* const keyword = &token_kind_vstrs[i];
+        if (sunder_vstr_cmp(&symbol, keyword) == 0) {
             return token_new(
                 start, count, self->next_token_location, (enum token_kind)i);
         }
@@ -254,22 +254,22 @@ static struct token*
 lex_integer(struct lexer* self)
 {
     assert(self != NULL);
-    assert(autil_isdigit(*self->current));
+    assert(sunder_isdigit(*self->current));
 
     // Prefix
     char const* const number_start = self->current;
-    int (*radix_isdigit)(int c) = autil_isdigit;
-    if (autil_cstr_starts_with(self->current, "0b")) {
-        self->current += AUTIL_STR_LITERAL_COUNT("0b");
-        radix_isdigit = autil_isbdigit;
+    int (*radix_isdigit)(int c) = sunder_isdigit;
+    if (sunder_cstr_starts_with(self->current, "0b")) {
+        self->current += SUNDER_STR_LITERAL_COUNT("0b");
+        radix_isdigit = sunder_isbdigit;
     }
-    else if (autil_cstr_starts_with(self->current, "0o")) {
-        self->current += AUTIL_STR_LITERAL_COUNT("0o");
-        radix_isdigit = autil_isodigit;
+    else if (sunder_cstr_starts_with(self->current, "0o")) {
+        self->current += SUNDER_STR_LITERAL_COUNT("0o");
+        radix_isdigit = sunder_isodigit;
     }
-    else if (autil_cstr_starts_with(self->current, "0x")) {
-        self->current += AUTIL_STR_LITERAL_COUNT("0x");
-        radix_isdigit = autil_isxdigit;
+    else if (sunder_cstr_starts_with(self->current, "0x")) {
+        self->current += SUNDER_STR_LITERAL_COUNT("0x");
+        radix_isdigit = sunder_isxdigit;
     }
 
     // Digits
@@ -285,15 +285,15 @@ lex_integer(struct lexer* self)
 
     // Suffix
     char const* const suffix_start = self->current;
-    while (autil_isalnum(*self->current)) {
+    while (sunder_isalnum(*self->current)) {
         self->current += 1;
     }
     size_t const suffix_count = (size_t)(self->current - suffix_start);
 
     char const* const start = number_start;
     size_t const count = (size_t)(self->current - start);
-    struct autil_vstr const number = {number_start, number_count};
-    struct autil_vstr const suffix = {suffix_start, suffix_count};
+    struct sunder_vstr const number = {number_start, number_count};
+    struct sunder_vstr const suffix = {suffix_start, suffix_count};
     struct token* const token = token_new_integer(
         start, count, self->next_token_location, number, suffix);
 
@@ -319,7 +319,7 @@ advance_character(struct lexer* self, char const* what)
             self->module->name, self->current_line, self->current};
         fatal(&location, "end-of-line encountered in %s", what);
     }
-    if (!autil_isprint(*self->current)) {
+    if (!sunder_isprint(*self->current)) {
         struct source_location const location = {
             self->module->name, self->current_line, self->current};
         fatal(
@@ -429,16 +429,16 @@ lex_bytes(struct lexer* self)
     char const* const start = self->current;
     self->current += 1;
 
-    struct autil_string* bytes = autil_string_new(NULL, 0);
+    struct sunder_string* bytes = sunder_string_new(NULL, 0);
     while (*self->current != '"') {
-        autil_string_append_fmt(
+        sunder_string_append_fmt(
             bytes, "%c", advance_character(self, "bytes literal"));
     }
 
     assert(*self->current == '"');
     self->current += 1;
 
-    autil_string_freeze(bytes, context()->freezer);
+    sunder_string_freeze(bytes, context()->freezer);
     struct token* token = token_new(
         start,
         (size_t)(self->current - start),
@@ -453,12 +453,12 @@ static struct token*
 lex_sigil(struct lexer* self)
 {
     assert(self != NULL);
-    assert(autil_ispunct(*self->current));
+    assert(sunder_ispunct(*self->current));
 
     for (int i = (int)SIGILS_FIRST; i <= (int)SIGILS_LAST; ++i) {
         char const* const sigil_start = token_kind_vstrs[i].start;
         size_t const sigil_count = token_kind_vstrs[i].count;
-        if (autil_cstr_starts_with(self->current, sigil_start)) {
+        if (sunder_cstr_starts_with(self->current, sigil_start)) {
             self->current += sigil_count;
             return token_new(
                 sigil_start,
@@ -470,7 +470,7 @@ lex_sigil(struct lexer* self)
 
     char const* const start = self->current;
     size_t count = 0;
-    while (autil_ispunct(start[count]) && start[count] != '#') {
+    while (sunder_ispunct(start[count]) && start[count] != '#') {
         count += 1;
     }
 
@@ -492,10 +492,10 @@ lexer_next_token(struct lexer* self)
     };
 
     char const ch = *self->current;
-    if (autil_isalpha(ch) || ch == '_') {
+    if (sunder_isalpha(ch) || ch == '_') {
         return lex_keyword_or_identifier(self);
     }
-    if (autil_isdigit(ch)) {
+    if (sunder_isdigit(ch)) {
         return lex_integer(self);
     }
     if (ch == '\'') {
@@ -504,7 +504,7 @@ lexer_next_token(struct lexer* self)
     if (ch == '\"') {
         return lex_bytes(self);
     }
-    if (autil_ispunct(ch)) {
+    if (sunder_ispunct(ch)) {
         return lex_sigil(self);
     }
     if (ch == '\0') {
