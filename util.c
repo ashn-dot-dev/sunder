@@ -484,15 +484,6 @@ directory_files(char const* path)
 SUNDER_STATIC_ASSERT(CHAR_BIT_IS_8, CHAR_BIT == 8);
 
 int
-sunder_cstr_vpcmp(void const* lhs, void const* rhs)
-{
-    assert(lhs != NULL);
-    assert(rhs != NULL);
-
-    return strcmp(*(char const**)lhs, *(char const**)rhs);
-}
-
-int
 sunder_isalnum(int c)
 {
     return sunder_isalpha(c) || sunder_isdigit(c);
@@ -638,7 +629,7 @@ sunder_xalloc(void* ptr, size_t size)
         return NULL;
     }
     if ((ptr = SUNDER_REALLOC(ptr, size)) == NULL) {
-        sunder_fatalf("[%s] Out of memory", __func__);
+        fatal(NULL, "[%s] Out of memory", __func__);
     }
     return ptr;
 }
@@ -648,23 +639,9 @@ sunder_xallocn(void* ptr, size_t nmemb, size_t size)
 {
     size_t const sz = nmemb * size;
     if (nmemb != 0 && sz / nmemb != size) {
-        sunder_fatalf("[%s] Integer overflow", __func__);
+        fatal(NULL, "[%s] Integer overflow", __func__);
     }
     return sunder_xalloc(ptr, sz);
-}
-
-void
-sunder_fatalf(char const* fmt, ...)
-{
-    va_list args;
-    va_start(args, fmt);
-
-    fputs("error: ", stderr);
-    vfprintf(stderr, fmt, args);
-    fputs("\n", stderr);
-
-    va_end(args);
-    exit(EXIT_FAILURE);
 }
 
 // Prepend othr_size bytes from othr onto the sunder_xalloc-allocated buffer of
@@ -826,7 +803,7 @@ sunder_cstr_new_fmt(char const* fmt, ...)
     va_end(copy);
 
     if (len < 0) {
-        sunder_fatalf("[%s] Formatting failure", __func__);
+        fatal(NULL, "[%s] Formatting failure", __func__);
     }
 
     size_t size = (size_t)len + SUNDER_STR_LITERAL_COUNT("\0");
@@ -1092,7 +1069,7 @@ sunder_bitarr_set(struct sunder_bitarr* self, size_t n, int value)
     assert(self != NULL);
 
     if (n >= self->count) {
-        sunder_fatalf("[%s] Index out of bounds (%zu)", __func__, n);
+        fatal(NULL, "[%s] Index out of bounds (%zu)", __func__, n);
     }
 
     SUNDER__BITARR_WORD_TYPE_* const pword =
@@ -1108,7 +1085,7 @@ sunder_bitarr_get(struct sunder_bitarr const* self, size_t n)
     assert(self != NULL);
 
     if (n >= self->count) {
-        sunder_fatalf("[%s] Index out of bounds (%zu)", __func__, n);
+        fatal(NULL, "[%s] Index out of bounds (%zu)", __func__, n);
     }
 
     SUNDER__BITARR_WORD_TYPE_ const word =
@@ -1126,7 +1103,8 @@ sunder_bitarr_assign(struct sunder_bitarr* self, struct sunder_bitarr const* oth
     assert(othr != NULL);
 
     if (self->count != othr->count) {
-        sunder_fatalf(
+        fatal(
+            NULL,
             "[%s] Mismatched array counts (%zu, %zu)",
             __func__,
             self->count,
@@ -1145,7 +1123,8 @@ sunder_bitarr_compl(struct sunder_bitarr* res, struct sunder_bitarr const* rhs)
     assert(rhs != NULL);
 
     if (res->count != rhs->count) {
-        sunder_fatalf(
+        fatal(
+            NULL,
             "[%s] Mismatched array counts (%zu, %zu)",
             __func__,
             res->count,
@@ -1165,7 +1144,8 @@ sunder_bitarr_shiftl(
     assert(lhs != NULL);
 
     if (res->count != lhs->count) {
-        sunder_fatalf(
+        fatal(
+            NULL,
             "[%s] Mismatched array counts (%zu, %zu)",
             __func__,
             res->count,
@@ -1190,7 +1170,8 @@ sunder_bitarr_shiftr(
     assert(lhs != NULL);
 
     if (res->count != lhs->count) {
-        sunder_fatalf(
+        fatal(
+            NULL,
             "[%s] Mismatched array counts (%zu, %zu)",
             __func__,
             res->count,
@@ -1218,7 +1199,8 @@ sunder_bitarr_and(
     assert(rhs != NULL);
 
     if (res->count != lhs->count || res->count != rhs->count) {
-        sunder_fatalf(
+        fatal(
+            NULL,
             "[%s] Mismatched array counts (%zu, %zu, %zu)",
             __func__,
             res->count,
@@ -1242,7 +1224,8 @@ sunder_bitarr_xor(
     assert(rhs != NULL);
 
     if (res->count != lhs->count || res->count != rhs->count) {
-        sunder_fatalf(
+        fatal(
+            NULL,
             "[%s] Mismatched array counts (%zu, %zu, %zu)",
             __func__,
             res->count,
@@ -1266,7 +1249,8 @@ sunder_bitarr_or(
     assert(rhs != NULL);
 
     if (res->count != lhs->count || res->count != rhs->count) {
-        sunder_fatalf(
+        fatal(
+            NULL,
             "[%s] Mismatched array counts (%zu, %zu, %zu)",
             __func__,
             res->count,
@@ -1279,6 +1263,12 @@ sunder_bitarr_or(
     }
 }
 
+// Arbitrary precision integer.
+// A bigint conceptually consists of the following components:
+// (1) sign: The arithmetic sign of the integer (+, -, or 0).
+// (2) magnitude: The absolute value of the bigint, presented through this API
+//     as an infinitely long sequence of bits with little endian ordering.
+//
 // The internals of struct sunder_bigint are designed such that initializing an
 // sunder_bigint with:
 //      struct sunder_bigint foo = {0};
@@ -1397,7 +1387,8 @@ sunder__bigint_shiftr_limbs_(struct sunder_bigint* self, size_t nlimbs)
         return;
     }
     if (nlimbs > self->count) {
-        sunder_fatalf(
+        fatal(
+            NULL,
             "[%s] Attempted right shift of %zu limbs on bigint with %zu limbs",
             __func__,
             nlimbs,
@@ -1878,7 +1869,7 @@ sunder_bigint_divrem(
 
     // lhs / 0 == undefined
     if (rhs->sign == 0) {
-        sunder_fatalf("[%s] Divide by zero", __func__);
+        fatal(NULL, "[%s] Divide by zero", __func__);
     }
 
     // Binary Long Division Algorithm
@@ -2205,7 +2196,7 @@ sunder_bigint_to_new_cstr(struct sunder_bigint const* self, char const* fmt)
         }
     }
     else {
-        sunder_fatalf("Unreachable!");
+        fatal(NULL, "Unreachable!");
     }
 
     if (digits_size != 0) {
@@ -2383,7 +2374,7 @@ sunder_string_ref(struct sunder_string* self, size_t idx)
     assert(self != NULL);
 
     if (idx >= self->count) {
-        sunder_fatalf("[%s] Index out of bounds (%zu)", __func__, idx);
+        fatal(NULL, "[%s] Index out of bounds (%zu)", __func__, idx);
     }
     return &self->start[idx];
 }
@@ -2394,7 +2385,7 @@ sunder_string_ref_const(struct sunder_string const* self, size_t idx)
     assert(self != NULL);
 
     if (idx >= self->count) {
-        sunder_fatalf("[%s] Index out of bounds (%zu)", __func__, idx);
+        fatal(NULL, "[%s] Index out of bounds (%zu)", __func__, idx);
     }
     return &self->start[idx];
 }
@@ -2406,7 +2397,7 @@ sunder_string_insert(
     assert(self != NULL);
     assert(start != NULL || count == 0);
     if (idx > self->count) {
-        sunder_fatalf("[%s] Invalid index %zu", __func__, idx);
+        fatal(NULL, "[%s] Invalid index %zu", __func__, idx);
     }
 
     if (count == 0) {
@@ -2423,7 +2414,7 @@ sunder_string_remove(struct sunder_string* self, size_t idx, size_t count)
 {
     assert(self != NULL);
     if ((idx + count) > self->count) {
-        sunder_fatalf("[%s] Invalid index,count %zu,%zu", __func__, idx, count);
+        fatal(NULL, "[%s] Invalid index,count %zu,%zu", __func__, idx, count);
     }
 
     if (count == 0) {
@@ -2474,7 +2465,7 @@ sunder_string_append_vfmt(
     va_end(copy);
 
     if (len < 0) {
-        sunder_fatalf("[%s] Formatting failure", __func__);
+        fatal(NULL, "[%s] Formatting failure", __func__);
     }
 
     size_t size = (size_t)len + SUNDER_STR_LITERAL_COUNT("\0");

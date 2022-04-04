@@ -62,13 +62,6 @@ typedef union {
     enum {STATIC_ASSERT__ ## what = 1/!!(expr)}//;
 // clang-format on
 
-// Should return an int less than, equal to, or greater than zero if lhs is
-// semantically less than, equal to, or greater than rhs, respectively.
-typedef int (*sunder_vpcmp_fn)(void const* lhs, void const* rhs);
-// Implementations of sunder_vpcmp_fn for builtin types.
-int
-sunder_cstr_vpcmp(void const* lhs, void const* rhs); // char const*
-
 // Alternatives to the C99 standard library functions in ctype.h.
 // These functions always use the "C" locale and will not result in undefined
 // behavior if passed a value not representable by an unsigned char.
@@ -118,11 +111,6 @@ sunder_xalloc(void* ptr, size_t size);
 void*
 sunder_xallocn(void* ptr, size_t nmemb, size_t size);
 #define SUNDER_XALLOC_FREE ((size_t)0)
-
-// Write a formatted error message to stderr and exit with EXIT_FAILURE status.
-// A newline is automatically appended to the end of the formatted message.
-void
-sunder_fatalf(char const* fmt, ...);
 
 // Read the full contents of the file specified by path.
 // Memory for the read content is allocated with sunder_xalloc.
@@ -176,7 +164,7 @@ struct sunder_vstr {
 #define SUNDER_VSTR_LOCAL_PTR_STR_LITERAL(str_literal)                         \
     SUNDER_VSTR_LOCAL_PTR(str_literal, SUNDER_STR_LITERAL_COUNT(str_literal))
 
-// Initializer for a vstring literal from a cstring literal.
+// Initializer for a vstr literal from a cstr literal.
 // Example:
 //      static struct sunder_vstr const foo =
 //          SUNDER_VSTR_INIT_STR_LITERAL("foo");
@@ -276,7 +264,6 @@ sunder_sipool_intern_cstr(struct sunder_sipool* self, char const* cstr);
 //      sunder_sbuf(int) sbuf = NULL;
 //      sunder_sbuf_push(sbuf, 1);
 #define sunder_sbuf(TYPE) TYPE*
-#define sunder_sbuf_const(TYPE) TYPE const*
 
 // void sunder_sbuf_fini(TYPE* sbuf)
 // ------------------------------------------------------------
@@ -427,12 +414,6 @@ sunder_bitarr_or(
     struct sunder_bitarr* res,
     struct sunder_bitarr const* lhs,
     struct sunder_bitarr const* rhs);
-
-// Arbitrary precision integer.
-// A bigint conceptually consists of the following components:
-// (1) sign: The arithmetic sign of the integer (+, -, or 0).
-// (2) magnitude: The absolute value of the bigint, presented through this API
-//     as an infinitely long sequence of bits with little endian ordering.
 
 extern struct sunder_bigint const* const SUNDER_BIGINT_ZERO; // 0
 extern struct sunder_bigint const* const SUNDER_BIGINT_POS_ONE; // +1
@@ -654,7 +635,6 @@ sunder_string_append_fmt(struct sunder_string* self, char const* fmt, ...);
 void
 sunder_string_append_vfmt(
     struct sunder_string* self, char const* fmt, va_list args);
-
 // Split the string on all occurrences of the provided separator.
 // Empty strings are *NOT* removed from the result.
 // This function returns a stretchy buffer of newly allocated sunder_string
