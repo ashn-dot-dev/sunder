@@ -85,9 +85,9 @@ int sunder_toupper(int c);
 // These functions do not result in undefined behavior when passed an invalid
 // pointer argument paired with a memory-size argument of zero.
 // clang-format off
-int sunder_memcmp(void const* s1, void const* s2, size_t n);
-void* sunder_memmove(void* dest, void const* src, size_t n);
-void* sunder_memset(void* s, int c, size_t n);
+int safe_memcmp(void const* s1, void const* s2, size_t n);
+void* safe_memmove(void* dest, void const* src, size_t n);
+void* safe_memset(void* s, int c, size_t n);
 // clang-format on
 
 // General purpose allocator functions with out-of-memory error checking. The

@@ -47,7 +47,7 @@ read_source(char const* path)
     // [\0][t][e][x][t][\0]
     text = xalloc(text, text_size + 2);
     char* const result = (char*)text + 1;
-    sunder_memmove(result, text, text_size);
+    safe_memmove(result, text, text_size);
     result[-1] = '\0'; // NUL-prefix.
     result[text_size] = '\0'; // NUL-terminator.
 
@@ -586,7 +586,7 @@ sunder_toupper(int c)
 }
 
 int
-sunder_memcmp(void const* s1, void const* s2, size_t n)
+safe_memcmp(void const* s1, void const* s2, size_t n)
 {
     assert(s1 != NULL || n == 0);
     assert(s2 != NULL || n == 0);
@@ -598,7 +598,7 @@ sunder_memcmp(void const* s1, void const* s2, size_t n)
 }
 
 void*
-sunder_memmove(void* dest, void const* src, size_t n)
+safe_memmove(void* dest, void const* src, size_t n)
 {
     assert(dest != NULL || n == 0);
     assert(src != NULL || n == 0);
@@ -610,7 +610,7 @@ sunder_memmove(void* dest, void const* src, size_t n)
 }
 
 void*
-sunder_memset(void* s, int c, size_t n)
+safe_memset(void* s, int c, size_t n)
 {
     assert(s != NULL || n == 0);
 
@@ -771,7 +771,7 @@ cstr_new(char const* start, size_t count)
     assert(start != NULL || count == 0);
 
     char* const s = xalloc(NULL, count + STR_LITERAL_COUNT("\0"));
-    sunder_memmove(s, start, count);
+    safe_memmove(s, start, count);
     s[count] = '\0';
     return s;
 }
@@ -838,7 +838,7 @@ vstr_cmp(struct vstr const* lhs, struct vstr const* rhs)
     assert(rhs != NULL);
 
     size_t const n = lhs->count < rhs->count ? lhs->count : rhs->count;
-    int const cmp = sunder_memcmp(lhs->start, rhs->start, n);
+    int const cmp = safe_memcmp(lhs->start, rhs->start, n);
 
     if (cmp != 0 || lhs->count == rhs->count) {
         return cmp;
@@ -863,7 +863,7 @@ vstr_starts_with(struct vstr const* vstr, struct vstr const* target)
     if (vstr->count < target->count) {
         return 0;
     }
-    return sunder_memcmp(vstr->start, target->start, target->count) == 0;
+    return safe_memcmp(vstr->start, target->start, target->count) == 0;
 }
 
 int
@@ -876,7 +876,7 @@ vstr_ends_with(struct vstr const* vstr, struct vstr const* target)
         return 0;
     }
     char const* start = vstr->start + (vstr->count - target->count);
-    return sunder_memcmp(start, target->start, target->count) == 0;
+    return safe_memcmp(start, target->start, target->count) == 0;
 }
 
 struct sipool {
@@ -1109,7 +1109,7 @@ bitarr_assign(struct bitarr* self, struct bitarr const* othr)
 
     assert(
         sunder__bitarr_size_(self->count) == sunder__bitarr_size_(othr->count));
-    sunder_memmove(self, othr, sunder__bitarr_size_(othr->count));
+    safe_memmove(self, othr, sunder__bitarr_size_(othr->count));
 }
 
 void
@@ -2318,7 +2318,7 @@ string_cmp(struct string const* lhs, struct string const* rhs)
     assert(rhs != NULL);
 
     size_t const n = lhs->count < rhs->count ? lhs->count : rhs->count;
-    int const cmp = sunder_memcmp(lhs->start, rhs->start, n);
+    int const cmp = safe_memcmp(lhs->start, rhs->start, n);
 
     if (cmp != 0 || lhs->count == rhs->count) {
         return cmp;

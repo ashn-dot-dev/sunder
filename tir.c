@@ -2060,7 +2060,7 @@ value_to_new_bytes(struct value const* value)
 
     sbuf(uint8_t) bytes = NULL;
     sbuf_resize(bytes, value->type->size);
-    sunder_memset(bytes, 0x00, value->type->size);
+    safe_memset(bytes, 0x00, value->type->size);
 
     switch (value->type->kind) {
     case TYPE_ANY: {
@@ -2129,7 +2129,7 @@ value_to_new_bytes(struct value const* value)
         size_t offset = 0;
         for (size_t i = 0; i < sbuf_count(elements); ++i) {
             sbuf(uint8_t) const element_bytes = value_to_new_bytes(elements[i]);
-            sunder_memmove(bytes + offset, element_bytes, element_size);
+            safe_memmove(bytes + offset, element_bytes, element_size);
             sbuf_fini(element_bytes);
             offset += element_size;
         }
@@ -2152,7 +2152,7 @@ value_to_new_bytes(struct value const* value)
                 value->data.struct_.member_variables[i];
 
             sbuf(uint8_t) const member_bytes = value_to_new_bytes(member_val);
-            sunder_memmove(
+            safe_memmove(
                 bytes + member_def->offset,
                 member_bytes,
                 sbuf_count(member_bytes));
