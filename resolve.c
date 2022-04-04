@@ -460,7 +460,7 @@ normalize(char const* prefix, char const* name, unsigned unique_id)
     // characters within the provided name.
     struct string* const name_string = string_new(NULL, 0);
     for (char const* search = name; *search != '\0'; ++search) {
-        if (sunder_isalnum(*search) || *search == '_') {
+        if (safe_isalnum(*search) || *search == '_') {
             string_append_fmt(name_string, "%c", *search);
             continue;
         }

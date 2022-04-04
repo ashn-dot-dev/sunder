@@ -192,7 +192,7 @@ skip_whitespace(struct lexer* self)
 {
     assert(self != NULL);
 
-    while (sunder_isspace(*self->current)) {
+    while (safe_isspace(*self->current)) {
         self->current_line += *self->current == '\n';
         self->current += 1;
     }
@@ -219,7 +219,7 @@ skip_whitespace_and_comments(struct lexer* self)
 {
     assert(self != NULL);
 
-    while (sunder_isspace(*self->current) || (*self->current == '#')) {
+    while (safe_isspace(*self->current) || (*self->current == '#')) {
         skip_whitespace(self);
         skip_comment(self);
     }
@@ -229,10 +229,10 @@ static struct token*
 lex_keyword_or_identifier(struct lexer* self)
 {
     assert(self != NULL);
-    assert(sunder_isalpha(*self->current) || *self->current == '_');
+    assert(safe_isalpha(*self->current) || *self->current == '_');
 
     char const* const start = self->current;
-    while (sunder_isalnum(*self->current) || *self->current == '_') {
+    while (safe_isalnum(*self->current) || *self->current == '_') {
         self->current += 1;
     }
     size_t const count = (size_t)(self->current - start);
@@ -253,22 +253,22 @@ static struct token*
 lex_integer(struct lexer* self)
 {
     assert(self != NULL);
-    assert(sunder_isdigit(*self->current));
+    assert(safe_isdigit(*self->current));
 
     // Prefix
     char const* const number_start = self->current;
-    int (*radix_isdigit)(int c) = sunder_isdigit;
+    int (*radix_isdigit)(int c) = safe_isdigit;
     if (cstr_starts_with(self->current, "0b")) {
         self->current += STR_LITERAL_COUNT("0b");
-        radix_isdigit = sunder_isbdigit;
+        radix_isdigit = safe_isbdigit;
     }
     else if (cstr_starts_with(self->current, "0o")) {
         self->current += STR_LITERAL_COUNT("0o");
-        radix_isdigit = sunder_isodigit;
+        radix_isdigit = safe_isodigit;
     }
     else if (cstr_starts_with(self->current, "0x")) {
         self->current += STR_LITERAL_COUNT("0x");
-        radix_isdigit = sunder_isxdigit;
+        radix_isdigit = safe_isxdigit;
     }
 
     // Digits
@@ -284,7 +284,7 @@ lex_integer(struct lexer* self)
 
     // Suffix
     char const* const suffix_start = self->current;
-    while (sunder_isalnum(*self->current)) {
+    while (safe_isalnum(*self->current)) {
         self->current += 1;
     }
     size_t const suffix_count = (size_t)(self->current - suffix_start);
@@ -318,7 +318,7 @@ advance_character(struct lexer* self, char const* what)
             self->module->name, self->current_line, self->current};
         fatal(&location, "end-of-line encountered in %s", what);
     }
-    if (!sunder_isprint(*self->current)) {
+    if (!safe_isprint(*self->current)) {
         struct source_location const location = {
             self->module->name, self->current_line, self->current};
         fatal(
@@ -452,7 +452,7 @@ static struct token*
 lex_sigil(struct lexer* self)
 {
     assert(self != NULL);
-    assert(sunder_ispunct(*self->current));
+    assert(safe_ispunct(*self->current));
 
     for (int i = (int)SIGILS_FIRST; i <= (int)SIGILS_LAST; ++i) {
         char const* const sigil_start = token_kind_vstrs[i].start;
@@ -469,7 +469,7 @@ lex_sigil(struct lexer* self)
 
     char const* const start = self->current;
     size_t count = 0;
-    while (sunder_ispunct(start[count]) && start[count] != '#') {
+    while (safe_ispunct(start[count]) && start[count] != '#') {
         count += 1;
     }
 
@@ -491,10 +491,10 @@ lexer_next_token(struct lexer* self)
     };
 
     char const ch = *self->current;
-    if (sunder_isalpha(ch) || ch == '_') {
+    if (safe_isalpha(ch) || ch == '_') {
         return lex_keyword_or_identifier(self);
     }
-    if (sunder_isdigit(ch)) {
+    if (safe_isdigit(ch)) {
         return lex_integer(self);
     }
     if (ch == '\'') {
@@ -503,7 +503,7 @@ lexer_next_token(struct lexer* self)
     if (ch == '\"') {
         return lex_bytes(self);
     }
-    if (sunder_ispunct(ch)) {
+    if (safe_ispunct(ch)) {
         return lex_sigil(self);
     }
     if (ch == '\0') {

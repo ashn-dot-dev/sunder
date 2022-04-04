@@ -483,94 +483,94 @@ directory_files(char const* path)
 SUNDER_STATIC_ASSERT(CHAR_BIT_IS_8, CHAR_BIT == 8);
 
 int
-sunder_isalnum(int c)
+safe_isalnum(int c)
 {
-    return sunder_isalpha(c) || sunder_isdigit(c);
+    return safe_isalpha(c) || safe_isdigit(c);
 }
 
 int
-sunder_isalpha(int c)
+safe_isalpha(int c)
 {
-    return sunder_isupper(c) || sunder_islower(c);
+    return safe_isupper(c) || safe_islower(c);
 }
 
 int
-sunder_isblank(int c)
+safe_isblank(int c)
 {
     return c == ' ' || c == '\t';
 }
 
 int
-sunder_iscntrl(int c)
+safe_iscntrl(int c)
 {
     return (unsigned)c < 0x20 || c == 0x7f;
 }
 
 int
-sunder_isdigit(int c)
+safe_isdigit(int c)
 {
     return (unsigned)c - '0' < 10;
 }
 
 int
-sunder_isgraph(int c)
+safe_isgraph(int c)
 {
-    return sunder_isprint(c) && c != ' ';
+    return safe_isprint(c) && c != ' ';
 }
 
 int
-sunder_islower(int c)
+safe_islower(int c)
 {
     return (unsigned)c - 'a' < 26;
 }
 
 int
-sunder_isprint(int c)
+safe_isprint(int c)
 {
     return 0x20 <= (unsigned)c && (unsigned)c <= 0x7e;
 }
 
 int
-sunder_ispunct(int c)
+safe_ispunct(int c)
 {
-    return sunder_isgraph(c) && !sunder_isalnum(c);
+    return safe_isgraph(c) && !safe_isalnum(c);
 }
 
 int
-sunder_isspace(int c)
+safe_isspace(int c)
 {
     return c == ' ' || c == '\f' || c == '\n' || c == '\r' || c == '\t'
         || c == '\v';
 }
 
 int
-sunder_isupper(int c)
+safe_isupper(int c)
 {
     return (unsigned)c - 'A' < 26;
 }
 
 int
-sunder_isbdigit(int c)
+safe_isbdigit(int c)
 {
     return (unsigned)c - '0' < 2;
 }
 
 int
-sunder_isodigit(int c)
+safe_isodigit(int c)
 {
     return (unsigned)c - '0' < 8;
 }
 
 int
-sunder_isxdigit(int c)
+safe_isxdigit(int c)
 {
-    return sunder_isdigit(c) || (unsigned)c - 'a' < 6 || (unsigned)c - 'A' < 6;
+    return safe_isdigit(c) || (unsigned)c - 'a' < 6 || (unsigned)c - 'A' < 6;
 }
 
 int
 sunder_tolower(int c)
 {
-    if (sunder_isupper(c)) {
+    if (safe_isupper(c)) {
         return c | 0x20;
     }
     return c;
@@ -579,7 +579,7 @@ sunder_tolower(int c)
 int
 sunder_toupper(int c)
 {
-    if (sunder_islower(c)) {
+    if (safe_islower(c)) {
         return c & 0x5f;
     }
     return c;
@@ -1446,7 +1446,7 @@ bigint_new_text(char const* start, size_t count)
     // Default to decimal radix.
     int radix = 10;
     struct bigint const* radix_bigint = BIGINT_DEC;
-    int (*radix_isdigit)(int c) = sunder_isdigit;
+    int (*radix_isdigit)(int c) = safe_isdigit;
 
     // Begin iterating over the string from left to right.
     char const* cur = start;
@@ -1481,21 +1481,21 @@ radix:
     if (cur[1] == 'b') {
         radix = 2;
         radix_bigint = BIGINT_BIN;
-        radix_isdigit = sunder_isbdigit;
+        radix_isdigit = safe_isbdigit;
         cur += 2;
         goto digits;
     }
     if (cur[1] == 'o') {
         radix = 8;
         radix_bigint = BIGINT_OCT;
-        radix_isdigit = sunder_isodigit;
+        radix_isdigit = safe_isodigit;
         cur += 2;
         goto digits;
     }
     if (cur[1] == 'x') {
         radix = 16;
         radix_bigint = BIGINT_HEX;
-        radix_isdigit = sunder_isxdigit;
+        radix_isdigit = safe_isxdigit;
         cur += 2;
         goto digits;
     }
@@ -2060,7 +2060,7 @@ bigint_to_new_cstr(struct bigint const* self, char const* fmt)
         // Width
         char* fmt_ =
             (char*)fmt; // Needed due to broken const behavior of strtol.
-        if (sunder_isdigit(*fmt)) {
+        if (safe_isdigit(*fmt)) {
             width = (size_t)strtol(fmt, &fmt_, 10);
         }
         fmt = fmt_;

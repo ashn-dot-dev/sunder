@@ -63,20 +63,20 @@ typedef union {
 // These functions always use the "C" locale and will not result in undefined
 // behavior if passed a value not representable by an unsigned char.
 // clang-format off
-int sunder_isalnum(int c);
-int sunder_isalpha(int c);
-int sunder_isblank(int c);
-int sunder_iscntrl(int c);
-int sunder_isdigit(int c);
-int sunder_isgraph(int c);
-int sunder_islower(int c);
-int sunder_isprint(int c);
-int sunder_ispunct(int c);
-int sunder_isspace(int c);
-int sunder_isupper(int c);
-int sunder_isbdigit(int c); // Not in C99. Binary digit.
-int sunder_isodigit(int c); // Not in C99. Octal digit.
-int sunder_isxdigit(int c);
+int safe_isalnum(int c);
+int safe_isalpha(int c);
+int safe_isblank(int c);
+int safe_iscntrl(int c);
+int safe_isdigit(int c);
+int safe_isgraph(int c);
+int safe_islower(int c);
+int safe_isprint(int c);
+int safe_ispunct(int c);
+int safe_isspace(int c);
+int safe_isupper(int c);
+int safe_isbdigit(int c); // Not in C99. Binary digit.
+int safe_isodigit(int c); // Not in C99. Octal digit.
+int safe_isxdigit(int c);
 int sunder_tolower(int c);
 int sunder_toupper(int c);
 // clang-format on
