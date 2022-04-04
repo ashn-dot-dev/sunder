@@ -153,7 +153,7 @@ token_new(
     self->count = count;
     self->location = location;
 
-    sunder_freezer_register(context()->freezer, self);
+    freezer_register(context()->freezer, self);
     return self;
 }
 

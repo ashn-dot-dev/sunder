@@ -17,9 +17,7 @@ struct sipool;
 struct bitarr;
 struct bigint;
 struct string;
-struct sunder_vec;
-struct sunder_map;
-struct sunder_freezer;
+struct freezer;
 
 // C99 compatible max_align_t.
 // clang-format off
@@ -270,7 +268,7 @@ sipool_intern_cstr(struct sipool* self, char const* cstr);
 #define sunder_sbuf_fini(sbuf)                                                 \
     ((void)((sbuf) != NULL ? SUNDER__SBUF_FREE_NON_NULL_HEAD_(sbuf) : NULL))
 
-// void sunder_sbuf_freeze(TYPE* sbuf, struct sunder_freezer* freezer)
+// void sunder_sbuf_freeze(TYPE* sbuf, struct freezer* freezer)
 // ------------------------------------------------------------
 // Register resources within bigint with the provided freezer.
 #define sunder_sbuf_freeze(sbuf, freezer)                                      \
@@ -329,7 +327,7 @@ enum{SUNDER__SBUF_HEADER_OFFSET_ = sizeof(struct sunder__sbuf_header_)};
 #define SUNDER__SBUF_FREE_NON_NULL_HEAD_(sbuf_)                                \
     (sunder_xalloc(SUNDER__SBUF_PHEAD_MUTBL_(sbuf_), SUNDER_XALLOC_FREE))
 #define SUNDER__SBUF_FREEZE_NON_NULL_HEAD_(sbuf_, freezer)                     \
-    (sunder_freezer_register(freezer, SUNDER__SBUF_PHEAD_MUTBL_(sbuf_)))
+    (freezer_register(freezer, SUNDER__SBUF_PHEAD_MUTBL_(sbuf_)))
 #define SUNDER__SBUF_MAYBE_GROW_(sbuf_)                                        \
     ((sunder_sbuf_count(sbuf_) == sunder_sbuf_capacity(sbuf_))                 \
          ? (sbuf_) = sunder__sbuf_grw_(sizeof(*(sbuf_)), sbuf_)                \
@@ -351,7 +349,7 @@ void
 bitarr_del(struct bitarr* self);
 // Register resources within the bit array with the provided freezer.
 void
-bitarr_freeze(struct bitarr* self, struct sunder_freezer* freezer);
+bitarr_freeze(struct bitarr* self, struct freezer* freezer);
 
 // Returns the number of bits in this bit array.
 size_t
@@ -439,7 +437,7 @@ void
 bigint_del(struct bigint* self);
 // Register resources within the bigint with the provided freezer.
 void
-bigint_freeze(struct bigint* self, struct sunder_freezer* freezer);
+bigint_freeze(struct bigint* self, struct freezer* freezer);
 
 // Return an int less than, equal to, or greater than zero if lhs is
 // semantically less than, equal to, or greater than rhs, respectively.
@@ -564,7 +562,7 @@ void
 string_del(struct string* self);
 // Register resources within the string with the provided freezer.
 void
-string_freeze(struct string* self, struct sunder_freezer* freezer);
+string_freeze(struct string* self, struct freezer* freezer);
 
 // Pointer to the start of the underlying char array of the string.
 // Returns a pointer to a NUL terminator when the count of the string is zero.
@@ -627,17 +625,17 @@ string_split_on(
     struct string const* self, char const* separator, size_t separator_size);
 
 // Allocate and initialize a freezer.
-struct sunder_freezer*
-sunder_freezer_new(void);
+struct freezer*
+freezer_new(void);
 // Deinitialize and free the freezer.
 // Does nothing if self == NULL.
 void
-sunder_freezer_del(struct sunder_freezer* self);
+freezer_del(struct freezer* self);
 
 // Register a pointer to sunder_xalloc-allocated memory to be freed when the
 // freezer is deinitialized.
 void
-sunder_freezer_register(struct sunder_freezer* self, void* ptr);
+freezer_register(struct freezer* self, void* ptr);
 
 #if __STDC_VERSION__ >= 201112L /* C11+ */
 #    define NORETURN _Noreturn
@@ -805,7 +803,7 @@ module_del(struct module* self);
 
 struct context {
     // Context-owned automatically managed objects.
-    struct sunder_freezer* freezer;
+    struct freezer* freezer;
 
     // Interned strings.
     struct sipool* sipool;
@@ -1944,7 +1942,7 @@ struct symbol_table {
 struct symbol_table*
 symbol_table_new(struct symbol_table const* parent);
 void
-symbol_table_freeze(struct symbol_table* self, struct sunder_freezer* freezer);
+symbol_table_freeze(struct symbol_table* self, struct freezer* freezer);
 void
 symbol_table_insert(
     struct symbol_table* self,
@@ -2358,7 +2356,7 @@ value_new_struct(struct type const* type);
 void
 value_del(struct value* self);
 void
-value_freeze(struct value* self, struct sunder_freezer* freezer);
+value_freeze(struct value* self, struct freezer* freezer);
 struct value*
 value_clone(struct value const* self);
 

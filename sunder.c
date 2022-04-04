@@ -19,7 +19,7 @@ module_new(char const* name, char const* path)
     self->path = sipool_intern_cstr(context()->sipool, path);
 
     char* const source = read_source(self->path);
-    sunder_freezer_register(context()->freezer, source - 1);
+    freezer_register(context()->freezer, source - 1);
     self->source = source;
     self->source_count = strlen(source);
 
@@ -138,7 +138,7 @@ static struct context s_context = {0};
 void
 context_init(void)
 {
-    s_context.freezer = sunder_freezer_new();
+    s_context.freezer = freezer_new();
 
     s_context.sipool = sipool_new();
 #define INTERN_STR_LITERAL(str_literal)                                        \
@@ -204,10 +204,10 @@ context_init(void)
 #define INIT_BUILTIN_TYPE(builtin_lvalue, /* struct type* */ t)                \
     {                                                                          \
         struct type* const type = t;                                           \
-        sunder_freezer_register(s_context.freezer, type);                      \
+        freezer_register(s_context.freezer, type);                             \
         struct symbol* const symbol =                                          \
             symbol_new_type(&s_context.builtin.location, type);                \
-        sunder_freezer_register(s_context.freezer, symbol);                    \
+        freezer_register(s_context.freezer, symbol);                           \
         symbol_table_insert(                                                   \
             s_context.global_symbol_table, symbol->name, symbol, false);       \
         builtin_lvalue = type;                                                 \
@@ -252,7 +252,7 @@ context_fini(void)
     }
     sunder_sbuf_fini(self->chilling_symbol_tables);
 
-    sunder_freezer_del(self->freezer);
+    freezer_del(self->freezer);
 
     memset(self, 0x00, sizeof(*self));
 }

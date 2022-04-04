@@ -462,8 +462,8 @@ type_unique_function(
         symbol_new_type(&context()->builtin.location, type);
     symbol_table_insert(
         context()->global_symbol_table, symbol->name, symbol, false);
-    sunder_freezer_register(context()->freezer, type);
-    sunder_freezer_register(context()->freezer, symbol);
+    freezer_register(context()->freezer, type);
+    freezer_register(context()->freezer, symbol);
     return type;
 }
 
@@ -484,8 +484,8 @@ type_unique_pointer(struct type const* base)
         symbol_new_type(&context()->builtin.location, type);
     symbol_table_insert(
         context()->global_symbol_table, symbol->name, symbol, false);
-    sunder_freezer_register(context()->freezer, type);
-    sunder_freezer_register(context()->freezer, symbol);
+    freezer_register(context()->freezer, type);
+    freezer_register(context()->freezer, symbol);
     return type;
 }
 
@@ -506,8 +506,8 @@ type_unique_array(size_t count, struct type const* base)
         symbol_new_type(&context()->builtin.location, type);
     symbol_table_insert(
         context()->global_symbol_table, symbol->name, symbol, false);
-    sunder_freezer_register(context()->freezer, type);
-    sunder_freezer_register(context()->freezer, symbol);
+    freezer_register(context()->freezer, type);
+    freezer_register(context()->freezer, symbol);
     return type;
 }
 
@@ -528,8 +528,8 @@ type_unique_slice(struct type const* base)
         symbol_new_type(&context()->builtin.location, type);
     symbol_table_insert(
         context()->global_symbol_table, symbol->name, symbol, false);
-    sunder_freezer_register(context()->freezer, type);
-    sunder_freezer_register(context()->freezer, symbol);
+    freezer_register(context()->freezer, type);
+    freezer_register(context()->freezer, symbol);
     return type;
 }
 
@@ -858,12 +858,12 @@ symbol_table_new(struct symbol_table const* parent)
 }
 
 void
-symbol_table_freeze(struct symbol_table* self, struct sunder_freezer* freezer)
+symbol_table_freeze(struct symbol_table* self, struct freezer* freezer)
 {
     assert(self != NULL);
     assert(freezer != NULL);
 
-    sunder_freezer_register(freezer, self);
+    freezer_register(freezer, self);
     sunder_sbuf_freeze(self->elements, freezer);
 }
 
@@ -1726,12 +1726,12 @@ value_del(struct value* self)
 }
 
 void
-value_freeze(struct value* self, struct sunder_freezer* freezer)
+value_freeze(struct value* self, struct freezer* freezer)
 {
     assert(self != NULL);
     assert(freezer != NULL);
 
-    sunder_freezer_register(freezer, self);
+    freezer_register(freezer, self);
     switch (self->type->kind) {
     case TYPE_ANY: /* fallthrough */
     case TYPE_VOID: {

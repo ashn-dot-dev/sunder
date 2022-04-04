@@ -290,7 +290,7 @@ parse_module(struct parser* parser)
     struct cst_module* const product =
         cst_module_new(namespace, imports, decls);
 
-    sunder_freezer_register(context()->freezer, product);
+    freezer_register(context()->freezer, product);
     return product;
 }
 
@@ -312,7 +312,7 @@ parse_namespace(struct parser* parser)
     struct cst_namespace* const product =
         cst_namespace_new(location, identifiers);
 
-    sunder_freezer_register(context()->freezer, product);
+    freezer_register(context()->freezer, product);
     return product;
 }
 
@@ -330,7 +330,7 @@ parse_import(struct parser* parser)
 
     struct cst_import* const product = cst_import_new(location, path);
 
-    sunder_freezer_register(context()->freezer, product);
+    freezer_register(context()->freezer, product);
     return product;
 }
 
@@ -394,7 +394,7 @@ parse_decl_variable(struct parser* parser)
     struct cst_decl* const product =
         cst_decl_new_variable(location, identifier, typespec, expr);
 
-    sunder_freezer_register(context()->freezer, product);
+    freezer_register(context()->freezer, product);
     return product;
 }
 
@@ -418,7 +418,7 @@ parse_decl_constant(struct parser* parser)
     struct cst_decl* const product =
         cst_decl_new_constant(location, identifier, typespec, expr);
 
-    sunder_freezer_register(context()->freezer, product);
+    freezer_register(context()->freezer, product);
     return product;
 }
 
@@ -447,7 +447,7 @@ parse_decl_function(struct parser* parser)
         return_typespec,
         body);
 
-    sunder_freezer_register(context()->freezer, product);
+    freezer_register(context()->freezer, product);
     return product;
 }
 
@@ -469,7 +469,7 @@ parse_decl_struct(struct parser* parser)
     struct cst_decl* const product =
         cst_decl_new_struct(location, identifier, template_parameters, members);
 
-    sunder_freezer_register(context()->freezer, product);
+    freezer_register(context()->freezer, product);
     return product;
 }
 
@@ -486,7 +486,7 @@ parse_decl_extend(struct parser* parser)
     struct cst_decl* const product =
         cst_decl_new_extend(location, typespec, decl);
 
-    sunder_freezer_register(context()->freezer, product);
+    freezer_register(context()->freezer, product);
     return product;
 }
 
@@ -505,7 +505,7 @@ parse_decl_alias(struct parser* parser)
     struct cst_decl* const product =
         cst_decl_new_alias(location, identifier, symbol);
 
-    sunder_freezer_register(context()->freezer, product);
+    freezer_register(context()->freezer, product);
     return product;
 }
 
@@ -525,7 +525,7 @@ parse_decl_extern_variable(struct parser* parser)
     struct cst_decl* const product =
         cst_decl_new_extern_variable(location, identifier, typespec);
 
-    sunder_freezer_register(context()->freezer, product);
+    freezer_register(context()->freezer, product);
     return product;
 }
 
@@ -574,14 +574,14 @@ parse_stmt(struct parser* parser)
 
         struct cst_stmt* const product =
             cst_stmt_new_assign(location, expr, rhs);
-        sunder_freezer_register(context()->freezer, product);
+        freezer_register(context()->freezer, product);
         return product;
     }
 
     // <stmt-expr>
     expect_current(parser, TOKEN_SEMICOLON);
     struct cst_stmt* const product = cst_stmt_new_expr(expr);
-    sunder_freezer_register(context()->freezer, product);
+    freezer_register(context()->freezer, product);
     return product;
 }
 
@@ -599,7 +599,7 @@ parse_stmt_if(struct parser* parser)
     struct cst_block const* body = parse_block(parser);
     struct cst_conditional* conditional =
         cst_conditional_new(location, condition, body);
-    sunder_freezer_register(context()->freezer, conditional);
+    freezer_register(context()->freezer, conditional);
     sunder_sbuf_push(conditionals, conditional);
 
     while (check_current(parser, TOKEN_ELIF)) {
@@ -607,7 +607,7 @@ parse_stmt_if(struct parser* parser)
         condition = parse_expr(parser);
         body = parse_block(parser);
         conditional = cst_conditional_new(location, condition, body);
-        sunder_freezer_register(context()->freezer, conditional);
+        freezer_register(context()->freezer, conditional);
         sunder_sbuf_push(conditionals, conditional);
     }
 
@@ -615,14 +615,14 @@ parse_stmt_if(struct parser* parser)
         location = &advance_token(parser)->location;
         body = parse_block(parser);
         conditional = cst_conditional_new(location, NULL, body);
-        sunder_freezer_register(context()->freezer, conditional);
+        freezer_register(context()->freezer, conditional);
         sunder_sbuf_push(conditionals, conditional);
     }
 
     sunder_sbuf_freeze(conditionals, context()->freezer);
     struct cst_stmt* const product = cst_stmt_new_if(conditionals);
 
-    sunder_freezer_register(context()->freezer, product);
+    freezer_register(context()->freezer, product);
     return product;
 }
 
@@ -649,7 +649,7 @@ parse_stmt_for(struct parser* parser)
         struct cst_stmt* const product =
             cst_stmt_new_for_range(location, identifier, begin, end, body);
 
-        sunder_freezer_register(context()->freezer, product);
+        freezer_register(context()->freezer, product);
         return product;
     }
 
@@ -660,7 +660,7 @@ parse_stmt_for(struct parser* parser)
     struct cst_stmt* const product =
         cst_stmt_new_for_expr(location, expr, body);
 
-    sunder_freezer_register(context()->freezer, product);
+    freezer_register(context()->freezer, product);
     return product;
 }
 
@@ -677,7 +677,7 @@ parse_stmt_break(struct parser* parser)
 
     struct cst_stmt* const product = cst_stmt_new_break(location);
 
-    sunder_freezer_register(context()->freezer, product);
+    freezer_register(context()->freezer, product);
     return product;
 }
 
@@ -694,7 +694,7 @@ parse_stmt_continue(struct parser* parser)
 
     struct cst_stmt* const product = cst_stmt_new_continue(location);
 
-    sunder_freezer_register(context()->freezer, product);
+    freezer_register(context()->freezer, product);
     return product;
 }
 
@@ -711,7 +711,7 @@ parse_stmt_dump(struct parser* parser)
 
     struct cst_stmt* const product = cst_stmt_new_dump(location, expr);
 
-    sunder_freezer_register(context()->freezer, product);
+    freezer_register(context()->freezer, product);
     return product;
 }
 
@@ -732,7 +732,7 @@ parse_stmt_return(struct parser* parser)
     expect_current(parser, TOKEN_SEMICOLON);
     struct cst_stmt* const product = cst_stmt_new_return(location, expr);
 
-    sunder_freezer_register(context()->freezer, product);
+    freezer_register(context()->freezer, product);
     return product;
 }
 
@@ -744,7 +744,7 @@ parse_stmt_decl(struct parser* parser)
     struct cst_decl const* const decl = parse_decl(parser);
     struct cst_stmt* const product = cst_stmt_new_decl(decl);
 
-    sunder_freezer_register(context()->freezer, product);
+    freezer_register(context()->freezer, product);
     return product;
 }
 
@@ -937,7 +937,7 @@ parse_expr_symbol(struct parser* parser)
 
     struct cst_expr* const product = cst_expr_new_symbol(symbol);
 
-    sunder_freezer_register(context()->freezer, product);
+    freezer_register(context()->freezer, product);
     return product;
 }
 
@@ -949,7 +949,7 @@ parse_expr_boolean(struct parser* parser)
     struct cst_boolean const* const boolean = parse_boolean(parser);
     struct cst_expr* const product = cst_expr_new_boolean(boolean);
 
-    sunder_freezer_register(context()->freezer, product);
+    freezer_register(context()->freezer, product);
     return product;
 }
 
@@ -961,7 +961,7 @@ parse_expr_integer(struct parser* parser)
     struct cst_integer const* const integer = parse_integer(parser);
     struct cst_expr* const product = cst_expr_new_integer(integer);
 
-    sunder_freezer_register(context()->freezer, product);
+    freezer_register(context()->freezer, product);
     return product;
 }
 
@@ -974,7 +974,7 @@ parse_expr_character(struct parser* parser)
     struct cst_expr* const product =
         cst_expr_new_character(&token->location, token->data.character);
 
-    sunder_freezer_register(context()->freezer, product);
+    freezer_register(context()->freezer, product);
     return product;
 }
 
@@ -987,7 +987,7 @@ parse_expr_bytes(struct parser* parser)
     struct cst_expr* const product =
         cst_expr_new_bytes(&token->location, token->data.bytes);
 
-    sunder_freezer_register(context()->freezer, product);
+    freezer_register(context()->freezer, product);
     return product;
 }
 
@@ -1005,7 +1005,7 @@ parse_expr_lparen(struct parser* parser)
         expect_current(parser, TOKEN_RPAREN);
         struct cst_expr* const product = cst_expr_new_grouped(location, expr);
 
-        sunder_freezer_register(context()->freezer, product);
+        freezer_register(context()->freezer, product);
         return product;
     }
 
@@ -1039,7 +1039,7 @@ parse_expr_lparen(struct parser* parser)
         struct cst_expr* const product =
             cst_expr_new_array(location, typespec, elements, ellipsis);
 
-        sunder_freezer_register(context()->freezer, product);
+        freezer_register(context()->freezer, product);
         return product;
     }
 
@@ -1055,7 +1055,7 @@ parse_expr_lparen(struct parser* parser)
         struct cst_expr* const product =
             cst_expr_new_slice(location, typespec, pointer, count);
 
-        sunder_freezer_register(context()->freezer, product);
+        freezer_register(context()->freezer, product);
         return product;
     }
 
@@ -1077,7 +1077,7 @@ parse_expr_lparen(struct parser* parser)
         struct cst_expr* const product =
             cst_expr_new_array_slice(location, typespec, elements);
 
-        sunder_freezer_register(context()->freezer, product);
+        freezer_register(context()->freezer, product);
         return product;
     }
 
@@ -1092,7 +1092,7 @@ parse_expr_lparen(struct parser* parser)
         struct cst_expr* const product =
             cst_expr_new_struct(location, typespec, initializers);
 
-        sunder_freezer_register(context()->freezer, product);
+        freezer_register(context()->freezer, product);
         return product;
     }
 
@@ -1103,7 +1103,7 @@ parse_expr_lparen(struct parser* parser)
     struct cst_expr* const product =
         cst_expr_new_cast(location, typespec, expr);
 
-    sunder_freezer_register(context()->freezer, product);
+    freezer_register(context()->freezer, product);
     return product;
 }
 
@@ -1126,7 +1126,7 @@ parse_expr_syscall(struct parser* parser)
 
     struct cst_expr* const product = cst_expr_new_syscall(location, exprs);
 
-    sunder_freezer_register(context()->freezer, product);
+    freezer_register(context()->freezer, product);
     return product;
 }
 
@@ -1149,7 +1149,7 @@ parse_expr_led_lparen(struct parser* parser, struct cst_expr const* lhs)
     expect_current(parser, TOKEN_RPAREN);
     struct cst_expr* const product = cst_expr_new_call(location, lhs, args);
 
-    sunder_freezer_register(context()->freezer, product);
+    freezer_register(context()->freezer, product);
     return product;
 }
 
@@ -1172,7 +1172,7 @@ parse_expr_led_lbracket(struct parser* parser, struct cst_expr const* lhs)
         struct cst_expr* const product =
             cst_expr_new_access_slice(location, lhs, idx, end);
 
-        sunder_freezer_register(context()->freezer, product);
+        freezer_register(context()->freezer, product);
         return product;
     }
 
@@ -1181,7 +1181,7 @@ parse_expr_led_lbracket(struct parser* parser, struct cst_expr const* lhs)
     struct cst_expr* const product =
         cst_expr_new_access_index(location, lhs, idx);
 
-    sunder_freezer_register(context()->freezer, product);
+    freezer_register(context()->freezer, product);
     return product;
 }
 
@@ -1197,7 +1197,7 @@ parse_expr_led_dot_star(struct parser* parser, struct cst_expr const* lhs)
     struct cst_expr* const product =
         cst_expr_new_access_dereference(location, lhs);
 
-    sunder_freezer_register(context()->freezer, product);
+    freezer_register(context()->freezer, product);
     return product;
 }
 
@@ -1214,7 +1214,7 @@ parse_expr_led_dot(struct parser* parser, struct cst_expr const* lhs)
     struct cst_expr* const product =
         cst_expr_new_access_member(location, lhs, identifier);
 
-    sunder_freezer_register(context()->freezer, product);
+    freezer_register(context()->freezer, product);
     return product;
 }
 
@@ -1237,7 +1237,7 @@ parse_expr_nud_unary(struct parser* parser)
 
     struct cst_expr* const product = cst_expr_new_unary(op, rhs);
 
-    sunder_freezer_register(context()->freezer, product);
+    freezer_register(context()->freezer, product);
     return product;
 }
 
@@ -1254,7 +1254,7 @@ parse_expr_sizeof(struct parser* parser)
 
     struct cst_expr* const product = cst_expr_new_sizeof(location, rhs);
 
-    sunder_freezer_register(context()->freezer, product);
+    freezer_register(context()->freezer, product);
     return product;
 }
 
@@ -1271,7 +1271,7 @@ parse_expr_alignof(struct parser* parser)
 
     struct cst_expr* const product = cst_expr_new_alignof(location, rhs);
 
-    sunder_freezer_register(context()->freezer, product);
+    freezer_register(context()->freezer, product);
     return product;
 }
 
@@ -1286,7 +1286,7 @@ parse_expr_led_binary(struct parser* parser, struct cst_expr const* lhs)
         parse_expr_precedence(parser, token_kind_precedence(op->kind));
     struct cst_expr* const product = cst_expr_new_binary(op, lhs, rhs);
 
-    sunder_freezer_register(context()->freezer, product);
+    freezer_register(context()->freezer, product);
     return product;
 }
 
@@ -1307,7 +1307,7 @@ parse_block(struct parser* parser)
 
     struct cst_block* const product = cst_block_new(location, stmts);
 
-    sunder_freezer_register(context()->freezer, product);
+    freezer_register(context()->freezer, product);
     return product;
 }
 
@@ -1337,7 +1337,7 @@ parse_symbol(struct parser* parser)
     struct cst_symbol* const product =
         cst_symbol_new(location, is_from_root, elements);
 
-    sunder_freezer_register(context()->freezer, product);
+    freezer_register(context()->freezer, product);
     return product;
 }
 
@@ -1355,7 +1355,7 @@ parse_symbol_element(struct parser* parser)
     struct cst_symbol_element* const product =
         cst_symbol_element_new(identifier, template_arguments);
 
-    sunder_freezer_register(context()->freezer, product);
+    freezer_register(context()->freezer, product);
     return product;
 }
 
@@ -1399,7 +1399,7 @@ parse_template_parameter(struct parser* parser)
     struct cst_template_parameter* const product =
         cst_template_parameter_new(identifier->location, identifier);
 
-    sunder_freezer_register(context()->freezer, product);
+    freezer_register(context()->freezer, product);
     return product;
 }
 
@@ -1439,7 +1439,7 @@ parse_template_argument(struct parser* parser)
     struct cst_template_argument* const product =
         cst_template_argument_new(typespec->location, typespec);
 
-    sunder_freezer_register(context()->freezer, product);
+    freezer_register(context()->freezer, product);
     return product;
 }
 
@@ -1476,7 +1476,7 @@ parse_function_parameter(struct parser* parser)
     struct cst_function_parameter* const product =
         cst_function_parameter_new(identifier, typespec);
 
-    sunder_freezer_register(context()->freezer, product);
+    freezer_register(context()->freezer, product);
     return product;
 }
 
@@ -1533,7 +1533,7 @@ parse_member_variable(struct parser* parser)
     struct cst_member* const product =
         cst_member_new_variable(location, identifier, typespec);
 
-    sunder_freezer_register(context()->freezer, product);
+    freezer_register(context()->freezer, product);
     return product;
 }
 
@@ -1546,7 +1546,7 @@ parse_member_constant(struct parser* parser)
 
     struct cst_member* const product = cst_member_new_constant(decl);
 
-    sunder_freezer_register(context()->freezer, product);
+    freezer_register(context()->freezer, product);
     return product;
 }
 
@@ -1559,7 +1559,7 @@ parse_member_function(struct parser* parser)
 
     struct cst_member* const product = cst_member_new_function(decl);
 
-    sunder_freezer_register(context()->freezer, product);
+    freezer_register(context()->freezer, product);
     return product;
 }
 
@@ -1598,7 +1598,7 @@ parse_member_initializer(struct parser* parser)
     struct cst_member_initializer* const product =
         cst_member_initializer_new(location, identifier, expr);
 
-    sunder_freezer_register(context()->freezer, product);
+    freezer_register(context()->freezer, product);
     return product;
 }
 
@@ -1644,7 +1644,7 @@ parse_typespec_symbol(struct parser* parser)
 
     struct cst_typespec* const product = cst_typespec_new_symbol(symbol);
 
-    sunder_freezer_register(context()->freezer, product);
+    freezer_register(context()->freezer, product);
     return product;
 }
 
@@ -1674,7 +1674,7 @@ parse_typespec_function(struct parser* parser)
     struct cst_typespec* const product = cst_typespec_new_function(
         location, parameter_typespecs, return_typespec);
 
-    sunder_freezer_register(context()->freezer, product);
+    freezer_register(context()->freezer, product);
     return product;
 }
 
@@ -1692,7 +1692,7 @@ parse_typespec_pointer(struct parser* parser)
     struct cst_typespec* const product =
         cst_typespec_new_pointer(location, base);
 
-    sunder_freezer_register(context()->freezer, product);
+    freezer_register(context()->freezer, product);
     return product;
 }
 
@@ -1713,7 +1713,7 @@ parse_typespec_array_or_slice(struct parser* parser)
         struct cst_typespec* const product =
             cst_typespec_new_slice(location, base);
 
-        sunder_freezer_register(context()->freezer, product);
+        freezer_register(context()->freezer, product);
         return product;
     }
 
@@ -1725,7 +1725,7 @@ parse_typespec_array_or_slice(struct parser* parser)
     struct cst_typespec* const product =
         cst_typespec_new_array(location, count, base);
 
-    sunder_freezer_register(context()->freezer, product);
+    freezer_register(context()->freezer, product);
     return product;
 }
 
@@ -1744,7 +1744,7 @@ parse_typespec_typeof(struct parser* parser)
     struct cst_typespec* const product =
         cst_typespec_new_typeof(location, expr);
 
-    sunder_freezer_register(context()->freezer, product);
+    freezer_register(context()->freezer, product);
     return product;
 }
 
@@ -1759,7 +1759,7 @@ parse_identifier(struct parser* parser)
         sipool_intern(context()->sipool, token->start, token->count);
     struct cst_identifier* const product = cst_identifier_new(location, name);
 
-    sunder_freezer_register(context()->freezer, product);
+    freezer_register(context()->freezer, product);
     return product;
 }
 
@@ -1774,7 +1774,7 @@ parse_boolean(struct parser* parser)
     bool const value = token->kind == TOKEN_TRUE;
     struct cst_boolean* const product = cst_boolean_new(location, value);
 
-    sunder_freezer_register(context()->freezer, product);
+    freezer_register(context()->freezer, product);
     return product;
 }
 
@@ -1795,7 +1795,7 @@ parse_integer(struct parser* parser)
     struct cst_integer* const product =
         cst_integer_new(location, value, suffix);
 
-    sunder_freezer_register(context()->freezer, product);
+    freezer_register(context()->freezer, product);
     return product;
 }
 

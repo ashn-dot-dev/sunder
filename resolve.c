@@ -387,7 +387,7 @@ resolver_reserve_storage_static(struct resolver* self, char const* name)
         normalize_unique(self->current_static_addr_prefix, name);
     struct address* const address =
         address_new(address_init_static(name_normalized, 0u));
-    sunder_freezer_register(context()->freezer, address);
+    freezer_register(context()->freezer, address);
     return address;
 }
 
@@ -405,7 +405,7 @@ resolver_reserve_storage_local(struct resolver* self, struct type const* type)
 
     struct address* const address =
         address_new(address_init_local(self->current_rbp_offset));
-    sunder_freezer_register(context()->freezer, address);
+    freezer_register(context()->freezer, address);
     return address;
 }
 
@@ -751,7 +751,7 @@ xget_template_instance(
         string_del(name_string);
         struct cst_identifier* const instance_identifier =
             cst_identifier_new(location, name_interned);
-        sunder_freezer_register(context()->freezer, instance_identifier);
+        freezer_register(context()->freezer, instance_identifier);
         // Replace template parameters. Zero template parameters means this
         // function is no longer a template.
         sunder_sbuf(struct cst_template_parameter const* const)
@@ -787,7 +787,7 @@ xget_template_instance(
             struct symbol* const symbol = symbol_new_type(
                 template_parameters[i]->identifier->location,
                 template_types[i]);
-            sunder_freezer_register(context()->freezer, symbol);
+            freezer_register(context()->freezer, symbol);
             symbol_table_insert(
                 instance_symbol_table,
                 template_parameters[i]->identifier->name,
@@ -808,7 +808,7 @@ xget_template_instance(
             instance_function_parameters,
             instance_return_typespec,
             instance_body);
-        sunder_freezer_register(context()->freezer, instance_decl);
+        freezer_register(context()->freezer, instance_decl);
 
         // Resolve the actual template instance.
         char const* const save_static_addr_prefix =
@@ -875,7 +875,7 @@ xget_template_instance(
         string_del(name_string);
         struct cst_identifier* const instance_identifier =
             cst_identifier_new(location, name_interned);
-        sunder_freezer_register(context()->freezer, instance_identifier);
+        freezer_register(context()->freezer, instance_identifier);
         // Replace template parameters. Zero template parameters means this
         // struct is no longer a template.
         sunder_sbuf(struct cst_template_parameter const* const)
@@ -905,7 +905,7 @@ xget_template_instance(
             struct symbol* const symbol = symbol_new_type(
                 template_parameters[i]->identifier->location,
                 template_types[i]);
-            sunder_freezer_register(context()->freezer, symbol);
+            freezer_register(context()->freezer, symbol);
             symbol_table_insert(
                 instance_symbol_table,
                 template_parameters[i]->identifier->name,
@@ -924,7 +924,7 @@ xget_template_instance(
             instance_identifier,
             instance_template_parameters,
             instance_members);
-        sunder_freezer_register(context()->freezer, instance_decl);
+        freezer_register(context()->freezer, instance_decl);
 
         // Resolve the actual template instance.
         char const* const save_static_addr_prefix =
@@ -1015,7 +1015,7 @@ shallow_implicit_cast(struct type const* type, struct expr const* expr)
         struct expr* const result =
             expr_new_integer(expr->location, type, expr->data.integer);
 
-        sunder_freezer_register(context()->freezer, result);
+        freezer_register(context()->freezer, result);
         return result;
     }
 
@@ -1049,7 +1049,7 @@ shallow_implicit_cast(struct type const* type, struct expr const* expr)
         struct expr* const result =
             expr_new_integer(expr->location, type, expr->data.integer);
 
-        sunder_freezer_register(context()->freezer, result);
+        freezer_register(context()->freezer, result);
         return result;
     }
 
@@ -1060,7 +1060,7 @@ shallow_implicit_cast(struct type const* type, struct expr const* expr)
         struct expr* const result = expr_new_cast(
             expr->location, type_unique_pointer(context()->builtin.any), expr);
 
-        sunder_freezer_register(context()->freezer, result);
+        freezer_register(context()->freezer, result);
         return result;
     }
 
@@ -1105,7 +1105,7 @@ shallow_implicit_cast(struct type const* type, struct expr const* expr)
 
         struct expr* const result = expr_new_cast(expr->location, type, expr);
 
-        sunder_freezer_register(context()->freezer, result);
+        freezer_register(context()->freezer, result);
         return result;
     }
 
@@ -1141,7 +1141,7 @@ merge_symbol_table(
 
                 struct symbol* const namespace =
                     symbol_new_namespace(symbol->location, symbol->name, table);
-                sunder_freezer_register(context()->freezer, namespace);
+                freezer_register(context()->freezer, namespace);
                 symbol_table_insert(self, name, namespace, false);
                 existing = namespace;
             }
@@ -1359,7 +1359,7 @@ resolve_decl_variable(
 
     struct symbol* const symbol =
         symbol_new_variable(decl->location, decl->name, type, address, value);
-    sunder_freezer_register(context()->freezer, symbol);
+    freezer_register(context()->freezer, symbol);
 
     symbol_table_insert(
         resolver->current_symbol_table,
@@ -1373,7 +1373,7 @@ resolve_decl_variable(
     if (lhs != NULL) {
         struct expr* const identifier =
             expr_new_symbol(decl->data.variable.identifier->location, symbol);
-        sunder_freezer_register(context()->freezer, identifier);
+        freezer_register(context()->freezer, identifier);
         *lhs = identifier;
     }
     if (rhs != NULL) {
@@ -1417,7 +1417,7 @@ resolve_decl_constant(struct resolver* resolver, struct cst_decl const* decl)
 
     struct symbol* const symbol =
         symbol_new_constant(decl->location, decl->name, type, address, value);
-    sunder_freezer_register(context()->freezer, symbol);
+    freezer_register(context()->freezer, symbol);
 
     symbol_table_insert(
         resolver->current_symbol_table,
@@ -1452,7 +1452,7 @@ resolve_decl_function(struct resolver* resolver, struct cst_decl const* decl)
             resolver->current_symbol_table,
             symbols);
 
-        sunder_freezer_register(context()->freezer, template_symbol);
+        freezer_register(context()->freezer, template_symbol);
         sunder_sbuf_push(context()->chilling_symbol_tables, symbols);
         symbol_table_insert(
             resolver->current_symbol_table,
@@ -1499,7 +1499,7 @@ resolve_decl_function(struct resolver* resolver, struct cst_decl const* decl)
     // function, and the address of that function/value.
     struct function* const function = function_new(
         decl->data.function.identifier->name, function_type, address);
-    sunder_freezer_register(context()->freezer, function);
+    freezer_register(context()->freezer, function);
 
     struct value* const value = value_new_function(function);
     value_freeze(value, context()->freezer);
@@ -1509,7 +1509,7 @@ resolve_decl_function(struct resolver* resolver, struct cst_decl const* decl)
     // functions may reference themselves.
     struct symbol* const function_symbol =
         symbol_new_function(decl->location, function);
-    sunder_freezer_register(context()->freezer, function_symbol);
+    freezer_register(context()->freezer, function_symbol);
     symbol_table_insert(
         resolver->current_symbol_table,
         function_symbol->name,
@@ -1538,12 +1538,12 @@ resolve_decl_function(struct resolver* resolver, struct cst_decl const* decl)
         struct type const* const type = parameter_types[i];
         struct address* const address =
             address_new(address_init_local(rbp_offset));
-        sunder_freezer_register(context()->freezer, address);
+        freezer_register(context()->freezer, address);
 
         rbp_offset += (int)ceil8zu(type->size);
         struct symbol* const symbol =
             symbol_new_variable(location, name, type, address, NULL);
-        sunder_freezer_register(context()->freezer, symbol);
+        freezer_register(context()->freezer, symbol);
 
         symbol_parameters[i] = symbol;
     }
@@ -1570,14 +1570,14 @@ resolve_decl_function(struct resolver* resolver, struct cst_decl const* decl)
     // Add the function's return value to its outermost symbol table.
     struct address* const return_value_address =
         address_new(address_init_local(rbp_offset));
-    sunder_freezer_register(context()->freezer, return_value_address);
+    freezer_register(context()->freezer, return_value_address);
     struct symbol* const return_value_symbol = symbol_new_variable(
         decl->data.function.return_typespec->location,
         context()->interned.return_,
         return_type,
         return_value_address,
         NULL);
-    sunder_freezer_register(context()->freezer, return_value_symbol);
+    freezer_register(context()->freezer, return_value_symbol);
     symbol_table_insert(
         symbol_table, return_value_symbol->name, return_value_symbol, false);
     function->symbol_return = return_value_symbol;
@@ -1589,7 +1589,7 @@ resolve_decl_function(struct resolver* resolver, struct cst_decl const* decl)
         function,
         symbol_table,
     };
-    sunder_freezer_register(context()->freezer, incomplete);
+    freezer_register(context()->freezer, incomplete);
     sunder_sbuf_push(resolver->incomplete_functions, incomplete);
 
     return function_symbol;
@@ -1616,7 +1616,7 @@ resolve_decl_struct(struct resolver* resolver, struct cst_decl const* decl)
             resolver->current_symbol_table,
             symbols);
 
-        sunder_freezer_register(context()->freezer, template_symbol);
+        freezer_register(context()->freezer, template_symbol);
         sunder_sbuf_push(context()->chilling_symbol_tables, symbols);
         symbol_table_insert(
             resolver->current_symbol_table,
@@ -1630,10 +1630,10 @@ resolve_decl_struct(struct resolver* resolver, struct cst_decl const* decl)
         symbol_table_new(resolver->current_symbol_table);
     sunder_sbuf_push(resolver->chilling_symbol_tables, struct_symbols);
     struct type* const type = type_new_struct(decl->name, struct_symbols);
-    sunder_freezer_register(context()->freezer, type);
+    freezer_register(context()->freezer, type);
 
     struct symbol* const symbol = symbol_new_type(decl->location, type);
-    sunder_freezer_register(context()->freezer, symbol);
+    freezer_register(context()->freezer, symbol);
 
     // Add the symbol to the current symbol table so that structs with
     // self-referential pointer and slice members may reference the type.
@@ -1759,7 +1759,7 @@ resolve_decl_extern_variable(
 
     struct symbol* const symbol =
         symbol_new_variable(decl->location, decl->name, type, address, NULL);
-    sunder_freezer_register(context()->freezer, symbol);
+    freezer_register(context()->freezer, symbol);
 
     symbol_table_insert(
         resolver->current_symbol_table, symbol->name, symbol, false);
@@ -1934,7 +1934,7 @@ resolve_stmt_decl(struct resolver* resolver, struct cst_stmt const* stmt)
         resolve_decl_variable(resolver, decl, &lhs, &rhs);
         struct stmt* const resolved = stmt_new_assign(stmt->location, lhs, rhs);
 
-        sunder_freezer_register(context()->freezer, resolved);
+        freezer_register(context()->freezer, resolved);
         return resolved;
     }
     case CST_DECL_CONSTANT: {
@@ -2011,14 +2011,14 @@ resolve_stmt_if(struct resolver* resolver, struct cst_stmt const* stmt)
 
         struct conditional* const resolved_conditional =
             conditional_new(conditionals[i]->location, condition, block);
-        sunder_freezer_register(context()->freezer, resolved_conditional);
+        freezer_register(context()->freezer, resolved_conditional);
         resolved_conditionals[i] = resolved_conditional;
     }
 
     sunder_sbuf_freeze(resolved_conditionals, context()->freezer);
     struct stmt* const resolved = stmt_new_if(resolved_conditionals);
 
-    sunder_freezer_register(context()->freezer, resolved);
+    freezer_register(context()->freezer, resolved);
     return resolved;
 }
 
@@ -2062,7 +2062,7 @@ resolve_stmt_for_range(struct resolver* resolver, struct cst_stmt const* stmt)
         loop_var_type,
         loop_var_address,
         NULL);
-    sunder_freezer_register(context()->freezer, loop_var_symbol);
+    freezer_register(context()->freezer, loop_var_symbol);
 
     struct symbol_table* const symbol_table =
         symbol_table_new(resolver->current_symbol_table);
@@ -2082,7 +2082,7 @@ resolve_stmt_for_range(struct resolver* resolver, struct cst_stmt const* stmt)
 
     struct stmt* const resolved =
         stmt_new_for_range(stmt->location, loop_var_symbol, begin, end, body);
-    sunder_freezer_register(context()->freezer, resolved);
+    freezer_register(context()->freezer, resolved);
     return resolved;
 }
 
@@ -2118,7 +2118,7 @@ resolve_stmt_for_expr(struct resolver* resolver, struct cst_stmt const* stmt)
 
     struct stmt* const resolved = stmt_new_for_expr(stmt->location, expr, body);
 
-    sunder_freezer_register(context()->freezer, resolved);
+    freezer_register(context()->freezer, resolved);
     return resolved;
 }
 
@@ -2136,7 +2136,7 @@ resolve_stmt_break(struct resolver* resolver, struct cst_stmt const* stmt)
 
     struct stmt* const resolved = stmt_new_break(stmt->location);
 
-    sunder_freezer_register(context()->freezer, resolved);
+    freezer_register(context()->freezer, resolved);
     return resolved;
 }
 
@@ -2154,7 +2154,7 @@ resolve_stmt_continue(struct resolver* resolver, struct cst_stmt const* stmt)
 
     struct stmt* const resolved = stmt_new_continue(stmt->location);
 
-    sunder_freezer_register(context()->freezer, resolved);
+    freezer_register(context()->freezer, resolved);
     return resolved;
 }
 
@@ -2174,7 +2174,7 @@ resolve_stmt_dump(struct resolver* resolver, struct cst_stmt const* stmt)
 
     struct stmt* const resolved = stmt_new_dump(stmt->location, expr);
 
-    sunder_freezer_register(context()->freezer, resolved);
+    freezer_register(context()->freezer, resolved);
     return resolved;
 }
 
@@ -2204,7 +2204,7 @@ resolve_stmt_return(struct resolver* resolver, struct cst_stmt const* stmt)
 
     struct stmt* const resolved = stmt_new_return(stmt->location, expr);
 
-    sunder_freezer_register(context()->freezer, resolved);
+    freezer_register(context()->freezer, resolved);
     return resolved;
 }
 
@@ -2236,7 +2236,7 @@ resolve_stmt_assign(struct resolver* resolver, struct cst_stmt const* stmt)
 
     struct stmt* const resolved = stmt_new_assign(stmt->location, lhs, rhs);
 
-    sunder_freezer_register(context()->freezer, resolved);
+    freezer_register(context()->freezer, resolved);
     return resolved;
 }
 
@@ -2258,7 +2258,7 @@ resolve_stmt_expr(struct resolver* resolver, struct cst_stmt const* stmt)
     }
     struct stmt* const resolved = stmt_new_expr(stmt->location, expr);
 
-    sunder_freezer_register(context()->freezer, resolved);
+    freezer_register(context()->freezer, resolved);
     return resolved;
 }
 
@@ -2375,7 +2375,7 @@ resolve_expr_symbol(struct resolver* resolver, struct cst_expr const* expr)
 
     struct expr* const resolved = expr_new_symbol(expr->location, symbol);
 
-    sunder_freezer_register(context()->freezer, resolved);
+    freezer_register(context()->freezer, resolved);
     return resolved;
 }
 
@@ -2390,7 +2390,7 @@ resolve_expr_boolean(struct resolver* resolver, struct cst_expr const* expr)
     bool const value = expr->data.boolean->value;
     struct expr* const resolved = expr_new_boolean(expr->location, value);
 
-    sunder_freezer_register(context()->freezer, resolved);
+    freezer_register(context()->freezer, resolved);
     return resolved;
 }
 
@@ -2456,7 +2456,7 @@ resolve_expr_integer(struct resolver* resolver, struct cst_expr const* expr)
 
     struct expr* const resolved = expr_new_integer(expr->location, type, value);
 
-    sunder_freezer_register(context()->freezer, resolved);
+    freezer_register(context()->freezer, resolved);
     return resolved;
 }
 
@@ -2480,7 +2480,7 @@ resolve_expr_character(struct resolver* resolver, struct cst_expr const* expr)
     bigint_freeze(value, context()->freezer);
     struct expr* const resolved = expr_new_integer(expr->location, type, value);
 
-    sunder_freezer_register(context()->freezer, resolved);
+    freezer_register(context()->freezer, resolved);
     return resolved;
 }
 
@@ -2517,13 +2517,13 @@ resolve_expr_bytes(struct resolver* resolver, struct cst_expr const* expr)
 
     struct symbol* const symbol = symbol_new_constant(
         expr->location, address->data.static_.name, type, address, value);
-    sunder_freezer_register(context()->freezer, symbol);
+    freezer_register(context()->freezer, symbol);
     register_static_symbol(symbol);
 
     struct expr* const resolved =
         expr_new_bytes(expr->location, address, count);
 
-    sunder_freezer_register(context()->freezer, resolved);
+    freezer_register(context()->freezer, resolved);
     return resolved;
 }
 
@@ -2583,7 +2583,7 @@ resolve_expr_array(struct resolver* resolver, struct cst_expr const* expr)
     struct expr* const resolved = expr_new_array(
         expr->location, type, resolved_elements, resolved_ellipsis);
 
-    sunder_freezer_register(context()->freezer, resolved);
+    freezer_register(context()->freezer, resolved);
     return resolved;
 }
 
@@ -2624,7 +2624,7 @@ resolve_expr_slice(struct resolver* resolver, struct cst_expr const* expr)
     struct expr* const resolved =
         expr_new_slice(expr->location, type, pointer, count);
 
-    sunder_freezer_register(context()->freezer, resolved);
+    freezer_register(context()->freezer, resolved);
     return resolved;
 }
 
@@ -2692,7 +2692,7 @@ resolve_expr_array_slice(struct resolver* resolver, struct cst_expr const* expr)
     if (is_static) {
         register_static_symbol(array_symbol);
     }
-    sunder_freezer_register(context()->freezer, array_symbol);
+    freezer_register(context()->freezer, array_symbol);
 
     symbol_table_insert(
         resolver->current_symbol_table,
@@ -2717,7 +2717,7 @@ resolve_expr_array_slice(struct resolver* resolver, struct cst_expr const* expr)
     struct expr* const resolved = expr_new_array_slice(
         expr->location, type, array_symbol, resolved_elements);
 
-    sunder_freezer_register(context()->freezer, resolved);
+    freezer_register(context()->freezer, resolved);
     return resolved;
 }
 
@@ -2815,7 +2815,7 @@ resolve_expr_struct(struct resolver* resolver, struct cst_expr const* expr)
     struct expr* const resolved =
         expr_new_struct(expr->location, type, member_variable_exprs);
 
-    sunder_freezer_register(context()->freezer, resolved);
+    freezer_register(context()->freezer, resolved);
     return resolved;
 }
 
@@ -2877,7 +2877,7 @@ resolve_expr_cast(struct resolver* resolver, struct cst_expr const* expr)
 
     struct expr* const resolved = expr_new_cast(expr->location, type, rhs);
 
-    sunder_freezer_register(context()->freezer, resolved);
+    freezer_register(context()->freezer, resolved);
     return resolved;
 }
 
@@ -2927,7 +2927,7 @@ resolve_expr_syscall(struct resolver* resolver, struct cst_expr const* expr)
     sunder_sbuf_freeze(exprs, context()->freezer);
     struct expr* const resolved = expr_new_syscall(expr->location, exprs);
 
-    sunder_freezer_register(context()->freezer, resolved);
+    freezer_register(context()->freezer, resolved);
     return resolved;
 }
 
@@ -3017,7 +3017,7 @@ resolve_expr_call(struct resolver* resolver, struct cst_expr const* expr)
         assert(expr_is_lvalue(instance));
         struct expr* const selfptr = expr_new_unary(
             expr->location, selfptr_type, UOP_ADDRESSOF, instance);
-        sunder_freezer_register(context()->freezer, selfptr);
+        freezer_register(context()->freezer, selfptr);
         sunder_sbuf_push(arguments, selfptr);
         for (size_t i = 0; i < arg_count; ++i) {
             struct expr const* arg =
@@ -3050,12 +3050,12 @@ resolve_expr_call(struct resolver* resolver, struct cst_expr const* expr)
             expr_new_symbol(
                 dot->data.access_member.identifier->location,
                 member_function_symbol);
-        sunder_freezer_register(context()->freezer, member_function_expr);
+        freezer_register(context()->freezer, member_function_expr);
 
         struct expr* resolved =
             expr_new_call(expr->location, member_function_expr, arguments);
 
-        sunder_freezer_register(context()->freezer, resolved);
+        freezer_register(context()->freezer, resolved);
         return resolved;
     }
 
@@ -3109,7 +3109,7 @@ regular_function_call:;
     struct expr* const resolved =
         expr_new_call(expr->location, function, arguments);
 
-    sunder_freezer_register(context()->freezer, resolved);
+    freezer_register(context()->freezer, resolved);
     return resolved;
 }
 
@@ -3143,7 +3143,7 @@ resolve_expr_access_index(
     struct expr* const resolved =
         expr_new_access_index(expr->location, lhs, idx);
 
-    sunder_freezer_register(context()->freezer, resolved);
+    freezer_register(context()->freezer, resolved);
     return resolved;
 }
 
@@ -3192,7 +3192,7 @@ resolve_expr_access_slice(
     struct expr* const resolved =
         expr_new_access_slice(expr->location, lhs, begin, end);
 
-    sunder_freezer_register(context()->freezer, resolved);
+    freezer_register(context()->freezer, resolved);
     return resolved;
 }
 
@@ -3221,7 +3221,7 @@ resolve_expr_access_member(
         struct expr* const resolved = expr_new_access_member_variable(
             expr->location, lhs, member_variable_def);
 
-        sunder_freezer_register(context()->freezer, resolved);
+        freezer_register(context()->freezer, resolved);
         return resolved;
     }
 
@@ -3266,7 +3266,7 @@ resolve_expr_access_dereference(
     struct expr* const resolved = expr_new_unary(
         expr->location, lhs->type->data.pointer.base, UOP_DEREFERENCE, lhs);
 
-    sunder_freezer_register(context()->freezer, resolved);
+    freezer_register(context()->freezer, resolved);
     return resolved;
 }
 
@@ -3284,7 +3284,7 @@ resolve_expr_sizeof(struct resolver* resolver, struct cst_expr const* expr)
 
     struct expr* const resolved = expr_new_sizeof(expr->location, rhs);
 
-    sunder_freezer_register(context()->freezer, resolved);
+    freezer_register(context()->freezer, resolved);
     return resolved;
 }
 
@@ -3302,7 +3302,7 @@ resolve_expr_alignof(struct resolver* resolver, struct cst_expr const* expr)
 
     struct expr* const resolved = expr_new_alignof(expr->location, rhs);
 
-    sunder_freezer_register(context()->freezer, resolved);
+    freezer_register(context()->freezer, resolved);
     return resolved;
 }
 
@@ -3339,7 +3339,7 @@ resolve_expr_unary(struct resolver* resolver, struct cst_expr const* expr)
         struct expr* const resolved =
             expr_new_integer(&op->location, type, value);
 
-        sunder_freezer_register(context()->freezer, resolved);
+        freezer_register(context()->freezer, resolved);
         return resolved;
     }
 
@@ -3405,7 +3405,7 @@ resolve_expr_unary_logical(
     struct expr* const resolved =
         expr_new_unary(&op->location, rhs->type, uop, rhs);
 
-    sunder_freezer_register(context()->freezer, resolved);
+    freezer_register(context()->freezer, resolved);
     return resolved;
 }
 
@@ -3432,7 +3432,7 @@ resolve_expr_unary_arithmetic(
     struct expr* const resolved =
         expr_new_unary(&op->location, rhs->type, uop, rhs);
 
-    sunder_freezer_register(context()->freezer, resolved);
+    freezer_register(context()->freezer, resolved);
     return resolved;
 }
 
@@ -3457,7 +3457,7 @@ resolve_expr_unary_bitwise(
     struct expr* const resolved =
         expr_new_unary(&op->location, rhs->type, uop, rhs);
 
-    sunder_freezer_register(context()->freezer, resolved);
+    freezer_register(context()->freezer, resolved);
     return resolved;
 }
 
@@ -3480,7 +3480,7 @@ resolve_expr_unary_dereference(
     struct expr* const resolved = expr_new_unary(
         &op->location, rhs->type->data.pointer.base, UOP_DEREFERENCE, rhs);
 
-    sunder_freezer_register(context()->freezer, resolved);
+    freezer_register(context()->freezer, resolved);
     return resolved;
 }
 
@@ -3501,7 +3501,7 @@ resolve_expr_unary_addressof(
     struct expr* const resolved = expr_new_unary(
         &op->location, type_unique_pointer(rhs->type), UOP_ADDRESSOF, rhs);
 
-    sunder_freezer_register(context()->freezer, resolved);
+    freezer_register(context()->freezer, resolved);
     return resolved;
 }
 
@@ -3525,7 +3525,7 @@ resolve_expr_unary_countof(
     struct expr* const resolved = expr_new_unary(
         &op->location, context()->builtin.usize, UOP_COUNTOF, rhs);
 
-    sunder_freezer_register(context()->freezer, resolved);
+    freezer_register(context()->freezer, resolved);
     return resolved;
 }
 
@@ -3631,7 +3631,7 @@ resolve_expr_binary_logical(
     struct expr* const resolved =
         expr_new_binary(&op->location, type, bop, lhs, rhs);
 
-    sunder_freezer_register(context()->freezer, resolved);
+    freezer_register(context()->freezer, resolved);
     return resolved;
 }
 
@@ -3671,7 +3671,7 @@ resolve_expr_binary_compare_equality(
 
     struct expr* resolved =
         expr_new_binary(&op->location, context()->builtin.bool_, bop, lhs, rhs);
-    sunder_freezer_register(context()->freezer, resolved);
+    freezer_register(context()->freezer, resolved);
 
     // Constant fold integer literal constant expression.
     if (lhs->kind == EXPR_INTEGER && rhs->kind == EXPR_INTEGER) {
@@ -3683,7 +3683,7 @@ resolve_expr_binary_compare_equality(
 
         assert(value->type->kind == TYPE_BOOL);
         resolved = expr_new_boolean(resolved->location, value->data.boolean);
-        sunder_freezer_register(context()->freezer, resolved);
+        freezer_register(context()->freezer, resolved);
     }
 
     return resolved;
@@ -3726,7 +3726,7 @@ resolve_expr_binary_compare_order(
 
     struct expr* resolved =
         expr_new_binary(&op->location, context()->builtin.bool_, bop, lhs, rhs);
-    sunder_freezer_register(context()->freezer, resolved);
+    freezer_register(context()->freezer, resolved);
 
     // Constant fold integer literal constant expression.
     if (lhs->kind == EXPR_INTEGER && rhs->kind == EXPR_INTEGER) {
@@ -3738,7 +3738,7 @@ resolve_expr_binary_compare_order(
 
         assert(value->type->kind == TYPE_BOOL);
         resolved = expr_new_boolean(resolved->location, value->data.boolean);
-        sunder_freezer_register(context()->freezer, resolved);
+        freezer_register(context()->freezer, resolved);
     }
 
     return resolved;
@@ -3774,7 +3774,7 @@ resolve_expr_binary_arithmetic(
 
     struct type const* const type = lhs->type; // Arbitrarily use lhs.
     struct expr* resolved = expr_new_binary(&op->location, type, bop, lhs, rhs);
-    sunder_freezer_register(context()->freezer, resolved);
+    freezer_register(context()->freezer, resolved);
 
     // Constant fold integer literal constant expression.
     if (lhs->kind == EXPR_INTEGER && rhs->kind == EXPR_INTEGER) {
@@ -3787,7 +3787,7 @@ resolve_expr_binary_arithmetic(
         assert(type_is_any_integer(value->type));
         resolved = expr_new_integer(
             resolved->location, resolved->type, value->data.integer);
-        sunder_freezer_register(context()->freezer, resolved);
+        freezer_register(context()->freezer, resolved);
     }
 
     return resolved;
@@ -3829,7 +3829,7 @@ resolve_expr_binary_bitwise(
     }
 
     struct expr* resolved = expr_new_binary(&op->location, type, bop, lhs, rhs);
-    sunder_freezer_register(context()->freezer, resolved);
+    freezer_register(context()->freezer, resolved);
 
     // Constant fold integer literal constant expression.
     if (lhs->kind == EXPR_INTEGER && rhs->kind == EXPR_INTEGER) {
@@ -3842,7 +3842,7 @@ resolve_expr_binary_bitwise(
         assert(type_is_any_integer(value->type));
         resolved = expr_new_integer(
             resolved->location, resolved->type, value->data.integer);
-        sunder_freezer_register(context()->freezer, resolved);
+        freezer_register(context()->freezer, resolved);
     }
 
     return resolved;
@@ -3883,7 +3883,7 @@ resolve_block(
     struct block* const resolved =
         block_new(block->location, symbol_table, stmts);
 
-    sunder_freezer_register(context()->freezer, resolved);
+    freezer_register(context()->freezer, resolved);
     resolver->current_symbol_table = save_symbol_table;
     resolver->current_rbp_offset = save_rbp_offset;
     return resolved;
@@ -4072,8 +4072,8 @@ resolve(struct module* module)
                 symbol_new_namespace(location, nsname, module_table);
             struct symbol* const export_nssymbol =
                 symbol_new_namespace(location, nsname, module_table);
-            sunder_freezer_register(context()->freezer, module_nssymbol);
-            sunder_freezer_register(context()->freezer, export_nssymbol);
+            freezer_register(context()->freezer, module_nssymbol);
+            freezer_register(context()->freezer, export_nssymbol);
 
             symbol_table_insert(
                 resolver->current_symbol_table, name, module_nssymbol, false);

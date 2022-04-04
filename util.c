@@ -1044,12 +1044,12 @@ bitarr_del(struct bitarr* self)
 }
 
 void
-bitarr_freeze(struct bitarr* self, struct sunder_freezer* freezer)
+bitarr_freeze(struct bitarr* self, struct freezer* freezer)
 {
     assert(self != NULL);
     assert(freezer != NULL);
 
-    sunder_freezer_register(freezer, self);
+    freezer_register(freezer, self);
 }
 
 size_t
@@ -1555,13 +1555,13 @@ bigint_del(struct bigint* self)
 }
 
 void
-bigint_freeze(struct bigint* self, struct sunder_freezer* freezer)
+bigint_freeze(struct bigint* self, struct freezer* freezer)
 {
     assert(self != NULL);
     assert(freezer != NULL);
 
-    sunder_freezer_register(freezer, self);
-    sunder_freezer_register(freezer, self->limbs);
+    freezer_register(freezer, self);
+    freezer_register(freezer, self->limbs);
 }
 
 int
@@ -2294,13 +2294,13 @@ string_del(struct string* self)
 }
 
 void
-string_freeze(struct string* self, struct sunder_freezer* freezer)
+string_freeze(struct string* self, struct freezer* freezer)
 {
     assert(self != NULL);
     assert(freezer != NULL);
 
-    sunder_freezer_register(freezer, self);
-    sunder_freezer_register(freezer, self->start);
+    freezer_register(freezer, self);
+    freezer_register(freezer, self->start);
 }
 
 char const*
@@ -2482,23 +2482,22 @@ string_split_on(
     return res;
 }
 
-struct sunder_freezer {
+struct freezer {
     // List of heap-allocated pointers to be freed when objects are cleaned out
     // of the freezer.
     sunder_sbuf(void*) ptrs;
 };
 
-struct sunder_freezer*
-sunder_freezer_new(void)
+struct freezer*
+freezer_new(void)
 {
-    struct sunder_freezer* const self =
-        sunder_xalloc(NULL, sizeof(struct sipool));
+    struct freezer* const self = sunder_xalloc(NULL, sizeof(struct sipool));
     self->ptrs = NULL;
     return self;
 }
 
 void
-sunder_freezer_del(struct sunder_freezer* self)
+freezer_del(struct freezer* self)
 {
     if (self == NULL) {
         return;
@@ -2513,7 +2512,7 @@ sunder_freezer_del(struct sunder_freezer* self)
 }
 
 void
-sunder_freezer_register(struct sunder_freezer* self, void* ptr)
+freezer_register(struct freezer* self, void* ptr)
 {
     assert(self != NULL);
 
