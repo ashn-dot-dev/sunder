@@ -134,20 +134,20 @@ sunder_stream_read(FILE* stream, void** buf, size_t* buf_size);
 // Returns an sunder_xalloc-allocated cstring of the first count bytes of start.
 // This function behaves similarly to the POSIX strdupn function.
 char*
-sunder_cstr_new(char const* start, size_t count);
+cstr_new(char const* start, size_t count);
 // Returns an sunder_xalloc-allocated copy of the provided cstring.
 // This function behaves similarly to the POSIX strdup function.
 char*
-sunder_cstr_new_cstr(char const* cstr);
+cstr_new_cstr(char const* cstr);
 // Returns an sunder_xalloc-allocated cstring from the provided formatted text.
 char*
-sunder_cstr_new_fmt(char const* fmt, ...);
+cstr_new_fmt(char const* fmt, ...);
 // Returns a non-zero value if cstr starts with target.
 int
-sunder_cstr_starts_with(char const* cstr, char const* target);
+cstr_starts_with(char const* cstr, char const* target);
 // Returns a non-zero value if cstr ends with target.
 int
-sunder_cstr_ends_with(char const* cstr, char const* target);
+cstr_ends_with(char const* cstr, char const* target);
 
 struct vstr {
     char const* start;

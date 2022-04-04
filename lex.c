@@ -92,15 +92,14 @@ token_to_new_cstr(struct token const* token)
     assert(token != NULL);
 
     if (token->kind == TOKEN_IDENTIFIER) {
-        return sunder_cstr_new_fmt(
+        return cstr_new_fmt(
             "identifier(%.*s)", (int)token->count, token->start);
     }
     if (token->kind == TOKEN_INTEGER) {
-        return sunder_cstr_new_fmt(
-            "integer(%.*s)", (int)token->count, token->start);
+        return cstr_new_fmt("integer(%.*s)", (int)token->count, token->start);
     }
 
-    return sunder_cstr_new_cstr(token_kind_to_cstr(token->kind));
+    return cstr_new_cstr(token_kind_to_cstr(token->kind));
 }
 
 struct lexer {
@@ -259,15 +258,15 @@ lex_integer(struct lexer* self)
     // Prefix
     char const* const number_start = self->current;
     int (*radix_isdigit)(int c) = sunder_isdigit;
-    if (sunder_cstr_starts_with(self->current, "0b")) {
+    if (cstr_starts_with(self->current, "0b")) {
         self->current += SUNDER_STR_LITERAL_COUNT("0b");
         radix_isdigit = sunder_isbdigit;
     }
-    else if (sunder_cstr_starts_with(self->current, "0o")) {
+    else if (cstr_starts_with(self->current, "0o")) {
         self->current += SUNDER_STR_LITERAL_COUNT("0o");
         radix_isdigit = sunder_isodigit;
     }
-    else if (sunder_cstr_starts_with(self->current, "0x")) {
+    else if (cstr_starts_with(self->current, "0x")) {
         self->current += SUNDER_STR_LITERAL_COUNT("0x");
         radix_isdigit = sunder_isxdigit;
     }
@@ -458,7 +457,7 @@ lex_sigil(struct lexer* self)
     for (int i = (int)SIGILS_FIRST; i <= (int)SIGILS_LAST; ++i) {
         char const* const sigil_start = token_kind_vstrs[i].start;
         size_t const sigil_count = token_kind_vstrs[i].count;
-        if (sunder_cstr_starts_with(self->current, sigil_start)) {
+        if (cstr_starts_with(self->current, sigil_start)) {
             self->current += sigil_count;
             return token_new(
                 sigil_start,

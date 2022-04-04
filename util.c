@@ -429,7 +429,7 @@ directory_path(char const* path)
 
     char const* const canonical = canonical_path(path);
 
-    char* const tmp = sunder_cstr_new_cstr(canonical);
+    char* const tmp = cstr_new_cstr(canonical);
     char const* const interned =
         sunder_sipool_intern_cstr(context()->sipool, dirname(tmp));
     sunder_xalloc(tmp, SUNDER_XALLOC_FREE);
@@ -771,7 +771,7 @@ sunder_stream_read(FILE* stream, void** buf, size_t* buf_size)
 }
 
 char*
-sunder_cstr_new(char const* start, size_t count)
+cstr_new(char const* start, size_t count)
 {
     assert(start != NULL || count == 0);
 
@@ -782,7 +782,7 @@ sunder_cstr_new(char const* start, size_t count)
 }
 
 char*
-sunder_cstr_new_cstr(char const* cstr)
+cstr_new_cstr(char const* cstr)
 {
     assert(cstr != NULL);
 
@@ -792,7 +792,7 @@ sunder_cstr_new_cstr(char const* cstr)
 }
 
 char*
-sunder_cstr_new_fmt(char const* fmt, ...)
+cstr_new_fmt(char const* fmt, ...)
 {
     assert(fmt != NULL);
 
@@ -817,7 +817,7 @@ sunder_cstr_new_fmt(char const* fmt, ...)
 }
 
 int
-sunder_cstr_starts_with(char const* cstr, char const* target)
+cstr_starts_with(char const* cstr, char const* target)
 {
     assert(cstr != NULL);
     assert(target != NULL);
@@ -826,7 +826,7 @@ sunder_cstr_starts_with(char const* cstr, char const* target)
 }
 
 int
-sunder_cstr_ends_with(char const* cstr, char const* target)
+cstr_ends_with(char const* cstr, char const* target)
 {
     assert(cstr != NULL);
     assert(target != NULL);
@@ -931,7 +931,7 @@ sunder_sipool_intern(
         }
     }
 
-    char* const str = sunder_cstr_new(start, count);
+    char* const str = cstr_new(start, count);
     sunder_sbuf_push(self->strings, str);
 
     return str;

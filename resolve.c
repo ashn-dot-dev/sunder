@@ -1262,7 +1262,7 @@ resolve_import_file(
         return;
     }
 
-    if (!sunder_cstr_ends_with(file_name, ".sunder") && from_directory) {
+    if (!cstr_ends_with(file_name, ".sunder") && from_directory) {
         // Ignore files imported via a directory import if they do not end in a
         // `.sunder` extension. This will allow directories containing
         // non-sunder files to be imported without the compiler producing an
