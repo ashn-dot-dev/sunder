@@ -128,7 +128,7 @@ module_del(struct module* self)
     symbol_table_freeze(self->symbols, context()->freezer);
     symbol_table_freeze(self->exports, context()->freezer);
 
-    sunder_sbuf_fini(self->ordered);
+    sbuf_fini(self->ordered);
     memset(self, 0x00, sizeof(*self));
     sunder_xalloc(self, SUNDER_XALLOC_FREE);
 }
@@ -235,22 +235,22 @@ context_fini(void)
 {
     struct context* const self = &s_context;
 
-    for (size_t i = 0; i < sunder_sbuf_count(self->modules); ++i) {
+    for (size_t i = 0; i < sbuf_count(self->modules); ++i) {
         module_del(self->modules[i]);
     }
-    sunder_sbuf_fini(self->modules);
+    sbuf_fini(self->modules);
 
     sipool_del(self->sipool);
 
-    sunder_sbuf_fini(self->static_symbols);
+    sbuf_fini(self->static_symbols);
     symbol_table_freeze(self->global_symbol_table, self->freezer);
 
-    sunder_sbuf(struct symbol_table*) const chilling_symbol_tables =
+    sbuf(struct symbol_table*) const chilling_symbol_tables =
         self->chilling_symbol_tables;
-    for (size_t i = 0; i < sunder_sbuf_count(chilling_symbol_tables); ++i) {
+    for (size_t i = 0; i < sbuf_count(chilling_symbol_tables); ++i) {
         symbol_table_freeze(chilling_symbol_tables[i], self->freezer);
     }
-    sunder_sbuf_fini(self->chilling_symbol_tables);
+    sbuf_fini(self->chilling_symbol_tables);
 
     freezer_del(self->freezer);
 
@@ -270,7 +270,7 @@ load_module(char const* name, char const* path)
     assert(lookup_module(path) == NULL);
 
     struct module* const module = module_new(name, path);
-    sunder_sbuf_push(s_context.modules, module);
+    sbuf_push(s_context.modules, module);
 
     parse(module);
     order(module);
@@ -285,7 +285,7 @@ lookup_module(char const* path)
 {
     assert(path != NULL);
 
-    for (size_t i = 0; i < sunder_sbuf_count(context()->modules); ++i) {
+    for (size_t i = 0; i < sbuf_count(context()->modules); ++i) {
         if (context()->modules[i]->path == path) {
             return context()->modules[i];
         }

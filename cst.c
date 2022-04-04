@@ -210,7 +210,7 @@ cst_stmt_new(struct source_location const* location, enum cst_stmt_kind kind)
 struct cst_stmt*
 cst_stmt_new_if(struct cst_conditional const* const* conditionals)
 {
-    assert(sunder_sbuf_count(conditionals) > 0u);
+    assert(sbuf_count(conditionals) > 0u);
 
     struct source_location const* const location = conditionals[0]->location;
     struct cst_stmt* const self = cst_stmt_new(location, CST_STMT_IF);
@@ -669,7 +669,7 @@ cst_symbol_new(
     struct cst_symbol_element const* const* elements)
 {
     assert(location != NULL);
-    assert(sunder_sbuf_count(elements) > 0);
+    assert(sbuf_count(elements) > 0);
 
     struct cst_symbol* const self = sunder_xalloc(NULL, sizeof(*self));
     memset(self, 0x00, sizeof(*self));

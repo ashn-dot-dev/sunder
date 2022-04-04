@@ -242,14 +242,14 @@ append_dx_data(struct value const* value)
     case TYPE_S64: /* fallthrough */
     case TYPE_USIZE: /* fallthrough */
     case TYPE_SSIZE: {
-        sunder_sbuf(uint8_t) const bytes = value_to_new_bytes(value);
-        for (size_t i = 0; i < sunder_sbuf_count(bytes); ++i) {
+        sbuf(uint8_t) const bytes = value_to_new_bytes(value);
+        for (size_t i = 0; i < sbuf_count(bytes); ++i) {
             if (i != 0) {
                 append(", ");
             }
             append("%#x", (unsigned)bytes[i]);
         }
-        sunder_sbuf_fini(bytes);
+        sbuf_fini(bytes);
         return;
     }
     case TYPE_INTEGER: {
@@ -276,7 +276,7 @@ append_dx_data(struct value const* value)
         return;
     }
     case TYPE_ARRAY: {
-        sunder_sbuf(struct value*) const elements = value->data.array.elements;
+        sbuf(struct value*) const elements = value->data.array.elements;
         struct value* const ellipsis = value->data.array.ellipsis;
 
         // One dimensional arrays may use NASM's times prefix to repeat the
@@ -288,11 +288,11 @@ append_dx_data(struct value const* value)
         if (value->type->data.array.base->kind == TYPE_ARRAY) {
             size_t const count = value->type->data.array.count;
             for (size_t i = 0; i < count; ++i) {
-                if (i != 0 && i < sunder_sbuf_count(elements)) {
+                if (i != 0 && i < sbuf_count(elements)) {
                     append(", ");
                 }
 
-                if (i < sunder_sbuf_count(elements)) {
+                if (i < sbuf_count(elements)) {
                     append_dx_data(elements[i]);
                 }
                 else {
@@ -303,8 +303,8 @@ append_dx_data(struct value const* value)
             return;
         }
 
-        if (sunder_sbuf_count(elements) != 0) {
-            for (size_t i = 0; i < sunder_sbuf_count(elements); ++i) {
+        if (sbuf_count(elements) != 0) {
+            for (size_t i = 0; i < sbuf_count(elements); ++i) {
                 appendch('\n');
                 appendli("; element %zu", i);
                 append("    ");
@@ -315,7 +315,7 @@ append_dx_data(struct value const* value)
         }
         if (ellipsis != NULL) {
             size_t const times =
-                value->type->data.array.count - sunder_sbuf_count(elements);
+                value->type->data.array.count - sbuf_count(elements);
             appendch('\n');
             appendli("; ellipsis element...");
             append("    times %zu", times);
@@ -343,10 +343,10 @@ append_dx_data(struct value const* value)
         return;
     }
     case TYPE_STRUCT: {
-        sunder_sbuf(struct member_variable) const member_variable_defs =
+        sbuf(struct member_variable) const member_variable_defs =
             value->type->data.struct_.member_variables;
         size_t const member_variable_defs_count =
-            sunder_sbuf_count(member_variable_defs);
+            sbuf_count(member_variable_defs);
         appendch('\n');
         for (size_t i = 0; i < member_variable_defs_count; ++i) {
             struct member_variable const* const def = member_variable_defs + i;
@@ -726,7 +726,7 @@ codegen_static_constants(void)
     appendln("; STATIC CONSTANTS");
     appendln("section .rodata");
 
-    for (size_t i = 0; i < sunder_sbuf_count(context()->static_symbols); ++i) {
+    for (size_t i = 0; i < sbuf_count(context()->static_symbols); ++i) {
         struct symbol const* const symbol = context()->static_symbols[i];
         assert(symbol_xget_address(symbol)->kind == ADDRESS_STATIC);
         if (symbol->kind != SYMBOL_CONSTANT) {
@@ -742,7 +742,7 @@ codegen_static_variables(void)
     appendln("; STATIC VARIABLES");
     appendln("section .data");
 
-    for (size_t i = 0; i < sunder_sbuf_count(context()->static_symbols); ++i) {
+    for (size_t i = 0; i < sbuf_count(context()->static_symbols); ++i) {
         struct symbol const* const symbol = context()->static_symbols[i];
         assert(symbol_xget_address(symbol)->kind == ADDRESS_STATIC);
         if (symbol->kind != SYMBOL_VARIABLE) {
@@ -758,7 +758,7 @@ codegen_static_functions(void)
     appendln("; STATIC (GLOBAL) FUNCTIONS");
     appendln("section .text");
 
-    for (size_t i = 0; i < sunder_sbuf_count(context()->static_symbols); ++i) {
+    for (size_t i = 0; i < sbuf_count(context()->static_symbols); ++i) {
         struct symbol const* const symbol = context()->static_symbols[i];
         assert(symbol_xget_address(symbol)->kind == ADDRESS_STATIC);
         if (symbol->kind != SYMBOL_FUNCTION) {
@@ -859,7 +859,7 @@ codegen_static_function(struct symbol const* symbol)
 
     assert(current_function == NULL);
     current_function = function;
-    for (size_t i = 0; i < sunder_sbuf_count(function->body->stmts); ++i) {
+    for (size_t i = 0; i < sbuf_count(function->body->stmts); ++i) {
         struct stmt const* const stmt = function->body->stmts[i];
         codegen_stmt(stmt);
     }
@@ -915,10 +915,10 @@ codegen_stmt_if(struct stmt const* stmt, size_t id)
     assert(stmt != NULL);
     assert(stmt->kind == STMT_IF);
 
-    sunder_sbuf(struct conditional const* const) const conditionals =
+    sbuf(struct conditional const* const) const conditionals =
         stmt->data.if_.conditionals;
-    for (size_t i = 0; i < sunder_sbuf_count(conditionals); ++i) {
-        bool const is_last = i == (sunder_sbuf_count(conditionals) - 1);
+    for (size_t i = 0; i < sbuf_count(conditionals); ++i) {
+        bool const is_last = i == (sbuf_count(conditionals) - 1);
 
         if (conditionals[i]->condition != NULL) {
             appendln("%s%zu_condition_%zu:", LABEL_STMT, id, i);
@@ -940,9 +940,9 @@ codegen_stmt_if(struct stmt const* stmt, size_t id)
         }
 
         appendln("%s%zu_body_%zu:", LABEL_STMT, id, i);
-        sunder_sbuf(struct stmt const* const) const stmts =
+        sbuf(struct stmt const* const) const stmts =
             conditionals[i]->body->stmts;
-        for (size_t i = 0; i < sunder_sbuf_count(stmts); ++i) {
+        for (size_t i = 0; i < sbuf_count(stmts); ++i) {
             codegen_stmt(stmts[i]);
         }
         appendli("jmp %s%zu_end", LABEL_STMT, id);
@@ -982,9 +982,9 @@ codegen_stmt_for_range(struct stmt const* stmt, size_t id)
     appendli("cmp rax, rbx");
     appendli("je %s%zu_end", LABEL_STMT, id);
     appendln("%s%zu_body_bgn:", LABEL_STMT, id);
-    sunder_sbuf(struct stmt const* const) const stmts =
+    sbuf(struct stmt const* const) const stmts =
         stmt->data.for_range.body->stmts;
-    for (size_t i = 0; i < sunder_sbuf_count(stmts); ++i) {
+    for (size_t i = 0; i < sbuf_count(stmts); ++i) {
         codegen_stmt(stmts[i]);
     }
     appendln("%s%zu_body_end:", LABEL_STMT, id);
@@ -1014,9 +1014,9 @@ codegen_stmt_for_expr(struct stmt const* stmt, size_t id)
     appendli("cmp al, bl");
     appendli("je %s%zu_end", LABEL_STMT, id);
     appendln("%s%zu_body_bgn:", LABEL_STMT, id);
-    sunder_sbuf(struct stmt const* const) const stmts =
+    sbuf(struct stmt const* const) const stmts =
         stmt->data.for_expr.body->stmts;
-    for (size_t i = 0; i < sunder_sbuf_count(stmts); ++i) {
+    for (size_t i = 0; i < sbuf_count(stmts); ++i) {
         codegen_stmt(stmts[i]);
     }
     appendln("%s%zu_body_end:", LABEL_STMT, id);
@@ -1294,8 +1294,7 @@ codegen_rvalue_array(struct expr const* expr, size_t id)
     // array elements. Additionally pushing/popping to and from the stack uses
     // 8-byte alignment, but arrays may have element alignment that does not
     // cleanly match the stack alignment (e.g. [count]bool).
-    sunder_sbuf(struct expr const* const) const elements =
-        expr->data.array.elements;
+    sbuf(struct expr const* const) const elements = expr->data.array.elements;
     struct type const* const element_type = expr->type->data.array.base;
     size_t const element_size = element_type->size;
     // TODO: This loop is manually unrolled here, but should probably be turned
@@ -1304,7 +1303,7 @@ codegen_rvalue_array(struct expr const* expr, size_t id)
     // interpreter allocates an array 30000 zeroed bytes, which would cause the
     // equivalent of memcpy(&my_array[index], &my_zero, 0x8) inline thousands of
     // times.
-    for (size_t i = 0; i < sunder_sbuf_count(elements); ++i) {
+    for (size_t i = 0; i < sbuf_count(elements); ++i) {
         assert(elements[i]->type == element_type);
         codegen_rvalue(elements[i]);
 
@@ -1317,14 +1316,14 @@ codegen_rvalue_array(struct expr const* expr, size_t id)
     }
 
     size_t const count = expr->type->data.array.count;
-    if (sunder_sbuf_count(elements) < count) { // ellipsis
+    if (sbuf_count(elements) < count) { // ellipsis
         assert(expr->data.array.ellipsis != NULL);
         assert(expr->data.array.ellipsis->type == element_type);
 
         // Number of elements already filled in.
-        size_t const completed = sunder_sbuf_count(elements);
+        size_t const completed = sbuf_count(elements);
         // Number of elements remaining to be filled in with the ellipsis.
-        size_t const remaining = count - sunder_sbuf_count(elements);
+        size_t const remaining = count - sbuf_count(elements);
 
         appendln("%s%zu_ellipsis_bgn:", LABEL_EXPR, id);
         codegen_rvalue(expr->data.array.ellipsis);
@@ -1390,7 +1389,7 @@ codegen_rvalue_array_slice(struct expr const* expr, size_t id)
     pop(symbol_xget_type(expr->data.array_slice.array_symbol)->size);
 
     // Evaluate a slice constructed from the backing array.
-    appendli("push %zu", sunder_sbuf_count(expr->data.array_slice.elements));
+    appendli("push %zu", sbuf_count(expr->data.array_slice.elements));
     push_address(symbol_xget_address(expr->data.array_slice.array_symbol));
 }
 
@@ -1422,14 +1421,13 @@ codegen_rvalue_struct(struct expr const* expr, size_t id)
     // Each member variable will be at the top of the stack after being
     // evaluated, so the member variable is manually memcpy-ed into the correct
     // position on the stack.
-    sunder_sbuf(struct member_variable) const member_variable_defs =
+    sbuf(struct member_variable) const member_variable_defs =
         expr->type->data.struct_.member_variables;
-    sunder_sbuf(struct expr const* const) const member_variable_exprs =
+    sbuf(struct expr const* const) const member_variable_exprs =
         expr->data.struct_.member_variables;
     assert(
-        sunder_sbuf_count(member_variable_defs)
-        == sunder_sbuf_count(member_variable_exprs));
-    for (size_t i = 0; i < sunder_sbuf_count(member_variable_defs); ++i) {
+        sbuf_count(member_variable_defs) == sbuf_count(member_variable_exprs));
+    for (size_t i = 0; i < sbuf_count(member_variable_defs); ++i) {
         assert(member_variable_exprs[i]->type == member_variable_defs[i].type);
         codegen_rvalue(member_variable_exprs[i]);
 
@@ -1529,7 +1527,7 @@ codegen_rvalue_syscall(struct expr const* expr, size_t id)
     (void)id;
 
     struct expr const* const* const arguments = expr->data.syscall.arguments;
-    size_t const count = sunder_sbuf_count(arguments);
+    size_t const count = sbuf_count(arguments);
     for (size_t i = 0; i < count; ++i) {
         assert(arguments[i]->type->size <= 8);
         codegen_rvalue(arguments[i]);
@@ -1578,7 +1576,7 @@ codegen_rvalue_call(struct expr const* expr, size_t id)
 
     // Evaluate & push arguments from left to right.
     struct expr const* const* const arguments = expr->data.call.arguments;
-    for (size_t i = 0; i < sunder_sbuf_count(arguments); ++i) {
+    for (size_t i = 0; i < sbuf_count(arguments); ++i) {
         appendli(
             "; push argument %zu of type `%s`",
             i + 1,
@@ -1593,7 +1591,7 @@ codegen_rvalue_call(struct expr const* expr, size_t id)
 
     // Pop arguments from right to left, leaving the return value as the top
     // element on the stack (for return values with non-zero size).
-    for (size_t i = sunder_sbuf_count(arguments); i--;) {
+    for (size_t i = sbuf_count(arguments); i--;) {
         appendli(
             "; discard (pop) argument %zu of type `%s`",
             i + 1,

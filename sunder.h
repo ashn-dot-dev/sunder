@@ -223,32 +223,32 @@ sipool_intern_cstr(struct sipool* self, char const* cstr);
 // | HEADER | SBUF[0] | SBUF[1] | SBUF[2] | ...
 // +--------+---------+---------+---------+--
 //          ^
-//          Pointer manipulated by the user / sunder_sbuf_* macros.
+//          Pointer manipulated by the user / sbuf_* macros.
 //
 // Example:
 //      // The declaration:
 //      //      TYPE* identifier = NULL;
 //      // creates an empty stretchy buffer holding TYPE values.
 //      // An equivalent declaration:
-//      //      sunder_sbuf(TYPE) identifier = NULL;
+//      //      sbuf(TYPE) identifier = NULL;
 //      // may also be used in most cases.
 //      int* vals = NULL;
-//      printf("count == %zu\n", sunder_sbuf_count(vals));  /* count == 0 */
+//      printf("count == %zu\n", sbuf_count(vals));  /* count == 0 */
 //
 //      for (int i = 0; i < 3; ++i) {
-//          sunder_sbuf_push(vals, (i + 1) * 2);
+//          sbuf_push(vals, (i + 1) * 2);
 //      }
-//      printf("count == %zu\n", sunder_sbuf_count(vals)); /* count == 3 */
+//      printf("count == %zu\n", sbuf_count(vals)); /* count == 3 */
 //      printf("vals[0] == %d\n", vals[0]); /* vals[0] == 2 */
 //      printf("vals[1] == %d\n", vals[1]); /* vals[1] == 4 */
 //      printf("vals[2] == %d\n", vals[2]); /* vals[2] == 6 */
 //
-//      printf("popped == %d\n", sunder_sbuf_pop(vals)); /* popped == 6 */
-//      printf("count == %zu\n", sunder_sbuf_count(vals)); /* count == 2 */
+//      printf("popped == %d\n", sbuf_pop(vals)); /* popped == 6 */
+//      printf("count == %zu\n", sbuf_count(vals)); /* count == 2 */
 //
 //      // Free memory allocated to the sbuf.
 //      // This is safe to call even if vals == NULL.
-//      sunder_sbuf_fini(vals);
+//      sbuf_fini(vals);
 
 // Convenience macros used to explicitly annotate a pointer as a stretchy
 // buffer. Type annotations for types such as stack-allocated arrays and
@@ -256,86 +256,86 @@ sipool_intern_cstr(struct sipool* self, char const* cstr);
 // nature of C variable/type declarations.
 //
 // Example:
-//      sunder_sbuf(int) sbuf = NULL;
-//      sunder_sbuf_push(sbuf, 1);
-#define sunder_sbuf(TYPE) TYPE*
+//      sbuf(int) sbuf = NULL;
+//      sbuf_push(sbuf, 1);
+#define sbuf(TYPE) TYPE*
 
-// void sunder_sbuf_fini(TYPE* sbuf)
+// void sbuf_fini(TYPE* sbuf)
 // ------------------------------------------------------------
 // Free resources associated with the stretchy buffer.
 // Macro parameter sbuf is evaluated multiple times.
-#define sunder_sbuf_fini(sbuf)                                                 \
-    ((void)((sbuf) != NULL ? SUNDER__SBUF_FREE_NON_NULL_HEAD_(sbuf) : NULL))
+#define sbuf_fini(sbuf)                                                        \
+    ((void)((sbuf) != NULL ? SBUF__FREE_NON_NULL_HEAD_(sbuf) : NULL))
 
-// void sunder_sbuf_freeze(TYPE* sbuf, struct freezer* freezer)
+// void sbuf_freeze(TYPE* sbuf, struct freezer* freezer)
 // ------------------------------------------------------------
 // Register resources within bigint with the provided freezer.
-#define sunder_sbuf_freeze(sbuf, freezer)                                      \
-    ((void)((sbuf) != NULL ? SUNDER__SBUF_FREEZE_NON_NULL_HEAD_(sbuf, freezer), NULL : NULL))
+#define sbuf_freeze(sbuf, freezer)                                             \
+    ((void)((sbuf) != NULL ? SBUF__FREEZE_NON_NULL_HEAD_(sbuf, freezer), NULL : NULL))
 
-// size_t sunder_sbuf_count(TYPE* sbuf)
+// size_t sbuf_count(TYPE* sbuf)
 // ------------------------------------------------------------
 // The number of elements in the stretchy buffer.
 // Macro parameter sbuf is evaluated multiple times.
-#define sunder_sbuf_count(sbuf)                                                \
-    ((size_t)((sbuf) != NULL ? SUNDER__SBUF_PHEAD_CONST_(sbuf)->cnt_ : 0u))
-// size_t sunder_sbuf_capacity(TYPE* sbuf)
+#define sbuf_count(sbuf)                                                       \
+    ((size_t)((sbuf) != NULL ? SBUF__PHEAD_CONST_(sbuf)->cnt_ : 0u))
+// size_t sbuf_capacity(TYPE* sbuf)
 // ------------------------------------------------------------
 // The number of elements the allocated in the sbuf.
 // Macro parameter sbuf is evaluated multiple times.
-#define sunder_sbuf_capacity(sbuf)                                             \
-    ((size_t)((sbuf) != NULL ? SUNDER__SBUF_PHEAD_CONST_(sbuf)->cap_ : 0u))
+#define sbuf_capacity(sbuf)                                                    \
+    ((size_t)((sbuf) != NULL ? SBUF__PHEAD_CONST_(sbuf)->cap_ : 0u))
 
-// void sunder_sbuf_reserve(TYPE* sbuf, size_t n)
+// void sbuf_reserve(TYPE* sbuf, size_t n)
 // ------------------------------------------------------------
 // Update the minimum capacity of the stretchy buffer to n elements.
 // Macro parameter sbuf is evaluated multiple times.
-#define sunder_sbuf_reserve(sbuf, /*n*/...)                                    \
-    ((void)((sbuf) = sunder__sbuf_rsv_(sizeof(*(sbuf)), sbuf, __VA_ARGS__)))
-// void sunder_sbuf_resize(TYPE* sbuf, size_t n)
+#define sbuf_reserve(sbuf, /*n*/...)                                           \
+    ((void)((sbuf) = sbuf__rsv_(sizeof(*(sbuf)), sbuf, __VA_ARGS__)))
+// void sbuf_resize(TYPE* sbuf, size_t n)
 // ------------------------------------------------------------
 // Update the count of the stretchy buffer to n elements.
 // Macro parameter sbuf is evaluated multiple times.
-#define sunder_sbuf_resize(sbuf, /*n*/...)                                     \
-    ((void)((sbuf) = sunder__sbuf_rsz_(sizeof(*(sbuf)), sbuf, __VA_ARGS__)))
+#define sbuf_resize(sbuf, /*n*/...)                                            \
+    ((void)((sbuf) = sbuf__rsz_(sizeof(*(sbuf)), sbuf, __VA_ARGS__)))
 
-// void sunder_sbuf_push(TYPE* sbuf, TYPE val)
+// void sbuf_push(TYPE* sbuf, TYPE val)
 // ------------------------------------------------------------
 // Append val as the last element of the stretchy buffer.
 // Macro parameter sbuf is evaluated multiple times.
-#define sunder_sbuf_push(sbuf, /*val*/...)                                     \
-    ((void)(SUNDER__SBUF_MAYBE_GROW_(sbuf), SUNDER__SBUF_APPEND_(sbuf, __VA_ARGS__)))
-// TYPE sunder_sbuf_pop(TYPE* sbuf)
+#define sbuf_push(sbuf, /*val*/...)                                            \
+    ((void)(SBUF__MAYBE_GROW_(sbuf), SBUF__APPEND_(sbuf, __VA_ARGS__)))
+// TYPE sbuf_pop(TYPE* sbuf)
 // ------------------------------------------------------------
 // Remove and return the last element of the stretchy buffer.
 // This macro does *not* perform bounds checking.
 // Macro parameter sbuf is evaluated multiple times.
-#define sunder_sbuf_pop(sbuf) ((sbuf)[--SUNDER__SBUF_PHEAD_MUTBL_(sbuf)->cnt_])
+#define sbuf_pop(sbuf) ((sbuf)[--SBUF__PHEAD_MUTBL_(sbuf)->cnt_])
 
 // Internal utilities that must be visible to other header/source files that
-// wish to use the sunder_sbuf_* API. Do not use these directly!
+// wish to use the sbuf_* API. Do not use these directly!
 // clang-format off
-struct sunder__sbuf_header_{size_t cnt_; size_t cap_; max_align_type _[];};
-enum{SUNDER__SBUF_HEADER_OFFSET_ = sizeof(struct sunder__sbuf_header_)};
-#define SUNDER__SBUF_PHEAD_MUTBL_(sbuf_)                                       \
-    ((struct sunder__sbuf_header_      *)                                      \
-     ((char      *)(sbuf_)-SUNDER__SBUF_HEADER_OFFSET_))
-#define SUNDER__SBUF_PHEAD_CONST_(sbuf_)                                       \
-    ((struct sunder__sbuf_header_ const*)                                      \
-     ((char const*)(sbuf_)-SUNDER__SBUF_HEADER_OFFSET_))
-#define SUNDER__SBUF_FREE_NON_NULL_HEAD_(sbuf_)                                \
-    (sunder_xalloc(SUNDER__SBUF_PHEAD_MUTBL_(sbuf_), SUNDER_XALLOC_FREE))
-#define SUNDER__SBUF_FREEZE_NON_NULL_HEAD_(sbuf_, freezer)                     \
-    (freezer_register(freezer, SUNDER__SBUF_PHEAD_MUTBL_(sbuf_)))
-#define SUNDER__SBUF_MAYBE_GROW_(sbuf_)                                        \
-    ((sunder_sbuf_count(sbuf_) == sunder_sbuf_capacity(sbuf_))                 \
-         ? (sbuf_) = sunder__sbuf_grw_(sizeof(*(sbuf_)), sbuf_)                \
+struct sbuf__header_{size_t cnt_; size_t cap_; max_align_type _[];};
+enum{SBUF__HEADER_OFFSET_ = sizeof(struct sbuf__header_)};
+#define SBUF__PHEAD_MUTBL_(sbuf_)                                              \
+    ((struct sbuf__header_      *)                                             \
+     ((char      *)(sbuf_)-SBUF__HEADER_OFFSET_))
+#define SBUF__PHEAD_CONST_(sbuf_)                                              \
+    ((struct sbuf__header_ const*)                                             \
+     ((char const*)(sbuf_)-SBUF__HEADER_OFFSET_))
+#define SBUF__FREE_NON_NULL_HEAD_(sbuf_)                                       \
+    (sunder_xalloc(SBUF__PHEAD_MUTBL_(sbuf_), SUNDER_XALLOC_FREE))
+#define SBUF__FREEZE_NON_NULL_HEAD_(sbuf_, freezer)                            \
+    (freezer_register(freezer, SBUF__PHEAD_MUTBL_(sbuf_)))
+#define SBUF__MAYBE_GROW_(sbuf_)                                               \
+    ((sbuf_count(sbuf_) == sbuf_capacity(sbuf_))                               \
+         ? (sbuf_) = sbuf__grw_(sizeof(*(sbuf_)), sbuf_)                       \
          : (sbuf_))
-#define SUNDER__SBUF_APPEND_(sbuf_, ...)                                       \
-    ((sbuf_)[SUNDER__SBUF_PHEAD_MUTBL_(sbuf_)->cnt_++] = (__VA_ARGS__))
-void* sunder__sbuf_rsv_(size_t elemsize, void* sbuf, size_t cap);
-void* sunder__sbuf_rsz_(size_t elemsize, void* sbuf, size_t cnt);
-void* sunder__sbuf_grw_(size_t elemsize, void* sbuf);
+#define SBUF__APPEND_(sbuf_, ...)                                              \
+    ((sbuf_)[SBUF__PHEAD_MUTBL_(sbuf_)->cnt_++] = (__VA_ARGS__))
+void* sbuf__rsv_(size_t elemsize, void* sbuf, size_t cap);
+void* sbuf__rsz_(size_t elemsize, void* sbuf, size_t cnt);
+void* sbuf__grw_(size_t elemsize, void* sbuf);
 // clang-format on
 
 // Allocate and initialize a bit array with count bits.
@@ -793,7 +793,7 @@ struct module {
     // List of top level declarations topologically ordered such that
     // declaration with index k does not depend on any declaration with index
     // k+n for all n. Initialized to NULL and populated during the order phase.
-    sunder_sbuf(struct cst_decl const*) ordered;
+    sbuf(struct cst_decl const*) ordered;
 };
 struct module*
 module_new(char const* name, char const* path);
@@ -875,14 +875,14 @@ struct context {
     } builtin;
 
     // List of all symbols with static storage duration.
-    sunder_sbuf(struct symbol const*) static_symbols;
+    sbuf(struct symbol const*) static_symbols;
 
     // Global symbol table.
     struct symbol_table* global_symbol_table;
 
     // Currently loaded/loading modules.
     // TODO: Maybe make this a map from realpath to module?
-    sunder_sbuf(struct module*) modules;
+    sbuf(struct module*) modules;
 
     // Symbol tables belonging to types and templates. These symbol tables
     // cannot be frozen until after all modules have been resolved as type
@@ -892,7 +892,7 @@ struct context {
     // TODO: We have have a chilling_symbol_tables on the resolver struct. Can
     // we merge that functionality into this context member variable and have a
     // single "chilling symbol tables" member for all symbol tables?
-    sunder_sbuf(struct symbol_table*) chilling_symbol_tables;
+    sbuf(struct symbol_table*) chilling_symbol_tables;
 };
 void
 context_init(void);
@@ -1017,8 +1017,8 @@ lexer_next_token(struct lexer* self);
 
 struct cst_module {
     struct cst_namespace const* namespace; // optional
-    sunder_sbuf(struct cst_import const* const) imports;
-    sunder_sbuf(struct cst_decl const* const) decls;
+    sbuf(struct cst_import const* const) imports;
+    sbuf(struct cst_decl const* const) decls;
 };
 struct cst_module*
 cst_module_new(
@@ -1028,7 +1028,7 @@ cst_module_new(
 
 struct cst_namespace {
     struct source_location const* location;
-    sunder_sbuf(struct cst_identifier const* const) identifiers;
+    sbuf(struct cst_identifier const* const) identifiers;
 };
 struct cst_namespace*
 cst_namespace_new(
@@ -1069,9 +1069,9 @@ struct cst_decl {
             struct cst_identifier const* identifier;
             // A template parameter list with count zero indicates that this
             // function was declared without template parameters.
-            sunder_sbuf(struct cst_template_parameter const* const)
+            sbuf(struct cst_template_parameter const* const)
                 template_parameters;
-            sunder_sbuf(struct cst_function_parameter const* const)
+            sbuf(struct cst_function_parameter const* const)
                 function_parameters;
             struct cst_typespec const* return_typespec;
             struct cst_block const* body;
@@ -1080,9 +1080,9 @@ struct cst_decl {
             struct cst_identifier const* identifier;
             // A template parameter list with count zero indicates that this
             // struct was declared without template parameters.
-            sunder_sbuf(struct cst_template_parameter const* const)
+            sbuf(struct cst_template_parameter const* const)
                 template_parameters;
-            sunder_sbuf(struct cst_member const* const) members;
+            sbuf(struct cst_member const* const) members;
         } struct_;
         struct {
             struct cst_typespec const* typespec;
@@ -1157,7 +1157,7 @@ struct cst_stmt {
     union {
         struct cst_decl const* decl;
         struct {
-            sunder_sbuf(struct cst_conditional const* const) conditionals;
+            sbuf(struct cst_conditional const* const) conditionals;
         } if_;
         struct {
             struct cst_identifier const* identifier;
@@ -1253,7 +1253,7 @@ struct cst_expr {
         struct string const* bytes;
         struct {
             struct cst_typespec const* typespec;
-            sunder_sbuf(struct cst_expr const* const) elements;
+            sbuf(struct cst_expr const* const) elements;
             struct cst_expr const* ellipsis; // optional
         } array;
         struct {
@@ -1263,12 +1263,11 @@ struct cst_expr {
         } slice;
         struct {
             struct cst_typespec const* typespec;
-            sunder_sbuf(struct cst_expr const* const) elements;
+            sbuf(struct cst_expr const* const) elements;
         } array_slice;
         struct {
             struct cst_typespec const* typespec;
-            sunder_sbuf(struct cst_member_initializer const* const)
-                initializers;
+            sbuf(struct cst_member_initializer const* const) initializers;
         } struct_;
         struct {
             struct cst_typespec const* typespec;
@@ -1278,11 +1277,11 @@ struct cst_expr {
             struct cst_expr const* expr;
         } grouped;
         struct cst_stmt_syscall {
-            sunder_sbuf(struct cst_expr const* const) arguments;
+            sbuf(struct cst_expr const* const) arguments;
         } syscall;
         struct {
             struct cst_expr const* func;
-            sunder_sbuf(struct cst_expr const* const) arguments;
+            sbuf(struct cst_expr const* const) arguments;
         } call;
         struct {
             struct cst_expr const* lhs;
@@ -1415,7 +1414,7 @@ cst_conditional_new(
 
 struct cst_block {
     struct source_location const* location;
-    sunder_sbuf(struct cst_stmt const* const) stmts;
+    sbuf(struct cst_stmt const* const) stmts;
 };
 struct cst_block*
 cst_block_new(
@@ -1429,7 +1428,7 @@ struct cst_symbol {
     // scope symbol table.
     bool is_from_root;
     // Individual symbol elements separated by "::".
-    sunder_sbuf(struct cst_symbol_element const* const) elements;
+    sbuf(struct cst_symbol_element const* const) elements;
 };
 struct cst_symbol*
 cst_symbol_new(
@@ -1442,7 +1441,7 @@ struct cst_symbol_element {
     struct cst_identifier const* identifier;
     // Template argument count of zero indicates that this symbol element has no
     // template arguments.
-    sunder_sbuf(struct cst_template_argument const* const) template_arguments;
+    sbuf(struct cst_template_argument const* const) template_arguments;
 };
 struct cst_symbol_element*
 cst_symbol_element_new(
@@ -1543,7 +1542,7 @@ struct cst_typespec {
     union {
         struct cst_symbol const* symbol;
         struct {
-            sunder_sbuf(struct cst_typespec const* const) parameter_typespecs;
+            sbuf(struct cst_typespec const* const) parameter_typespecs;
             struct cst_typespec const* return_typespec;
         } function;
         struct {
@@ -1670,7 +1669,7 @@ struct type {
             struct bigint const* max; // optional
         } integer;
         struct {
-            sunder_sbuf(struct type const* const) parameter_types;
+            sbuf(struct type const* const) parameter_types;
             struct type const* return_type;
         } function;
         struct {
@@ -1936,7 +1935,7 @@ struct symbol_table_element {
 };
 struct symbol_table {
     struct symbol_table const* parent; // optional (NULL => global scope)
-    sunder_sbuf(struct symbol_table_element) elements;
+    sbuf(struct symbol_table_element) elements;
 };
 struct symbol_table*
 symbol_table_new(struct symbol_table const* parent);
@@ -1970,7 +1969,7 @@ struct stmt {
     } kind;
     union {
         struct {
-            sunder_sbuf(struct conditional const* const) conditionals;
+            sbuf(struct conditional const* const) conditionals;
         } if_;
         struct {
             struct symbol const* loop_variable;
@@ -2064,7 +2063,7 @@ struct expr {
             size_t count;
         } bytes;
         struct {
-            sunder_sbuf(struct expr const* const) elements;
+            sbuf(struct expr const* const) elements;
             struct expr const* ellipsis; // optional
         } array;
         struct {
@@ -2073,24 +2072,24 @@ struct expr {
         } slice;
         struct {
             struct symbol const* array_symbol;
-            sunder_sbuf(struct expr const* const) elements;
+            sbuf(struct expr const* const) elements;
         } array_slice;
         struct {
             // List of elements corresponding the member variables defined by
             // the struct type.
-            sunder_sbuf(struct expr const* const) member_variables;
+            sbuf(struct expr const* const) member_variables;
         } struct_;
         struct {
             struct expr const* expr;
         } cast;
         struct {
-            sunder_sbuf(struct expr const* const) arguments;
+            sbuf(struct expr const* const) arguments;
         } syscall;
         struct {
             // Expression resulting in a callable function.
             struct expr const* function;
             // Arguments to the callable function.
-            sunder_sbuf(struct expr const* const) arguments;
+            sbuf(struct expr const* const) arguments;
         } call;
         struct {
             struct expr const* lhs;
@@ -2254,7 +2253,7 @@ struct function {
     // function. Initialized to NULL on struct creation.
     struct symbol_table const* symbol_table;
     // Initialized to NULL on struct creation.
-    sunder_sbuf(struct symbol const* const) symbol_parameters;
+    sbuf(struct symbol const* const) symbol_parameters;
     // Initialized to NULL on struct creation.
     struct symbol const* symbol_return;
     // Initialized to NULL on struct creation.
@@ -2289,7 +2288,7 @@ conditional_new(
 struct block {
     struct source_location const* location;
     struct symbol_table* symbol_table; // not owned
-    sunder_sbuf(struct stmt const* const) stmts;
+    sbuf(struct stmt const* const) stmts;
 };
 struct block*
 block_new(
@@ -2307,13 +2306,13 @@ struct value {
         struct address pointer;
         struct {
             // Concrete values specified for elements of the array value before
-            // the optional ellipsis element. The sunder_sbuf_count of the
+            // the optional ellipsis element. The sbuf_count of the
             // elements member may be less than countof(array), in which case
             // the ellipsis value represents the rest of the elements upto
             // the countof(array)th element.
-            sunder_sbuf(struct value*) elements;
+            sbuf(struct value*) elements;
             // Value representing elements from indices within the half-open
-            // range [sunder_sbuf_count(elements), countof(array)) that are
+            // range [sbuf_count(elements), countof(array)) that are
             // initialized via an ellipsis element. NULL if no ellipsis element
             // was specified in the parse tree for the array value.
             struct value* ellipsis; // optional
@@ -2330,7 +2329,7 @@ struct value {
             // pointer in the member_variables array will be initialized to
             // NULL, and the values of each member variable must be explicitly
             // set before the value object may be used.
-            sunder_sbuf(struct value*) member_variables;
+            sbuf(struct value*) member_variables;
         } struct_;
     } data;
 };

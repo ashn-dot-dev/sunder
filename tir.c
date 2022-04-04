@@ -31,7 +31,7 @@ type_new_any(void)
 {
     struct symbol_table* const symbols =
         symbol_table_new(context()->global_symbol_table);
-    sunder_sbuf_push(context()->chilling_symbol_tables, symbols);
+    sbuf_push(context()->chilling_symbol_tables, symbols);
 
     return type_new(
         context()->interned.any,
@@ -46,7 +46,7 @@ type_new_void(void)
 {
     struct symbol_table* const symbols =
         symbol_table_new(context()->global_symbol_table);
-    sunder_sbuf_push(context()->chilling_symbol_tables, symbols);
+    sbuf_push(context()->chilling_symbol_tables, symbols);
 
     return type_new(context()->interned.void_, 0u, 0u, symbols, TYPE_VOID);
 }
@@ -56,7 +56,7 @@ type_new_bool(void)
 {
     struct symbol_table* const symbols =
         symbol_table_new(context()->global_symbol_table);
-    sunder_sbuf_push(context()->chilling_symbol_tables, symbols);
+    sbuf_push(context()->chilling_symbol_tables, symbols);
 
     return type_new(context()->interned.bool_, 1u, 1u, symbols, TYPE_BOOL);
 }
@@ -66,7 +66,7 @@ type_new_byte(void)
 {
     struct symbol_table* const symbols =
         symbol_table_new(context()->global_symbol_table);
-    sunder_sbuf_push(context()->chilling_symbol_tables, symbols);
+    sbuf_push(context()->chilling_symbol_tables, symbols);
 
     return type_new(context()->interned.byte, 1u, 1u, symbols, TYPE_BYTE);
 }
@@ -76,7 +76,7 @@ type_new_u8(void)
 {
     struct symbol_table* const symbols =
         symbol_table_new(context()->global_symbol_table);
-    sunder_sbuf_push(context()->chilling_symbol_tables, symbols);
+    sbuf_push(context()->chilling_symbol_tables, symbols);
 
     struct type* const self =
         type_new(context()->interned.u8, 1u, 1u, symbols, TYPE_U8);
@@ -90,7 +90,7 @@ type_new_s8(void)
 {
     struct symbol_table* const symbols =
         symbol_table_new(context()->global_symbol_table);
-    sunder_sbuf_push(context()->chilling_symbol_tables, symbols);
+    sbuf_push(context()->chilling_symbol_tables, symbols);
 
     struct type* const self =
         type_new(context()->interned.s8, 1u, 1u, symbols, TYPE_S8);
@@ -104,7 +104,7 @@ type_new_u16(void)
 {
     struct symbol_table* const symbols =
         symbol_table_new(context()->global_symbol_table);
-    sunder_sbuf_push(context()->chilling_symbol_tables, symbols);
+    sbuf_push(context()->chilling_symbol_tables, symbols);
 
     struct type* const self =
         type_new(context()->interned.u16, 2u, 2u, symbols, TYPE_U16);
@@ -118,7 +118,7 @@ type_new_s16(void)
 {
     struct symbol_table* const symbols =
         symbol_table_new(context()->global_symbol_table);
-    sunder_sbuf_push(context()->chilling_symbol_tables, symbols);
+    sbuf_push(context()->chilling_symbol_tables, symbols);
 
     struct type* const self =
         type_new(context()->interned.s16, 2u, 2u, symbols, TYPE_S16);
@@ -132,7 +132,7 @@ type_new_u32(void)
 {
     struct symbol_table* const symbols =
         symbol_table_new(context()->global_symbol_table);
-    sunder_sbuf_push(context()->chilling_symbol_tables, symbols);
+    sbuf_push(context()->chilling_symbol_tables, symbols);
 
     struct type* const self =
         type_new(context()->interned.u32, 4u, 4u, symbols, TYPE_U32);
@@ -146,7 +146,7 @@ type_new_s32(void)
 {
     struct symbol_table* const symbols =
         symbol_table_new(context()->global_symbol_table);
-    sunder_sbuf_push(context()->chilling_symbol_tables, symbols);
+    sbuf_push(context()->chilling_symbol_tables, symbols);
 
     struct type* const self =
         type_new(context()->interned.s32, 4u, 4u, symbols, TYPE_S32);
@@ -160,7 +160,7 @@ type_new_u64(void)
 {
     struct symbol_table* const symbols =
         symbol_table_new(context()->global_symbol_table);
-    sunder_sbuf_push(context()->chilling_symbol_tables, symbols);
+    sbuf_push(context()->chilling_symbol_tables, symbols);
 
     struct type* const self =
         type_new(context()->interned.u64, 8u, 8u, symbols, TYPE_U64);
@@ -174,7 +174,7 @@ type_new_s64(void)
 {
     struct symbol_table* const symbols =
         symbol_table_new(context()->global_symbol_table);
-    sunder_sbuf_push(context()->chilling_symbol_tables, symbols);
+    sbuf_push(context()->chilling_symbol_tables, symbols);
 
     struct type* const self =
         type_new(context()->interned.s64, 8u, 8u, symbols, TYPE_S64);
@@ -188,7 +188,7 @@ type_new_usize(void)
 {
     struct symbol_table* const symbols =
         symbol_table_new(context()->global_symbol_table);
-    sunder_sbuf_push(context()->chilling_symbol_tables, symbols);
+    sbuf_push(context()->chilling_symbol_tables, symbols);
 
     struct type* const self =
         type_new(context()->interned.usize, 8u, 8u, symbols, TYPE_USIZE);
@@ -202,7 +202,7 @@ type_new_ssize(void)
 {
     struct symbol_table* const symbols =
         symbol_table_new(context()->global_symbol_table);
-    sunder_sbuf_push(context()->chilling_symbol_tables, symbols);
+    sbuf_push(context()->chilling_symbol_tables, symbols);
 
     struct type* const self =
         type_new(context()->interned.ssize, 8u, 8u, symbols, TYPE_SSIZE);
@@ -216,7 +216,7 @@ type_new_integer(void)
 {
     struct symbol_table* const symbols =
         symbol_table_new(context()->global_symbol_table);
-    sunder_sbuf_push(context()->chilling_symbol_tables, symbols);
+    sbuf_push(context()->chilling_symbol_tables, symbols);
 
     struct type* const self = type_new(
         context()->interned.integer,
@@ -236,10 +236,10 @@ type_new_function(
     assert(return_type != NULL);
 
     struct string* const name_string = string_new_cstr("func(");
-    if (sunder_sbuf_count(parameter_types) != 0) {
+    if (sbuf_count(parameter_types) != 0) {
         string_append_cstr(name_string, parameter_types[0]->name);
     }
-    for (size_t i = 1; i < sunder_sbuf_count(parameter_types); ++i) {
+    for (size_t i = 1; i < sbuf_count(parameter_types); ++i) {
         string_append_fmt(name_string, ", %s", parameter_types[i]->name);
     }
     string_append_fmt(name_string, ") %s", return_type->name);
@@ -251,7 +251,7 @@ type_new_function(
 
     struct symbol_table* const symbols =
         symbol_table_new(context()->global_symbol_table);
-    sunder_sbuf_push(context()->chilling_symbol_tables, symbols);
+    sbuf_push(context()->chilling_symbol_tables, symbols);
 
     struct type* const self = type_new(name, 8u, 8u, symbols, TYPE_FUNCTION);
     self->data.function.parameter_types = parameter_types;
@@ -273,7 +273,7 @@ type_new_pointer(struct type const* base)
 
     struct symbol_table* const symbols =
         symbol_table_new(context()->global_symbol_table);
-    sunder_sbuf_push(context()->chilling_symbol_tables, symbols);
+    sbuf_push(context()->chilling_symbol_tables, symbols);
 
     struct type* const self = type_new(name, 8u, 8u, symbols, TYPE_POINTER);
     self->data.pointer.base = base;
@@ -303,7 +303,7 @@ type_new_array(size_t count, struct type const* base)
 
     struct symbol_table* const symbols =
         symbol_table_new(context()->global_symbol_table);
-    sunder_sbuf_push(context()->chilling_symbol_tables, symbols);
+    sbuf_push(context()->chilling_symbol_tables, symbols);
 
     struct type* const self = type_new(name, size, align, symbols, TYPE_ARRAY);
     self->data.array.count = count;
@@ -325,7 +325,7 @@ type_new_slice(struct type const* base)
 
     struct symbol_table* const symbols =
         symbol_table_new(context()->global_symbol_table);
-    sunder_sbuf_push(context()->chilling_symbol_tables, symbols);
+    sbuf_push(context()->chilling_symbol_tables, symbols);
 
     struct type* const self = type_new(name, 8u * 2u, 8u, symbols, TYPE_SLICE);
     self->data.pointer.base = base;
@@ -364,7 +364,7 @@ type_struct_add_member_variable(
             .type = type,
             .offset = self->data.struct_.next_offset,
         };
-        sunder_sbuf_push(self->data.struct_.member_variables, m);
+        sbuf_push(self->data.struct_.member_variables, m);
         return;
     }
 
@@ -390,7 +390,7 @@ type_struct_add_member_variable(
         .type = type,
         .offset = self->data.struct_.next_offset,
     };
-    sunder_sbuf_push(self->data.struct_.member_variables, m);
+    sbuf_push(self->data.struct_.member_variables, m);
 
     // Adjust the struct alignment to match the alignment of the first
     // non-zero-sized non-zero-aligned member. This case should only ever occur
@@ -421,7 +421,7 @@ type_struct_member_variable_index(struct type const* self, char const* name)
 
     struct member_variable const* const member_variables =
         self->data.struct_.member_variables;
-    for (size_t i = 0; i < sunder_sbuf_count(member_variables); ++i) {
+    for (size_t i = 0; i < sbuf_count(member_variables); ++i) {
         if (0 == strcmp(member_variables[i].name, name)) {
             return (long)i;
         }
@@ -864,7 +864,7 @@ symbol_table_freeze(struct symbol_table* self, struct freezer* freezer)
     assert(freezer != NULL);
 
     freezer_register(freezer, self);
-    sunder_sbuf_freeze(self->elements, freezer);
+    sbuf_freeze(self->elements, freezer);
 }
 
 void
@@ -891,7 +891,7 @@ symbol_table_insert(
         }
     }
 
-    sunder_sbuf_push(
+    sbuf_push(
         self->elements,
         (struct symbol_table_element){.name = name, .symbol = symbol});
 }
@@ -918,7 +918,7 @@ symbol_table_lookup_local(struct symbol_table const* self, char const* name)
     assert(self != NULL);
     assert(name != NULL);
 
-    for (size_t i = sunder_sbuf_count(self->elements); i--;) {
+    for (size_t i = sbuf_count(self->elements); i--;) {
         if (self->elements[i].name == name) {
             return self->elements[i].symbol;
         }
@@ -940,7 +940,7 @@ stmt_new(struct source_location const* location, enum stmt_kind kind)
 struct stmt*
 stmt_new_if(struct conditional const* const* conditionals)
 {
-    assert(sunder_sbuf_count(conditionals) > 0u);
+    assert(sbuf_count(conditionals) > 0u);
 
     struct stmt* const self = stmt_new(conditionals[0]->location, STMT_IF);
     self->data.if_.conditionals = conditionals;
@@ -1602,9 +1602,7 @@ value_new_array(
 {
     assert(type != NULL);
     assert(type->kind == TYPE_ARRAY);
-    assert(
-        type->data.array.count == sunder_sbuf_count(elements)
-        || ellipsis != NULL);
+    assert(type->data.array.count == sbuf_count(elements) || ellipsis != NULL);
     // TODO: Should we validate that each element of the array and the ellipsis
     // are of the array element type? That might be expensive so maybe hide it
     // behind `#ifndef NDEBUG`?
@@ -1644,10 +1642,10 @@ value_new_struct(struct type const* type)
     struct value* self = value_new(type);
 
     size_t const member_variables_count =
-        sunder_sbuf_count(type->data.struct_.member_variables);
+        sbuf_count(type->data.struct_.member_variables);
     self->data.struct_.member_variables = NULL;
     for (size_t i = 0; i < member_variables_count; ++i) {
-        sunder_sbuf_push(self->data.struct_.member_variables, NULL);
+        sbuf_push(self->data.struct_.member_variables, NULL);
     }
 
     return self;
@@ -1690,11 +1688,11 @@ value_del(struct value* self)
         break;
     }
     case TYPE_ARRAY: {
-        sunder_sbuf(struct value*) const elements = self->data.array.elements;
-        for (size_t i = 0; i < sunder_sbuf_count(elements); ++i) {
+        sbuf(struct value*) const elements = self->data.array.elements;
+        for (size_t i = 0; i < sbuf_count(elements); ++i) {
             value_del(elements[i]);
         }
-        sunder_sbuf_fini(elements);
+        sbuf_fini(elements);
         if (self->data.array.ellipsis != NULL) {
             value_del(self->data.array.ellipsis);
         }
@@ -1707,7 +1705,7 @@ value_del(struct value* self)
     }
     case TYPE_STRUCT: {
         size_t const member_variables_count =
-            sunder_sbuf_count(self->type->data.struct_.member_variables);
+            sbuf_count(self->type->data.struct_.member_variables);
         for (size_t i = 0; i < member_variables_count; ++i) {
             struct value** pvalue = self->data.struct_.member_variables + i;
             if (*pvalue == NULL) {
@@ -1716,7 +1714,7 @@ value_del(struct value* self)
             }
             value_del(*pvalue);
         }
-        sunder_sbuf_fini(self->data.struct_.member_variables);
+        sbuf_fini(self->data.struct_.member_variables);
         break;
     }
     }
@@ -1764,10 +1762,10 @@ value_freeze(struct value* self, struct freezer* freezer)
         return;
     }
     case TYPE_ARRAY: {
-        sunder_sbuf(struct value*) const elements = self->data.array.elements;
+        sbuf(struct value*) const elements = self->data.array.elements;
         struct value* const ellipsis = self->data.array.ellipsis;
-        sunder_sbuf_freeze(elements, freezer);
-        for (size_t i = 0; i < sunder_sbuf_count(elements); ++i) {
+        sbuf_freeze(elements, freezer);
+        for (size_t i = 0; i < sbuf_count(elements); ++i) {
             value_freeze(elements[i], freezer);
         }
         if (ellipsis != NULL) {
@@ -1782,13 +1780,13 @@ value_freeze(struct value* self, struct freezer* freezer)
     }
     case TYPE_STRUCT: {
         size_t const member_variables_count =
-            sunder_sbuf_count(self->type->data.struct_.member_variables);
+            sbuf_count(self->type->data.struct_.member_variables);
         for (size_t i = 0; i < member_variables_count; ++i) {
             struct value** pvalue = self->data.struct_.member_variables + i;
             assert(*pvalue != NULL); // Self not fully initialized.
             value_freeze(*pvalue, freezer);
         }
-        sunder_sbuf_freeze(self->data.struct_.member_variables, freezer);
+        sbuf_freeze(self->data.struct_.member_variables, freezer);
         return;
     }
     }
@@ -1832,11 +1830,11 @@ value_clone(struct value const* self)
         return value_new_pointer(self->type, self->data.pointer);
     }
     case TYPE_ARRAY: {
-        sunder_sbuf(struct value*) const elements = self->data.array.elements;
+        sbuf(struct value*) const elements = self->data.array.elements;
         struct value* const ellipsis = self->data.array.ellipsis;
-        sunder_sbuf(struct value*) cloned_elements = NULL;
-        for (size_t i = 0; i < sunder_sbuf_count(elements); ++i) {
-            sunder_sbuf_push(cloned_elements, value_clone(elements[i]));
+        sbuf(struct value*) cloned_elements = NULL;
+        for (size_t i = 0; i < sbuf_count(elements); ++i) {
+            sbuf_push(cloned_elements, value_clone(elements[i]));
         }
         return value_new_array(self->type, cloned_elements, ellipsis);
     }
@@ -1849,7 +1847,7 @@ value_clone(struct value const* self)
     case TYPE_STRUCT: {
         struct value* const new = value_new_struct(self->type);
         size_t const member_variables_count =
-            sunder_sbuf_count(self->type->data.struct_.member_variables);
+            sbuf_count(self->type->data.struct_.member_variables);
         for (size_t i = 0; i < member_variables_count; ++i) {
             new->data.struct_.member_variables[i] =
                 value_clone(self->data.struct_.member_variables[i]);
@@ -2060,8 +2058,8 @@ value_to_new_bytes(struct value const* value)
 {
     assert(value != NULL);
 
-    sunder_sbuf(uint8_t) bytes = NULL;
-    sunder_sbuf_resize(bytes, value->type->size);
+    sbuf(uint8_t) bytes = NULL;
+    sbuf_resize(bytes, value->type->size);
     sunder_memset(bytes, 0x00, value->type->size);
 
     switch (value->type->kind) {
@@ -2069,16 +2067,16 @@ value_to_new_bytes(struct value const* value)
         UNREACHABLE();
     }
     case TYPE_VOID: {
-        assert(sunder_sbuf_count(bytes) == 0);
+        assert(sbuf_count(bytes) == 0);
         return bytes;
     }
     case TYPE_BOOL: {
-        assert(sunder_sbuf_count(bytes) == 1);
+        assert(sbuf_count(bytes) == 1);
         bytes[0] = value->data.boolean;
         return bytes;
     }
     case TYPE_BYTE: {
-        assert(sunder_sbuf_count(bytes) == 1);
+        assert(sbuf_count(bytes) == 1);
         bytes[0] = value->data.byte;
         return bytes;
     }
@@ -2126,14 +2124,13 @@ value_to_new_bytes(struct value const* value)
         UNREACHABLE();
     }
     case TYPE_ARRAY: {
-        sunder_sbuf(struct value*) const elements = value->data.array.elements;
+        sbuf(struct value*) const elements = value->data.array.elements;
         size_t const element_size = value->type->data.array.base->size;
         size_t offset = 0;
-        for (size_t i = 0; i < sunder_sbuf_count(elements); ++i) {
-            sunder_sbuf(uint8_t) const element_bytes =
-                value_to_new_bytes(elements[i]);
+        for (size_t i = 0; i < sbuf_count(elements); ++i) {
+            sbuf(uint8_t) const element_bytes = value_to_new_bytes(elements[i]);
             sunder_memmove(bytes + offset, element_bytes, element_size);
-            sunder_sbuf_fini(element_bytes);
+            sbuf_fini(element_bytes);
             offset += element_size;
         }
         return bytes;
@@ -2147,20 +2144,19 @@ value_to_new_bytes(struct value const* value)
     case TYPE_STRUCT: {
         struct member_variable const* const member_variable_defs =
             value->type->data.struct_.member_variables;
-        for (size_t i = 0; i < sunder_sbuf_count(member_variable_defs); ++i) {
+        for (size_t i = 0; i < sbuf_count(member_variable_defs); ++i) {
             struct member_variable const* const member_def =
                 value->type->data.struct_.member_variables + i;
 
             struct value const* const member_val =
                 value->data.struct_.member_variables[i];
 
-            sunder_sbuf(uint8_t) const member_bytes =
-                value_to_new_bytes(member_val);
+            sbuf(uint8_t) const member_bytes = value_to_new_bytes(member_val);
             sunder_memmove(
                 bytes + member_def->offset,
                 member_bytes,
-                sunder_sbuf_count(member_bytes));
-            sunder_sbuf_fini(member_bytes);
+                sbuf_count(member_bytes));
+            sbuf_fini(member_bytes);
         }
         return bytes;
     }

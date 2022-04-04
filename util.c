@@ -449,14 +449,14 @@ directory_files(char const* path)
             strerror(errno));
     }
 
-    sunder_sbuf(char const*) files = NULL;
+    sbuf(char const*) files = NULL;
     struct dirent* dirent = {0};
     while ((dirent = readdir(dir)) != NULL) {
         char const* file = dirent->d_name;
         if (strcmp(file, ".") == 0 || strcmp(file, "..") == 0) {
             continue;
         }
-        sunder_sbuf_push(files, sipool_intern_cstr(context()->sipool, file));
+        sbuf_push(files, sipool_intern_cstr(context()->sipool, file));
     }
 
     (void)closedir(dir);
@@ -884,7 +884,7 @@ vstr_ends_with(struct vstr const* vstr, struct vstr const* target)
 struct sipool {
     // List of heap-allocated strings interned within this pool.
     // elements of the map member reference memory owned by this list.
-    sunder_sbuf(char*) strings;
+    sbuf(char*) strings;
 };
 
 struct sipool*
@@ -902,10 +902,10 @@ sipool_del(struct sipool* self)
         return;
     }
 
-    for (size_t i = 0; i < sunder_sbuf_count(self->strings); ++i) {
+    for (size_t i = 0; i < sbuf_count(self->strings); ++i) {
         sunder_xalloc(self->strings[i], SUNDER_XALLOC_FREE);
     }
-    sunder_sbuf_fini(self->strings);
+    sbuf_fini(self->strings);
 
     memset(self, 0x00, sizeof(*self)); // scrub
     sunder_xalloc(self, SUNDER_XALLOC_FREE);
@@ -918,7 +918,7 @@ sipool_intern(struct sipool* self, char const* start, size_t count)
     assert(start != NULL || count == 0);
 
     struct vstr const vstr = {start, count};
-    for (size_t i = 0; i < sunder_sbuf_count(self->strings); ++i) {
+    for (size_t i = 0; i < sbuf_count(self->strings); ++i) {
         struct vstr const element = {self->strings[i],
                                      strlen(self->strings[i])};
         if (vstr_cmp(&vstr, &element) == 0) {
@@ -927,7 +927,7 @@ sipool_intern(struct sipool* self, char const* start, size_t count)
     }
 
     char* const str = cstr_new(start, count);
-    sunder_sbuf_push(self->strings, str);
+    sbuf_push(self->strings, str);
 
     return str;
 }
@@ -943,59 +943,59 @@ sipool_intern_cstr(struct sipool* self, char const* cstr)
 
 SUNDER_STATIC_ASSERT(
     SBUF_HEADER_OFFSET_IS_ALIGNED,
-    SUNDER__SBUF_HEADER_OFFSET_ % ALIGNOF(max_align_type) == 0);
+    SBUF__HEADER_OFFSET_ % ALIGNOF(max_align_type) == 0);
 
 /* reserve */
 void*
-sunder__sbuf_rsv_(size_t elemsize, void* sbuf, size_t cap)
+sbuf__rsv_(size_t elemsize, void* sbuf, size_t cap)
 {
     assert(elemsize != 0);
 
-    if (cap <= sunder_sbuf_capacity(sbuf)) {
+    if (cap <= sbuf_capacity(sbuf)) {
         return sbuf;
     }
 
     assert(cap != 0);
-    size_t const size = SUNDER__SBUF_HEADER_OFFSET_ + elemsize * cap;
-    struct sunder__sbuf_header_* const header = sunder_xalloc(
-        sbuf != NULL ? SUNDER__SBUF_PHEAD_MUTBL_(sbuf) : NULL, size);
+    size_t const size = SBUF__HEADER_OFFSET_ + elemsize * cap;
+    struct sbuf__header_* const header = sunder_xalloc(
+        sbuf != NULL ? SBUF__PHEAD_MUTBL_(sbuf) : NULL, size);
     header->cnt_ = sbuf != NULL ? header->cnt_ : 0;
     header->cap_ = cap;
-    return (char*)header + SUNDER__SBUF_HEADER_OFFSET_;
+    return (char*)header + SBUF__HEADER_OFFSET_;
 }
 
 /* resize */
 void*
-sunder__sbuf_rsz_(size_t elemsize, void* sbuf, size_t cnt)
+sbuf__rsz_(size_t elemsize, void* sbuf, size_t cnt)
 {
     assert(elemsize != 0);
 
     if (cnt == 0) {
-        sunder_sbuf_fini(sbuf);
+        sbuf_fini(sbuf);
         return NULL;
     }
 
-    if (cnt > sunder_sbuf_capacity(sbuf)) {
-        sbuf = sunder__sbuf_rsv_(elemsize, sbuf, cnt);
+    if (cnt > sbuf_capacity(sbuf)) {
+        sbuf = sbuf__rsv_(elemsize, sbuf, cnt);
     }
     assert(sbuf != NULL);
-    SUNDER__SBUF_PHEAD_MUTBL_(sbuf)->cnt_ = cnt;
+    SBUF__PHEAD_MUTBL_(sbuf)->cnt_ = cnt;
     return sbuf;
 }
 
 /* grow capacity by doubling */
 void*
-sunder__sbuf_grw_(size_t elemsize, void* sbuf)
+sbuf__grw_(size_t elemsize, void* sbuf)
 {
     assert(elemsize != 0);
 
-    size_t const cap = sunder_sbuf_capacity(sbuf);
-    assert(sunder_sbuf_count(sbuf) == cap);
+    size_t const cap = sbuf_capacity(sbuf);
+    assert(sbuf_count(sbuf) == cap);
 
     static size_t const GROWTH_FACTOR = 2;
     static size_t const DEFAULT_CAPACITY = 8;
     size_t const new_cap = cap ? cap * GROWTH_FACTOR : DEFAULT_CAPACITY;
-    return sunder__sbuf_rsv_(elemsize, sbuf, new_cap);
+    return sbuf__rsv_(elemsize, sbuf, new_cap);
 }
 
 #define SUNDER__BITARR_WORD_TYPE_ unsigned long
@@ -2458,10 +2458,10 @@ string_split_on(
     struct string const* self, char const* separator, size_t separator_size)
 {
     assert(self != NULL);
-    sunder_sbuf(struct string*) res = NULL;
+    sbuf(struct string*) res = NULL;
 
     if (separator_size == 0) {
-        sunder_sbuf_push(res, string_new(self->start, self->count));
+        sbuf_push(res, string_new(self->start, self->count));
         return res;
     }
 
@@ -2473,18 +2473,18 @@ string_split_on(
             end += 1;
             continue;
         }
-        sunder_sbuf_push(res, string_new(beg, (size_t)(end - beg)));
+        sbuf_push(res, string_new(beg, (size_t)(end - beg)));
         beg = end + separator_size;
         end = beg;
     }
-    sunder_sbuf_push(res, string_new(beg, (size_t)(end - beg)));
+    sbuf_push(res, string_new(beg, (size_t)(end - beg)));
     return res;
 }
 
 struct freezer {
     // List of heap-allocated pointers to be freed when objects are cleaned out
     // of the freezer.
-    sunder_sbuf(void*) ptrs;
+    sbuf(void*) ptrs;
 };
 
 struct freezer*
@@ -2502,10 +2502,10 @@ freezer_del(struct freezer* self)
         return;
     }
 
-    for (size_t i = 0; i < sunder_sbuf_count(self->ptrs); ++i) {
+    for (size_t i = 0; i < sbuf_count(self->ptrs); ++i) {
         sunder_xalloc(self->ptrs[i], SUNDER_XALLOC_FREE);
     }
-    sunder_sbuf_fini(self->ptrs);
+    sbuf_fini(self->ptrs);
 
     sunder_xalloc(self, SUNDER_XALLOC_FREE);
 }
@@ -2515,5 +2515,5 @@ freezer_register(struct freezer* self, void* ptr)
 {
     assert(self != NULL);
 
-    sunder_sbuf_push(self->ptrs, ptr);
+    sbuf_push(self->ptrs, ptr);
 }

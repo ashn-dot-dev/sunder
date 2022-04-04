@@ -204,10 +204,10 @@ eval_rvalue_array(struct expr const* expr)
     assert(expr != NULL);
     assert(expr->kind == EXPR_ARRAY);
 
-    sunder_sbuf(struct expr const* const) elements = expr->data.array.elements;
-    sunder_sbuf(struct value*) evaled_elements = NULL;
-    for (size_t i = 0; i < sunder_sbuf_count(elements); ++i) {
-        sunder_sbuf_push(evaled_elements, eval_rvalue(elements[i]));
+    sbuf(struct expr const* const) elements = expr->data.array.elements;
+    sbuf(struct value*) evaled_elements = NULL;
+    for (size_t i = 0; i < sbuf_count(elements); ++i) {
+        sbuf_push(evaled_elements, eval_rvalue(elements[i]));
     }
 
     struct value* evaled_ellipsis = NULL;
@@ -242,11 +242,11 @@ eval_rvalue_array_slice(struct expr const* expr)
     struct value* const pointer = value_new_pointer(
         type_unique_pointer(expr->type->data.slice.base), *address);
 
-    sunder_sbuf(struct expr const* const) const elements =
+    sbuf(struct expr const* const) const elements =
         expr->data.array_slice.elements;
     struct value* const count =
         value_new_integer(context()->builtin.usize, bigint_new(BIGINT_ZERO));
-    uz_to_bigint(count->data.integer, sunder_sbuf_count(elements));
+    uz_to_bigint(count->data.integer, sbuf_count(elements));
 
     return value_new_slice(expr->type, pointer, count);
 }
@@ -259,15 +259,14 @@ eval_rvalue_struct(struct expr const* expr)
 
     struct value* const value = value_new_struct(expr->type);
 
-    sunder_sbuf(struct member_variable) const member_variable_defs =
+    sbuf(struct member_variable) const member_variable_defs =
         expr->type->data.struct_.member_variables;
-    sunder_sbuf(struct expr const* const) const member_variable_exprs =
+    sbuf(struct expr const* const) const member_variable_exprs =
         expr->data.struct_.member_variables;
     assert(
-        sunder_sbuf_count(member_variable_defs)
-        == sunder_sbuf_count(member_variable_exprs));
+        sbuf_count(member_variable_defs) == sbuf_count(member_variable_exprs));
 
-    for (size_t i = 0; i < sunder_sbuf_count(member_variable_exprs); ++i) {
+    for (size_t i = 0; i < sbuf_count(member_variable_exprs); ++i) {
         value_set_member(
             value,
             member_variable_defs[i].name,
@@ -312,19 +311,19 @@ eval_rvalue_cast(struct expr const* expr)
             "constant expression contains cast to pointer type");
     }
 
-    sunder_sbuf(uint8_t) bytes = value_to_new_bytes(from);
+    sbuf(uint8_t) bytes = value_to_new_bytes(from);
     struct value* res = NULL;
     switch (expr->type->kind) {
     case TYPE_BOOL: {
         bool boolean = false;
-        for (size_t i = 0; i < sunder_sbuf_count(bytes); ++i) {
+        for (size_t i = 0; i < sbuf_count(bytes); ++i) {
             boolean |= bytes[i] != 0;
         }
         res = value_new_boolean(boolean);
         break;
     }
     case TYPE_BYTE: {
-        assert(sunder_sbuf_count(bytes) >= 1);
+        assert(sbuf_count(bytes) >= 1);
         res = value_new_byte(bytes[0]);
         break;
     }
@@ -339,7 +338,7 @@ eval_rvalue_cast(struct expr const* expr)
     case TYPE_USIZE: /* fallthrough */
     case TYPE_SSIZE: {
         // Zero-extension or sign-extension bit.
-        size_t bytes_count = sunder_sbuf_count(bytes);
+        size_t bytes_count = sbuf_count(bytes);
         int const extend = type_is_signed_integer(from->type)
             && (bytes[bytes_count - 1] & 0x80);
 
@@ -376,7 +375,7 @@ eval_rvalue_cast(struct expr const* expr)
     }
 
     value_del(from);
-    sunder_sbuf_fini(bytes);
+    sbuf_fini(bytes);
     return res;
 }
 
@@ -408,10 +407,10 @@ eval_rvalue_access_index(struct expr const* expr)
                 idx_uz);
         }
 
-        sunder_sbuf(struct value*) const elements = lhs->data.array.elements;
+        sbuf(struct value*) const elements = lhs->data.array.elements;
         struct value* const ellipsis = lhs->data.array.ellipsis;
-        assert(idx_uz < sunder_sbuf_count(elements) || ellipsis != NULL);
-        struct value* const res = idx_uz < sunder_sbuf_count(elements)
+        assert(idx_uz < sbuf_count(elements) || ellipsis != NULL);
+        struct value* const res = idx_uz < sbuf_count(elements)
             ? value_clone(elements[idx_uz])
             : value_clone(ellipsis);
         value_del(lhs);

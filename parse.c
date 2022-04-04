@@ -275,17 +275,17 @@ parse_module(struct parser* parser)
         namespace = parse_namespace(parser);
     }
 
-    sunder_sbuf(struct cst_import const*) imports = NULL;
+    sbuf(struct cst_import const*) imports = NULL;
     while (check_current(parser, TOKEN_IMPORT)) {
-        sunder_sbuf_push(imports, parse_import(parser));
+        sbuf_push(imports, parse_import(parser));
     }
-    sunder_sbuf_freeze(imports, context()->freezer);
+    sbuf_freeze(imports, context()->freezer);
 
-    sunder_sbuf(struct cst_decl const*) decls = NULL;
+    sbuf(struct cst_decl const*) decls = NULL;
     while (!check_current(parser, TOKEN_EOF)) {
-        sunder_sbuf_push(decls, parse_decl(parser));
+        sbuf_push(decls, parse_decl(parser));
     }
-    sunder_sbuf_freeze(decls, context()->freezer);
+    sbuf_freeze(decls, context()->freezer);
 
     struct cst_module* const product =
         cst_module_new(namespace, imports, decls);
@@ -300,15 +300,15 @@ parse_namespace(struct parser* parser)
     struct source_location const* const location =
         &expect_current(parser, TOKEN_NAMESPACE)->location;
 
-    sunder_sbuf(struct cst_identifier const*) identifiers = NULL;
-    sunder_sbuf_push(identifiers, parse_identifier(parser));
+    sbuf(struct cst_identifier const*) identifiers = NULL;
+    sbuf_push(identifiers, parse_identifier(parser));
     while (!check_current(parser, TOKEN_SEMICOLON)) {
         expect_current(parser, TOKEN_COLON_COLON);
-        sunder_sbuf_push(identifiers, parse_identifier(parser));
+        sbuf_push(identifiers, parse_identifier(parser));
     }
     expect_current(parser, TOKEN_SEMICOLON);
 
-    sunder_sbuf_freeze(identifiers, context()->freezer);
+    sbuf_freeze(identifiers, context()->freezer);
     struct cst_namespace* const product =
         cst_namespace_new(location, identifiers);
 
@@ -430,11 +430,11 @@ parse_decl_function(struct parser* parser)
     struct source_location const* const location =
         &expect_current(parser, TOKEN_FUNC)->location;
     struct cst_identifier const* const identifier = parse_identifier(parser);
-    sunder_sbuf(struct cst_template_parameter const* const)
-        const template_parameters = parse_template_parameter_list(parser);
+    sbuf(struct cst_template_parameter const* const) const template_parameters =
+        parse_template_parameter_list(parser);
     expect_current(parser, TOKEN_LPAREN);
-    sunder_sbuf(struct cst_function_parameter const* const)
-        const function_parameters = parse_function_parameter_list(parser);
+    sbuf(struct cst_function_parameter const* const) const function_parameters =
+        parse_function_parameter_list(parser);
     expect_current(parser, TOKEN_RPAREN);
     struct cst_typespec const* const return_typespec = parse_typespec(parser);
     struct cst_block const* const body = parse_block(parser);
@@ -459,11 +459,10 @@ parse_decl_struct(struct parser* parser)
     struct source_location const* const location =
         &expect_current(parser, TOKEN_STRUCT)->location;
     struct cst_identifier const* const identifier = parse_identifier(parser);
-    sunder_sbuf(struct cst_template_parameter const* const)
-        const template_parameters = parse_template_parameter_list(parser);
+    sbuf(struct cst_template_parameter const* const) const template_parameters =
+        parse_template_parameter_list(parser);
     expect_current(parser, TOKEN_LBRACE);
-    sunder_sbuf(struct cst_member const* const) members =
-        parse_member_list(parser);
+    sbuf(struct cst_member const* const) members = parse_member_list(parser);
     expect_current(parser, TOKEN_RBRACE);
 
     struct cst_decl* const product =
@@ -591,7 +590,7 @@ parse_stmt_if(struct parser* parser)
     assert(parser != NULL);
     assert(check_current(parser, TOKEN_IF));
 
-    sunder_sbuf(struct cst_conditional const*) conditionals = NULL;
+    sbuf(struct cst_conditional const*) conditionals = NULL;
 
     struct source_location const* location =
         &expect_current(parser, TOKEN_IF)->location;
@@ -600,7 +599,7 @@ parse_stmt_if(struct parser* parser)
     struct cst_conditional* conditional =
         cst_conditional_new(location, condition, body);
     freezer_register(context()->freezer, conditional);
-    sunder_sbuf_push(conditionals, conditional);
+    sbuf_push(conditionals, conditional);
 
     while (check_current(parser, TOKEN_ELIF)) {
         location = &advance_token(parser)->location;
@@ -608,7 +607,7 @@ parse_stmt_if(struct parser* parser)
         body = parse_block(parser);
         conditional = cst_conditional_new(location, condition, body);
         freezer_register(context()->freezer, conditional);
-        sunder_sbuf_push(conditionals, conditional);
+        sbuf_push(conditionals, conditional);
     }
 
     if (check_current(parser, TOKEN_ELSE)) {
@@ -616,10 +615,10 @@ parse_stmt_if(struct parser* parser)
         body = parse_block(parser);
         conditional = cst_conditional_new(location, NULL, body);
         freezer_register(context()->freezer, conditional);
-        sunder_sbuf_push(conditionals, conditional);
+        sbuf_push(conditionals, conditional);
     }
 
-    sunder_sbuf_freeze(conditionals, context()->freezer);
+    sbuf_freeze(conditionals, context()->freezer);
     struct cst_stmt* const product = cst_stmt_new_if(conditionals);
 
     freezer_register(context()->freezer, product);
@@ -1017,10 +1016,10 @@ parse_expr_lparen(struct parser* parser)
         && typespec->kind == TYPESPEC_ARRAY) {
         // <expr-array>
         expect_current(parser, TOKEN_LBRACKET);
-        sunder_sbuf(struct cst_expr const*) elements = NULL;
+        sbuf(struct cst_expr const*) elements = NULL;
         struct cst_expr const* ellipsis = NULL;
         while (!check_current(parser, TOKEN_RBRACKET)) {
-            if (sunder_sbuf_count(elements) != 0u) {
+            if (sbuf_count(elements) != 0u) {
                 expect_current(parser, TOKEN_COMMA);
             }
 
@@ -1031,9 +1030,9 @@ parse_expr_lparen(struct parser* parser)
                 break;
             }
 
-            sunder_sbuf_push(elements, expr);
+            sbuf_push(elements, expr);
         }
-        sunder_sbuf_freeze(elements, context()->freezer);
+        sbuf_freeze(elements, context()->freezer);
         expect_current(parser, TOKEN_RBRACKET);
 
         struct cst_expr* const product =
@@ -1063,15 +1062,15 @@ parse_expr_lparen(struct parser* parser)
         && typespec->kind == TYPESPEC_SLICE) {
         // <expr-array-slice>
         expect_current(parser, TOKEN_LBRACKET);
-        sunder_sbuf(struct cst_expr const*) elements = NULL;
+        sbuf(struct cst_expr const*) elements = NULL;
         while (!check_current(parser, TOKEN_RBRACKET)) {
-            if (sunder_sbuf_count(elements) != 0u) {
+            if (sbuf_count(elements) != 0u) {
                 expect_current(parser, TOKEN_COMMA);
             }
 
-            sunder_sbuf_push(elements, parse_expr(parser));
+            sbuf_push(elements, parse_expr(parser));
         }
-        sunder_sbuf_freeze(elements, context()->freezer);
+        sbuf_freeze(elements, context()->freezer);
         expect_current(parser, TOKEN_RBRACKET);
 
         struct cst_expr* const product =
@@ -1085,7 +1084,7 @@ parse_expr_lparen(struct parser* parser)
         && typespec->kind != TYPESPEC_SLICE) {
         // <expr-struct>
         expect_current(parser, TOKEN_LBRACE);
-        sunder_sbuf(struct cst_member_initializer const* const) initializers =
+        sbuf(struct cst_member_initializer const* const) initializers =
             parse_member_initializer_list(parser);
         expect_current(parser, TOKEN_RBRACE);
 
@@ -1115,13 +1114,13 @@ parse_expr_syscall(struct parser* parser)
     struct source_location const* const location =
         &expect_current(parser, TOKEN_SYSCALL)->location;
     expect_current(parser, TOKEN_LPAREN);
-    sunder_sbuf(struct cst_expr const*) exprs = NULL;
-    sunder_sbuf_push(exprs, parse_expr(parser));
+    sbuf(struct cst_expr const*) exprs = NULL;
+    sbuf_push(exprs, parse_expr(parser));
     while (!check_current(parser, TOKEN_RPAREN)) {
         expect_current(parser, TOKEN_COMMA);
-        sunder_sbuf_push(exprs, parse_expr(parser));
+        sbuf_push(exprs, parse_expr(parser));
     }
-    sunder_sbuf_freeze(exprs, context()->freezer);
+    sbuf_freeze(exprs, context()->freezer);
     expect_current(parser, TOKEN_RPAREN);
 
     struct cst_expr* const product = cst_expr_new_syscall(location, exprs);
@@ -1138,14 +1137,14 @@ parse_expr_led_lparen(struct parser* parser, struct cst_expr const* lhs)
 
     struct source_location const* const location =
         &expect_current(parser, TOKEN_LPAREN)->location;
-    sunder_sbuf(struct cst_expr const*) args = NULL;
+    sbuf(struct cst_expr const*) args = NULL;
     while (!check_current(parser, TOKEN_RPAREN)) {
-        if (sunder_sbuf_count(args) != 0) {
+        if (sbuf_count(args) != 0) {
             expect_current(parser, TOKEN_COMMA);
         }
-        sunder_sbuf_push(args, parse_expr(parser));
+        sbuf_push(args, parse_expr(parser));
     }
-    sunder_sbuf_freeze(args, context()->freezer);
+    sbuf_freeze(args, context()->freezer);
     expect_current(parser, TOKEN_RPAREN);
     struct cst_expr* const product = cst_expr_new_call(location, lhs, args);
 
@@ -1298,11 +1297,11 @@ parse_block(struct parser* parser)
     struct source_location const* const location =
         &expect_current(parser, TOKEN_LBRACE)->location;
 
-    sunder_sbuf(struct cst_stmt const*) stmts = NULL;
+    sbuf(struct cst_stmt const*) stmts = NULL;
     while (!check_current(parser, TOKEN_RBRACE)) {
-        sunder_sbuf_push(stmts, parse_stmt(parser));
+        sbuf_push(stmts, parse_stmt(parser));
     }
-    sunder_sbuf_freeze(stmts, context()->freezer);
+    sbuf_freeze(stmts, context()->freezer);
     expect_current(parser, TOKEN_RBRACE);
 
     struct cst_block* const product = cst_block_new(location, stmts);
@@ -1323,16 +1322,16 @@ parse_symbol(struct parser* parser)
         location = &expect_current(parser, TOKEN_COLON_COLON)->location;
     }
 
-    sunder_sbuf(struct cst_symbol_element const*) elements = NULL;
-    sunder_sbuf_push(elements, parse_symbol_element(parser));
+    sbuf(struct cst_symbol_element const*) elements = NULL;
+    sbuf_push(elements, parse_symbol_element(parser));
     if (!is_from_root) {
         location = elements[0]->location;
     }
     while (check_current(parser, TOKEN_COLON_COLON)) {
         expect_current(parser, TOKEN_COLON_COLON);
-        sunder_sbuf_push(elements, parse_symbol_element(parser));
+        sbuf_push(elements, parse_symbol_element(parser));
     }
-    sunder_sbuf_freeze(elements, context()->freezer);
+    sbuf_freeze(elements, context()->freezer);
 
     struct cst_symbol* const product =
         cst_symbol_new(location, is_from_root, elements);
@@ -1364,8 +1363,7 @@ parse_template_parameter_list(struct parser* parser)
 {
     assert(parser != NULL);
 
-    sunder_sbuf(struct cst_template_parameter const*) template_parameters =
-        NULL;
+    sbuf(struct cst_template_parameter const*) template_parameters = NULL;
     if (!check_current(parser, TOKEN_LBRACKET_LBRACKET)) {
         return template_parameters;
     }
@@ -1378,15 +1376,15 @@ parse_template_parameter_list(struct parser* parser)
             "template parameter list declared with zero parameters");
     }
 
-    sunder_sbuf_push(template_parameters, parse_template_parameter(parser));
+    sbuf_push(template_parameters, parse_template_parameter(parser));
     while (check_current(parser, TOKEN_COMMA)) {
         advance_token(parser);
-        sunder_sbuf_push(template_parameters, parse_template_parameter(parser));
+        sbuf_push(template_parameters, parse_template_parameter(parser));
     }
 
     expect_current(parser, TOKEN_RBRACKET_RBRACKET);
 
-    sunder_sbuf_freeze(template_parameters, context()->freezer);
+    sbuf_freeze(template_parameters, context()->freezer);
     return template_parameters;
 }
 
@@ -1411,22 +1409,22 @@ parse_template_argument_list(struct parser* parser)
     struct token const* const lbracket =
         expect_current(parser, TOKEN_LBRACKET_LBRACKET);
 
-    sunder_sbuf(struct cst_template_argument const*) template_arguments = NULL;
+    sbuf(struct cst_template_argument const*) template_arguments = NULL;
     if (check_current(parser, TOKEN_RBRACKET_RBRACKET)) {
         fatal(
             &lbracket->location,
             "template argument list declared with zero arguments");
     }
 
-    sunder_sbuf_push(template_arguments, parse_template_argument(parser));
+    sbuf_push(template_arguments, parse_template_argument(parser));
     while (check_current(parser, TOKEN_COMMA)) {
         advance_token(parser);
-        sunder_sbuf_push(template_arguments, parse_template_argument(parser));
+        sbuf_push(template_arguments, parse_template_argument(parser));
     }
 
     expect_current(parser, TOKEN_RBRACKET_RBRACKET);
 
-    sunder_sbuf_freeze(template_arguments, context()->freezer);
+    sbuf_freeze(template_arguments, context()->freezer);
     return template_arguments;
 }
 
@@ -1448,19 +1446,18 @@ parse_function_parameter_list(struct parser* parser)
 {
     assert(parser != NULL);
 
-    sunder_sbuf(struct cst_function_parameter const*) function_parameters =
-        NULL;
+    sbuf(struct cst_function_parameter const*) function_parameters = NULL;
     if (!check_current(parser, TOKEN_IDENTIFIER)) {
         return function_parameters;
     }
 
-    sunder_sbuf_push(function_parameters, parse_function_parameter(parser));
+    sbuf_push(function_parameters, parse_function_parameter(parser));
     while (check_current(parser, TOKEN_COMMA)) {
         advance_token(parser);
-        sunder_sbuf_push(function_parameters, parse_function_parameter(parser));
+        sbuf_push(function_parameters, parse_function_parameter(parser));
     }
 
-    sunder_sbuf_freeze(function_parameters, context()->freezer);
+    sbuf_freeze(function_parameters, context()->freezer);
     return function_parameters;
 }
 
@@ -1485,12 +1482,12 @@ parse_member_list(struct parser* parser)
 {
     assert(parser != NULL);
 
-    sunder_sbuf(struct cst_member const*) members = NULL;
+    sbuf(struct cst_member const*) members = NULL;
     while (!check_current(parser, TOKEN_RBRACE)) {
-        sunder_sbuf_push(members, parse_member(parser));
+        sbuf_push(members, parse_member(parser));
     }
 
-    sunder_sbuf_freeze(members, context()->freezer);
+    sbuf_freeze(members, context()->freezer);
     return members;
 }
 
@@ -1568,19 +1565,18 @@ parse_member_initializer_list(struct parser* parser)
 {
     assert(parser != NULL);
 
-    sunder_sbuf(struct cst_member_initializer const*) member_initializers =
-        NULL;
+    sbuf(struct cst_member_initializer const*) member_initializers = NULL;
     if (!check_current(parser, TOKEN_DOT)) {
         return member_initializers;
     }
 
-    sunder_sbuf_push(member_initializers, parse_member_initializer(parser));
+    sbuf_push(member_initializers, parse_member_initializer(parser));
     while (check_current(parser, TOKEN_COMMA)) {
         advance_token(parser);
-        sunder_sbuf_push(member_initializers, parse_member_initializer(parser));
+        sbuf_push(member_initializers, parse_member_initializer(parser));
     }
 
-    sunder_sbuf_freeze(member_initializers, context()->freezer);
+    sbuf_freeze(member_initializers, context()->freezer);
     return member_initializers;
 }
 
@@ -1658,16 +1654,16 @@ parse_typespec_function(struct parser* parser)
         &expect_current(parser, TOKEN_FUNC)->location;
 
     expect_current(parser, TOKEN_LPAREN);
-    sunder_sbuf(struct cst_typespec const*) parameter_typespecs = NULL;
+    sbuf(struct cst_typespec const*) parameter_typespecs = NULL;
     if (!check_current(parser, TOKEN_RPAREN)) {
-        sunder_sbuf_push(parameter_typespecs, parse_typespec(parser));
+        sbuf_push(parameter_typespecs, parse_typespec(parser));
         while (check_current(parser, TOKEN_COMMA)) {
             advance_token(parser);
-            sunder_sbuf_push(parameter_typespecs, parse_typespec(parser));
+            sbuf_push(parameter_typespecs, parse_typespec(parser));
         }
     }
     expect_current(parser, TOKEN_RPAREN);
-    sunder_sbuf_freeze(parameter_typespecs, context()->freezer);
+    sbuf_freeze(parameter_typespecs, context()->freezer);
 
     struct cst_typespec const* const return_typespec = parse_typespec(parser);
 
