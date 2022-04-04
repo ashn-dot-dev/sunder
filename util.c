@@ -831,13 +831,13 @@ sunder_cstr_ends_with(char const* cstr, char const* target)
     assert(cstr != NULL);
     assert(target != NULL);
 
-    return sunder_vstr_ends_with(
-        SUNDER_VSTR_LOCAL_PTR(cstr, strlen(cstr)),
-        SUNDER_VSTR_LOCAL_PTR(target, strlen(target)));
+    return vstr_ends_with(
+        VSTR_LOCAL_PTR(cstr, strlen(cstr)),
+        VSTR_LOCAL_PTR(target, strlen(target)));
 }
 
 int
-sunder_vstr_cmp(struct sunder_vstr const* lhs, struct sunder_vstr const* rhs)
+vstr_cmp(struct vstr const* lhs, struct vstr const* rhs)
 {
     assert(lhs != NULL);
     assert(rhs != NULL);
@@ -852,16 +852,15 @@ sunder_vstr_cmp(struct sunder_vstr const* lhs, struct sunder_vstr const* rhs)
 }
 
 int
-sunder_vstr_vpcmp(void const* lhs, void const* rhs)
+vstr_vpcmp(void const* lhs, void const* rhs)
 {
     assert(lhs != NULL);
     assert(rhs != NULL);
-    return sunder_vstr_cmp(lhs, rhs);
+    return vstr_cmp(lhs, rhs);
 }
 
 int
-sunder_vstr_starts_with(
-    struct sunder_vstr const* vstr, struct sunder_vstr const* target)
+vstr_starts_with(struct vstr const* vstr, struct vstr const* target)
 {
     assert(vstr != NULL);
     assert(target != NULL);
@@ -873,8 +872,7 @@ sunder_vstr_starts_with(
 }
 
 int
-sunder_vstr_ends_with(
-    struct sunder_vstr const* vstr, struct sunder_vstr const* target)
+vstr_ends_with(struct vstr const* vstr, struct vstr const* target)
 {
     assert(vstr != NULL);
     assert(target != NULL);
@@ -924,11 +922,11 @@ sunder_sipool_intern(
     assert(self != NULL);
     assert(start != NULL || count == 0);
 
-    struct sunder_vstr const vstr = {start, count};
+    struct vstr const vstr = {start, count};
     for (size_t i = 0; i < sunder_sbuf_count(self->strings); ++i) {
-        struct sunder_vstr const element = {self->strings[i],
-                                            strlen(self->strings[i])};
-        if (sunder_vstr_cmp(&vstr, &element) == 0) {
+        struct vstr const element = {self->strings[i],
+                                     strlen(self->strings[i])};
+        if (vstr_cmp(&vstr, &element) == 0) {
             return self->strings[i];
         }
     }

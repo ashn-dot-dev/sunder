@@ -12,7 +12,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 //////// util.c ////////////////////////////////////////////////////////////////
 
-struct sunder_vstr;
+struct vstr;
 struct sunder_sipool;
 struct sunder_bitarr;
 struct sunder_bigint;
@@ -149,52 +149,49 @@ sunder_cstr_starts_with(char const* cstr, char const* target);
 int
 sunder_cstr_ends_with(char const* cstr, char const* target);
 
-struct sunder_vstr {
+struct vstr {
     char const* start;
     size_t count;
 };
 
-// Produce a pointer of type struct sunder_vstr* constructed from the provided
+// Produce a pointer of type struct vstr* constructed from the provided
 // parameters. This pointer has automatic storage duration associated with the
 // enclosing block.
-#define SUNDER_VSTR_LOCAL_PTR(start, count)                                    \
-    (&(struct sunder_vstr){start, count})
-// Produce a pointer of type struct sunder_vstr* from the provided cstring
-// literal. This pointer has automatic storage duration associated with the
-// enclosing block.
-#define SUNDER_VSTR_LOCAL_PTR_STR_LITERAL(str_literal)                         \
-    SUNDER_VSTR_LOCAL_PTR(str_literal, SUNDER_STR_LITERAL_COUNT(str_literal))
+#define VSTR_LOCAL_PTR(start, count) (&(struct vstr){start, count})
+// Produce a pointer of type struct vstr* from the provided cstring literal.
+// This pointer has automatic storage duration associated with the enclosing
+// block.
+#define VSTR_LOCAL_PTR_STR_LITERAL(str_literal)                                \
+    VSTR_LOCAL_PTR(str_literal, SUNDER_STR_LITERAL_COUNT(str_literal))
 
 // Initializer for a vstr literal from a cstr literal.
 // Example:
-//      static struct sunder_vstr const foo =
-//          SUNDER_VSTR_INIT_STR_LITERAL("foo");
+//      static struct vstr const foo =
+//          VSTR_INIT_STR_LITERAL("foo");
 // Example:
-//      struct sunder_vstr bar = {0};
+//      struct vstr bar = {0};
 //      // some time later...
-//      bar = (struct sunder_vstr)SUNDER_VSTR_INIT_STR_LITERAL("bar");
+//      bar = (struct vstr)VSTR_INIT_STR_LITERAL("bar");
 // clang-format off
-#define SUNDER_VSTR_INIT_STR_LITERAL(str_literal)                              \
+#define VSTR_INIT_STR_LITERAL(str_literal)                                     \
     {str_literal, SUNDER_STR_LITERAL_COUNT(str_literal)}
 // clang-format on
 
 // Return an int less than, equal to, or greater than zero if lhs is
 // lexicographically less than, equal to, or greater than rhs, respectively.
 int
-sunder_vstr_cmp(struct sunder_vstr const* lhs, struct sunder_vstr const* rhs);
+vstr_cmp(struct vstr const* lhs, struct vstr const* rhs);
 // Comparison function satisfying sunder_vpcmp_fn.
-// Parameters lhs and rhs must be of type struct sunder_vstr const*.
+// Parameters lhs and rhs must be of type struct vstr const*.
 int
-sunder_vstr_vpcmp(void const* lhs, void const* rhs);
+vstr_vpcmp(void const* lhs, void const* rhs);
 
 // Returns a non-zero value if vstr starts with target.
 int
-sunder_vstr_starts_with(
-    struct sunder_vstr const* vstr, struct sunder_vstr const* target);
+vstr_starts_with(struct vstr const* vstr, struct vstr const* target);
 // Returns a non-zero value if vstr ends with target.
 int
-sunder_vstr_ends_with(
-    struct sunder_vstr const* vstr, struct sunder_vstr const* target);
+vstr_ends_with(struct vstr const* vstr, struct vstr const* target);
 
 // Allocate and initialize a string intern pool.
 struct sunder_sipool*
@@ -1026,8 +1023,8 @@ struct token {
     union {
         // TOKEN_INTEGER
         struct {
-            struct sunder_vstr number;
-            struct sunder_vstr suffix;
+            struct vstr number;
+            struct vstr suffix;
         } integer;
         // TOKEN_CHARACTER
         // Contains the value of the character literal.

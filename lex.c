@@ -9,74 +9,74 @@ static enum token_kind const KEYWORDS_FIRST = TOKEN_TRUE;
 static enum token_kind const KEYWORDS_LAST = TOKEN_TYPEOF;
 static enum token_kind const SIGILS_FIRST = TOKEN_EQ;
 static enum token_kind const SIGILS_LAST = TOKEN_SEMICOLON;
-static struct sunder_vstr token_kind_vstrs[TOKEN_EOF + 1u] = {
+static struct vstr token_kind_vstrs[TOKEN_EOF + 1u] = {
     // Keywords
-    [TOKEN_TRUE] = SUNDER_VSTR_INIT_STR_LITERAL("true"),
-    [TOKEN_FALSE] = SUNDER_VSTR_INIT_STR_LITERAL("false"),
-    [TOKEN_NOT] = SUNDER_VSTR_INIT_STR_LITERAL("not"),
-    [TOKEN_OR] = SUNDER_VSTR_INIT_STR_LITERAL("or"),
-    [TOKEN_AND] = SUNDER_VSTR_INIT_STR_LITERAL("and"),
-    [TOKEN_NAMESPACE] = SUNDER_VSTR_INIT_STR_LITERAL("namespace"),
-    [TOKEN_IMPORT] = SUNDER_VSTR_INIT_STR_LITERAL("import"),
-    [TOKEN_VAR] = SUNDER_VSTR_INIT_STR_LITERAL("var"),
-    [TOKEN_CONST] = SUNDER_VSTR_INIT_STR_LITERAL("const"),
-    [TOKEN_FUNC] = SUNDER_VSTR_INIT_STR_LITERAL("func"),
-    [TOKEN_STRUCT] = SUNDER_VSTR_INIT_STR_LITERAL("struct"),
-    [TOKEN_EXTEND] = SUNDER_VSTR_INIT_STR_LITERAL("extend"),
-    [TOKEN_ALIAS] = SUNDER_VSTR_INIT_STR_LITERAL("alias"),
-    [TOKEN_EXTERN] = SUNDER_VSTR_INIT_STR_LITERAL("extern"),
-    [TOKEN_DUMP] = SUNDER_VSTR_INIT_STR_LITERAL("dump"),
-    [TOKEN_RETURN] = SUNDER_VSTR_INIT_STR_LITERAL("return"),
-    [TOKEN_IF] = SUNDER_VSTR_INIT_STR_LITERAL("if"),
-    [TOKEN_ELIF] = SUNDER_VSTR_INIT_STR_LITERAL("elif"),
-    [TOKEN_ELSE] = SUNDER_VSTR_INIT_STR_LITERAL("else"),
-    [TOKEN_FOR] = SUNDER_VSTR_INIT_STR_LITERAL("for"),
-    [TOKEN_IN] = SUNDER_VSTR_INIT_STR_LITERAL("in"),
-    [TOKEN_BREAK] = SUNDER_VSTR_INIT_STR_LITERAL("break"),
-    [TOKEN_CONTINUE] = SUNDER_VSTR_INIT_STR_LITERAL("continue"),
-    [TOKEN_SYSCALL] = SUNDER_VSTR_INIT_STR_LITERAL("syscall"),
-    [TOKEN_ALIGNOF] = SUNDER_VSTR_INIT_STR_LITERAL("alignof"),
-    [TOKEN_COUNTOF] = SUNDER_VSTR_INIT_STR_LITERAL("countof"),
-    [TOKEN_SIZEOF] = SUNDER_VSTR_INIT_STR_LITERAL("sizeof"),
-    [TOKEN_TYPEOF] = SUNDER_VSTR_INIT_STR_LITERAL("typeof"),
+    [TOKEN_TRUE] = VSTR_INIT_STR_LITERAL("true"),
+    [TOKEN_FALSE] = VSTR_INIT_STR_LITERAL("false"),
+    [TOKEN_NOT] = VSTR_INIT_STR_LITERAL("not"),
+    [TOKEN_OR] = VSTR_INIT_STR_LITERAL("or"),
+    [TOKEN_AND] = VSTR_INIT_STR_LITERAL("and"),
+    [TOKEN_NAMESPACE] = VSTR_INIT_STR_LITERAL("namespace"),
+    [TOKEN_IMPORT] = VSTR_INIT_STR_LITERAL("import"),
+    [TOKEN_VAR] = VSTR_INIT_STR_LITERAL("var"),
+    [TOKEN_CONST] = VSTR_INIT_STR_LITERAL("const"),
+    [TOKEN_FUNC] = VSTR_INIT_STR_LITERAL("func"),
+    [TOKEN_STRUCT] = VSTR_INIT_STR_LITERAL("struct"),
+    [TOKEN_EXTEND] = VSTR_INIT_STR_LITERAL("extend"),
+    [TOKEN_ALIAS] = VSTR_INIT_STR_LITERAL("alias"),
+    [TOKEN_EXTERN] = VSTR_INIT_STR_LITERAL("extern"),
+    [TOKEN_DUMP] = VSTR_INIT_STR_LITERAL("dump"),
+    [TOKEN_RETURN] = VSTR_INIT_STR_LITERAL("return"),
+    [TOKEN_IF] = VSTR_INIT_STR_LITERAL("if"),
+    [TOKEN_ELIF] = VSTR_INIT_STR_LITERAL("elif"),
+    [TOKEN_ELSE] = VSTR_INIT_STR_LITERAL("else"),
+    [TOKEN_FOR] = VSTR_INIT_STR_LITERAL("for"),
+    [TOKEN_IN] = VSTR_INIT_STR_LITERAL("in"),
+    [TOKEN_BREAK] = VSTR_INIT_STR_LITERAL("break"),
+    [TOKEN_CONTINUE] = VSTR_INIT_STR_LITERAL("continue"),
+    [TOKEN_SYSCALL] = VSTR_INIT_STR_LITERAL("syscall"),
+    [TOKEN_ALIGNOF] = VSTR_INIT_STR_LITERAL("alignof"),
+    [TOKEN_COUNTOF] = VSTR_INIT_STR_LITERAL("countof"),
+    [TOKEN_SIZEOF] = VSTR_INIT_STR_LITERAL("sizeof"),
+    [TOKEN_TYPEOF] = VSTR_INIT_STR_LITERAL("typeof"),
     // Sigils
-    [TOKEN_EQ] = SUNDER_VSTR_INIT_STR_LITERAL("=="),
-    [TOKEN_NE] = SUNDER_VSTR_INIT_STR_LITERAL("!="),
-    [TOKEN_LE] = SUNDER_VSTR_INIT_STR_LITERAL("<="),
-    [TOKEN_LT] = SUNDER_VSTR_INIT_STR_LITERAL("<"),
-    [TOKEN_GE] = SUNDER_VSTR_INIT_STR_LITERAL(">="),
-    [TOKEN_GT] = SUNDER_VSTR_INIT_STR_LITERAL(">"),
-    [TOKEN_ASSIGN] = SUNDER_VSTR_INIT_STR_LITERAL("="),
-    [TOKEN_PLUS] = SUNDER_VSTR_INIT_STR_LITERAL("+"),
-    [TOKEN_DASH] = SUNDER_VSTR_INIT_STR_LITERAL("-"),
-    [TOKEN_STAR] = SUNDER_VSTR_INIT_STR_LITERAL("*"),
-    [TOKEN_FSLASH] = SUNDER_VSTR_INIT_STR_LITERAL("/"),
-    [TOKEN_TILDE] = SUNDER_VSTR_INIT_STR_LITERAL("~"),
-    [TOKEN_PIPE] = SUNDER_VSTR_INIT_STR_LITERAL("|"),
-    [TOKEN_CARET] = SUNDER_VSTR_INIT_STR_LITERAL("^"),
-    [TOKEN_AMPERSAND] = SUNDER_VSTR_INIT_STR_LITERAL("&"),
-    [TOKEN_LPAREN] = SUNDER_VSTR_INIT_STR_LITERAL("("),
-    [TOKEN_RPAREN] = SUNDER_VSTR_INIT_STR_LITERAL(")"),
-    [TOKEN_LBRACE] = SUNDER_VSTR_INIT_STR_LITERAL("{"),
-    [TOKEN_RBRACE] = SUNDER_VSTR_INIT_STR_LITERAL("}"),
-    [TOKEN_LBRACKET_LBRACKET] = SUNDER_VSTR_INIT_STR_LITERAL("[["),
-    [TOKEN_RBRACKET_RBRACKET] = SUNDER_VSTR_INIT_STR_LITERAL("]]"),
-    [TOKEN_LBRACKET] = SUNDER_VSTR_INIT_STR_LITERAL("["),
-    [TOKEN_RBRACKET] = SUNDER_VSTR_INIT_STR_LITERAL("]"),
-    [TOKEN_COMMA] = SUNDER_VSTR_INIT_STR_LITERAL(","),
-    [TOKEN_ELLIPSIS] = SUNDER_VSTR_INIT_STR_LITERAL("..."),
-    [TOKEN_DOT_STAR] = SUNDER_VSTR_INIT_STR_LITERAL(".*"),
-    [TOKEN_DOT] = SUNDER_VSTR_INIT_STR_LITERAL("."),
-    [TOKEN_COLON_COLON] = SUNDER_VSTR_INIT_STR_LITERAL("::"),
-    [TOKEN_COLON] = SUNDER_VSTR_INIT_STR_LITERAL(":"),
-    [TOKEN_SEMICOLON] = SUNDER_VSTR_INIT_STR_LITERAL(";"),
+    [TOKEN_EQ] = VSTR_INIT_STR_LITERAL("=="),
+    [TOKEN_NE] = VSTR_INIT_STR_LITERAL("!="),
+    [TOKEN_LE] = VSTR_INIT_STR_LITERAL("<="),
+    [TOKEN_LT] = VSTR_INIT_STR_LITERAL("<"),
+    [TOKEN_GE] = VSTR_INIT_STR_LITERAL(">="),
+    [TOKEN_GT] = VSTR_INIT_STR_LITERAL(">"),
+    [TOKEN_ASSIGN] = VSTR_INIT_STR_LITERAL("="),
+    [TOKEN_PLUS] = VSTR_INIT_STR_LITERAL("+"),
+    [TOKEN_DASH] = VSTR_INIT_STR_LITERAL("-"),
+    [TOKEN_STAR] = VSTR_INIT_STR_LITERAL("*"),
+    [TOKEN_FSLASH] = VSTR_INIT_STR_LITERAL("/"),
+    [TOKEN_TILDE] = VSTR_INIT_STR_LITERAL("~"),
+    [TOKEN_PIPE] = VSTR_INIT_STR_LITERAL("|"),
+    [TOKEN_CARET] = VSTR_INIT_STR_LITERAL("^"),
+    [TOKEN_AMPERSAND] = VSTR_INIT_STR_LITERAL("&"),
+    [TOKEN_LPAREN] = VSTR_INIT_STR_LITERAL("("),
+    [TOKEN_RPAREN] = VSTR_INIT_STR_LITERAL(")"),
+    [TOKEN_LBRACE] = VSTR_INIT_STR_LITERAL("{"),
+    [TOKEN_RBRACE] = VSTR_INIT_STR_LITERAL("}"),
+    [TOKEN_LBRACKET_LBRACKET] = VSTR_INIT_STR_LITERAL("[["),
+    [TOKEN_RBRACKET_RBRACKET] = VSTR_INIT_STR_LITERAL("]]"),
+    [TOKEN_LBRACKET] = VSTR_INIT_STR_LITERAL("["),
+    [TOKEN_RBRACKET] = VSTR_INIT_STR_LITERAL("]"),
+    [TOKEN_COMMA] = VSTR_INIT_STR_LITERAL(","),
+    [TOKEN_ELLIPSIS] = VSTR_INIT_STR_LITERAL("..."),
+    [TOKEN_DOT_STAR] = VSTR_INIT_STR_LITERAL(".*"),
+    [TOKEN_DOT] = VSTR_INIT_STR_LITERAL("."),
+    [TOKEN_COLON_COLON] = VSTR_INIT_STR_LITERAL("::"),
+    [TOKEN_COLON] = VSTR_INIT_STR_LITERAL(":"),
+    [TOKEN_SEMICOLON] = VSTR_INIT_STR_LITERAL(";"),
     // Identifiers and Non-Keyword Literals
-    [TOKEN_IDENTIFIER] = SUNDER_VSTR_INIT_STR_LITERAL("identifier"),
-    [TOKEN_INTEGER] = SUNDER_VSTR_INIT_STR_LITERAL("integer"),
-    [TOKEN_CHARACTER] = SUNDER_VSTR_INIT_STR_LITERAL("character"),
-    [TOKEN_BYTES] = SUNDER_VSTR_INIT_STR_LITERAL("bytes"),
+    [TOKEN_IDENTIFIER] = VSTR_INIT_STR_LITERAL("identifier"),
+    [TOKEN_INTEGER] = VSTR_INIT_STR_LITERAL("integer"),
+    [TOKEN_CHARACTER] = VSTR_INIT_STR_LITERAL("character"),
+    [TOKEN_BYTES] = VSTR_INIT_STR_LITERAL("bytes"),
     // Meta
-    [TOKEN_EOF] = SUNDER_VSTR_INIT_STR_LITERAL("end-of-file"),
+    [TOKEN_EOF] = VSTR_INIT_STR_LITERAL("end-of-file"),
 };
 
 char const*
@@ -174,8 +174,8 @@ token_new_integer(
     char const* start,
     size_t count,
     struct source_location location,
-    struct sunder_vstr number,
-    struct sunder_vstr suffix)
+    struct vstr number,
+    struct vstr suffix)
 {
     assert(start != NULL && count != 0);
     assert(number.start != NULL && number.count != 0);
@@ -237,11 +237,11 @@ lex_keyword_or_identifier(struct lexer* self)
         self->current += 1;
     }
     size_t const count = (size_t)(self->current - start);
-    struct sunder_vstr const symbol = {start, count};
+    struct vstr const symbol = {start, count};
 
     for (int i = (int)KEYWORDS_FIRST; i <= (int)KEYWORDS_LAST; ++i) {
-        struct sunder_vstr const* const keyword = &token_kind_vstrs[i];
-        if (sunder_vstr_cmp(&symbol, keyword) == 0) {
+        struct vstr const* const keyword = &token_kind_vstrs[i];
+        if (vstr_cmp(&symbol, keyword) == 0) {
             return token_new(
                 start, count, self->next_token_location, (enum token_kind)i);
         }
@@ -292,8 +292,8 @@ lex_integer(struct lexer* self)
 
     char const* const start = number_start;
     size_t const count = (size_t)(self->current - start);
-    struct sunder_vstr const number = {number_start, number_count};
-    struct sunder_vstr const suffix = {suffix_start, suffix_count};
+    struct vstr const number = {number_start, number_count};
+    struct vstr const suffix = {suffix_start, suffix_count};
     struct token* const token = token_new_integer(
         start, count, self->next_token_location, number, suffix);
 
