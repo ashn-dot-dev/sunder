@@ -167,8 +167,8 @@ context_init(void)
 #undef INTERN_STR_LITERAL
 
 #define INIT_BIGINT_CONSTANT(ident, str_literal)                               \
-    struct sunder_bigint* const ident = sunder_bigint_new_cstr(str_literal);     \
-    sunder_bigint_freeze(ident, s_context.freezer);                             \
+    struct sunder_bigint* const ident = sunder_bigint_new_cstr(str_literal);   \
+    sunder_bigint_freeze(ident, s_context.freezer);                            \
     s_context.ident = ident;
     INIT_BIGINT_CONSTANT(u8_min, "+0x00")
     INIT_BIGINT_CONSTANT(u8_max, "+0xFF")
@@ -204,10 +204,10 @@ context_init(void)
 #define INIT_BUILTIN_TYPE(builtin_lvalue, /* struct type* */ t)                \
     {                                                                          \
         struct type* const type = t;                                           \
-        sunder_freezer_register(s_context.freezer, type);                       \
+        sunder_freezer_register(s_context.freezer, type);                      \
         struct symbol* const symbol =                                          \
             symbol_new_type(&s_context.builtin.location, type);                \
-        sunder_freezer_register(s_context.freezer, symbol);                     \
+        sunder_freezer_register(s_context.freezer, symbol);                    \
         symbol_table_insert(                                                   \
             s_context.global_symbol_table, symbol->name, symbol, false);       \
         builtin_lvalue = type;                                                 \

@@ -157,7 +157,8 @@ struct sunder_vstr {
 // Produce a pointer of type struct sunder_vstr* constructed from the provided
 // parameters. This pointer has automatic storage duration associated with the
 // enclosing block.
-#define SUNDER_VSTR_LOCAL_PTR(start, count) (&(struct sunder_vstr){start, count})
+#define SUNDER_VSTR_LOCAL_PTR(start, count)                                    \
+    (&(struct sunder_vstr){start, count})
 // Produce a pointer of type struct sunder_vstr* from the provided cstring
 // literal. This pointer has automatic storage duration associated with the
 // enclosing block.
@@ -206,7 +207,8 @@ sunder_sipool_del(struct sunder_sipool* self);
 // Intern the string specified by the first count bytes of start.
 // Returns the canonical NUL-terminated representation of the interned string.
 char const*
-sunder_sipool_intern(struct sunder_sipool* self, char const* start, size_t count);
+sunder_sipool_intern(
+    struct sunder_sipool* self, char const* start, size_t count);
 // Intern the string specified by the provided NUL-terminated cstring.
 // Returns the canonical NUL-terminated representation of the interned string.
 char const*
@@ -353,7 +355,8 @@ void
 sunder_bitarr_del(struct sunder_bitarr* self);
 // Register resources within the bit array with the provided freezer.
 void
-sunder_bitarr_freeze(struct sunder_bitarr* self, struct sunder_freezer* freezer);
+sunder_bitarr_freeze(
+    struct sunder_bitarr* self, struct sunder_freezer* freezer);
 
 // Returns the number of bits in this bit array.
 size_t
@@ -371,7 +374,8 @@ sunder_bitarr_get(struct sunder_bitarr const* self, size_t n);
 // Fatally exits after printing an error message if the count of self is not
 // equal to the count of othr.
 void
-sunder_bitarr_assign(struct sunder_bitarr* self, struct sunder_bitarr const* othr);
+sunder_bitarr_assign(
+    struct sunder_bitarr* self, struct sunder_bitarr const* othr);
 
 // res = ~rhs
 // Fatally exits after printing an error message if the count of res and rhs are
@@ -449,7 +453,8 @@ void
 sunder_bigint_del(struct sunder_bigint* self);
 // Register resources within the bigint with the provided freezer.
 void
-sunder_bigint_freeze(struct sunder_bigint* self, struct sunder_freezer* freezer);
+sunder_bigint_freeze(
+    struct sunder_bigint* self, struct sunder_freezer* freezer);
 
 // Return an int less than, equal to, or greater than zero if lhs is
 // semantically less than, equal to, or greater than rhs, respectively.
@@ -459,7 +464,8 @@ sunder_bigint_cmp(
 
 // self = othr
 void
-sunder_bigint_assign(struct sunder_bigint* self, struct sunder_bigint const* othr);
+sunder_bigint_assign(
+    struct sunder_bigint* self, struct sunder_bigint const* othr);
 
 // res = -rhs
 void
@@ -523,7 +529,8 @@ sunder_bigint_magnitude_bit_get(struct sunder_bigint const* self, size_t n);
 // Set the nth bit (zero indexed) of the magnitude of self to value.
 // This function is sign-oblivious (the sign of self is not altered).
 void
-sunder_bigint_magnitude_bit_set(struct sunder_bigint* self, size_t n, int value);
+sunder_bigint_magnitude_bit_set(
+    struct sunder_bigint* self, size_t n, int value);
 
 // Returns an sunder_xalloc-allocated cstring representation of the provided
 // bigint as specified by the provided format string.
@@ -581,7 +588,8 @@ void
 sunder_string_del(struct sunder_string* self);
 // Register resources within the string with the provided freezer.
 void
-sunder_string_freeze(struct sunder_string* self, struct sunder_freezer* freezer);
+sunder_string_freeze(
+    struct sunder_string* self, struct sunder_freezer* freezer);
 
 // Pointer to the start of the underlying char array of the string.
 // Returns a pointer to a NUL terminator when the count of the string is zero.
@@ -625,7 +633,8 @@ sunder_string_remove(struct sunder_string* self, size_t idx, size_t count);
 
 // Append count bytes of start onto the end of the string.
 void
-sunder_string_append(struct sunder_string* self, char const* start, size_t count);
+sunder_string_append(
+    struct sunder_string* self, char const* start, size_t count);
 // Append the provided NUL-terminated cstring onto the end of the string.
 void
 sunder_string_append_cstr(struct sunder_string* self, char const* cstr);
@@ -1294,7 +1303,8 @@ struct cst_expr {
         } array_slice;
         struct {
             struct cst_typespec const* typespec;
-            sunder_sbuf(struct cst_member_initializer const* const) initializers;
+            sunder_sbuf(struct cst_member_initializer const* const)
+                initializers;
         } struct_;
         struct {
             struct cst_typespec const* typespec;

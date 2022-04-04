@@ -2602,7 +2602,8 @@ codegen(char const* const opt_o, bool opt_k)
     assert(opt_o != NULL);
 
     out = sunder_string_new(NULL, 0u);
-    struct sunder_string* const asm_path = sunder_string_new_fmt("%s.asm", opt_o);
+    struct sunder_string* const asm_path =
+        sunder_string_new_fmt("%s.asm", opt_o);
     struct sunder_string* const obj_path = sunder_string_new_fmt("%s.o", opt_o);
 
     codegen_sys();

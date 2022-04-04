@@ -324,8 +324,8 @@ parse_import(struct parser* parser)
 
     struct sunder_string const* const bytes =
         expect_current(parser, TOKEN_BYTES)->data.bytes;
-    char const* const path =
-        sunder_sipool_intern_cstr(context()->sipool, sunder_string_start(bytes));
+    char const* const path = sunder_sipool_intern_cstr(
+        context()->sipool, sunder_string_start(bytes));
     expect_current(parser, TOKEN_SEMICOLON);
 
     struct cst_import* const product = cst_import_new(location, path);
@@ -1364,7 +1364,8 @@ parse_template_parameter_list(struct parser* parser)
 {
     assert(parser != NULL);
 
-    sunder_sbuf(struct cst_template_parameter const*) template_parameters = NULL;
+    sunder_sbuf(struct cst_template_parameter const*) template_parameters =
+        NULL;
     if (!check_current(parser, TOKEN_LBRACKET_LBRACKET)) {
         return template_parameters;
     }
@@ -1447,7 +1448,8 @@ parse_function_parameter_list(struct parser* parser)
 {
     assert(parser != NULL);
 
-    sunder_sbuf(struct cst_function_parameter const*) function_parameters = NULL;
+    sunder_sbuf(struct cst_function_parameter const*) function_parameters =
+        NULL;
     if (!check_current(parser, TOKEN_IDENTIFIER)) {
         return function_parameters;
     }
@@ -1566,7 +1568,8 @@ parse_member_initializer_list(struct parser* parser)
 {
     assert(parser != NULL);
 
-    sunder_sbuf(struct cst_member_initializer const*) member_initializers = NULL;
+    sunder_sbuf(struct cst_member_initializer const*) member_initializers =
+        NULL;
     if (!check_current(parser, TOKEN_DOT)) {
         return member_initializers;
     }

@@ -747,7 +747,8 @@ xget_template_instance(
             if (i != 0) {
                 sunder_string_append_cstr(name_string, ", ");
             }
-            sunder_string_append_fmt(name_string, "%s", template_types[i]->name);
+            sunder_string_append_fmt(
+                name_string, "%s", template_types[i]->name);
         }
         sunder_string_append_cstr(name_string, "]]");
         char const* const name_interned = sunder_sipool_intern_cstr(
@@ -872,7 +873,8 @@ xget_template_instance(
             if (i != 0) {
                 sunder_string_append_cstr(name_string, ", ");
             }
-            sunder_string_append_fmt(name_string, "%s", template_types[i]->name);
+            sunder_string_append_fmt(
+                name_string, "%s", template_types[i]->name);
         }
         sunder_string_append_cstr(name_string, "]]");
         char const* const name_interned = sunder_sipool_intern_cstr(
@@ -1205,7 +1207,8 @@ canonical_import_path(char const* module_path, char const* import_path)
     sunder_string_resize(tmp, 0u);
     sunder_string_append_cstr(tmp, SUNDER_IMPORT_PATH);
 
-    sunder_sbuf(struct sunder_string*) const imp = sunder_string_split_on(tmp, ":", SUNDER_STR_LITERAL_COUNT(":"));
+    sunder_sbuf(struct sunder_string*) const imp =
+        sunder_string_split_on(tmp, ":", SUNDER_STR_LITERAL_COUNT(":"));
     for (size_t i = 0; i < sunder_sbuf_count(imp); ++i) {
         struct sunder_string* const s = imp[i];
 
@@ -1535,7 +1538,8 @@ resolve_decl_function(struct resolver* resolver, struct cst_decl const* decl)
     // stack (i.e. right to left), adjusting the rbp_offset for each parameter
     // along the way.
     sunder_sbuf(struct symbol const*) symbol_parameters = NULL;
-    sunder_sbuf_resize(symbol_parameters, sunder_sbuf_count(function_parameters));
+    sunder_sbuf_resize(
+        symbol_parameters, sunder_sbuf_count(function_parameters));
     for (size_t i = sunder_sbuf_count(function_parameters); i--;) {
         struct source_location const* const location =
             function_parameters[i]->location;
@@ -2481,7 +2485,8 @@ resolve_expr_character(struct resolver* resolver, struct cst_expr const* expr)
     (void)written;
 
     struct type const* const type = context()->builtin.integer;
-    struct sunder_bigint* const value = sunder_bigint_new_text(buf, strlen(buf));
+    struct sunder_bigint* const value =
+        sunder_bigint_new_text(buf, strlen(buf));
     sunder_bigint_freeze(value, context()->freezer);
     struct expr* const resolved = expr_new_integer(expr->location, type, value);
 
@@ -3007,7 +3012,8 @@ resolve_expr_call(struct resolver* resolver, struct cst_expr const* expr)
         }
         size_t const arg_count = sunder_sbuf_count(expr->data.call.arguments);
         // Number of parameters minus one for the implicit pointer to self.
-        size_t const expected_arg_count = sunder_sbuf_count(parameter_types) - 1;
+        size_t const expected_arg_count =
+            sunder_sbuf_count(parameter_types) - 1;
         if (arg_count != expected_arg_count) {
             fatal(
                 expr->location,

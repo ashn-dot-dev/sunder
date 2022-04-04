@@ -460,8 +460,9 @@ order_typespec(struct orderer* orderer, struct cst_typespec const* typespec)
         return;
     }
     case TYPESPEC_FUNCTION: {
-        sunder_sbuf(struct cst_typespec const* const) const parameter_typespecs =
-            typespec->data.function.parameter_typespecs;
+        sunder_sbuf(struct cst_typespec const* const)
+            const parameter_typespecs =
+                typespec->data.function.parameter_typespecs;
         for (size_t i = 0; i < sunder_sbuf_count(parameter_typespecs); ++i) {
             order_typespec(orderer, parameter_typespecs[i]);
         }

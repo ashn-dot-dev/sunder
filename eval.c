@@ -53,7 +53,8 @@ static struct value*
 eval_lvalue_unary(struct expr const* expr);
 
 static bool
-integer_is_out_of_range(struct type const* type, struct sunder_bigint const* res)
+integer_is_out_of_range(
+    struct type const* type, struct sunder_bigint const* res)
 {
     assert(type != NULL);
     assert(type_is_any_integer(type));
@@ -815,8 +816,8 @@ eval_rvalue_binary(struct expr const* expr)
         }
 
         for (size_t i = 0; i < bit_count; ++i) {
-            int const bit =
-                sunder_bitarr_get(lhs_bits, i) || sunder_bitarr_get(rhs_bits, i);
+            int const bit = sunder_bitarr_get(lhs_bits, i)
+                || sunder_bitarr_get(rhs_bits, i);
             sunder_bitarr_set(res_bits, i, bit);
         }
         sunder_bitarr_del(lhs_bits);
@@ -913,8 +914,8 @@ eval_rvalue_binary(struct expr const* expr)
         }
 
         for (size_t i = 0; i < bit_count; ++i) {
-            int const bit =
-                sunder_bitarr_get(lhs_bits, i) && sunder_bitarr_get(rhs_bits, i);
+            int const bit = sunder_bitarr_get(lhs_bits, i)
+                && sunder_bitarr_get(rhs_bits, i);
             sunder_bitarr_set(res_bits, i, bit);
         }
         sunder_bitarr_del(lhs_bits);
