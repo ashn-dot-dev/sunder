@@ -18,6 +18,8 @@
 
 #include "sunder.h"
 
+STATIC_ASSERT(CHAR_BIT_IS_8, CHAR_BIT == 8);
+
 // clang-format off
 #define ANSI_ESC_DEFAULT "\x1b[0m"
 #define ANSI_ESC_BOLD    "\x1b[1m"
@@ -463,25 +465,6 @@ directory_files(char const* path)
     return files;
 }
 
-// USE: SUNDER_REALLOC(ptr, size)
-#ifndef SUNDER_REALLOC
-#    define SUNDER_REALLOC realloc
-#endif
-
-// USE: SUNDER_FREE(ptr)
-#ifndef SUNDER_FREE
-#    define SUNDER_FREE free
-#endif
-
-#include <assert.h>
-#include <errno.h>
-#include <limits.h>
-#include <stdint.h>
-#include <stdlib.h>
-#include <string.h>
-
-STATIC_ASSERT(CHAR_BIT_IS_8, CHAR_BIT == 8);
-
 int
 safe_isalnum(int c)
 {
@@ -606,10 +589,10 @@ void*
 xalloc(void* ptr, size_t size)
 {
     if (size == 0) {
-        SUNDER_FREE(ptr);
+        free(ptr);
         return NULL;
     }
-    if ((ptr = SUNDER_REALLOC(ptr, size)) == NULL) {
+    if ((ptr = realloc(ptr, size)) == NULL) {
         fatal(NULL, "[%s] Out of memory", __func__);
     }
     return ptr;
@@ -970,32 +953,31 @@ sbuf__grw_(size_t elemsize, void* sbuf)
     return sbuf__rsv_(elemsize, sbuf, new_cap);
 }
 
-#define SUNDER__BITARR_WORD_TYPE_ unsigned long
-#define SUNDER__BITARR_WORD_SIZE_ sizeof(SUNDER__BITARR_WORD_TYPE_)
-#define SUNDER__BITARR_WORD_BITS_ (SUNDER__BITARR_WORD_SIZE_ * CHAR_BIT)
+#define BITARR__WORD_TYPE_ unsigned long
+#define BITARR__WORD_SIZE_ sizeof(BITARR__WORD_TYPE_)
+#define BITARR__WORD_BITS_ (BITARR__WORD_SIZE_ * CHAR_BIT)
 struct bitarr {
     size_t count;
-    SUNDER__BITARR_WORD_TYPE_ words[];
+    BITARR__WORD_TYPE_ words[];
 };
 
 static inline size_t
-sunder__bitarr_word_count_(size_t count)
+bitarr__word_count_(size_t count)
 {
-    return (count / SUNDER__BITARR_WORD_SIZE_)
-        + (count % SUNDER__BITARR_WORD_SIZE_ != 0);
+    return (count / BITARR__WORD_SIZE_) + (count % BITARR__WORD_SIZE_ != 0);
 }
 
 static inline size_t
-sunder__bitarr_size_(size_t count)
+bitarr__size_(size_t count)
 {
     return sizeof(struct bitarr)
-        + (sunder__bitarr_word_count_(count) * SUNDER__BITARR_WORD_SIZE_);
+        + (bitarr__word_count_(count) * BITARR__WORD_SIZE_);
 }
 
 struct bitarr*
 bitarr_new(size_t count)
 {
-    size_t const size = sunder__bitarr_size_(count);
+    size_t const size = bitarr__size_(count);
     struct bitarr* const self = xalloc(NULL, size);
     memset(self, 0x00, size);
 
@@ -1010,7 +992,7 @@ bitarr_del(struct bitarr* self)
         return;
     }
 
-    size_t const size = sunder__bitarr_size_(self->count);
+    size_t const size = bitarr__size_(self->count);
     memset(self, 0x00, size); // scrub
     xalloc(self, XALLOC_FREE);
 }
@@ -1041,12 +1023,10 @@ bitarr_set(struct bitarr* self, size_t n, int value)
         fatal(NULL, "[%s] Index out of bounds (%zu)", __func__, n);
     }
 
-    SUNDER__BITARR_WORD_TYPE_* const pword =
-        &self->words[n / SUNDER__BITARR_WORD_SIZE_];
-    SUNDER__BITARR_WORD_TYPE_ const mask = (SUNDER__BITARR_WORD_TYPE_)1u
-        << (n % SUNDER__BITARR_WORD_SIZE_);
-    *pword =
-        (SUNDER__BITARR_WORD_TYPE_)(value ? *pword | mask : *pword & ~mask);
+    BITARR__WORD_TYPE_* const pword = &self->words[n / BITARR__WORD_SIZE_];
+    BITARR__WORD_TYPE_ const mask = (BITARR__WORD_TYPE_)1u
+        << (n % BITARR__WORD_SIZE_);
+    *pword = (BITARR__WORD_TYPE_)(value ? *pword | mask : *pword & ~mask);
 }
 
 int
@@ -1058,10 +1038,9 @@ bitarr_get(struct bitarr const* self, size_t n)
         fatal(NULL, "[%s] Index out of bounds (%zu)", __func__, n);
     }
 
-    SUNDER__BITARR_WORD_TYPE_ const word =
-        self->words[n / SUNDER__BITARR_WORD_SIZE_];
-    SUNDER__BITARR_WORD_TYPE_ const mask = (SUNDER__BITARR_WORD_TYPE_)1u
-        << (n % SUNDER__BITARR_WORD_SIZE_);
+    BITARR__WORD_TYPE_ const word = self->words[n / BITARR__WORD_SIZE_];
+    BITARR__WORD_TYPE_ const mask = (BITARR__WORD_TYPE_)1u
+        << (n % BITARR__WORD_SIZE_);
 
     return (word & mask) != 0;
 }
@@ -1081,9 +1060,8 @@ bitarr_assign(struct bitarr* self, struct bitarr const* othr)
             othr->count);
     }
 
-    assert(
-        sunder__bitarr_size_(self->count) == sunder__bitarr_size_(othr->count));
-    safe_memmove(self, othr, sunder__bitarr_size_(othr->count));
+    assert(bitarr__size_(self->count) == bitarr__size_(othr->count));
+    safe_memmove(self, othr, bitarr__size_(othr->count));
 }
 
 void
@@ -1101,7 +1079,7 @@ bitarr_compl(struct bitarr* res, struct bitarr const* rhs)
             rhs->count);
     }
 
-    for (size_t i = 0; i < sunder__bitarr_word_count_(res->count); ++i) {
+    for (size_t i = 0; i < bitarr__word_count_(res->count); ++i) {
         res->words[i] = ~rhs->words[i];
     }
 }
@@ -1174,7 +1152,7 @@ bitarr_and(
             rhs->count);
     }
 
-    for (size_t i = 0; i < sunder__bitarr_word_count_(res->count); ++i) {
+    for (size_t i = 0; i < bitarr__word_count_(res->count); ++i) {
         res->words[i] = lhs->words[i] & rhs->words[i];
     }
 }
@@ -1197,7 +1175,7 @@ bitarr_xor(
             rhs->count);
     }
 
-    for (size_t i = 0; i < sunder__bitarr_word_count_(res->count); ++i) {
+    for (size_t i = 0; i < bitarr__word_count_(res->count); ++i) {
         res->words[i] = lhs->words[i] ^ rhs->words[i];
     }
 }
@@ -1220,7 +1198,7 @@ bitarr_or(
             rhs->count);
     }
 
-    for (size_t i = 0; i < sunder__bitarr_word_count_(res->count); ++i) {
+    for (size_t i = 0; i < bitarr__word_count_(res->count); ++i) {
         res->words[i] = lhs->words[i] | rhs->words[i];
     }
 }
@@ -1261,11 +1239,10 @@ struct bigint {
 // machine uint8_t and uint16_t values will implicitly cast up to unsigned int
 // values cleanly which makes addition and multiplication of limbs work without
 // needing to think too hard.
-#define SUNDER__BIGINT_LIMB_BITS_ ((size_t)8)
+#define BIGINT__LIMB_BITS_ ((size_t)8)
 STATIC_ASSERT(
     correct_bits_per_limb,
-    SUNDER__BIGINT_LIMB_BITS_
-        == (sizeof(*((struct bigint*)0)->limbs) * CHAR_BIT));
+    BIGINT__LIMB_BITS_ == (sizeof(*((struct bigint*)0)->limbs) * CHAR_BIT));
 
 struct bigint const* const BIGINT_ZERO =
     &(struct bigint){.sign = 0, .limbs = NULL, .count = 0u};
@@ -1284,7 +1261,7 @@ static struct bigint const* const BIGINT_HEX =
     &(struct bigint){.sign = +1, .limbs = (uint8_t[]){0x10}, .count = 1u};
 
 static void
-sunder__bigint_fini_(struct bigint* self)
+bigint__fini_(struct bigint* self)
 {
     assert(self != NULL);
 
@@ -1293,7 +1270,7 @@ sunder__bigint_fini_(struct bigint* self)
 }
 
 static void
-sunder__bigint_resize_(struct bigint* self, size_t count)
+bigint__resize_(struct bigint* self, size_t count)
 {
     assert(self != NULL);
 
@@ -1309,7 +1286,7 @@ sunder__bigint_resize_(struct bigint* self, size_t count)
 }
 
 static void
-sunder__bigint_normalize_(struct bigint* self)
+bigint__normalize_(struct bigint* self)
 {
     assert(self != NULL);
 
@@ -1325,7 +1302,7 @@ sunder__bigint_normalize_(struct bigint* self)
 // Example:
 //      -0xFFEE shifted left by nlimbs=2 becomes -0xFFEE0000 with 8-bit limbs.
 static void
-sunder__bigint_shiftl_limbs_(struct bigint* self, size_t nlimbs)
+bigint__shiftl_limbs_(struct bigint* self, size_t nlimbs)
 {
     assert(self != NULL);
     if (nlimbs == 0) {
@@ -1342,7 +1319,7 @@ sunder__bigint_shiftl_limbs_(struct bigint* self, size_t nlimbs)
 // Example:
 //      -0xFFEE00 shifted right by nlimbs=2 becomes -0xFF with 8-bit limbs.
 static void
-sunder__bigint_shiftr_limbs_(struct bigint* self, size_t nlimbs)
+bigint__shiftr_limbs_(struct bigint* self, size_t nlimbs)
 {
     assert(self != NULL);
     if (nlimbs == 0) {
@@ -1359,7 +1336,7 @@ sunder__bigint_shiftr_limbs_(struct bigint* self, size_t nlimbs)
 
     memmove((char*)self->limbs, self->limbs + nlimbs, self->count - nlimbs);
     self->count -= nlimbs;
-    sunder__bigint_normalize_(self);
+    bigint__normalize_(self);
 }
 
 // This function is "technically" part of the public API, but it is not given a
@@ -1507,7 +1484,7 @@ digits:
     }
 
     self->sign = sign;
-    sunder__bigint_normalize_(self);
+    bigint__normalize_(self);
     return self;
 
 error:
@@ -1522,7 +1499,7 @@ bigint_del(struct bigint* self)
         return;
     }
 
-    sunder__bigint_fini_(self);
+    bigint__fini_(self);
     xalloc(self, XALLOC_FREE);
 }
 
@@ -1677,9 +1654,9 @@ bigint_add(
     }
     assert(carry == 0);
 
-    sunder__bigint_normalize_(&RES);
+    bigint__normalize_(&RES);
     bigint_assign(res, &RES);
-    sunder__bigint_fini_(&RES);
+    bigint__fini_(&RES);
 }
 
 void
@@ -1754,9 +1731,9 @@ bigint_sub(
     if (neg) {
         bigint_neg(&RES, &RES);
     }
-    sunder__bigint_normalize_(&RES);
+    bigint__normalize_(&RES);
     bigint_assign(res, &RES);
-    sunder__bigint_fini_(&RES);
+    bigint__fini_(&RES);
 }
 
 // res  = lhs * rhs
@@ -1784,7 +1761,7 @@ bigint_mul(
     //         (Third Edition) page. 268.
     size_t const count = lhs->count + rhs->count;
     struct bigint W = {0}; // abs(res)
-    sunder__bigint_resize_(&W, count);
+    bigint__resize_(&W, count);
     uint8_t* const w = W.limbs;
     uint8_t const* const u = lhs->limbs;
     uint8_t const* const v = rhs->limbs;
@@ -1807,9 +1784,9 @@ bigint_mul(
     }
 
     W.sign = lhs->sign * rhs->sign;
-    sunder__bigint_normalize_(&W);
+    bigint__normalize_(&W);
     bigint_assign(res, &W);
-    sunder__bigint_fini_(&W);
+    bigint__fini_(&W);
 }
 
 void
@@ -1874,17 +1851,17 @@ bigint_divrem(
     R.sign = lhs->sign;
 
     if (res != NULL) {
-        sunder__bigint_normalize_(&Q);
+        bigint__normalize_(&Q);
         bigint_assign(res, &Q);
     }
     if (rem != NULL) {
-        sunder__bigint_normalize_(&R);
+        bigint__normalize_(&R);
         bigint_assign(rem, &R);
     }
-    sunder__bigint_fini_(&Q);
-    sunder__bigint_fini_(&R);
-    sunder__bigint_fini_(&N);
-    sunder__bigint_fini_(&D);
+    bigint__fini_(&Q);
+    bigint__fini_(&R);
+    bigint__fini_(&N);
+    bigint__fini_(&D);
 }
 
 void
@@ -1898,8 +1875,8 @@ bigint_magnitude_shiftl(struct bigint* self, size_t nbits)
         return;
     }
 
-    sunder__bigint_shiftl_limbs_(self, nbits / SUNDER__BIGINT_LIMB_BITS_);
-    for (size_t n = 0; n < nbits % SUNDER__BIGINT_LIMB_BITS_; ++n) {
+    bigint__shiftl_limbs_(self, nbits / BIGINT__LIMB_BITS_);
+    for (size_t n = 0; n < nbits % BIGINT__LIMB_BITS_; ++n) {
         if (self->limbs[self->count - 1] & 0x80) {
             self->count += 1;
             self->limbs = xalloc(self->limbs, self->count);
@@ -1929,8 +1906,8 @@ bigint_magnitude_shiftr(struct bigint* self, size_t nbits)
         return;
     }
 
-    sunder__bigint_shiftr_limbs_(self, nbits / SUNDER__BIGINT_LIMB_BITS_);
-    for (size_t n = 0; n < nbits % SUNDER__BIGINT_LIMB_BITS_; ++n) {
+    bigint__shiftr_limbs_(self, nbits / BIGINT__LIMB_BITS_);
+    for (size_t n = 0; n < nbits % BIGINT__LIMB_BITS_; ++n) {
         // [limb0 >> 1 | lsbit(limb1)][limb1 >> 1 | lsbit(limb2)]...
         for (size_t i = 0; i < self->count - 1; ++i) {
             self->limbs[i] = (uint8_t)(self->limbs[i] >> 1u);
@@ -1941,7 +1918,7 @@ bigint_magnitude_shiftr(struct bigint* self, size_t nbits)
         self->limbs[self->count - 1] =
             (uint8_t)(self->limbs[self->count - 1] >> 1u);
     }
-    sunder__bigint_normalize_(self);
+    bigint__normalize_(self);
 }
 
 size_t
@@ -1959,7 +1936,7 @@ bigint_magnitude_bit_count(struct bigint const* self)
         top_bit_count += 1;
         top = top >> 1;
     }
-    return (self->count - 1) * SUNDER__BIGINT_LIMB_BITS_ + top_bit_count;
+    return (self->count - 1) * BIGINT__LIMB_BITS_ + top_bit_count;
 }
 
 int
@@ -1967,12 +1944,12 @@ bigint_magnitude_bit_get(struct bigint const* self, size_t n)
 {
     assert(self != NULL);
 
-    if (n >= (self->count * SUNDER__BIGINT_LIMB_BITS_)) {
+    if (n >= (self->count * BIGINT__LIMB_BITS_)) {
         return 0;
     }
 
-    uint8_t const limb = self->limbs[n / SUNDER__BIGINT_LIMB_BITS_];
-    uint8_t const mask = (uint8_t)(1u << (n % SUNDER__BIGINT_LIMB_BITS_));
+    uint8_t const limb = self->limbs[n / BIGINT__LIMB_BITS_];
+    uint8_t const mask = (uint8_t)(1u << (n % BIGINT__LIMB_BITS_));
     return (limb & mask) != 0;
 }
 
@@ -1981,7 +1958,7 @@ bigint_magnitude_bit_set(struct bigint* self, size_t n, int value)
 {
     assert(self != NULL);
 
-    size_t const limb_idx = (n / SUNDER__BIGINT_LIMB_BITS_);
+    size_t const limb_idx = (n / BIGINT__LIMB_BITS_);
     if (limb_idx >= self->count) {
         if (!value) {
             // The abstact unallocated bit is already zero so re-setting it to
@@ -1990,11 +1967,11 @@ bigint_magnitude_bit_set(struct bigint* self, size_t n, int value)
             // normalizing for what is essentially a NOP.
             return;
         }
-        sunder__bigint_resize_(self, limb_idx + 1);
+        bigint__resize_(self, limb_idx + 1);
     }
 
     uint8_t* const plimb = self->limbs + limb_idx;
-    uint8_t const mask = (uint8_t)(1 << (n % SUNDER__BIGINT_LIMB_BITS_));
+    uint8_t const mask = (uint8_t)(1 << (n % BIGINT__LIMB_BITS_));
     *plimb = (uint8_t)(value ? *plimb | mask : *plimb & ~mask);
     if (self->sign == 0 && value) {
         // If the integer was zero (i.e. had sign zero) before and a bit was
@@ -2002,7 +1979,7 @@ bigint_magnitude_bit_set(struct bigint* self, size_t n, int value)
         // integer zero to a positive integer.
         self->sign = +1;
     }
-    sunder__bigint_normalize_(self);
+    bigint__normalize_(self);
 }
 
 // clang-format off
@@ -2086,7 +2063,7 @@ bigint_to_new_cstr(struct bigint const* self, char const* fmt)
     // Digits.
     void* digits = NULL;
     size_t digits_size = 0;
-    char digit_buf[SUNDER__BIGINT_LIMB_BITS_ + STR_LITERAL_COUNT("\0")] = {0};
+    char digit_buf[BIGINT__LIMB_BITS_ + STR_LITERAL_COUNT("\0")] = {0};
     if (specifier == 'd') {
         struct bigint DEC = {0};
         struct bigint SELF = {0};
@@ -2098,8 +2075,8 @@ bigint_to_new_cstr(struct bigint const* self, char const* fmt)
             sprintf(digit_buf, "%d", DEC.limbs != NULL ? (int)DEC.limbs[0] : 0);
             xalloc_prepend(&digits, &digits_size, digit_buf, strlen(digit_buf));
         }
-        sunder__bigint_fini_(&DEC);
-        sunder__bigint_fini_(&SELF);
+        bigint__fini_(&DEC);
+        bigint__fini_(&SELF);
     }
     else if (specifier == 'b') {
         for (size_t i = self->count - 1; i < self->count; --i) {
@@ -2128,8 +2105,8 @@ bigint_to_new_cstr(struct bigint const* self, char const* fmt)
             sprintf(digit_buf, "%o", OCT.limbs != NULL ? (int)OCT.limbs[0] : 0);
             xalloc_prepend(&digits, &digits_size, digit_buf, strlen(digit_buf));
         }
-        sunder__bigint_fini_(&OCT);
-        sunder__bigint_fini_(&SELF);
+        bigint__fini_(&OCT);
+        bigint__fini_(&SELF);
     }
     else if (specifier == 'x') {
         for (size_t i = self->count - 1; i < self->count; --i) {
@@ -2203,7 +2180,7 @@ struct string {
     char* start;
     size_t count;
 };
-#define SUNDER_STRING_SIZE_(count_) (count_ + STR_LITERAL_COUNT("\0"))
+#define STRING__SIZE_(count_) (count_ + STR_LITERAL_COUNT("\0"))
 
 struct string*
 string_new(char const* start, size_t count)
@@ -2212,7 +2189,7 @@ string_new(char const* start, size_t count)
 
     struct string* const self = xalloc(NULL, sizeof(struct string));
 
-    self->start = xalloc(NULL, SUNDER_STRING_SIZE_(count));
+    self->start = xalloc(NULL, STRING__SIZE_(count));
     self->count = count;
 
     if (start != NULL) {
@@ -2306,8 +2283,8 @@ string_resize(struct string* self, size_t count)
     assert(self != NULL);
 
     if (count > self->count) {
-        self->start = xalloc(self->start, SUNDER_STRING_SIZE_(count));
-        char* const fill_start = self->start + SUNDER_STRING_SIZE_(self->count);
+        self->start = xalloc(self->start, STRING__SIZE_(count));
+        char* const fill_start = self->start + STRING__SIZE_(self->count);
         size_t const fill_count = count - self->count;
         memset(fill_start, 0x00, fill_count); // Fill new space with NULs.
     }
