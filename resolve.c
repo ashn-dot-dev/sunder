@@ -997,26 +997,26 @@ shallow_implicit_cast(struct type const* type, struct expr const* expr)
 
     // FROM untyped integer TO byte.
     if (type->kind == TYPE_BYTE && expr->type->kind == TYPE_INTEGER) {
-        struct sunder_bigint const* const min = context()->u8_min;
-        struct sunder_bigint const* const max = context()->u8_max;
+        struct bigint const* const min = context()->u8_min;
+        struct bigint const* const max = context()->u8_max;
 
-        if (sunder_bigint_cmp(expr->data.integer, min) < 0) {
+        if (bigint_cmp(expr->data.integer, min) < 0) {
             fatal(
                 expr->location,
                 "out-of-range conversion from `%s` to `%s` (%s < %s)",
                 expr->type->name,
                 type->name,
-                sunder_bigint_to_new_cstr(expr->data.integer, NULL),
-                sunder_bigint_to_new_cstr(min, NULL));
+                bigint_to_new_cstr(expr->data.integer, NULL),
+                bigint_to_new_cstr(min, NULL));
         }
-        if (sunder_bigint_cmp(expr->data.integer, max) > 0) {
+        if (bigint_cmp(expr->data.integer, max) > 0) {
             fatal(
                 expr->location,
                 "out-of-range conversion from `%s` to `%s` (%s > %s)",
                 expr->type->name,
                 type->name,
-                sunder_bigint_to_new_cstr(expr->data.integer, NULL),
-                sunder_bigint_to_new_cstr(max, NULL));
+                bigint_to_new_cstr(expr->data.integer, NULL),
+                bigint_to_new_cstr(max, NULL));
         }
 
         struct expr* const result =
@@ -1031,26 +1031,26 @@ shallow_implicit_cast(struct type const* type, struct expr const* expr)
         && expr->type->kind == TYPE_INTEGER) {
         assert(type->data.integer.min != NULL);
         assert(type->data.integer.max != NULL);
-        struct sunder_bigint const* const min = type->data.integer.min;
-        struct sunder_bigint const* const max = type->data.integer.max;
+        struct bigint const* const min = type->data.integer.min;
+        struct bigint const* const max = type->data.integer.max;
 
-        if (sunder_bigint_cmp(expr->data.integer, min) < 0) {
+        if (bigint_cmp(expr->data.integer, min) < 0) {
             fatal(
                 expr->location,
                 "out-of-range conversion from `%s` to `%s` (%s < %s)",
                 expr->type->name,
                 type->name,
-                sunder_bigint_to_new_cstr(expr->data.integer, NULL),
-                sunder_bigint_to_new_cstr(min, NULL));
+                bigint_to_new_cstr(expr->data.integer, NULL),
+                bigint_to_new_cstr(min, NULL));
         }
-        if (sunder_bigint_cmp(expr->data.integer, max) > 0) {
+        if (bigint_cmp(expr->data.integer, max) > 0) {
             fatal(
                 expr->location,
                 "out-of-range conversion from `%s` to `%s` (%s > %s)",
                 expr->type->name,
                 type->name,
-                sunder_bigint_to_new_cstr(expr->data.integer, NULL),
-                sunder_bigint_to_new_cstr(max, NULL));
+                bigint_to_new_cstr(expr->data.integer, NULL),
+                bigint_to_new_cstr(max, NULL));
         }
 
         struct expr* const result =
@@ -2459,7 +2459,7 @@ resolve_expr_integer(struct resolver* resolver, struct cst_expr const* expr)
     (void)resolver;
 
     struct cst_integer const* const cst_integer = expr->data.integer;
-    struct sunder_bigint const* const value = cst_integer->value;
+    struct bigint const* const value = cst_integer->value;
     struct type const* const type = integer_literal_suffix_to_type(
         cst_integer->location, cst_integer->suffix);
 
@@ -2477,7 +2477,7 @@ resolve_expr_character(struct resolver* resolver, struct cst_expr const* expr)
     assert(expr->kind == CST_EXPR_CHARACTER);
     (void)resolver;
 
-    // XXX: Hack to get around the sunder_bigint API not having a constructor
+    // XXX: Hack to get around the bigint API not having a constructor
     // function that creates a bigint based of of an int input value.
     char buf[255] = {0};
     int const written = snprintf(buf, sizeof(buf), "%d", expr->data.character);
@@ -2485,9 +2485,8 @@ resolve_expr_character(struct resolver* resolver, struct cst_expr const* expr)
     (void)written;
 
     struct type const* const type = context()->builtin.integer;
-    struct sunder_bigint* const value =
-        sunder_bigint_new_text(buf, strlen(buf));
-    sunder_bigint_freeze(value, context()->freezer);
+    struct bigint* const value = bigint_new_text(buf, strlen(buf));
+    bigint_freeze(value, context()->freezer);
     struct expr* const resolved = expr_new_integer(expr->location, type, value);
 
     sunder_freezer_register(context()->freezer, resolved);
@@ -3337,11 +3336,11 @@ resolve_expr_unary(struct resolver* resolver, struct cst_expr const* expr)
     struct cst_expr const* const cst_rhs = expr->data.unary.rhs;
     if (is_sign && cst_rhs->kind == CST_EXPR_INTEGER) {
         struct cst_integer const* const cst_integer = cst_rhs->data.integer;
-        struct sunder_bigint const* value = cst_integer->value;
+        struct bigint const* value = cst_integer->value;
         if (op->kind == TOKEN_DASH) {
-            struct sunder_bigint* const tmp = sunder_bigint_new(value);
-            sunder_bigint_neg(tmp, value);
-            sunder_bigint_freeze(tmp, context()->freezer);
+            struct bigint* const tmp = bigint_new(value);
+            bigint_neg(tmp, value);
+            bigint_freeze(tmp, context()->freezer);
             value = tmp;
         }
         struct type const* const type = integer_literal_suffix_to_type(
@@ -4015,7 +4014,7 @@ resolve_typespec_array(
         fatal(
             count_expr->location,
             "array count too large (received %s)",
-            sunder_bigint_to_new_cstr(count_value->data.integer, NULL));
+            bigint_to_new_cstr(count_value->data.integer, NULL));
     }
     value_del(count_value);
 

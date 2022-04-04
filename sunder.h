@@ -15,7 +15,7 @@
 struct vstr;
 struct sipool;
 struct bitarr;
-struct sunder_bigint;
+struct bigint;
 struct sunder_string;
 struct sunder_vec;
 struct sunder_map;
@@ -405,14 +405,14 @@ void
 bitarr_or(
     struct bitarr* res, struct bitarr const* lhs, struct bitarr const* rhs);
 
-extern struct sunder_bigint const* const SUNDER_BIGINT_ZERO; // 0
-extern struct sunder_bigint const* const SUNDER_BIGINT_POS_ONE; // +1
-extern struct sunder_bigint const* const SUNDER_BIGINT_NEG_ONE; // -1
+extern struct bigint const* const BIGINT_ZERO; // 0
+extern struct bigint const* const BIGINT_POS_ONE; // +1
+extern struct bigint const* const BIGINT_NEG_ONE; // -1
 
 // Allocate and initialize a bigint to the specified value.
-// The call sunder_bigint_new(SUNDER_BIGINT_ZERO) will zero-initialize a bigint.
-struct sunder_bigint*
-sunder_bigint_new(struct sunder_bigint const* othr);
+// The call bigint_new(BIGINT_ZERO) will zero-initialize a bigint.
+struct bigint*
+bigint_new(struct bigint const* othr);
 // Allocate and initialize a bigint from the provided NUL-terminated cstring.
 // Returns NULL if the cstring could not be parsed.
 //
@@ -426,57 +426,48 @@ sunder_bigint_new(struct sunder_bigint const* othr);
 // with radix 10 (decimal).
 //
 // The cstring *must* not have any leading or trailing whitespace.
-struct sunder_bigint*
-sunder_bigint_new_cstr(char const* cstr);
+struct bigint*
+bigint_new_cstr(char const* cstr);
 // Allocate and initialize a bigint from the provided string slice.
 // Returns NULL if the string could not be parsed.
-// This function uses the same string-grammar as sunder_bigint_new_cstr().
-struct sunder_bigint*
-sunder_bigint_new_text(char const* start, size_t count);
+// This function uses the same string-grammar as bigint_new_cstr().
+struct bigint*
+bigint_new_text(char const* start, size_t count);
 // Deinitialize and free the bigint.
 // Does nothing if self == NULL.
 void
-sunder_bigint_del(struct sunder_bigint* self);
+bigint_del(struct bigint* self);
 // Register resources within the bigint with the provided freezer.
 void
-sunder_bigint_freeze(
-    struct sunder_bigint* self, struct sunder_freezer* freezer);
+bigint_freeze(struct bigint* self, struct sunder_freezer* freezer);
 
 // Return an int less than, equal to, or greater than zero if lhs is
 // semantically less than, equal to, or greater than rhs, respectively.
 int
-sunder_bigint_cmp(
-    struct sunder_bigint const* lhs, struct sunder_bigint const* rhs);
+bigint_cmp(struct bigint const* lhs, struct bigint const* rhs);
 
 // self = othr
 void
-sunder_bigint_assign(
-    struct sunder_bigint* self, struct sunder_bigint const* othr);
+bigint_assign(struct bigint* self, struct bigint const* othr);
 
 // res = -rhs
 void
-sunder_bigint_neg(struct sunder_bigint* res, struct sunder_bigint const* rhs);
+bigint_neg(struct bigint* res, struct bigint const* rhs);
 // res = abs(rhs)
 void
-sunder_bigint_abs(struct sunder_bigint* res, struct sunder_bigint const* rhs);
+bigint_abs(struct bigint* res, struct bigint const* rhs);
 // res = lhs + rhs
 void
-sunder_bigint_add(
-    struct sunder_bigint* res,
-    struct sunder_bigint const* lhs,
-    struct sunder_bigint const* rhs);
+bigint_add(
+    struct bigint* res, struct bigint const* lhs, struct bigint const* rhs);
 // res = lhs - rhs
 void
-sunder_bigint_sub(
-    struct sunder_bigint* res,
-    struct sunder_bigint const* lhs,
-    struct sunder_bigint const* rhs);
+bigint_sub(
+    struct bigint* res, struct bigint const* lhs, struct bigint const* rhs);
 // res  = lhs * rhs
 void
-sunder_bigint_mul(
-    struct sunder_bigint* res,
-    struct sunder_bigint const* lhs,
-    struct sunder_bigint const* rhs);
+bigint_mul(
+    struct bigint* res, struct bigint const* lhs, struct bigint const* rhs);
 // res  = lhs / rhs
 // rem  = lhs % rhs
 // If res is NULL then the result will not be written to res.
@@ -489,34 +480,33 @@ sunder_bigint_mul(
 //      lhs/rhs == res
 //      lhs%rhs == rem
 void
-sunder_bigint_divrem(
-    struct sunder_bigint* res,
-    struct sunder_bigint* rem,
-    struct sunder_bigint const* lhs,
-    struct sunder_bigint const* rhs);
+bigint_divrem(
+    struct bigint* res,
+    struct bigint* rem,
+    struct bigint const* lhs,
+    struct bigint const* rhs);
 
 // self.magnitude = self.magnitude << nbits (logical shift left)
 // This function is sign-oblivious (the sign of self is not altered).
 void
-sunder_bigint_magnitude_shiftl(struct sunder_bigint* self, size_t nbits);
+bigint_magnitude_shiftl(struct bigint* self, size_t nbits);
 // self.magnitude = self.magnitude >> nbits (logical shift right)
 // This function is sign-oblivious (the sign of self is not altered).
 void
-sunder_bigint_magnitude_shiftr(struct sunder_bigint* self, size_t nbits);
+bigint_magnitude_shiftr(struct bigint* self, size_t nbits);
 // Returns the number of bits required to store the magnitude of self.
 // This function is sign-oblivious (the sign of self is not considered).
 size_t
-sunder_bigint_magnitude_bit_count(struct sunder_bigint const* self);
+bigint_magnitude_bit_count(struct bigint const* self);
 // Returns the value (one or zero) of the nth bit (zero indexed) of the
 // magnitude of self.
 // This function is sign-oblivious (the sign of self is not considered).
 int
-sunder_bigint_magnitude_bit_get(struct sunder_bigint const* self, size_t n);
+bigint_magnitude_bit_get(struct bigint const* self, size_t n);
 // Set the nth bit (zero indexed) of the magnitude of self to value.
 // This function is sign-oblivious (the sign of self is not altered).
 void
-sunder_bigint_magnitude_bit_set(
-    struct sunder_bigint* self, size_t n, int value);
+bigint_magnitude_bit_set(struct bigint* self, size_t n, int value);
 
 // Returns an sunder_xalloc-allocated cstring representation of the provided
 // bigint as specified by the provided format string.
@@ -556,7 +546,7 @@ sunder_bigint_magnitude_bit_set(
 //   X      The provided bigint will be represented using hexadecimal notation
 //          with *UPPER CASE* alphanumeric digits.
 char*
-sunder_bigint_to_new_cstr(struct sunder_bigint const* self, char const* fmt);
+bigint_to_new_cstr(struct bigint const* self, char const* fmt);
 
 // Allocate and initialize a string from the first count bytes of start.
 struct sunder_string*
@@ -726,36 +716,36 @@ ceil8zu(size_t x);
 // Returns non-zero if the provided bigint is out-of-range, in which case *res
 // is left unmodified.
 int
-bigint_to_u8(uint8_t* res, struct sunder_bigint const* bigint);
+bigint_to_u8(uint8_t* res, struct bigint const* bigint);
 // Convert a bigint to a size_t.
 // Returns zero on success.
 // Returns non-zero if the provided bigint is out-of-range, in which case *res
 // is left unmodified.
 int
-bigint_to_uz(size_t* res, struct sunder_bigint const* bigint);
+bigint_to_uz(size_t* res, struct bigint const* bigint);
 // Convert a bigint to a uintmax_t.
 // Returns zero on success.
 // Returns non-zero if the provided bigint is out-of-range, in which case *res
 // is left unmodified.
 int
-bigint_to_umax(uintmax_t* res, struct sunder_bigint const* bigint);
+bigint_to_umax(uintmax_t* res, struct bigint const* bigint);
 // Convert a bigint into a two's complement bit array.
 // Returns zero on success.
 // Returns non-zero if the provided bigint is out-of-range would require more
 // than bitarr_count(res) bits to express, in which case *res is left
 // unmodified.
 int
-bigint_to_bitarr(struct bitarr* res, struct sunder_bigint const* bigint);
+bigint_to_bitarr(struct bitarr* res, struct bigint const* bigint);
 
 // Convert a size_t to a bigint.
 // The result bigint must be pre-initialized.
 void
-uz_to_bigint(struct sunder_bigint* res, size_t uz);
+uz_to_bigint(struct bigint* res, size_t uz);
 // Convert a two's complement bit array into a bigint.
 // The result bigint must be pre-initialized.
 void
 bitarr_to_bigint(
-    struct sunder_bigint* res, struct bitarr const* bitarr, bool is_signed);
+    struct bigint* res, struct bitarr const* bitarr, bool is_signed);
 
 // Spawn a subprocess and wait for it to complete.
 // Returns the exit status of the spawned process.
@@ -853,26 +843,26 @@ struct context {
     } interned;
 
     // Integer (bigint) constants.
-    struct sunder_bigint const* u8_min;
-    struct sunder_bigint const* u8_max;
-    struct sunder_bigint const* s8_min;
-    struct sunder_bigint const* s8_max;
-    struct sunder_bigint const* u16_min;
-    struct sunder_bigint const* u16_max;
-    struct sunder_bigint const* s16_min;
-    struct sunder_bigint const* s16_max;
-    struct sunder_bigint const* u32_min;
-    struct sunder_bigint const* u32_max;
-    struct sunder_bigint const* s32_min;
-    struct sunder_bigint const* s32_max;
-    struct sunder_bigint const* u64_min;
-    struct sunder_bigint const* u64_max;
-    struct sunder_bigint const* s64_min;
-    struct sunder_bigint const* s64_max;
-    struct sunder_bigint const* usize_min;
-    struct sunder_bigint const* usize_max;
-    struct sunder_bigint const* ssize_min;
-    struct sunder_bigint const* ssize_max;
+    struct bigint const* u8_min;
+    struct bigint const* u8_max;
+    struct bigint const* s8_min;
+    struct bigint const* s8_max;
+    struct bigint const* u16_min;
+    struct bigint const* u16_max;
+    struct bigint const* s16_min;
+    struct bigint const* s16_max;
+    struct bigint const* u32_min;
+    struct bigint const* u32_max;
+    struct bigint const* s32_min;
+    struct bigint const* s32_max;
+    struct bigint const* u64_min;
+    struct bigint const* u64_max;
+    struct bigint const* s64_min;
+    struct bigint const* s64_max;
+    struct bigint const* usize_min;
+    struct bigint const* usize_max;
+    struct bigint const* ssize_min;
+    struct bigint const* ssize_max;
 
     // Language builtins.
     struct {
@@ -1619,13 +1609,13 @@ cst_boolean_new(struct source_location const* location, bool value);
 
 struct cst_integer {
     struct source_location const* location;
-    struct sunder_bigint const* value;
+    struct bigint const* value;
     char const* suffix; // interned
 };
 struct cst_integer*
 cst_integer_new(
     struct source_location const* location,
-    struct sunder_bigint const* value,
+    struct bigint const* value,
     char const* suffix);
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -1686,8 +1676,8 @@ struct type {
             // they are not defined for all types satisfying the
             // type_is_any_integer function. The type kind TYPE_INTEGER will
             // have these as NULL as integers of this type have no defined size.
-            struct sunder_bigint const* min; // optional
-            struct sunder_bigint const* max; // optional
+            struct bigint const* min; // optional
+            struct bigint const* max; // optional
         } integer;
         struct {
             sunder_sbuf(struct type const* const) parameter_types;
@@ -2078,7 +2068,7 @@ struct expr {
     union {
         struct symbol const* symbol;
         bool boolean;
-        struct sunder_bigint const* integer;
+        struct bigint const* integer;
         struct {
             struct address const* address;
             size_t count;
@@ -2177,7 +2167,7 @@ struct expr*
 expr_new_integer(
     struct source_location const* location,
     struct type const* type,
-    struct sunder_bigint const* value);
+    struct bigint const* value);
 struct expr*
 expr_new_bytes(
     struct source_location const* location,
@@ -2322,7 +2312,7 @@ struct value {
     struct {
         bool boolean;
         uint8_t byte;
-        struct sunder_bigint* integer;
+        struct bigint* integer;
         struct function const* function;
         struct address pointer;
         struct {
@@ -2359,7 +2349,7 @@ value_new_boolean(bool boolean);
 struct value*
 value_new_byte(uint8_t byte);
 struct value*
-value_new_integer(struct type const* type, struct sunder_bigint* integer);
+value_new_integer(struct type const* type, struct bigint* integer);
 struct value*
 value_new_function(struct function const* function);
 struct value*

@@ -196,7 +196,7 @@ ceil8zu(size_t x)
 }
 
 int
-bigint_to_u8(uint8_t* res, struct sunder_bigint const* bigint)
+bigint_to_u8(uint8_t* res, struct bigint const* bigint)
 {
     assert(res != NULL);
     assert(bigint != NULL);
@@ -211,7 +211,7 @@ bigint_to_u8(uint8_t* res, struct sunder_bigint const* bigint)
 }
 
 int
-bigint_to_uz(size_t* res, struct sunder_bigint const* bigint)
+bigint_to_uz(size_t* res, struct bigint const* bigint)
 {
     assert(res != NULL);
     assert(bigint != NULL);
@@ -226,16 +226,16 @@ bigint_to_uz(size_t* res, struct sunder_bigint const* bigint)
 }
 
 int
-bigint_to_umax(uintmax_t* res, struct sunder_bigint const* bigint)
+bigint_to_umax(uintmax_t* res, struct bigint const* bigint)
 {
     assert(res != NULL);
     assert(bigint != NULL);
 
-    if (sunder_bigint_cmp(bigint, SUNDER_BIGINT_ZERO) < 0) {
+    if (bigint_cmp(bigint, BIGINT_ZERO) < 0) {
         return -1;
     }
 
-    char* const cstr = sunder_bigint_to_new_cstr(bigint, NULL);
+    char* const cstr = bigint_to_new_cstr(bigint, NULL);
     errno = 0;
     uintmax_t umax = strtoumax(cstr, NULL, 0);
     int const err = errno; // save errno
@@ -269,12 +269,12 @@ bitarr_twos_complement_neg(struct bitarr* bitarr)
 }
 
 int
-bigint_to_bitarr(struct bitarr* res, struct sunder_bigint const* bigint)
+bigint_to_bitarr(struct bitarr* res, struct bigint const* bigint)
 {
     assert(res != NULL);
     assert(bigint != NULL);
 
-    size_t const mag_bit_count = sunder_bigint_magnitude_bit_count(bigint);
+    size_t const mag_bit_count = bigint_magnitude_bit_count(bigint);
     size_t const res_bit_count = bitarr_count(res);
     if (mag_bit_count > res_bit_count) {
         return -1;
@@ -284,13 +284,13 @@ bigint_to_bitarr(struct bitarr* res, struct sunder_bigint const* bigint)
     // negative then we adjust the bit array below using two's complement
     // arithmetic.
     for (size_t i = 0; i < res_bit_count; ++i) {
-        int const bit = sunder_bigint_magnitude_bit_get(bigint, i);
+        int const bit = bigint_magnitude_bit_get(bigint, i);
         bitarr_set(res, i, bit);
     }
 
     // Convert two's complement unsigned (magnitude) representation into
     // negative signed representation if necessary.
-    if (sunder_bigint_cmp(bigint, SUNDER_BIGINT_ZERO) < 0) {
+    if (bigint_cmp(bigint, BIGINT_ZERO) < 0) {
         // Two's complement positive<->negative conversion.
         bitarr_twos_complement_neg(res);
     }
@@ -299,21 +299,21 @@ bigint_to_bitarr(struct bitarr* res, struct sunder_bigint const* bigint)
 }
 
 void
-uz_to_bigint(struct sunder_bigint* res, size_t uz)
+uz_to_bigint(struct bigint* res, size_t uz)
 {
     assert(res != 0);
 
     char buf[256] = {0};
     snprintf(buf, SUNDER_ARRAY_COUNT(buf), "%zu", uz);
 
-    struct sunder_bigint* const tmp = sunder_bigint_new_cstr(buf);
-    sunder_bigint_assign(res, tmp);
-    sunder_bigint_del(tmp);
+    struct bigint* const tmp = bigint_new_cstr(buf);
+    bigint_assign(res, tmp);
+    bigint_del(tmp);
 }
 
 void
 bitarr_to_bigint(
-    struct sunder_bigint* res, struct bitarr const* bitarr, bool is_signed)
+    struct bigint* res, struct bitarr const* bitarr, bool is_signed)
 {
     assert(res != NULL);
     assert(bitarr != NULL);
@@ -331,14 +331,14 @@ bitarr_to_bigint(
         bitarr_twos_complement_neg(mag_bits);
     }
 
-    sunder_bigint_assign(res, SUNDER_BIGINT_ZERO);
+    bigint_assign(res, BIGINT_ZERO);
     for (size_t i = 0; i < bit_count; ++i) {
         int const bit = bitarr_get(mag_bits, i);
-        sunder_bigint_magnitude_bit_set(res, i, bit);
+        bigint_magnitude_bit_set(res, i, bit);
     }
 
     if (is_neg) {
-        sunder_bigint_neg(res, res);
+        bigint_neg(res, res);
     }
 
     bitarr_del(mag_bits);
@@ -1259,14 +1259,14 @@ bitarr_or(
 // (2) magnitude: The absolute value of the bigint, presented through this API
 //     as an infinitely long sequence of bits with little endian ordering.
 //
-// The internals of struct sunder_bigint are designed such that initializing an
-// sunder_bigint with:
-//      struct sunder_bigint foo = {0};
+// The internals of struct bigint are designed such that initializing an
+// bigint with:
+//      struct bigint foo = {0};
 // or
-//      struct sunder_bigint foo;
+//      struct bigint foo;
 //      memset(&foo, 0x00, sizeof(foo));
 // will create a bigint equal to zero without requiring heap allocation.
-struct sunder_bigint {
+struct bigint {
     // -1 if the integer <  0
     //  0 if the integer == 0
     // +1 if the integer >  0
@@ -1293,26 +1293,26 @@ struct sunder_bigint {
 SUNDER_STATIC_ASSERT(
     correct_bits_per_limb,
     SUNDER__BIGINT_LIMB_BITS_
-        == (sizeof(*((struct sunder_bigint*)0)->limbs) * CHAR_BIT));
+        == (sizeof(*((struct bigint*)0)->limbs) * CHAR_BIT));
 
-struct sunder_bigint const* const SUNDER_BIGINT_ZERO =
-    &(struct sunder_bigint){.sign = 0, .limbs = NULL, .count = 0u};
-struct sunder_bigint const* const SUNDER_BIGINT_POS_ONE = &(
-    struct sunder_bigint){.sign = +1, .limbs = (uint8_t[]){0x01}, .count = 1u};
-struct sunder_bigint const* const SUNDER_BIGINT_NEG_ONE = &(
-    struct sunder_bigint){.sign = -1, .limbs = (uint8_t[]){0x01}, .count = 1u};
+struct bigint const* const BIGINT_ZERO =
+    &(struct bigint){.sign = 0, .limbs = NULL, .count = 0u};
+struct bigint const* const BIGINT_POS_ONE =
+    &(struct bigint){.sign = +1, .limbs = (uint8_t[]){0x01}, .count = 1u};
+struct bigint const* const BIGINT_NEG_ONE =
+    &(struct bigint){.sign = -1, .limbs = (uint8_t[]){0x01}, .count = 1u};
 
-static struct sunder_bigint const* const SUNDER_BIGINT_DEC = &(
-    struct sunder_bigint){.sign = +1, .limbs = (uint8_t[]){0x0A}, .count = 1u};
-static struct sunder_bigint const* const SUNDER_BIGINT_BIN = &(
-    struct sunder_bigint){.sign = +1, .limbs = (uint8_t[]){0x02}, .count = 1u};
-static struct sunder_bigint const* const SUNDER_BIGINT_OCT = &(
-    struct sunder_bigint){.sign = +1, .limbs = (uint8_t[]){0x08}, .count = 1u};
-static struct sunder_bigint const* const SUNDER_BIGINT_HEX = &(
-    struct sunder_bigint){.sign = +1, .limbs = (uint8_t[]){0x10}, .count = 1u};
+static struct bigint const* const BIGINT_DEC =
+    &(struct bigint){.sign = +1, .limbs = (uint8_t[]){0x0A}, .count = 1u};
+static struct bigint const* const BIGINT_BIN =
+    &(struct bigint){.sign = +1, .limbs = (uint8_t[]){0x02}, .count = 1u};
+static struct bigint const* const BIGINT_OCT =
+    &(struct bigint){.sign = +1, .limbs = (uint8_t[]){0x08}, .count = 1u};
+static struct bigint const* const BIGINT_HEX =
+    &(struct bigint){.sign = +1, .limbs = (uint8_t[]){0x10}, .count = 1u};
 
 static void
-sunder__bigint_fini_(struct sunder_bigint* self)
+sunder__bigint_fini_(struct bigint* self)
 {
     assert(self != NULL);
 
@@ -1321,7 +1321,7 @@ sunder__bigint_fini_(struct sunder_bigint* self)
 }
 
 static void
-sunder__bigint_resize_(struct sunder_bigint* self, size_t count)
+sunder__bigint_resize_(struct bigint* self, size_t count)
 {
     assert(self != NULL);
 
@@ -1337,7 +1337,7 @@ sunder__bigint_resize_(struct sunder_bigint* self, size_t count)
 }
 
 static void
-sunder__bigint_normalize_(struct sunder_bigint* self)
+sunder__bigint_normalize_(struct bigint* self)
 {
     assert(self != NULL);
 
@@ -1353,7 +1353,7 @@ sunder__bigint_normalize_(struct sunder_bigint* self)
 // Example:
 //      -0xFFEE shifted left by nlimbs=2 becomes -0xFFEE0000 with 8-bit limbs.
 static void
-sunder__bigint_shiftl_limbs_(struct sunder_bigint* self, size_t nlimbs)
+sunder__bigint_shiftl_limbs_(struct bigint* self, size_t nlimbs)
 {
     assert(self != NULL);
     if (nlimbs == 0) {
@@ -1370,7 +1370,7 @@ sunder__bigint_shiftl_limbs_(struct sunder_bigint* self, size_t nlimbs)
 // Example:
 //      -0xFFEE00 shifted right by nlimbs=2 becomes -0xFF with 8-bit limbs.
 static void
-sunder__bigint_shiftr_limbs_(struct sunder_bigint* self, size_t nlimbs)
+sunder__bigint_shiftr_limbs_(struct bigint* self, size_t nlimbs)
 {
     assert(self != NULL);
     if (nlimbs == 0) {
@@ -1394,7 +1394,7 @@ sunder__bigint_shiftr_limbs_(struct sunder_bigint* self, size_t nlimbs)
 // prototype, and is intended for debugging purposes only.
 // Expect this function to be removed in future versions of this header.
 void
-sunder_bigint_dump(struct sunder_bigint const* self)
+bigint_dump(struct bigint const* self)
 {
     assert(self != NULL);
 
@@ -1418,37 +1418,36 @@ sunder_bigint_dump(struct sunder_bigint const* self)
     fputs("]\n", fp);
 }
 
-struct sunder_bigint*
-sunder_bigint_new(struct sunder_bigint const* othr)
+struct bigint*
+bigint_new(struct bigint const* othr)
 {
     assert(othr != NULL);
 
-    struct sunder_bigint* const self =
-        sunder_xalloc(NULL, sizeof(struct sunder_bigint));
-    *self = *SUNDER_BIGINT_ZERO;
-    sunder_bigint_assign(self, othr);
+    struct bigint* const self = sunder_xalloc(NULL, sizeof(struct bigint));
+    *self = *BIGINT_ZERO;
+    bigint_assign(self, othr);
     return self;
 }
 
-struct sunder_bigint*
-sunder_bigint_new_cstr(char const* cstr)
+struct bigint*
+bigint_new_cstr(char const* cstr)
 {
     assert(cstr != NULL);
 
-    return sunder_bigint_new_text(cstr, strlen(cstr));
+    return bigint_new_text(cstr, strlen(cstr));
 }
 
-struct sunder_bigint*
-sunder_bigint_new_text(char const* start, size_t count)
+struct bigint*
+bigint_new_text(char const* start, size_t count)
 {
     assert(start != NULL);
 
-    struct sunder_bigint* self = NULL;
+    struct bigint* self = NULL;
     char const* const end = start + count;
 
     // Default to decimal radix.
     int radix = 10;
-    struct sunder_bigint const* radix_bigint = SUNDER_BIGINT_DEC;
+    struct bigint const* radix_bigint = BIGINT_DEC;
     int (*radix_isdigit)(int c) = sunder_isdigit;
 
     // Begin iterating over the string from left to right.
@@ -1483,21 +1482,21 @@ radix:
 
     if (cur[1] == 'b') {
         radix = 2;
-        radix_bigint = SUNDER_BIGINT_BIN;
+        radix_bigint = BIGINT_BIN;
         radix_isdigit = sunder_isbdigit;
         cur += 2;
         goto digits;
     }
     if (cur[1] == 'o') {
         radix = 8;
-        radix_bigint = SUNDER_BIGINT_OCT;
+        radix_bigint = BIGINT_OCT;
         radix_isdigit = sunder_isodigit;
         cur += 2;
         goto digits;
     }
     if (cur[1] == 'x') {
         radix = 16;
-        radix_bigint = SUNDER_BIGINT_HEX;
+        radix_bigint = BIGINT_HEX;
         radix_isdigit = sunder_isxdigit;
         cur += 2;
         goto digits;
@@ -1517,7 +1516,7 @@ digits:
         cur += 1;
     }
 
-    self = sunder_bigint_new(SUNDER_BIGINT_ZERO);
+    self = bigint_new(BIGINT_ZERO);
     cur = digits_start;
     while (cur != end) {
         errno = 0;
@@ -1527,10 +1526,10 @@ digits:
             goto error;
         }
 
-        struct sunder_bigint const digit_bigint = {
+        struct bigint const digit_bigint = {
             .sign = +1, .limbs = (uint8_t[]){digit_value}, .count = 1u};
-        sunder_bigint_mul(self, self, radix_bigint);
-        sunder_bigint_add(self, self, &digit_bigint);
+        bigint_mul(self, self, radix_bigint);
+        bigint_add(self, self, &digit_bigint);
 
         cur += 1;
     }
@@ -1540,12 +1539,12 @@ digits:
     return self;
 
 error:
-    sunder_bigint_del(self);
+    bigint_del(self);
     return NULL;
 }
 
 void
-sunder_bigint_del(struct sunder_bigint* self)
+bigint_del(struct bigint* self)
 {
     if (self == NULL) {
         return;
@@ -1556,7 +1555,7 @@ sunder_bigint_del(struct sunder_bigint* self)
 }
 
 void
-sunder_bigint_freeze(struct sunder_bigint* self, struct sunder_freezer* freezer)
+bigint_freeze(struct bigint* self, struct sunder_freezer* freezer)
 {
     assert(self != NULL);
     assert(freezer != NULL);
@@ -1566,8 +1565,7 @@ sunder_bigint_freeze(struct sunder_bigint* self, struct sunder_freezer* freezer)
 }
 
 int
-sunder_bigint_cmp(
-    struct sunder_bigint const* lhs, struct sunder_bigint const* rhs)
+bigint_cmp(struct bigint const* lhs, struct bigint const* rhs)
 {
     assert(lhs != NULL);
     assert(rhs != NULL);
@@ -1607,8 +1605,7 @@ sunder_bigint_cmp(
 }
 
 void
-sunder_bigint_assign(
-    struct sunder_bigint* self, struct sunder_bigint const* othr)
+bigint_assign(struct bigint* self, struct bigint const* othr)
 {
     assert(self != NULL);
     assert(othr != NULL);
@@ -1627,12 +1624,12 @@ sunder_bigint_assign(
 }
 
 void
-sunder_bigint_neg(struct sunder_bigint* res, struct sunder_bigint const* rhs)
+bigint_neg(struct bigint* res, struct bigint const* rhs)
 {
     assert(res != NULL);
     assert(rhs != NULL);
 
-    sunder_bigint_assign(res, rhs);
+    bigint_assign(res, rhs);
     // +1 * -1 == -1
     // -1 * -1 == +1
     //  0 * -1 ==  0
@@ -1640,12 +1637,12 @@ sunder_bigint_neg(struct sunder_bigint* res, struct sunder_bigint const* rhs)
 }
 
 void
-sunder_bigint_abs(struct sunder_bigint* res, struct sunder_bigint const* rhs)
+bigint_abs(struct bigint* res, struct bigint const* rhs)
 {
     assert(res != NULL);
     assert(rhs != NULL);
 
-    sunder_bigint_assign(res, rhs);
+    bigint_assign(res, rhs);
     // +1 * +1 == +1
     // -1 * -1 == +1
     //  0 *  0 ==  0
@@ -1653,10 +1650,8 @@ sunder_bigint_abs(struct sunder_bigint* res, struct sunder_bigint const* rhs)
 }
 
 void
-sunder_bigint_add(
-    struct sunder_bigint* res,
-    struct sunder_bigint const* lhs,
-    struct sunder_bigint const* rhs)
+bigint_add(
+    struct bigint* res, struct bigint const* lhs, struct bigint const* rhs)
 {
     assert(res != NULL);
     assert(lhs != NULL);
@@ -1664,28 +1659,28 @@ sunder_bigint_add(
 
     // 0 + rhs == rhs
     if (lhs->sign == 0) {
-        sunder_bigint_assign(res, rhs);
+        bigint_assign(res, rhs);
         return;
     }
     // lhs + 0 == lhs
     if (rhs->sign == 0) {
-        sunder_bigint_assign(res, lhs);
+        bigint_assign(res, lhs);
         return;
     }
     // (+lhs) + (-rhs) == (+lhs) - (+rhs)
     if ((lhs->sign == +1) && (rhs->sign == -1)) {
-        struct sunder_bigint* const RHS = sunder_bigint_new(SUNDER_BIGINT_ZERO);
-        sunder_bigint_neg(RHS, rhs);
-        sunder_bigint_sub(res, lhs, RHS);
-        sunder_bigint_del(RHS);
+        struct bigint* const RHS = bigint_new(BIGINT_ZERO);
+        bigint_neg(RHS, rhs);
+        bigint_sub(res, lhs, RHS);
+        bigint_del(RHS);
         return;
     }
     // (-lhs) + (+rhs) == (+rhs) - (+lhs)
     if ((lhs->sign == -1) && (rhs->sign == +1)) {
-        struct sunder_bigint* const LHS = sunder_bigint_new(SUNDER_BIGINT_ZERO);
-        sunder_bigint_neg(LHS, lhs);
-        sunder_bigint_sub(res, rhs, LHS);
-        sunder_bigint_del(LHS);
+        struct bigint* const LHS = bigint_new(BIGINT_ZERO);
+        bigint_neg(LHS, lhs);
+        bigint_sub(res, rhs, LHS);
+        bigint_del(LHS);
         return;
     }
 
@@ -1694,7 +1689,7 @@ sunder_bigint_add(
     assert(lhs->sign == rhs->sign);
     int const sign = lhs->sign;
 
-    struct sunder_bigint RES = {0};
+    struct bigint RES = {0};
     RES.sign = sign;
     RES.count = 1 + (lhs->count > rhs->count ? lhs->count : rhs->count);
     RES.limbs = sunder_xalloc(RES.limbs, RES.count);
@@ -1711,15 +1706,13 @@ sunder_bigint_add(
     assert(carry == 0);
 
     sunder__bigint_normalize_(&RES);
-    sunder_bigint_assign(res, &RES);
+    bigint_assign(res, &RES);
     sunder__bigint_fini_(&RES);
 }
 
 void
-sunder_bigint_sub(
-    struct sunder_bigint* res,
-    struct sunder_bigint const* lhs,
-    struct sunder_bigint const* rhs)
+bigint_sub(
+    struct bigint* res, struct bigint const* lhs, struct bigint const* rhs)
 {
     assert(res != NULL);
     assert(lhs != NULL);
@@ -1727,28 +1720,28 @@ sunder_bigint_sub(
 
     // 0 - rhs == -(rhs)
     if (lhs->sign == 0) {
-        sunder_bigint_neg(res, rhs);
+        bigint_neg(res, rhs);
         return;
     }
     // lhs - 0 == lhs
     if (rhs->sign == 0) {
-        sunder_bigint_assign(res, lhs);
+        bigint_assign(res, lhs);
         return;
     }
     // (+lhs) - (-rhs) == (+lhs) + (+rhs)
     if ((lhs->sign == +1) && (rhs->sign == -1)) {
-        struct sunder_bigint* const RHS = sunder_bigint_new(SUNDER_BIGINT_ZERO);
-        sunder_bigint_neg(RHS, rhs);
-        sunder_bigint_add(res, lhs, RHS);
-        sunder_bigint_del(RHS);
+        struct bigint* const RHS = bigint_new(BIGINT_ZERO);
+        bigint_neg(RHS, rhs);
+        bigint_add(res, lhs, RHS);
+        bigint_del(RHS);
         return;
     }
     // (-lhs) - (+rhs) == (-lhs) + (-rhs)
     if ((lhs->sign == -1) && (rhs->sign == +1)) {
-        struct sunder_bigint* const RHS = sunder_bigint_new(SUNDER_BIGINT_ZERO);
-        sunder_bigint_neg(RHS, rhs);
-        sunder_bigint_add(res, lhs, RHS);
-        sunder_bigint_del(RHS);
+        struct bigint* const RHS = bigint_new(BIGINT_ZERO);
+        bigint_neg(RHS, rhs);
+        bigint_add(res, lhs, RHS);
+        bigint_del(RHS);
         return;
     }
 
@@ -1762,15 +1755,15 @@ sunder_bigint_sub(
     // (+3) - (+5) == -2
     // (-5) - (-3) == -2
     // (-3) - (-5) == +2
-    int const cmp = sunder_bigint_cmp(lhs, rhs);
+    int const cmp = bigint_cmp(lhs, rhs);
     int const neg = ((sign == +1) && (cmp < 0)) || ((sign == -1) && (cmp > 0));
     if (neg) {
-        struct sunder_bigint const* tmp = lhs;
+        struct bigint const* tmp = lhs;
         lhs = rhs;
         rhs = tmp;
     }
 
-    struct sunder_bigint RES = {0};
+    struct bigint RES = {0};
     RES.sign = lhs->sign;
     RES.count = lhs->count > rhs->count ? lhs->count : rhs->count;
     RES.limbs = sunder_xalloc(RES.limbs, RES.count);
@@ -1787,19 +1780,17 @@ sunder_bigint_sub(
     assert(borrow == 0);
 
     if (neg) {
-        sunder_bigint_neg(&RES, &RES);
+        bigint_neg(&RES, &RES);
     }
     sunder__bigint_normalize_(&RES);
-    sunder_bigint_assign(res, &RES);
+    bigint_assign(res, &RES);
     sunder__bigint_fini_(&RES);
 }
 
 // res  = lhs * rhs
 void
-sunder_bigint_mul(
-    struct sunder_bigint* res,
-    struct sunder_bigint const* lhs,
-    struct sunder_bigint const* rhs)
+bigint_mul(
+    struct bigint* res, struct bigint const* lhs, struct bigint const* rhs)
 {
     assert(res != NULL);
     assert(lhs != NULL);
@@ -1807,12 +1798,12 @@ sunder_bigint_mul(
 
     // 0 * rhs == 0
     if (lhs->sign == 0) {
-        sunder_bigint_assign(res, SUNDER_BIGINT_ZERO);
+        bigint_assign(res, BIGINT_ZERO);
         return;
     }
     // lhs * 0 == 0
     if (rhs->sign == 0) {
-        sunder_bigint_assign(res, SUNDER_BIGINT_ZERO);
+        bigint_assign(res, BIGINT_ZERO);
         return;
     }
 
@@ -1820,7 +1811,7 @@ sunder_bigint_mul(
     // Source: Art of Computer Programming, Volume 2: Seminumerical Algorithms
     //         (Third Edition) page. 268.
     size_t const count = lhs->count + rhs->count;
-    struct sunder_bigint W = {0}; // abs(res)
+    struct bigint W = {0}; // abs(res)
     sunder__bigint_resize_(&W, count);
     uint8_t* const w = W.limbs;
     uint8_t const* const u = lhs->limbs;
@@ -1845,16 +1836,16 @@ sunder_bigint_mul(
 
     W.sign = lhs->sign * rhs->sign;
     sunder__bigint_normalize_(&W);
-    sunder_bigint_assign(res, &W);
+    bigint_assign(res, &W);
     sunder__bigint_fini_(&W);
 }
 
 void
-sunder_bigint_divrem(
-    struct sunder_bigint* res,
-    struct sunder_bigint* rem,
-    struct sunder_bigint const* lhs,
-    struct sunder_bigint const* rhs)
+bigint_divrem(
+    struct bigint* res,
+    struct bigint* rem,
+    struct bigint const* lhs,
+    struct bigint const* rhs)
 {
     assert(lhs != NULL);
     assert(rhs != NULL);
@@ -1883,20 +1874,19 @@ sunder_bigint_divrem(
     //     Q(i) := 1
     //   end
     // end
-    struct sunder_bigint Q = {0}; // abs(res)
-    struct sunder_bigint R = {0}; // abs(rem)
-    struct sunder_bigint N = {0}; // abs(lhs)
-    sunder_bigint_abs(&N, lhs);
-    struct sunder_bigint D = {0}; // abs(rhs)
-    sunder_bigint_abs(&D, rhs);
-    size_t const n = sunder_bigint_magnitude_bit_count(lhs);
+    struct bigint Q = {0}; // abs(res)
+    struct bigint R = {0}; // abs(rem)
+    struct bigint N = {0}; // abs(lhs)
+    bigint_abs(&N, lhs);
+    struct bigint D = {0}; // abs(rhs)
+    bigint_abs(&D, rhs);
+    size_t const n = bigint_magnitude_bit_count(lhs);
     for (size_t i = n - 1; i < n; --i) {
-        sunder_bigint_magnitude_shiftl(&R, 1);
-        sunder_bigint_magnitude_bit_set(
-            &R, 0, sunder_bigint_magnitude_bit_get(&N, i));
-        if (sunder_bigint_cmp(&R, &D) >= 0) {
-            sunder_bigint_sub(&R, &R, &D);
-            sunder_bigint_magnitude_bit_set(&Q, i, 1);
+        bigint_magnitude_shiftl(&R, 1);
+        bigint_magnitude_bit_set(&R, 0, bigint_magnitude_bit_get(&N, i));
+        if (bigint_cmp(&R, &D) >= 0) {
+            bigint_sub(&R, &R, &D);
+            bigint_magnitude_bit_set(&Q, i, 1);
         }
     }
 
@@ -1913,11 +1903,11 @@ sunder_bigint_divrem(
 
     if (res != NULL) {
         sunder__bigint_normalize_(&Q);
-        sunder_bigint_assign(res, &Q);
+        bigint_assign(res, &Q);
     }
     if (rem != NULL) {
         sunder__bigint_normalize_(&R);
-        sunder_bigint_assign(rem, &R);
+        bigint_assign(rem, &R);
     }
     sunder__bigint_fini_(&Q);
     sunder__bigint_fini_(&R);
@@ -1926,7 +1916,7 @@ sunder_bigint_divrem(
 }
 
 void
-sunder_bigint_magnitude_shiftl(struct sunder_bigint* self, size_t nbits)
+bigint_magnitude_shiftl(struct bigint* self, size_t nbits)
 {
     assert(self != NULL);
     if (nbits == 0) {
@@ -1955,15 +1945,15 @@ sunder_bigint_magnitude_shiftl(struct sunder_bigint* self, size_t nbits)
 }
 
 void
-sunder_bigint_magnitude_shiftr(struct sunder_bigint* self, size_t nbits)
+bigint_magnitude_shiftr(struct bigint* self, size_t nbits)
 {
     assert(self != NULL);
     if (nbits == 0) {
         return;
     }
 
-    if (nbits >= sunder_bigint_magnitude_bit_count(self)) {
-        sunder_bigint_assign(self, SUNDER_BIGINT_ZERO);
+    if (nbits >= bigint_magnitude_bit_count(self)) {
+        bigint_assign(self, BIGINT_ZERO);
         return;
     }
 
@@ -1983,7 +1973,7 @@ sunder_bigint_magnitude_shiftr(struct sunder_bigint* self, size_t nbits)
 }
 
 size_t
-sunder_bigint_magnitude_bit_count(struct sunder_bigint const* self)
+bigint_magnitude_bit_count(struct bigint const* self)
 {
     assert(self != NULL);
 
@@ -2001,7 +1991,7 @@ sunder_bigint_magnitude_bit_count(struct sunder_bigint const* self)
 }
 
 int
-sunder_bigint_magnitude_bit_get(struct sunder_bigint const* self, size_t n)
+bigint_magnitude_bit_get(struct bigint const* self, size_t n)
 {
     assert(self != NULL);
 
@@ -2015,7 +2005,7 @@ sunder_bigint_magnitude_bit_get(struct sunder_bigint const* self, size_t n)
 }
 
 void
-sunder_bigint_magnitude_bit_set(struct sunder_bigint* self, size_t n, int value)
+bigint_magnitude_bit_set(struct bigint* self, size_t n, int value)
 {
     assert(self != NULL);
 
@@ -2044,14 +2034,14 @@ sunder_bigint_magnitude_bit_set(struct sunder_bigint* self, size_t n, int value)
 }
 
 // clang-format off
-#define SUNDER_BIGINT_FMT_FLAG_HASH_  ((unsigned)0)
-#define SUNDER_BIGINT_FMT_FLAG_ZERO_  ((unsigned)1)
-#define SUNDER_BIGINT_FMT_FLAG_PLUS_  ((unsigned)2)
-#define SUNDER_BIGINT_FMT_FLAG_MINUS_ ((unsigned)3)
-#define SUNDER_BIGINT_FMT_FLAG_SPACE_ ((unsigned)4)
+#define BIGINT_FMT_FLAG_HASH_  ((unsigned)0)
+#define BIGINT_FMT_FLAG_ZERO_  ((unsigned)1)
+#define BIGINT_FMT_FLAG_PLUS_  ((unsigned)2)
+#define BIGINT_FMT_FLAG_MINUS_ ((unsigned)3)
+#define BIGINT_FMT_FLAG_SPACE_ ((unsigned)4)
 // clang-format on
 char*
-sunder_bigint_to_new_cstr(struct sunder_bigint const* self, char const* fmt)
+bigint_to_new_cstr(struct bigint const* self, char const* fmt)
 {
     assert(self != NULL);
 
@@ -2062,11 +2052,11 @@ sunder_bigint_to_new_cstr(struct sunder_bigint const* self, char const* fmt)
     if (fmt != NULL) {
         // Flags
         while (*fmt != '\0' && strchr("#0+- ", *fmt) != NULL) {
-            flags |= (unsigned)(*fmt == '#') << SUNDER_BIGINT_FMT_FLAG_HASH_;
-            flags |= (unsigned)(*fmt == '0') << SUNDER_BIGINT_FMT_FLAG_ZERO_;
-            flags |= (unsigned)(*fmt == '+') << SUNDER_BIGINT_FMT_FLAG_PLUS_;
-            flags |= (unsigned)(*fmt == '-') << SUNDER_BIGINT_FMT_FLAG_MINUS_;
-            flags |= (unsigned)(*fmt == ' ') << SUNDER_BIGINT_FMT_FLAG_SPACE_;
+            flags |= (unsigned)(*fmt == '#') << BIGINT_FMT_FLAG_HASH_;
+            flags |= (unsigned)(*fmt == '0') << BIGINT_FMT_FLAG_ZERO_;
+            flags |= (unsigned)(*fmt == '+') << BIGINT_FMT_FLAG_PLUS_;
+            flags |= (unsigned)(*fmt == '-') << BIGINT_FMT_FLAG_MINUS_;
+            flags |= (unsigned)(*fmt == ' ') << BIGINT_FMT_FLAG_SPACE_;
             fmt += 1;
         }
         // Width
@@ -2089,24 +2079,24 @@ sunder_bigint_to_new_cstr(struct sunder_bigint const* self, char const* fmt)
         }
         // Match clang/gcc behavior:
         //      "flag '0' is ignored when flag '-' is present"
-        if (flags & (1u << SUNDER_BIGINT_FMT_FLAG_MINUS_)) {
-            flags &= (unsigned)~(1u << SUNDER_BIGINT_FMT_FLAG_ZERO_);
+        if (flags & (1u << BIGINT_FMT_FLAG_MINUS_)) {
+            flags &= (unsigned)~(1u << BIGINT_FMT_FLAG_ZERO_);
         }
     }
 
     // Prefix.
     void* prefix = NULL;
     size_t prefix_size = 0;
-    if (self->sign == +1 && (flags & (1u << SUNDER_BIGINT_FMT_FLAG_PLUS_))) {
+    if (self->sign == +1 && (flags & (1u << BIGINT_FMT_FLAG_PLUS_))) {
         sunder_xalloc_append(&prefix, &prefix_size, "+", 1);
     }
-    if (self->sign == +1 && (flags & (1u << SUNDER_BIGINT_FMT_FLAG_SPACE_))) {
+    if (self->sign == +1 && (flags & (1u << BIGINT_FMT_FLAG_SPACE_))) {
         sunder_xalloc_append(&prefix, &prefix_size, " ", 1);
     }
     if (self->sign == -1) {
         sunder_xalloc_append(&prefix, &prefix_size, "-", 1);
     }
-    if (flags & (1u << SUNDER_BIGINT_FMT_FLAG_HASH_)) {
+    if (flags & (1u << BIGINT_FMT_FLAG_HASH_)) {
         if (specifier == 'b') {
             sunder_xalloc_append(&prefix, &prefix_size, "0b", 2);
         }
@@ -2127,11 +2117,11 @@ sunder_bigint_to_new_cstr(struct sunder_bigint const* self, char const* fmt)
     char digit_buf[SUNDER__BIGINT_LIMB_BITS_ + SUNDER_STR_LITERAL_COUNT("\0")] =
         {0};
     if (specifier == 'd') {
-        struct sunder_bigint DEC = {0};
-        struct sunder_bigint SELF = {0};
-        sunder_bigint_abs(&SELF, self);
-        while (sunder_bigint_cmp(&SELF, SUNDER_BIGINT_ZERO) != 0) {
-            sunder_bigint_divrem(&SELF, &DEC, &SELF, SUNDER_BIGINT_DEC);
+        struct bigint DEC = {0};
+        struct bigint SELF = {0};
+        bigint_abs(&SELF, self);
+        while (bigint_cmp(&SELF, BIGINT_ZERO) != 0) {
+            bigint_divrem(&SELF, &DEC, &SELF, BIGINT_DEC);
             assert(DEC.count <= 1);
             assert(DEC.limbs == NULL || DEC.limbs[0] < 10);
             sprintf(digit_buf, "%d", DEC.limbs != NULL ? (int)DEC.limbs[0] : 0);
@@ -2159,11 +2149,11 @@ sunder_bigint_to_new_cstr(struct sunder_bigint const* self, char const* fmt)
         }
     }
     else if (specifier == 'o') {
-        struct sunder_bigint OCT = {0};
-        struct sunder_bigint SELF = {0};
-        sunder_bigint_abs(&SELF, self);
-        while (sunder_bigint_cmp(&SELF, SUNDER_BIGINT_ZERO) != 0) {
-            sunder_bigint_divrem(&SELF, &OCT, &SELF, SUNDER_BIGINT_OCT);
+        struct bigint OCT = {0};
+        struct bigint SELF = {0};
+        bigint_abs(&SELF, self);
+        while (bigint_cmp(&SELF, BIGINT_ZERO) != 0) {
+            bigint_divrem(&SELF, &OCT, &SELF, BIGINT_OCT);
             assert(OCT.count <= 1);
             assert(OCT.limbs == NULL || OCT.limbs[0] < 8);
             sprintf(digit_buf, "%o", OCT.limbs != NULL ? (int)OCT.limbs[0] : 0);
@@ -2210,20 +2200,20 @@ sunder_bigint_to_new_cstr(struct sunder_bigint const* self, char const* fmt)
     size_t widths_size = 0;
     if ((prefix_size + digits_size) < width) {
         char pad = ' ';
-        if (flags & (1u << SUNDER_BIGINT_FMT_FLAG_ZERO_)) {
-            assert(!(flags & (1u << SUNDER_BIGINT_FMT_FLAG_MINUS_)));
+        if (flags & (1u << BIGINT_FMT_FLAG_ZERO_)) {
+            assert(!(flags & (1u << BIGINT_FMT_FLAG_MINUS_)));
             pad = '0';
         }
         widths_size = width - (prefix_size + digits_size);
         widths = sunder_xalloc(widths, widths_size);
         memset(widths, pad, widths_size);
 
-        if (flags & (1u << SUNDER_BIGINT_FMT_FLAG_ZERO_)) {
-            assert(!(flags & (1u << SUNDER_BIGINT_FMT_FLAG_MINUS_)));
+        if (flags & (1u << BIGINT_FMT_FLAG_ZERO_)) {
+            assert(!(flags & (1u << BIGINT_FMT_FLAG_MINUS_)));
             sunder_xalloc_prepend(&digits, &digits_size, widths, widths_size);
         }
-        else if (flags & (1u << SUNDER_BIGINT_FMT_FLAG_MINUS_)) {
-            assert(!(flags & (1u << SUNDER_BIGINT_FMT_FLAG_ZERO_)));
+        else if (flags & (1u << BIGINT_FMT_FLAG_MINUS_)) {
+            assert(!(flags & (1u << BIGINT_FMT_FLAG_ZERO_)));
             sunder_xalloc_append(&digits, &digits_size, widths, widths_size);
         }
         else {

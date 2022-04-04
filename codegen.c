@@ -337,8 +337,8 @@ append_dx_data(struct value const* value)
         // count need to be written in their qd representation, we manually
         // write the dq value of the count here instead of making a call to
         // append_dx_data.
-        char* const count_cstr = sunder_bigint_to_new_cstr(
-            value->data.slice.count->data.integer, NULL);
+        char* const count_cstr =
+            bigint_to_new_cstr(value->data.slice.count->data.integer, NULL);
         append("%s", count_cstr);
         sunder_xalloc(count_cstr, SUNDER_XALLOC_FREE);
         return;
@@ -1255,7 +1255,7 @@ codegen_rvalue_integer(struct expr const* expr, size_t id)
     assert(expr->kind == EXPR_INTEGER);
     (void)id;
 
-    char* const cstr = sunder_bigint_to_new_cstr(expr->data.integer, NULL);
+    char* const cstr = bigint_to_new_cstr(expr->data.integer, NULL);
 
     assert(expr->type->size >= 1u);
     assert(expr->type->size <= 8u);
@@ -1960,7 +1960,7 @@ codegen_rvalue_unary(struct expr const* expr, size_t id)
         appendli("pop rax");
         if (type_is_signed_integer(rhs->type)) {
             char* const min_cstr =
-                sunder_bigint_to_new_cstr(rhs->type->data.integer.min, NULL);
+                bigint_to_new_cstr(rhs->type->data.integer.min, NULL);
             appendli("mov rbx, %s", min_cstr);
             sunder_xalloc(min_cstr, SUNDER_XALLOC_FREE);
             appendli(

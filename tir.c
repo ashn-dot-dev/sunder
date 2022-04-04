@@ -1102,7 +1102,7 @@ struct expr*
 expr_new_integer(
     struct source_location const* location,
     struct type const* type,
-    struct sunder_bigint const* value)
+    struct bigint const* value)
 {
     assert(location != NULL);
     assert(type != NULL);
@@ -1113,42 +1113,36 @@ expr_new_integer(
     bool const is_sized_integer =
         type_is_any_integer(type) && type->kind != TYPE_INTEGER;
 
-    if (is_byte && sunder_bigint_cmp(value, context()->u8_min) < 0) {
-        char* const lit_cstr = sunder_bigint_to_new_cstr(value, NULL);
-        char* const min_cstr =
-            sunder_bigint_to_new_cstr(context()->u8_min, NULL);
+    if (is_byte && bigint_cmp(value, context()->u8_min) < 0) {
+        char* const lit_cstr = bigint_to_new_cstr(value, NULL);
+        char* const min_cstr = bigint_to_new_cstr(context()->u8_min, NULL);
         fatal(
             location,
             "out-of-range byte literal (%s < %s)",
             lit_cstr,
             min_cstr);
     }
-    if (is_byte && sunder_bigint_cmp(value, context()->u8_max) > 0) {
-        char* const lit_cstr = sunder_bigint_to_new_cstr(value, NULL);
-        char* const max_cstr =
-            sunder_bigint_to_new_cstr(context()->u8_max, NULL);
+    if (is_byte && bigint_cmp(value, context()->u8_max) > 0) {
+        char* const lit_cstr = bigint_to_new_cstr(value, NULL);
+        char* const max_cstr = bigint_to_new_cstr(context()->u8_max, NULL);
         fatal(
             location,
             "out-of-range byte literal (%s > %s)",
             lit_cstr,
             max_cstr);
     }
-    if (is_sized_integer
-        && sunder_bigint_cmp(value, type->data.integer.min) < 0) {
-        char* const lit_cstr = sunder_bigint_to_new_cstr(value, NULL);
-        char* const min_cstr =
-            sunder_bigint_to_new_cstr(type->data.integer.min, NULL);
+    if (is_sized_integer && bigint_cmp(value, type->data.integer.min) < 0) {
+        char* const lit_cstr = bigint_to_new_cstr(value, NULL);
+        char* const min_cstr = bigint_to_new_cstr(type->data.integer.min, NULL);
         fatal(
             location,
             "out-of-range integer literal (%s < %s)",
             lit_cstr,
             min_cstr);
     }
-    if (is_sized_integer
-        && sunder_bigint_cmp(value, type->data.integer.max) > 0) {
-        char* const lit_cstr = sunder_bigint_to_new_cstr(value, NULL);
-        char* const max_cstr =
-            sunder_bigint_to_new_cstr(type->data.integer.max, NULL);
+    if (is_sized_integer && bigint_cmp(value, type->data.integer.max) > 0) {
+        char* const lit_cstr = bigint_to_new_cstr(value, NULL);
+        char* const max_cstr = bigint_to_new_cstr(type->data.integer.max, NULL);
         fatal(
             location,
             "out-of-range integer literal (%s > %s)",
@@ -1566,17 +1560,17 @@ value_new_byte(uint8_t byte)
 }
 
 struct value*
-value_new_integer(struct type const* type, struct sunder_bigint* integer)
+value_new_integer(struct type const* type, struct bigint* integer)
 {
     assert(type != NULL);
     assert(type->kind == TYPE_BYTE || type_is_any_integer(type));
     assert(integer != NULL);
     assert(
         type->kind == TYPE_INTEGER
-        || sunder_bigint_cmp(integer, type->data.integer.min) >= 0);
+        || bigint_cmp(integer, type->data.integer.min) >= 0);
     assert(
         type->kind == TYPE_INTEGER
-        || sunder_bigint_cmp(integer, type->data.integer.max) <= 0);
+        || bigint_cmp(integer, type->data.integer.max) <= 0);
 
     struct value* self = value_new(type);
     self->data.integer = integer;
@@ -1633,7 +1627,7 @@ value_new_slice(
     assert(pointer->type->kind == TYPE_POINTER);
     assert(count != NULL);
     assert(count->type->kind == TYPE_USIZE);
-    assert(sunder_bigint_cmp(count->data.integer, SUNDER_BIGINT_ZERO) >= 0);
+    assert(bigint_cmp(count->data.integer, BIGINT_ZERO) >= 0);
 
     assert(type->data.slice.base == pointer->type->data.pointer.base);
 
@@ -1688,7 +1682,7 @@ value_del(struct value* self)
     case TYPE_USIZE: /* fallthrough */
     case TYPE_SSIZE: /* fallthrough */
     case TYPE_INTEGER: {
-        sunder_bigint_del(self->data.integer);
+        bigint_del(self->data.integer);
         break;
     }
     case TYPE_FUNCTION: {
@@ -1762,7 +1756,7 @@ value_freeze(struct value* self, struct sunder_freezer* freezer)
     case TYPE_USIZE: /* fallthrough */
     case TYPE_SSIZE: /* fallthrough */
     case TYPE_INTEGER: {
-        sunder_bigint_freeze(self->data.integer, freezer);
+        bigint_freeze(self->data.integer, freezer);
         return;
     }
     case TYPE_FUNCTION: {
@@ -1831,8 +1825,7 @@ value_clone(struct value const* self)
     case TYPE_USIZE: /* fallthrough */
     case TYPE_SSIZE: /* fallthrough */
     case TYPE_INTEGER: {
-        return value_new_integer(
-            self->type, sunder_bigint_new(self->data.integer));
+        return value_new_integer(self->type, bigint_new(self->data.integer));
     }
     case TYPE_FUNCTION: {
         return value_new_function(self->data.function);
@@ -1940,7 +1933,7 @@ value_eq(struct value const* lhs, struct value const* rhs)
     case TYPE_USIZE: /* fallthrough */
     case TYPE_SSIZE: /* fallthrough */
     case TYPE_INTEGER: {
-        return sunder_bigint_cmp(lhs->data.integer, rhs->data.integer) == 0;
+        return bigint_cmp(lhs->data.integer, rhs->data.integer) == 0;
     }
     case TYPE_FUNCTION: {
         return lhs->data.function == rhs->data.function;
@@ -1998,7 +1991,7 @@ value_lt(struct value const* lhs, struct value const* rhs)
     case TYPE_USIZE: /* fallthrough */
     case TYPE_SSIZE: /* fallthrough */
     case TYPE_INTEGER: {
-        return sunder_bigint_cmp(lhs->data.integer, rhs->data.integer) < 0;
+        return bigint_cmp(lhs->data.integer, rhs->data.integer) < 0;
     }
     case TYPE_POINTER: {
         UNREACHABLE(); // illegal (see comment in value_eq)
@@ -2047,7 +2040,7 @@ value_gt(struct value const* lhs, struct value const* rhs)
     case TYPE_USIZE: /* fallthrough */
     case TYPE_SSIZE: /* fallthrough */
     case TYPE_INTEGER: {
-        return sunder_bigint_cmp(lhs->data.integer, rhs->data.integer) > 0;
+        return bigint_cmp(lhs->data.integer, rhs->data.integer) > 0;
     }
     case TYPE_POINTER: {
         UNREACHABLE(); // illegal (see comment in value_eq)

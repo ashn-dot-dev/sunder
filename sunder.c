@@ -167,8 +167,8 @@ context_init(void)
 #undef INTERN_STR_LITERAL
 
 #define INIT_BIGINT_CONSTANT(ident, str_literal)                               \
-    struct sunder_bigint* const ident = sunder_bigint_new_cstr(str_literal);   \
-    sunder_bigint_freeze(ident, s_context.freezer);                            \
+    struct bigint* const ident = bigint_new_cstr(str_literal);                 \
+    bigint_freeze(ident, s_context.freezer);                                   \
     s_context.ident = ident;
     INIT_BIGINT_CONSTANT(u8_min, "+0x00")
     INIT_BIGINT_CONSTANT(u8_max, "+0xFF")

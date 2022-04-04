@@ -7,8 +7,7 @@
 #include "sunder.h"
 
 static bool
-integer_is_out_of_range(
-    struct type const* type, struct sunder_bigint const* res);
+integer_is_out_of_range(struct type const* type, struct bigint const* res);
 
 static struct value*
 eval_rvalue_symbol(struct expr const* expr);
@@ -53,8 +52,7 @@ static struct value*
 eval_lvalue_unary(struct expr const* expr);
 
 static bool
-integer_is_out_of_range(
-    struct type const* type, struct sunder_bigint const* res)
+integer_is_out_of_range(struct type const* type, struct bigint const* res)
 {
     assert(type != NULL);
     assert(type_is_any_integer(type));
@@ -66,8 +64,8 @@ integer_is_out_of_range(
         // Arbitrary precision integers do not have a defined min or max value.
         return false;
     }
-    return sunder_bigint_cmp(res, type->data.integer.min) < 0
-        || sunder_bigint_cmp(res, type->data.integer.max) > 0;
+    return bigint_cmp(res, type->data.integer.min) < 0
+        || bigint_cmp(res, type->data.integer.max) > 0;
 }
 
 struct value*
@@ -167,7 +165,7 @@ eval_rvalue_integer(struct expr const* expr)
     assert(expr != NULL);
     assert(expr->kind == EXPR_INTEGER);
 
-    struct sunder_bigint const* const integer = expr->data.integer;
+    struct bigint const* const integer = expr->data.integer;
 
     if (expr->type->kind == TYPE_BYTE) {
         uint8_t byte = 0;
@@ -179,7 +177,7 @@ eval_rvalue_integer(struct expr const* expr)
     }
 
     assert(type_is_any_integer(expr->type));
-    return value_new_integer(expr->type, sunder_bigint_new(integer));
+    return value_new_integer(expr->type, bigint_new(integer));
 }
 
 static struct value*
@@ -192,8 +190,7 @@ eval_rvalue_bytes(struct expr const* expr)
         type_unique_pointer(context()->builtin.byte),
         *expr->data.bytes.address);
 
-    struct sunder_bigint* const count_bigint =
-        sunder_bigint_new(SUNDER_BIGINT_ZERO);
+    struct bigint* const count_bigint = bigint_new(BIGINT_ZERO);
     uz_to_bigint(count_bigint, expr->data.bytes.count);
     struct value* const count =
         value_new_integer(context()->builtin.usize, count_bigint);
@@ -247,8 +244,8 @@ eval_rvalue_array_slice(struct expr const* expr)
 
     sunder_sbuf(struct expr const* const) const elements =
         expr->data.array_slice.elements;
-    struct value* const count = value_new_integer(
-        context()->builtin.usize, sunder_bigint_new(SUNDER_BIGINT_ZERO));
+    struct value* const count =
+        value_new_integer(context()->builtin.usize, bigint_new(BIGINT_ZERO));
     uz_to_bigint(count->data.integer, sunder_sbuf_count(elements));
 
     return value_new_slice(expr->type, pointer, count);
@@ -359,8 +356,7 @@ eval_rvalue_cast(struct expr const* expr)
             bitarr_set(bits, i, bit);
         }
 
-        struct sunder_bigint* const integer =
-            sunder_bigint_new(SUNDER_BIGINT_ZERO);
+        struct bigint* const integer = bigint_new(BIGINT_ZERO);
         bitarr_to_bigint(integer, bits, type_is_signed_integer(expr->type));
         bitarr_del(bits);
 
@@ -394,13 +390,13 @@ eval_rvalue_access_index(struct expr const* expr)
     struct value* const idx = eval_rvalue(expr->data.access_index.idx);
 
     assert(idx->type->kind == TYPE_USIZE);
-    struct sunder_bigint const* const idx_bigint = idx->data.integer;
+    struct bigint const* const idx_bigint = idx->data.integer;
     size_t idx_uz = 0u;
     if (bigint_to_uz(&idx_uz, idx_bigint)) {
         fatal(
             expr->data.access_index.idx->location,
             "index out-of-range (received %s)",
-            sunder_bigint_to_new_cstr(idx_bigint, NULL));
+            bigint_to_new_cstr(idx_bigint, NULL));
     }
 
     if (lhs->type->kind == TYPE_ARRAY) {
@@ -450,22 +446,22 @@ eval_rvalue_access_slice(struct expr const* expr)
     struct value* const end = eval_rvalue(expr->data.access_slice.end);
 
     assert(begin->type->kind == TYPE_USIZE);
-    struct sunder_bigint const* const begin_bigint = begin->data.integer;
+    struct bigint const* const begin_bigint = begin->data.integer;
     size_t begin_uz = 0u;
     if (bigint_to_uz(&begin_uz, begin_bigint)) {
         fatal(
             expr->data.access_slice.begin->location,
             "index out-of-range (received %s)",
-            sunder_bigint_to_new_cstr(begin_bigint, NULL));
+            bigint_to_new_cstr(begin_bigint, NULL));
     }
     assert(end->type->kind == TYPE_USIZE);
-    struct sunder_bigint const* const end_bigint = end->data.integer;
+    struct bigint const* const end_bigint = end->data.integer;
     size_t end_uz = 0u;
     if (bigint_to_uz(&end_uz, end_bigint)) {
         fatal(
             expr->data.access_slice.end->location,
             "index out-of-range (received %s)",
-            sunder_bigint_to_new_cstr(end_bigint, NULL));
+            bigint_to_new_cstr(end_bigint, NULL));
     }
 
     if (lhs->type->kind == TYPE_ARRAY) {
@@ -491,9 +487,8 @@ eval_rvalue_access_slice(struct expr const* expr)
         pointer->data.pointer.data.static_.offset +=
             begin_uz * expr->type->data.slice.base->size;
 
-        struct sunder_bigint* const count_bigint =
-            sunder_bigint_new(SUNDER_BIGINT_ZERO);
-        sunder_bigint_sub(count_bigint, end_bigint, begin_bigint);
+        struct bigint* const count_bigint = bigint_new(BIGINT_ZERO);
+        bigint_sub(count_bigint, end_bigint, begin_bigint);
 
         struct value* const count =
             value_new_integer(context()->builtin.usize, count_bigint);
@@ -546,8 +541,7 @@ eval_rvalue_sizeof(struct expr const* expr)
     assert(expr != NULL);
     assert(expr->kind == EXPR_SIZEOF);
 
-    struct sunder_bigint* const size_bigint =
-        sunder_bigint_new(SUNDER_BIGINT_ZERO);
+    struct bigint* const size_bigint = bigint_new(BIGINT_ZERO);
     uz_to_bigint(size_bigint, expr->data.sizeof_.rhs->size);
 
     assert(expr->type->kind == TYPE_USIZE);
@@ -560,8 +554,7 @@ eval_rvalue_alignof(struct expr const* expr)
     assert(expr != NULL);
     assert(expr->kind == EXPR_ALIGNOF);
 
-    struct sunder_bigint* const size_bigint =
-        sunder_bigint_new(SUNDER_BIGINT_ZERO);
+    struct bigint* const size_bigint = bigint_new(BIGINT_ZERO);
     uz_to_bigint(size_bigint, expr->data.alignof_.rhs->align);
 
     assert(expr->type->kind == TYPE_USIZE);
@@ -589,14 +582,14 @@ eval_rvalue_unary(struct expr const* expr)
     case UOP_NEG: {
         struct value* const rhs = eval_rvalue(expr->data.unary.rhs);
         assert(type_is_any_integer(rhs->type));
-        struct sunder_bigint* const r = sunder_bigint_new(SUNDER_BIGINT_ZERO);
-        sunder_bigint_neg(r, rhs->data.integer);
+        struct bigint* const r = bigint_new(BIGINT_ZERO);
+        bigint_neg(r, rhs->data.integer);
         if (integer_is_out_of_range(expr->type, r)) {
             fatal(
                 expr->location,
                 "arithmetic operation produces out-of-range result (-(%s) == %s)",
-                sunder_bigint_to_new_cstr(rhs->data.integer, NULL),
-                sunder_bigint_to_new_cstr(r, NULL));
+                bigint_to_new_cstr(rhs->data.integer, NULL),
+                bigint_to_new_cstr(r, NULL));
         }
         value_del(rhs);
         return value_new_integer(expr->type, r);
@@ -624,8 +617,7 @@ eval_rvalue_unary(struct expr const* expr)
         }
         bitarr_del(rhs_bits);
 
-        struct sunder_bigint* const res_bigint =
-            sunder_bigint_new(SUNDER_BIGINT_ZERO);
+        struct bigint* const res_bigint = bigint_new(BIGINT_ZERO);
         bitarr_to_bigint(res_bigint, res_bits, is_signed);
         bitarr_del(res_bits);
 
@@ -644,7 +636,7 @@ eval_rvalue_unary(struct expr const* expr)
     case UOP_COUNTOF: {
         assert(expr->type->kind == TYPE_USIZE);
         struct value* const res = value_new_integer(
-            context()->builtin.usize, sunder_bigint_new(SUNDER_BIGINT_ZERO));
+            context()->builtin.usize, bigint_new(BIGINT_ZERO));
 
         struct value* const rhs = eval_rvalue(expr->data.unary.rhs);
         switch (rhs->type->kind) {
@@ -655,9 +647,9 @@ eval_rvalue_unary(struct expr const* expr)
         }
         case TYPE_SLICE: {
             assert(rhs->data.slice.count->type->kind == TYPE_USIZE);
-            struct sunder_bigint const* const count_bigint =
+            struct bigint const* const count_bigint =
                 rhs->data.slice.count->data.integer;
-            sunder_bigint_assign(res->data.integer, count_bigint);
+            bigint_assign(res->data.integer, count_bigint);
             break;
         }
         default:
@@ -722,15 +714,15 @@ eval_rvalue_binary(struct expr const* expr)
     case BOP_ADD: {
         assert(type_is_any_integer(lhs->type));
         assert(type_is_any_integer(rhs->type));
-        struct sunder_bigint* const r = sunder_bigint_new(SUNDER_BIGINT_ZERO);
-        sunder_bigint_add(r, lhs->data.integer, rhs->data.integer);
+        struct bigint* const r = bigint_new(BIGINT_ZERO);
+        bigint_add(r, lhs->data.integer, rhs->data.integer);
         if (integer_is_out_of_range(expr->type, r)) {
             fatal(
                 expr->location,
                 "arithmetic operation produces out-of-range result (%s + %s == %s)",
-                sunder_bigint_to_new_cstr(lhs->data.integer, NULL),
-                sunder_bigint_to_new_cstr(rhs->data.integer, NULL),
-                sunder_bigint_to_new_cstr(r, NULL));
+                bigint_to_new_cstr(lhs->data.integer, NULL),
+                bigint_to_new_cstr(rhs->data.integer, NULL),
+                bigint_to_new_cstr(r, NULL));
         }
         res = value_new_integer(expr->type, r);
         break;
@@ -738,15 +730,15 @@ eval_rvalue_binary(struct expr const* expr)
     case BOP_SUB: {
         assert(type_is_any_integer(lhs->type));
         assert(type_is_any_integer(rhs->type));
-        struct sunder_bigint* const r = sunder_bigint_new(SUNDER_BIGINT_ZERO);
-        sunder_bigint_sub(r, lhs->data.integer, rhs->data.integer);
+        struct bigint* const r = bigint_new(BIGINT_ZERO);
+        bigint_sub(r, lhs->data.integer, rhs->data.integer);
         if (integer_is_out_of_range(expr->type, r)) {
             fatal(
                 expr->location,
                 "arithmetic operation produces out-of-range result (%s - %s == %s)",
-                sunder_bigint_to_new_cstr(lhs->data.integer, NULL),
-                sunder_bigint_to_new_cstr(rhs->data.integer, NULL),
-                sunder_bigint_to_new_cstr(r, NULL));
+                bigint_to_new_cstr(lhs->data.integer, NULL),
+                bigint_to_new_cstr(rhs->data.integer, NULL),
+                bigint_to_new_cstr(r, NULL));
         }
         res = value_new_integer(expr->type, r);
         break;
@@ -754,15 +746,15 @@ eval_rvalue_binary(struct expr const* expr)
     case BOP_MUL: {
         assert(type_is_any_integer(lhs->type));
         assert(type_is_any_integer(rhs->type));
-        struct sunder_bigint* const r = sunder_bigint_new(SUNDER_BIGINT_ZERO);
-        sunder_bigint_mul(r, lhs->data.integer, rhs->data.integer);
+        struct bigint* const r = bigint_new(BIGINT_ZERO);
+        bigint_mul(r, lhs->data.integer, rhs->data.integer);
         if (integer_is_out_of_range(expr->type, r)) {
             fatal(
                 expr->location,
                 "arithmetic operation produces out-of-range result (%s * %s == %s)",
-                sunder_bigint_to_new_cstr(lhs->data.integer, NULL),
-                sunder_bigint_to_new_cstr(rhs->data.integer, NULL),
-                sunder_bigint_to_new_cstr(r, NULL));
+                bigint_to_new_cstr(lhs->data.integer, NULL),
+                bigint_to_new_cstr(rhs->data.integer, NULL),
+                bigint_to_new_cstr(r, NULL));
         }
         res = value_new_integer(expr->type, r);
         break;
@@ -770,15 +762,15 @@ eval_rvalue_binary(struct expr const* expr)
     case BOP_DIV: {
         assert(type_is_any_integer(lhs->type));
         assert(type_is_any_integer(rhs->type));
-        if (sunder_bigint_cmp(rhs->data.integer, SUNDER_BIGINT_ZERO) == 0) {
+        if (bigint_cmp(rhs->data.integer, BIGINT_ZERO) == 0) {
             fatal(
                 expr->location,
                 "divide by zero (%s / %s)",
-                sunder_bigint_to_new_cstr(lhs->data.integer, NULL),
-                sunder_bigint_to_new_cstr(rhs->data.integer, NULL));
+                bigint_to_new_cstr(lhs->data.integer, NULL),
+                bigint_to_new_cstr(rhs->data.integer, NULL));
         }
-        struct sunder_bigint* const r = sunder_bigint_new(SUNDER_BIGINT_ZERO);
-        sunder_bigint_divrem(r, NULL, lhs->data.integer, rhs->data.integer);
+        struct bigint* const r = bigint_new(BIGINT_ZERO);
+        bigint_divrem(r, NULL, lhs->data.integer, rhs->data.integer);
         res = value_new_integer(expr->type, r);
         break;
     }
@@ -822,8 +814,7 @@ eval_rvalue_binary(struct expr const* expr)
         bitarr_del(lhs_bits);
         bitarr_del(rhs_bits);
 
-        struct sunder_bigint* const res_bigint =
-            sunder_bigint_new(SUNDER_BIGINT_ZERO);
+        struct bigint* const res_bigint = bigint_new(BIGINT_ZERO);
         bitarr_to_bigint(res_bigint, res_bits, is_signed);
         bitarr_del(res_bits);
 
@@ -870,8 +861,7 @@ eval_rvalue_binary(struct expr const* expr)
         bitarr_del(lhs_bits);
         bitarr_del(rhs_bits);
 
-        struct sunder_bigint* const res_bigint =
-            sunder_bigint_new(SUNDER_BIGINT_ZERO);
+        struct bigint* const res_bigint = bigint_new(BIGINT_ZERO);
         bitarr_to_bigint(res_bigint, res_bits, is_signed);
         bitarr_del(res_bits);
 
@@ -918,8 +908,7 @@ eval_rvalue_binary(struct expr const* expr)
         bitarr_del(lhs_bits);
         bitarr_del(rhs_bits);
 
-        struct sunder_bigint* const res_bigint =
-            sunder_bigint_new(SUNDER_BIGINT_ZERO);
+        struct bigint* const res_bigint = bigint_new(BIGINT_ZERO);
         bitarr_to_bigint(res_bigint, res_bits, is_signed);
         bitarr_del(res_bits);
 
@@ -1013,7 +1002,7 @@ eval_lvalue_access_index(struct expr const* expr)
         fatal(
             expr->data.access_index.idx->location,
             "index out-of-range (received %s)",
-            sunder_bigint_to_new_cstr(idx->data.integer, NULL));
+            bigint_to_new_cstr(idx->data.integer, NULL));
     }
 
     assert(expr->data.access_index.lhs->type->kind == TYPE_ARRAY);
@@ -1022,7 +1011,7 @@ eval_lvalue_access_index(struct expr const* expr)
             expr->data.access_index.idx->location,
             "index out-of-bounds (array count is %zu, received %s)",
             lhs->type->data.array.count,
-            sunder_bigint_to_new_cstr(idx->data.integer, NULL));
+            bigint_to_new_cstr(idx->data.integer, NULL));
     }
 
     assert(lhs->data.pointer.kind == ADDRESS_STATIC);

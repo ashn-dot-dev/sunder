@@ -1785,9 +1785,9 @@ parse_integer(struct parser* parser)
 
     struct token const* const token = expect_current(parser, TOKEN_INTEGER);
     struct source_location const* const location = &token->location;
-    struct sunder_bigint* const value = sunder_bigint_new_text(
+    struct bigint* const value = bigint_new_text(
         token->data.integer.number.start, token->data.integer.number.count);
-    sunder_bigint_freeze(value, context()->freezer);
+    bigint_freeze(value, context()->freezer);
     char const* const suffix = sipool_intern(
         context()->sipool,
         token->data.integer.suffix.start,

@@ -935,7 +935,7 @@ cst_boolean_new(struct source_location const* location, bool value)
 struct cst_integer*
 cst_integer_new(
     struct source_location const* location,
-    struct sunder_bigint const* value,
+    struct bigint const* value,
     char const* suffix)
 {
     assert(location != NULL);
