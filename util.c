@@ -568,24 +568,6 @@ safe_isxdigit(int c)
 }
 
 int
-sunder_tolower(int c)
-{
-    if (safe_isupper(c)) {
-        return c | 0x20;
-    }
-    return c;
-}
-
-int
-sunder_toupper(int c)
-{
-    if (safe_islower(c)) {
-        return c & 0x5f;
-    }
-    return c;
-}
-
-int
 safe_memcmp(void const* s1, void const* s2, size_t n)
 {
     assert(s1 != NULL || n == 0);

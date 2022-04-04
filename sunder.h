@@ -77,8 +77,6 @@ int safe_isupper(int c);
 int safe_isbdigit(int c); // Not in C99. Binary digit.
 int safe_isodigit(int c); // Not in C99. Octal digit.
 int safe_isxdigit(int c);
-int sunder_tolower(int c);
-int sunder_toupper(int c);
 // clang-format on
 
 // Alternatives to the C99 standard library functions in string.h.
