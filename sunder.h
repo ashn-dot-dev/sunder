@@ -35,7 +35,7 @@ typedef union {
     long double long_double_;
     void*       void_ptr_;
     void        (*fn_ptr_)();
-} sunder_max_align_type;
+} max_align_type;
 // clang-format on
 
 // Number of elements in an array.
@@ -319,7 +319,7 @@ sunder_sipool_intern_cstr(struct sunder_sipool* self, char const* cstr);
 // Internal utilities that must be visible to other header/source files that
 // wish to use the sunder_sbuf_* API. Do not use these directly!
 // clang-format off
-struct sunder__sbuf_header_{size_t cnt_; size_t cap_; sunder_max_align_type _[];};
+struct sunder__sbuf_header_{size_t cnt_; size_t cap_; max_align_type _[];};
 enum{SUNDER__SBUF_HEADER_OFFSET_ = sizeof(struct sunder__sbuf_header_)};
 #define SUNDER__SBUF_PHEAD_MUTBL_(sbuf_)                                       \
     ((struct sunder__sbuf_header_      *)                                      \

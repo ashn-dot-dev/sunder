@@ -948,7 +948,7 @@ sunder_sipool_intern_cstr(struct sunder_sipool* self, char const* cstr)
 
 SUNDER_STATIC_ASSERT(
     SBUF_HEADER_OFFSET_IS_ALIGNED,
-    SUNDER__SBUF_HEADER_OFFSET_ % SUNDER_ALIGNOF(sunder_max_align_type) == 0);
+    SUNDER__SBUF_HEADER_OFFSET_ % SUNDER_ALIGNOF(max_align_type) == 0);
 
 /* reserve */
 void*
