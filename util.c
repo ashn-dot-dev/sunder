@@ -2233,19 +2233,18 @@ bigint_to_new_cstr(struct bigint const* self, char const* fmt)
 }
 
 // Byte string with guaranteed NUL termination.
-struct sunder_string {
+struct string {
     char* start;
     size_t count;
 };
 #define SUNDER_STRING_SIZE_(count_) (count_ + SUNDER_STR_LITERAL_COUNT("\0"))
 
-struct sunder_string*
-sunder_string_new(char const* start, size_t count)
+struct string*
+string_new(char const* start, size_t count)
 {
     assert(start != NULL || count == 0);
 
-    struct sunder_string* const self =
-        sunder_xalloc(NULL, sizeof(struct sunder_string));
+    struct string* const self = sunder_xalloc(NULL, sizeof(struct string));
 
     self->start = sunder_xalloc(NULL, SUNDER_STRING_SIZE_(count));
     self->count = count;
@@ -2258,32 +2257,32 @@ sunder_string_new(char const* start, size_t count)
     return self;
 }
 
-struct sunder_string*
-sunder_string_new_cstr(char const* cstr)
+struct string*
+string_new_cstr(char const* cstr)
 {
     if (cstr == NULL) {
         cstr = "";
     }
-    return sunder_string_new(cstr, strlen(cstr));
+    return string_new(cstr, strlen(cstr));
 }
 
-struct sunder_string*
-sunder_string_new_fmt(char const* fmt, ...)
+struct string*
+string_new_fmt(char const* fmt, ...)
 {
     assert(fmt != NULL);
 
-    struct sunder_string* const self = sunder_string_new(NULL, 0);
+    struct string* const self = string_new(NULL, 0);
 
     va_list args;
     va_start(args, fmt);
-    sunder_string_append_vfmt(self, fmt, args);
+    string_append_vfmt(self, fmt, args);
     va_end(args);
 
     return self;
 }
 
 void
-sunder_string_del(struct sunder_string* self)
+string_del(struct string* self)
 {
     if (self == NULL) {
         return;
@@ -2295,7 +2294,7 @@ sunder_string_del(struct sunder_string* self)
 }
 
 void
-sunder_string_freeze(struct sunder_string* self, struct sunder_freezer* freezer)
+string_freeze(struct string* self, struct sunder_freezer* freezer)
 {
     assert(self != NULL);
     assert(freezer != NULL);
@@ -2305,7 +2304,7 @@ sunder_string_freeze(struct sunder_string* self, struct sunder_freezer* freezer)
 }
 
 char const*
-sunder_string_start(struct sunder_string const* self)
+string_start(struct string const* self)
 {
     assert(self != NULL);
 
@@ -2313,7 +2312,7 @@ sunder_string_start(struct sunder_string const* self)
 }
 
 size_t
-sunder_string_count(struct sunder_string const* self)
+string_count(struct string const* self)
 {
     assert(self != NULL);
 
@@ -2321,8 +2320,7 @@ sunder_string_count(struct sunder_string const* self)
 }
 
 int
-sunder_string_cmp(
-    struct sunder_string const* lhs, struct sunder_string const* rhs)
+string_cmp(struct string const* lhs, struct string const* rhs)
 {
     assert(lhs != NULL);
     assert(rhs != NULL);
@@ -2337,7 +2335,7 @@ sunder_string_cmp(
 }
 
 void
-sunder_string_resize(struct sunder_string* self, size_t count)
+string_resize(struct string* self, size_t count)
 {
     assert(self != NULL);
 
@@ -2352,7 +2350,7 @@ sunder_string_resize(struct sunder_string* self, size_t count)
 }
 
 char*
-sunder_string_ref(struct sunder_string* self, size_t idx)
+string_ref(struct string* self, size_t idx)
 {
     assert(self != NULL);
 
@@ -2363,7 +2361,7 @@ sunder_string_ref(struct sunder_string* self, size_t idx)
 }
 
 char const*
-sunder_string_ref_const(struct sunder_string const* self, size_t idx)
+string_ref_const(struct string const* self, size_t idx)
 {
     assert(self != NULL);
 
@@ -2374,8 +2372,7 @@ sunder_string_ref_const(struct sunder_string const* self, size_t idx)
 }
 
 void
-sunder_string_insert(
-    struct sunder_string* self, size_t idx, char const* start, size_t count)
+string_insert(struct string* self, size_t idx, char const* start, size_t count)
 {
     assert(self != NULL);
     assert(start != NULL || count == 0);
@@ -2387,13 +2384,13 @@ sunder_string_insert(
         return;
     }
     size_t const mov_count = self->count - idx;
-    sunder_string_resize(self, self->count + count);
+    string_resize(self, self->count + count);
     memmove(self->start + idx + count, self->start + idx, mov_count);
     memmove(self->start + idx, start, count);
 }
 
 void
-sunder_string_remove(struct sunder_string* self, size_t idx, size_t count)
+string_remove(struct string* self, size_t idx, size_t count)
 {
     assert(self != NULL);
     if ((idx + count) > self->count) {
@@ -2404,41 +2401,39 @@ sunder_string_remove(struct sunder_string* self, size_t idx, size_t count)
         return;
     }
     memmove(self->start + idx, self->start + idx + count, self->count - count);
-    sunder_string_resize(self, self->count - count);
+    string_resize(self, self->count - count);
 }
 
 void
-sunder_string_append(
-    struct sunder_string* self, char const* start, size_t count)
+string_append(struct string* self, char const* start, size_t count)
 {
     assert(self != NULL);
 
-    sunder_string_insert(self, sunder_string_count(self), start, count);
+    string_insert(self, string_count(self), start, count);
 }
 
 void
-sunder_string_append_cstr(struct sunder_string* self, char const* cstr)
+string_append_cstr(struct string* self, char const* cstr)
 {
     assert(self != NULL);
 
-    sunder_string_insert(self, sunder_string_count(self), cstr, strlen(cstr));
+    string_insert(self, string_count(self), cstr, strlen(cstr));
 }
 
 void
-sunder_string_append_fmt(struct sunder_string* self, char const* fmt, ...)
+string_append_fmt(struct string* self, char const* fmt, ...)
 {
     assert(self != NULL);
     assert(fmt != NULL);
 
     va_list args;
     va_start(args, fmt);
-    sunder_string_append_vfmt(self, fmt, args);
+    string_append_vfmt(self, fmt, args);
     va_end(args);
 }
 
 void
-sunder_string_append_vfmt(
-    struct sunder_string* self, char const* fmt, va_list args)
+string_append_vfmt(struct string* self, char const* fmt, va_list args)
 {
     assert(self != NULL);
     assert(fmt != NULL);
@@ -2455,21 +2450,19 @@ sunder_string_append_vfmt(
     size_t size = (size_t)len + SUNDER_STR_LITERAL_COUNT("\0");
     char* const buf = sunder_xalloc(NULL, size);
     vsnprintf(buf, size, fmt, args);
-    sunder_string_append(self, buf, (size_t)len);
+    string_append(self, buf, (size_t)len);
     sunder_xalloc(buf, SUNDER_XALLOC_FREE);
 }
 
-struct sunder_string**
-sunder_string_split_on(
-    struct sunder_string const* self,
-    char const* separator,
-    size_t separator_size)
+struct string**
+string_split_on(
+    struct string const* self, char const* separator, size_t separator_size)
 {
     assert(self != NULL);
-    sunder_sbuf(struct sunder_string*) res = NULL;
+    sunder_sbuf(struct string*) res = NULL;
 
     if (separator_size == 0) {
-        sunder_sbuf_push(res, sunder_string_new(self->start, self->count));
+        sunder_sbuf_push(res, string_new(self->start, self->count));
         return res;
     }
 
@@ -2481,11 +2474,11 @@ sunder_string_split_on(
             end += 1;
             continue;
         }
-        sunder_sbuf_push(res, sunder_string_new(beg, (size_t)(end - beg)));
+        sunder_sbuf_push(res, string_new(beg, (size_t)(end - beg)));
         beg = end + separator_size;
         end = beg;
     }
-    sunder_sbuf_push(res, sunder_string_new(beg, (size_t)(end - beg)));
+    sunder_sbuf_push(res, string_new(beg, (size_t)(end - beg)));
     return res;
 }
 

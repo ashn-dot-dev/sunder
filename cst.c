@@ -388,7 +388,7 @@ cst_expr_new_character(struct source_location const* location, int character)
 
 struct cst_expr*
 cst_expr_new_bytes(
-    struct source_location const* location, struct sunder_string const* bytes)
+    struct source_location const* location, struct string const* bytes)
 {
     assert(location != NULL);
     assert(bytes != NULL);

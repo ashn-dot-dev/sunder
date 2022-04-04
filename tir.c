@@ -235,19 +235,19 @@ type_new_function(
 {
     assert(return_type != NULL);
 
-    struct sunder_string* const name_string = sunder_string_new_cstr("func(");
+    struct string* const name_string = string_new_cstr("func(");
     if (sunder_sbuf_count(parameter_types) != 0) {
-        sunder_string_append_cstr(name_string, parameter_types[0]->name);
+        string_append_cstr(name_string, parameter_types[0]->name);
     }
     for (size_t i = 1; i < sunder_sbuf_count(parameter_types); ++i) {
-        sunder_string_append_fmt(name_string, ", %s", parameter_types[i]->name);
+        string_append_fmt(name_string, ", %s", parameter_types[i]->name);
     }
-    sunder_string_append_fmt(name_string, ") %s", return_type->name);
+    string_append_fmt(name_string, ") %s", return_type->name);
     char const* const name = sipool_intern(
         context()->sipool,
-        sunder_string_start(name_string),
-        sunder_string_count(name_string));
-    sunder_string_del(name_string);
+        string_start(name_string),
+        string_count(name_string));
+    string_del(name_string);
 
     struct symbol_table* const symbols =
         symbol_table_new(context()->global_symbol_table);
@@ -264,13 +264,12 @@ type_new_pointer(struct type const* base)
 {
     assert(base != NULL);
 
-    struct sunder_string* const name_string =
-        sunder_string_new_fmt("*%s", base->name);
+    struct string* const name_string = string_new_fmt("*%s", base->name);
     char const* const name = sipool_intern(
         context()->sipool,
-        sunder_string_start(name_string),
-        sunder_string_count(name_string));
-    sunder_string_del(name_string);
+        string_start(name_string),
+        string_count(name_string));
+    string_del(name_string);
 
     struct symbol_table* const symbols =
         symbol_table_new(context()->global_symbol_table);
@@ -286,13 +285,13 @@ type_new_array(size_t count, struct type const* base)
 {
     assert(base != NULL);
 
-    struct sunder_string* const name_string =
-        sunder_string_new_fmt("[%zu]%s", count, base->name);
+    struct string* const name_string =
+        string_new_fmt("[%zu]%s", count, base->name);
     char const* const name = sipool_intern(
         context()->sipool,
-        sunder_string_start(name_string),
-        sunder_string_count(name_string));
-    sunder_string_del(name_string);
+        string_start(name_string),
+        string_count(name_string));
+    string_del(name_string);
 
     size_t const size = count * base->size;
     assert((count == 0 || size / count == base->size) && "array size overflow");
@@ -317,13 +316,12 @@ type_new_slice(struct type const* base)
 {
     assert(base != NULL);
 
-    struct sunder_string* const name_string =
-        sunder_string_new_fmt("[]%s", base->name);
+    struct string* const name_string = string_new_fmt("[]%s", base->name);
     char const* const name = sipool_intern(
         context()->sipool,
-        sunder_string_start(name_string),
-        sunder_string_count(name_string));
-    sunder_string_del(name_string);
+        string_start(name_string),
+        string_count(name_string));
+    string_del(name_string);
 
     struct symbol_table* const symbols =
         symbol_table_new(context()->global_symbol_table);

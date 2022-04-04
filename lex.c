@@ -428,16 +428,16 @@ lex_bytes(struct lexer* self)
     char const* const start = self->current;
     self->current += 1;
 
-    struct sunder_string* bytes = sunder_string_new(NULL, 0);
+    struct string* bytes = string_new(NULL, 0);
     while (*self->current != '"') {
-        sunder_string_append_fmt(
+        string_append_fmt(
             bytes, "%c", advance_character(self, "bytes literal"));
     }
 
     assert(*self->current == '"');
     self->current += 1;
 
-    sunder_string_freeze(bytes, context()->freezer);
+    string_freeze(bytes, context()->freezer);
     struct token* token = token_new(
         start,
         (size_t)(self->current - start),

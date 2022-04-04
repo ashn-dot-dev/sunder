@@ -16,7 +16,7 @@ struct vstr;
 struct sipool;
 struct bitarr;
 struct bigint;
-struct sunder_string;
+struct string;
 struct sunder_vec;
 struct sunder_map;
 struct sunder_freezer;
@@ -549,89 +549,82 @@ char*
 bigint_to_new_cstr(struct bigint const* self, char const* fmt);
 
 // Allocate and initialize a string from the first count bytes of start.
-struct sunder_string*
-sunder_string_new(char const* start, size_t count);
+struct string*
+string_new(char const* start, size_t count);
 // Allocate and initialize a string from the provided NUL-terminated cstring.
 // If cstr is NULL then string will be initialized to the empty string.
-struct sunder_string*
-sunder_string_new_cstr(char const* cstr);
+struct string*
+string_new_cstr(char const* cstr);
 // Allocate and initialize a string from the provided formatted text.
-struct sunder_string*
-sunder_string_new_fmt(char const* fmt, ...);
+struct string*
+string_new_fmt(char const* fmt, ...);
 // Deinitialize and free the string.
 // Does nothing if self == NULL.
 void
-sunder_string_del(struct sunder_string* self);
+string_del(struct string* self);
 // Register resources within the string with the provided freezer.
 void
-sunder_string_freeze(
-    struct sunder_string* self, struct sunder_freezer* freezer);
+string_freeze(struct string* self, struct sunder_freezer* freezer);
 
 // Pointer to the start of the underlying char array of the string.
 // Returns a pointer to a NUL terminator when the count of the string is zero.
 char const*
-sunder_string_start(struct sunder_string const* self);
+string_start(struct string const* self);
 // The number of bytes in the string *NOT* including the NUL terminator.
 size_t
-sunder_string_count(struct sunder_string const* self);
+string_count(struct string const* self);
 
 // Return an int less than, equal to, or greater than zero if lhs is
 // lexicographically less than, equal to, or greater than rhs, respectively.
 int
-sunder_string_cmp(
-    struct sunder_string const* lhs, struct sunder_string const* rhs);
+string_cmp(struct string const* lhs, struct string const* rhs);
 
 // Update the count of the string.
 // If count is greater than the current count of the string then additional
 // elements are initialized with garbage data.
 void
-sunder_string_resize(struct sunder_string* self, size_t count);
+string_resize(struct string* self, size_t count);
 
 // Return a pointer to the byte of the string at position idx.
 // Fatally exits after printing an error message if idx is out of bounds.
 char*
-sunder_string_ref(struct sunder_string* self, size_t idx);
+string_ref(struct string* self, size_t idx);
 char const*
-sunder_string_ref_const(struct sunder_string const* self, size_t idx);
+string_ref_const(struct string const* self, size_t idx);
 
 // Insert count bytes of start into the string at position idx.
 // Bytes with position greater than idx are moved back count bytes.
 // Fatally exits after printing an error message if idx is out of bounds.
 void
-sunder_string_insert(
-    struct sunder_string* self, size_t idx, char const* start, size_t count);
+string_insert(struct string* self, size_t idx, char const* start, size_t count);
 // Remove count bytes at position idx from the string.
 // Bytes with position greater than idx are moved forward count bytes.
 // Fatally exits after printing an error message if the slice to be removed
 // indexes out of bounds.
 void
-sunder_string_remove(struct sunder_string* self, size_t idx, size_t count);
+string_remove(struct string* self, size_t idx, size_t count);
 
 // Append count bytes of start onto the end of the string.
 void
-sunder_string_append(
-    struct sunder_string* self, char const* start, size_t count);
+string_append(struct string* self, char const* start, size_t count);
 // Append the provided NUL-terminated cstring onto the end of the string.
 void
-sunder_string_append_cstr(struct sunder_string* self, char const* cstr);
+string_append_cstr(struct string* self, char const* cstr);
 // Append the formatted text to the end of the string.
 void
-sunder_string_append_fmt(struct sunder_string* self, char const* fmt, ...);
+string_append_fmt(struct string* self, char const* fmt, ...);
 void
-sunder_string_append_vfmt(
-    struct sunder_string* self, char const* fmt, va_list args);
+string_append_vfmt(struct string* self, char const* fmt, va_list args);
 // Split the string on all occurrences of the provided separator.
 // Empty strings are *NOT* removed from the result.
-// This function returns a stretchy buffer of newly allocated sunder_string
+// This function returns a stretchy buffer of newly allocated string
 // pointers containing the results of the split.
 //
 // Example:
 //      "ABCBB" ===split on "B"===> "A" "C" "" ""
-struct sunder_string**
-sunder_string_split_on(
-    struct sunder_string const* self,
-    char const* separator,
-    size_t separator_size);
+struct string**
+string_split_on(
+    struct string const* self, char const* separator, size_t separator_size);
 
 // Allocate and initialize a freezer.
 struct sunder_freezer*
@@ -1008,7 +1001,7 @@ struct token {
         int character;
         // TOKEN_BYTES
         // Contains the un-escaped contents of the bytes literal.
-        struct sunder_string const* bytes;
+        struct string const* bytes;
     } data;
 };
 char*
@@ -1260,7 +1253,7 @@ struct cst_expr {
         struct cst_boolean const* boolean;
         struct cst_integer const* integer;
         int character;
-        struct sunder_string const* bytes;
+        struct string const* bytes;
         struct {
             struct cst_typespec const* typespec;
             sunder_sbuf(struct cst_expr const* const) elements;
@@ -1337,7 +1330,7 @@ struct cst_expr*
 cst_expr_new_character(struct source_location const* location, int character);
 struct cst_expr*
 cst_expr_new_bytes(
-    struct source_location const* location, struct sunder_string const* bytes);
+    struct source_location const* location, struct string const* bytes);
 struct cst_expr*
 cst_expr_new_array(
     struct source_location const* location,

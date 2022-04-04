@@ -7,7 +7,7 @@
 #include <string.h>
 #include "sunder.h"
 
-static struct sunder_string* out = NULL;
+static struct string* out = NULL;
 static struct function const* current_function = NULL;
 static size_t current_loop_id; // Used for generating break & continue lables.
 static size_t unique_id = 0; // Used for generating unique names and labels.
@@ -95,7 +95,7 @@ append(char const* fmt, ...)
 
     va_list args;
     va_start(args, fmt);
-    sunder_string_append_vfmt(out, fmt, args);
+    string_append_vfmt(out, fmt, args);
     va_end(args);
 }
 
@@ -107,10 +107,10 @@ appendln(char const* fmt, ...)
 
     va_list args;
     va_start(args, fmt);
-    sunder_string_append_vfmt(out, fmt, args);
+    string_append_vfmt(out, fmt, args);
     va_end(args);
 
-    sunder_string_append_cstr(out, "\n");
+    string_append_cstr(out, "\n");
 }
 
 static void
@@ -119,14 +119,14 @@ appendli(char const* fmt, ...)
     assert(out != NULL);
     assert(fmt != NULL);
 
-    sunder_string_append_cstr(out, "    ");
+    string_append_cstr(out, "    ");
 
     va_list args;
     va_start(args, fmt);
-    sunder_string_append_vfmt(out, fmt, args);
+    string_append_vfmt(out, fmt, args);
     va_end(args);
 
-    sunder_string_append_cstr(out, "\n");
+    string_append_cstr(out, "\n");
 }
 
 static void
@@ -138,22 +138,21 @@ appendli_location(struct source_location const* location, char const* fmt, ...)
     assert(location->line != NO_LINE);
     assert(location->psrc != NO_PSRC);
 
-    sunder_string_append_fmt(
-        out, "    ; [%s:%zu] ", location->path, location->line);
+    string_append_fmt(out, "    ; [%s:%zu] ", location->path, location->line);
 
     va_list args;
     va_start(args, fmt);
-    sunder_string_append_vfmt(out, fmt, args);
+    string_append_vfmt(out, fmt, args);
     va_end(args);
 
-    sunder_string_append_cstr(out, "\n");
+    string_append_cstr(out, "\n");
 
     char const* const line_start = source_line_start(location->psrc);
     char const* const line_end = source_line_end(location->psrc);
 
-    sunder_string_append_fmt(
+    string_append_fmt(
         out, "    ;%.*s\n", (int)(line_end - line_start), line_start);
-    sunder_string_append_fmt(
+    string_append_fmt(
         out, "    ;%*s^\n", (int)(location->psrc - line_start), "");
 }
 
@@ -162,7 +161,7 @@ appendch(char ch)
 {
     assert(out != NULL);
 
-    sunder_string_append(out, &ch, 1u);
+    string_append(out, &ch, 1u);
 }
 
 static void
@@ -776,21 +775,21 @@ codegen_sys(void)
     if (SUNDER_HOME == NULL) {
         fatal(NULL, "missing environment variable SUNDER_HOME");
     }
-    struct sunder_string* const core =
-        sunder_string_new_fmt("%s/lib/sys/sys.asm", SUNDER_HOME);
+    struct string* const core =
+        string_new_fmt("%s/lib/sys/sys.asm", SUNDER_HOME);
 
     void* buf = NULL;
     size_t buf_size = 0;
-    if (sunder_file_read(sunder_string_start(core), &buf, &buf_size)) {
+    if (sunder_file_read(string_start(core), &buf, &buf_size)) {
         fatal(
             NULL,
             "failed to read '%s' with error '%s'",
-            sunder_string_start(core),
+            string_start(core),
             strerror(errno));
     }
     append("%.*s", (int)buf_size, (char const*)buf);
 
-    sunder_string_del(core);
+    string_del(core);
     sunder_xalloc(buf, SUNDER_XALLOC_FREE);
 }
 
@@ -2601,10 +2600,9 @@ codegen(char const* const opt_o, bool opt_k)
 {
     assert(opt_o != NULL);
 
-    out = sunder_string_new(NULL, 0u);
-    struct sunder_string* const asm_path =
-        sunder_string_new_fmt("%s.asm", opt_o);
-    struct sunder_string* const obj_path = sunder_string_new_fmt("%s.o", opt_o);
+    out = string_new(NULL, 0u);
+    struct string* const asm_path = string_new_fmt("%s.asm", opt_o);
+    struct string* const obj_path = string_new_fmt("%s.o", opt_o);
 
     codegen_sys();
     appendch('\n');
@@ -2616,13 +2614,11 @@ codegen(char const* const opt_o, bool opt_k)
 
     int err = 0;
     if ((err = sunder_file_write(
-             sunder_string_start(asm_path),
-             sunder_string_start(out),
-             sunder_string_count(out)))) {
+             string_start(asm_path), string_start(out), string_count(out)))) {
         error(
             NULL,
             "unable to write file `%s` with error '%s'",
-            sunder_string_start(asm_path),
+            string_start(asm_path),
             strerror(errno));
         goto cleanup;
     }
@@ -2630,7 +2626,7 @@ codegen(char const* const opt_o, bool opt_k)
     // clang-format off
     char const* const nasm_argv[] = {
         "nasm", "-w+error=all", "-f", "elf64", "-O0", "-g", "-F", "dwarf",
-        sunder_string_start(asm_path), (char const*)NULL
+        string_start(asm_path), (char const*)NULL
     };
     // clang-format on
     if ((err = spawnvpw(nasm_argv))) {
@@ -2639,7 +2635,7 @@ codegen(char const* const opt_o, bool opt_k)
 
     // clang-format off
     char const* const ld_argv[] = {
-        "ld", "-o",  opt_o, sunder_string_start(obj_path), (char const*)NULL
+        "ld", "-o",  opt_o, string_start(obj_path), (char const*)NULL
     };
     // clang-format on
     if ((err = spawnvpw(ld_argv))) {
@@ -2648,12 +2644,12 @@ codegen(char const* const opt_o, bool opt_k)
 
 cleanup:
     if (!opt_k) {
-        (void)remove(sunder_string_start(asm_path));
-        (void)remove(sunder_string_start(obj_path));
+        (void)remove(string_start(asm_path));
+        (void)remove(string_start(obj_path));
     }
-    sunder_string_del(asm_path);
-    sunder_string_del(obj_path);
-    sunder_string_del(out);
+    string_del(asm_path);
+    string_del(obj_path);
+    string_del(out);
     if (err) {
         exit(EXIT_FAILURE);
     }

@@ -322,10 +322,10 @@ parse_import(struct parser* parser)
     struct source_location const* const location =
         &expect_current(parser, TOKEN_IMPORT)->location;
 
-    struct sunder_string const* const bytes =
+    struct string const* const bytes =
         expect_current(parser, TOKEN_BYTES)->data.bytes;
     char const* const path =
-        sipool_intern_cstr(context()->sipool, sunder_string_start(bytes));
+        sipool_intern_cstr(context()->sipool, string_start(bytes));
     expect_current(parser, TOKEN_SEMICOLON);
 
     struct cst_import* const product = cst_import_new(location, path);

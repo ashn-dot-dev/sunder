@@ -414,19 +414,19 @@ qualified_name(char const* prefix, char const* name)
 {
     assert(name != NULL);
 
-    struct sunder_string* const s = sunder_string_new(NULL, 0);
+    struct string* const s = string_new(NULL, 0);
 
     // <prefix>::
     if (prefix != NULL) {
-        sunder_string_append_fmt(s, "%s::", prefix);
+        string_append_fmt(s, "%s::", prefix);
     }
     // <prefix>::<name>
-    sunder_string_append_cstr(s, name);
+    string_append_cstr(s, name);
 
-    char const* const interned = sipool_intern(
-        context()->sipool, sunder_string_start(s), sunder_string_count(s));
+    char const* const interned =
+        sipool_intern(context()->sipool, string_start(s), string_count(s));
 
-    sunder_string_del(s);
+    string_del(s);
     return interned;
 }
 
@@ -435,19 +435,19 @@ qualified_addr(char const* prefix, char const* name)
 {
     assert(name != NULL);
 
-    struct sunder_string* const s = sunder_string_new(NULL, 0);
+    struct string* const s = string_new(NULL, 0);
 
     // <prefix>.
     if (prefix != NULL) {
-        sunder_string_append_fmt(s, "%s.", prefix);
+        string_append_fmt(s, "%s.", prefix);
     }
     // <prefix>.<name>
-    sunder_string_append_cstr(s, name);
+    string_append_cstr(s, name);
 
-    char const* const interned = sipool_intern(
-        context()->sipool, sunder_string_start(s), sunder_string_count(s));
+    char const* const interned =
+        sipool_intern(context()->sipool, string_start(s), string_count(s));
 
-    sunder_string_del(s);
+    string_del(s);
     return interned;
 }
 
@@ -458,40 +458,37 @@ normalize(char const* prefix, char const* name, unsigned unique_id)
 
     // Substitute invalid assembly character symbols with replacement
     // characters within the provided name.
-    struct sunder_string* const name_string = sunder_string_new(NULL, 0);
+    struct string* const name_string = string_new(NULL, 0);
     for (char const* search = name; *search != '\0'; ++search) {
         if (sunder_isalnum(*search) || *search == '_') {
-            sunder_string_append_fmt(name_string, "%c", *search);
+            string_append_fmt(name_string, "%c", *search);
             continue;
         }
 
         // Replace all non valid identifier characters with an underscore.
-        sunder_string_append_cstr(name_string, "_");
+        string_append_cstr(name_string, "_");
     }
-    assert(sunder_string_count(name_string) != 0);
+    assert(string_count(name_string) != 0);
 
-    struct sunder_string* const s = sunder_string_new(NULL, 0);
+    struct string* const s = string_new(NULL, 0);
 
     // <prefix>.
     if (prefix != NULL) {
-        sunder_string_append_fmt(s, "%s.", prefix);
+        string_append_fmt(s, "%s.", prefix);
     }
     // <prefix>.<name>
-    sunder_string_append_fmt(
-        s,
-        "%.*s",
-        (int)sunder_string_count(name_string),
-        sunder_string_start(name_string));
+    string_append_fmt(
+        s, "%.*s", (int)string_count(name_string), string_start(name_string));
     // <prefix>.<name>.<unique-id>
     if (unique_id != 0) {
-        sunder_string_append_fmt(s, ".%u", unique_id);
+        string_append_fmt(s, ".%u", unique_id);
     }
 
-    char const* const interned = sipool_intern(
-        context()->sipool, sunder_string_start(s), sunder_string_count(s));
+    char const* const interned =
+        sipool_intern(context()->sipool, string_start(s), string_count(s));
 
-    sunder_string_del(s);
-    sunder_string_del(name_string);
+    string_del(s);
+    string_del(name_string);
     return interned;
 }
 
@@ -740,20 +737,18 @@ xget_template_instance(
         sunder_sbuf_freeze(template_types, context()->freezer);
 
         // Replace function identifier (i.e. name).
-        struct sunder_string* const name_string =
-            sunder_string_new_cstr(symbol->name);
-        sunder_string_append_cstr(name_string, "[[");
+        struct string* const name_string = string_new_cstr(symbol->name);
+        string_append_cstr(name_string, "[[");
         for (size_t i = 0; i < template_arguments_count; ++i) {
             if (i != 0) {
-                sunder_string_append_cstr(name_string, ", ");
+                string_append_cstr(name_string, ", ");
             }
-            sunder_string_append_fmt(
-                name_string, "%s", template_types[i]->name);
+            string_append_fmt(name_string, "%s", template_types[i]->name);
         }
-        sunder_string_append_cstr(name_string, "]]");
-        char const* const name_interned = sipool_intern_cstr(
-            context()->sipool, sunder_string_start(name_string));
-        sunder_string_del(name_string);
+        string_append_cstr(name_string, "]]");
+        char const* const name_interned =
+            sipool_intern_cstr(context()->sipool, string_start(name_string));
+        string_del(name_string);
         struct cst_identifier* const instance_identifier =
             cst_identifier_new(location, name_interned);
         sunder_freezer_register(context()->freezer, instance_identifier);
@@ -866,20 +861,18 @@ xget_template_instance(
         sunder_sbuf_freeze(template_types, context()->freezer);
 
         // Replace struct identifier (i.e. name).
-        struct sunder_string* const name_string =
-            sunder_string_new_cstr(symbol->name);
-        sunder_string_append_cstr(name_string, "[[");
+        struct string* const name_string = string_new_cstr(symbol->name);
+        string_append_cstr(name_string, "[[");
         for (size_t i = 0; i < template_arguments_count; ++i) {
             if (i != 0) {
-                sunder_string_append_cstr(name_string, ", ");
+                string_append_cstr(name_string, ", ");
             }
-            sunder_string_append_fmt(
-                name_string, "%s", template_types[i]->name);
+            string_append_fmt(name_string, "%s", template_types[i]->name);
         }
-        sunder_string_append_cstr(name_string, "]]");
-        char const* const name_interned = sipool_intern_cstr(
-            context()->sipool, sunder_string_start(name_string));
-        sunder_string_del(name_string);
+        string_append_cstr(name_string, "]]");
+        char const* const name_interned =
+            sipool_intern_cstr(context()->sipool, string_start(name_string));
+        string_del(name_string);
         struct cst_identifier* const instance_identifier =
             cst_identifier_new(location, name_interned);
         sunder_freezer_register(context()->freezer, instance_identifier);
@@ -1190,43 +1183,41 @@ canonical_import_path(char const* module_path, char const* import_path)
 
     // Path relative to the current module.
     char const* const module_dir = directory_path(module_path);
-    struct sunder_string* const tmp =
-        sunder_string_new_fmt("%s/%s", module_dir, import_path);
-    if (file_exists(sunder_string_start(tmp))) {
-        result = canonical_path(sunder_string_start(tmp));
-        sunder_string_del(tmp);
+    struct string* const tmp = string_new_fmt("%s/%s", module_dir, import_path);
+    if (file_exists(string_start(tmp))) {
+        result = canonical_path(string_start(tmp));
+        string_del(tmp);
         return result;
     }
 
     // Path relative to environment-defined import path-list.
     char const* SUNDER_IMPORT_PATH = getenv("SUNDER_IMPORT_PATH");
     if (SUNDER_IMPORT_PATH == NULL) {
-        sunder_string_del(tmp);
+        string_del(tmp);
         return NULL;
     }
-    sunder_string_resize(tmp, 0u);
-    sunder_string_append_cstr(tmp, SUNDER_IMPORT_PATH);
+    string_resize(tmp, 0u);
+    string_append_cstr(tmp, SUNDER_IMPORT_PATH);
 
-    sunder_sbuf(struct sunder_string*) const imp =
-        sunder_string_split_on(tmp, ":", SUNDER_STR_LITERAL_COUNT(":"));
+    sunder_sbuf(struct string*) const imp =
+        string_split_on(tmp, ":", SUNDER_STR_LITERAL_COUNT(":"));
     for (size_t i = 0; i < sunder_sbuf_count(imp); ++i) {
-        struct sunder_string* const s = imp[i];
+        struct string* const s = imp[i];
 
-        sunder_string_resize(tmp, 0u);
-        sunder_string_append_fmt(
-            tmp, "%s/%s", sunder_string_start(s), import_path);
+        string_resize(tmp, 0u);
+        string_append_fmt(tmp, "%s/%s", string_start(s), import_path);
 
-        if (!file_exists(sunder_string_start(tmp))) {
+        if (!file_exists(string_start(tmp))) {
             continue;
         }
 
-        result = canonical_path(sunder_string_start(tmp));
+        result = canonical_path(string_start(tmp));
         break; // Found the module.
     }
 
-    sunder_string_del(tmp);
+    string_del(tmp);
     for (size_t i = 0; i < sunder_sbuf_count(imp); ++i) {
-        sunder_string_del(imp[i]);
+        string_del(imp[i]);
     }
     sunder_sbuf_fini(imp);
     return result;
@@ -1251,11 +1242,11 @@ resolve_import_file(
     if (file_is_directory(path)) {
         sunder_sbuf(char const*) dir_contents = directory_files(path);
         for (size_t i = 0; i < sunder_sbuf_count(dir_contents); ++i) {
-            struct sunder_string* const string =
-                sunder_string_new_fmt("%s/%s", file_name, dir_contents[i]);
-            char const* const interned = sipool_intern_cstr(
-                context()->sipool, sunder_string_start(string));
-            sunder_string_del(string);
+            struct string* const string =
+                string_new_fmt("%s/%s", file_name, dir_contents[i]);
+            char const* const interned =
+                sipool_intern_cstr(context()->sipool, string_start(string));
+            string_del(string);
             resolve_import_file(resolver, location, interned, true);
         }
         sunder_sbuf_fini(dir_contents);
@@ -2504,18 +2495,17 @@ resolve_expr_bytes(struct resolver* resolver, struct cst_expr const* expr)
     struct address const* const address =
         resolver_reserve_storage_static(resolver, "__bytes");
 
-    size_t const count = sunder_string_count(expr->data.bytes);
+    size_t const count = string_count(expr->data.bytes);
     struct type const* const type =
         type_unique_array(count + 1 /*NUL*/, context()->builtin.byte);
     // TODO: Allocating a value for each and every byte in the bytes literal
     // feels wasteful. It may be worth investigating some specific ascii or
-    // asciiz static object that would use the expr's sunder_string directly and
+    // asciiz static object that would use the expr's string directly and
     // then generate a readable string in the output assembly during the codegen
     // phase.
     sunder_sbuf(struct value*) elements = NULL;
     for (size_t i = 0; i < count; ++i) {
-        uint8_t const byte =
-            (uint8_t)*sunder_string_ref_const(expr->data.bytes, i);
+        uint8_t const byte = (uint8_t)*string_ref_const(expr->data.bytes, i);
         sunder_sbuf_push(elements, value_new_byte(byte));
     }
     // Append a NUL byte to the end of every bytes literal. This NUL byte is not
@@ -2659,11 +2649,11 @@ resolve_expr_array_slice(struct resolver* resolver, struct cst_expr const* expr)
     size_t const elements_count = sunder_sbuf_count(elements);
 
     static size_t id = 0;
-    struct sunder_string* const array_name_string =
-        sunder_string_new_fmt("__array_slice_elements_%zu", id++);
-    char const* const array_name = sipool_intern_cstr(
-        context()->sipool, sunder_string_start(array_name_string));
-    sunder_string_del(array_name_string);
+    struct string* const array_name_string =
+        string_new_fmt("__array_slice_elements_%zu", id++);
+    char const* const array_name =
+        sipool_intern_cstr(context()->sipool, string_start(array_name_string));
+    string_del(array_name_string);
 
     struct type const* const array_type =
         type_unique_array(elements_count, type->data.slice.base);
