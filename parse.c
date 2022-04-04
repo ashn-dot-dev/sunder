@@ -200,7 +200,7 @@ parser_new(struct module* module, struct lexer* lexer)
     assert(module != NULL);
     assert(lexer != NULL);
 
-    struct parser* const self = sunder_xalloc(NULL, sizeof(*self));
+    struct parser* const self = xalloc(NULL, sizeof(*self));
     self->module = module;
     self->lexer = lexer;
     self->current_token = NULL;
@@ -218,7 +218,7 @@ parser_del(struct parser* self)
     assert(self != NULL);
 
     memset(self, 0x00, sizeof(*self));
-    sunder_xalloc(self, SUNDER_XALLOC_FREE);
+    xalloc(self, XALLOC_FREE);
 }
 
 static struct token const*

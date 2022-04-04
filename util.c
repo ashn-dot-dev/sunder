@@ -45,7 +45,7 @@ read_source(char const* path)
     // [t][e][x][t]
     // to
     // [\0][t][e][x][t][\0]
-    text = sunder_xalloc(text, text_size + 2);
+    text = xalloc(text, text_size + 2);
     char* const result = (char*)text + 1;
     sunder_memmove(result, text, text_size);
     result[-1] = '\0'; // NUL-prefix.
@@ -239,7 +239,7 @@ bigint_to_umax(uintmax_t* res, struct bigint const* bigint)
     errno = 0;
     uintmax_t umax = strtoumax(cstr, NULL, 0);
     int const err = errno; // save errno
-    sunder_xalloc(cstr, SUNDER_XALLOC_FREE);
+    xalloc(cstr, XALLOC_FREE);
     assert(err == 0 || err == ERANGE);
     if (err == ERANGE) {
         return -1;
@@ -430,7 +430,7 @@ directory_path(char const* path)
     char* const tmp = cstr_new_cstr(canonical);
     char const* const interned =
         sipool_intern_cstr(context()->sipool, dirname(tmp));
-    sunder_xalloc(tmp, SUNDER_XALLOC_FREE);
+    xalloc(tmp, XALLOC_FREE);
 
     return interned;
 }
@@ -621,7 +621,7 @@ sunder_memset(void* s, int c, size_t n)
 }
 
 void*
-sunder_xalloc(void* ptr, size_t size)
+xalloc(void* ptr, size_t size)
 {
     if (size == 0) {
         SUNDER_FREE(ptr);
@@ -634,21 +634,20 @@ sunder_xalloc(void* ptr, size_t size)
 }
 
 void*
-sunder_xallocn(void* ptr, size_t nmemb, size_t size)
+xallocn(void* ptr, size_t nmemb, size_t size)
 {
     size_t const sz = nmemb * size;
     if (nmemb != 0 && sz / nmemb != size) {
         fatal(NULL, "[%s] Integer overflow", __func__);
     }
-    return sunder_xalloc(ptr, sz);
+    return xalloc(ptr, sz);
 }
 
-// Prepend othr_size bytes from othr onto the sunder_xalloc-allocated buffer of
+// Prepend othr_size bytes from othr onto the xalloc-allocated buffer of
 // size *psize pointed to by *pdata, updating the address of *pdata if
 // necessary.
 static void
-sunder_xalloc_prepend(
-    void** pdata, size_t* psize, void const* othr, size_t othr_size)
+xalloc_prepend(void** pdata, size_t* psize, void const* othr, size_t othr_size)
 {
     assert(pdata != NULL);
     assert(psize != NULL);
@@ -659,7 +658,7 @@ sunder_xalloc_prepend(
     }
 
     size_t const new_size = *psize + othr_size;
-    void* const new_data = sunder_xalloc(*pdata, new_size);
+    void* const new_data = xalloc(*pdata, new_size);
     memmove((char*)new_data + othr_size, new_data, *psize);
     memcpy(new_data, othr, othr_size);
 
@@ -667,12 +666,11 @@ sunder_xalloc_prepend(
     *psize = new_size;
 }
 
-// Append othr_size bytes from othr onto the sunder_xalloc-allocated buffer of
+// Append othr_size bytes from othr onto the xalloc-allocated buffer of
 // size *psize pointed to by *pdata, updating the address of *pdata if
 // necessary.
 static void
-sunder_xalloc_append(
-    void** pdata, size_t* psize, void const* othr, size_t othr_size)
+xalloc_append(void** pdata, size_t* psize, void const* othr, size_t othr_size)
 {
     assert(pdata != NULL);
     assert(psize != NULL);
@@ -683,7 +681,7 @@ sunder_xalloc_append(
     }
 
     size_t const new_size = *psize + othr_size;
-    void* const new_data = sunder_xalloc(*pdata, new_size);
+    void* const new_data = xalloc(*pdata, new_size);
     memcpy((char*)new_data + *psize, othr, othr_size);
 
     *pdata = new_data;
@@ -754,11 +752,11 @@ sunder_stream_read(FILE* stream, void** buf, size_t* buf_size)
 
     int c;
     while ((c = fgetc(stream)) != EOF) {
-        bf = sunder_xalloc(bf, sz + 1);
+        bf = xalloc(bf, sz + 1);
         bf[sz++] = (unsigned char)c;
     }
     if (ferror(stream)) {
-        sunder_xalloc(bf, SUNDER_XALLOC_FREE);
+        xalloc(bf, XALLOC_FREE);
         return -1;
     }
 
@@ -772,7 +770,7 @@ cstr_new(char const* start, size_t count)
 {
     assert(start != NULL || count == 0);
 
-    char* const s = sunder_xalloc(NULL, count + STR_LITERAL_COUNT("\0"));
+    char* const s = xalloc(NULL, count + STR_LITERAL_COUNT("\0"));
     sunder_memmove(s, start, count);
     s[count] = '\0';
     return s;
@@ -784,7 +782,7 @@ cstr_new_cstr(char const* cstr)
     assert(cstr != NULL);
 
     size_t const count = strlen(cstr);
-    char* const s = sunder_xalloc(NULL, count + STR_LITERAL_COUNT("\0"));
+    char* const s = xalloc(NULL, count + STR_LITERAL_COUNT("\0"));
     return strcpy(s, cstr);
 }
 
@@ -806,7 +804,7 @@ cstr_new_fmt(char const* fmt, ...)
     }
 
     size_t size = (size_t)len + STR_LITERAL_COUNT("\0");
-    char* const buf = sunder_xalloc(NULL, size);
+    char* const buf = xalloc(NULL, size);
     vsnprintf(buf, size, fmt, args);
     va_end(args);
 
@@ -890,7 +888,7 @@ struct sipool {
 struct sipool*
 sipool_new(void)
 {
-    struct sipool* const self = sunder_xalloc(NULL, sizeof(struct sipool));
+    struct sipool* const self = xalloc(NULL, sizeof(struct sipool));
     self->strings = NULL;
     return self;
 }
@@ -903,12 +901,12 @@ sipool_del(struct sipool* self)
     }
 
     for (size_t i = 0; i < sbuf_count(self->strings); ++i) {
-        sunder_xalloc(self->strings[i], SUNDER_XALLOC_FREE);
+        xalloc(self->strings[i], XALLOC_FREE);
     }
     sbuf_fini(self->strings);
 
     memset(self, 0x00, sizeof(*self)); // scrub
-    sunder_xalloc(self, SUNDER_XALLOC_FREE);
+    xalloc(self, XALLOC_FREE);
 }
 
 char const*
@@ -957,8 +955,8 @@ sbuf__rsv_(size_t elemsize, void* sbuf, size_t cap)
 
     assert(cap != 0);
     size_t const size = SBUF__HEADER_OFFSET_ + elemsize * cap;
-    struct sbuf__header_* const header = sunder_xalloc(
-        sbuf != NULL ? SBUF__PHEAD_MUTBL_(sbuf) : NULL, size);
+    struct sbuf__header_* const header =
+        xalloc(sbuf != NULL ? SBUF__PHEAD_MUTBL_(sbuf) : NULL, size);
     header->cnt_ = sbuf != NULL ? header->cnt_ : 0;
     header->cap_ = cap;
     return (char*)header + SBUF__HEADER_OFFSET_;
@@ -1024,7 +1022,7 @@ struct bitarr*
 bitarr_new(size_t count)
 {
     size_t const size = sunder__bitarr_size_(count);
-    struct bitarr* const self = sunder_xalloc(NULL, size);
+    struct bitarr* const self = xalloc(NULL, size);
     memset(self, 0x00, size);
 
     self->count = count;
@@ -1040,7 +1038,7 @@ bitarr_del(struct bitarr* self)
 
     size_t const size = sunder__bitarr_size_(self->count);
     memset(self, 0x00, size); // scrub
-    sunder_xalloc(self, SUNDER_XALLOC_FREE);
+    xalloc(self, XALLOC_FREE);
 }
 
 void
@@ -1316,7 +1314,7 @@ sunder__bigint_fini_(struct bigint* self)
 {
     assert(self != NULL);
 
-    sunder_xalloc(self->limbs, SUNDER_XALLOC_FREE);
+    xalloc(self->limbs, XALLOC_FREE);
     memset(self, 0x00, sizeof(*self)); // scrub
 }
 
@@ -1332,7 +1330,7 @@ sunder__bigint_resize_(struct bigint* self, size_t count)
 
     size_t const nlimbs = count - self->count; // Number of limbs to add.
     self->count = count;
-    self->limbs = sunder_xalloc(self->limbs, self->count);
+    self->limbs = xalloc(self->limbs, self->count);
     memset(self->limbs + self->count - nlimbs, 0x00, nlimbs);
 }
 
@@ -1361,7 +1359,7 @@ sunder__bigint_shiftl_limbs_(struct bigint* self, size_t nlimbs)
     }
 
     self->count += nlimbs;
-    self->limbs = sunder_xalloc(self->limbs, self->count);
+    self->limbs = xalloc(self->limbs, self->count);
     memmove((char*)self->limbs + nlimbs, self->limbs, self->count - nlimbs);
     memset(self->limbs, 0x00, nlimbs);
 }
@@ -1423,7 +1421,7 @@ bigint_new(struct bigint const* othr)
 {
     assert(othr != NULL);
 
-    struct bigint* const self = sunder_xalloc(NULL, sizeof(struct bigint));
+    struct bigint* const self = xalloc(NULL, sizeof(struct bigint));
     *self = *BIGINT_ZERO;
     bigint_assign(self, othr);
     return self;
@@ -1551,7 +1549,7 @@ bigint_del(struct bigint* self)
     }
 
     sunder__bigint_fini_(self);
-    sunder_xalloc(self, SUNDER_XALLOC_FREE);
+    xalloc(self, XALLOC_FREE);
 }
 
 void
@@ -1614,7 +1612,7 @@ bigint_assign(struct bigint* self, struct bigint const* othr)
     }
 
     self->sign = othr->sign;
-    self->limbs = sunder_xalloc(self->limbs, othr->count);
+    self->limbs = xalloc(self->limbs, othr->count);
     self->count = othr->count;
     if (self->sign != 0) {
         assert(self->limbs != NULL);
@@ -1692,7 +1690,7 @@ bigint_add(
     struct bigint RES = {0};
     RES.sign = sign;
     RES.count = 1 + (lhs->count > rhs->count ? lhs->count : rhs->count);
-    RES.limbs = sunder_xalloc(RES.limbs, RES.count);
+    RES.limbs = xalloc(RES.limbs, RES.count);
 
     unsigned carry = 0;
     for (size_t i = 0; i < RES.count; ++i) {
@@ -1766,7 +1764,7 @@ bigint_sub(
     struct bigint RES = {0};
     RES.sign = lhs->sign;
     RES.count = lhs->count > rhs->count ? lhs->count : rhs->count;
-    RES.limbs = sunder_xalloc(RES.limbs, RES.count);
+    RES.limbs = xalloc(RES.limbs, RES.count);
 
     unsigned borrow = 0;
     for (size_t i = 0; i < RES.count; ++i) {
@@ -1930,7 +1928,7 @@ bigint_magnitude_shiftl(struct bigint* self, size_t nbits)
     for (size_t n = 0; n < nbits % SUNDER__BIGINT_LIMB_BITS_; ++n) {
         if (self->limbs[self->count - 1] & 0x80) {
             self->count += 1;
-            self->limbs = sunder_xalloc(self->limbs, self->count);
+            self->limbs = xalloc(self->limbs, self->count);
             self->limbs[self->count - 1] = 0x00;
         }
         // [limb0 << 1][limb1 << 1 | msbit(limb0)][limb2 << 1 | msbit(limb1)]...
@@ -2088,26 +2086,26 @@ bigint_to_new_cstr(struct bigint const* self, char const* fmt)
     void* prefix = NULL;
     size_t prefix_size = 0;
     if (self->sign == +1 && (flags & (1u << BIGINT_FMT_FLAG_PLUS_))) {
-        sunder_xalloc_append(&prefix, &prefix_size, "+", 1);
+        xalloc_append(&prefix, &prefix_size, "+", 1);
     }
     if (self->sign == +1 && (flags & (1u << BIGINT_FMT_FLAG_SPACE_))) {
-        sunder_xalloc_append(&prefix, &prefix_size, " ", 1);
+        xalloc_append(&prefix, &prefix_size, " ", 1);
     }
     if (self->sign == -1) {
-        sunder_xalloc_append(&prefix, &prefix_size, "-", 1);
+        xalloc_append(&prefix, &prefix_size, "-", 1);
     }
     if (flags & (1u << BIGINT_FMT_FLAG_HASH_)) {
         if (specifier == 'b') {
-            sunder_xalloc_append(&prefix, &prefix_size, "0b", 2);
+            xalloc_append(&prefix, &prefix_size, "0b", 2);
         }
         if (specifier == 'o') {
-            sunder_xalloc_append(&prefix, &prefix_size, "0o", 2);
+            xalloc_append(&prefix, &prefix_size, "0o", 2);
         }
         if (specifier == 'x') {
-            sunder_xalloc_append(&prefix, &prefix_size, "0x", 2);
+            xalloc_append(&prefix, &prefix_size, "0x", 2);
         }
         if (specifier == 'X') {
-            sunder_xalloc_append(&prefix, &prefix_size, "0x", 2);
+            xalloc_append(&prefix, &prefix_size, "0x", 2);
         }
     }
 
@@ -2124,8 +2122,7 @@ bigint_to_new_cstr(struct bigint const* self, char const* fmt)
             assert(DEC.count <= 1);
             assert(DEC.limbs == NULL || DEC.limbs[0] < 10);
             sprintf(digit_buf, "%d", DEC.limbs != NULL ? (int)DEC.limbs[0] : 0);
-            sunder_xalloc_prepend(
-                &digits, &digits_size, digit_buf, strlen(digit_buf));
+            xalloc_prepend(&digits, &digits_size, digit_buf, strlen(digit_buf));
         }
         sunder__bigint_fini_(&DEC);
         sunder__bigint_fini_(&SELF);
@@ -2143,8 +2140,7 @@ bigint_to_new_cstr(struct bigint const* self, char const* fmt)
                 ((int)self->limbs[i] >> 2) & 0x01 ? '1' : '0',
                 ((int)self->limbs[i] >> 1) & 0x01 ? '1' : '0',
                 ((int)self->limbs[i] >> 0) & 0x01 ? '1' : '0');
-            sunder_xalloc_append(
-                &digits, &digits_size, digit_buf, strlen(digit_buf));
+            xalloc_append(&digits, &digits_size, digit_buf, strlen(digit_buf));
         }
     }
     else if (specifier == 'o') {
@@ -2156,8 +2152,7 @@ bigint_to_new_cstr(struct bigint const* self, char const* fmt)
             assert(OCT.count <= 1);
             assert(OCT.limbs == NULL || OCT.limbs[0] < 8);
             sprintf(digit_buf, "%o", OCT.limbs != NULL ? (int)OCT.limbs[0] : 0);
-            sunder_xalloc_prepend(
-                &digits, &digits_size, digit_buf, strlen(digit_buf));
+            xalloc_prepend(&digits, &digits_size, digit_buf, strlen(digit_buf));
         }
         sunder__bigint_fini_(&OCT);
         sunder__bigint_fini_(&SELF);
@@ -2165,15 +2160,13 @@ bigint_to_new_cstr(struct bigint const* self, char const* fmt)
     else if (specifier == 'x') {
         for (size_t i = self->count - 1; i < self->count; --i) {
             sprintf(digit_buf, "%02x", (int)self->limbs[i]);
-            sunder_xalloc_append(
-                &digits, &digits_size, digit_buf, strlen(digit_buf));
+            xalloc_append(&digits, &digits_size, digit_buf, strlen(digit_buf));
         }
     }
     else if (specifier == 'X') {
         for (size_t i = self->count - 1; i < self->count; --i) {
             sprintf(digit_buf, "%02X", (int)self->limbs[i]);
-            sunder_xalloc_append(
-                &digits, &digits_size, digit_buf, strlen(digit_buf));
+            xalloc_append(&digits, &digits_size, digit_buf, strlen(digit_buf));
         }
     }
     else {
@@ -2191,7 +2184,7 @@ bigint_to_new_cstr(struct bigint const* self, char const* fmt)
     }
     else {
         // The number zero contains one digit - zero.
-        sunder_xalloc_append(&digits, &digits_size, "0", 1);
+        xalloc_append(&digits, &digits_size, "0", 1);
     }
 
     // Width.
@@ -2204,30 +2197,30 @@ bigint_to_new_cstr(struct bigint const* self, char const* fmt)
             pad = '0';
         }
         widths_size = width - (prefix_size + digits_size);
-        widths = sunder_xalloc(widths, widths_size);
+        widths = xalloc(widths, widths_size);
         memset(widths, pad, widths_size);
 
         if (flags & (1u << BIGINT_FMT_FLAG_ZERO_)) {
             assert(!(flags & (1u << BIGINT_FMT_FLAG_MINUS_)));
-            sunder_xalloc_prepend(&digits, &digits_size, widths, widths_size);
+            xalloc_prepend(&digits, &digits_size, widths, widths_size);
         }
         else if (flags & (1u << BIGINT_FMT_FLAG_MINUS_)) {
             assert(!(flags & (1u << BIGINT_FMT_FLAG_ZERO_)));
-            sunder_xalloc_append(&digits, &digits_size, widths, widths_size);
+            xalloc_append(&digits, &digits_size, widths, widths_size);
         }
         else {
-            sunder_xalloc_prepend(&prefix, &prefix_size, widths, widths_size);
+            xalloc_prepend(&prefix, &prefix_size, widths, widths_size);
         }
     }
 
     void* cstr = NULL;
     size_t cstr_size = 0;
-    sunder_xalloc_append(&cstr, &cstr_size, prefix, prefix_size);
-    sunder_xalloc_append(&cstr, &cstr_size, digits, digits_size);
-    sunder_xalloc_append(&cstr, &cstr_size, "\0", 1);
-    sunder_xalloc(prefix, SUNDER_XALLOC_FREE);
-    sunder_xalloc(digits, SUNDER_XALLOC_FREE);
-    sunder_xalloc(widths, SUNDER_XALLOC_FREE);
+    xalloc_append(&cstr, &cstr_size, prefix, prefix_size);
+    xalloc_append(&cstr, &cstr_size, digits, digits_size);
+    xalloc_append(&cstr, &cstr_size, "\0", 1);
+    xalloc(prefix, XALLOC_FREE);
+    xalloc(digits, XALLOC_FREE);
+    xalloc(widths, XALLOC_FREE);
     return cstr;
 }
 
@@ -2243,9 +2236,9 @@ string_new(char const* start, size_t count)
 {
     assert(start != NULL || count == 0);
 
-    struct string* const self = sunder_xalloc(NULL, sizeof(struct string));
+    struct string* const self = xalloc(NULL, sizeof(struct string));
 
-    self->start = sunder_xalloc(NULL, SUNDER_STRING_SIZE_(count));
+    self->start = xalloc(NULL, SUNDER_STRING_SIZE_(count));
     self->count = count;
 
     if (start != NULL) {
@@ -2287,9 +2280,9 @@ string_del(struct string* self)
         return;
     }
 
-    sunder_xalloc(self->start, SUNDER_XALLOC_FREE);
+    xalloc(self->start, XALLOC_FREE);
     memset(self, 0x00, sizeof(*self)); // scrub
-    sunder_xalloc(self, SUNDER_XALLOC_FREE);
+    xalloc(self, XALLOC_FREE);
 }
 
 void
@@ -2339,7 +2332,7 @@ string_resize(struct string* self, size_t count)
     assert(self != NULL);
 
     if (count > self->count) {
-        self->start = sunder_xalloc(self->start, SUNDER_STRING_SIZE_(count));
+        self->start = xalloc(self->start, SUNDER_STRING_SIZE_(count));
         char* const fill_start = self->start + SUNDER_STRING_SIZE_(self->count);
         size_t const fill_count = count - self->count;
         memset(fill_start, 0x00, fill_count); // Fill new space with NULs.
@@ -2447,10 +2440,10 @@ string_append_vfmt(struct string* self, char const* fmt, va_list args)
     }
 
     size_t size = (size_t)len + STR_LITERAL_COUNT("\0");
-    char* const buf = sunder_xalloc(NULL, size);
+    char* const buf = xalloc(NULL, size);
     vsnprintf(buf, size, fmt, args);
     string_append(self, buf, (size_t)len);
-    sunder_xalloc(buf, SUNDER_XALLOC_FREE);
+    xalloc(buf, XALLOC_FREE);
 }
 
 struct string**
@@ -2490,7 +2483,7 @@ struct freezer {
 struct freezer*
 freezer_new(void)
 {
-    struct freezer* const self = sunder_xalloc(NULL, sizeof(struct sipool));
+    struct freezer* const self = xalloc(NULL, sizeof(struct sipool));
     self->ptrs = NULL;
     return self;
 }
@@ -2503,11 +2496,11 @@ freezer_del(struct freezer* self)
     }
 
     for (size_t i = 0; i < sbuf_count(self->ptrs); ++i) {
-        sunder_xalloc(self->ptrs[i], SUNDER_XALLOC_FREE);
+        xalloc(self->ptrs[i], XALLOC_FREE);
     }
     sbuf_fini(self->ptrs);
 
-    sunder_xalloc(self, SUNDER_XALLOC_FREE);
+    xalloc(self, XALLOC_FREE);
 }
 
 void

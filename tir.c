@@ -16,7 +16,7 @@ type_new(
 {
     assert(name != NULL);
 
-    struct type* const self = sunder_xalloc(NULL, sizeof(*self));
+    struct type* const self = xalloc(NULL, sizeof(*self));
     memset(self, 0x00, sizeof(*self));
     self->name = name;
     self->size = size;
@@ -454,7 +454,7 @@ type_unique_function(
     struct symbol const* const existing =
         symbol_table_lookup(context()->global_symbol_table, type->name);
     if (existing != NULL) {
-        sunder_xalloc(type, SUNDER_XALLOC_FREE);
+        xalloc(type, XALLOC_FREE);
         return symbol_xget_type(existing);
     }
 
@@ -476,7 +476,7 @@ type_unique_pointer(struct type const* base)
     struct symbol const* const existing =
         symbol_table_lookup(context()->global_symbol_table, type->name);
     if (existing != NULL) {
-        sunder_xalloc(type, SUNDER_XALLOC_FREE);
+        xalloc(type, XALLOC_FREE);
         return symbol_xget_type(existing);
     }
 
@@ -498,7 +498,7 @@ type_unique_array(size_t count, struct type const* base)
     struct symbol const* const existing =
         symbol_table_lookup(context()->global_symbol_table, type->name);
     if (existing != NULL) {
-        sunder_xalloc(type, SUNDER_XALLOC_FREE);
+        xalloc(type, XALLOC_FREE);
         return symbol_xget_type(existing);
     }
 
@@ -520,7 +520,7 @@ type_unique_slice(struct type const* base)
     struct symbol const* const existing =
         symbol_table_lookup(context()->global_symbol_table, type->name);
     if (existing != NULL) {
-        sunder_xalloc(type, SUNDER_XALLOC_FREE);
+        xalloc(type, XALLOC_FREE);
         return symbol_xget_type(existing);
     }
 
@@ -635,7 +635,7 @@ address_init_local(int rbp_offset)
 struct address*
 address_new(struct address from)
 {
-    struct address* const self = sunder_xalloc(NULL, sizeof(*self));
+    struct address* const self = xalloc(NULL, sizeof(*self));
     *self = from;
     return self;
 }
@@ -646,7 +646,7 @@ symbol_new_type(struct source_location const* location, struct type const* type)
     assert(location != NULL);
     assert(type != NULL);
 
-    struct symbol* const self = sunder_xalloc(NULL, sizeof(*self));
+    struct symbol* const self = xalloc(NULL, sizeof(*self));
     memset(self, 0x00, sizeof(*self));
     self->kind = SYMBOL_TYPE;
     self->location = location;
@@ -668,7 +668,7 @@ symbol_new_variable(
     assert(type != NULL);
     assert(address != NULL);
 
-    struct symbol* const self = sunder_xalloc(NULL, sizeof(*self));
+    struct symbol* const self = xalloc(NULL, sizeof(*self));
     memset(self, 0x00, sizeof(*self));
     self->kind = SYMBOL_VARIABLE;
     self->location = location;
@@ -694,7 +694,7 @@ symbol_new_constant(
     assert(address->kind == ADDRESS_STATIC);
     assert(value != NULL);
 
-    struct symbol* const self = sunder_xalloc(NULL, sizeof(*self));
+    struct symbol* const self = xalloc(NULL, sizeof(*self));
     memset(self, 0x00, sizeof(*self));
     self->kind = SYMBOL_CONSTANT;
     self->location = location;
@@ -713,7 +713,7 @@ symbol_new_function(
     assert(function != NULL);
     assert(function->type->kind == TYPE_FUNCTION);
 
-    struct symbol* const self = sunder_xalloc(NULL, sizeof(*self));
+    struct symbol* const self = xalloc(NULL, sizeof(*self));
     memset(self, 0x00, sizeof(*self));
     self->kind = SYMBOL_FUNCTION;
     self->location = location;
@@ -736,7 +736,7 @@ symbol_new_template(
     assert(decl != NULL);
     assert(symbols != NULL);
 
-    struct symbol* const self = sunder_xalloc(NULL, sizeof(*self));
+    struct symbol* const self = xalloc(NULL, sizeof(*self));
     memset(self, 0x00, sizeof(*self));
     self->kind = SYMBOL_TEMPLATE;
     self->location = location;
@@ -758,7 +758,7 @@ symbol_new_namespace(
     assert(name != NULL);
     assert(symbols != NULL);
 
-    struct symbol* const self = sunder_xalloc(NULL, sizeof(*self));
+    struct symbol* const self = xalloc(NULL, sizeof(*self));
     memset(self, 0x00, sizeof(*self));
     self->kind = SYMBOL_NAMESPACE;
     self->location = location;
@@ -848,7 +848,7 @@ symbol_xget_value(struct symbol const* self)
 struct symbol_table*
 symbol_table_new(struct symbol_table const* parent)
 {
-    struct symbol_table* const self = sunder_xalloc(NULL, sizeof(*self));
+    struct symbol_table* const self = xalloc(NULL, sizeof(*self));
     memset(self, 0x00, sizeof(*self));
 
     self->parent = parent;
@@ -930,7 +930,7 @@ symbol_table_lookup_local(struct symbol_table const* self, char const* name)
 static struct stmt*
 stmt_new(struct source_location const* location, enum stmt_kind kind)
 {
-    struct stmt* const self = sunder_xalloc(NULL, sizeof(*self));
+    struct stmt* const self = xalloc(NULL, sizeof(*self));
     memset(self, 0x00, sizeof(*self));
     self->location = location;
     self->kind = kind;
@@ -1063,7 +1063,7 @@ expr_new(
     assert(location != NULL);
     assert(type != NULL);
 
-    struct expr* const self = sunder_xalloc(NULL, sizeof(*self));
+    struct expr* const self = xalloc(NULL, sizeof(*self));
     memset(self, 0x00, sizeof(*self));
     self->location = location;
     self->type = type;
@@ -1489,7 +1489,7 @@ function_new(
     assert(address != NULL);
     assert(address->kind == ADDRESS_STATIC);
 
-    struct function* const self = sunder_xalloc(NULL, sizeof(*self));
+    struct function* const self = xalloc(NULL, sizeof(*self));
     memset(self, 0x00, sizeof(*self));
     self->name = name;
     self->type = type;
@@ -1503,7 +1503,7 @@ conditional_new(
     struct expr const* condition,
     struct block const* body)
 {
-    struct conditional* const self = sunder_xalloc(NULL, sizeof(*self));
+    struct conditional* const self = xalloc(NULL, sizeof(*self));
     memset(self, 0x00, sizeof(*self));
     self->location = location;
     self->condition = condition;
@@ -1520,7 +1520,7 @@ block_new(
     assert(location != NULL);
     assert(symbol_table != NULL);
 
-    struct block* const self = sunder_xalloc(NULL, sizeof(*self));
+    struct block* const self = xalloc(NULL, sizeof(*self));
     memset(self, 0x00, sizeof(*self));
     self->location = location;
     self->symbol_table = symbol_table;
@@ -1533,7 +1533,7 @@ value_new(struct type const* type)
 {
     assert(type != NULL);
 
-    struct value* const self = sunder_xalloc(NULL, sizeof(*self));
+    struct value* const self = xalloc(NULL, sizeof(*self));
     memset(self, 0x00, sizeof(*self));
     self->type = type;
     return self;
@@ -1720,7 +1720,7 @@ value_del(struct value* self)
     }
 
     memset(self, 0x00, sizeof(*self));
-    sunder_xalloc(self, SUNDER_XALLOC_FREE);
+    xalloc(self, XALLOC_FREE);
 }
 
 void

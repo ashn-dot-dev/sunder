@@ -117,7 +117,7 @@ lexer_new(struct module* module)
 {
     assert(module != NULL);
 
-    struct lexer* const self = sunder_xalloc(NULL, sizeof(*self));
+    struct lexer* const self = xalloc(NULL, sizeof(*self));
     memset(self, 0x00, sizeof(*self));
 
     self->module = module;
@@ -133,7 +133,7 @@ lexer_del(struct lexer* self)
     assert(self != NULL);
 
     memset(self, 0x00, sizeof(*self));
-    sunder_xalloc(self, SUNDER_XALLOC_FREE);
+    xalloc(self, XALLOC_FREE);
 }
 
 static struct token*
@@ -146,7 +146,7 @@ token_new(
     assert(start != NULL || count == 0);
     assert(count != 0 || kind == TOKEN_EOF);
 
-    struct token* const self = sunder_xalloc(NULL, sizeof(*self));
+    struct token* const self = xalloc(NULL, sizeof(*self));
     memset(self, 0x00, sizeof(*self));
     self->kind = kind;
     self->start = start;

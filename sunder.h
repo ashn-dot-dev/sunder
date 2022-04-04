@@ -91,26 +91,24 @@ void* sunder_memset(void* s, int c, size_t n);
 // clang-format on
 
 // General purpose allocator functions with out-of-memory error checking. The
-// behavior of sunder_xalloc and sunder_xallocn is similar to libc realloc and
+// behavior of xalloc and xallocn is similar to libc realloc and
 // *BSD reallocarray with the following exceptions:
 // (1) On allocation failure an error message will be printed followed by
 //     program termination with EXIT_FAILURE status.
-// (2) The call sunder_xalloc(ptr, 0) is guaranteed to free the memory backing
-//     ptr. A pointer returned by sunder_xalloc may be freed with
-//     sunder_xalloc(ptr, 0) or the equivalent sunder_xalloc(ptr,
-//     SUNDER_XALLOC_FREE). The calls sunder_xallocn(ptr, x, 0) and
-//     sunder_xallocn(ptr, 0, y) are equivalent to sunder_xalloc(ptr, 0).
-// The macro SUNDER_XALLOC_FREE may be used in place of the constant zero to
-// indicate that a call sunder_xalloc(ptr, SUNDER_XALLOC_FREE) is intended as a
-// free operation.
+// (2) The call xalloc(ptr, 0) is guaranteed to free the memory backing prt. A
+//     pointer returned by xalloc may be freed with xalloc(ptr, 0) or the
+//     equivalent xalloc(ptr, XALLOC_FREE). The calls xallocn(ptr, x, 0) and
+//     xallocn(ptr, 0, y) are equivalent to xalloc(ptr, 0).
+// The macro XALLOC_FREE may be used in place of the constant zero to indicate
+// that a call xalloc(ptr, XALLOC_FREE) is intended as a free operation.
 void*
-sunder_xalloc(void* ptr, size_t size);
+xalloc(void* ptr, size_t size);
 void*
-sunder_xallocn(void* ptr, size_t nmemb, size_t size);
-#define SUNDER_XALLOC_FREE ((size_t)0)
+xallocn(void* ptr, size_t nmemb, size_t size);
+#define XALLOC_FREE ((size_t)0)
 
 // Read the full contents of the file specified by path.
-// Memory for the read content is allocated with sunder_xalloc.
+// Memory for the read content is allocated with xalloc.
 // Returns zero on success.
 int
 sunder_file_read(char const* path, void** buf, size_t* buf_size);
@@ -123,20 +121,20 @@ int
 sunder_file_write(char const* path, void const* buf, size_t buf_size);
 
 // Read the full contents of the input stream specified by stream.
-// Memory for the read content is allocated with sunder_xalloc.
+// Memory for the read content is allocated with xalloc.
 // Returns zero on success.
 int
 sunder_stream_read(FILE* stream, void** buf, size_t* buf_size);
 
-// Returns an sunder_xalloc-allocated cstring of the first count bytes of start.
+// Returns an xalloc-allocated cstring of the first count bytes of start.
 // This function behaves similarly to the POSIX strdupn function.
 char*
 cstr_new(char const* start, size_t count);
-// Returns an sunder_xalloc-allocated copy of the provided cstring.
+// Returns an xalloc-allocated copy of the provided cstring.
 // This function behaves similarly to the POSIX strdup function.
 char*
 cstr_new_cstr(char const* cstr);
-// Returns an sunder_xalloc-allocated cstring from the provided formatted text.
+// Returns an xalloc-allocated cstring from the provided formatted text.
 char*
 cstr_new_fmt(char const* fmt, ...);
 // Returns a non-zero value if cstr starts with target.
@@ -324,7 +322,7 @@ enum{SBUF__HEADER_OFFSET_ = sizeof(struct sbuf__header_)};
     ((struct sbuf__header_ const*)                                             \
      ((char const*)(sbuf_)-SBUF__HEADER_OFFSET_))
 #define SBUF__FREE_NON_NULL_HEAD_(sbuf_)                                       \
-    (sunder_xalloc(SBUF__PHEAD_MUTBL_(sbuf_), SUNDER_XALLOC_FREE))
+    (xalloc(SBUF__PHEAD_MUTBL_(sbuf_), XALLOC_FREE))
 #define SBUF__FREEZE_NON_NULL_HEAD_(sbuf_, freezer)                            \
     (freezer_register(freezer, SBUF__PHEAD_MUTBL_(sbuf_)))
 #define SBUF__MAYBE_GROW_(sbuf_)                                               \
@@ -505,7 +503,7 @@ bigint_magnitude_bit_get(struct bigint const* self, size_t n);
 void
 bigint_magnitude_bit_set(struct bigint* self, size_t n, int value);
 
-// Returns an sunder_xalloc-allocated cstring representation of the provided
+// Returns an xalloc-allocated cstring representation of the provided
 // bigint as specified by the provided format string.
 // If fmt is NULL then default formatting is used.
 //
@@ -631,7 +629,7 @@ freezer_new(void);
 void
 freezer_del(struct freezer* self);
 
-// Register a pointer to sunder_xalloc-allocated memory to be freed when the
+// Register a pointer to xalloc-allocated memory to be freed when the
 // freezer is deinitialized.
 void
 freezer_register(struct freezer* self, void* ptr);

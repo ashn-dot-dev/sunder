@@ -346,7 +346,7 @@ resolver_new(struct module* module)
 {
     assert(module != NULL);
 
-    struct resolver* const self = sunder_xalloc(NULL, sizeof(*self));
+    struct resolver* const self = xalloc(NULL, sizeof(*self));
     memset(self, 0x00, sizeof(*self));
     self->module = module;
     self->current_static_addr_prefix = NULL;
@@ -366,7 +366,7 @@ resolver_del(struct resolver* self)
     sbuf_fini(self->incomplete_functions);
 
     memset(self, 0x00, sizeof(*self));
-    sunder_xalloc(self, SUNDER_XALLOC_FREE);
+    xalloc(self, XALLOC_FREE);
 }
 
 static bool
@@ -1579,7 +1579,7 @@ resolve_decl_function(struct resolver* resolver, struct cst_decl const* decl)
     function->symbol_return = return_value_symbol;
 
     struct incomplete_function* const incomplete =
-        sunder_xalloc(NULL, sizeof(*incomplete));
+        xalloc(NULL, sizeof(*incomplete));
     *incomplete = (struct incomplete_function){
         decl,
         function,

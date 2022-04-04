@@ -73,7 +73,7 @@ orderer_new(struct module* module)
 {
     assert(module != NULL);
 
-    struct orderer* const self = sunder_xalloc(NULL, sizeof(*self));
+    struct orderer* const self = xalloc(NULL, sizeof(*self));
     memset(self, 0x00, sizeof(*self));
 
     self->module = module;
@@ -107,7 +107,7 @@ orderer_del(struct orderer* self)
     sbuf_fini(self->topological_order);
 
     memset(self, 0x00, sizeof(*self));
-    sunder_xalloc(self, SUNDER_XALLOC_FREE);
+    xalloc(self, XALLOC_FREE);
 }
 
 static struct tldecl*

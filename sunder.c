@@ -12,7 +12,7 @@ module_new(char const* name, char const* path)
     assert(name != NULL);
     assert(path != NULL);
 
-    struct module* const self = sunder_xalloc(NULL, sizeof(*self));
+    struct module* const self = xalloc(NULL, sizeof(*self));
     memset(self, 0x00, sizeof(*self));
 
     self->name = sipool_intern_cstr(context()->sipool, name);
@@ -130,7 +130,7 @@ module_del(struct module* self)
 
     sbuf_fini(self->ordered);
     memset(self, 0x00, sizeof(*self));
-    sunder_xalloc(self, SUNDER_XALLOC_FREE);
+    xalloc(self, XALLOC_FREE);
 }
 
 static struct context s_context = {0};

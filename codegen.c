@@ -339,7 +339,7 @@ append_dx_data(struct value const* value)
         char* const count_cstr =
             bigint_to_new_cstr(value->data.slice.count->data.integer, NULL);
         append("%s", count_cstr);
-        sunder_xalloc(count_cstr, SUNDER_XALLOC_FREE);
+        xalloc(count_cstr, XALLOC_FREE);
         return;
     }
     case TYPE_STRUCT: {
@@ -477,7 +477,7 @@ push_at_address(size_t size, struct address const* address)
     }
     */
 
-    sunder_xalloc(addr, SUNDER_XALLOC_FREE);
+    xalloc(addr, XALLOC_FREE);
 }
 
 static void
@@ -790,7 +790,7 @@ codegen_sys(void)
     append("%.*s", (int)buf_size, (char const*)buf);
 
     string_del(core);
-    sunder_xalloc(buf, SUNDER_XALLOC_FREE);
+    xalloc(buf, XALLOC_FREE);
 }
 
 static void
@@ -1261,7 +1261,7 @@ codegen_rvalue_integer(struct expr const* expr, size_t id)
     appendli("mov rax, %s", cstr);
     appendli("push rax");
 
-    sunder_xalloc(cstr, SUNDER_XALLOC_FREE);
+    xalloc(cstr, XALLOC_FREE);
 }
 
 static void
@@ -1380,7 +1380,7 @@ codegen_rvalue_array_slice(struct expr const* expr, size_t id)
         expr->data.array_slice.elements,
         NULL);
     codegen_rvalue_array(array_expr, id);
-    sunder_xalloc(array_expr, SUNDER_XALLOC_FREE);
+    xalloc(array_expr, XALLOC_FREE);
 
     push_address(symbol_xget_address(expr->data.array_slice.array_symbol));
     appendli("pop rbx ; address of the array-slice backing array");
@@ -1959,7 +1959,7 @@ codegen_rvalue_unary(struct expr const* expr, size_t id)
             char* const min_cstr =
                 bigint_to_new_cstr(rhs->type->data.integer.min, NULL);
             appendli("mov rbx, %s", min_cstr);
-            sunder_xalloc(min_cstr, SUNDER_XALLOC_FREE);
+            xalloc(min_cstr, XALLOC_FREE);
             appendli(
                 "cmp %s, %s", rhs_reg, reg_b(expr->data.unary.rhs->type->size));
             appendli("jne %s%zu_op", LABEL_EXPR, id);
