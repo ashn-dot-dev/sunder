@@ -210,7 +210,7 @@ skip_comment(struct lexer* self)
     while (*self->current != '\0' && *self->current != '\n') {
         self->current += 1;
     }
-    self->current += SUNDER_STR_LITERAL_COUNT("\n");
+    self->current += STR_LITERAL_COUNT("\n");
     self->current_line += 1;
 }
 
@@ -259,15 +259,15 @@ lex_integer(struct lexer* self)
     char const* const number_start = self->current;
     int (*radix_isdigit)(int c) = sunder_isdigit;
     if (cstr_starts_with(self->current, "0b")) {
-        self->current += SUNDER_STR_LITERAL_COUNT("0b");
+        self->current += STR_LITERAL_COUNT("0b");
         radix_isdigit = sunder_isbdigit;
     }
     else if (cstr_starts_with(self->current, "0o")) {
-        self->current += SUNDER_STR_LITERAL_COUNT("0o");
+        self->current += STR_LITERAL_COUNT("0o");
         radix_isdigit = sunder_isodigit;
     }
     else if (cstr_starts_with(self->current, "0x")) {
-        self->current += SUNDER_STR_LITERAL_COUNT("0x");
+        self->current += STR_LITERAL_COUNT("0x");
         radix_isdigit = sunder_isxdigit;
     }
 

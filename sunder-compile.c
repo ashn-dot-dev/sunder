@@ -47,7 +47,7 @@ usage(void)
    "  -h        Display usage information and exit.",
     };
     // clang-format on
-    for (size_t i = 0; i < SUNDER_ARRAY_COUNT(lines); ++i) {
+    for (size_t i = 0; i < ARRAY_COUNT(lines); ++i) {
         fprintf(stderr, "%s\n", lines[i]);
     }
 }

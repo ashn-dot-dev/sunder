@@ -304,7 +304,7 @@ uz_to_bigint(struct bigint* res, size_t uz)
     assert(res != 0);
 
     char buf[256] = {0};
-    snprintf(buf, SUNDER_ARRAY_COUNT(buf), "%zu", uz);
+    snprintf(buf, ARRAY_COUNT(buf), "%zu", uz);
 
     struct bigint* const tmp = bigint_new_cstr(buf);
     bigint_assign(res, tmp);
@@ -772,7 +772,7 @@ cstr_new(char const* start, size_t count)
 {
     assert(start != NULL || count == 0);
 
-    char* const s = sunder_xalloc(NULL, count + SUNDER_STR_LITERAL_COUNT("\0"));
+    char* const s = sunder_xalloc(NULL, count + STR_LITERAL_COUNT("\0"));
     sunder_memmove(s, start, count);
     s[count] = '\0';
     return s;
@@ -784,7 +784,7 @@ cstr_new_cstr(char const* cstr)
     assert(cstr != NULL);
 
     size_t const count = strlen(cstr);
-    char* const s = sunder_xalloc(NULL, count + SUNDER_STR_LITERAL_COUNT("\0"));
+    char* const s = sunder_xalloc(NULL, count + STR_LITERAL_COUNT("\0"));
     return strcpy(s, cstr);
 }
 
@@ -805,7 +805,7 @@ cstr_new_fmt(char const* fmt, ...)
         fatal(NULL, "[%s] Formatting failure", __func__);
     }
 
-    size_t size = (size_t)len + SUNDER_STR_LITERAL_COUNT("\0");
+    size_t size = (size_t)len + STR_LITERAL_COUNT("\0");
     char* const buf = sunder_xalloc(NULL, size);
     vsnprintf(buf, size, fmt, args);
     va_end(args);
@@ -943,7 +943,7 @@ sipool_intern_cstr(struct sipool* self, char const* cstr)
 
 SUNDER_STATIC_ASSERT(
     SBUF_HEADER_OFFSET_IS_ALIGNED,
-    SUNDER__SBUF_HEADER_OFFSET_ % SUNDER_ALIGNOF(max_align_type) == 0);
+    SUNDER__SBUF_HEADER_OFFSET_ % ALIGNOF(max_align_type) == 0);
 
 /* reserve */
 void*
@@ -1472,7 +1472,7 @@ sign:
     }
 
 radix:
-    if ((size_t)(end - cur) < SUNDER_STR_LITERAL_COUNT("0x")) {
+    if ((size_t)(end - cur) < STR_LITERAL_COUNT("0x")) {
         // String is not long enough to have a radix identifier.
         goto digits;
     }
@@ -2114,8 +2114,7 @@ bigint_to_new_cstr(struct bigint const* self, char const* fmt)
     // Digits.
     void* digits = NULL;
     size_t digits_size = 0;
-    char digit_buf[SUNDER__BIGINT_LIMB_BITS_ + SUNDER_STR_LITERAL_COUNT("\0")] =
-        {0};
+    char digit_buf[SUNDER__BIGINT_LIMB_BITS_ + STR_LITERAL_COUNT("\0")] = {0};
     if (specifier == 'd') {
         struct bigint DEC = {0};
         struct bigint SELF = {0};
@@ -2237,7 +2236,7 @@ struct string {
     char* start;
     size_t count;
 };
-#define SUNDER_STRING_SIZE_(count_) (count_ + SUNDER_STR_LITERAL_COUNT("\0"))
+#define SUNDER_STRING_SIZE_(count_) (count_ + STR_LITERAL_COUNT("\0"))
 
 struct string*
 string_new(char const* start, size_t count)
@@ -2447,7 +2446,7 @@ string_append_vfmt(struct string* self, char const* fmt, va_list args)
         fatal(NULL, "[%s] Formatting failure", __func__);
     }
 
-    size_t size = (size_t)len + SUNDER_STR_LITERAL_COUNT("\0");
+    size_t size = (size_t)len + STR_LITERAL_COUNT("\0");
     char* const buf = sunder_xalloc(NULL, size);
     vsnprintf(buf, size, fmt, args);
     string_append(self, buf, (size_t)len);

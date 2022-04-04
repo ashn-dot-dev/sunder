@@ -37,15 +37,14 @@ typedef union {
 // clang-format on
 
 // Number of elements in an array.
-#define SUNDER_ARRAY_COUNT(array) (sizeof(array) / sizeof((array)[0]))
+#define ARRAY_COUNT(array) (sizeof(array) / sizeof((array)[0]))
 // Number of characters in a string literal, excluding the NUL-terminator.
-#define SUNDER_STR_LITERAL_COUNT(str_literal)                                  \
-    (SUNDER_ARRAY_COUNT(str_literal) - 1)
+#define STR_LITERAL_COUNT(str_literal) (ARRAY_COUNT(str_literal) - 1)
 
 // C99 compatible _Alignof operator.
 // Produces an integer constant expression.
 // clang-format off
-#define SUNDER_ALIGNOF(type) offsetof(struct{char _; type ty;}, ty)
+#define ALIGNOF(type) offsetof(struct{char _; type ty;}, ty)
 // clang-format on
 
 // C99 compatible(ish) _Static_assert.
@@ -160,7 +159,7 @@ struct vstr {
 // This pointer has automatic storage duration associated with the enclosing
 // block.
 #define VSTR_LOCAL_PTR_STR_LITERAL(str_literal)                                \
-    VSTR_LOCAL_PTR(str_literal, SUNDER_STR_LITERAL_COUNT(str_literal))
+    VSTR_LOCAL_PTR(str_literal, STR_LITERAL_COUNT(str_literal))
 
 // Initializer for a vstr literal from a cstr literal.
 // Example:
@@ -172,7 +171,7 @@ struct vstr {
 //      bar = (struct vstr)VSTR_INIT_STR_LITERAL("bar");
 // clang-format off
 #define VSTR_INIT_STR_LITERAL(str_literal)                                     \
-    {str_literal, SUNDER_STR_LITERAL_COUNT(str_literal)}
+    {str_literal, STR_LITERAL_COUNT(str_literal)}
 // clang-format on
 
 // Return an int less than, equal to, or greater than zero if lhs is
