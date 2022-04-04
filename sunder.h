@@ -19,6 +19,14 @@ struct bigint;
 struct string;
 struct freezer;
 
+#if __STDC_VERSION__ >= 201112L /* C11+ */
+#    define NORETURN _Noreturn
+#elif defined(__GNUC__) /* GCC and Clang */
+#    define NORETURN __attribute__((noreturn))
+#else
+#    define NORETURN /* nothing */
+#endif
+
 // C99 compatible max_align_t.
 // clang-format off
 typedef union {
@@ -103,6 +111,22 @@ xalloc(void* ptr, size_t size);
 void*
 xallocn(void* ptr, size_t nmemb, size_t size);
 #define XALLOC_FREE ((size_t)0)
+
+char const* // interned
+canonical_path(char const* path);
+
+char const* // interned
+directory_path(char const* path);
+
+// Excludes `.` and `..`
+char const* /* interned */* /* sbuf */
+directory_files(char const* path);
+
+bool
+file_exists(char const* path);
+
+bool
+file_is_directory(char const* path);
 
 // Read the full contents of the file specified by path.
 // Memory for the read content is allocated with xalloc.
@@ -603,6 +627,7 @@ void
 string_append_fmt(struct string* self, char const* fmt, ...);
 void
 string_append_vfmt(struct string* self, char const* fmt, va_list args);
+
 // Split the string on all occurrences of the provided separator.
 // Empty strings are *NOT* removed from the result.
 // This function returns a stretchy buffer of newly allocated string
@@ -610,7 +635,7 @@ string_append_vfmt(struct string* self, char const* fmt, va_list args);
 //
 // Example:
 //      "ABCBB" ===split on "B"===> "A" "C" "" ""
-struct string**
+struct string** /* sbuf */
 string_split_on(
     struct string const* self, char const* separator, size_t separator_size);
 
@@ -626,14 +651,6 @@ freezer_del(struct freezer* self);
 // freezer is deinitialized.
 void
 freezer_register(struct freezer* self, void* ptr);
-
-#if __STDC_VERSION__ >= 201112L /* C11+ */
-#    define NORETURN _Noreturn
-#elif defined(__GNUC__) /* GCC and Clang */
-#    define NORETURN __attribute__((noreturn))
-#else
-#    define NORETURN /* nothing */
-#endif
 
 // Returns the string contents of a file with the provided path. The produced
 // string is NUL-prefixed and NUL-terminated. This function will cause a fatal
@@ -736,19 +753,6 @@ spawnvpw(char const* const* argv);
 // Fatally exits if the exit status of the spawned process is non-zero.
 void
 xspawnvpw(char const* const* argv);
-
-bool
-file_exists(char const* path);
-bool
-file_is_directory(char const* path);
-
-char const* // interned
-canonical_path(char const* path);
-char const* // interned
-directory_path(char const* path);
-// Excludes `.` and `..`
-char const* /* interned */* /* sbuf */
-directory_files(char const* path);
 
 ////////////////////////////////////////////////////////////////////////////////
 //////// sunder.c //////////////////////////////////////////////////////////////
