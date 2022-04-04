@@ -829,14 +829,6 @@ vstr_cmp(struct vstr const* lhs, struct vstr const* rhs)
 }
 
 int
-vstr_vpcmp(void const* lhs, void const* rhs)
-{
-    assert(lhs != NULL);
-    assert(rhs != NULL);
-    return vstr_cmp(lhs, rhs);
-}
-
-int
 vstr_starts_with(struct vstr const* vstr, struct vstr const* target)
 {
     assert(vstr != NULL);

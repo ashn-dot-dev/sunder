@@ -173,10 +173,6 @@ struct vstr {
 // lexicographically less than, equal to, or greater than rhs, respectively.
 int
 vstr_cmp(struct vstr const* lhs, struct vstr const* rhs);
-// Comparison function satisfying sunder_vpcmp_fn.
-// Parameters lhs and rhs must be of type struct vstr const*.
-int
-vstr_vpcmp(void const* lhs, void const* rhs);
 
 // Returns a non-zero value if vstr starts with target.
 int
