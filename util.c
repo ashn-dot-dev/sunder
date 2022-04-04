@@ -32,7 +32,7 @@ read_source(char const* path)
 {
     void* text = NULL;
     size_t text_size = 0;
-    if (sunder_file_read(path, &text, &text_size)) {
+    if (file_read_all(path, &text, &text_size)) {
         struct source_location const location = {path, NO_LINE, NO_PSRC};
         fatal(
             &location,
@@ -671,7 +671,7 @@ xalloc_append(void** pdata, size_t* psize, void const* othr, size_t othr_size)
 }
 
 int
-sunder_file_read(char const* path, void** buf, size_t* buf_size)
+file_read_all(char const* path, void** buf, size_t* buf_size)
 {
     assert(path != NULL);
     assert(buf != NULL);
@@ -682,14 +682,14 @@ sunder_file_read(char const* path, void** buf, size_t* buf_size)
         return -1;
     }
 
-    int const err = sunder_stream_read(stream, buf, buf_size);
+    int const err = stream_read_all(stream, buf, buf_size);
     (void)fclose(stream);
 
     return err;
 }
 
 int
-sunder_file_write(char const* path, void const* buf, size_t buf_size)
+file_write_all(char const* path, void const* buf, size_t buf_size)
 {
     assert(path != NULL);
     assert(buf != NULL || buf_size == 0);
@@ -723,7 +723,7 @@ sunder_file_write(char const* path, void const* buf, size_t buf_size)
 }
 
 int
-sunder_stream_read(FILE* stream, void** buf, size_t* buf_size)
+stream_read_all(FILE* stream, void** buf, size_t* buf_size)
 {
     assert(stream != NULL);
     assert(buf != NULL);

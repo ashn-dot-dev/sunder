@@ -108,20 +108,20 @@ xallocn(void* ptr, size_t nmemb, size_t size);
 // Memory for the read content is allocated with xalloc.
 // Returns zero on success.
 int
-sunder_file_read(char const* path, void** buf, size_t* buf_size);
+file_read_all(char const* path, void** buf, size_t* buf_size);
 
 // Write the contents of a buffer into the file specified by path.
 // The file specified by path is created if it does not exist.
 // Returns zero on success.
 // On failure, the contents of the file specified by path is undefined.
 int
-sunder_file_write(char const* path, void const* buf, size_t buf_size);
+file_write_all(char const* path, void const* buf, size_t buf_size);
 
 // Read the full contents of the input stream specified by stream.
 // Memory for the read content is allocated with xalloc.
 // Returns zero on success.
 int
-sunder_stream_read(FILE* stream, void** buf, size_t* buf_size);
+stream_read_all(FILE* stream, void** buf, size_t* buf_size);
 
 // Returns an xalloc-allocated cstring of the first count bytes of start.
 // This function behaves similarly to the POSIX strdupn function.

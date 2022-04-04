@@ -780,7 +780,7 @@ codegen_sys(void)
 
     void* buf = NULL;
     size_t buf_size = 0;
-    if (sunder_file_read(string_start(core), &buf, &buf_size)) {
+    if (file_read_all(string_start(core), &buf, &buf_size)) {
         fatal(
             NULL,
             "failed to read '%s' with error '%s'",
@@ -2611,7 +2611,7 @@ codegen(char const* const opt_o, bool opt_k)
     codegen_static_functions();
 
     int err = 0;
-    if ((err = sunder_file_write(
+    if ((err = file_write_all(
              string_start(asm_path), string_start(out), string_count(out)))) {
         error(
             NULL,
