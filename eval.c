@@ -347,22 +347,22 @@ eval_rvalue_cast(struct expr const* expr)
             && (bytes[bytes_count - 1] & 0x80);
 
         size_t const bit_count = expr->type->size * 8u;
-        struct sunder_bitarr* const bits = sunder_bitarr_new(bit_count);
+        struct bitarr* const bits = bitarr_new(bit_count);
         for (size_t i = 0; i < bit_count; ++i) {
             if (i >= (bytes_count * 8u)) {
-                sunder_bitarr_set(bits, i, extend);
+                bitarr_set(bits, i, extend);
                 continue;
             }
             unsigned const byte = bytes[i / 8u];
             unsigned const mask = 1u << (i % 8u);
             int const bit = (byte & mask) != 0;
-            sunder_bitarr_set(bits, i, bit);
+            bitarr_set(bits, i, bit);
         }
 
         struct sunder_bigint* const integer =
             sunder_bigint_new(SUNDER_BIGINT_ZERO);
         bitarr_to_bigint(integer, bits, type_is_signed_integer(expr->type));
-        sunder_bitarr_del(bits);
+        bitarr_del(bits);
 
         res = value_new_integer(expr->type, integer);
         break;
@@ -612,22 +612,22 @@ eval_rvalue_unary(struct expr const* expr)
 
         bool is_signed = type_is_signed_integer(rhs->type);
         size_t bit_count = rhs->type->size * 8u;
-        struct sunder_bitarr* const rhs_bits = sunder_bitarr_new(bit_count);
-        struct sunder_bitarr* const res_bits = sunder_bitarr_new(bit_count);
+        struct bitarr* const rhs_bits = bitarr_new(bit_count);
+        struct bitarr* const res_bits = bitarr_new(bit_count);
         if (bigint_to_bitarr(rhs_bits, rhs->data.integer)) {
             UNREACHABLE();
         }
 
         for (size_t i = 0; i < bit_count; ++i) {
-            int const bit = !sunder_bitarr_get(rhs_bits, i);
-            sunder_bitarr_set(res_bits, i, bit);
+            int const bit = !bitarr_get(rhs_bits, i);
+            bitarr_set(res_bits, i, bit);
         }
-        sunder_bitarr_del(rhs_bits);
+        bitarr_del(rhs_bits);
 
         struct sunder_bigint* const res_bigint =
             sunder_bigint_new(SUNDER_BIGINT_ZERO);
         bitarr_to_bigint(res_bigint, res_bits, is_signed);
-        sunder_bitarr_del(res_bits);
+        bitarr_del(res_bits);
 
         struct value* const res = value_new_integer(rhs->type, res_bigint);
         value_del(rhs);
@@ -805,9 +805,9 @@ eval_rvalue_binary(struct expr const* expr)
         assert(type_is_any_integer(type));
         bool is_signed = type_is_signed_integer(type);
         size_t bit_count = type->size * 8u;
-        struct sunder_bitarr* const lhs_bits = sunder_bitarr_new(bit_count);
-        struct sunder_bitarr* const rhs_bits = sunder_bitarr_new(bit_count);
-        struct sunder_bitarr* const res_bits = sunder_bitarr_new(bit_count);
+        struct bitarr* const lhs_bits = bitarr_new(bit_count);
+        struct bitarr* const rhs_bits = bitarr_new(bit_count);
+        struct bitarr* const res_bits = bitarr_new(bit_count);
         if (bigint_to_bitarr(lhs_bits, lhs->data.integer)) {
             UNREACHABLE();
         }
@@ -816,17 +816,16 @@ eval_rvalue_binary(struct expr const* expr)
         }
 
         for (size_t i = 0; i < bit_count; ++i) {
-            int const bit = sunder_bitarr_get(lhs_bits, i)
-                || sunder_bitarr_get(rhs_bits, i);
-            sunder_bitarr_set(res_bits, i, bit);
+            int const bit = bitarr_get(lhs_bits, i) || bitarr_get(rhs_bits, i);
+            bitarr_set(res_bits, i, bit);
         }
-        sunder_bitarr_del(lhs_bits);
-        sunder_bitarr_del(rhs_bits);
+        bitarr_del(lhs_bits);
+        bitarr_del(rhs_bits);
 
         struct sunder_bigint* const res_bigint =
             sunder_bigint_new(SUNDER_BIGINT_ZERO);
         bitarr_to_bigint(res_bigint, res_bits, is_signed);
-        sunder_bitarr_del(res_bits);
+        bitarr_del(res_bits);
 
         res = value_new_integer(type, res_bigint);
         break;
@@ -854,9 +853,9 @@ eval_rvalue_binary(struct expr const* expr)
         assert(type_is_any_integer(type));
         bool is_signed = type_is_signed_integer(type);
         size_t bit_count = type->size * 8u;
-        struct sunder_bitarr* const lhs_bits = sunder_bitarr_new(bit_count);
-        struct sunder_bitarr* const rhs_bits = sunder_bitarr_new(bit_count);
-        struct sunder_bitarr* const res_bits = sunder_bitarr_new(bit_count);
+        struct bitarr* const lhs_bits = bitarr_new(bit_count);
+        struct bitarr* const rhs_bits = bitarr_new(bit_count);
+        struct bitarr* const res_bits = bitarr_new(bit_count);
         if (bigint_to_bitarr(lhs_bits, lhs->data.integer)) {
             UNREACHABLE();
         }
@@ -865,17 +864,16 @@ eval_rvalue_binary(struct expr const* expr)
         }
 
         for (size_t i = 0; i < bit_count; ++i) {
-            int const bit =
-                sunder_bitarr_get(lhs_bits, i) ^ sunder_bitarr_get(rhs_bits, i);
-            sunder_bitarr_set(res_bits, i, bit);
+            int const bit = bitarr_get(lhs_bits, i) ^ bitarr_get(rhs_bits, i);
+            bitarr_set(res_bits, i, bit);
         }
-        sunder_bitarr_del(lhs_bits);
-        sunder_bitarr_del(rhs_bits);
+        bitarr_del(lhs_bits);
+        bitarr_del(rhs_bits);
 
         struct sunder_bigint* const res_bigint =
             sunder_bigint_new(SUNDER_BIGINT_ZERO);
         bitarr_to_bigint(res_bigint, res_bits, is_signed);
-        sunder_bitarr_del(res_bits);
+        bitarr_del(res_bits);
 
         res = value_new_integer(type, res_bigint);
         break;
@@ -903,9 +901,9 @@ eval_rvalue_binary(struct expr const* expr)
         assert(type_is_any_integer(type));
         bool is_signed = type_is_signed_integer(type);
         size_t bit_count = type->size * 8u;
-        struct sunder_bitarr* const lhs_bits = sunder_bitarr_new(bit_count);
-        struct sunder_bitarr* const rhs_bits = sunder_bitarr_new(bit_count);
-        struct sunder_bitarr* const res_bits = sunder_bitarr_new(bit_count);
+        struct bitarr* const lhs_bits = bitarr_new(bit_count);
+        struct bitarr* const rhs_bits = bitarr_new(bit_count);
+        struct bitarr* const res_bits = bitarr_new(bit_count);
         if (bigint_to_bitarr(lhs_bits, lhs->data.integer)) {
             UNREACHABLE();
         }
@@ -914,17 +912,16 @@ eval_rvalue_binary(struct expr const* expr)
         }
 
         for (size_t i = 0; i < bit_count; ++i) {
-            int const bit = sunder_bitarr_get(lhs_bits, i)
-                && sunder_bitarr_get(rhs_bits, i);
-            sunder_bitarr_set(res_bits, i, bit);
+            int const bit = bitarr_get(lhs_bits, i) && bitarr_get(rhs_bits, i);
+            bitarr_set(res_bits, i, bit);
         }
-        sunder_bitarr_del(lhs_bits);
-        sunder_bitarr_del(rhs_bits);
+        bitarr_del(lhs_bits);
+        bitarr_del(rhs_bits);
 
         struct sunder_bigint* const res_bigint =
             sunder_bigint_new(SUNDER_BIGINT_ZERO);
         bitarr_to_bigint(res_bigint, res_bits, is_signed);
-        sunder_bitarr_del(res_bits);
+        bitarr_del(res_bits);
 
         res = value_new_integer(type, res_bigint);
         break;

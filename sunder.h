@@ -14,7 +14,7 @@
 
 struct vstr;
 struct sipool;
-struct sunder_bitarr;
+struct bitarr;
 struct sunder_bigint;
 struct sunder_string;
 struct sunder_vec;
@@ -343,77 +343,67 @@ void* sunder__sbuf_grw_(size_t elemsize, void* sbuf);
 
 // Allocate and initialize a bit array with count bits.
 // The bit array is initially zeroed.
-struct sunder_bitarr*
-sunder_bitarr_new(size_t count);
+struct bitarr*
+bitarr_new(size_t count);
 // Deinitialize and free the bit array.
 // Does nothing if self == NULL.
 void
-sunder_bitarr_del(struct sunder_bitarr* self);
+bitarr_del(struct bitarr* self);
 // Register resources within the bit array with the provided freezer.
 void
-sunder_bitarr_freeze(
-    struct sunder_bitarr* self, struct sunder_freezer* freezer);
+bitarr_freeze(struct bitarr* self, struct sunder_freezer* freezer);
 
 // Returns the number of bits in this bit array.
 size_t
-sunder_bitarr_count(struct sunder_bitarr const* self);
+bitarr_count(struct bitarr const* self);
 // Set the nth bit (zero indexed) of self to value.
 // Fatally exits after printing an error message if n is out of bounds.
 void
-sunder_bitarr_set(struct sunder_bitarr* self, size_t n, int value);
+bitarr_set(struct bitarr* self, size_t n, int value);
 // Returns the value (one or zero) of the nth bit (zero indexed) of self.
 // Fatally exits after printing an error message if n is out of bounds.
 int
-sunder_bitarr_get(struct sunder_bitarr const* self, size_t n);
+bitarr_get(struct bitarr const* self, size_t n);
 
 // self = othr
 // Fatally exits after printing an error message if the count of self is not
 // equal to the count of othr.
 void
-sunder_bitarr_assign(
-    struct sunder_bitarr* self, struct sunder_bitarr const* othr);
+bitarr_assign(struct bitarr* self, struct bitarr const* othr);
 
 // res = ~rhs
 // Fatally exits after printing an error message if the count of res and rhs are
 // not equal.
 void
-sunder_bitarr_compl(struct sunder_bitarr* res, struct sunder_bitarr const* rhs);
+bitarr_compl(struct bitarr* res, struct bitarr const* rhs);
 // res = lhs << nbits (logical shift left)
 // Fatally exits after printing an error message if the count of res and lhs are
 // not equal.
 void
-sunder_bitarr_shiftl(
-    struct sunder_bitarr* res, struct sunder_bitarr const* lhs, size_t nbits);
+bitarr_shiftl(struct bitarr* res, struct bitarr const* lhs, size_t nbits);
 // res = lhs >> nbits (logical shift right)
 // Fatally exits after printing an error message if the count of res and lhs are
 // not equal.
 void
-sunder_bitarr_shiftr(
-    struct sunder_bitarr* res, struct sunder_bitarr const* lhs, size_t nbits);
+bitarr_shiftr(struct bitarr* res, struct bitarr const* lhs, size_t nbits);
 // res = lhs & rhs
 // Fatally exits after printing an error message if the count of res, lhs, and
 // rhs are not equal.
 void
-sunder_bitarr_and(
-    struct sunder_bitarr* res,
-    struct sunder_bitarr const* lhs,
-    struct sunder_bitarr const* rhs);
+bitarr_and(
+    struct bitarr* res, struct bitarr const* lhs, struct bitarr const* rhs);
 // res = lhs ^ rhs
 // Fatally exits after printing an error message if the count of res, lhs, and
 // rhs are not equal.
 void
-sunder_bitarr_xor(
-    struct sunder_bitarr* res,
-    struct sunder_bitarr const* lhs,
-    struct sunder_bitarr const* rhs);
+bitarr_xor(
+    struct bitarr* res, struct bitarr const* lhs, struct bitarr const* rhs);
 // res = lhs | rhs
 // Fatally exits after printing an error message if the count of res, lhs, and
 // rhs are not equal.
 void
-sunder_bitarr_or(
-    struct sunder_bitarr* res,
-    struct sunder_bitarr const* lhs,
-    struct sunder_bitarr const* rhs);
+bitarr_or(
+    struct bitarr* res, struct bitarr const* lhs, struct bitarr const* rhs);
 
 extern struct sunder_bigint const* const SUNDER_BIGINT_ZERO; // 0
 extern struct sunder_bigint const* const SUNDER_BIGINT_POS_ONE; // +1
@@ -752,10 +742,10 @@ bigint_to_umax(uintmax_t* res, struct sunder_bigint const* bigint);
 // Convert a bigint into a two's complement bit array.
 // Returns zero on success.
 // Returns non-zero if the provided bigint is out-of-range would require more
-// than sunder_bitarr_count(res) bits to express, in which case *res is left
+// than bitarr_count(res) bits to express, in which case *res is left
 // unmodified.
 int
-bigint_to_bitarr(struct sunder_bitarr* res, struct sunder_bigint const* bigint);
+bigint_to_bitarr(struct bitarr* res, struct sunder_bigint const* bigint);
 
 // Convert a size_t to a bigint.
 // The result bigint must be pre-initialized.
@@ -765,9 +755,7 @@ uz_to_bigint(struct sunder_bigint* res, size_t uz);
 // The result bigint must be pre-initialized.
 void
 bitarr_to_bigint(
-    struct sunder_bigint* res,
-    struct sunder_bitarr const* bitarr,
-    bool is_signed);
+    struct sunder_bigint* res, struct bitarr const* bitarr, bool is_signed);
 
 // Spawn a subprocess and wait for it to complete.
 // Returns the exit status of the spawned process.

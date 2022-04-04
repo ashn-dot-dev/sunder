@@ -2103,7 +2103,7 @@ value_to_new_bytes(struct value const* value)
     case TYPE_SSIZE: {
         // Convert the bigint into a bit array.
         size_t const bit_count = value->type->size * 8u;
-        struct sunder_bitarr* const bits = sunder_bitarr_new(bit_count);
+        struct bitarr* const bits = bitarr_new(bit_count);
         if (bigint_to_bitarr(bits, value->data.integer)) {
             // Internal compiler error. Integer is out of range.
             UNREACHABLE();
@@ -2111,12 +2111,11 @@ value_to_new_bytes(struct value const* value)
 
         // Convert the bit array into a byte array via bit shifting and masking.
         for (size_t i = 0; i < bit_count; ++i) {
-            uint8_t const mask =
-                (uint8_t)(sunder_bitarr_get(bits, i) << (i % 8u));
+            uint8_t const mask = (uint8_t)(bitarr_get(bits, i) << (i % 8u));
             bytes[i / 8u] |= mask;
         }
 
-        sunder_bitarr_del(bits);
+        bitarr_del(bits);
         return bytes;
     }
     case TYPE_INTEGER: {

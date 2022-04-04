@@ -250,32 +250,32 @@ bigint_to_umax(uintmax_t* res, struct sunder_bigint const* bigint)
 }
 
 static void
-bitarr_twos_complement_neg(struct sunder_bitarr* bitarr)
+bitarr_twos_complement_neg(struct bitarr* bitarr)
 {
     assert(bitarr != NULL);
 
     // Invert the bits...
-    sunder_bitarr_compl(bitarr, bitarr);
+    bitarr_compl(bitarr, bitarr);
 
     // ...and add one.
     int carry = 1;
-    size_t const bit_count = sunder_bitarr_count(bitarr);
+    size_t const bit_count = bitarr_count(bitarr);
     for (size_t i = 0; i < bit_count; ++i) {
-        int const new_digit = (carry + sunder_bitarr_get(bitarr, i)) % 2;
-        int const new_carry = (carry + sunder_bitarr_get(bitarr, i)) >= 2;
-        sunder_bitarr_set(bitarr, i, new_digit);
+        int const new_digit = (carry + bitarr_get(bitarr, i)) % 2;
+        int const new_carry = (carry + bitarr_get(bitarr, i)) >= 2;
+        bitarr_set(bitarr, i, new_digit);
         carry = new_carry;
     }
 }
 
 int
-bigint_to_bitarr(struct sunder_bitarr* res, struct sunder_bigint const* bigint)
+bigint_to_bitarr(struct bitarr* res, struct sunder_bigint const* bigint)
 {
     assert(res != NULL);
     assert(bigint != NULL);
 
     size_t const mag_bit_count = sunder_bigint_magnitude_bit_count(bigint);
-    size_t const res_bit_count = sunder_bitarr_count(res);
+    size_t const res_bit_count = bitarr_count(res);
     if (mag_bit_count > res_bit_count) {
         return -1;
     }
@@ -285,7 +285,7 @@ bigint_to_bitarr(struct sunder_bitarr* res, struct sunder_bigint const* bigint)
     // arithmetic.
     for (size_t i = 0; i < res_bit_count; ++i) {
         int const bit = sunder_bigint_magnitude_bit_get(bigint, i);
-        sunder_bitarr_set(res, i, bit);
+        bitarr_set(res, i, bit);
     }
 
     // Convert two's complement unsigned (magnitude) representation into
@@ -313,21 +313,19 @@ uz_to_bigint(struct sunder_bigint* res, size_t uz)
 
 void
 bitarr_to_bigint(
-    struct sunder_bigint* res,
-    struct sunder_bitarr const* bitarr,
-    bool is_signed)
+    struct sunder_bigint* res, struct bitarr const* bitarr, bool is_signed)
 {
     assert(res != NULL);
     assert(bitarr != NULL);
 
-    size_t const bit_count = sunder_bitarr_count(bitarr);
-    struct sunder_bitarr* const mag_bits = sunder_bitarr_new(bit_count);
+    size_t const bit_count = bitarr_count(bitarr);
+    struct bitarr* const mag_bits = bitarr_new(bit_count);
     for (size_t i = 0; i < bit_count; ++i) {
-        int const bit = sunder_bitarr_get(bitarr, i);
-        sunder_bitarr_set(mag_bits, i, bit);
+        int const bit = bitarr_get(bitarr, i);
+        bitarr_set(mag_bits, i, bit);
     }
 
-    bool const is_neg = is_signed && sunder_bitarr_get(bitarr, bit_count - 1u);
+    bool const is_neg = is_signed && bitarr_get(bitarr, bit_count - 1u);
     if (is_neg) {
         // Two's complement negative<->positive conversion.
         bitarr_twos_complement_neg(mag_bits);
@@ -335,7 +333,7 @@ bitarr_to_bigint(
 
     sunder_bigint_assign(res, SUNDER_BIGINT_ZERO);
     for (size_t i = 0; i < bit_count; ++i) {
-        int const bit = sunder_bitarr_get(mag_bits, i);
+        int const bit = bitarr_get(mag_bits, i);
         sunder_bigint_magnitude_bit_set(res, i, bit);
     }
 
@@ -343,7 +341,7 @@ bitarr_to_bigint(
         sunder_bigint_neg(res, res);
     }
 
-    sunder_bitarr_del(mag_bits);
+    bitarr_del(mag_bits);
 }
 
 int
@@ -1003,7 +1001,7 @@ sunder__sbuf_grw_(size_t elemsize, void* sbuf)
 #define SUNDER__BITARR_WORD_TYPE_ unsigned long
 #define SUNDER__BITARR_WORD_SIZE_ sizeof(SUNDER__BITARR_WORD_TYPE_)
 #define SUNDER__BITARR_WORD_BITS_ (SUNDER__BITARR_WORD_SIZE_ * CHAR_BIT)
-struct sunder_bitarr {
+struct bitarr {
     size_t count;
     SUNDER__BITARR_WORD_TYPE_ words[];
 };
@@ -1018,15 +1016,15 @@ sunder__bitarr_word_count_(size_t count)
 static inline size_t
 sunder__bitarr_size_(size_t count)
 {
-    return sizeof(struct sunder_bitarr)
+    return sizeof(struct bitarr)
         + (sunder__bitarr_word_count_(count) * SUNDER__BITARR_WORD_SIZE_);
 }
 
-struct sunder_bitarr*
-sunder_bitarr_new(size_t count)
+struct bitarr*
+bitarr_new(size_t count)
 {
     size_t const size = sunder__bitarr_size_(count);
-    struct sunder_bitarr* const self = sunder_xalloc(NULL, size);
+    struct bitarr* const self = sunder_xalloc(NULL, size);
     memset(self, 0x00, size);
 
     self->count = count;
@@ -1034,7 +1032,7 @@ sunder_bitarr_new(size_t count)
 }
 
 void
-sunder_bitarr_del(struct sunder_bitarr* self)
+bitarr_del(struct bitarr* self)
 {
     if (self == NULL) {
         return;
@@ -1046,7 +1044,7 @@ sunder_bitarr_del(struct sunder_bitarr* self)
 }
 
 void
-sunder_bitarr_freeze(struct sunder_bitarr* self, struct sunder_freezer* freezer)
+bitarr_freeze(struct bitarr* self, struct sunder_freezer* freezer)
 {
     assert(self != NULL);
     assert(freezer != NULL);
@@ -1055,7 +1053,7 @@ sunder_bitarr_freeze(struct sunder_bitarr* self, struct sunder_freezer* freezer)
 }
 
 size_t
-sunder_bitarr_count(struct sunder_bitarr const* self)
+bitarr_count(struct bitarr const* self)
 {
     assert(self != NULL);
 
@@ -1063,7 +1061,7 @@ sunder_bitarr_count(struct sunder_bitarr const* self)
 }
 
 void
-sunder_bitarr_set(struct sunder_bitarr* self, size_t n, int value)
+bitarr_set(struct bitarr* self, size_t n, int value)
 {
     assert(self != NULL);
 
@@ -1080,7 +1078,7 @@ sunder_bitarr_set(struct sunder_bitarr* self, size_t n, int value)
 }
 
 int
-sunder_bitarr_get(struct sunder_bitarr const* self, size_t n)
+bitarr_get(struct bitarr const* self, size_t n)
 {
     assert(self != NULL);
 
@@ -1097,8 +1095,7 @@ sunder_bitarr_get(struct sunder_bitarr const* self, size_t n)
 }
 
 void
-sunder_bitarr_assign(
-    struct sunder_bitarr* self, struct sunder_bitarr const* othr)
+bitarr_assign(struct bitarr* self, struct bitarr const* othr)
 {
     assert(self != NULL);
     assert(othr != NULL);
@@ -1118,7 +1115,7 @@ sunder_bitarr_assign(
 }
 
 void
-sunder_bitarr_compl(struct sunder_bitarr* res, struct sunder_bitarr const* rhs)
+bitarr_compl(struct bitarr* res, struct bitarr const* rhs)
 {
     assert(res != NULL);
     assert(rhs != NULL);
@@ -1138,8 +1135,7 @@ sunder_bitarr_compl(struct sunder_bitarr* res, struct sunder_bitarr const* rhs)
 }
 
 void
-sunder_bitarr_shiftl(
-    struct sunder_bitarr* res, struct sunder_bitarr const* lhs, size_t nbits)
+bitarr_shiftl(struct bitarr* res, struct bitarr const* lhs, size_t nbits)
 {
     assert(res != NULL);
     assert(lhs != NULL);
@@ -1153,19 +1149,18 @@ sunder_bitarr_shiftl(
             lhs->count);
     }
 
-    size_t const count = sunder_bitarr_count(res);
-    sunder_bitarr_assign(res, lhs);
+    size_t const count = bitarr_count(res);
+    bitarr_assign(res, lhs);
     for (size_t n = 0; n < nbits; ++n) {
         for (size_t i = count - 1; i != 0; --i) {
-            sunder_bitarr_set(res, i, sunder_bitarr_get(res, i - 1u));
+            bitarr_set(res, i, bitarr_get(res, i - 1u));
         }
-        sunder_bitarr_set(res, 0u, 0);
+        bitarr_set(res, 0u, 0);
     }
 }
 
 void
-sunder_bitarr_shiftr(
-    struct sunder_bitarr* res, struct sunder_bitarr const* lhs, size_t nbits)
+bitarr_shiftr(struct bitarr* res, struct bitarr const* lhs, size_t nbits)
 {
     assert(res != NULL);
     assert(lhs != NULL);
@@ -1179,21 +1174,19 @@ sunder_bitarr_shiftr(
             lhs->count);
     }
 
-    size_t const count = sunder_bitarr_count(res);
-    sunder_bitarr_assign(res, lhs);
+    size_t const count = bitarr_count(res);
+    bitarr_assign(res, lhs);
     for (size_t n = 0; n < nbits; ++n) {
         for (size_t i = 0; i < count - 1; ++i) {
-            sunder_bitarr_set(res, i, sunder_bitarr_get(res, i + 1u));
+            bitarr_set(res, i, bitarr_get(res, i + 1u));
         }
-        sunder_bitarr_set(res, count - 1, 0);
+        bitarr_set(res, count - 1, 0);
     }
 }
 
 void
-sunder_bitarr_and(
-    struct sunder_bitarr* res,
-    struct sunder_bitarr const* lhs,
-    struct sunder_bitarr const* rhs)
+bitarr_and(
+    struct bitarr* res, struct bitarr const* lhs, struct bitarr const* rhs)
 {
     assert(res != NULL);
     assert(lhs != NULL);
@@ -1215,10 +1208,8 @@ sunder_bitarr_and(
 }
 
 void
-sunder_bitarr_xor(
-    struct sunder_bitarr* res,
-    struct sunder_bitarr const* lhs,
-    struct sunder_bitarr const* rhs)
+bitarr_xor(
+    struct bitarr* res, struct bitarr const* lhs, struct bitarr const* rhs)
 {
     assert(res != NULL);
     assert(lhs != NULL);
@@ -1240,10 +1231,8 @@ sunder_bitarr_xor(
 }
 
 void
-sunder_bitarr_or(
-    struct sunder_bitarr* res,
-    struct sunder_bitarr const* lhs,
-    struct sunder_bitarr const* rhs)
+bitarr_or(
+    struct bitarr* res, struct bitarr const* lhs, struct bitarr const* rhs)
 {
     assert(res != NULL);
     assert(lhs != NULL);
