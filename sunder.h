@@ -53,10 +53,9 @@ typedef union {
 // read as if they were a sentence.
 // Example:
 //      // Assert that we are compiling on a 64-bit machine.
-//      SUNDER_STATIC_ASSERT(pointers_are_eight_bytes, sizeof(void*) == 8);
+//      STATIC_ASSERT(pointers_are_eight_bytes, sizeof(void*) == 8);
 // clang-format off
-#define SUNDER_STATIC_ASSERT(what, expr)                                       \
-    enum {STATIC_ASSERT__ ## what = 1/!!(expr)}//;
+#define STATIC_ASSERT(what, expr) enum {STATIC_ASSERT__ ## what = 1/!!(expr)}
 // clang-format on
 
 // Alternatives to the C99 standard library functions in ctype.h.

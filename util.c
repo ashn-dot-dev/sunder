@@ -480,7 +480,7 @@ directory_files(char const* path)
 #include <stdlib.h>
 #include <string.h>
 
-SUNDER_STATIC_ASSERT(CHAR_BIT_IS_8, CHAR_BIT == 8);
+STATIC_ASSERT(CHAR_BIT_IS_8, CHAR_BIT == 8);
 
 int
 safe_isalnum(int c)
@@ -921,7 +921,7 @@ sipool_intern_cstr(struct sipool* self, char const* cstr)
     return sipool_intern(self, cstr, strlen(cstr));
 }
 
-SUNDER_STATIC_ASSERT(
+STATIC_ASSERT(
     SBUF_HEADER_OFFSET_IS_ALIGNED,
     SBUF__HEADER_OFFSET_ % ALIGNOF(max_align_type) == 0);
 
@@ -1270,7 +1270,7 @@ struct bigint {
 // values cleanly which makes addition and multiplication of limbs work without
 // needing to think too hard.
 #define SUNDER__BIGINT_LIMB_BITS_ ((size_t)8)
-SUNDER_STATIC_ASSERT(
+STATIC_ASSERT(
     correct_bits_per_limb,
     SUNDER__BIGINT_LIMB_BITS_
         == (sizeof(*((struct bigint*)0)->limbs) * CHAR_BIT));
