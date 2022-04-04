@@ -515,15 +515,15 @@ bigint_magnitude_bit_set(struct bigint* self, size_t n, int value);
 //   0      Left pad the output string up to the field width using zeros.
 //          Default behavior is to pad with spaces.
 //   +      Prefix the numeric representation of the output string with a plus
-//          or minus sign (+ or -), even for positive numbers.
-//          Default behavior is to only add the minus sign for negative numbers.
+//          or minus sign (+ or -), even for positive numbers. Default behavior
+//          is to only add the minus sign for negative numbers.
 //   -      Left justify the output string within the provided field width.
 //   space  Prefix the numeric representation of the output string with a space
 //          if no sign would be written otherwise.
 //
 // Width (optional):
-//   Decimal digit string with nonzero first digit specifying the minimum length
-//   of the output string.
+//   Decimal digit string with nonzero first digit specifying the minimum
+//   length of the output string.
 //
 // Specifier (required):
 //   d      The provided bigint will be represented using decimal notation.
