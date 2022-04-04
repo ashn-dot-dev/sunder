@@ -15,8 +15,8 @@ module_new(char const* name, char const* path)
     struct module* const self = sunder_xalloc(NULL, sizeof(*self));
     memset(self, 0x00, sizeof(*self));
 
-    self->name = sunder_sipool_intern_cstr(context()->sipool, name);
-    self->path = sunder_sipool_intern_cstr(context()->sipool, path);
+    self->name = sipool_intern_cstr(context()->sipool, name);
+    self->path = sipool_intern_cstr(context()->sipool, path);
 
     char* const source = read_source(self->path);
     sunder_freezer_register(context()->freezer, source - 1);
@@ -140,9 +140,9 @@ context_init(void)
 {
     s_context.freezer = sunder_freezer_new();
 
-    s_context.sipool = sunder_sipool_new();
+    s_context.sipool = sipool_new();
 #define INTERN_STR_LITERAL(str_literal)                                        \
-    sunder_sipool_intern_cstr(context()->sipool, str_literal)
+    sipool_intern_cstr(context()->sipool, str_literal)
     s_context.interned.empty = INTERN_STR_LITERAL("");
     s_context.interned.builtin = INTERN_STR_LITERAL("builtin");
     s_context.interned.return_ = INTERN_STR_LITERAL("return");
@@ -240,7 +240,7 @@ context_fini(void)
     }
     sunder_sbuf_fini(self->modules);
 
-    sunder_sipool_del(self->sipool);
+    sipool_del(self->sipool);
 
     sunder_sbuf_fini(self->static_symbols);
     symbol_table_freeze(self->global_symbol_table, self->freezer);

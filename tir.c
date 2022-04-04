@@ -243,7 +243,7 @@ type_new_function(
         sunder_string_append_fmt(name_string, ", %s", parameter_types[i]->name);
     }
     sunder_string_append_fmt(name_string, ") %s", return_type->name);
-    char const* const name = sunder_sipool_intern(
+    char const* const name = sipool_intern(
         context()->sipool,
         sunder_string_start(name_string),
         sunder_string_count(name_string));
@@ -266,7 +266,7 @@ type_new_pointer(struct type const* base)
 
     struct sunder_string* const name_string =
         sunder_string_new_fmt("*%s", base->name);
-    char const* const name = sunder_sipool_intern(
+    char const* const name = sipool_intern(
         context()->sipool,
         sunder_string_start(name_string),
         sunder_string_count(name_string));
@@ -288,7 +288,7 @@ type_new_array(size_t count, struct type const* base)
 
     struct sunder_string* const name_string =
         sunder_string_new_fmt("[%zu]%s", count, base->name);
-    char const* const name = sunder_sipool_intern(
+    char const* const name = sipool_intern(
         context()->sipool,
         sunder_string_start(name_string),
         sunder_string_count(name_string));
@@ -319,7 +319,7 @@ type_new_slice(struct type const* base)
 
     struct sunder_string* const name_string =
         sunder_string_new_fmt("[]%s", base->name);
-    char const* const name = sunder_sipool_intern(
+    char const* const name = sipool_intern(
         context()->sipool,
         sunder_string_start(name_string),
         sunder_string_count(name_string));

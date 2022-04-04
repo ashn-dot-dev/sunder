@@ -324,8 +324,8 @@ parse_import(struct parser* parser)
 
     struct sunder_string const* const bytes =
         expect_current(parser, TOKEN_BYTES)->data.bytes;
-    char const* const path = sunder_sipool_intern_cstr(
-        context()->sipool, sunder_string_start(bytes));
+    char const* const path =
+        sipool_intern_cstr(context()->sipool, sunder_string_start(bytes));
     expect_current(parser, TOKEN_SEMICOLON);
 
     struct cst_import* const product = cst_import_new(location, path);
@@ -1756,7 +1756,7 @@ parse_identifier(struct parser* parser)
     struct token const* const token = expect_current(parser, TOKEN_IDENTIFIER);
     struct source_location const* location = &token->location;
     char const* const name =
-        sunder_sipool_intern(context()->sipool, token->start, token->count);
+        sipool_intern(context()->sipool, token->start, token->count);
     struct cst_identifier* const product = cst_identifier_new(location, name);
 
     sunder_freezer_register(context()->freezer, product);
@@ -1788,7 +1788,7 @@ parse_integer(struct parser* parser)
     struct sunder_bigint* const value = sunder_bigint_new_text(
         token->data.integer.number.start, token->data.integer.number.count);
     sunder_bigint_freeze(value, context()->freezer);
-    char const* const suffix = sunder_sipool_intern(
+    char const* const suffix = sipool_intern(
         context()->sipool,
         token->data.integer.suffix.start,
         token->data.integer.suffix.count);

@@ -419,7 +419,7 @@ canonical_path(char const* path)
             strerror(errno));
     }
 
-    return sunder_sipool_intern_cstr(context()->sipool, resolved_path);
+    return sipool_intern_cstr(context()->sipool, resolved_path);
 }
 
 char const*
@@ -431,7 +431,7 @@ directory_path(char const* path)
 
     char* const tmp = cstr_new_cstr(canonical);
     char const* const interned =
-        sunder_sipool_intern_cstr(context()->sipool, dirname(tmp));
+        sipool_intern_cstr(context()->sipool, dirname(tmp));
     sunder_xalloc(tmp, SUNDER_XALLOC_FREE);
 
     return interned;
@@ -458,8 +458,7 @@ directory_files(char const* path)
         if (strcmp(file, ".") == 0 || strcmp(file, "..") == 0) {
             continue;
         }
-        sunder_sbuf_push(
-            files, sunder_sipool_intern_cstr(context()->sipool, file));
+        sunder_sbuf_push(files, sipool_intern_cstr(context()->sipool, file));
     }
 
     (void)closedir(dir);
@@ -884,23 +883,22 @@ vstr_ends_with(struct vstr const* vstr, struct vstr const* target)
     return sunder_memcmp(start, target->start, target->count) == 0;
 }
 
-struct sunder_sipool {
+struct sipool {
     // List of heap-allocated strings interned within this pool.
     // elements of the map member reference memory owned by this list.
     sunder_sbuf(char*) strings;
 };
 
-struct sunder_sipool*
-sunder_sipool_new(void)
+struct sipool*
+sipool_new(void)
 {
-    struct sunder_sipool* const self =
-        sunder_xalloc(NULL, sizeof(struct sunder_sipool));
+    struct sipool* const self = sunder_xalloc(NULL, sizeof(struct sipool));
     self->strings = NULL;
     return self;
 }
 
 void
-sunder_sipool_del(struct sunder_sipool* self)
+sipool_del(struct sipool* self)
 {
     if (self == NULL) {
         return;
@@ -916,8 +914,7 @@ sunder_sipool_del(struct sunder_sipool* self)
 }
 
 char const*
-sunder_sipool_intern(
-    struct sunder_sipool* self, char const* start, size_t count)
+sipool_intern(struct sipool* self, char const* start, size_t count)
 {
     assert(self != NULL);
     assert(start != NULL || count == 0);
@@ -938,12 +935,12 @@ sunder_sipool_intern(
 }
 
 char const*
-sunder_sipool_intern_cstr(struct sunder_sipool* self, char const* cstr)
+sipool_intern_cstr(struct sipool* self, char const* cstr)
 {
     assert(self != NULL);
     assert(cstr != NULL);
 
-    return sunder_sipool_intern(self, cstr, strlen(cstr));
+    return sipool_intern(self, cstr, strlen(cstr));
 }
 
 SUNDER_STATIC_ASSERT(
@@ -2523,7 +2520,7 @@ struct sunder_freezer*
 sunder_freezer_new(void)
 {
     struct sunder_freezer* const self =
-        sunder_xalloc(NULL, sizeof(struct sunder_sipool));
+        sunder_xalloc(NULL, sizeof(struct sipool));
     self->ptrs = NULL;
     return self;
 }

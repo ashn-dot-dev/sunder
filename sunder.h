@@ -13,7 +13,7 @@
 //////// util.c ////////////////////////////////////////////////////////////////
 
 struct vstr;
-struct sunder_sipool;
+struct sipool;
 struct sunder_bitarr;
 struct sunder_bigint;
 struct sunder_string;
@@ -194,22 +194,21 @@ int
 vstr_ends_with(struct vstr const* vstr, struct vstr const* target);
 
 // Allocate and initialize a string intern pool.
-struct sunder_sipool*
-sunder_sipool_new(void);
+struct sipool*
+sipool_new(void);
 // Deinitialize and free the string intern pool.
 // Does nothing if self == NULL.
 void
-sunder_sipool_del(struct sunder_sipool* self);
+sipool_del(struct sipool* self);
 
 // Intern the string specified by the first count bytes of start.
 // Returns the canonical NUL-terminated representation of the interned string.
 char const*
-sunder_sipool_intern(
-    struct sunder_sipool* self, char const* start, size_t count);
+sipool_intern(struct sipool* self, char const* start, size_t count);
 // Intern the string specified by the provided NUL-terminated cstring.
 // Returns the canonical NUL-terminated representation of the interned string.
 char const*
-sunder_sipool_intern_cstr(struct sunder_sipool* self, char const* cstr);
+sipool_intern_cstr(struct sipool* self, char const* cstr);
 
 // General purpose type-safe dynamic array (a.k.a stretchy buffer).
 //
@@ -838,7 +837,7 @@ struct context {
     struct sunder_freezer* freezer;
 
     // Interned strings.
-    struct sunder_sipool* sipool;
+    struct sipool* sipool;
     struct {
         // clang-format off
         char const* empty;   // ""

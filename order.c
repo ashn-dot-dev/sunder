@@ -146,7 +146,7 @@ orderer_tldecl_name(struct cst_decl const* decl, size_t declaration_order_index)
         // declaration by name during ordering.
         struct sunder_string* s =
             sunder_string_new_fmt("declaration %zu", declaration_order_index);
-        char const* const name = sunder_sipool_intern(
+        char const* const name = sipool_intern(
             context()->sipool, sunder_string_start(s), sunder_string_count(s));
         sunder_string_del(s);
         return name;
