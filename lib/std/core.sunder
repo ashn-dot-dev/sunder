@@ -4,6 +4,8 @@ import "sys";
 alias umax = sys::umax;
 alias smax = sys::smax;
 
+extend void func init() void { }
+
 extend u8 const MIN: u8 = 0x00;
 extend u8 const MAX: u8 = 0xFF;
 extend u8 func init_from_str(str: []byte, radix: usize) std::result[[u8, []byte]] {
@@ -12,7 +14,7 @@ extend u8 func init_from_str(str: []byte, radix: usize) std::result[[u8, []byte]
 extend u8 func compare(lhs: *u8, rhs: *u8) ssize {
     return _int_compare_value[[umax]]((:umax)*lhs, (:umax)*rhs);
 }
-extend u8 func format(self: *u8, writer: std::writer, fmt: []byte) std::result[[usize, []byte]] {
+extend u8 func format(self: *u8, writer: std::writer, fmt: []byte) std::result[[void, []byte]] {
     return _int_common_format((:umax)*self, false, writer, fmt);
 }
 
@@ -24,7 +26,7 @@ extend u16 func init_from_str(str: []byte, radix: usize) std::result[[u16, []byt
 extend u16 func compare(lhs: *u16, rhs: *u16) ssize {
     return _int_compare_value[[umax]]((:umax)*lhs, (:umax)*rhs);
 }
-extend u16 func format(self: *u16, writer: std::writer, fmt: []byte) std::result[[usize, []byte]] {
+extend u16 func format(self: *u16, writer: std::writer, fmt: []byte) std::result[[void, []byte]] {
     return _int_common_format((:umax)*self, false, writer, fmt);
 }
 
@@ -36,7 +38,7 @@ extend u32 func init_from_str(str: []byte, radix: usize) std::result[[u32, []byt
 extend u32 func compare(lhs: *u32, rhs: *u32) ssize {
     return _int_compare_value[[umax]]((:umax)*lhs, (:umax)*rhs);
 }
-extend u32 func format(self: *u32, writer: std::writer, fmt: []byte) std::result[[usize, []byte]] {
+extend u32 func format(self: *u32, writer: std::writer, fmt: []byte) std::result[[void, []byte]] {
     return _int_common_format((:umax)*self, false, writer, fmt);
 }
 
@@ -48,7 +50,7 @@ extend u64 func init_from_str(str: []byte, radix: usize) std::result[[u64, []byt
 extend u64 func compare(lhs: *u64, rhs: *u64) ssize {
     return _int_compare_value[[umax]]((:umax)*lhs, (:umax)*rhs);
 }
-extend u64 func format(self: *u64, writer: std::writer, fmt: []byte) std::result[[usize, []byte]] {
+extend u64 func format(self: *u64, writer: std::writer, fmt: []byte) std::result[[void, []byte]] {
     return _int_common_format((:umax)*self, false, writer, fmt);
 }
 
@@ -60,7 +62,7 @@ extend usize func init_from_str(str: []byte, radix: usize) std::result[[usize, [
 extend usize func compare(lhs: *usize, rhs: *usize) ssize {
     return _int_compare_value[[umax]]((:umax)*lhs, (:umax)*rhs);
 }
-extend usize func format(self: *usize, writer: std::writer, fmt: []byte) std::result[[usize, []byte]] {
+extend usize func format(self: *usize, writer: std::writer, fmt: []byte) std::result[[void, []byte]] {
     return _int_common_format((:umax)*self, false, writer, fmt);
 }
 
@@ -72,7 +74,7 @@ extend s8 func init_from_str(str: []byte, radix: usize) std::result[[s8, []byte]
 extend s8 func compare(lhs: *s8, rhs: *s8) ssize {
     return _int_compare_value[[smax]]((:smax)*lhs, (:smax)*rhs);
 }
-extend s8 func format(self: *s8, writer: std::writer, fmt: []byte) std::result[[usize, []byte]] {
+extend s8 func format(self: *s8, writer: std::writer, fmt: []byte) std::result[[void, []byte]] {
     return _int_common_format(_int_absolute_value[[s8]](*self), *self < 0, writer, fmt);
 }
 
@@ -84,7 +86,7 @@ extend s16 func init_from_str(str: []byte, radix: usize) std::result[[s16, []byt
 extend s16 func compare(lhs: *s16, rhs: *s16) ssize {
     return _int_compare_value[[smax]]((:smax)*lhs, (:smax)*rhs);
 }
-extend s16 func format(self: *s16, writer: std::writer, fmt: []byte) std::result[[usize, []byte]] {
+extend s16 func format(self: *s16, writer: std::writer, fmt: []byte) std::result[[void, []byte]] {
     return _int_common_format(_int_absolute_value[[s16]](*self), *self < 0, writer, fmt);
 }
 
@@ -96,7 +98,7 @@ extend s32 func init_from_str(str: []byte, radix: usize) std::result[[s32, []byt
 extend s32 func compare(lhs: *s32, rhs: *s32) ssize {
     return _int_compare_value[[smax]]((:smax)*lhs, (:smax)*rhs);
 }
-extend s32 func format(self: *s32, writer: std::writer, fmt: []byte) std::result[[usize, []byte]] {
+extend s32 func format(self: *s32, writer: std::writer, fmt: []byte) std::result[[void, []byte]] {
     return _int_common_format(_int_absolute_value[[s32]](*self), *self < 0, writer, fmt);
 }
 
@@ -108,7 +110,7 @@ extend s64 func init_from_str(str: []byte, radix: usize) std::result[[s64, []byt
 extend s64 func compare(lhs: *s64, rhs: *s64) ssize {
     return _int_compare_value[[smax]]((:smax)*lhs, (:smax)*rhs);
 }
-extend s64 func format(self: *s64, writer: std::writer, fmt: []byte) std::result[[usize, []byte]] {
+extend s64 func format(self: *s64, writer: std::writer, fmt: []byte) std::result[[void, []byte]] {
     return _int_common_format(_int_absolute_value[[s64]](*self), *self < 0, writer, fmt);
 }
 
@@ -120,7 +122,7 @@ extend ssize func init_from_str(str: []byte, radix: usize) std::result[[ssize, [
 extend ssize func compare(lhs: *ssize, rhs: *ssize) ssize {
     return _int_compare_value[[smax]]((:smax)*lhs, (:smax)*rhs);
 }
-extend ssize func format(self: *ssize, writer: std::writer, fmt: []byte) std::result[[usize, []byte]] {
+extend ssize func format(self: *ssize, writer: std::writer, fmt: []byte) std::result[[void, []byte]] {
     return _int_common_format(_int_absolute_value[[ssize]](*self), *self < 0, writer, fmt);
 }
 
@@ -139,7 +141,7 @@ extend []byte func compare(lhs: *[]byte, rhs: *[]byte) ssize {
 # Accepted format specifiers:
 #   ""  => verbatim (default)
 #   "e" => escaped
-extend []byte func format(self: *[]byte, writer: std::writer, fmt: []byte) std::result[[usize, []byte]] {
+extend []byte func format(self: *[]byte, writer: std::writer, fmt: []byte) std::result[[void, []byte]] {
     # Format specifier: ""
     if countof(fmt) == 0 {
         return std::write_all(writer, *self);
@@ -147,58 +149,57 @@ extend []byte func format(self: *[]byte, writer: std::writer, fmt: []byte) std::
 
     # Format specifier: "e"
     if countof(fmt) == 1 and fmt[0] == 'e' {
-        var written: usize = 0;
-        var result = std::zeroed[[std::result[[usize, []byte]]]]();
+        var result = std::zeroed[[std::result[[void, []byte]]]]();
         for i in 0:countof(*self) {
             var c: byte = self.*[i];
             if c == '\0' {
-                result = std::write_all_accumulate(writer, "\\0", &written);
+                result = std::write_all(writer, "\\0");
                 if result.is_error() {
                     return result;
                 }
                 continue;
             }
             if c == '\t' {
-                result = std::write_all_accumulate(writer, "\\t", &written);
+                result = std::write_all(writer, "\\t");
                 if result.is_error() {
                     return result;
                 }
                 continue;
             }
             if c == '\n' {
-                result = std::write_all_accumulate(writer, "\\n", &written);
+                result = std::write_all(writer, "\\n");
                 if result.is_error() {
                     return result;
                 }
                 continue;
             }
             if c == '\'' {
-                result = std::write_all_accumulate(writer, "\\\'", &written);
+                result = std::write_all(writer, "\\\'");
                 if result.is_error() {
                     return result;
                 }
                 continue;
             }
             if c == '\"' {
-                result = std::write_all_accumulate(writer, "\\\"", &written);
+                result = std::write_all(writer, "\\\"");
                 if result.is_error() {
                     return result;
                 }
                 continue;
             }
             if c == '\\' {
-                result = std::write_all_accumulate(writer, "\\\\", &written);
+                result = std::write_all(writer, "\\\\");
                 if result.is_error() {
                     return result;
                 }
                 continue;
             }
-            result = std::write_all_accumulate(writer, (:[]byte){&c, 1}, &written);
+            result = std::write_all(writer, (:[]byte){&c, 1});
             if result.is_error() {
                 return result;
             }
         }
-        return std::result[[usize, []byte]]::init_value(written);
+        return std::result[[void, []byte]]::init_value(void::init());
     }
 
     std::formatter::invalid_format_specifier(fmt);
@@ -347,7 +348,7 @@ struct writer {
 }
 
 struct formatter_itable {
-    var format: func(*any, std::writer, []byte) std::result[[usize, []byte]];
+    var format: func(*any, std::writer, []byte) std::result[[void, []byte]];
 }
 
 struct formatter {
@@ -370,10 +371,6 @@ struct formatter {
     # the empty format specifier, `""`, should always be handled as a default
     # formatting case.
     #
-    # On success, this function returns the number of bytes written to the
-    # provided writer. Types implementing this function should ensure that all
-    # bytes are written to the provided writer.
-    #
     # On failure, this function returns a static string describing the failure.
     # In the event of a write error, the erroneous write result should be
     # returned. If the provided format specifier does not match a format
@@ -382,7 +379,7 @@ struct formatter {
     #   std::formatter::invalid_format_specifier(fmt);
     #
     # which will terminate the program with failure status.
-    func format(self: *formatter, writer: std::writer, fmt: []byte) std::result[[usize, []byte]] {
+    func format(self: *formatter, writer: std::writer, fmt: []byte) std::result[[void, []byte]] {
         return self.*.itable.*.format(self.*.object, writer, fmt);
     }
 
@@ -628,39 +625,21 @@ func read_line(reader: std::reader, allocator: std::allocator) std::result[[std:
 # Write `countof(buf)` bytes using the provided writer, invoking the writer's
 # `write` function repeatedly until either all bytes have been written or an
 # error occurs.
-func write_all(writer: std::writer, buf: []byte) std::result[[usize, []byte]] {
+func write_all(writer: std::writer, buf: []byte) std::result[[void, []byte]] {
     var written: usize = 0;
     for written < countof(buf) {
         var result = writer.write(buf[written:countof(buf)]);
         if result.is_error() {
-            return result;
+            return  std::result[[void, []byte]]::init_error(result.error());
         }
         written = written + result.value();
     }
-    return std::result[[usize, []byte]]::init_value(written);
+    return std::result[[void, []byte]]::init_value(void::init());
 }
 
-# Write `countof(buf)` bytes using the provided writer, invoking the writer's
-# `write` function repeatedly until either all bytes have been written or an
-# error occurs. This function behaves identically to `std::write_all`, but will
-# additionally add the number of written bytes to the value at `written` on
-# success. This behavior is useful when defining `format` member functions that
-# require multiple `std::write_all` calls.
-func write_all_accumulate(writer: std::writer, buf: []byte, written: *usize) std::result[[usize, []byte]] {
-    var result = std::write_all(writer, buf);
-    if result.is_value() {
-        *written = *written + result.value();
-    }
-    return result;
-}
-
-
-func write_format(writer: std::writer, format: []byte, args: []std::formatter) std::result[[usize, []byte]] {
+func write_format(writer: std::writer, format: []byte, args: []std::formatter) std::result[[void, []byte]] {
     # Current format argument index.
     var arg: usize = 0;
-
-    # Total number of bytes written.
-    var written: usize = 0;
 
     # Walking along the format string accumulating bytes to be written verbatim.
     #   "some{fmt}text"
@@ -701,7 +680,7 @@ func write_format(writer: std::writer, format: []byte, args: []std::formatter) s
                 #      ^^
                 # "some}}text"
                 #      ^^ Escaped '{' or '}' character.
-                var res = std::write_all_accumulate(writer, format[start:end+1], &written);
+                var res = std::write_all(writer, format[start:end+1]);
                 if res.is_error() {
                     return res;
                 }
@@ -718,7 +697,7 @@ func write_format(writer: std::writer, format: []byte, args: []std::formatter) s
 
             # "some{fmt}text"
             #      ^ Start of format specifier.
-            var res = std::write_all_accumulate(writer, format[start:end], &written);
+            var res = std::write_all(writer, format[start:end]);
             if res.is_error() {
                 return res;
             }
@@ -754,7 +733,6 @@ func write_format(writer: std::writer, format: []byte, args: []std::formatter) s
             if res.is_error() {
                 return res;
             }
-            written = written + res.value();
             start = end + 1;
             end = start;
             arg = arg + 1;
@@ -773,7 +751,7 @@ func write_format(writer: std::writer, format: []byte, args: []std::formatter) s
 
     # "some{fmt}text"
     #           ^^^^ Write the remaining walked text.
-    var res = std::write_all_accumulate(writer, format[start:end], &written);
+    var res = std::write_all(writer, format[start:end]);
     if res.is_error() {
         return res;
     }
@@ -787,7 +765,7 @@ func write_format(writer: std::writer, format: []byte, args: []std::formatter) s
         std::panic("invalid format argument count");
     }
 
-    return std::result[[usize, []byte]]::init_value(written);
+    return std::result[[void, []byte]]::init_value(void::init());
 }
 
 func print(writer: std::writer, str: []byte) void {
@@ -1198,7 +1176,7 @@ func _int_absolute_value[[T]](value: T) umax {
 # Parameter `value` is the absolute value of the integer.
 # Parameter `is_negative` is true if the original value of the integer was a
 # negative signed integer. This parameter is false for unsigned integers.
-func _int_common_format(value: umax, is_negative: bool, writer: std::writer, fmt: []byte) std::result[[usize, []byte]] {
+func _int_common_format(value: umax, is_negative: bool, writer: std::writer, fmt: []byte) std::result[[void, []byte]] {
     # All non-default format specifiers have a length of one byte.
     if countof(fmt) > 1 {
         std::formatter::invalid_format_specifier(fmt);

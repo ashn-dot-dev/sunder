@@ -3,7 +3,7 @@ import "std/core.sunder";
 struct person {
     var name: []byte;
 
-    func format(self: *person, writer: std::writer, fmt: []byte) std::result[[usize, []byte]] {
+    func format(self: *person, writer: std::writer, fmt: []byte) std::result[[void , []byte]] {
         if countof(fmt) != 0 {
             std::formatter::invalid_format_specifier(fmt);
         }
@@ -14,13 +14,12 @@ struct person {
 func main() void {
     var alice: person = (:person){.name = "Alice"};
     var bob: person = (:person){.name = "Bob"};
-
-    var args: [2]std::formatter = (:[2]std::formatter)[
-        std::formatter::init[[person]](&alice),
-        std::formatter::init[[person]](&bob)
-    ];
-    var res: std::result[[usize, []byte]] =
-        std::write_format(std::out(), "{} is alone", args[0:countof(args)]);
+    std::write_format(
+        std::out(),
+        "{} is alone",
+        (:[]std::formatter)[
+            std::formatter::init[[person]](&alice),
+            std::formatter::init[[person]](&bob)]);
 }
 ################################################################################
 # Alice is alonepanic: invalid format argument count

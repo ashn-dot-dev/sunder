@@ -3,7 +3,7 @@ import "std/core.sunder";
 struct person {
     var name: []byte;
 
-    func format(self: *person, writer: std::writer, fmt: []byte) std::result[[usize, []byte]] {
+    func format(self: *person, writer: std::writer, fmt: []byte) std::result[[void, []byte]] {
         if countof(fmt) != 0 {
             std::formatter::invalid_format_specifier(fmt);
         }
@@ -12,7 +12,7 @@ struct person {
 }
 
 struct int {
-    func format(self: *int, writer: std::writer, fmt: []byte) std::result[[usize, []byte]] {
+    func format(self: *int, writer: std::writer, fmt: []byte) std::result[[void, []byte]] {
         if countof(fmt) == 0 {
             return std::write_all(writer, "decimal");
         }
@@ -42,10 +42,9 @@ func test0() void {
         std::formatter::init[[person]](&alice),
         std::formatter::init[[person]](&bob)
     ];
-    var res: std::result[[usize, []byte]] =
-        std::write_format(std::out(), "{} and {}", args[0:countof(args)]);
+    var result = std::write_format(std::out(), "{} and {}", args[0:countof(args)]);
     std::print(std::out(), "\n"); # Separate '\n' to test format string ending in "{}".
-    dump res.value();
+    dump result.value();
 }
 
 func test1() void {
@@ -58,9 +57,8 @@ func test1() void {
         std::formatter::init[[int]](&i),
         std::formatter::init[[int]](&i)
     ];
-    var res: std::result[[usize, []byte]] =
-        std::write_format(std::out(), "{} {d} {b} {o} {x}\n", args[0:countof(args)]);
-    dump res.value();
+    var result = std::write_format(std::out(), "{} {d} {b} {o} {x}\n", args[0:countof(args)]);
+    dump result.value();
 }
 
 func test2() void {
@@ -71,9 +69,8 @@ func test2() void {
         std::formatter::init[[person]](&alice),
         std::formatter::init[[person]](&bob)
     ];
-    var res: std::result[[usize, []byte]] =
-        std::write_format(std::out(), "{{ {} {{ {} {{\n", args[0:countof(args)]);
-    dump res.value();
+    var result = std::write_format(std::out(), "{{ {} {{ {} {{\n", args[0:countof(args)]);
+    dump result.value();
 }
 
 func test3() void {
@@ -84,9 +81,8 @@ func test3() void {
         std::formatter::init[[person]](&alice),
         std::formatter::init[[person]](&bob)
     ];
-    var res: std::result[[usize, []byte]] =
-        std::write_format(std::out(), "}} {} }} {} }}\n", args[0:countof(args)]);
-    dump res.value();
+    var result = std::write_format(std::out(), "}} {} }} {} }}\n", args[0:countof(args)]);
+    dump result.value();
 }
 
 func test4() void {
@@ -95,9 +91,8 @@ func test4() void {
     var args: [1]std::formatter = (:[1]std::formatter)[
         std::formatter::init[[person]](&alice)
     ];
-    var res: std::result[[usize, []byte]] =
-        std::write_format(std::out(), "{{{}\n", args[0:countof(args)]);
-    dump res.value();
+    var result = std::write_format(std::out(), "{{{}\n", args[0:countof(args)]);
+    dump result.value();
 }
 
 # Test that std::write_format works as expected when called with array-slice
@@ -108,13 +103,13 @@ func test5() void {
     var alice: person = (:person){.name = "Alice"};
     var bob: person = (:person){.name = "Bob"};
 
-    var res: std::result[[usize, []byte]] = std::write_format(
+    var result = std::write_format(
         std::err(),
         "{} and {} as an array-slice\n",
         (:[]std::formatter)[
             std::formatter::init[[person]](&alice),
             std::formatter::init[[person]](&bob)]);
-    dump res.value();
+    dump result.value();
 }
 
 func main() void {
@@ -127,14 +122,14 @@ func main() void {
 }
 ################################################################################
 # Alice and Bob
-# 0D 00 00 00 00 00 00 00
+#
 # decimal decimal binary octal hexadecimal
-# 29 00 00 00 00 00 00 00
+#
 # { Alice { Bob {
-# 10 00 00 00 00 00 00 00
+#
 # } Alice } Bob }
-# 10 00 00 00 00 00 00 00
+#
 # {Alice
-# 07 00 00 00 00 00 00 00
+#
 # Alice and Bob as an array-slice
-# 20 00 00 00 00 00 00 00
+#

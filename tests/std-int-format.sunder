@@ -5,9 +5,9 @@ func format_test0() void {
     var a_fmtr: std::formatter = std::formatter::init[[u32]](&a);
 
     var args: [1]std::formatter = (:[1]std::formatter)[a_fmtr];
-    var res: std::result[[usize, []byte]] = std::write_format(std::out(), "{}\n", args[0:countof(args)]);
+    var result = std::write_format(std::out(), "{}\n", args[0:countof(args)]);
 
-    dump res.value();
+    dump result.value();
 }
 
 func format_test1() void {
@@ -15,9 +15,9 @@ func format_test1() void {
     var a_fmtr: std::formatter = std::formatter::init[[s32]](&a);
 
     var args: [1]std::formatter = (:[1]std::formatter)[a_fmtr];
-    var res: std::result[[usize, []byte]] = std::write_format(std::out(), "{}\n", args[0:countof(args)]);
+    var result = std::write_format(std::out(), "{}\n", args[0:countof(args)]);
 
-    dump res.value();
+    dump result.value();
 }
 
 func format_test2() void {
@@ -25,9 +25,9 @@ func format_test2() void {
     var a_fmtr: std::formatter = std::formatter::init[[u32]](&a);
 
     var args: [1]std::formatter = (:[1]std::formatter)[a_fmtr];
-    var res: std::result[[usize, []byte]] = std::write_format(std::out(), "{d}\n", args[0:countof(args)]);
+    var result = std::write_format(std::out(), "{d}\n", args[0:countof(args)]);
 
-    dump res.value();
+    dump result.value();
 }
 
 func format_test3() void {
@@ -35,9 +35,9 @@ func format_test3() void {
     var a_fmtr: std::formatter = std::formatter::init[[u32]](&a);
 
     var args: [1]std::formatter = (:[1]std::formatter)[a_fmtr];
-    var res: std::result[[usize, []byte]] = std::write_format(std::out(), "{b}\n", args[0:countof(args)]);
+    var result = std::write_format(std::out(), "{b}\n", args[0:countof(args)]);
 
-    dump res.value();
+    dump result.value();
 }
 
 func format_test4() void {
@@ -45,9 +45,9 @@ func format_test4() void {
     var a_fmtr: std::formatter = std::formatter::init[[u32]](&a);
 
     var args: [1]std::formatter = (:[1]std::formatter)[a_fmtr];
-    var res: std::result[[usize, []byte]] = std::write_format(std::out(), "{o}\n", args[0:countof(args)]);
+    var result = std::write_format(std::out(), "{o}\n", args[0:countof(args)]);
 
-    dump res.value();
+    dump result.value();
 }
 
 func format_test5() void {
@@ -55,9 +55,9 @@ func format_test5() void {
     var a_fmtr: std::formatter = std::formatter::init[[u32]](&a);
 
     var args: [1]std::formatter = (:[1]std::formatter)[a_fmtr];
-    var res: std::result[[usize, []byte]] = std::write_format(std::out(), "{x}\n", args[0:countof(args)]);
+    var result = std::write_format(std::out(), "{x}\n", args[0:countof(args)]);
 
-    dump res.value();
+    dump result.value();
 }
 
 func format_test6() void {
@@ -65,9 +65,9 @@ func format_test6() void {
     var a_fmtr: std::formatter = std::formatter::init[[u32]](&a);
 
     var args: [1]std::formatter = (:[1]std::formatter)[a_fmtr];
-    var res: std::result[[usize, []byte]] = std::write_format(std::out(), "{X}\n", args[0:countof(args)]);
+    var result = std::write_format(std::out(), "{X}\n", args[0:countof(args)]);
 
-    dump res.value();
+    dump result.value();
 }
 
 func format_test7() void {
@@ -75,9 +75,9 @@ func format_test7() void {
     var a_fmtr: std::formatter = std::formatter::init[[s32]](&a);
 
     var args: [1]std::formatter = (:[1]std::formatter)[a_fmtr];
-    var res: std::result[[usize, []byte]] = std::write_format(std::out(), "{X}\n", args[0:countof(args)]);
+    var result = std::write_format(std::out(), "{X}\n", args[0:countof(args)]);
 
-    dump res.value();
+    dump result.value();
 }
 
 # Test that zero is properly printed in all formats.
@@ -85,12 +85,12 @@ func format_test8() void {
     var a: s32 = 0;
     var a_fmtr: std::formatter = std::formatter::init[[s32]](&a);
 
-    var res: std::result[[usize, []byte]] = std::write_format(
+    var result = std::write_format(
         std::out(),
         "{} {d} {b} {o} {x}\n",
         (:[]std::formatter)[a_fmtr, a_fmtr, a_fmtr, a_fmtr, a_fmtr]);
 
-    dump res.value();
+    dump result.value();
 }
 
 # Test for minimum negative number (subject to integer out-of-range if negated).
@@ -99,9 +99,9 @@ func format_test9() void {
     var a_fmtr: std::formatter = std::formatter::init[[s8]](&a);
 
     var args: [1]std::formatter = (:[1]std::formatter)[a_fmtr];
-    var res: std::result[[usize, []byte]] = std::write_format(std::out(), "{}\n", args[0:countof(args)]);
+    var result = std::write_format(std::out(), "{}\n", args[0:countof(args)]);
 
-    dump res.value();
+    dump result.value();
 }
 
 func format_test10() void {
@@ -109,9 +109,9 @@ func format_test10() void {
     var a_fmtr: std::formatter = std::formatter::init[[u32]](&a);
 
     var args: [1]std::formatter = (:[1]std::formatter)[a_fmtr];
-    var res: std::result[[usize, []byte]] = std::write_format(std::out(), "{l}\n", args[0:countof(args)]);
+    var result = std::write_format(std::out(), "{l}\n", args[0:countof(args)]);
 
-    std::print_line(std::err(), res.error());
+    std::print_line(std::err(), result.error());
 }
 
 func main() void {
@@ -129,23 +129,23 @@ func main() void {
 }
 ################################################################################
 # 3735928559
-# 0B 00 00 00 00 00 00 00
+#
 # -123
-# 05 00 00 00 00 00 00 00
+#
 # 3735928559
-# 0B 00 00 00 00 00 00 00
+#
 # 0b11011110101011011011111011101111
-# 23 00 00 00 00 00 00 00
+#
 # 0o33653337357
-# 0E 00 00 00 00 00 00 00
+#
 # 0xdeadbeef
-# 0B 00 00 00 00 00 00 00
+#
 # 0xDEADBEEF
-# 0B 00 00 00 00 00 00 00
+#
 # -0xBEEF
-# 08 00 00 00 00 00 00 00
+#
 # 0 0 0b0 0o0 0x0
-# 10 00 00 00 00 00 00 00
+#
 # -128
-# 05 00 00 00 00 00 00 00
+#
 # panic: invalid format specifier "l"
