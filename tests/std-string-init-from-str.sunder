@@ -1,0 +1,13 @@
+import "std/core.sunder";
+import "std/page_allocator.sunder";
+import "std/string.sunder";
+
+func main() void {
+    var string = std::string::init_from_str(std::allocator::init[[std::page_allocator]](std::page_allocator::the()), "foo bar");
+    dump string.count();
+    std::print_line(std::out(), string.data());
+    string.fini();
+}
+################################################################################
+# 07 00 00 00 00 00 00 00
+# foo bar

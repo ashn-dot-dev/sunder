@@ -1,0 +1,36 @@
+import "std/core.sunder";
+import "std/page_allocator.sunder";
+import "std/string.sunder";
+
+func main() void {
+    var string = std::string::init(std::allocator::init[[std::page_allocator]](std::page_allocator::the()));
+    var writer = std::writer::init[[std::string]](&string);
+
+    std::print_line(std::out(), string.data());
+
+    std::print(writer, "foo");
+    std::print_line(std::out(), string.data());
+
+    std::print(writer, "bar");
+    std::print_line(std::out(), string.data());
+
+    var x = 123u16;
+    var y = "some str";
+    std::print_format(
+        writer,
+        " - {} {}",
+        (:[]std::formatter)[
+            std::formatter::init[[u16]](&x),
+            std::formatter::init[[[]byte]](&y)]);
+    std::print_line(std::out(), string.data());
+
+    dump string.count();
+
+    string.fini();
+}
+################################################################################
+#
+# foo
+# foobar
+# foobar - 123 some str
+# 15 00 00 00 00 00 00 00

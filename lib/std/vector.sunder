@@ -8,7 +8,7 @@ struct vector[[T]] {
     var _capacity: usize;
 
     func init(allocator: std::allocator) vector[[T]] {
-        return (:std::vector[[T]]){
+        return (:vector[[T]]){
             ._allocator = allocator,
             ._start = (:*T)0u,
             ._count = 0,

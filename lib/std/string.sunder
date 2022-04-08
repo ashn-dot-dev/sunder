@@ -1,0 +1,85 @@
+namespace std;
+import "std/core.sunder";
+
+struct string {
+    var _allocator: std::allocator;
+    var _start: *byte;
+    var _count: usize;
+    var _capacity: usize;
+
+    func init(allocator: std::allocator) string {
+        return (:string){
+            ._allocator = allocator,
+            ._start = (:*byte)0u,
+            ._count = 0,
+            ._capacity = 0
+        };
+    }
+
+    func init_from_str(allocator: std::allocator, str: []byte) string {
+        var self = string::init(allocator);
+        std::print(std::writer::init[[std::string]](&self), str);
+        return self;
+    }
+
+    func init_from_format(allocator: std::allocator, format: []byte, args: []std::formatter) string {
+        var self = string::init(allocator);
+        std::print_format(std::writer::init[[std::string]](&self), format, args);
+        return self;
+    }
+
+    func fini(self: *string) void {
+        if self.*._capacity != 0 {
+            std::delete_slice[[byte]](self.*._allocator, (:[]byte){self.*._start, self.*._capacity});
+        }
+    }
+
+    func start(self: *string) *byte {
+        return self.*._start;
+    }
+
+    func count(self: *string) usize {
+        return self.*._count;
+    }
+
+    func capacity(self: *string) usize {
+        return self.*._capacity;
+    }
+
+    func data(self: *string) []byte {
+        return (:[]byte){self.*._start, self.*._count};
+    }
+
+    func reserve(self: *string, capacity: usize) void {
+        if capacity <= self.*._capacity {
+            return;
+        }
+
+        if self.*._capacity == 0 {
+            var new = std::new_slice[[byte]](self.*._allocator, capacity);
+            self.*._start = &new[0];
+            self.*._capacity = capacity;
+            return;
+        }
+
+        var cur = (:[]byte){self.*._start, self.*._capacity};
+        var new = std::resize_slice[[byte]](self.*._allocator, cur, capacity);
+        self.*._start = &new[0];
+        self.*._capacity = capacity;
+    }
+
+    func resize(self: *string, count: usize) void {
+        if count > self.*._capacity {
+            self.*.reserve(count);
+        }
+
+        self.*._count = count;
+    }
+
+    func write(self: *string, buf: []byte) std::result[[usize, []byte]] {
+        var end = self.*._count;
+        self.*.resize(end + countof(buf));
+        std::copy_slice[[byte]](self.*.data()[end : end + countof(buf)], buf);
+        return std::result[[usize, []byte]]::init_value(countof(buf));
+    }
+}

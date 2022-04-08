@@ -1,0 +1,21 @@
+import "std/core.sunder";
+import "std/page_allocator.sunder";
+import "std/string.sunder";
+
+func main() void {
+    var x = 123u16;
+    var y = "some str";
+
+    var string = std::string::init_from_format(
+        std::allocator::init[[std::page_allocator]](std::page_allocator::the()),
+        "{} {}",
+        (:[]std::formatter)[
+            std::formatter::init[[u16]](&x),
+            std::formatter::init[[[]byte]](&y)]);
+    dump string.count();
+    std::print_line(std::out(), string.data());
+    string.fini();
+}
+################################################################################
+# 0C 00 00 00 00 00 00 00
+# 123 some str
