@@ -1,4 +1,4 @@
-namespace std::fs;
+namespace std;
 import "std/core.sunder";
 import "sys";
 
@@ -27,15 +27,15 @@ const SEEK_END: usize = (:usize)sys::SEEK_END;
 struct file {
     var fd: ssize;
 
-    func open(path: []byte, mode: usize) std::result[[std::fs::file, []byte]] {
+    func open(path: []byte, mode: usize) std::result[[std::file, []byte]] {
         var flags: s32 = 0;
         if mode == 0 {
             # OPEN_READ, OPEN_WRITE, or OPEN_APPEND must be selected.
-            return std::result[[std::fs::file, []byte]]::init_error(sys::ERRNO_STRINGS[(:usize)sys::EINVAL]);
+            return std::result[[std::file, []byte]]::init_error(sys::ERRNO_STRINGS[(:usize)sys::EINVAL]);
         }
         if (mode & OPEN_WRITE != 0) and (mode & OPEN_APPEND != 0) {
             # Attempted open with both non-appending and appending write modes.
-            return std::result[[std::fs::file, []byte]]::init_error(sys::ERRNO_STRINGS[(:usize)sys::EINVAL]);
+            return std::result[[std::file, []byte]]::init_error(sys::ERRNO_STRINGS[(:usize)sys::EINVAL]);
         }
 
         if (mode & OPEN_READ != 0) and (mode & OPEN_WRITE != 0) {
@@ -61,20 +61,20 @@ struct file {
             # Path is too long. The path must be less than sys::PATH_MAX bytes
             # so that a NUL-terminated buffer of sys::PATH_MAX bytes may be
             # constructed without a buffer overflow.
-            return std::result[[std::fs::file, []byte]]::init_error(sys::ERRNO_STRINGS[(:usize)sys::EINVAL]);
+            return std::result[[std::file, []byte]]::init_error(sys::ERRNO_STRINGS[(:usize)sys::EINVAL]);
         }
         var path_cstr = (:[sys::PATH_MAX]byte)[0...];
         std::copy_slice[[byte]](path_cstr[0:countof(path)], path);
 
         var sysret = sys::open(&path_cstr[0], flags, 0o666);
         if sysret < 0 {
-            return std::result[[std::fs::file, []byte]]::init_error(sys::ERRNO_STRINGS[(:usize)-sysret]);
+            return std::result[[std::file, []byte]]::init_error(sys::ERRNO_STRINGS[(:usize)-sysret]);
         }
 
-        return std::result[[std::fs::file, []byte]]::init_value((:std::fs::file){.fd = sysret});
+        return std::result[[std::file, []byte]]::init_value((:std::file){.fd = sysret});
     }
 
-    func close(self: *fs::file) std::result[[void, []byte]] {
+    func close(self: *file) std::result[[void, []byte]] {
         var sysret = sys::close((:u32)self.*.fd);
         if sysret < 0 {
             return std::result[[void, []byte]]::init_error(sys::ERRNO_STRINGS[(:usize)-sysret]);
@@ -83,7 +83,7 @@ struct file {
         return std::result[[void, []byte]]::init_value(std::zeroed[[void]]());
     }
 
-    func read(self: *fs::file, buf: []byte) std::result[[usize, []byte]] {
+    func read(self: *file, buf: []byte) std::result[[usize, []byte]] {
         if countof(buf) == 0 {
             return std::result[[usize, []byte]]::init_value(0);
         }
@@ -96,7 +96,7 @@ struct file {
         return std::result[[usize, []byte]]::init_value((:usize)sysret);
     }
 
-    func write(self: *fs::file, buf: []byte) std::result[[usize, []byte]] {
+    func write(self: *file, buf: []byte) std::result[[usize, []byte]] {
         if countof(buf) == 0 {
             return std::result[[usize, []byte]]::init_value(0);
         }
@@ -109,7 +109,7 @@ struct file {
         return std::result[[usize, []byte]]::init_value((:usize)sysret);
     }
 
-    func seek(self: *fs::file, offset: ssize, from: usize) std::result[[void, []byte]] {
+    func seek(self: *file, offset: ssize, from: usize) std::result[[void, []byte]] {
         # TODO: Seeking past the end of a file with `lseek` on Linux and then
         # writing to that position will create a "hole" that is read as NUL
         # bytes by subsequent read operations until the hole is filled in.
@@ -126,7 +126,7 @@ struct file {
         return std::result[[void, []byte]]::init_value(std::zeroed[[void]]());
     }
 
-    func tell(self: *fs::file) std::result[[usize, []byte]] {
+    func tell(self: *file) std::result[[usize, []byte]] {
         var sysret = sys::lseek((:u32)self.*.fd, 0, sys::SEEK_CUR);
         if sysret < 0 {
             return std::result[[usize, []byte]]::init_error(sys::ERRNO_STRINGS[(:usize)-sysret]);

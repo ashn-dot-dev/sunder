@@ -3,10 +3,10 @@ import "std/fs.sunder";
 import "std/page_allocator.sunder";
 
 func main() void {
-    var open_result = std::fs::file::open("data.txt", std::fs::OPEN_READ);
-    var file: std::fs::file = open_result.value();
+    var open_result = std::file::open("data.txt", std::OPEN_READ);
+    var file: std::file = open_result.value();
 
-    var reader = std::reader::init[[std::fs::file]](&file);
+    var reader = std::reader::init[[std::file]](&file);
     var allocator = std::allocator::init[[std::page_allocator]](std::page_allocator::the());
 
     var read_result = std::read_all(reader, allocator);

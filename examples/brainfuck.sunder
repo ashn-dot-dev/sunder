@@ -28,7 +28,7 @@ func main() void {
     }
 
     var path = *std::cptr::add[[*byte]](sys::argv, 1);
-    var result = std::fs::file::open(std::cstr::to_bytes(path), std::fs::OPEN_READ);
+    var result = std::file::open(std::cstr::to_bytes(path), std::OPEN_READ);
     if result.is_error() {
         var p = std::cstr::to_bytes(path);
         var e = result.error();
@@ -41,7 +41,7 @@ func main() void {
         std::exit(std::EXIT_FAILURE);
     }
     var file = result.value();
-    var file_reader = std::reader::init[[std::fs::file]](&file);
+    var file_reader = std::reader::init[[std::file]](&file);
     var result = std::read_all(file_reader, std::allocator::init[[std::page_allocator]](std::page_allocator::the()));
     if result.is_error() {
         var p = std::cstr::to_bytes(path);
