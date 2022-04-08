@@ -291,7 +291,7 @@ struct reader {
     var itable: *std::reader_itable;
     var object: *any;
 
-    func init[[T]](object: *T) std::reader {
+    func init[[T]](object: *T) reader {
         const itable = (:std::reader_itable){
             .read = T::read
         };
@@ -325,7 +325,7 @@ struct writer {
     var itable: *std::writer_itable;
     var object: *any;
 
-    func init[[T]](object: *T) std::writer {
+    func init[[T]](object: *T) writer {
         const itable = (:std::writer_itable){
             .write = T::write
         };
@@ -355,7 +355,7 @@ struct formatter {
     var itable: *std::formatter_itable;
     var object: *any;
 
-    func init[[T]](object: *T) std::formatter {
+    func init[[T]](object: *T) formatter {
         const itable = (:std::formatter_itable){
             .format = T::format
         };
@@ -411,7 +411,7 @@ struct allocator {
     var itable: *std::allocator_itable;
     var object: *any;
 
-    func init[[T]](object: *T) std::allocator {
+    func init[[T]](object: *T) allocator {
         const itable = (:std::allocator_itable){
             .allocate = T::allocate,
             .reallocate = T::reallocate,
@@ -456,7 +456,7 @@ struct allocator {
 }
 
 struct input_reader {
-    func read(self: *std::input_reader, buf: []byte) std::result[[usize, []byte]] {
+    func read(self: *input_reader, buf: []byte) std::result[[usize, []byte]] {
         if countof(buf) == 0 {
             return std::result[[usize, []byte]]::init_value(0);
         }
@@ -471,7 +471,7 @@ struct input_reader {
 }
 
 struct out_writer {
-    func write(self: *std::out_writer, buf: []byte) std::result[[usize, []byte]] {
+    func write(self: *out_writer, buf: []byte) std::result[[usize, []byte]] {
         if countof(buf) == 0 {
             return std::result[[usize, []byte]]::init_value(0);
         }
@@ -486,7 +486,7 @@ struct out_writer {
 }
 
 struct err_writer {
-    func write(self: *std::err_writer, buf: []byte) std::result[[usize, []byte]] {
+    func write(self: *err_writer, buf: []byte) std::result[[usize, []byte]] {
         if countof(buf) == 0 {
             return std::result[[usize, []byte]]::init_value(0);
         }

@@ -6,7 +6,7 @@ struct linear_allocator {
     var _old_offset: usize; # Previous offset into the backing buffer.
     var _cur_offset: usize; # Current offset into the backing buffer.
 
-    func init(buf: []byte) std::linear_allocator {
+    func init(buf: []byte) linear_allocator {
         return (:std::linear_allocator){
             ._buf = buf,
             ._old_offset = 0,

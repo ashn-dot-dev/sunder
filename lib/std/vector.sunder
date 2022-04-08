@@ -7,7 +7,7 @@ struct vector[[T]] {
     var _count: usize;
     var _capacity: usize;
 
-    func init(allocator: std::allocator) std::vector[[T]] {
+    func init(allocator: std::allocator) vector[[T]] {
         return (:std::vector[[T]]){
             ._allocator = allocator,
             ._start = (:*T)0u,
@@ -16,29 +16,29 @@ struct vector[[T]] {
         };
     }
 
-    func fini(self: *std::vector[[T]]) void {
+    func fini(self: *vector[[T]]) void {
         if self.*._capacity != 0 {
             std::delete_slice[[T]](self.*._allocator, (:[]T){self.*._start, self.*._capacity});
         }
     }
 
-    func start(self: *std::vector[[T]]) *T {
+    func start(self: *vector[[T]]) *T {
         return self.*._start;
     }
 
-    func count(self: *std::vector[[T]]) usize {
+    func count(self: *vector[[T]]) usize {
         return self.*._count;
     }
 
-    func capacity(self: *std::vector[[T]]) usize {
+    func capacity(self: *vector[[T]]) usize {
         return self.*._capacity;
     }
 
-    func data(self: *std::vector[[T]]) []T {
+    func data(self: *vector[[T]]) []T {
         return (:[]T){self.*._start, self.*._count};
     }
 
-    func reserve(self: *std::vector[[T]], capacity: usize) void {
+    func reserve(self: *vector[[T]], capacity: usize) void {
         if capacity <= self.*._capacity {
             return;
         }
@@ -56,7 +56,7 @@ struct vector[[T]] {
         self.*._capacity = capacity;
     }
 
-    func resize(self: *std::vector[[T]], count: usize) void {
+    func resize(self: *vector[[T]], count: usize) void {
         if count > self.*._capacity {
             self.*.reserve(count);
         }
@@ -64,7 +64,7 @@ struct vector[[T]] {
         self.*._count = count;
     }
 
-    func insert(self: *std::vector[[T]], index: usize, value: T) void {
+    func insert(self: *vector[[T]], index: usize, value: T) void {
         if index > self.*._count {
             std::panic("invalid index");
         }
@@ -96,7 +96,7 @@ struct vector[[T]] {
         self.*.data()[index] = value;
     }
 
-    func remove(self: *std::vector[[T]], index: usize) void {
+    func remove(self: *vector[[T]], index: usize) void {
         if index >= self.*._count {
             std::panic("invalid index");
         }
@@ -111,11 +111,11 @@ struct vector[[T]] {
         self.*._count = self.*._count - 1;
     }
 
-    func push(self: *std::vector[[T]], value: T) void {
+    func push(self: *vector[[T]], value: T) void {
         self.*.insert(self.*._count, value);
     }
 
-    func pop(self: *std::vector[[T]]) void {
+    func pop(self: *vector[[T]]) void {
         if self.*._count == 0 {
             std::panic("attempted to pop empty vec");
         }

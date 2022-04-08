@@ -74,7 +74,7 @@ struct file {
         return std::result[[std::fs::file, []byte]]::init_value((:std::fs::file){.fd = sysret});
     }
 
-    func close(self: *std::fs::file) std::result[[void, []byte]] {
+    func close(self: *fs::file) std::result[[void, []byte]] {
         var sysret = sys::close((:u32)self.*.fd);
         if sysret < 0 {
             return std::result[[void, []byte]]::init_error(sys::ERRNO_STRINGS[(:usize)-sysret]);
@@ -83,7 +83,7 @@ struct file {
         return std::result[[void, []byte]]::init_value(std::zeroed[[void]]());
     }
 
-    func read(self: *std::fs::file, buf: []byte) std::result[[usize, []byte]] {
+    func read(self: *fs::file, buf: []byte) std::result[[usize, []byte]] {
         if countof(buf) == 0 {
             return std::result[[usize, []byte]]::init_value(0);
         }
@@ -96,7 +96,7 @@ struct file {
         return std::result[[usize, []byte]]::init_value((:usize)sysret);
     }
 
-    func write(self: *std::fs::file, buf: []byte) std::result[[usize, []byte]] {
+    func write(self: *fs::file, buf: []byte) std::result[[usize, []byte]] {
         if countof(buf) == 0 {
             return std::result[[usize, []byte]]::init_value(0);
         }
@@ -109,7 +109,7 @@ struct file {
         return std::result[[usize, []byte]]::init_value((:usize)sysret);
     }
 
-    func seek(self: *std::fs::file, offset: ssize, from: usize) std::result[[void, []byte]] {
+    func seek(self: *fs::file, offset: ssize, from: usize) std::result[[void, []byte]] {
         # TODO: Seeking past the end of a file with `lseek` on Linux and then
         # writing to that position will create a "hole" that is read as NUL
         # bytes by subsequent read operations until the hole is filled in.
@@ -126,7 +126,7 @@ struct file {
         return std::result[[void, []byte]]::init_value(std::zeroed[[void]]());
     }
 
-    func tell(self: *std::fs::file) std::result[[usize, []byte]] {
+    func tell(self: *fs::file) std::result[[usize, []byte]] {
         var sysret = sys::lseek((:u32)self.*.fd, 0, sys::SEEK_CUR);
         if sysret < 0 {
             return std::result[[usize, []byte]]::init_error(sys::ERRNO_STRINGS[(:usize)-sysret]);
