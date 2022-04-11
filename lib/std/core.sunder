@@ -295,7 +295,7 @@ struct reader {
         const itable = (:std::reader_itable){
             .read = T::read
         };
-        return (:std::reader){
+        return (:reader){
             .itable = &itable,
             .object = object
         };
@@ -329,7 +329,7 @@ struct writer {
         const itable = (:std::writer_itable){
             .write = T::write
         };
-        return (:std::writer){
+        return (:writer){
             .itable = &itable,
             .object = object
         };
@@ -359,7 +359,7 @@ struct formatter {
         const itable = (:std::formatter_itable){
             .format = T::format
         };
-        return (:std::formatter){
+        return (:formatter){
             .itable = &itable,
             .object = object
         };
@@ -417,7 +417,7 @@ struct allocator {
             .reallocate = T::reallocate,
             .deallocate = T::deallocate
         };
-        return (:std::allocator){
+        return (:allocator){
             .itable = &itable,
             .object = object
         };
