@@ -1,0 +1,33 @@
+import "std/core.sunder";
+import "std/hash_map.sunder";
+import "std/page_allocator.sunder";
+
+func main() void {
+    var allocator = std::allocator::init[[std::page_allocator]](std::page_allocator::the());
+    var map = std::hash_map[[[]byte, ssize]]::init(allocator);
+
+    map.insert("foo", 0x123);
+    map.insert("bar", 0x456);
+    map.insert("baz", 0x789);
+    map.insert("qux", 0xABC);
+    map.insert("quz", 0xDEF);
+
+    var hash_map_iterator = std::hash_map_iterator[[[]byte, ssize]]::init(&map);
+    var iter = std::iterator[[std::hash_map_element[[[]byte, ssize]]]]::init[[std::hash_map_iterator[[[]byte, ssize]]]](&hash_map_iterator);
+    for iter.advance() {
+        std::print_format_line(
+            std::out(),
+            "{}, {X}",
+            (:[]std::formatter)[
+                std::formatter::init[[[]byte]](&iter.current().*.key),
+                std::formatter::init[[ssize]](&iter.current().*.value)]);
+    }
+
+    map.fini();
+}
+################################################################################
+# bar, 0x456
+# qux, 0xABC
+# baz, 0x789
+# quz, 0xDEF
+# foo, 0x123

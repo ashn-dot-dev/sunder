@@ -14,6 +14,9 @@ extend u8 func init_from_str(str: []byte, radix: usize) std::result[[u8, []byte]
 extend u8 func compare(lhs: *u8, rhs: *u8) ssize {
     return _int_compare_value[[umax]]((:umax)*lhs, (:umax)*rhs);
 }
+extend u8 func hash(self: *u8) usize {
+    return (:usize)*self;
+}
 extend u8 func format(self: *u8, writer: std::writer, fmt: []byte) std::result[[void, []byte]] {
     return _int_common_format((:umax)*self, false, writer, fmt);
 }
@@ -25,6 +28,9 @@ extend u16 func init_from_str(str: []byte, radix: usize) std::result[[u16, []byt
 }
 extend u16 func compare(lhs: *u16, rhs: *u16) ssize {
     return _int_compare_value[[umax]]((:umax)*lhs, (:umax)*rhs);
+}
+extend u16 func hash(self: *u16) usize {
+    return (:usize)*self;
 }
 extend u16 func format(self: *u16, writer: std::writer, fmt: []byte) std::result[[void, []byte]] {
     return _int_common_format((:umax)*self, false, writer, fmt);
@@ -38,6 +44,9 @@ extend u32 func init_from_str(str: []byte, radix: usize) std::result[[u32, []byt
 extend u32 func compare(lhs: *u32, rhs: *u32) ssize {
     return _int_compare_value[[umax]]((:umax)*lhs, (:umax)*rhs);
 }
+extend u32 func hash(self: *u32) usize {
+    return (:usize)*self;
+}
 extend u32 func format(self: *u32, writer: std::writer, fmt: []byte) std::result[[void, []byte]] {
     return _int_common_format((:umax)*self, false, writer, fmt);
 }
@@ -49,6 +58,9 @@ extend u64 func init_from_str(str: []byte, radix: usize) std::result[[u64, []byt
 }
 extend u64 func compare(lhs: *u64, rhs: *u64) ssize {
     return _int_compare_value[[umax]]((:umax)*lhs, (:umax)*rhs);
+}
+extend u64 func hash(self: *u64) usize {
+    return (:usize)*self;
 }
 extend u64 func format(self: *u64, writer: std::writer, fmt: []byte) std::result[[void, []byte]] {
     return _int_common_format((:umax)*self, false, writer, fmt);
@@ -62,6 +74,9 @@ extend usize func init_from_str(str: []byte, radix: usize) std::result[[usize, [
 extend usize func compare(lhs: *usize, rhs: *usize) ssize {
     return _int_compare_value[[umax]]((:umax)*lhs, (:umax)*rhs);
 }
+extend usize func hash(self: *usize) usize {
+    return *self;
+}
 extend usize func format(self: *usize, writer: std::writer, fmt: []byte) std::result[[void, []byte]] {
     return _int_common_format((:umax)*self, false, writer, fmt);
 }
@@ -73,6 +88,9 @@ extend s8 func init_from_str(str: []byte, radix: usize) std::result[[s8, []byte]
 }
 extend s8 func compare(lhs: *s8, rhs: *s8) ssize {
     return _int_compare_value[[smax]]((:smax)*lhs, (:smax)*rhs);
+}
+extend s8 func hash(self: *s8) usize {
+    return (:usize)*self;
 }
 extend s8 func format(self: *s8, writer: std::writer, fmt: []byte) std::result[[void, []byte]] {
     return _int_common_format(_int_absolute_value[[s8]](*self), *self < 0, writer, fmt);
@@ -86,6 +104,9 @@ extend s16 func init_from_str(str: []byte, radix: usize) std::result[[s16, []byt
 extend s16 func compare(lhs: *s16, rhs: *s16) ssize {
     return _int_compare_value[[smax]]((:smax)*lhs, (:smax)*rhs);
 }
+extend s16 func hash(self: *s16) usize {
+    return (:usize)*self;
+}
 extend s16 func format(self: *s16, writer: std::writer, fmt: []byte) std::result[[void, []byte]] {
     return _int_common_format(_int_absolute_value[[s16]](*self), *self < 0, writer, fmt);
 }
@@ -97,6 +118,9 @@ extend s32 func init_from_str(str: []byte, radix: usize) std::result[[s32, []byt
 }
 extend s32 func compare(lhs: *s32, rhs: *s32) ssize {
     return _int_compare_value[[smax]]((:smax)*lhs, (:smax)*rhs);
+}
+extend s32 func hash(self: *s32) usize {
+    return (:usize)*self;
 }
 extend s32 func format(self: *s32, writer: std::writer, fmt: []byte) std::result[[void, []byte]] {
     return _int_common_format(_int_absolute_value[[s32]](*self), *self < 0, writer, fmt);
@@ -110,6 +134,9 @@ extend s64 func init_from_str(str: []byte, radix: usize) std::result[[s64, []byt
 extend s64 func compare(lhs: *s64, rhs: *s64) ssize {
     return _int_compare_value[[smax]]((:smax)*lhs, (:smax)*rhs);
 }
+extend s64 func hash(self: *s64) usize {
+    return (:usize)*self;
+}
 extend s64 func format(self: *s64, writer: std::writer, fmt: []byte) std::result[[void, []byte]] {
     return _int_common_format(_int_absolute_value[[s64]](*self), *self < 0, writer, fmt);
 }
@@ -121,6 +148,9 @@ extend ssize func init_from_str(str: []byte, radix: usize) std::result[[ssize, [
 }
 extend ssize func compare(lhs: *ssize, rhs: *ssize) ssize {
     return _int_compare_value[[smax]]((:smax)*lhs, (:smax)*rhs);
+}
+extend ssize func hash(self: *ssize) usize {
+    return (:usize)*self;
 }
 extend ssize func format(self: *ssize, writer: std::writer, fmt: []byte) std::result[[void, []byte]] {
     return _int_common_format(_int_absolute_value[[ssize]](*self), *self < 0, writer, fmt);
@@ -136,6 +166,18 @@ extend []byte func compare(lhs: *[]byte, rhs: *[]byte) ssize {
         }
     }
     return (:ssize)countof(lhs_data) - (:ssize)countof(rhs_data);
+}
+
+extend []byte func hash(self: *[]byte) usize {
+    # Implementation of djb2 with an additional statement that zeroes the upper
+    # five bits of the hash before the multiplcation in order to prevent
+    # overflow.
+    var hash = 5381u;
+    for i in 0:countof(*self) {
+        const MASK = 0xf800000000000000u; # XXX: usize assumed 64-bit
+        hash = (hash & MASK) * 33 + (:usize)self.*[i];
+    }
+    return hash;
 }
 
 # Accepted format specifiers:
