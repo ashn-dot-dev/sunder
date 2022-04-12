@@ -1,0 +1,119 @@
+import "std";
+
+struct node {
+    var l: std::optional[[*node]];
+    var r: std::optional[[*node]];
+    var value: []byte;
+
+    func new(allocator: std::allocator, l: std::optional[[*node]], r: std::optional[[*node]], value: []byte) *node {
+        var self = std::new[[node]](allocator);
+        *self = (:node){
+            .l = l,
+            .r = r,
+            .value = value
+        };
+        return self;
+    }
+}
+
+struct tree {
+    var root: std::optional[[*node]];
+}
+
+struct tree_iterator {
+    var stack: std::vector[[*node]];
+    var cur: std::optional[[*node]];
+
+    func init(t: *tree) tree_iterator {
+        var stack = std::vector[[*::node]]::init(std::allocator::init[[std::page_allocator]](std::page_allocator::the()));
+
+        var node: std::optional[[*::node]] = t.*.root;
+        for node.is_value() {
+            stack.push(node.value());
+            node = node.value().*.l;
+        }
+
+        return (:tree_iterator){
+            .stack = stack,
+            .cur = std::optional[[*::node]]::init_empty()
+        };
+    }
+
+    func fini(self: *tree_iterator) void {
+        self.*.stack.fini();
+    }
+
+    func advance(self: *tree_iterator) bool {
+        if self.*.stack.count() == 0 {
+            return false; # end-of-iteration
+        }
+
+        if self.*.cur.is_empty() {
+            self.*.cur = std::optional[[*::node]]::init_value(self.*.stack.pop());
+            return true; # start-of-iteration
+        }
+
+        var node = self.*.stack.pop();
+        self.*.cur = std::optional[[*::node]]::init_value(node);
+        if not node.*.r.is_value() {
+            return true;
+        }
+
+        var node = node.*.r;
+        for node.is_value() {
+            self.*.stack.push(node.value());
+            node = node.value().*.l;
+        }
+        return true;
+    }
+
+    func current(self: *tree_iterator) *node {
+        if self.*.cur.is_empty() {
+            std::panic("invalid iterator");
+        }
+        return self.*.cur.value();
+    }
+}
+
+func main() void {
+    var allocator = std::allocator::init[[std::page_allocator]](std::page_allocator::the());
+
+    var A = node::new(allocator, std::optional[[*node]]::init_empty(), std::optional[[*node]]::init_empty(), "A");
+    var C = node::new(allocator, std::optional[[*node]]::init_empty(), std::optional[[*node]]::init_empty(), "C");
+    var E = node::new(allocator, std::optional[[*node]]::init_empty(), std::optional[[*node]]::init_empty(), "E");
+    var G = node::new(allocator, std::optional[[*node]]::init_empty(), std::optional[[*node]]::init_empty(), "G");
+    var B = node::new(allocator, std::optional[[*node]]::init_value(A), std::optional[[*node]]::init_value(C), "B");
+    var F = node::new(allocator, std::optional[[*node]]::init_value(E), std::optional[[*node]]::init_value(G), "F");
+    var D = node::new(allocator, std::optional[[*node]]::init_value(B), std::optional[[*node]]::init_value(F), "D");
+    #     __D__
+    #    /     \
+    #   B       F
+    #  / \     / \
+    # A   C   E   G
+    var t = (:tree){
+        .root = std::optional[[*node]]::init_value(D)
+    };
+
+    var tree_iterator = ::tree_iterator::init(&t);
+    var iter = std::iterator[[node]]::init[[::tree_iterator]](&tree_iterator);
+    for iter.advance() {
+        std::print_line(std::out(), iter.current().*.value);
+    }
+    tree_iterator.fini();
+
+    std::delete[[node]](allocator, A);
+    std::delete[[node]](allocator, B);
+    std::delete[[node]](allocator, C);
+    std::delete[[node]](allocator, D);
+    std::delete[[node]](allocator, E);
+    std::delete[[node]](allocator, G);
+    std::delete[[node]](allocator, G);
+}
+################################################################################
+# A
+# B
+# C
+# D
+# E
+# F
+# G

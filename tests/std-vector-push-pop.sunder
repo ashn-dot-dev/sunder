@@ -65,4 +65,4 @@ func main() void {
 # 01 00 00 00 00 00 00 00
 # AA
 # 00 00 00 00 00 00 00 00
-# panic: attempted to pop empty vec
+# panic: attempted to pop empty vector

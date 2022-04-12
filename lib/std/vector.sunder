@@ -96,7 +96,7 @@ struct vector[[T]] {
         self.*.data()[index] = value;
     }
 
-    func remove(self: *vector[[T]], index: usize) void {
+    func remove(self: *vector[[T]], index: usize) T {
         if index >= self.*._count {
             std::panic("invalid index");
         }
@@ -107,18 +107,20 @@ struct vector[[T]] {
         var mem: []T = (:[]T){self.*._start, self.*._capacity};
         var src: []T = mem[index + 1 : index + n + 1];
         var dst: []T = mem[index     : index + n];
+        var res = mem[index];
         std::copy_slice[[T]](dst, src);
         self.*._count = self.*._count - 1;
+        return res;
     }
 
     func push(self: *vector[[T]], value: T) void {
         self.*.insert(self.*._count, value);
     }
 
-    func pop(self: *vector[[T]]) void {
+    func pop(self: *vector[[T]]) T {
         if self.*._count == 0 {
-            std::panic("attempted to pop empty vec");
+            std::panic("attempted to pop empty vector");
         }
-        self.*.remove(self.*._count - 1);
+        return self.*.remove(self.*._count - 1);
     }
 }

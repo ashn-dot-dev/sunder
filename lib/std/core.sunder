@@ -374,9 +374,10 @@ struct formatter {
     # On failure, this function returns a static string describing the failure.
     # In the event of a write error, the erroneous write result should be
     # returned. If the provided format specifier does not match a format
-    # specifier implemented by the type, then the format function should call
+    # specifier implemented by the type, then the backing `format` function
+    # should call
     #
-    #   std::formatter::invalid_format_specifier(fmt);
+    #   std::formatter::invalid_format_specifier(fmt)
     #
     # which will terminate the program with failure status.
     func format(self: *formatter, writer: std::writer, fmt: []byte) std::result[[void, []byte]] {
@@ -393,6 +394,78 @@ struct formatter {
         std::panic_format(
             "invalid format specifier \"{e}\"\n",
             (:[]std::formatter)[std::formatter::init[[[]byte]](&fmt)]);
+    }
+}
+
+struct iterator_itable[[T]] {
+    var advance: func(*any) bool;
+    var current: func(*any) *T;
+}
+
+struct iterator[[T]] {
+    var itable: *std::iterator_itable[[T]];
+    var object: *any;
+
+    func init[[I]](object: *I) iterator[[T]] {
+        const itable = (:std::iterator_itable[[T]]){
+            .advance = I::advance,
+            .current = I::current
+        };
+        return (:iterator[[T]]){
+            .itable = &itable,
+            .object = object
+        };
+    }
+
+    # Advance the iterator by one position. Returns true if the iterator was
+    # successfully advanced. Returns false if the iterator has reached an
+    # end-of-iteration condition.
+    func advance(self: *iterator[[T]]) bool {
+        return self.*.itable.*.advance(self.*.object);
+    }
+
+    # Returns a reference to the element in the iterable at the current
+    # position of the iterator. The reference may be invalidated by the next
+    # call to `advance` or by finalization of the backing iterator object.
+    #
+    # If the backing iterator has reached an end-of-iteration condition, then
+    # the backing `current` function should panic.
+    func current(self: *iterator[[T]]) *T {
+        return self.*.itable.*.current(self.*.object);
+    }
+}
+
+struct slice_iterator[[T]] {
+    var _slice: []T;
+    var _index: std::optional[[usize]];
+
+    func init(slice: []T) slice_iterator[[T]] {
+        return (:slice_iterator[[T]]){
+            ._slice = slice,
+            ._index = std::optional[[usize]]::init_empty()
+        };
+    }
+
+    func advance(self: *slice_iterator[[T]]) bool {
+        if countof(self.*._slice) == 0 {
+            return false; # end-of-iteration
+        }
+
+        if self.*._index.is_empty() {
+            self.*._index = std::optional[[usize]]::init_value(0);
+            return true; # start-of-iteration
+        }
+
+        self.*._index = std::optional[[usize]]::init_value(self.*._index.value() + 1);
+        return self.*._index.value() < countof(self.*._slice);
+    }
+
+    func current(self: *slice_iterator[[T]]) *T {
+        if self.*._index.is_empty() or self.*._index.value() >= countof(self.*._slice) {
+            std::panic("invalid iterator");
+        }
+
+        return &self.*._slice[self.*._index.value()];
     }
 }
 
