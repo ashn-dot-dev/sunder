@@ -4,153 +4,153 @@ import "std/cptr.sunder";
 import "std/page_allocator.sunder";
 import "sys";
 
-struct general_allocator_block {
-    var _prev: *general_allocator_block;
-    var _next: *general_allocator_block;
+struct general_allocator_element {
+    var _prev: *general_allocator_element;
+    var _next: *general_allocator_element;
 
     var _start: *byte;
     var _align: usize;
     var _size: usize;
 
-    func start(self: *general_allocator_block) *byte {
+    func start(self: *general_allocator_element) *byte {
         return self.*._start;
     }
 
-    func align(self: *general_allocator_block) usize {
+    func align(self: *general_allocator_element) usize {
         return self.*._align;
     }
 
-    func size(self: *general_allocator_block) usize {
+    func size(self: *general_allocator_element) usize {
         return self.*._size;
     }
 }
 
 struct general_allocator {
-    var _blocks: *general_allocator_block;
+    var _elements: *general_allocator_element;
 
     func init() general_allocator {
         return (:general_allocator){
-            ._blocks = (:*general_allocator_block)0u
+            ._elements = (:*general_allocator_element)0u
         };
     }
 
     func fini(self: *general_allocator) void {
-        for self.*._blocks != (:*general_allocator_block)0u {
-            self.*.deallocate(self.*._blocks.*._start, self.*._blocks.*._align, self.*._blocks.*._size);
+        for self.*._elements != (:*general_allocator_element)0u {
+            self.*.deallocate(self.*._elements.*._start, self.*._elements.*._align, self.*._elements.*._size);
         }
     }
 
     func allocate(self: *general_allocator, align: usize, size: usize) std::result[[*byte, []byte]] {
-        var offset: usize = std::align_forward(sizeof(general_allocator_block), align);
+        var offset: usize = std::align_forward(sizeof(general_allocator_element), align);
         var result = std::page_allocator::the().*.allocate(sys::PAGE_SIZE, offset + size);
         if result.is_error() {
             return result;
         }
 
         var bytes = result.value();
-        var block = (:*general_allocator_block)bytes;
-        *block = (:general_allocator_block){
-            ._prev = (:*general_allocator_block)0u,
-            ._next = (:*general_allocator_block)0u,
+        var element = (:*general_allocator_element)bytes;
+        *element = (:general_allocator_element){
+            ._prev = (:*general_allocator_element)0u,
+            ._next = (:*general_allocator_element)0u,
             ._start = std::cptr::add[[byte]](bytes, offset),
             ._align = align,
             ._size = size
         };
 
-        self.*._insert_block(block);
-        return std::result[[*byte, []byte]]::init_value(block.*._start);
+        self.*._insert_element(element);
+        return std::result[[*byte, []byte]]::init_value(element.*._start);
     }
 
     func reallocate(self: *general_allocator, ptr: *byte, align: usize, old_size: usize, new_size: usize) std::result[[*byte, []byte]] {
-        var offset: usize = std::align_forward(sizeof(general_allocator_block), align);
-        var block = (:*general_allocator_block)std::cptr::sub[[byte]](ptr, offset);
-        self.*._remove_block(block);
+        var offset: usize = std::align_forward(sizeof(general_allocator_element), align);
+        var element = (:*general_allocator_element)std::cptr::sub[[byte]](ptr, offset);
+        self.*._remove_element(element);
 
-        var result = std::page_allocator::the().*.reallocate((:*byte)block, sys::PAGE_SIZE, old_size + offset, new_size + offset);
+        var result = std::page_allocator::the().*.reallocate((:*byte)element, sys::PAGE_SIZE, old_size + offset, new_size + offset);
         if result.is_error() {
             return result;
         }
 
         var bytes = result.value();
-        var block = (:*general_allocator_block)bytes;
-        *block = (:general_allocator_block){
-            ._prev = (:*general_allocator_block)0u,
-            ._next = (:*general_allocator_block)0u,
+        var element = (:*general_allocator_element)bytes;
+        *element = (:general_allocator_element){
+            ._prev = (:*general_allocator_element)0u,
+            ._next = (:*general_allocator_element)0u,
             ._start = std::cptr::add[[byte]](bytes, offset),
             ._align = align,
             ._size = new_size
         };
 
-        self.*._insert_block(block);
-        return std::result[[*byte, []byte]]::init_value(block.*._start);
+        self.*._insert_element(element);
+        return std::result[[*byte, []byte]]::init_value(element.*._start);
     }
 
     func deallocate(self: *general_allocator, ptr: *byte, align: usize, size: usize) void {
-        var offset: usize = std::align_forward(sizeof(general_allocator_block), align);
-        var block = (:*general_allocator_block)std::cptr::sub[[byte]](ptr, offset);
+        var offset: usize = std::align_forward(sizeof(general_allocator_element), align);
+        var element = (:*general_allocator_element)std::cptr::sub[[byte]](ptr, offset);
 
-        self.*._remove_block(block);
-        std::page_allocator::the().*.deallocate((:*byte)block, sys::PAGE_SIZE, size + offset);
+        self.*._remove_element(element);
+        std::page_allocator::the().*.deallocate((:*byte)element, sys::PAGE_SIZE, size + offset);
     }
 
-    func _insert_block(self: *general_allocator, block: *general_allocator_block) void {
-        var is_first_block = self.*._blocks == (:*general_allocator_block)0u;
-        if is_first_block {
-            block.*._prev = block;
-            block.*._next = block;
-            self.*._blocks = block;
+    func _insert_element(self: *general_allocator, element: *general_allocator_element) void {
+        var is_first_element = self.*._elements == (:*general_allocator_element)0u;
+        if is_first_element {
+            element.*._prev = element;
+            element.*._next = element;
+            self.*._elements = element;
             return;
         }
 
-        block.*._prev = self.*._blocks.*._prev;
-        block.*._next = self.*._blocks;
-        block.*._prev.*._next = block;
-        block.*._next.*._prev = block;
-        self.*._blocks = block;
+        element.*._prev = self.*._elements.*._prev;
+        element.*._next = self.*._elements;
+        element.*._prev.*._next = element;
+        element.*._next.*._prev = element;
+        self.*._elements = element;
     }
 
-    func _remove_block(self: *general_allocator, block: *general_allocator_block) void {
-        var prev = block.*._prev;
-        var next = block.*._next;
+    func _remove_element(self: *general_allocator, element: *general_allocator_element) void {
+        var prev = element.*._prev;
+        var next = element.*._next;
 
-        var is_only_block = self.*._blocks == block and prev == next;
-        if is_only_block {
-            self.*._blocks = (:*general_allocator_block)0u;
+        var is_only_element = self.*._elements == element and prev == next;
+        if is_only_element {
+            self.*._elements = (:*general_allocator_element)0u;
             return;
         }
 
         prev.*._next = next;
         next.*._prev = prev;
-        self.*._blocks = next;
+        self.*._elements = next;
     }
 }
 
 struct general_allocator_iterator {
     var _general_allocator: *std::general_allocator;
-    var _current: std::optional[[*general_allocator_block]];
+    var _current: std::optional[[*general_allocator_element]];
 
     func init(general_allocator: *std::general_allocator) general_allocator_iterator {
         return (:general_allocator_iterator){
             ._general_allocator = general_allocator,
-            ._current = std::optional[[*general_allocator_block]]::init_empty()
+            ._current = std::optional[[*general_allocator_element]]::init_empty()
         };
     }
 
     func advance(self: *general_allocator_iterator) bool {
-        if self.*._general_allocator.*._blocks == (:*general_allocator_block)0u {
+        if self.*._general_allocator.*._elements == (:*general_allocator_element)0u {
             return false; # end-of-iteration
         }
 
         if self.*._current.is_empty() {
-            self.*._current = std::optional[[*general_allocator_block]]::init_value(self.*._general_allocator.*._blocks);
+            self.*._current = std::optional[[*general_allocator_element]]::init_value(self.*._general_allocator.*._elements);
             return true; # start-of-iteration
         }
 
-        self.*._current = std::optional[[*general_allocator_block]]::init_value(self.*._current.value().*._next);
-        return self.*._current.value() != self.*._general_allocator.*._blocks;
+        self.*._current = std::optional[[*general_allocator_element]]::init_value(self.*._current.value().*._next);
+        return self.*._current.value() != self.*._general_allocator.*._elements;
     }
 
-    func current(self: *general_allocator_iterator) *general_allocator_block {
+    func current(self: *general_allocator_iterator) *general_allocator_element {
         if self.*._current.is_empty() {
             std::panic("invalid iterator");
         }

@@ -12,7 +12,7 @@ func main() void {
     *bar = 456;
     *baz = 789;
     var general_allocator_iterator = std::general_allocator_iterator::init(&general_allocator);
-    var iter = std::iterator[[std::general_allocator_block]]::init[[std::general_allocator_iterator]](&general_allocator_iterator);
+    var iter = std::iterator[[std::general_allocator_element]]::init[[std::general_allocator_iterator]](&general_allocator_iterator);
     for iter.advance() {
         std::print_format_line(
             std::out(),
@@ -27,7 +27,7 @@ func main() void {
     bar = std::new[[u16]](allocator);
     *bar = 666;
     var general_allocator_iterator = std::general_allocator_iterator::init(&general_allocator);
-    var iter = std::iterator[[std::general_allocator_block]]::init[[std::general_allocator_iterator]](&general_allocator_iterator);
+    var iter = std::iterator[[std::general_allocator_element]]::init[[std::general_allocator_iterator]](&general_allocator_iterator);
     for iter.advance() {
         std::print_format_line(
             std::out(),
