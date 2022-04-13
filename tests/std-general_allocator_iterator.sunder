@@ -1,0 +1,49 @@
+import "std/core.sunder";
+import "std/general_allocator.sunder";
+
+func main() void {
+    var general_allocator = std::general_allocator::init();
+    var allocator = std::allocator::init[[std::general_allocator]](&general_allocator);
+
+    var foo = std::new[[u16]](allocator);
+    var bar = std::new[[u16]](allocator);
+    var baz = std::new[[u16]](allocator);
+    *foo = 123;
+    *bar = 456;
+    *baz = 789;
+    var general_allocator_iterator = std::general_allocator_iterator::init(&general_allocator);
+    var iter = std::iterator[[std::general_allocator_block]]::init[[std::general_allocator_iterator]](&general_allocator_iterator);
+    for iter.advance() {
+        std::print_format_line(
+            std::out(),
+            "{}",
+            (:[]std::formatter)[
+                std::formatter::init[[u16]]((:*u16)iter.current().*.start())]);
+    }
+
+    std::print_line(std::out(), "========");
+
+    std::delete[[u16]](allocator, bar);
+    bar = std::new[[u16]](allocator);
+    *bar = 666;
+    var general_allocator_iterator = std::general_allocator_iterator::init(&general_allocator);
+    var iter = std::iterator[[std::general_allocator_block]]::init[[std::general_allocator_iterator]](&general_allocator_iterator);
+    for iter.advance() {
+        std::print_format_line(
+            std::out(),
+            "{}",
+            (:[]std::formatter)[
+                std::formatter::init[[u16]]((:*u16)iter.current().*.start())]);
+    }
+
+    general_allocator.fini();
+}
+################################################################################
+# 789
+# 456
+# 123
+# ========
+# 666
+# 123
+# 789
+

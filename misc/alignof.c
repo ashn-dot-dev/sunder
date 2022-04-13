@@ -1,6 +1,7 @@
 // clang -std=c11 alignof.c
 #include <stdalign.h>
 #include <stdint.h>
+#include <stddef.h>
 #include <stdio.h>
 
 #define P(type) printf("%12s: %zu\n", #type, alignof(type))
@@ -25,6 +26,10 @@ main(void)
 
     P(uint8_t[5]);
     P(uint64_t[2]);
+
+    fputc('\n', stdout);
+
+    P(max_align_t);
 }
 
 // Linux x86-64
@@ -42,3 +47,5 @@ main(void)
 //
 //   uint8_t[5]: 1
 //  uint64_t[2]: 8
+//
+//  max_align_t: 16

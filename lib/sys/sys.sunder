@@ -16,7 +16,7 @@ namespace sys;
 # signed   long long | 8    | 8         | s64
 # unsigned long long | 8    | 8         | u64
 #
-# mus/include/alltypes.h.in:
+# musl/include/alltypes.h.in:
 # TYPEDEF signed _Int64   intmax_t;
 # TYPEDEF unsigned _Int64 uintmax_t;
 #

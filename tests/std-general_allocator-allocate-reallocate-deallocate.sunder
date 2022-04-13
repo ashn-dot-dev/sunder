@@ -1,0 +1,27 @@
+import "std/core.sunder";
+import "std/general_allocator.sunder";
+
+func main() void {
+    var general_allocator = std::general_allocator::init();
+
+    var result = general_allocator.allocate(8, 512);
+    var result = general_allocator.reallocate(result.value(), 8, 512, 8192);
+    var result = general_allocator.reallocate(result.value(), 8, 8192, 0);
+    general_allocator.deallocate(result.value(), 8, 8192);
+
+    var allocator = std::allocator::init[[std::general_allocator]](&general_allocator);
+    var pointers = (:[1000]*byte)[(:*byte)0u...];
+    for i in 0:countof(pointers) {
+        var result = allocator.allocate(16, i);
+        pointers[i] = result.value();
+    }
+    for i in 0:countof(pointers) {
+        var result = allocator.reallocate(pointers[i], 16, i, i*42);
+        pointers[i] = result.value();
+    }
+    for i in 0:countof(pointers) {
+        allocator.deallocate(pointers[i], 16, i*42);
+    }
+
+    general_allocator.fini();
+}
