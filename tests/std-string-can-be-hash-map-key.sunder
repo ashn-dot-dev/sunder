@@ -1,0 +1,25 @@
+import "std/core.sunder";
+import "std/hash_map.sunder";
+import "std/general_allocator.sunder";
+import "std/string.sunder";
+
+func main() void {
+    var general_allocator = std::general_allocator::init();
+    var allocator = std::allocator::init[[std::general_allocator]](&general_allocator);
+
+    var map = std::hash_map[[std::string, []byte]]::init(allocator);
+
+    map.insert(std::string::init_from_str(allocator, "foo"), "foo value");
+    map.insert(std::string::init_from_str(allocator, "bar"), "bar value");
+
+    var iterator = std::hash_map_iterator[[std::string, []byte]]::init(&map);
+    for iterator.advance() {
+        std::print_line(std::out(), iterator.current().*.value());
+    }
+
+    map.fini();
+    general_allocator.fini();
+}
+################################################################################
+# bar value
+# foo value

@@ -50,6 +50,17 @@ struct string {
         return (:[]byte){self.*._start, self.*._count};
     }
 
+    func compare(lhs: *string, rhs: *string) ssize {
+        var lhs_data = lhs.*.data();
+        var rhs_data = rhs.*.data();
+        return lhs_data.compare(&rhs_data);
+    }
+
+    func hash(self: *string) usize {
+        var data = self.*.data();
+        return data.hash();
+    }
+
     func reserve(self: *string, capacity: usize) void {
         if capacity <= self.*._capacity {
             return;
