@@ -15,12 +15,14 @@ func main() void {
     var hash_map_iterator = std::hash_map_iterator[[[]byte, ssize]]::init(&map);
     var iter = std::iterator[[std::hash_map_element[[[]byte, ssize]]]]::init[[std::hash_map_iterator[[[]byte, ssize]]]](&hash_map_iterator);
     for iter.advance() {
+        var key = iter.current().*.key();
+        var val = iter.current().*.value();
         std::print_format_line(
             std::out(),
             "{}, {X}",
             (:[]std::formatter)[
-                std::formatter::init[[[]byte]](&iter.current().*.key),
-                std::formatter::init[[ssize]](&iter.current().*.value)]);
+                std::formatter::init[[[]byte]](&key),
+                std::formatter::init[[ssize]](&val)]);
     }
 
     map.fini();
