@@ -1,3 +1,4 @@
+# Simplified (non-POSIX-compliant) version of `echo`.
 import "std";
 import "sys";
 

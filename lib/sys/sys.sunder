@@ -23,10 +23,12 @@ namespace sys;
 # linux/include/linux/types.h:
 # typedef unsigned short        umode_t;
 # typedef __kernel_off_t        off_t;
+# typedef __kernel_pid_t        pid_t;
 #
 # linux/include/uapi/asm-generic/posix_types.h:
 # typedef long              __kernel_long_t;
 # typedef unsigned long     __kernel_ulong_t;
+# typedef int               __kernel_pid_t
 # typedef __kernel_long_t   __kernel_off_t;
 alias char      = byte;
 alias schar     = s8;
@@ -44,6 +46,7 @@ alias smax = s64;
 alias umax = u64;
 
 alias umode_t = ushort;
+alias pid_t   = sint;
 alias off_t   = slong;
 
 const SYS_READ:   ssize = 0;
@@ -53,7 +56,10 @@ const SYS_CLOSE:  ssize = 3;
 const SYS_LSEEK:  ssize = 8;
 const SYS_MMAP:   ssize = 9;
 const SYS_MUNMAP: ssize = 11;
+const SYS_FORK:   ssize = 57;
+const SYS_EXECVE: ssize = 59;
 const SYS_EXIT:   ssize = 60;
+const SYS_WAIT4:  ssize = 61;
 
 const EPERM:           ssize = 1;
 const ENOENT:          ssize = 2;
@@ -420,16 +426,28 @@ func lseek(fd: uint, offset: off_t, whence: uint) ssize {
     return syscall(SYS_LSEEK, fd, offset, whence);
 }
 
-# arch/x86/kernel/sys_x86_64.c
+# arch/x86/kernel/sys_x86_64.c:
 # SYSCALL_DEFINE6(mmap, unsigned long, addr, unsigned long, len, unsigned long, prot, unsigned long, flags, unsigned long, fd, unsigned long, off)
 func mmap(addr: ulong, len: ulong, prot: ulong, flags: ulong, fd: ulong, off: ulong) ssize {
     return syscall(SYS_MMAP, addr, len, prot, flags, fd, off);
 }
 
-# linux/mm/mmap.c
+# linux/mm/mmap.c:
 # SYSCALL_DEFINE2(munmap, unsigned long, addr, size_t, len)
 func munmap(addr: ulong, len: usize) ssize {
     return syscall(SYS_MUNMAP, addr, len);
+}
+
+# linux/kernel/fork.c:
+# SYSCALL_DEFINE0(fork)
+func fork() ssize {
+    return syscall(SYS_FORK);
+}
+
+# linux/fs/exec.c
+# SYSCALL_DEFINE3(execve, const char __user *, filename, const char __user *const __user *, argv, const char __user *const __user *, envp)
+func execve(filename: *byte, argv: **byte, envp: **byte) ssize {
+    return syscall(SYS_EXECVE, filename, argv, envp);
 }
 
 # linux/kernel/exit.c:
@@ -438,5 +456,26 @@ func exit(error_code: sint) void {
     syscall(SYS_EXIT, error_code);
 }
 
+# linux/kernel/exit.c:
+# SYSCALL_DEFINE4(wait4, pid_t, upid, int __user *, stat_addr, int, options, struct rusage __user *, ru)
+#
+# The resource usage data structure `struct rusage` has not yet been
+# implemented, so the `ru` *must* be called with a NULL value.
+func wait4(upid: pid_t, stat_addr: *sint, options: sint, ru: *any) ssize {
+    if (:usize)ru != 0 {
+        const error = "struct rusage unimplemented\n";
+        write(STDERR_FILENO, &error[0], countof(error));
+        exit(1);
+    }
+    return syscall(SYS_WAIT4, upid, stat_addr, options, ru);
+}
+
+# linux/tools/include/nolibc/nolibc.h:
+# #define WEXITSTATUS(status)   (((status) & 0xff00) >> 8)
+func WEXITSTATUS(status: sint) sint {
+    return (status & 0xff00) / 256;
+}
+
 extern var argc: usize;
 extern var argv: **byte;
+extern var envp: **byte;

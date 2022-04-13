@@ -1,3 +1,4 @@
+# Simplified (non-POSIX-compliant) version of `cat`.
 import "std";
 import "sys";
 

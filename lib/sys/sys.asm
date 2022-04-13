@@ -239,6 +239,7 @@ __index_oob_msg_count: equ $ - __index_oob_msg_start
 section .data
 sys.argc: dq 0 ; extern var argc: usize;
 sys.argv: dq 0 ; extern var argv: **byte;
+sys.envp: dq 0 ; extern var envp: **byte;
 
 
 ; PROGRAM ENTRY POINT
@@ -246,12 +247,18 @@ sys.argv: dq 0 ; extern var argv: **byte;
 section .text
 global _start
 _start:
-    xor rbp, rbp   ; [SysV ABI] deepest stack frame
-    mov rax, [rsp] ; [SysV ABI] argc @ rsp
-    mov rbx, rsp   ; [SysV ABI] argv @ rsp + 8
-    add rbx, 0x8   ; ...
-    mov [sys.argc], rax ; sys.argc = SysV ABI argc
-    mov [sys.argv], rbx ; sys.argv = SysV ABI argv
+    xor rbp, rbp        ; [SysV ABI] deepest stack frame
+    mov rax, [rsp]      ; [SysV ABI] argc @ rsp
+    mov [sys.argc], rax
+    mov rax, rsp        ; [SysV ABI] argv @ rsp + 8
+    add rax, 0x8
+    mov [sys.argv], rax
+    mov rax, [sys.argc] ; [SysV ABI] envp @ rsp + 8 + argc * 8 + 8
+    mov rbx, 0x8
+    mul rbx
+    add rax, rsp
+    add rax, 0x10
+    mov [sys.envp], rax
     call main
     mov rax, __SYS_EXIT
     mov rdi, __EXIT_SUCCESS
