@@ -27,7 +27,7 @@ struct linear_allocator {
 
         var buf_addr: usize = (:usize)*((:**byte)&self.*._buf);
         var cur_addr: usize = buf_addr + self.*._cur_offset;
-        var offset: usize = std::align_forward(cur_addr, align) - buf_addr;
+        var offset: usize = std::forward_align(cur_addr, align) - buf_addr;
 
         if offset + size > countof(self.*._buf) {
             return std::result[[*byte, []byte]]::init_error(std::allocator::ERROR_ALLOCATION_FAILURE);
