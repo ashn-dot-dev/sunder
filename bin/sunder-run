@@ -35,5 +35,6 @@ fi
 
 shift
 ./a.out $@
+STATUS=$?
 rm a.out
-exit $?
+exit $STATUS
