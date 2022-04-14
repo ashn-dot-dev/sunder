@@ -470,7 +470,6 @@ sipool_intern(struct sipool* self, char const* start, size_t count)
     assert(self != NULL);
     assert(start != NULL || count == 0);
 
-    struct vstr const vstr = {start, count};
     for (size_t i = 0; i < sbuf_count(self->strings); ++i) {
         char const* const s = self->strings[i];
         if (count == strlen(s) && safe_memcmp(s, start, count) == 0) {

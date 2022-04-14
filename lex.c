@@ -236,7 +236,6 @@ lex_keyword_or_identifier(struct lexer* self)
         self->current += 1;
     }
     size_t const count = (size_t)(self->current - start);
-    struct vstr const symbol = {start, count};
 
     for (int i = (int)KEYWORDS_FIRST; i <= (int)KEYWORDS_LAST; ++i) {
         struct vstr const* const keyword = &token_kind_vstrs[i];
