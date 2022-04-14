@@ -424,9 +424,14 @@ cstr_ends_with(char const* cstr, char const* target)
     assert(cstr != NULL);
     assert(target != NULL);
 
-    return vstr_ends_with(
-        VSTR_LOCAL_PTR(cstr, strlen(cstr)),
-        VSTR_LOCAL_PTR(target, strlen(target)));
+    size_t const cstr_count = strlen(cstr);
+    size_t const target_count = strlen(target);
+
+    if (cstr_count < target_count) {
+        return 0;
+    }
+    char const* const start = cstr + (cstr_count - target_count);
+    return safe_memcmp(start, target, target_count) == 0;
 }
 
 int
@@ -442,31 +447,6 @@ vstr_cmp(struct vstr const* lhs, struct vstr const* rhs)
         return cmp;
     }
     return lhs->count < rhs->count ? -1 : +1;
-}
-
-int
-vstr_starts_with(struct vstr const* vstr, struct vstr const* target)
-{
-    assert(vstr != NULL);
-    assert(target != NULL);
-
-    if (vstr->count < target->count) {
-        return 0;
-    }
-    return safe_memcmp(vstr->start, target->start, target->count) == 0;
-}
-
-int
-vstr_ends_with(struct vstr const* vstr, struct vstr const* target)
-{
-    assert(vstr != NULL);
-    assert(target != NULL);
-
-    if (vstr->count < target->count) {
-        return 0;
-    }
-    char const* start = vstr->start + (vstr->count - target->count);
-    return safe_memcmp(start, target->start, target->count) == 0;
 }
 
 struct sipool {

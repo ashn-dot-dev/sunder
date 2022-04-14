@@ -198,13 +198,6 @@ struct vstr {
 int
 vstr_cmp(struct vstr const* lhs, struct vstr const* rhs);
 
-// Returns a non-zero value if vstr starts with target.
-int
-vstr_starts_with(struct vstr const* vstr, struct vstr const* target);
-// Returns a non-zero value if vstr ends with target.
-int
-vstr_ends_with(struct vstr const* vstr, struct vstr const* target);
-
 // Allocate and initialize a string intern pool.
 struct sipool*
 sipool_new(void);
