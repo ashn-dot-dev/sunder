@@ -158,11 +158,11 @@ cstr_new_cstr(char const* cstr);
 // Returns an xalloc-allocated cstring from the provided formatted text.
 char*
 cstr_new_fmt(char const* fmt, ...);
-// Returns a non-zero value if cstr starts with target.
-int
+// Returns true if cstr starts with target.
+bool
 cstr_starts_with(char const* cstr, char const* target);
-// Returns a non-zero value if cstr ends with target.
-int
+// Returns true if cstr ends with target.
+bool
 cstr_ends_with(char const* cstr, char const* target);
 
 struct vstr {

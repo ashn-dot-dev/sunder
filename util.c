@@ -409,7 +409,7 @@ cstr_new_fmt(char const* fmt, ...)
     return buf;
 }
 
-int
+bool
 cstr_starts_with(char const* cstr, char const* target)
 {
     assert(cstr != NULL);
@@ -418,7 +418,7 @@ cstr_starts_with(char const* cstr, char const* target)
     return strncmp(cstr, target, strlen(target)) == 0;
 }
 
-int
+bool
 cstr_ends_with(char const* cstr, char const* target)
 {
     assert(cstr != NULL);
