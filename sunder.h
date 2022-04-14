@@ -170,10 +170,6 @@ struct vstr {
     size_t count;
 };
 
-// Produce a pointer of type struct vstr* constructed from the provided
-// parameters. This pointer has automatic storage duration associated with the
-// enclosing block.
-#define VSTR_LOCAL_PTR(start, count) (&(struct vstr){start, count})
 // Produce a pointer of type struct vstr* from the provided cstring literal.
 // This pointer has automatic storage duration associated with the enclosing
 // block.
