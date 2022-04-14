@@ -266,6 +266,7 @@ intern_fini(void);
 // Macro parameter sbuf is evaluated multiple times.
 #define sbuf_count(sbuf)                                                       \
     ((size_t)((sbuf) != NULL ? SBUF__PHEAD_CONST_(sbuf)->cnt_ : 0u))
+
 // size_t sbuf_capacity(TYPE* sbuf)
 // ------------------------------------------------------------
 // The number of elements the allocated in the sbuf.
@@ -292,6 +293,7 @@ intern_fini(void);
 // Macro parameter sbuf is evaluated multiple times.
 #define sbuf_push(sbuf, /*val*/...)                                            \
     ((void)(SBUF__MAYBE_GROW_(sbuf), SBUF__APPEND_(sbuf, __VA_ARGS__)))
+
 // TYPE sbuf_pop(TYPE* sbuf)
 // ------------------------------------------------------------
 // Remove and return the last element of the stretchy buffer.
