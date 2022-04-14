@@ -97,8 +97,8 @@ void* safe_memset(void* s, int c, size_t n);
 // behavior of xalloc and xallocn is similar to libc realloc and
 // *BSD reallocarray with the following exceptions:
 // (1) On allocation failure an error message will be printed followed by
-//     program termination with EXIT_FAILURE status.
-// (2) The call xalloc(ptr, 0) is guaranteed to free the memory backing prt. A
+//     program termination with via abort.
+// (2) The call xalloc(ptr, 0) is guaranteed to free the memory backing ptr. A
 //     pointer returned by xalloc may be freed with xalloc(ptr, 0) or the
 //     equivalent xalloc(ptr, XALLOC_FREE). The calls xallocn(ptr, x, 0) and
 //     xallocn(ptr, 0, y) are equivalent to xalloc(ptr, 0).

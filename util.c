@@ -148,7 +148,8 @@ xalloc(void* ptr, size_t size)
         return NULL;
     }
     if ((ptr = realloc(ptr, size)) == NULL) {
-        fatal(NULL, "[%s] Out of memory", __func__);
+        error(NULL, "[%s] Out of memory", __func__);
+        abort();
     }
     return ptr;
 }
@@ -158,7 +159,8 @@ xallocn(void* ptr, size_t nmemb, size_t size)
 {
     size_t const sz = nmemb * size;
     if (nmemb != 0 && sz / nmemb != size) {
-        fatal(NULL, "[%s] Integer overflow", __func__);
+        error(NULL, "[%s] Integer overflow", __func__);
+        abort();
     }
     return xalloc(ptr, sz);
 }
