@@ -569,13 +569,6 @@ string_cmp(struct string const* lhs, struct string const* rhs);
 void
 string_resize(struct string* self, size_t count);
 
-// Return a pointer to the byte of the string at position idx.
-// Fatally exits after printing an error message if idx is out of bounds.
-char*
-string_ref(struct string* self, size_t idx);
-char const*
-string_ref_const(struct string const* self, size_t idx);
-
 // Insert count bytes of start into the string at position idx.
 // Bytes with position greater than idx are moved back count bytes.
 // Fatally exits after printing an error message if idx is out of bounds.

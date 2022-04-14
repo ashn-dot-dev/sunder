@@ -2498,7 +2498,7 @@ resolve_expr_bytes(struct resolver* resolver, struct cst_expr const* expr)
     // phase.
     sbuf(struct value*) elements = NULL;
     for (size_t i = 0; i < count; ++i) {
-        uint8_t const byte = (uint8_t)*string_ref_const(expr->data.bytes, i);
+        uint8_t const byte = (uint8_t)string_start(expr->data.bytes)[i];
         sbuf_push(elements, value_new_byte(byte));
     }
     // Append a NUL byte to the end of every bytes literal. This NUL byte is

@@ -1863,28 +1863,6 @@ string_resize(struct string* self, size_t count)
     self->start[self->count] = '\0';
 }
 
-char*
-string_ref(struct string* self, size_t idx)
-{
-    assert(self != NULL);
-
-    if (idx >= self->count) {
-        fatal(NULL, "[%s] Index out of bounds (%zu)", __func__, idx);
-    }
-    return &self->start[idx];
-}
-
-char const*
-string_ref_const(struct string const* self, size_t idx)
-{
-    assert(self != NULL);
-
-    if (idx >= self->count) {
-        fatal(NULL, "[%s] Index out of bounds (%zu)", __func__, idx);
-    }
-    return &self->start[idx];
-}
-
 void
 string_insert(struct string* self, size_t idx, char const* start, size_t count)
 {
