@@ -832,7 +832,6 @@ struct context {
     struct symbol_table* global_symbol_table;
 
     // Currently loaded/loading modules.
-    // TODO: Maybe make this a map from realpath to module?
     sbuf(struct module*) modules;
 
     // List of symbol tables to be frozen before (successful) program exit.
