@@ -23,7 +23,8 @@ func main() void {
     }
 
     var status: sys::sint = 0;
-    var sysret = sys::wait4(pid, &status, 0, (:*any)0u);
+    var rusage: sys::rusage = std::zeroed[[sys::rusage]]();
+    var sysret = sys::wait4(pid, &status, 0, &rusage);
     if sysret < 0 {
         std::panic("wait4 failed");
     }
