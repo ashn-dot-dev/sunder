@@ -423,8 +423,7 @@ qualified_name(char const* prefix, char const* name)
     // <prefix>::<name>
     string_append_cstr(s, name);
 
-    char const* const interned =
-        sipool_intern(context()->sipool, string_start(s), string_count(s));
+    char const* const interned = intern(string_start(s), string_count(s));
 
     string_del(s);
     return interned;
@@ -444,8 +443,7 @@ qualified_addr(char const* prefix, char const* name)
     // <prefix>.<name>
     string_append_cstr(s, name);
 
-    char const* const interned =
-        sipool_intern(context()->sipool, string_start(s), string_count(s));
+    char const* const interned = intern(string_start(s), string_count(s));
 
     string_del(s);
     return interned;
@@ -484,8 +482,7 @@ normalize(char const* prefix, char const* name, unsigned unique_id)
         string_append_fmt(s, ".%u", unique_id);
     }
 
-    char const* const interned =
-        sipool_intern(context()->sipool, string_start(s), string_count(s));
+    char const* const interned = intern(string_start(s), string_count(s));
 
     string_del(s);
     string_del(name_string);
@@ -745,7 +742,7 @@ xget_template_instance(
         }
         string_append_cstr(name_string, "]]");
         char const* const name_interned =
-            sipool_intern_cstr(context()->sipool, string_start(name_string));
+            intern_cstr(string_start(name_string));
         string_del(name_string);
         struct cst_identifier* const instance_identifier =
             cst_identifier_new(location, name_interned);
@@ -868,7 +865,7 @@ xget_template_instance(
         }
         string_append_cstr(name_string, "]]");
         char const* const name_interned =
-            sipool_intern_cstr(context()->sipool, string_start(name_string));
+            intern_cstr(string_start(name_string));
         string_del(name_string);
         struct cst_identifier* const instance_identifier =
             cst_identifier_new(location, name_interned);
@@ -1241,8 +1238,7 @@ resolve_import_file(
         for (size_t i = 0; i < sbuf_count(dir_contents); ++i) {
             struct string* const string =
                 string_new_fmt("%s/%s", file_name, dir_contents[i]);
-            char const* const interned =
-                sipool_intern_cstr(context()->sipool, string_start(string));
+            char const* const interned = intern_cstr(string_start(string));
             string_del(string);
             resolve_import_file(resolver, location, interned, true);
         }
@@ -2646,8 +2642,7 @@ resolve_expr_array_slice(struct resolver* resolver, struct cst_expr const* expr)
     static size_t id = 0;
     struct string* const array_name_string =
         string_new_fmt("__array_slice_elements_%zu", id++);
-    char const* const array_name =
-        sipool_intern_cstr(context()->sipool, string_start(array_name_string));
+    char const* const array_name = intern_cstr(string_start(array_name_string));
     string_del(array_name_string);
 
     struct type const* const array_type =

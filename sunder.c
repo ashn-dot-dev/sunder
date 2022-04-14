@@ -15,8 +15,8 @@ module_new(char const* name, char const* path)
     struct module* const self = xalloc(NULL, sizeof(*self));
     memset(self, 0x00, sizeof(*self));
 
-    self->name = sipool_intern_cstr(context()->sipool, name);
-    self->path = sipool_intern_cstr(context()->sipool, path);
+    self->name = intern_cstr(name);
+    self->path = intern_cstr(path);
 
     char* const source = read_source(self->path);
     freezer_register(context()->freezer, source - 1);
@@ -140,31 +140,27 @@ context_init(void)
 {
     s_context.freezer = freezer_new();
 
-    s_context.sipool = sipool_new();
-#define INTERN_STR_LITERAL(str_literal)                                        \
-    sipool_intern_cstr(context()->sipool, str_literal)
-    s_context.interned.empty = INTERN_STR_LITERAL("");
-    s_context.interned.builtin = INTERN_STR_LITERAL("builtin");
-    s_context.interned.return_ = INTERN_STR_LITERAL("return");
-    s_context.interned.any = INTERN_STR_LITERAL("any");
-    s_context.interned.void_ = INTERN_STR_LITERAL("void");
-    s_context.interned.bool_ = INTERN_STR_LITERAL("bool");
-    s_context.interned.byte = INTERN_STR_LITERAL("byte");
-    s_context.interned.u8 = INTERN_STR_LITERAL("u8");
-    s_context.interned.s8 = INTERN_STR_LITERAL("s8");
-    s_context.interned.u16 = INTERN_STR_LITERAL("u16");
-    s_context.interned.s16 = INTERN_STR_LITERAL("s16");
-    s_context.interned.u32 = INTERN_STR_LITERAL("u32");
-    s_context.interned.s32 = INTERN_STR_LITERAL("s32");
-    s_context.interned.u64 = INTERN_STR_LITERAL("u64");
-    s_context.interned.s64 = INTERN_STR_LITERAL("s64");
-    s_context.interned.usize = INTERN_STR_LITERAL("usize");
-    s_context.interned.ssize = INTERN_STR_LITERAL("ssize");
-    s_context.interned.integer = INTERN_STR_LITERAL("integer");
-    s_context.interned.y = INTERN_STR_LITERAL("y");
-    s_context.interned.u = INTERN_STR_LITERAL("u");
-    s_context.interned.s = INTERN_STR_LITERAL("s");
-#undef INTERN_STR_LITERAL
+    s_context.interned.empty = intern_cstr("");
+    s_context.interned.builtin = intern_cstr("builtin");
+    s_context.interned.return_ = intern_cstr("return");
+    s_context.interned.any = intern_cstr("any");
+    s_context.interned.void_ = intern_cstr("void");
+    s_context.interned.bool_ = intern_cstr("bool");
+    s_context.interned.byte = intern_cstr("byte");
+    s_context.interned.u8 = intern_cstr("u8");
+    s_context.interned.s8 = intern_cstr("s8");
+    s_context.interned.u16 = intern_cstr("u16");
+    s_context.interned.s16 = intern_cstr("s16");
+    s_context.interned.u32 = intern_cstr("u32");
+    s_context.interned.s32 = intern_cstr("s32");
+    s_context.interned.u64 = intern_cstr("u64");
+    s_context.interned.s64 = intern_cstr("s64");
+    s_context.interned.usize = intern_cstr("usize");
+    s_context.interned.ssize = intern_cstr("ssize");
+    s_context.interned.integer = intern_cstr("integer");
+    s_context.interned.y = intern_cstr("y");
+    s_context.interned.u = intern_cstr("u");
+    s_context.interned.s = intern_cstr("s");
 
 #define INIT_BIGINT_CONSTANT(ident, str_literal)                               \
     struct bigint* const ident = bigint_new_cstr(str_literal);                 \
@@ -230,6 +226,9 @@ context_init(void)
 #undef INIT_BUILTIN_TYPE
 }
 
+/* util.c */
+extern sbuf(char*) interned;
+
 void
 context_fini(void)
 {
@@ -240,7 +239,7 @@ context_fini(void)
     }
     sbuf_fini(self->modules);
 
-    sipool_del(self->sipool);
+    intern_fini();
 
     sbuf_fini(self->static_symbols);
     symbol_table_freeze(self->global_symbol_table, self->freezer);

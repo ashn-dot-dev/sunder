@@ -222,7 +222,7 @@ canonical_path(char const* path)
             strerror(errno));
     }
 
-    return sipool_intern_cstr(context()->sipool, resolved_path);
+    return intern_cstr(resolved_path);
 }
 
 char const*
@@ -233,8 +233,7 @@ directory_path(char const* path)
     char const* const canonical = canonical_path(path);
 
     char* const tmp = cstr_new_cstr(canonical);
-    char const* const interned =
-        sipool_intern_cstr(context()->sipool, dirname(tmp));
+    char const* const interned = intern_cstr(dirname(tmp));
     xalloc(tmp, XALLOC_FREE);
 
     return interned;
@@ -261,7 +260,7 @@ directory_files(char const* path)
         if (strcmp(file, ".") == 0 || strcmp(file, "..") == 0) {
             continue;
         }
-        sbuf_push(files, sipool_intern_cstr(context()->sipool, file));
+        sbuf_push(files, intern_cstr(file));
     }
 
     (void)closedir(dir);
@@ -434,62 +433,39 @@ cstr_ends_with(char const* cstr, char const* target)
     return safe_memcmp(start, target, target_count) == 0;
 }
 
-struct sipool {
-    // List of heap-allocated strings interned within this pool.
-    // elements of the map member reference memory owned by this list.
-    sbuf(char*) strings;
-};
-
-struct sipool*
-sipool_new(void)
-{
-    struct sipool* const self = xalloc(NULL, sizeof(struct sipool));
-    self->strings = NULL;
-    return self;
-}
-
-void
-sipool_del(struct sipool* self)
-{
-    if (self == NULL) {
-        return;
-    }
-
-    for (size_t i = 0; i < sbuf_count(self->strings); ++i) {
-        xalloc(self->strings[i], XALLOC_FREE);
-    }
-    sbuf_fini(self->strings);
-
-    memset(self, 0x00, sizeof(*self)); // scrub
-    xalloc(self, XALLOC_FREE);
-}
+// List of heap-allocated interned cstrings.
+sbuf(char*) interned;
 
 char const*
-sipool_intern(struct sipool* self, char const* start, size_t count)
+intern(char const* start, size_t count)
 {
-    assert(self != NULL);
     assert(start != NULL || count == 0);
 
-    for (size_t i = 0; i < sbuf_count(self->strings); ++i) {
-        char const* const s = self->strings[i];
+    for (size_t i = 0; i < sbuf_count(interned); ++i) {
+        char const* const s = interned[i];
         if (count == strlen(s) && safe_memcmp(s, start, count) == 0) {
             return s;
         }
     }
 
     char* const str = cstr_new(start, count);
-    sbuf_push(self->strings, str);
-
+    sbuf_push(interned, str);
     return str;
 }
 
 char const*
-sipool_intern_cstr(struct sipool* self, char const* cstr)
+intern_cstr(char const* cstr)
 {
-    assert(self != NULL);
-    assert(cstr != NULL);
+    return intern(cstr, strlen(cstr));
+}
 
-    return sipool_intern(self, cstr, strlen(cstr));
+void
+intern_fini(void)
+{
+    for (size_t i = 0; i < sbuf_count(interned); ++i) {
+        xalloc(interned[i], XALLOC_FREE);
+    }
+    sbuf_fini(interned);
 }
 
 STATIC_ASSERT(
@@ -2030,7 +2006,7 @@ struct freezer {
 struct freezer*
 freezer_new(void)
 {
-    struct freezer* const self = xalloc(NULL, sizeof(struct sipool));
+    struct freezer* const self = xalloc(NULL, sizeof(*self));
     self->ptrs = NULL;
     return self;
 }

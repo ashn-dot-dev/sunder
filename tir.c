@@ -243,10 +243,8 @@ type_new_function(
         string_append_fmt(name_string, ", %s", parameter_types[i]->name);
     }
     string_append_fmt(name_string, ") %s", return_type->name);
-    char const* const name = sipool_intern(
-        context()->sipool,
-        string_start(name_string),
-        string_count(name_string));
+    char const* const name =
+        intern(string_start(name_string), string_count(name_string));
     string_del(name_string);
 
     struct symbol_table* const symbols =
@@ -265,10 +263,8 @@ type_new_pointer(struct type const* base)
     assert(base != NULL);
 
     struct string* const name_string = string_new_fmt("*%s", base->name);
-    char const* const name = sipool_intern(
-        context()->sipool,
-        string_start(name_string),
-        string_count(name_string));
+    char const* const name =
+        intern(string_start(name_string), string_count(name_string));
     string_del(name_string);
 
     struct symbol_table* const symbols =
@@ -287,10 +283,8 @@ type_new_array(size_t count, struct type const* base)
 
     struct string* const name_string =
         string_new_fmt("[%zu]%s", count, base->name);
-    char const* const name = sipool_intern(
-        context()->sipool,
-        string_start(name_string),
-        string_count(name_string));
+    char const* const name =
+        intern(string_start(name_string), string_count(name_string));
     string_del(name_string);
 
     size_t const size = count * base->size;
@@ -317,10 +311,8 @@ type_new_slice(struct type const* base)
     assert(base != NULL);
 
     struct string* const name_string = string_new_fmt("[]%s", base->name);
-    char const* const name = sipool_intern(
-        context()->sipool,
-        string_start(name_string),
-        string_count(name_string));
+    char const* const name =
+        intern(string_start(name_string), string_count(name_string));
     string_del(name_string);
 
     struct symbol_table* const symbols =

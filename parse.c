@@ -324,8 +324,7 @@ parse_import(struct parser* parser)
 
     struct string const* const bytes =
         expect_current(parser, TOKEN_BYTES)->data.bytes;
-    char const* const path =
-        sipool_intern_cstr(context()->sipool, string_start(bytes));
+    char const* const path = intern_cstr(string_start(bytes));
     expect_current(parser, TOKEN_SEMICOLON);
 
     struct cst_import* const product = cst_import_new(location, path);
@@ -1751,8 +1750,7 @@ parse_identifier(struct parser* parser)
 
     struct token const* const token = expect_current(parser, TOKEN_IDENTIFIER);
     struct source_location const* location = &token->location;
-    char const* const name =
-        sipool_intern(context()->sipool, token->start, token->count);
+    char const* const name = intern(token->start, token->count);
     struct cst_identifier* const product = cst_identifier_new(location, name);
 
     freezer_register(context()->freezer, product);
@@ -1784,10 +1782,8 @@ parse_integer(struct parser* parser)
     struct bigint* const value = bigint_new_text(
         token->data.integer.number.start, token->data.integer.number.count);
     bigint_freeze(value, context()->freezer);
-    char const* const suffix = sipool_intern(
-        context()->sipool,
-        token->data.integer.suffix.start,
-        token->data.integer.suffix.count);
+    char const* const suffix = intern(
+        token->data.integer.suffix.start, token->data.integer.suffix.count);
     struct cst_integer* const product =
         cst_integer_new(location, value, suffix);
 

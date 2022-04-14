@@ -13,7 +13,6 @@
 //////// util.c ////////////////////////////////////////////////////////////////
 
 struct vstr;
-struct sipool;
 struct bitarr;
 struct bigint;
 struct string;
@@ -184,22 +183,17 @@ struct vstr {
     {str_literal, STR_LITERAL_COUNT(str_literal)}
 // clang-format on
 
-// Allocate and initialize a string intern pool.
-struct sipool*
-sipool_new(void);
-// Deinitialize and free the string intern pool.
-// Does nothing if self == NULL.
-void
-sipool_del(struct sipool* self);
-
 // Intern the string specified by the first count bytes of start.
 // Returns the canonical NUL-terminated representation of the interned string.
 char const*
-sipool_intern(struct sipool* self, char const* start, size_t count);
+intern(char const* start, size_t count);
 // Intern the string specified by the provided NUL-terminated cstring.
 // Returns the canonical NUL-terminated representation of the interned string.
 char const*
-sipool_intern_cstr(struct sipool* self, char const* cstr);
+intern_cstr(char const* cstr);
+// Deinitialize interned string list free interned strings.
+void
+intern_fini(void);
 
 // General purpose type-safe dynamic array (a.k.a stretchy buffer).
 //
