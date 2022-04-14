@@ -90,9 +90,9 @@ qualified_addr(char const* prefix, char const* name);
 // Returns the normalized name as an interned string.
 static char const* // interned
 normalize(char const* prefix, char const* name, unsigned unique_id);
-// Returns the normalization of the provided name within the provided prefix via
-// the normalize function. Linearly increments unique IDs starting at zero until
-// a unique ID is found that does not cause a name collision.
+// Returns the normalization of the provided name within the provided prefix
+// via the normalize function. Linearly increments unique IDs starting at zero
+// until a unique ID is found that does not cause a name collision.
 static char const* // interned
 normalize_unique(char const* prefix, char const* name);
 // Add the provided static symbol to the list of static symbols within the
@@ -125,18 +125,18 @@ check_type_compatibility(
 // implicitly casted to type then expr is returned unchanged.
 //
 // The attempted implicit cast is "shallow" in the sense that it will not
-// recursively traverse the expression tree when casting, so currently immediate
-// values (literals), casts from `*T` to `*any`, and casts of function types
-// with parameter and/or a return type casts  from `*T` to `*any` are the only
-// valid expr targets.
+// recursively traverse the expression tree when casting, so currently
+// immediate values (literals), casts from `*T` to `*any`, and casts of
+// function types with parameter and/or a return type casts  from `*T` to
+// `*any` are the only valid expr targets.
 //
 // This function is intended for use when casting untyped literals to an
 // expression that would require a typed literal (e.g. integer->usize), or for
 // casting from a typed pointer to a generic pointer (e.g. *foo->*any).
-// Sub-expressions with integer literal constants are constant folded during the
-// resolve phase, so the expression `123 + 456 * 2` *should* be folded to the
-// integer literal constant `615` long before this function would be called on
-// it, so for most cases the sequence:
+// Sub-expressions with integer literal constants are constant folded during
+// the resolve phase, so the expression `123 + 456 * 2` *should* be folded to
+// the integer literal constant `615` long before this function would be called
+// on it, so for most cases the sequence:
 // ```
 // struct expr const* expr = resolve_expr(some_cst_expr);
 // expr = shallow_implicit_cast(type, expr);
@@ -1142,8 +1142,8 @@ merge_symbol_table(
 
             if (existing->kind != SYMBOL_NAMESPACE) {
                 // Actual name collision! Attempt to insert the symbol from the
-                // other symbol table into self so that a redeclaration error is
-                // generated.
+                // other symbol table into self so that a redeclaration error
+                // is generated.
                 symbol_table_insert(self, name, symbol, false);
             }
 
@@ -1154,10 +1154,10 @@ merge_symbol_table(
             continue;
         }
 
-        // Add the symbol if it has not been added by a previous import. Perform
-        // a pointer inequality comparison so that symbols with the same name
-        // that do not refer to the same symbol definition cause a redeclaration
-        // error.
+        // Add the symbol if it has not been added by a previous import.
+        // Perform a pointer inequality comparison so that symbols with the
+        // same name that do not refer to the same symbol definition cause a
+        // redeclaration error.
         struct symbol const* const existing =
             symbol_table_lookup_local(self, name);
         if (existing == NULL || existing != symbol) {
@@ -1399,9 +1399,9 @@ resolve_decl_constant(struct resolver* resolver, struct cst_decl const* decl)
     expr = shallow_implicit_cast(type, expr);
     check_type_compatibility(expr->location, expr->type, type);
 
-    // Constants (globals and locals) have their values computed at compile-time
-    // and therefore must always be added to the symbol table with an evaluated
-    // value.
+    // Constants (globals and locals) have their values computed at
+    // compile-time and therefore must always be added to the symbol table with
+    // an evaluated value.
     struct value* const value = eval_rvalue(expr);
     value_freeze(value);
 
@@ -1677,8 +1677,8 @@ resolve_decl_extend(struct resolver* resolver, struct cst_decl const* decl)
         resolve_typespec(resolver, decl->data.extend.typespec);
 
     // PLAN: Create the decl in a sub-symbol table of the module namespace that
-    // is created specifically for this one symbol so that name collisions don't
-    // happen. Then add the symbol to the type.
+    // is created specifically for this one symbol so that name collisions
+    // don't happen. Then add the symbol to the type.
 
     // Create a symbol table for this declaration only in order to prevent name
     // collisions and hide the created symbol from the rest of the module.
@@ -1785,9 +1785,9 @@ complete_struct(
         (struct symbol_table*)symbol_xget_type(symbol)->symbols;
 
     // XXX: A "direct leak" is detected if we encounter a fatal error while
-    // resolving the member constants and declarations below even though we hold
-    // a valid path to the buffer through the `type` pointer. Always keep a
-    // reference to the the stretchy buffer so that ASAN does not complain.
+    // resolving the member constants and declarations below even though we
+    // hold a valid path to the buffer through the `type` pointer. Always keep
+    // a reference to the the stretchy buffer so that ASAN does not complain.
     sbuf(struct member_variable const) xxx_member_variables_ref = NULL;
     (void)xxx_member_variables_ref;
     // Add all member definitions to the struct in the order that they were
@@ -2212,11 +2212,12 @@ resolve_stmt_assign(struct resolver* resolver, struct cst_stmt const* stmt)
         resolve_expr(resolver, stmt->data.assign.lhs);
     struct expr const* rhs = resolve_expr(resolver, stmt->data.assign.rhs);
 
-    // TODO: Rather than query if lhs is an lvalue, perhaps there could function
-    // `validate_expr_is_lvalue` in resolve.c which traverses the expression
-    // tree and emits an error with more context about *why* a specific
-    // expression is not an lvalue. Currently it's up to the user to figure out
-    // *why* lhs is not an lvalue, and better information could ease debugging.
+    // TODO: Rather than query if lhs is an lvalue, perhaps there could
+    // function `validate_expr_is_lvalue` in resolve.c which traverses the
+    // expression tree and emits an error with more context about *why* a
+    // specific expression is not an lvalue. Currently it's up to the user to
+    // figure out *why* lhs is not an lvalue, and better information could ease
+    // debugging.
     if (!expr_is_lvalue(lhs)) {
         fatal(
             lhs->location,
@@ -2492,16 +2493,16 @@ resolve_expr_bytes(struct resolver* resolver, struct cst_expr const* expr)
         type_unique_array(count + 1 /*NUL*/, context()->builtin.byte);
     // TODO: Allocating a value for each and every byte in the bytes literal
     // feels wasteful. It may be worth investigating some specific ascii or
-    // asciiz static object that would use the expr's string directly and
-    // then generate a readable string in the output assembly during the codegen
+    // asciiz static object that would use the expr's string directly and then
+    // generate a readable string in the output assembly during the codegen
     // phase.
     sbuf(struct value*) elements = NULL;
     for (size_t i = 0; i < count; ++i) {
         uint8_t const byte = (uint8_t)*string_ref_const(expr->data.bytes, i);
         sbuf_push(elements, value_new_byte(byte));
     }
-    // Append a NUL byte to the end of every bytes literal. This NUL byte is not
-    // included in the slice length, but will allow bytes literals to be
+    // Append a NUL byte to the end of every bytes literal. This NUL byte is
+    // not included in the slice length, but will allow bytes literals to be
     // accessed as NUL-terminated arrays when interfacing with C code.
     sbuf_push(elements, value_new_byte(0x00));
     struct value* const value = value_new_array(type, elements, NULL);
@@ -2920,8 +2921,8 @@ resolve_expr_syscall(struct resolver* resolver, struct cst_expr const* expr)
     return resolved;
 }
 
-// TODO: Remove redundant logic in this function that is the same for member and
-// non-member functions calls (such as the argument type checking code).
+// TODO: Remove redundant logic in this function that is the same for member
+// and non-member functions calls (such as the argument type checking code).
 static struct expr const*
 resolve_expr_call(struct resolver* resolver, struct cst_expr const* expr)
 {
