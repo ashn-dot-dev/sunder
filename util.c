@@ -2346,7 +2346,7 @@ spawnvpw(char const* const* argv)
 
     int status = 0;
     waitpid(pid, &status, 0);
-    return status;
+    return WEXITSTATUS(status);
 }
 
 void
