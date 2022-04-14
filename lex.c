@@ -240,7 +240,8 @@ lex_keyword_or_identifier(struct lexer* self)
 
     for (int i = (int)KEYWORDS_FIRST; i <= (int)KEYWORDS_LAST; ++i) {
         struct vstr const* const keyword = &token_kind_vstrs[i];
-        if (vstr_cmp(&symbol, keyword) == 0) {
+        if (count == keyword->count
+            && safe_memcmp(start, keyword->start, count) == 0) {
             return token_new(
                 start, count, self->next_token_location, (enum token_kind)i);
         }

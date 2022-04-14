@@ -434,21 +434,6 @@ cstr_ends_with(char const* cstr, char const* target)
     return safe_memcmp(start, target, target_count) == 0;
 }
 
-int
-vstr_cmp(struct vstr const* lhs, struct vstr const* rhs)
-{
-    assert(lhs != NULL);
-    assert(rhs != NULL);
-
-    size_t const n = lhs->count < rhs->count ? lhs->count : rhs->count;
-    int const cmp = safe_memcmp(lhs->start, rhs->start, n);
-
-    if (cmp != 0 || lhs->count == rhs->count) {
-        return cmp;
-    }
-    return lhs->count < rhs->count ? -1 : +1;
-}
-
 struct sipool {
     // List of heap-allocated strings interned within this pool.
     // elements of the map member reference memory owned by this list.
@@ -487,10 +472,9 @@ sipool_intern(struct sipool* self, char const* start, size_t count)
 
     struct vstr const vstr = {start, count};
     for (size_t i = 0; i < sbuf_count(self->strings); ++i) {
-        struct vstr const element = {self->strings[i],
-                                     strlen(self->strings[i])};
-        if (vstr_cmp(&vstr, &element) == 0) {
-            return self->strings[i];
+        char const* const s = self->strings[i];
+        if (count == strlen(s) && safe_memcmp(s, start, count) == 0) {
+            return s;
         }
     }
 

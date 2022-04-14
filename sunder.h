@@ -170,12 +170,6 @@ struct vstr {
     size_t count;
 };
 
-// Produce a pointer of type struct vstr* from the provided cstring literal.
-// This pointer has automatic storage duration associated with the enclosing
-// block.
-#define VSTR_LOCAL_PTR_STR_LITERAL(str_literal)                                \
-    VSTR_LOCAL_PTR(str_literal, STR_LITERAL_COUNT(str_literal))
-
 // Initializer for a vstr literal from a cstr literal.
 // Example:
 //      static struct vstr const foo =
@@ -188,11 +182,6 @@ struct vstr {
 #define VSTR_INIT_STR_LITERAL(str_literal)                                     \
     {str_literal, STR_LITERAL_COUNT(str_literal)}
 // clang-format on
-
-// Return an int less than, equal to, or greater than zero if lhs is
-// lexicographically less than, equal to, or greater than rhs, respectively.
-int
-vstr_cmp(struct vstr const* lhs, struct vstr const* rhs);
 
 // Allocate and initialize a string intern pool.
 struct sipool*
