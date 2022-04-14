@@ -842,14 +842,21 @@ struct context {
     // TODO: Maybe make this a map from realpath to module?
     sbuf(struct module*) modules;
 
-    // Symbol tables belonging to types and templates. These symbol tables
-    // cannot be frozen until after all modules have been resolved as type
-    // extensions template instantiations may be defined in modules other than
-    // the module where a declaration is defined.
+    // List of symbol tables to be frozen before (successful) program exit.
     //
-    // TODO: We have have a chilling_symbol_tables on the resolver struct. Can
-    // we merge that functionality into this context member variable and have a
-    // single "chilling symbol tables" member for all symbol tables?
+    // Some symbol tables, such as those belonging to types and templates,
+    // cannot be frozen until after all modules have been resolved as type
+    // extensions and template instantiations may be defined in modules other
+    // than the module where the symbol table was created.
+    //
+    // Other symbol tables, such as those belonging to a module namespace
+    // symbol, cannot be frozen until after that module has been resolved as
+    // they may have symbols added over the course of that module's resolution.
+    // These symbol tables *could* be frozen as soon as the module is fully
+    // resolved, but adding them to this list and freezing them some time after
+    // the module has been resolved makes no semantic difference in how they
+    // are used, and avoids making separate chilling symbol table lists for
+    // each module.
     sbuf(struct symbol_table*) chilling_symbol_tables;
 };
 void

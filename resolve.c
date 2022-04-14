@@ -1131,7 +1131,7 @@ merge_symbol_table(
                 // self. Create a new namespace symbol for this purpose and
                 // perform the merge.
                 struct symbol_table* const table = symbol_table_new(self);
-                sbuf_push(resolver->chilling_symbol_tables, table);
+                sbuf_push(context()->chilling_symbol_tables, table);
 
                 struct symbol* const namespace =
                     symbol_new_namespace(symbol->location, symbol->name, table);
@@ -1548,7 +1548,7 @@ resolve_decl_function(struct resolver* resolver, struct cst_decl const* decl)
     // added to the table.
     struct symbol_table* const symbol_table =
         symbol_table_new(resolver->current_symbol_table);
-    sbuf_push(resolver->chilling_symbol_tables, symbol_table);
+    sbuf_push(context()->chilling_symbol_tables, symbol_table);
     // The function references, but does not own, its outermost symbol table.
     function->symbol_table = symbol_table;
     for (size_t i = 0; i < sbuf_count(function_parameters); ++i) {
@@ -1620,7 +1620,7 @@ resolve_decl_struct(struct resolver* resolver, struct cst_decl const* decl)
 
     struct symbol_table* const struct_symbols =
         symbol_table_new(resolver->current_symbol_table);
-    sbuf_push(resolver->chilling_symbol_tables, struct_symbols);
+    sbuf_push(context()->chilling_symbol_tables, struct_symbols);
     struct type* const type = type_new_struct(decl->name, struct_symbols);
     freeze(type);
 
@@ -4053,8 +4053,8 @@ resolve(struct module* module)
                 symbol_table_new(resolver->current_symbol_table);
             struct symbol_table* const export_table =
                 symbol_table_new(resolver->current_export_table);
-            sbuf_push(resolver->chilling_symbol_tables, module_table);
-            sbuf_push(resolver->chilling_symbol_tables, export_table);
+            sbuf_push(context()->chilling_symbol_tables, module_table);
+            sbuf_push(context()->chilling_symbol_tables, export_table);
 
             struct symbol* const module_nssymbol =
                 symbol_new_namespace(location, nsname, module_table);
@@ -4140,13 +4140,6 @@ resolve(struct module* module)
     for (size_t i = 0; i < sbuf_count(resolver->incomplete_functions); ++i) {
         complete_function(resolver, resolver->incomplete_functions[i]);
     }
-
-    size_t const chilling_symbol_tables_count =
-        sbuf_count(resolver->chilling_symbol_tables);
-    for (size_t i = 0; i < chilling_symbol_tables_count; ++i) {
-        symbol_table_freeze(resolver->chilling_symbol_tables[i]);
-    }
-    sbuf_fini(resolver->chilling_symbol_tables);
 
     resolver_del(resolver);
 }
