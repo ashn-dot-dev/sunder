@@ -237,7 +237,7 @@ intern_fini(void);
 //      // This is safe to call even if vals == NULL.
 //      sbuf_fini(vals);
 
-// Convenience macros used to explicitly annotate a pointer as a stretchy
+// Convenience macro used to explicitly annotate a pointer as a stretchy
 // buffer. Type annotations for types such as stack-allocated arrays and
 // function pointers are not supported by this macro due to the complicated
 // nature of C variable/type declarations.
