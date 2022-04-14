@@ -165,12 +165,13 @@ cstr_starts_with(char const* cstr, char const* target);
 bool
 cstr_ends_with(char const* cstr, char const* target);
 
+// Byte-string view.
 struct vstr {
     char const* start;
     size_t count;
 };
 
-// Initializer for a vstr literal from a cstr literal.
+// Initializer for a vstr literal from a str literal.
 // Example:
 //      static struct vstr const foo =
 //          VSTR_INIT_STR_LITERAL("foo");
