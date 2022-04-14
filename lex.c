@@ -153,7 +153,7 @@ token_new(
     self->count = count;
     self->location = location;
 
-    freezer_register(context()->freezer, self);
+    freeze(self);
     return self;
 }
 
@@ -437,7 +437,7 @@ lex_bytes(struct lexer* self)
     assert(*self->current == '"');
     self->current += 1;
 
-    string_freeze(bytes, context()->freezer);
+    string_freeze(bytes);
     struct token* token = token_new(
         start,
         (size_t)(self->current - start),

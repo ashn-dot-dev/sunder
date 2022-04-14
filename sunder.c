@@ -19,7 +19,7 @@ module_new(char const* name, char const* path)
     self->path = intern_cstr(path);
 
     char* const source = read_source(self->path);
-    freezer_register(context()->freezer, source - 1);
+    freeze(source - 1);
     self->source = source;
     self->source_count = strlen(source);
 
@@ -125,8 +125,8 @@ module_del(struct module* self)
 {
     assert(self != NULL);
 
-    symbol_table_freeze(self->symbols, context()->freezer);
-    symbol_table_freeze(self->exports, context()->freezer);
+    symbol_table_freeze(self->symbols);
+    symbol_table_freeze(self->exports);
 
     sbuf_fini(self->ordered);
     memset(self, 0x00, sizeof(*self));
@@ -138,8 +138,6 @@ static struct context s_context = {0};
 void
 context_init(void)
 {
-    s_context.freezer = freezer_new();
-
     s_context.interned.empty = intern_cstr("");
     s_context.interned.builtin = intern_cstr("builtin");
     s_context.interned.return_ = intern_cstr("return");
@@ -164,7 +162,7 @@ context_init(void)
 
 #define INIT_BIGINT_CONSTANT(ident, str_literal)                               \
     struct bigint* const ident = bigint_new_cstr(str_literal);                 \
-    bigint_freeze(ident, s_context.freezer);                                   \
+    bigint_freeze(ident);                                                      \
     s_context.ident = ident;
     INIT_BIGINT_CONSTANT(u8_min, "+0x00")
     INIT_BIGINT_CONSTANT(u8_max, "+0xFF")
@@ -200,10 +198,10 @@ context_init(void)
 #define INIT_BUILTIN_TYPE(builtin_lvalue, /* struct type* */ t)                \
     {                                                                          \
         struct type* const type = t;                                           \
-        freezer_register(s_context.freezer, type);                             \
+        freeze(type);                                                          \
         struct symbol* const symbol =                                          \
             symbol_new_type(&s_context.builtin.location, type);                \
-        freezer_register(s_context.freezer, symbol);                           \
+        freeze(symbol);                                                        \
         symbol_table_insert(                                                   \
             s_context.global_symbol_table, symbol->name, symbol, false);       \
         builtin_lvalue = type;                                                 \
@@ -242,16 +240,16 @@ context_fini(void)
     intern_fini();
 
     sbuf_fini(self->static_symbols);
-    symbol_table_freeze(self->global_symbol_table, self->freezer);
+    symbol_table_freeze(self->global_symbol_table);
 
     sbuf(struct symbol_table*) const chilling_symbol_tables =
         self->chilling_symbol_tables;
     for (size_t i = 0; i < sbuf_count(chilling_symbol_tables); ++i) {
-        symbol_table_freeze(chilling_symbol_tables[i], self->freezer);
+        symbol_table_freeze(chilling_symbol_tables[i]);
     }
     sbuf_fini(self->chilling_symbol_tables);
 
-    freezer_del(self->freezer);
+    freeze_fini();
 
     memset(self, 0x00, sizeof(*self));
 }

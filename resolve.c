@@ -387,7 +387,7 @@ resolver_reserve_storage_static(struct resolver* self, char const* name)
         normalize_unique(self->current_static_addr_prefix, name);
     struct address* const address =
         address_new(address_init_static(name_normalized, 0u));
-    freezer_register(context()->freezer, address);
+    freeze(address);
     return address;
 }
 
@@ -405,7 +405,7 @@ resolver_reserve_storage_local(struct resolver* self, struct type const* type)
 
     struct address* const address =
         address_new(address_init_local(self->current_rbp_offset));
-    freezer_register(context()->freezer, address);
+    freeze(address);
     return address;
 }
 
@@ -729,7 +729,7 @@ xget_template_instance(
                 template_types,
                 resolve_typespec(resolver, template_arguments[i]->typespec));
         }
-        sbuf_freeze(template_types, context()->freezer);
+        sbuf_freeze(template_types);
 
         // Replace function identifier (i.e. name).
         struct string* const name_string = string_new_cstr(symbol->name);
@@ -746,7 +746,7 @@ xget_template_instance(
         string_del(name_string);
         struct cst_identifier* const instance_identifier =
             cst_identifier_new(location, name_interned);
-        freezer_register(context()->freezer, instance_identifier);
+        freeze(instance_identifier);
         // Replace template parameters. Zero template parameters means this
         // function is no longer a template.
         sbuf(struct cst_template_parameter const* const)
@@ -782,7 +782,7 @@ xget_template_instance(
             struct symbol* const symbol = symbol_new_type(
                 template_parameters[i]->identifier->location,
                 template_types[i]);
-            freezer_register(context()->freezer, symbol);
+            freeze(symbol);
             symbol_table_insert(
                 instance_symbol_table,
                 template_parameters[i]->identifier->name,
@@ -793,7 +793,7 @@ xget_template_instance(
         // arguments so that self referential functions (e.g. fibonacci) do not
         // have to fully qualify the function name.
         symbol_table_insert(instance_symbol_table, symbol->name, symbol, false);
-        symbol_table_freeze(instance_symbol_table, context()->freezer);
+        symbol_table_freeze(instance_symbol_table);
 
         // Generate the template instance concrete syntax tree.
         struct cst_decl* const instance_decl = cst_decl_new_function(
@@ -803,7 +803,7 @@ xget_template_instance(
             instance_function_parameters,
             instance_return_typespec,
             instance_body);
-        freezer_register(context()->freezer, instance_decl);
+        freeze(instance_decl);
 
         // Resolve the actual template instance.
         char const* const save_static_addr_prefix =
@@ -852,7 +852,7 @@ xget_template_instance(
                 template_types,
                 resolve_typespec(resolver, template_arguments[i]->typespec));
         }
-        sbuf_freeze(template_types, context()->freezer);
+        sbuf_freeze(template_types);
 
         // Replace struct identifier (i.e. name).
         struct string* const name_string = string_new_cstr(symbol->name);
@@ -869,7 +869,7 @@ xget_template_instance(
         string_del(name_string);
         struct cst_identifier* const instance_identifier =
             cst_identifier_new(location, name_interned);
-        freezer_register(context()->freezer, instance_identifier);
+        freeze(instance_identifier);
         // Replace template parameters. Zero template parameters means this
         // struct is no longer a template.
         sbuf(struct cst_template_parameter const* const)
@@ -899,7 +899,7 @@ xget_template_instance(
             struct symbol* const symbol = symbol_new_type(
                 template_parameters[i]->identifier->location,
                 template_types[i]);
-            freezer_register(context()->freezer, symbol);
+            freeze(symbol);
             symbol_table_insert(
                 instance_symbol_table,
                 template_parameters[i]->identifier->name,
@@ -910,7 +910,7 @@ xget_template_instance(
         // arguments so that self referential structs (e.g. return values of
         // init functions) do not have to fully qualify the struct type.
         symbol_table_insert(instance_symbol_table, symbol->name, symbol, false);
-        symbol_table_freeze(instance_symbol_table, context()->freezer);
+        symbol_table_freeze(instance_symbol_table);
 
         // Generate the template instance concrete syntax tree.
         struct cst_decl* const instance_decl = cst_decl_new_struct(
@@ -918,7 +918,7 @@ xget_template_instance(
             instance_identifier,
             instance_template_parameters,
             instance_members);
-        freezer_register(context()->freezer, instance_decl);
+        freeze(instance_decl);
 
         // Resolve the actual template instance.
         char const* const save_static_addr_prefix =
@@ -1009,7 +1009,7 @@ shallow_implicit_cast(struct type const* type, struct expr const* expr)
         struct expr* const result =
             expr_new_integer(expr->location, type, expr->data.integer);
 
-        freezer_register(context()->freezer, result);
+        freeze(result);
         return result;
     }
 
@@ -1043,7 +1043,7 @@ shallow_implicit_cast(struct type const* type, struct expr const* expr)
         struct expr* const result =
             expr_new_integer(expr->location, type, expr->data.integer);
 
-        freezer_register(context()->freezer, result);
+        freeze(result);
         return result;
     }
 
@@ -1054,7 +1054,7 @@ shallow_implicit_cast(struct type const* type, struct expr const* expr)
         struct expr* const result = expr_new_cast(
             expr->location, type_unique_pointer(context()->builtin.any), expr);
 
-        freezer_register(context()->freezer, result);
+        freeze(result);
         return result;
     }
 
@@ -1099,7 +1099,7 @@ shallow_implicit_cast(struct type const* type, struct expr const* expr)
 
         struct expr* const result = expr_new_cast(expr->location, type, expr);
 
-        freezer_register(context()->freezer, result);
+        freeze(result);
         return result;
     }
 
@@ -1135,7 +1135,7 @@ merge_symbol_table(
 
                 struct symbol* const namespace =
                     symbol_new_namespace(symbol->location, symbol->name, table);
-                freezer_register(context()->freezer, namespace);
+                freeze(namespace);
                 symbol_table_insert(self, name, namespace, false);
                 existing = namespace;
             }
@@ -1343,7 +1343,7 @@ resolve_decl_variable(
     struct value* value = NULL;
     if (is_static) {
         value = eval_rvalue(expr);
-        value_freeze(value, context()->freezer);
+        value_freeze(value);
     }
 
     struct address const* const address = is_static
@@ -1352,7 +1352,7 @@ resolve_decl_variable(
 
     struct symbol* const symbol =
         symbol_new_variable(decl->location, decl->name, type, address, value);
-    freezer_register(context()->freezer, symbol);
+    freeze(symbol);
 
     symbol_table_insert(
         resolver->current_symbol_table,
@@ -1366,7 +1366,7 @@ resolve_decl_variable(
     if (lhs != NULL) {
         struct expr* const identifier =
             expr_new_symbol(decl->data.variable.identifier->location, symbol);
-        freezer_register(context()->freezer, identifier);
+        freeze(identifier);
         *lhs = identifier;
     }
     if (rhs != NULL) {
@@ -1403,14 +1403,14 @@ resolve_decl_constant(struct resolver* resolver, struct cst_decl const* decl)
     // and therefore must always be added to the symbol table with an evaluated
     // value.
     struct value* const value = eval_rvalue(expr);
-    value_freeze(value, context()->freezer);
+    value_freeze(value);
 
     struct address const* const address =
         resolver_reserve_storage_static(resolver, decl->name);
 
     struct symbol* const symbol =
         symbol_new_constant(decl->location, decl->name, type, address, value);
-    freezer_register(context()->freezer, symbol);
+    freeze(symbol);
 
     symbol_table_insert(
         resolver->current_symbol_table,
@@ -1445,7 +1445,7 @@ resolve_decl_function(struct resolver* resolver, struct cst_decl const* decl)
             resolver->current_symbol_table,
             symbols);
 
-        freezer_register(context()->freezer, template_symbol);
+        freeze(template_symbol);
         sbuf_push(context()->chilling_symbol_tables, symbols);
         symbol_table_insert(
             resolver->current_symbol_table,
@@ -1471,7 +1471,7 @@ resolve_decl_function(struct resolver* resolver, struct cst_decl const* decl)
                 parameter_types[i]->name);
         }
     }
-    sbuf_freeze(parameter_types, context()->freezer);
+    sbuf_freeze(parameter_types);
 
     struct type const* const return_type =
         resolve_typespec(resolver, decl->data.function.return_typespec);
@@ -1492,17 +1492,17 @@ resolve_decl_function(struct resolver* resolver, struct cst_decl const* decl)
     // function, and the address of that function/value.
     struct function* const function = function_new(
         decl->data.function.identifier->name, function_type, address);
-    freezer_register(context()->freezer, function);
+    freeze(function);
 
     struct value* const value = value_new_function(function);
-    value_freeze(value, context()->freezer);
+    value_freeze(value);
     function->value = value;
 
     // Add the function/value to the symbol table now so that recursive
     // functions may reference themselves.
     struct symbol* const function_symbol =
         symbol_new_function(decl->location, function);
-    freezer_register(context()->freezer, function_symbol);
+    freeze(function_symbol);
     symbol_table_insert(
         resolver->current_symbol_table,
         function_symbol->name,
@@ -1530,16 +1530,16 @@ resolve_decl_function(struct resolver* resolver, struct cst_decl const* decl)
         struct type const* const type = parameter_types[i];
         struct address* const address =
             address_new(address_init_local(rbp_offset));
-        freezer_register(context()->freezer, address);
+        freeze(address);
 
         rbp_offset += (int)ceil8zu(type->size);
         struct symbol* const symbol =
             symbol_new_variable(location, name, type, address, NULL);
-        freezer_register(context()->freezer, symbol);
+        freeze(symbol);
 
         symbol_parameters[i] = symbol;
     }
-    sbuf_freeze(symbol_parameters, context()->freezer);
+    sbuf_freeze(symbol_parameters);
     function->symbol_parameters = symbol_parameters;
 
     // Add the function's parameters to its outermost symbol table in order
@@ -1562,14 +1562,14 @@ resolve_decl_function(struct resolver* resolver, struct cst_decl const* decl)
     // Add the function's return value to its outermost symbol table.
     struct address* const return_value_address =
         address_new(address_init_local(rbp_offset));
-    freezer_register(context()->freezer, return_value_address);
+    freeze(return_value_address);
     struct symbol* const return_value_symbol = symbol_new_variable(
         decl->data.function.return_typespec->location,
         context()->interned.return_,
         return_type,
         return_value_address,
         NULL);
-    freezer_register(context()->freezer, return_value_symbol);
+    freeze(return_value_symbol);
     symbol_table_insert(
         symbol_table, return_value_symbol->name, return_value_symbol, false);
     function->symbol_return = return_value_symbol;
@@ -1581,7 +1581,7 @@ resolve_decl_function(struct resolver* resolver, struct cst_decl const* decl)
         function,
         symbol_table,
     };
-    freezer_register(context()->freezer, incomplete);
+    freeze(incomplete);
     sbuf_push(resolver->incomplete_functions, incomplete);
 
     return function_symbol;
@@ -1608,7 +1608,7 @@ resolve_decl_struct(struct resolver* resolver, struct cst_decl const* decl)
             resolver->current_symbol_table,
             symbols);
 
-        freezer_register(context()->freezer, template_symbol);
+        freeze(template_symbol);
         sbuf_push(context()->chilling_symbol_tables, symbols);
         symbol_table_insert(
             resolver->current_symbol_table,
@@ -1622,10 +1622,10 @@ resolve_decl_struct(struct resolver* resolver, struct cst_decl const* decl)
         symbol_table_new(resolver->current_symbol_table);
     sbuf_push(resolver->chilling_symbol_tables, struct_symbols);
     struct type* const type = type_new_struct(decl->name, struct_symbols);
-    freezer_register(context()->freezer, type);
+    freeze(type);
 
     struct symbol* const symbol = symbol_new_type(decl->location, type);
-    freezer_register(context()->freezer, symbol);
+    freeze(symbol);
 
     // Add the symbol to the current symbol table so that structs with
     // self-referential pointer and slice members may reference the type.
@@ -1709,7 +1709,7 @@ resolve_decl_extend(struct resolver* resolver, struct cst_decl const* decl)
     resolver->current_static_addr_prefix = save_static_addr_prefix;
     resolver->current_symbol_table = save_symbol_table;
 
-    symbol_table_freeze(symbol_table, context()->freezer);
+    symbol_table_freeze(symbol_table);
     return symbol;
 }
 
@@ -1751,7 +1751,7 @@ resolve_decl_extern_variable(
 
     struct symbol* const symbol =
         symbol_new_variable(decl->location, decl->name, type, address, NULL);
-    freezer_register(context()->freezer, symbol);
+    freeze(symbol);
 
     symbol_table_insert(
         resolver->current_symbol_table, symbol->name, symbol, false);
@@ -1834,7 +1834,7 @@ complete_struct(
     resolver->current_static_addr_prefix = save_static_addr_prefix;
     resolver->current_symbol_table = save_symbol_table;
 
-    sbuf_freeze(type->data.struct_.member_variables, context()->freezer);
+    sbuf_freeze(type->data.struct_.member_variables);
 }
 
 static void
@@ -1926,7 +1926,7 @@ resolve_stmt_decl(struct resolver* resolver, struct cst_stmt const* stmt)
         resolve_decl_variable(resolver, decl, &lhs, &rhs);
         struct stmt* const resolved = stmt_new_assign(stmt->location, lhs, rhs);
 
-        freezer_register(context()->freezer, resolved);
+        freeze(resolved);
         return resolved;
     }
     case CST_DECL_CONSTANT: {
@@ -1999,18 +1999,18 @@ resolve_stmt_if(struct resolver* resolver, struct cst_stmt const* stmt)
             resolve_block(resolver, symbol_table, conditionals[i]->body);
         // Freeze the symbol table now that the block has been resolved and no
         // new symbols will be added.
-        symbol_table_freeze(symbol_table, context()->freezer);
+        symbol_table_freeze(symbol_table);
 
         struct conditional* const resolved_conditional =
             conditional_new(conditionals[i]->location, condition, block);
-        freezer_register(context()->freezer, resolved_conditional);
+        freeze(resolved_conditional);
         resolved_conditionals[i] = resolved_conditional;
     }
 
-    sbuf_freeze(resolved_conditionals, context()->freezer);
+    sbuf_freeze(resolved_conditionals);
     struct stmt* const resolved = stmt_new_if(resolved_conditionals);
 
-    freezer_register(context()->freezer, resolved);
+    freeze(resolved);
     return resolved;
 }
 
@@ -2054,7 +2054,7 @@ resolve_stmt_for_range(struct resolver* resolver, struct cst_stmt const* stmt)
         loop_var_type,
         loop_var_address,
         NULL);
-    freezer_register(context()->freezer, loop_var_symbol);
+    freeze(loop_var_symbol);
 
     struct symbol_table* const symbol_table =
         symbol_table_new(resolver->current_symbol_table);
@@ -2070,11 +2070,11 @@ resolve_stmt_for_range(struct resolver* resolver, struct cst_stmt const* stmt)
 
     // Freeze the symbol table now that the block has been resolved and no new
     // symbols will be added.
-    symbol_table_freeze(symbol_table, context()->freezer);
+    symbol_table_freeze(symbol_table);
 
     struct stmt* const resolved =
         stmt_new_for_range(stmt->location, loop_var_symbol, begin, end, body);
-    freezer_register(context()->freezer, resolved);
+    freeze(resolved);
     return resolved;
 }
 
@@ -2106,11 +2106,11 @@ resolve_stmt_for_expr(struct resolver* resolver, struct cst_stmt const* stmt)
 
     // Freeze the symbol table now that the block has been resolved and no new
     // symbols will be added.
-    symbol_table_freeze(symbol_table, context()->freezer);
+    symbol_table_freeze(symbol_table);
 
     struct stmt* const resolved = stmt_new_for_expr(stmt->location, expr, body);
 
-    freezer_register(context()->freezer, resolved);
+    freeze(resolved);
     return resolved;
 }
 
@@ -2128,7 +2128,7 @@ resolve_stmt_break(struct resolver* resolver, struct cst_stmt const* stmt)
 
     struct stmt* const resolved = stmt_new_break(stmt->location);
 
-    freezer_register(context()->freezer, resolved);
+    freeze(resolved);
     return resolved;
 }
 
@@ -2146,7 +2146,7 @@ resolve_stmt_continue(struct resolver* resolver, struct cst_stmt const* stmt)
 
     struct stmt* const resolved = stmt_new_continue(stmt->location);
 
-    freezer_register(context()->freezer, resolved);
+    freeze(resolved);
     return resolved;
 }
 
@@ -2166,7 +2166,7 @@ resolve_stmt_dump(struct resolver* resolver, struct cst_stmt const* stmt)
 
     struct stmt* const resolved = stmt_new_dump(stmt->location, expr);
 
-    freezer_register(context()->freezer, resolved);
+    freeze(resolved);
     return resolved;
 }
 
@@ -2196,7 +2196,7 @@ resolve_stmt_return(struct resolver* resolver, struct cst_stmt const* stmt)
 
     struct stmt* const resolved = stmt_new_return(stmt->location, expr);
 
-    freezer_register(context()->freezer, resolved);
+    freeze(resolved);
     return resolved;
 }
 
@@ -2228,7 +2228,7 @@ resolve_stmt_assign(struct resolver* resolver, struct cst_stmt const* stmt)
 
     struct stmt* const resolved = stmt_new_assign(stmt->location, lhs, rhs);
 
-    freezer_register(context()->freezer, resolved);
+    freeze(resolved);
     return resolved;
 }
 
@@ -2250,7 +2250,7 @@ resolve_stmt_expr(struct resolver* resolver, struct cst_stmt const* stmt)
     }
     struct stmt* const resolved = stmt_new_expr(stmt->location, expr);
 
-    freezer_register(context()->freezer, resolved);
+    freeze(resolved);
     return resolved;
 }
 
@@ -2367,7 +2367,7 @@ resolve_expr_symbol(struct resolver* resolver, struct cst_expr const* expr)
 
     struct expr* const resolved = expr_new_symbol(expr->location, symbol);
 
-    freezer_register(context()->freezer, resolved);
+    freeze(resolved);
     return resolved;
 }
 
@@ -2382,7 +2382,7 @@ resolve_expr_boolean(struct resolver* resolver, struct cst_expr const* expr)
     bool const value = expr->data.boolean->value;
     struct expr* const resolved = expr_new_boolean(expr->location, value);
 
-    freezer_register(context()->freezer, resolved);
+    freeze(resolved);
     return resolved;
 }
 
@@ -2448,7 +2448,7 @@ resolve_expr_integer(struct resolver* resolver, struct cst_expr const* expr)
 
     struct expr* const resolved = expr_new_integer(expr->location, type, value);
 
-    freezer_register(context()->freezer, resolved);
+    freeze(resolved);
     return resolved;
 }
 
@@ -2469,10 +2469,10 @@ resolve_expr_character(struct resolver* resolver, struct cst_expr const* expr)
 
     struct type const* const type = context()->builtin.integer;
     struct bigint* const value = bigint_new_text(buf, strlen(buf));
-    bigint_freeze(value, context()->freezer);
+    bigint_freeze(value);
     struct expr* const resolved = expr_new_integer(expr->location, type, value);
 
-    freezer_register(context()->freezer, resolved);
+    freeze(resolved);
     return resolved;
 }
 
@@ -2505,17 +2505,17 @@ resolve_expr_bytes(struct resolver* resolver, struct cst_expr const* expr)
     // accessed as NUL-terminated arrays when interfacing with C code.
     sbuf_push(elements, value_new_byte(0x00));
     struct value* const value = value_new_array(type, elements, NULL);
-    value_freeze(value, context()->freezer);
+    value_freeze(value);
 
     struct symbol* const symbol = symbol_new_constant(
         expr->location, address->data.static_.name, type, address, value);
-    freezer_register(context()->freezer, symbol);
+    freeze(symbol);
     register_static_symbol(symbol);
 
     struct expr* const resolved =
         expr_new_bytes(expr->location, address, count);
 
-    freezer_register(context()->freezer, resolved);
+    freeze(resolved);
     return resolved;
 }
 
@@ -2548,7 +2548,7 @@ resolve_expr_array(struct resolver* resolver, struct cst_expr const* expr)
             type->data.array.base);
         sbuf_push(resolved_elements, resolved_element);
     }
-    sbuf_freeze(resolved_elements, context()->freezer);
+    sbuf_freeze(resolved_elements);
 
     struct expr const* resolved_ellipsis = NULL;
     if (expr->data.array.ellipsis != NULL) {
@@ -2574,7 +2574,7 @@ resolve_expr_array(struct resolver* resolver, struct cst_expr const* expr)
     struct expr* const resolved = expr_new_array(
         expr->location, type, resolved_elements, resolved_ellipsis);
 
-    freezer_register(context()->freezer, resolved);
+    freeze(resolved);
     return resolved;
 }
 
@@ -2615,7 +2615,7 @@ resolve_expr_slice(struct resolver* resolver, struct cst_expr const* expr)
     struct expr* const resolved =
         expr_new_slice(expr->location, type, pointer, count);
 
-    freezer_register(context()->freezer, resolved);
+    freeze(resolved);
     return resolved;
 }
 
@@ -2670,9 +2670,9 @@ resolve_expr_array_slice(struct resolver* resolver, struct cst_expr const* expr)
             sbuf_push(resolved_elements, resolved_element);
             sbuf_push(resolved_values, eval_rvalue(resolved_element));
         }
-        sbuf_freeze(resolved_elements, context()->freezer);
+        sbuf_freeze(resolved_elements);
         array_value = value_new_array(array_type, resolved_values, NULL);
-        value_freeze(array_value, context()->freezer);
+        value_freeze(array_value);
     }
 
     struct symbol* const array_symbol =
@@ -2682,7 +2682,7 @@ resolve_expr_array_slice(struct resolver* resolver, struct cst_expr const* expr)
     if (is_static) {
         register_static_symbol(array_symbol);
     }
-    freezer_register(context()->freezer, array_symbol);
+    freeze(array_symbol);
 
     symbol_table_insert(
         resolver->current_symbol_table,
@@ -2702,12 +2702,12 @@ resolve_expr_array_slice(struct resolver* resolver, struct cst_expr const* expr)
             type->data.slice.base);
         sbuf_push(resolved_elements, resolved_element);
     }
-    sbuf_freeze(resolved_elements, context()->freezer);
+    sbuf_freeze(resolved_elements);
 
     struct expr* const resolved = expr_new_array_slice(
         expr->location, type, array_symbol, resolved_elements);
 
-    freezer_register(context()->freezer, resolved);
+    freeze(resolved);
     return resolved;
 }
 
@@ -2801,11 +2801,11 @@ resolve_expr_struct(struct resolver* resolver, struct cst_expr const* expr)
     }
 
     sbuf_fini(initializer_exprs);
-    sbuf_freeze(member_variable_exprs, context()->freezer);
+    sbuf_freeze(member_variable_exprs);
     struct expr* const resolved =
         expr_new_struct(expr->location, type, member_variable_exprs);
 
-    freezer_register(context()->freezer, resolved);
+    freeze(resolved);
     return resolved;
 }
 
@@ -2867,7 +2867,7 @@ resolve_expr_cast(struct resolver* resolver, struct cst_expr const* expr)
 
     struct expr* const resolved = expr_new_cast(expr->location, type, rhs);
 
-    freezer_register(context()->freezer, resolved);
+    freeze(resolved);
     return resolved;
 }
 
@@ -2913,10 +2913,10 @@ resolve_expr_syscall(struct resolver* resolver, struct cst_expr const* expr)
         }
         sbuf_push(exprs, arg);
     }
-    sbuf_freeze(exprs, context()->freezer);
+    sbuf_freeze(exprs);
     struct expr* const resolved = expr_new_syscall(expr->location, exprs);
 
-    freezer_register(context()->freezer, resolved);
+    freeze(resolved);
     return resolved;
 }
 
@@ -3005,14 +3005,14 @@ resolve_expr_call(struct resolver* resolver, struct cst_expr const* expr)
         assert(expr_is_lvalue(instance));
         struct expr* const selfptr = expr_new_unary(
             expr->location, selfptr_type, UOP_ADDRESSOF, instance);
-        freezer_register(context()->freezer, selfptr);
+        freeze(selfptr);
         sbuf_push(arguments, selfptr);
         for (size_t i = 0; i < arg_count; ++i) {
             struct expr const* arg =
                 resolve_expr(resolver, expr->data.call.arguments[i]);
             sbuf_push(arguments, arg);
         }
-        sbuf_freeze(arguments, context()->freezer);
+        sbuf_freeze(arguments);
 
         // Type-check function arguments.
         for (size_t i = 0; i < sbuf_count(arguments); ++i) {
@@ -3038,12 +3038,12 @@ resolve_expr_call(struct resolver* resolver, struct cst_expr const* expr)
             expr_new_symbol(
                 dot->data.access_member.identifier->location,
                 member_function_symbol);
-        freezer_register(context()->freezer, member_function_expr);
+        freeze(member_function_expr);
 
         struct expr* resolved =
             expr_new_call(expr->location, member_function_expr, arguments);
 
-        freezer_register(context()->freezer, resolved);
+        freeze(resolved);
         return resolved;
     }
 
@@ -3074,7 +3074,7 @@ regular_function_call:;
             resolve_expr(resolver, expr->data.call.arguments[i]);
         sbuf_push(arguments, arg);
     }
-    sbuf_freeze(arguments, context()->freezer);
+    sbuf_freeze(arguments);
 
     // Type-check function arguments.
     sbuf(struct type const* const) const parameter_types =
@@ -3097,7 +3097,7 @@ regular_function_call:;
     struct expr* const resolved =
         expr_new_call(expr->location, function, arguments);
 
-    freezer_register(context()->freezer, resolved);
+    freeze(resolved);
     return resolved;
 }
 
@@ -3131,7 +3131,7 @@ resolve_expr_access_index(
     struct expr* const resolved =
         expr_new_access_index(expr->location, lhs, idx);
 
-    freezer_register(context()->freezer, resolved);
+    freeze(resolved);
     return resolved;
 }
 
@@ -3180,7 +3180,7 @@ resolve_expr_access_slice(
     struct expr* const resolved =
         expr_new_access_slice(expr->location, lhs, begin, end);
 
-    freezer_register(context()->freezer, resolved);
+    freeze(resolved);
     return resolved;
 }
 
@@ -3209,7 +3209,7 @@ resolve_expr_access_member(
         struct expr* const resolved = expr_new_access_member_variable(
             expr->location, lhs, member_variable_def);
 
-        freezer_register(context()->freezer, resolved);
+        freeze(resolved);
         return resolved;
     }
 
@@ -3254,7 +3254,7 @@ resolve_expr_access_dereference(
     struct expr* const resolved = expr_new_unary(
         expr->location, lhs->type->data.pointer.base, UOP_DEREFERENCE, lhs);
 
-    freezer_register(context()->freezer, resolved);
+    freeze(resolved);
     return resolved;
 }
 
@@ -3272,7 +3272,7 @@ resolve_expr_sizeof(struct resolver* resolver, struct cst_expr const* expr)
 
     struct expr* const resolved = expr_new_sizeof(expr->location, rhs);
 
-    freezer_register(context()->freezer, resolved);
+    freeze(resolved);
     return resolved;
 }
 
@@ -3290,7 +3290,7 @@ resolve_expr_alignof(struct resolver* resolver, struct cst_expr const* expr)
 
     struct expr* const resolved = expr_new_alignof(expr->location, rhs);
 
-    freezer_register(context()->freezer, resolved);
+    freeze(resolved);
     return resolved;
 }
 
@@ -3318,7 +3318,7 @@ resolve_expr_unary(struct resolver* resolver, struct cst_expr const* expr)
         if (op->kind == TOKEN_DASH) {
             struct bigint* const tmp = bigint_new(value);
             bigint_neg(tmp, value);
-            bigint_freeze(tmp, context()->freezer);
+            bigint_freeze(tmp);
             value = tmp;
         }
         struct type const* const type = integer_literal_suffix_to_type(
@@ -3327,7 +3327,7 @@ resolve_expr_unary(struct resolver* resolver, struct cst_expr const* expr)
         struct expr* const resolved =
             expr_new_integer(&op->location, type, value);
 
-        freezer_register(context()->freezer, resolved);
+        freeze(resolved);
         return resolved;
     }
 
@@ -3393,7 +3393,7 @@ resolve_expr_unary_logical(
     struct expr* const resolved =
         expr_new_unary(&op->location, rhs->type, uop, rhs);
 
-    freezer_register(context()->freezer, resolved);
+    freeze(resolved);
     return resolved;
 }
 
@@ -3420,7 +3420,7 @@ resolve_expr_unary_arithmetic(
     struct expr* const resolved =
         expr_new_unary(&op->location, rhs->type, uop, rhs);
 
-    freezer_register(context()->freezer, resolved);
+    freeze(resolved);
     return resolved;
 }
 
@@ -3445,7 +3445,7 @@ resolve_expr_unary_bitwise(
     struct expr* const resolved =
         expr_new_unary(&op->location, rhs->type, uop, rhs);
 
-    freezer_register(context()->freezer, resolved);
+    freeze(resolved);
     return resolved;
 }
 
@@ -3468,7 +3468,7 @@ resolve_expr_unary_dereference(
     struct expr* const resolved = expr_new_unary(
         &op->location, rhs->type->data.pointer.base, UOP_DEREFERENCE, rhs);
 
-    freezer_register(context()->freezer, resolved);
+    freeze(resolved);
     return resolved;
 }
 
@@ -3489,7 +3489,7 @@ resolve_expr_unary_addressof(
     struct expr* const resolved = expr_new_unary(
         &op->location, type_unique_pointer(rhs->type), UOP_ADDRESSOF, rhs);
 
-    freezer_register(context()->freezer, resolved);
+    freeze(resolved);
     return resolved;
 }
 
@@ -3513,7 +3513,7 @@ resolve_expr_unary_countof(
     struct expr* const resolved = expr_new_unary(
         &op->location, context()->builtin.usize, UOP_COUNTOF, rhs);
 
-    freezer_register(context()->freezer, resolved);
+    freeze(resolved);
     return resolved;
 }
 
@@ -3619,7 +3619,7 @@ resolve_expr_binary_logical(
     struct expr* const resolved =
         expr_new_binary(&op->location, type, bop, lhs, rhs);
 
-    freezer_register(context()->freezer, resolved);
+    freeze(resolved);
     return resolved;
 }
 
@@ -3659,7 +3659,7 @@ resolve_expr_binary_compare_equality(
 
     struct expr* resolved =
         expr_new_binary(&op->location, context()->builtin.bool_, bop, lhs, rhs);
-    freezer_register(context()->freezer, resolved);
+    freeze(resolved);
 
     // Constant fold integer literal constant expression.
     if (lhs->kind == EXPR_INTEGER && rhs->kind == EXPR_INTEGER) {
@@ -3667,11 +3667,11 @@ resolve_expr_binary_compare_equality(
         rhs = shallow_implicit_cast(lhs->type, rhs);
 
         struct value* const value = eval_rvalue(resolved);
-        value_freeze(value, context()->freezer);
+        value_freeze(value);
 
         assert(value->type->kind == TYPE_BOOL);
         resolved = expr_new_boolean(resolved->location, value->data.boolean);
-        freezer_register(context()->freezer, resolved);
+        freeze(resolved);
     }
 
     return resolved;
@@ -3714,7 +3714,7 @@ resolve_expr_binary_compare_order(
 
     struct expr* resolved =
         expr_new_binary(&op->location, context()->builtin.bool_, bop, lhs, rhs);
-    freezer_register(context()->freezer, resolved);
+    freeze(resolved);
 
     // Constant fold integer literal constant expression.
     if (lhs->kind == EXPR_INTEGER && rhs->kind == EXPR_INTEGER) {
@@ -3722,11 +3722,11 @@ resolve_expr_binary_compare_order(
         rhs = shallow_implicit_cast(lhs->type, rhs);
 
         struct value* const value = eval_rvalue(resolved);
-        value_freeze(value, context()->freezer);
+        value_freeze(value);
 
         assert(value->type->kind == TYPE_BOOL);
         resolved = expr_new_boolean(resolved->location, value->data.boolean);
-        freezer_register(context()->freezer, resolved);
+        freeze(resolved);
     }
 
     return resolved;
@@ -3762,7 +3762,7 @@ resolve_expr_binary_arithmetic(
 
     struct type const* const type = lhs->type; // Arbitrarily use lhs.
     struct expr* resolved = expr_new_binary(&op->location, type, bop, lhs, rhs);
-    freezer_register(context()->freezer, resolved);
+    freeze(resolved);
 
     // Constant fold integer literal constant expression.
     if (lhs->kind == EXPR_INTEGER && rhs->kind == EXPR_INTEGER) {
@@ -3770,12 +3770,12 @@ resolve_expr_binary_arithmetic(
         rhs = shallow_implicit_cast(lhs->type, rhs);
 
         struct value* const value = eval_rvalue(resolved);
-        value_freeze(value, context()->freezer);
+        value_freeze(value);
 
         assert(type_is_any_integer(value->type));
         resolved = expr_new_integer(
             resolved->location, resolved->type, value->data.integer);
-        freezer_register(context()->freezer, resolved);
+        freeze(resolved);
     }
 
     return resolved;
@@ -3817,7 +3817,7 @@ resolve_expr_binary_bitwise(
     }
 
     struct expr* resolved = expr_new_binary(&op->location, type, bop, lhs, rhs);
-    freezer_register(context()->freezer, resolved);
+    freeze(resolved);
 
     // Constant fold integer literal constant expression.
     if (lhs->kind == EXPR_INTEGER && rhs->kind == EXPR_INTEGER) {
@@ -3825,12 +3825,12 @@ resolve_expr_binary_bitwise(
         rhs = shallow_implicit_cast(lhs->type, rhs);
 
         struct value* const value = eval_rvalue(resolved);
-        value_freeze(value, context()->freezer);
+        value_freeze(value);
 
         assert(type_is_any_integer(value->type));
         resolved = expr_new_integer(
             resolved->location, resolved->type, value->data.integer);
-        freezer_register(context()->freezer, resolved);
+        freeze(resolved);
     }
 
     return resolved;
@@ -3866,12 +3866,12 @@ resolve_block(
             sbuf_push(stmts, resolved_stmt);
         }
     }
-    sbuf_freeze(stmts, context()->freezer);
+    sbuf_freeze(stmts);
 
     struct block* const resolved =
         block_new(block->location, symbol_table, stmts);
 
-    freezer_register(context()->freezer, resolved);
+    freeze(resolved);
     resolver->current_symbol_table = save_symbol_table;
     resolver->current_rbp_offset = save_rbp_offset;
     return resolved;
@@ -3948,7 +3948,7 @@ resolve_typespec_function(
     for (size_t i = 0; i < sbuf_count(parameter_typespecs); ++i) {
         parameter_types[i] = resolve_typespec(resolver, parameter_typespecs[i]);
     }
-    sbuf_freeze(parameter_types, context()->freezer);
+    sbuf_freeze(parameter_types);
 
     struct type const* const return_type =
         resolve_typespec(resolver, typespec->data.function.return_typespec);
@@ -4060,8 +4060,8 @@ resolve(struct module* module)
                 symbol_new_namespace(location, nsname, module_table);
             struct symbol* const export_nssymbol =
                 symbol_new_namespace(location, nsname, module_table);
-            freezer_register(context()->freezer, module_nssymbol);
-            freezer_register(context()->freezer, export_nssymbol);
+            freeze(module_nssymbol);
+            freeze(export_nssymbol);
 
             symbol_table_insert(
                 resolver->current_symbol_table, name, module_nssymbol, false);
@@ -4144,8 +4144,7 @@ resolve(struct module* module)
     size_t const chilling_symbol_tables_count =
         sbuf_count(resolver->chilling_symbol_tables);
     for (size_t i = 0; i < chilling_symbol_tables_count; ++i) {
-        symbol_table_freeze(
-            resolver->chilling_symbol_tables[i], context()->freezer);
+        symbol_table_freeze(resolver->chilling_symbol_tables[i]);
     }
     sbuf_fini(resolver->chilling_symbol_tables);
 

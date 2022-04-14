@@ -454,8 +454,8 @@ type_unique_function(
         symbol_new_type(&context()->builtin.location, type);
     symbol_table_insert(
         context()->global_symbol_table, symbol->name, symbol, false);
-    freezer_register(context()->freezer, type);
-    freezer_register(context()->freezer, symbol);
+    freeze(type);
+    freeze(symbol);
     return type;
 }
 
@@ -476,8 +476,8 @@ type_unique_pointer(struct type const* base)
         symbol_new_type(&context()->builtin.location, type);
     symbol_table_insert(
         context()->global_symbol_table, symbol->name, symbol, false);
-    freezer_register(context()->freezer, type);
-    freezer_register(context()->freezer, symbol);
+    freeze(type);
+    freeze(symbol);
     return type;
 }
 
@@ -498,8 +498,8 @@ type_unique_array(size_t count, struct type const* base)
         symbol_new_type(&context()->builtin.location, type);
     symbol_table_insert(
         context()->global_symbol_table, symbol->name, symbol, false);
-    freezer_register(context()->freezer, type);
-    freezer_register(context()->freezer, symbol);
+    freeze(type);
+    freeze(symbol);
     return type;
 }
 
@@ -520,8 +520,8 @@ type_unique_slice(struct type const* base)
         symbol_new_type(&context()->builtin.location, type);
     symbol_table_insert(
         context()->global_symbol_table, symbol->name, symbol, false);
-    freezer_register(context()->freezer, type);
-    freezer_register(context()->freezer, symbol);
+    freeze(type);
+    freeze(symbol);
     return type;
 }
 
@@ -850,13 +850,12 @@ symbol_table_new(struct symbol_table const* parent)
 }
 
 void
-symbol_table_freeze(struct symbol_table* self, struct freezer* freezer)
+symbol_table_freeze(struct symbol_table* self)
 {
     assert(self != NULL);
-    assert(freezer != NULL);
 
-    freezer_register(freezer, self);
-    sbuf_freeze(self->elements, freezer);
+    freeze(self);
+    sbuf_freeze(self->elements);
 }
 
 void
@@ -1716,12 +1715,11 @@ value_del(struct value* self)
 }
 
 void
-value_freeze(struct value* self, struct freezer* freezer)
+value_freeze(struct value* self)
 {
     assert(self != NULL);
-    assert(freezer != NULL);
 
-    freezer_register(freezer, self);
+    freeze(self);
     switch (self->type->kind) {
     case TYPE_ANY: /* fallthrough */
     case TYPE_VOID: {
@@ -1744,7 +1742,7 @@ value_freeze(struct value* self, struct freezer* freezer)
     case TYPE_USIZE: /* fallthrough */
     case TYPE_SSIZE: /* fallthrough */
     case TYPE_INTEGER: {
-        bigint_freeze(self->data.integer, freezer);
+        bigint_freeze(self->data.integer);
         return;
     }
     case TYPE_FUNCTION: {
@@ -1756,18 +1754,18 @@ value_freeze(struct value* self, struct freezer* freezer)
     case TYPE_ARRAY: {
         sbuf(struct value*) const elements = self->data.array.elements;
         struct value* const ellipsis = self->data.array.ellipsis;
-        sbuf_freeze(elements, freezer);
+        sbuf_freeze(elements);
         for (size_t i = 0; i < sbuf_count(elements); ++i) {
-            value_freeze(elements[i], freezer);
+            value_freeze(elements[i]);
         }
         if (ellipsis != NULL) {
-            value_freeze(ellipsis, freezer);
+            value_freeze(ellipsis);
         }
         return;
     }
     case TYPE_SLICE: {
-        value_freeze(self->data.slice.pointer, freezer);
-        value_freeze(self->data.slice.count, freezer);
+        value_freeze(self->data.slice.pointer);
+        value_freeze(self->data.slice.count);
         return;
     }
     case TYPE_STRUCT: {
@@ -1776,9 +1774,9 @@ value_freeze(struct value* self, struct freezer* freezer)
         for (size_t i = 0; i < member_variables_count; ++i) {
             struct value** pvalue = self->data.struct_.member_variables + i;
             assert(*pvalue != NULL); // Self not fully initialized.
-            value_freeze(*pvalue, freezer);
+            value_freeze(*pvalue);
         }
-        sbuf_freeze(self->data.struct_.member_variables, freezer);
+        sbuf_freeze(self->data.struct_.member_variables);
         return;
     }
     }

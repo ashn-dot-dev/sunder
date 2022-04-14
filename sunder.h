@@ -16,7 +16,6 @@ struct vstr;
 struct bitarr;
 struct bigint;
 struct string;
-struct freezer;
 
 #if __STDC_VERSION__ >= 201112L /* C11+ */
 #    define NORETURN _Noreturn
@@ -191,7 +190,7 @@ intern(char const* start, size_t count);
 // Returns the canonical NUL-terminated representation of the interned string.
 char const*
 intern_cstr(char const* cstr);
-// Deinitialize interned string list free interned strings.
+// Deinitialize the interned string list free interned strings.
 void
 intern_fini(void);
 
@@ -255,11 +254,11 @@ intern_fini(void);
 #define sbuf_fini(sbuf)                                                        \
     ((void)((sbuf) != NULL ? SBUF__FREE_NON_NULL_HEAD_(sbuf) : NULL))
 
-// void sbuf_freeze(TYPE* sbuf, struct freezer* freezer)
+// void sbuf_freeze(TYPE* sbuf)
 // ------------------------------------------------------------
-// Register resources within bigint with the provided freezer.
-#define sbuf_freeze(sbuf, freezer)                                             \
-    ((void)((sbuf) != NULL ? SBUF__FREEZE_NON_NULL_HEAD_(sbuf, freezer), NULL : NULL))
+// Freeze the stretchy buffer.
+#define sbuf_freeze(sbuf)                                                      \
+    ((void)((sbuf) != NULL ? SBUF__FREEZE_NON_NULL_HEAD_(sbuf), NULL : NULL))
 
 // size_t sbuf_count(TYPE* sbuf)
 // ------------------------------------------------------------
@@ -313,8 +312,8 @@ enum{SBUF__HEADER_OFFSET_ = sizeof(struct sbuf__header_)};
      ((char const*)(sbuf_)-SBUF__HEADER_OFFSET_))
 #define SBUF__FREE_NON_NULL_HEAD_(sbuf_)                                       \
     (xalloc(SBUF__PHEAD_MUTBL_(sbuf_), XALLOC_FREE))
-#define SBUF__FREEZE_NON_NULL_HEAD_(sbuf_, freezer)                            \
-    (freezer_register(freezer, SBUF__PHEAD_MUTBL_(sbuf_)))
+#define SBUF__FREEZE_NON_NULL_HEAD_(sbuf_)                                     \
+    (freeze(SBUF__PHEAD_MUTBL_(sbuf_)))
 #define SBUF__MAYBE_GROW_(sbuf_)                                               \
     ((sbuf_count(sbuf_) == sbuf_capacity(sbuf_))                               \
          ? (sbuf_) = sbuf__grw_(sizeof(*(sbuf_)), sbuf_)                       \
@@ -334,9 +333,9 @@ bitarr_new(size_t count);
 // Does nothing if self == NULL.
 void
 bitarr_del(struct bitarr* self);
-// Register resources within the bit array with the provided freezer.
+// Freeze the bit array.
 void
-bitarr_freeze(struct bitarr* self, struct freezer* freezer);
+bitarr_freeze(struct bitarr* self);
 
 // Returns the number of bits in this bit array.
 size_t
@@ -422,9 +421,9 @@ bigint_new_text(char const* start, size_t count);
 // Does nothing if self == NULL.
 void
 bigint_del(struct bigint* self);
-// Register resources within the bigint with the provided freezer.
+// Free the bigint.
 void
-bigint_freeze(struct bigint* self, struct freezer* freezer);
+bigint_freeze(struct bigint* self);
 
 // Return an int less than, equal to, or greater than zero if lhs is
 // semantically less than, equal to, or greater than rhs, respectively.
@@ -547,9 +546,9 @@ string_new_fmt(char const* fmt, ...);
 // Does nothing if self == NULL.
 void
 string_del(struct string* self);
-// Register resources within the string with the provided freezer.
+// Freeze the string.
 void
-string_freeze(struct string* self, struct freezer* freezer);
+string_freeze(struct string* self);
 
 // Pointer to the start of the underlying char array of the string.
 // Returns a pointer to a NUL terminator when the count of the string is zero.
@@ -612,18 +611,12 @@ struct string** /* sbuf */
 string_split_on(
     struct string const* self, char const* separator, size_t separator_size);
 
-// Allocate and initialize a freezer.
-struct freezer*
-freezer_new(void);
-// Deinitialize and free the freezer.
-// Does nothing if self == NULL.
+// Register a pointer to xalloc-allocated memory to be frozen.
 void
-freezer_del(struct freezer* self);
-
-// Register a pointer to xalloc-allocated memory to be freed when the
-// freezer is deinitialized.
+freeze(void* ptr);
+// Deinitialize the frozen object list free frozen objects.
 void
-freezer_register(struct freezer* self, void* ptr);
+freeze_fini(void);
 
 // Returns the string contents of a file with the provided path. The produced
 // string is NUL-prefixed and NUL-terminated. This function will cause a fatal
@@ -769,9 +762,6 @@ void
 module_del(struct module* self);
 
 struct context {
-    // Context-owned automatically managed objects.
-    struct freezer* freezer;
-
     // Interned strings.
     struct sipool* sipool;
     struct {
@@ -1908,7 +1898,7 @@ struct symbol_table {
 struct symbol_table*
 symbol_table_new(struct symbol_table const* parent);
 void
-symbol_table_freeze(struct symbol_table* self, struct freezer* freezer);
+symbol_table_freeze(struct symbol_table* self);
 void
 symbol_table_insert(
     struct symbol_table* self,
@@ -2322,7 +2312,7 @@ value_new_struct(struct type const* type);
 void
 value_del(struct value* self);
 void
-value_freeze(struct value* self, struct freezer* freezer);
+value_freeze(struct value* self);
 struct value*
 value_clone(struct value const* self);
 

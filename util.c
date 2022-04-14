@@ -570,12 +570,11 @@ bitarr_del(struct bitarr* self)
 }
 
 void
-bitarr_freeze(struct bitarr* self, struct freezer* freezer)
+bitarr_freeze(struct bitarr* self)
 {
     assert(self != NULL);
-    assert(freezer != NULL);
 
-    freezer_register(freezer, self);
+    freeze(self);
 }
 
 size_t
@@ -1076,13 +1075,12 @@ bigint_del(struct bigint* self)
 }
 
 void
-bigint_freeze(struct bigint* self, struct freezer* freezer)
+bigint_freeze(struct bigint* self)
 {
     assert(self != NULL);
-    assert(freezer != NULL);
 
-    freezer_register(freezer, self);
-    freezer_register(freezer, self->limbs);
+    freeze(self);
+    freeze(self->limbs);
 }
 
 int
@@ -1809,13 +1807,12 @@ string_del(struct string* self)
 }
 
 void
-string_freeze(struct string* self, struct freezer* freezer)
+string_freeze(struct string* self)
 {
     assert(self != NULL);
-    assert(freezer != NULL);
 
-    freezer_register(freezer, self);
-    freezer_register(freezer, self->start);
+    freeze(self);
+    freeze(self->start);
 }
 
 char const*
@@ -1997,41 +1994,22 @@ string_split_on(
     return res;
 }
 
-struct freezer {
-    // List of heap-allocated pointers to be freed when objects are cleaned out
-    // of the freezer.
-    sbuf(void*) ptrs;
-};
+// List of heap-allocated frozen pointers.
+sbuf(void*) frozen;
 
-struct freezer*
-freezer_new(void)
+void
+freeze(void* ptr)
 {
-    struct freezer* const self = xalloc(NULL, sizeof(*self));
-    self->ptrs = NULL;
-    return self;
+    sbuf_push(frozen, ptr);
 }
 
 void
-freezer_del(struct freezer* self)
+freeze_fini(void)
 {
-    if (self == NULL) {
-        return;
+    for (size_t i = 0; i < sbuf_count(frozen); ++i) {
+        xalloc(frozen[i], XALLOC_FREE);
     }
-
-    for (size_t i = 0; i < sbuf_count(self->ptrs); ++i) {
-        xalloc(self->ptrs[i], XALLOC_FREE);
-    }
-    sbuf_fini(self->ptrs);
-
-    xalloc(self, XALLOC_FREE);
-}
-
-void
-freezer_register(struct freezer* self, void* ptr)
-{
-    assert(self != NULL);
-
-    sbuf_push(self->ptrs, ptr);
+    sbuf_fini(frozen);
 }
 
 // clang-format off
