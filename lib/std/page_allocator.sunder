@@ -121,7 +121,7 @@ struct page_allocator {
         }
     }
 
-    func the() *std::page_allocator {
+    func the() *page_allocator {
         const the = (:page_allocator){};
         return &the;
     }

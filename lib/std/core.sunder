@@ -583,6 +583,11 @@ struct input_reader {
 
         return std::result[[usize, []byte]]::init_value((:usize)sysret);
     }
+
+    func the() *input_reader {
+        const the = (:input_reader){};
+        return &the;
+    }
 }
 
 struct out_writer {
@@ -598,6 +603,11 @@ struct out_writer {
 
         return std::result[[usize, []byte]]::init_value((:usize)sysret);
     }
+
+    func the() *out_writer {
+        const the = (:out_writer){};
+        return &the;
+    }
 }
 
 struct err_writer {
@@ -612,6 +622,11 @@ struct err_writer {
         }
 
         return std::result[[usize, []byte]]::init_value((:usize)sysret);
+    }
+
+    func the() *err_writer {
+        const the = (:err_writer){};
+        return &the;
     }
 }
 

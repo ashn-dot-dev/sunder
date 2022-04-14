@@ -7,16 +7,13 @@ import "std";
 import "sys";
 
 var cells = (:[30000]u8)[0...];
-var stack = (:[4096]usize)[0...];
-
 var cells_index: usize = 0;
-var stack_index: usize = 0;
 
 func main() void {
     if sys::argc != 2 {
         var progname = std::cstr::to_bytes(*sys::argv);
-        var expected: usize = 1;
-        var received: usize = sys::argc - 1;
+        var expected = 1u;
+        var received = sys::argc - 1u;
         std::print_format_line(
             std::err(),
             "{}: invalid number of arguments (expected {}, received {})",
@@ -27,38 +24,39 @@ func main() void {
         std::exit(std::EXIT_FAILURE);
     }
 
-    var path = *std::cptr::add[[*byte]](sys::argv, 1);
-    var result = std::file::open(std::cstr::to_bytes(path), std::OPEN_READ);
+    var path = std::cstr::to_bytes(*std::cptr::add[[*byte]](sys::argv, 1));
+    var result = std::file::open(path, std::OPEN_READ);
     if result.is_error() {
-        var p = std::cstr::to_bytes(path);
-        var e = result.error();
+        var error = result.error();
         std::print_format_line(
             std::err(),
             "{}: {}",
             (:[]std::formatter)[
-                std::formatter::init[[[]byte]](&p),
-                std::formatter::init[[[]byte]](&e)]);
+                std::formatter::init[[[]byte]](&path),
+                std::formatter::init[[[]byte]](&error)]);
         std::exit(std::EXIT_FAILURE);
     }
+
     var file = result.value();
-    var file_reader = std::reader::init[[std::file]](&file);
-    var result = std::read_all(file_reader, std::allocator::init[[std::page_allocator]](std::page_allocator::the()));
+
+    var allocator = std::general_allocator::init();
+    var result = std::read_all(std::reader::init[[std::file]](&file), std::allocator::init[[typeof(allocator)]](&allocator));
     if result.is_error() {
-        var p = std::cstr::to_bytes(path);
-        var e = result.error();
+        var error = result.error();
         std::print_format_line(
             std::err(),
             "{}: {}",
             (:[]std::formatter)[
-                std::formatter::init[[[]byte]](&p),
-                std::formatter::init[[[]byte]](&e)]);
+                std::formatter::init[[[]byte]](&path),
+                std::formatter::init[[[]byte]](&error)]);
         file.close();
+        allocator.fini();
         std::exit(std::EXIT_FAILURE);
     }
     var source = result.value();
     var source_size: usize = countof(source);
 
-    var reader = std::input();
+    var stack = std::vector[[usize]]::init(std::allocator::init[[typeof(allocator)]](&allocator));
     var source_index: usize = 0;
     for source_index < source_size {
         var cur: byte = source[source_index];
@@ -66,42 +64,38 @@ func main() void {
         if cur == '>' {
             cells_index = cells_index + 1;
             source_index = source_index + 1;
+            continue;
         }
-        elif cur == '<' {
+        if cur == '<' {
             cells_index = cells_index - 1;
             source_index = source_index + 1;
+            continue;
         }
-        elif cur == '+' {
-            if cells[cells_index] == 0xFF {
-                cells[cells_index] = 0x00;
-            }
-            else {
-                cells[cells_index] = cells[cells_index] + 1;
-            }
+        if cur == '+' {
+            cells[cells_index] = (:u8)((:ssize)cells[cells_index] + 1);
             source_index = source_index + 1;
+            continue;
         }
-        elif cur == '-' {
-            if cells[cells_index] == 0x00 {
-                cells[cells_index] = 0xFF;
-            }
-            else {
-                cells[cells_index] = cells[cells_index] - 1;
-            }
+        if cur == '-' {
+            cells[cells_index] = (:u8)((:ssize)cells[cells_index] - 1);
             source_index = source_index + 1;
+            continue;
         }
-        elif cur == '.' {
+        if cur == '.' {
             std::print(std::out(), (:[]byte){(:*byte)&cells[cells_index], 1});
             source_index = source_index + 1;
+            continue;
         }
-        elif cur == ',' {
+        if cur == ',' {
             var b: byte = 0;
-            var result = reader.read((:[]byte){&b, 1});
+            var result = std::input_reader::the().*.read((:[]byte){&b, 1});
             if result.value() != 0 { # Only update on non-EOF.
                cells[cells_index] = (:u8)b;
             }
             source_index = source_index + 1;
+            continue;
         }
-        elif cur == '[' {
+        if cur == '[' {
             if cells[cells_index] == 0 {
                 var depth: usize = 1;
                 for depth > 0 {
@@ -113,22 +107,19 @@ func main() void {
                         depth = depth - 1;
                     }
                 }
-                source_index = source_index + 1;
             } else {
-                stack[stack_index] = source_index;
-                stack_index = stack_index + 1;
-                source_index = source_index + 1;
+                stack.push(source_index);
             }
-        }
-        elif cur == ']' {
-            stack_index = stack_index - 1;
-            source_index = stack[stack_index];
-        }
-        else {
             source_index = source_index + 1;
+            continue;
         }
+        if cur == ']' {
+            source_index = stack.pop();
+            continue;
+        }
+        source_index = source_index + 1;
     }
 
-    std::delete_slice[[byte]](std::allocator::init[[std::page_allocator]](std::page_allocator::the()), source);
     file.close();
+    allocator.fini();
 }
