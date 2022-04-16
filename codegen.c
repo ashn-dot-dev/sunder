@@ -1687,7 +1687,7 @@ codegen_rvalue_access_index_lhs_array(struct expr const* expr, size_t id)
         appendli("mov rbx, %zu", lhs_type->data.array.count); // count
         appendli("cmp rax, rbx");
         appendli("jb %s%zu_op", LABEL_EXPR, id);
-        appendli("call __index_oob_handler");
+        appendli("call __fatal_index_out_of_bounds");
         appendln("%s%zu_op:", LABEL_EXPR, id);
         appendli("mov rbx, %zu", element_type->size); // sizeof(element_type)
         appendli("mul rbx"); // index * sizeof(element_type)
@@ -1708,7 +1708,7 @@ codegen_rvalue_access_index_lhs_array(struct expr const* expr, size_t id)
     appendli("mov rbx, %zu", lhs_type->data.array.count); // count
     appendli("cmp rax, rbx");
     appendli("jb %s%zu_op", LABEL_EXPR, id);
-    appendli("call __index_oob_handler");
+    appendli("call __fatal_index_out_of_bounds");
     appendln("%s%zu_op:", LABEL_EXPR, id);
     appendli("mov rbx, %zu", element_type->size); // sizeof(element_type)
     appendli("mul rbx"); // index * sizeof(element_type)
@@ -1755,7 +1755,7 @@ codegen_rvalue_access_index_lhs_slice(struct expr const* expr, size_t id)
     appendli("mov rbx, [rsp + 8]"); // slice count
     appendli("cmp rax, rbx");
     appendli("jb %s%zu_op", LABEL_EXPR, id);
-    appendli("call __index_oob_handler");
+    appendli("call __fatal_index_out_of_bounds");
     appendln("%s%zu_op:", LABEL_EXPR, id);
     appendli("mov rbx, %zu", element_type->size); // sizeof(element_type)
     appendli("mul rbx"); // index * sizeof(element_type)
@@ -1806,18 +1806,18 @@ codegen_rvalue_access_slice_lhs_array(struct expr const* expr, size_t id)
 
     appendli("cmp rax, rbx"); // cmp begin end
     appendli("jbe %s%zu_oob_check_bgnidx", LABEL_EXPR, id); // jmp begin <= end
-    appendli("call __index_oob_handler");
+    appendli("call __fatal_index_out_of_bounds");
 
     appendli("%s%zu_oob_check_bgnidx:", LABEL_EXPR, id);
     appendli("cmp rax, rcx"); // cmp begin count
     appendli(
         "jbe %s%zu_oob_check_endidx", LABEL_EXPR, id); // jmp begin <= count
-    appendli("call __index_oob_handler");
+    appendli("call __fatal_index_out_of_bounds");
 
     appendli("%s%zu_oob_check_endidx:", LABEL_EXPR, id);
     appendli("cmp rbx, rcx"); // cmp end count
     appendli("jbe %s%zu_op", LABEL_EXPR, id); // jmp end <= count
-    appendli("call __index_oob_handler");
+    appendli("call __fatal_index_out_of_bounds");
 
     appendli("%s%zu_op:", LABEL_EXPR, id);
     appendli("sub rbx, rax"); // count = end - begin
@@ -1858,18 +1858,18 @@ codegen_rvalue_access_slice_lhs_slice(struct expr const* expr, size_t id)
 
     appendli("cmp rax, rbx"); // cmp begin end
     appendli("jbe %s%zu_oob_check_bgnidx", LABEL_EXPR, id); // jmp begin <= end
-    appendli("call __index_oob_handler");
+    appendli("call __fatal_index_out_of_bounds");
 
     appendli("%s%zu_oob_check_bgnidx:", LABEL_EXPR, id);
     appendli("cmp rax, rcx"); // cmp begin count
     appendli(
         "jbe %s%zu_oob_check_endidx", LABEL_EXPR, id); // jmp begin <= count
-    appendli("call __index_oob_handler");
+    appendli("call __fatal_index_out_of_bounds");
 
     appendli("%s%zu_oob_check_endidx:", LABEL_EXPR, id);
     appendli("cmp rbx, rcx"); // cmp end count
     appendli("jbe %s%zu_op", LABEL_EXPR, id); // jmp end <= count
-    appendli("call __index_oob_handler");
+    appendli("call __fatal_index_out_of_bounds");
 
     appendli("%s%zu_op:", LABEL_EXPR, id);
     appendli("sub rbx, rax"); // count = end - begin
@@ -1999,7 +1999,7 @@ codegen_rvalue_unary(struct expr const* expr, size_t id)
             appendli(
                 "cmp %s, %s", rhs_reg, reg_b(expr->data.unary.rhs->type->size));
             appendli("jne %s%zu_op", LABEL_EXPR, id);
-            appendli("call __integer_oor_handler");
+            appendli("call __fatal_integer_out_of_range");
         }
         appendln("%s%zu_op:", LABEL_EXPR, id);
         appendli("neg rax");
@@ -2303,7 +2303,7 @@ codegen_rvalue_binary(struct expr const* expr, size_t id)
         appendli("add %s, %s", lhs_reg, rhs_reg);
         appendli("push rax");
         appendli("%s %s%zu_end", jmp_not_overflow, LABEL_EXPR, id);
-        appendli("call __integer_oor_handler");
+        appendli("call __fatal_integer_out_of_range");
         return;
     }
     case BOP_SUB: {
@@ -2326,7 +2326,7 @@ codegen_rvalue_binary(struct expr const* expr, size_t id)
         appendli("sub %s, %s", lhs_reg, rhs_reg);
         appendli("push rax");
         appendli("%s %s%zu_end", jmp_not_overflow, LABEL_EXPR, id);
-        appendli("call __integer_oor_handler");
+        appendli("call __fatal_integer_out_of_range");
         return;
     }
     case BOP_MUL: {
@@ -2348,7 +2348,7 @@ codegen_rvalue_binary(struct expr const* expr, size_t id)
         appendli("%s %s", mul, rhs_reg);
         appendli("push rax");
         appendli("jno %s%zu_end", LABEL_EXPR, id);
-        appendli("call __integer_oor_handler");
+        appendli("call __fatal_integer_out_of_range");
         return;
     }
     case BOP_DIV: {
@@ -2399,7 +2399,7 @@ codegen_rvalue_binary(struct expr const* expr, size_t id)
             rhs_reg,
             reg_c(xhs_type->size)); // divide-by-zero check
         appendli("jne %s%zu_op", LABEL_EXPR, id);
-        appendli("call __integer_divz_handler");
+        appendli("call __fatal_integer_divide_by_zero");
         appendli("%s%zu_op:", LABEL_EXPR, id);
         appendli("%s %s", div, rhs_reg);
         appendli("push rax");
@@ -2547,7 +2547,7 @@ codegen_lvalue_access_index_lhs_array(struct expr const* expr, size_t id)
     appendli("mov rbx, %zu", lhs_type->data.array.count); // count
     appendli("cmp rax, rbx");
     appendli("jb %s%zu_op", LABEL_EXPR, id);
-    appendli("call __index_oob_handler");
+    appendli("call __fatal_index_out_of_bounds");
     appendln("%s%zu_op:", LABEL_EXPR, id);
     appendli("mov rbx, %zu", element_type->size); // sizeof(element_type)
     appendli("mul rbx"); // index * sizeof(element_type)
@@ -2577,7 +2577,7 @@ codegen_lvalue_access_index_lhs_slice(struct expr const* expr, size_t id)
     appendli("mov rbx, [rsp + 8]"); // slice count
     appendli("cmp rax, rbx");
     appendli("jb %s%zu_op", LABEL_EXPR, id);
-    appendli("call __index_oob_handler");
+    appendli("call __fatal_index_out_of_bounds");
     appendln("%s%zu_op:", LABEL_EXPR, id);
     appendli("mov rbx, %zu", element_type->size); // sizeof(element_type)
     appendli("mul rbx"); // index * sizeof(element_type)

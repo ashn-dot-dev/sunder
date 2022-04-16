@@ -170,14 +170,14 @@ __dump_lookup_table: db \
 ; BUILTIN OUT-OF-RANGE INTEGER RESULT HANDLER
 ; ===========================================
 section .text
-__integer_oor_handler:
+__fatal_integer_out_of_range:
     push rbp
     mov rbp, rsp
 
     mov rax, __SYS_WRITE
     mov rdi, __STDERR_FILENO
-    mov rsi, __integer_oor_msg_start
-    mov rdx, __integer_oor_msg_count
+    mov rsi, __fatal_integer_out_of_range_msg_start
+    mov rdx, __fatal_integer_out_of_range_msg_count
     syscall
 
     mov rax, __SYS_EXIT
@@ -185,22 +185,21 @@ __integer_oor_handler:
     syscall
 
 section .rodata
-__integer_oor_msg_start: db \
-    "fatal: arithmetic operation produces out-of-range result", 0x0A
-__integer_oor_msg_count: equ $ - __integer_oor_msg_start
+__fatal_integer_out_of_range_msg_start: db "fatal: arithmetic operation produces out-of-range result", 0x0A
+__fatal_integer_out_of_range_msg_count: equ $ - __fatal_integer_out_of_range_msg_start
 
 
 ; BUILTIN INTEGER DIVIDE BY ZERO HANDLER
 ; ======================================
 section .text
-__integer_divz_handler:
+__fatal_integer_divide_by_zero:
     push rbp
     mov rbp, rsp
 
     mov rax, __SYS_WRITE
     mov rdi, __STDERR_FILENO
-    mov rsi, __integer_divz_msg_start
-    mov rdx, __integer_divz_msg_count
+    mov rsi, __fatal_integer_divide_by_zero_msg_start
+    mov rdx, __fatal_integer_divide_by_zero_msg_count
     syscall
 
     mov rax, __SYS_EXIT
@@ -208,21 +207,21 @@ __integer_divz_handler:
     syscall
 
 section .rodata
-__integer_divz_msg_start: db "fatal: divide by zero", 0x0A
-__integer_divz_msg_count: equ $ - __integer_divz_msg_start
+__fatal_integer_divide_by_zero_msg_start: db "fatal: divide by zero", 0x0A
+__fatal_integer_divide_by_zero_msg_count: equ $ - __fatal_integer_divide_by_zero_msg_start
 
 
 ; BUILTIN INDEX OUT-OF-BOUNDS HANDLER
 ; ===================================
 section .text
-__index_oob_handler:
+__fatal_index_out_of_bounds:
     push rbp
     mov rbp, rsp
 
     mov rax, __SYS_WRITE
     mov rdi, __STDERR_FILENO
-    mov rsi, __index_oob_msg_start
-    mov rdx, __index_oob_msg_count
+    mov rsi, __fatal_index_out_of_bounds_msg_start
+    mov rdx, __fatal_index_out_of_bounds_msg_count
     syscall
 
     mov rax, __SYS_EXIT
@@ -230,8 +229,8 @@ __index_oob_handler:
     syscall
 
 section .rodata
-__index_oob_msg_start: db "fatal: index out-of-bounds", 0x0A
-__index_oob_msg_count: equ $ - __index_oob_msg_start
+__fatal_index_out_of_bounds_msg_start: db "fatal: index out-of-bounds", 0x0A
+__fatal_index_out_of_bounds_msg_count: equ $ - __fatal_index_out_of_bounds_msg_start
 
 
 ; SYS DEFINITIONS (lib/sys/sys.sunder)
