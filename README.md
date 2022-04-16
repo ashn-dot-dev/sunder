@@ -70,7 +70,7 @@ Verify that the compiler has been successfully installed by running
 until the start of your next login session.
 
 ## Using the Sunder Compiler
-Compiling the source file `hello.sunder` into the executable `hello`.
+Sunder programs are compiled into executables with `sunder-compile`.
 
 ```sunder
 import "std";
