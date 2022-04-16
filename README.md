@@ -103,8 +103,7 @@ hello  hello.asm  hello.o
 
 ## Using Sunder as a Scripting Language
 Sunder can be used for scripting by adding `#!/usr/local/env sunder-run` (or
-equivalent) as the first line of a Sunder source file and executing that source
-file directly from the command line.
+equivalent) as the first line of a Sunder source file.
 
 ```sunder
 #!/usr/bin/env sunder-run
