@@ -66,8 +66,8 @@ fi
 ```
 
 Verify that the compiler has been successfully installed by running
-`sunder-compile --h`. You may have to source your `.profile` in new shells
-until the start of your next login session.
+`sunder-compile -h`. You may have to source your `.profile` in new shells until
+the start of your next login session.
 
 ## Using the Sunder Compiler
 Sunder programs are compiled into executables with `sunder-compile`.
