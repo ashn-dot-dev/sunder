@@ -96,9 +96,9 @@ removed after the output executable has been created. The `-k` flag will
 instruct the compiler *not* to remove these files (useful for debugging).
 
 ```sh
-$ sunder-compile -k -o hello hello.sunder
+$ sunder-compile -k -o hello examples/hello.sunder
 $ ls hello*
-hello  hello.asm  hello.o  hello.sunder
+hello  hello.asm  hello.o
 ```
 
 ## Using Sunder as a Scripting Language
