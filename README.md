@@ -131,7 +131,7 @@ func main() void {
     }
 
     var name = line.value();
-    std::print_format_line(std::out(), "Nice to meet you {}!", (:[]std::formatter)[std::formatter::init[[[]byte]](&name)]);
+    std::print_format_line(std::out(), "Nice to meet you {}!", (:[]std::formatter)[std::formatter::init[[typeof(name)]](&name)]);
 }
 ```
 
