@@ -73,15 +73,21 @@ parse_stmt_dump(struct parser* parser);
 static struct cst_stmt const*
 parse_stmt_return(struct parser* parser);
 
+// Precedence levels roughly follow the precedence levels described in the
+// operator precedence section of the Go Programming Language Specification.
+// Sunder encourages using parentheses to disambiguate the order of evaluation
+// for expressions with many operations, and an effort is made to keep the
+// number of precedence levels small in comparison to the precedence levels of
+// languages like C and C++.
 enum precedence {
     PRECEDENCE_LOWEST,
     PRECEDENCE_OR, // or
     PRECEDENCE_AND, // and
-    PRECEDENCE_COMPARE, // ==
-    PRECEDENCE_SUM, // + -
-    PRECEDENCE_PRODUCT, // * /
-    PRECEDENCE_PREFIX, // +x OR -x OR *x OR &x
-    PRECEDENCE_POSTFIX, // foo(bar, 123) OR foo[42]
+    PRECEDENCE_COMPARE, // == != < <= > >=
+    PRECEDENCE_SUM, // + - | ^
+    PRECEDENCE_PRODUCT, // * / << >> &
+    PRECEDENCE_PREFIX, // +x -x *x &x
+    PRECEDENCE_POSTFIX, // foo(bar, 123) foo[42] foo.*
 };
 // Returns the precedence corresponding to provided token or PRECEDENCE_LOWEST
 // if no precedence mapping exists.
@@ -792,6 +798,8 @@ token_kind_precedence(enum token_kind kind)
     }
     case TOKEN_STAR: /* fallthrough */
     case TOKEN_FSLASH: /* fallthrough */
+    case TOKEN_SHL: /* fallthrough */
+    case TOKEN_SHR: /* fallthrough */
     case TOKEN_AMPERSAND: {
         return PRECEDENCE_PRODUCT;
     }
@@ -885,6 +893,8 @@ token_kind_led(enum token_kind kind)
     }
     case TOKEN_OR: /* fallthrough */
     case TOKEN_AND: /* fallthrough */
+    case TOKEN_SHL: /* fallthrough */
+    case TOKEN_SHR: /* fallthrough */
     case TOKEN_EQ: /* fallthrough */
     case TOKEN_NE: /* fallthrough */
     case TOKEN_LE: /* fallthrough */

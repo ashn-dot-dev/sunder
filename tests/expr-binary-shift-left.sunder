@@ -1,0 +1,62 @@
+func main() void {
+    const a = 1u << 0;
+    const b = 1u << 1;
+    const c = 1u << 2;
+    const d = 1u << 8;
+    const e = 1u << 63;
+    const f = 1u << 64;
+
+    dump a;
+    dump b;
+    dump c;
+    dump d;
+    dump e;
+    dump f;
+
+    var x = 1u;
+    dump x << 0;
+    dump x << 1;
+    dump x << 2;
+    dump x << 8;
+    dump x << 63;
+    dump x << 64;
+
+    var some_u8 = 1u8;
+    var some_u16 = 1u16;
+    var some_u32 = 1u32;
+    var some_u64 = 1u64;
+    var some_s8 = -1s8;
+    var some_s16 = -1s16;
+    var some_s32 = -1s32;
+    var some_s64 = -1s64;
+
+    dump some_u8 << 1;
+    dump some_u16 << 1;
+    dump some_u32 << 1;
+    dump some_u64 << 1;
+    dump some_s8 << 1;
+    dump some_s16 << 1;
+    dump some_s32 << 1;
+    dump some_s64 << 1;
+}
+################################################################################
+# 01 00 00 00 00 00 00 00
+# 02 00 00 00 00 00 00 00
+# 04 00 00 00 00 00 00 00
+# 00 01 00 00 00 00 00 00
+# 00 00 00 00 00 00 00 80
+# 00 00 00 00 00 00 00 00
+# 01 00 00 00 00 00 00 00
+# 02 00 00 00 00 00 00 00
+# 04 00 00 00 00 00 00 00
+# 00 01 00 00 00 00 00 00
+# 00 00 00 00 00 00 00 80
+# 00 00 00 00 00 00 00 00
+# 02
+# 02 00
+# 02 00 00 00
+# 02 00 00 00 00 00 00 00
+# FE
+# FE FF
+# FE FF FF FF
+# FE FF FF FF FF FF FF FF

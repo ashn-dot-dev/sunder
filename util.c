@@ -683,7 +683,8 @@ bitarr_shiftl(struct bitarr* res, struct bitarr const* lhs, size_t nbits)
 }
 
 void
-bitarr_shiftr(struct bitarr* res, struct bitarr const* lhs, size_t nbits)
+bitarr_shiftr(
+    struct bitarr* res, struct bitarr const* lhs, size_t nbits, int high_bit)
 {
     assert(res != NULL);
     assert(lhs != NULL);
@@ -703,7 +704,7 @@ bitarr_shiftr(struct bitarr* res, struct bitarr const* lhs, size_t nbits)
         for (size_t i = 0; i < count - 1; ++i) {
             bitarr_set(res, i, bitarr_get(res, i + 1u));
         }
-        bitarr_set(res, count - 1, 0);
+        bitarr_set(res, count - 1, high_bit);
     }
 }
 

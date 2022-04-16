@@ -371,7 +371,8 @@ bitarr_shiftl(struct bitarr* res, struct bitarr const* lhs, size_t nbits);
 // Fatally exits after printing an error message if the count of res and lhs are
 // not equal.
 void
-bitarr_shiftr(struct bitarr* res, struct bitarr const* lhs, size_t nbits);
+bitarr_shiftr(
+    struct bitarr* res, struct bitarr const* lhs, size_t nbits, int high_bit);
 // res = lhs & rhs
 // Fatally exits after printing an error message if the count of res, lhs, and
 // rhs are not equal.
@@ -900,6 +901,8 @@ enum token_kind {
     TOKEN_SIZEOF,
     TOKEN_TYPEOF,
     // Sigils
+    TOKEN_SHL, // <<
+    TOKEN_SHR, // >>
     TOKEN_EQ, // ==
     TOKEN_NE, // !=
     TOKEN_LE, // <=
@@ -2122,6 +2125,8 @@ struct expr {
             enum bop_kind {
                 BOP_OR,
                 BOP_AND,
+                BOP_SHL,
+                BOP_SHR,
                 BOP_EQ,
                 BOP_NE,
                 BOP_LE,

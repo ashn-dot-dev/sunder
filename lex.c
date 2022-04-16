@@ -7,7 +7,7 @@
 
 static enum token_kind const KEYWORDS_FIRST = TOKEN_TRUE;
 static enum token_kind const KEYWORDS_LAST = TOKEN_TYPEOF;
-static enum token_kind const SIGILS_FIRST = TOKEN_EQ;
+static enum token_kind const SIGILS_FIRST = TOKEN_SHL;
 static enum token_kind const SIGILS_LAST = TOKEN_SEMICOLON;
 static struct vstr token_kind_vstrs[TOKEN_EOF + 1u] = {
     // Keywords
@@ -41,6 +41,8 @@ static struct vstr token_kind_vstrs[TOKEN_EOF + 1u] = {
     [TOKEN_SIZEOF] = VSTR_INIT_STR_LITERAL("sizeof"),
     [TOKEN_TYPEOF] = VSTR_INIT_STR_LITERAL("typeof"),
     // Sigils
+    [TOKEN_SHL] = VSTR_INIT_STR_LITERAL("<<"),
+    [TOKEN_SHR] = VSTR_INIT_STR_LITERAL(">>"),
     [TOKEN_EQ] = VSTR_INIT_STR_LITERAL("=="),
     [TOKEN_NE] = VSTR_INIT_STR_LITERAL("!="),
     [TOKEN_LE] = VSTR_INIT_STR_LITERAL("<="),

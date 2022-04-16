@@ -602,8 +602,8 @@ eval_rvalue_unary(struct expr const* expr)
             return rhs;
         }
 
-        bool is_signed = type_is_signed_integer(rhs->type);
-        size_t bit_count = rhs->type->size * 8u;
+        bool const is_signed = type_is_signed_integer(rhs->type);
+        size_t const bit_count = rhs->type->size * 8u;
         struct bitarr* const rhs_bits = bitarr_new(bit_count);
         struct bitarr* const res_bits = bitarr_new(bit_count);
         if (bigint_to_bitarr(rhs_bits, rhs->data.integer)) {
@@ -684,6 +684,64 @@ eval_rvalue_binary(struct expr const* expr)
         assert(lhs->type->kind == TYPE_BOOL);
         assert(rhs->type->kind == TYPE_BOOL);
         res = value_new_boolean(lhs->data.boolean && rhs->data.boolean);
+        break;
+    }
+    case BOP_SHL: {
+        assert(type_is_any_integer(lhs->type));
+        assert(rhs->type->kind == TYPE_USIZE);
+
+        bool const is_signed = type_is_signed_integer(expr->type);
+        //bool const is_negative = bigint_cmp(lhs->data.integer, BIGINT_ZERO) < 0;
+
+        size_t const bit_count = rhs->type->size * 8u;
+        struct bitarr* const res_bits = bitarr_new(bit_count);
+        if (bigint_to_bitarr(res_bits, lhs->data.integer)) {
+            UNREACHABLE();
+        }
+
+        size_t shift_count = 0u;
+        if (bigint_to_uz(&shift_count, rhs->data.integer)) {
+            fatal(
+                expr->data.access_index.idx->location,
+                "shift count out-of-range (received %s)",
+                bigint_to_new_cstr(rhs->data.integer, NULL));
+        }
+
+        bitarr_shiftl(res_bits, res_bits, shift_count);
+        struct bigint* const res_bigint = bigint_new(BIGINT_ZERO);
+        bitarr_to_bigint(res_bigint, res_bits, is_signed);
+
+        res = value_new_integer(expr->type, res_bigint);
+        bitarr_del(res_bits);
+        break;
+    }
+    case BOP_SHR: {
+        assert(type_is_any_integer(lhs->type));
+        assert(rhs->type->kind == TYPE_USIZE);
+
+        bool const is_signed = type_is_signed_integer(expr->type);
+        bool const is_negative = bigint_cmp(lhs->data.integer, BIGINT_ZERO) < 0;
+
+        size_t const bit_count = rhs->type->size * 8u;
+        struct bitarr* const res_bits = bitarr_new(bit_count);
+        if (bigint_to_bitarr(res_bits, lhs->data.integer)) {
+            UNREACHABLE();
+        }
+
+        size_t shift_count = 0u;
+        if (bigint_to_uz(&shift_count, rhs->data.integer)) {
+            fatal(
+                expr->data.access_index.idx->location,
+                "shift count out-of-range (received %s)",
+                bigint_to_new_cstr(rhs->data.integer, NULL));
+        }
+
+        bitarr_shiftr(res_bits, res_bits, shift_count, is_negative);
+        struct bigint* const res_bigint = bigint_new(BIGINT_ZERO);
+        bitarr_to_bigint(res_bigint, res_bits, is_signed);
+
+        res = value_new_integer(expr->type, res_bigint);
+        bitarr_del(res_bits);
         break;
     }
     case BOP_EQ: {
@@ -794,8 +852,8 @@ eval_rvalue_binary(struct expr const* expr)
         }
 
         assert(type_is_any_integer(type));
-        bool is_signed = type_is_signed_integer(type);
-        size_t bit_count = type->size * 8u;
+        bool const is_signed = type_is_signed_integer(type);
+        size_t const bit_count = type->size * 8u;
         struct bitarr* const lhs_bits = bitarr_new(bit_count);
         struct bitarr* const rhs_bits = bitarr_new(bit_count);
         struct bitarr* const res_bits = bitarr_new(bit_count);
@@ -841,8 +899,8 @@ eval_rvalue_binary(struct expr const* expr)
         }
 
         assert(type_is_any_integer(type));
-        bool is_signed = type_is_signed_integer(type);
-        size_t bit_count = type->size * 8u;
+        bool const is_signed = type_is_signed_integer(type);
+        size_t const bit_count = type->size * 8u;
         struct bitarr* const lhs_bits = bitarr_new(bit_count);
         struct bitarr* const rhs_bits = bitarr_new(bit_count);
         struct bitarr* const res_bits = bitarr_new(bit_count);
@@ -888,8 +946,8 @@ eval_rvalue_binary(struct expr const* expr)
         }
 
         assert(type_is_any_integer(type));
-        bool is_signed = type_is_signed_integer(type);
-        size_t bit_count = type->size * 8u;
+        bool const is_signed = type_is_signed_integer(type);
+        size_t const bit_count = type->size * 8u;
         struct bitarr* const lhs_bits = bitarr_new(bit_count);
         struct bitarr* const rhs_bits = bitarr_new(bit_count);
         struct bitarr* const res_bits = bitarr_new(bit_count);

@@ -1,0 +1,106 @@
+func main() void {
+    const a = 0xFFFFFFFFFFFFFFFFu >> 0;
+    const b = 0xFFFFFFFFFFFFFFFFu >> 1;
+    const c = 0xFFFFFFFFFFFFFFFFu >> 2;
+    const d = 0xFFFFFFFFFFFFFFFFu >> 8;
+    const e = 0xFFFFFFFFFFFFFFFFu >> 63;
+    const f = 0xFFFFFFFFFFFFFFFFu >> 64;
+
+    dump a;
+    dump b;
+    dump c;
+    dump d;
+    dump e;
+    dump f;
+
+    var x = 0xFF00000000000000u;
+    dump x >> 0;
+    dump x >> 1;
+    dump x >> 2;
+    dump x >> 8;
+    dump x >> 63;
+    dump x >> 64;
+
+    var y = 0x7FFFFFFFFFFFFFFFs;
+    dump y >> 0;
+    dump y >> 1;
+    dump y >> 2;
+    dump y >> 8;
+    dump y >> 48;
+    dump y >> 63;
+    dump y >> 64;
+
+    var z = (:ssize)(0xF100000000000000u);
+    dump z >> 0;
+    dump z >> 1;
+    dump z >> 2;
+    dump z >> 8;
+    dump z >> 48;
+    dump z >> 63;
+    dump z >> 64;
+
+    var some_u8 = 1u8;
+    var some_u16 = 1u16;
+    var some_u32 = 1u32;
+    var some_u64 = 1u64;
+    var some_s8_pos = 1s8;
+    var some_s16_pos = 1s16;
+    var some_s32_pos = 1s32;
+    var some_s64_pos = 1s64;
+    var some_s8_neg = -1s8;
+    var some_s16_neg = -1s16;
+    var some_s32_neg = -1s32;
+    var some_s64_neg = -1s64;
+
+    dump some_u8 >> 1;
+    dump some_u16 >> 1;
+    dump some_u32 >> 1;
+    dump some_u64 >> 1;
+    dump some_s8_pos >> 1;
+    dump some_s16_pos >> 1;
+    dump some_s32_pos >> 1;
+    dump some_s64_pos >> 1;
+    dump some_s8_neg >> 1;
+    dump some_s16_neg >> 1;
+    dump some_s32_neg >> 1;
+    dump some_s64_neg >> 1;
+}
+################################################################################
+# FF FF FF FF FF FF FF FF
+# FF FF FF FF FF FF FF 7F
+# FF FF FF FF FF FF FF 3F
+# FF FF FF FF FF FF FF 00
+# 01 00 00 00 00 00 00 00
+# 00 00 00 00 00 00 00 00
+# 00 00 00 00 00 00 00 FF
+# 00 00 00 00 00 00 80 7F
+# 00 00 00 00 00 00 C0 3F
+# 00 00 00 00 00 00 FF 00
+# 01 00 00 00 00 00 00 00
+# 00 00 00 00 00 00 00 00
+# FF FF FF FF FF FF FF 7F
+# FF FF FF FF FF FF FF 3F
+# FF FF FF FF FF FF FF 1F
+# FF FF FF FF FF FF 7F 00
+# FF 7F 00 00 00 00 00 00
+# 00 00 00 00 00 00 00 00
+# 00 00 00 00 00 00 00 00
+# 00 00 00 00 00 00 00 F1
+# 00 00 00 00 00 00 80 F8
+# 00 00 00 00 00 00 40 FC
+# 00 00 00 00 00 00 F1 FF
+# 00 F1 FF FF FF FF FF FF
+# FF FF FF FF FF FF FF FF
+# FF FF FF FF FF FF FF FF
+# 00
+# 00 00
+# 00 00 00 00
+# 00 00 00 00 00 00 00 00
+# 00
+# 00 00
+# 00 00 00 00
+# 00 00 00 00 00 00 00 00
+# FF
+# FF FF
+# FF FF FF FF
+# FF FF FF FF FF FF FF FF

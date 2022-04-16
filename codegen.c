@@ -87,6 +87,11 @@ copy_rsp_rbx_via_rcx(size_t size);
 static void
 copy_rax_rsp_via_rcx(size_t size);
 
+// Move the value currently in register a into the full width of rax with zero
+// extend (unsigned values) or sign extend (signed values).
+static void
+mov_rax_reg_a_with_zero_or_sign_extend(struct type const* type);
+
 static void
 append(char const* fmt, ...)
 {
@@ -620,6 +625,58 @@ copy_rax_rsp_via_rcx(size_t size)
     if ((size - cur) == 1u) {
         appendli("mov cl, [rax + %#zu]", cur);
         appendli("mov [rsp + %#zx], cl", cur);
+    }
+}
+
+static void
+mov_rax_reg_a_with_zero_or_sign_extend(struct type const* type)
+{
+    char const* const reg = reg_a(type->size);
+
+    switch (type->kind) {
+    case TYPE_BOOL: /* fallthrough */
+    case TYPE_BYTE: /* fallthrough */
+    case TYPE_U8: /* fallthrough */
+    case TYPE_U16: {
+        // Move with Zero-Extend
+        appendli("movzx rax, %s", reg);
+        break;
+    }
+    case TYPE_U32: {
+        // The MOVZX instruction does not have an encoding with SRC of r/m32 or
+        // r/m64, but a MOV with SRC of r/m32 will zero out the upper 32 bits.
+        appendli("mov eax, %s", reg);
+        break;
+    }
+    case TYPE_S8: /* fallthrough */
+    case TYPE_S16: /* fallthrough */
+    case TYPE_S32: {
+        // Move with Sign-Extension
+        appendli("movsx rax, %s", reg);
+        break;
+    }
+    case TYPE_U64: /* fallthrough */
+    case TYPE_S64: /* fallthrough */
+    case TYPE_USIZE: /* fallthrough */
+    case TYPE_SSIZE: /* fallthrough */
+    case TYPE_POINTER: {
+        // A MOV with r/m64 has nothing to zero-extend/sign-extend.
+        break;
+    }
+    case TYPE_FUNCTION: {
+        // Functions are implemented as pointers to the function entry point,
+        // so the function value stays the same when casting from one function
+        // to another.
+        break;
+    }
+    case TYPE_ANY: /* fallthrough */
+    case TYPE_VOID: /* fallthrough */
+    case TYPE_INTEGER: /* fallthrough */
+    case TYPE_ARRAY: /* fallthrough */
+    case TYPE_SLICE: /* fallthrough */
+    case TYPE_STRUCT: {
+        UNREACHABLE();
+    }
     }
 }
 
@@ -1498,53 +1555,8 @@ codegen_rvalue_cast(struct expr const* expr, size_t id)
     char const* const reg = reg_a(from->type->size);
     appendli("mov %s, [rsp]", reg);
 
-    // Perform the operation zero-extend/sign-extend the casted-from data.
-    switch (from->type->kind) {
-    case TYPE_BOOL: /* fallthrough */
-    case TYPE_BYTE: /* fallthrough */
-    case TYPE_U8: /* fallthrough */
-    case TYPE_U16: {
-        // Move with Zero-Extend
-        appendli("movzx rax, %s", reg);
-        break;
-    }
-    case TYPE_U32: {
-        // The MOVZX instruction does not have an encoding with SRC of r/m32 or
-        // r/m64, but a MOV with SRC of r/m32 will zero out the upper 32 bits.
-        appendli("mov eax, %s", reg);
-        break;
-    }
-    case TYPE_S8: /* fallthrough */
-    case TYPE_S16: /* fallthrough */
-    case TYPE_S32: {
-        // Move with Sign-Extension
-        appendli("movsx rax, %s", reg);
-        break;
-    }
-    case TYPE_U64: /* fallthrough */
-    case TYPE_S64: /* fallthrough */
-    case TYPE_USIZE: /* fallthrough */
-    case TYPE_SSIZE: /* fallthrough */
-    case TYPE_POINTER: {
-        // A MOV with r/m64 has nothing to zero-extend/sign-extend.
-        break;
-    }
-    case TYPE_FUNCTION: {
-        assert(expr->type->kind == TYPE_FUNCTION);
-        // Functions are implemented as pointers to the function entry point, so
-        // the function value stays the same when casting from one function to
-        // another.
-        break;
-    }
-    case TYPE_ANY: /* fallthrough */
-    case TYPE_VOID: /* fallthrough */
-    case TYPE_INTEGER: /* fallthrough */
-    case TYPE_ARRAY: /* fallthrough */
-    case TYPE_SLICE: /* fallthrough */
-    case TYPE_STRUCT: {
-        UNREACHABLE();
-    }
-    }
+    // Perform the operation to zero-extend/sign-extend the casted-from data.
+    mov_rax_reg_a_with_zero_or_sign_extend(from->type);
 
     // Boolean values *must* be either zero or one.
     if (expr->type->kind == TYPE_BOOL) {
@@ -2143,6 +2155,62 @@ codegen_rvalue_binary(struct expr const* expr, size_t id)
         appendln("%s%zu_false:", LABEL_EXPR, id);
         appendli("push 0x00");
         appendli("jmp %s%zu_end", LABEL_EXPR, id);
+        return;
+    }
+    case BOP_SHL: {
+        assert(type_is_any_integer(expr->data.binary.lhs->type));
+        assert(expr->data.binary.rhs->type->kind == TYPE_USIZE);
+
+        codegen_rvalue(expr->data.binary.lhs);
+        codegen_rvalue(expr->data.binary.rhs);
+
+        appendli("pop rcx ; shift rhs");
+        appendli("mov rbx, 64");
+        appendli("cmp rcx, rbx");
+        appendli("jl %s%zu_shift", LABEL_EXPR, id);
+        appendli("pop rbx ; discard lhs");
+        appendli("push 0");
+        appendli("jmp %s%zu_end", LABEL_EXPR, id);
+        appendln("%s%zu_shift:", LABEL_EXPR, id);
+        appendli("pop rax ; shift lhs");
+        mov_rax_reg_a_with_zero_or_sign_extend(expr->data.binary.lhs->type);
+        appendli("shl rax, cl");
+        appendli("push rax");
+        return;
+    }
+    case BOP_SHR: {
+        assert(type_is_any_integer(expr->data.binary.lhs->type));
+        assert(expr->data.binary.rhs->type->kind == TYPE_USIZE);
+
+        codegen_rvalue(expr->data.binary.lhs);
+        codegen_rvalue(expr->data.binary.rhs);
+
+        appendli("pop rcx ; shift rhs");
+        appendli("mov rbx, 64");
+        appendli("cmp rcx, rbx");
+        appendli("jl %s%zu_shift", LABEL_EXPR, id);
+        if (type_is_signed_integer(expr->data.binary.lhs->type)) {
+            appendli("pop rbx ; discard lhs, but cmov based on high bit");
+            appendli("mov r8, 0");
+            appendli("mov r9, 0xFFFFFFFFFFFFFFFF");
+            appendli("cmp rbx, 0");
+            appendli("cmovge rax, r8 ; non-negative integer");
+            appendli("cmovl rax, r9 ; neative-integer");
+            appendli("push rax");
+        }
+        else {
+            appendli("pop rbx ; discard lhs");
+            appendli("push 0");
+        }
+        appendli("jmp %s%zu_end", LABEL_EXPR, id);
+        appendln("%s%zu_shift:", LABEL_EXPR, id);
+        appendli("pop rax ; shift lhs");
+        mov_rax_reg_a_with_zero_or_sign_extend(expr->data.binary.lhs->type);
+        appendli(
+            "%s rax, cl",
+            type_is_signed_integer(expr->data.binary.lhs->type) ? "sar"
+                                                                : "shr");
+        appendli("push rax");
         return;
     }
     case BOP_EQ: {

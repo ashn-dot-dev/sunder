@@ -294,6 +294,13 @@ resolve_expr_binary_logical(
     struct expr const* lhs,
     struct expr const* rhs);
 static struct expr const*
+resolve_expr_binary_shift(
+    struct resolver* resolver,
+    struct token const* op,
+    enum bop_kind bop,
+    struct expr const* lhs,
+    struct expr const* rhs);
+static struct expr const*
 resolve_expr_binary_compare_equality(
     struct resolver* resolver,
     struct token const* op,
@@ -3088,7 +3095,7 @@ resolve_expr_call(struct resolver* resolver, struct cst_expr const* expr)
                 member_function_symbol);
         freeze(member_function_expr);
 
-        struct expr* resolved =
+        struct expr* const resolved =
             expr_new_call(expr->location, member_function_expr, arguments);
 
         freeze(resolved);
@@ -3584,6 +3591,12 @@ resolve_expr_binary(struct resolver* resolver, struct cst_expr const* expr)
     case TOKEN_AND: {
         return resolve_expr_binary_logical(resolver, op, BOP_AND, lhs, rhs);
     }
+    case TOKEN_SHL: {
+        return resolve_expr_binary_shift(resolver, op, BOP_SHL, lhs, rhs);
+    }
+    case TOKEN_SHR: {
+        return resolve_expr_binary_shift(resolver, op, BOP_SHR, lhs, rhs);
+    }
     case TOKEN_EQ: {
         return resolve_expr_binary_compare_equality(
             resolver, op, BOP_EQ, lhs, rhs);
@@ -3668,6 +3681,46 @@ resolve_expr_binary_logical(
         expr_new_binary(&op->location, type, bop, lhs, rhs);
 
     freeze(resolved);
+    return resolved;
+}
+
+static struct expr const*
+resolve_expr_binary_shift(
+    struct resolver* resolver,
+    struct token const* op,
+    enum bop_kind bop,
+    struct expr const* lhs,
+    struct expr const* rhs)
+{
+    assert(resolver != NULL);
+    assert(op != NULL);
+    assert(lhs != NULL);
+    assert(rhs != NULL);
+    (void)resolver;
+
+    if (!type_is_any_integer(lhs->type)) {
+        fatal(
+            &op->location,
+            "invalid left-hand argument of type `%s` in binary `%s` expression",
+            lhs->type->name,
+            token_kind_to_cstr(op->kind));
+    }
+
+    rhs = shallow_implicit_cast(context()->builtin.usize, rhs);
+    if (rhs->type != context()->builtin.usize) {
+        fatal(
+            &op->location,
+            "invalid non-usize right-hand argument of type `%s` in binary `%s` expression",
+            rhs->type->name,
+            token_kind_to_cstr(op->kind));
+    }
+
+    struct type const* const type = lhs->type;
+
+    struct expr* const resolved =
+        expr_new_binary(&op->location, type, bop, lhs, rhs);
+    freeze(resolved);
+
     return resolved;
 }
 
