@@ -640,6 +640,8 @@ codegen_static_function(struct symbol const* symbol);
 static void
 codegen_stmt(struct stmt const* stmt);
 static void
+codegen_stmt_defer(struct stmt const* stmt, size_t id);
+static void
 codegen_stmt_if(struct stmt const* stmt, size_t id);
 static void
 codegen_stmt_for_range(struct stmt const* stmt, size_t id);
@@ -657,6 +659,12 @@ static void
 codegen_stmt_assign(struct stmt const* stmt, size_t id);
 static void
 codegen_stmt_expr(struct stmt const* stmt, size_t id);
+
+static void
+codegen_block(struct block const* block);
+
+static void
+codegen_defers(struct stmt const* begin, struct stmt const* end);
 
 static void
 codegen_rvalue(struct expr const* expr);
@@ -859,10 +867,7 @@ codegen_static_function(struct symbol const* symbol)
 
     assert(current_function == NULL);
     current_function = function;
-    for (size_t i = 0; i < sbuf_count(function->body->stmts); ++i) {
-        struct stmt const* const stmt = function->body->stmts[i];
-        codegen_stmt(stmt);
-    }
+    codegen_block(function->body);
     current_function = NULL;
 
     appendli("; END-OF-FUNCTION");
@@ -889,6 +894,7 @@ codegen_stmt(struct stmt const* stmt)
         void (*codegen_fn)(struct stmt const*, size_t);
     } const table[] = {
 #define TABLE_ENTRY(kind, fn) [kind] = {#kind, fn}
+        TABLE_ENTRY(STMT_DEFER, codegen_stmt_defer),
         TABLE_ENTRY(STMT_IF, codegen_stmt_if),
         TABLE_ENTRY(STMT_FOR_RANGE, codegen_stmt_for_range),
         TABLE_ENTRY(STMT_FOR_EXPR, codegen_stmt_for_expr),
@@ -907,6 +913,18 @@ codegen_stmt(struct stmt const* stmt)
     appendli_location(stmt->location, "%s (ID %zu)", cstr, id);
     table[stmt->kind].codegen_fn(stmt, id);
     appendln("%s%zu_end:", LABEL_STMT, id);
+}
+
+static void
+codegen_stmt_defer(struct stmt const* stmt, size_t id)
+{
+    assert(stmt != NULL);
+    assert(stmt->kind == STMT_DEFER);
+    (void)id;
+
+    // No code generation is performed for defer statements as defers are
+    // generated as equivalent lowered statements by other codegen functions.
+    return;
 }
 
 static void
@@ -940,11 +958,7 @@ codegen_stmt_if(struct stmt const* stmt, size_t id)
         }
 
         appendln("%s%zu_body_%zu:", LABEL_STMT, id, i);
-        sbuf(struct stmt const* const) const stmts =
-            conditionals[i]->body->stmts;
-        for (size_t i = 0; i < sbuf_count(stmts); ++i) {
-            codegen_stmt(stmts[i]);
-        }
+        codegen_block(conditionals[i]->body);
         appendli("jmp %s%zu_end", LABEL_STMT, id);
     }
 }
@@ -982,11 +996,7 @@ codegen_stmt_for_range(struct stmt const* stmt, size_t id)
     appendli("cmp rax, rbx");
     appendli("je %s%zu_end", LABEL_STMT, id);
     appendln("%s%zu_body_bgn:", LABEL_STMT, id);
-    sbuf(struct stmt const* const) const stmts =
-        stmt->data.for_range.body->stmts;
-    for (size_t i = 0; i < sbuf_count(stmts); ++i) {
-        codegen_stmt(stmts[i]);
-    }
+    codegen_block(stmt->data.for_range.body);
     appendln("%s%zu_body_end:", LABEL_STMT, id);
     appendli(
         "inc qword [rbp + %d]",
@@ -1014,11 +1024,7 @@ codegen_stmt_for_expr(struct stmt const* stmt, size_t id)
     appendli("cmp al, bl");
     appendli("je %s%zu_end", LABEL_STMT, id);
     appendln("%s%zu_body_bgn:", LABEL_STMT, id);
-    sbuf(struct stmt const* const) const stmts =
-        stmt->data.for_expr.body->stmts;
-    for (size_t i = 0; i < sbuf_count(stmts); ++i) {
-        codegen_stmt(stmts[i]);
-    }
+    codegen_block(stmt->data.for_expr.body);
     appendln("%s%zu_body_end:", LABEL_STMT, id);
     appendli("jmp %s%zu_condition", LABEL_STMT, id);
 
@@ -1033,6 +1039,7 @@ codegen_stmt_break(struct stmt const* stmt, size_t id)
     (void)stmt;
     (void)id;
 
+    codegen_defers(stmt->data.break_.defer_begin, stmt->data.break_.defer_end);
     appendli("jmp %s%zu_end", LABEL_STMT, current_loop_id);
 }
 
@@ -1044,6 +1051,7 @@ codegen_stmt_continue(struct stmt const* stmt, size_t id)
     (void)stmt;
     (void)id;
 
+    codegen_defers(stmt->data.break_.defer_begin, stmt->data.break_.defer_end);
     appendli("jmp %s%zu_body_end", LABEL_STMT, current_loop_id);
 }
 
@@ -1090,6 +1098,8 @@ codegen_stmt_return(struct stmt const* stmt, size_t id)
             symbol_xget_address(return_symbol)->data.local.rbp_offset);
         copy_rsp_rbx_via_rcx(symbol_xget_type(return_symbol)->size);
     }
+
+    codegen_defers(stmt->data.return_.defer, NULL);
 
     appendli("; STMT_RETURN EPILOGUE");
     // Restore stack pointer.
@@ -1163,6 +1173,32 @@ codegen_stmt_expr(struct stmt const* stmt, size_t id)
     codegen_rvalue(stmt->data.expr);
     // Remove the (unused) result from the stack.
     pop(stmt->data.expr->type->size);
+}
+
+static void
+codegen_block(struct block const* block)
+{
+    assert(block != NULL);
+
+    for (size_t i = 0; i < sbuf_count(block->stmts); ++i) {
+        struct stmt const* const stmt = block->stmts[i];
+        codegen_stmt(stmt);
+    }
+
+    codegen_defers(block->defer_begin, block->defer_end);
+}
+
+static void
+codegen_defers(struct stmt const* begin, struct stmt const* end)
+{
+    assert(begin == NULL || begin->kind == STMT_DEFER);
+    assert(end == NULL || end->kind == STMT_DEFER);
+
+    struct stmt const* current = begin;
+    while (current != end) {
+        codegen_block(current->data.defer.body);
+        current = current->data.defer.prev;
+    }
 }
 
 static void

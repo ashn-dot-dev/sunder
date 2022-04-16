@@ -27,6 +27,7 @@
 <decl-extern-variable> ::= "extern" "var" <identifier> ":" <typespec> ";"
 
 <stmt> ::= <stmt-decl>
+         | <stmt-defer>
          | <stmt-if>
          | <stmt-for-range>
          | <stmt-for-expr>
@@ -38,6 +39,8 @@
          | <stmt-expr>
 
 <stmt-decl> ::= <decl>
+
+<stmt-defer> ::= "defer" <block>
 
 <stmt-if> ::= "if" <expr> <block> ("elif" <expr> <block>)* ("else" <block>)?
 

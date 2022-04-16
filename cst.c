@@ -267,6 +267,17 @@ cst_stmt_new_decl(struct cst_decl const* decl)
 }
 
 struct cst_stmt*
+cst_stmt_new_defer(
+    struct source_location const* location, struct cst_block const* block)
+{
+    assert(block != NULL);
+
+    struct cst_stmt* const self = cst_stmt_new(location, CST_STMT_DEFER);
+    self->data.defer = block;
+    return self;
+}
+
+struct cst_stmt*
 cst_stmt_new_break(struct source_location const* location)
 {
     assert(location != NULL);

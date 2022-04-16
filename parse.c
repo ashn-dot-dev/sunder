@@ -57,6 +57,10 @@ parse_decl_extern_variable(struct parser* parser);
 static struct cst_stmt const*
 parse_stmt(struct parser* parser);
 static struct cst_stmt const*
+parse_stmt_decl(struct parser* parser);
+static struct cst_stmt const*
+parse_stmt_defer(struct parser* parser);
+static struct cst_stmt const*
 parse_stmt_if(struct parser* parser);
 static struct cst_stmt const*
 parse_stmt_for(struct parser* parser);
@@ -68,8 +72,6 @@ static struct cst_stmt const*
 parse_stmt_dump(struct parser* parser);
 static struct cst_stmt const*
 parse_stmt_return(struct parser* parser);
-static struct cst_stmt const*
-parse_stmt_decl(struct parser* parser);
 
 enum precedence {
     PRECEDENCE_LOWEST,
@@ -538,6 +540,10 @@ parse_stmt(struct parser* parser)
         return parse_stmt_decl(parser);
     }
 
+    if (check_current(parser, TOKEN_DEFER)) {
+        return parse_stmt_defer(parser);
+    }
+
     if (check_current(parser, TOKEN_IF)) {
         return parse_stmt_if(parser);
     }
@@ -579,6 +585,32 @@ parse_stmt(struct parser* parser)
     // <stmt-expr>
     expect_current(parser, TOKEN_SEMICOLON);
     struct cst_stmt* const product = cst_stmt_new_expr(expr);
+    freeze(product);
+    return product;
+}
+
+static struct cst_stmt const*
+parse_stmt_decl(struct parser* parser)
+{
+    assert(parser != NULL);
+
+    struct cst_decl const* const decl = parse_decl(parser);
+    struct cst_stmt* const product = cst_stmt_new_decl(decl);
+
+    freeze(product);
+    return product;
+}
+
+static struct cst_stmt const*
+parse_stmt_defer(struct parser* parser)
+{
+    assert(parser != NULL);
+
+    struct source_location const* const location =
+        &expect_current(parser, TOKEN_DEFER)->location;
+    struct cst_block const* block = parse_block(parser);
+    struct cst_stmt* const product = cst_stmt_new_defer(location, block);
+
     freeze(product);
     return product;
 }
@@ -630,7 +662,7 @@ parse_stmt_for(struct parser* parser)
     assert(parser != NULL);
     assert(check_current(parser, TOKEN_FOR));
 
-    struct source_location const* location =
+    struct source_location const* const location =
         &expect_current(parser, TOKEN_FOR)->location;
 
     // <stmt-for-range>
@@ -729,18 +761,6 @@ parse_stmt_return(struct parser* parser)
 
     expect_current(parser, TOKEN_SEMICOLON);
     struct cst_stmt* const product = cst_stmt_new_return(location, expr);
-
-    freeze(product);
-    return product;
-}
-
-static struct cst_stmt const*
-parse_stmt_decl(struct parser* parser)
-{
-    assert(parser != NULL);
-
-    struct cst_decl const* const decl = parse_decl(parser);
-    struct cst_stmt* const product = cst_stmt_new_decl(decl);
 
     freeze(product);
     return product;
@@ -1749,7 +1769,7 @@ parse_identifier(struct parser* parser)
     assert(parser != NULL);
 
     struct token const* const token = expect_current(parser, TOKEN_IDENTIFIER);
-    struct source_location const* location = &token->location;
+    struct source_location const* const location = &token->location;
     char const* const name = intern(token->start, token->count);
     struct cst_identifier* const product = cst_identifier_new(location, name);
 

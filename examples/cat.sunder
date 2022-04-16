@@ -16,6 +16,9 @@ func cat(filename: []byte) void {
     }
 
     var file = result.value();
+    defer {
+        file.close();
+    }
 
     var buf: [512]byte = (:[512]byte)[0...];
     for true {
@@ -37,8 +40,6 @@ func cat(filename: []byte) void {
 
         std::print(std::out(), buf[0:result.value()]);
     }
-
-    file.close();
 }
 
 func main() void {

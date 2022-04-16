@@ -38,8 +38,15 @@ func main() void {
     }
 
     var file = result.value();
+    defer {
+        file.close();
+    }
 
     var allocator = std::general_allocator::init();
+    defer {
+        allocator.fini();
+    }
+
     var result = std::read_all(std::reader::init[[std::file]](&file), std::allocator::init[[typeof(allocator)]](&allocator));
     if result.is_error() {
         var error = result.error();
@@ -49,8 +56,6 @@ func main() void {
             (:[]std::formatter)[
                 std::formatter::init[[[]byte]](&path),
                 std::formatter::init[[[]byte]](&error)]);
-        file.close();
-        allocator.fini();
         std::exit(std::EXIT_FAILURE);
     }
     var source = result.value();
@@ -119,7 +124,4 @@ func main() void {
         }
         source_index = source_index + 1;
     }
-
-    file.close();
-    allocator.fini();
 }

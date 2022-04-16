@@ -929,6 +929,22 @@ stmt_new(struct source_location const* location, enum stmt_kind kind)
 }
 
 struct stmt*
+stmt_new_defer(
+    struct source_location const* location,
+    struct stmt const* prev,
+    struct block const* body)
+{
+    assert(location != NULL);
+    assert(prev == NULL || prev->kind == STMT_DEFER);
+    assert(body != NULL);
+
+    struct stmt* const self = stmt_new(location, STMT_DEFER);
+    self->data.defer.prev = prev;
+    self->data.defer.body = body;
+    return self;
+}
+
+struct stmt*
 stmt_new_if(struct conditional const* const* conditionals)
 {
     assert(sbuf_count(conditionals) > 0u);
@@ -981,20 +997,34 @@ stmt_new_for_expr(
 }
 
 struct stmt*
-stmt_new_break(struct source_location const* location)
+stmt_new_break(
+    struct source_location const* location,
+    struct stmt const* defer_begin,
+    struct stmt const* defer_end)
 {
     assert(location != NULL);
+    assert(defer_begin == NULL || defer_begin->kind == STMT_DEFER);
+    assert(defer_end == NULL || defer_end->kind == STMT_DEFER);
 
     struct stmt* const self = stmt_new(location, STMT_BREAK);
+    self->data.break_.defer_begin = defer_begin;
+    self->data.break_.defer_end = defer_end;
     return self;
 }
 
 struct stmt*
-stmt_new_continue(struct source_location const* location)
+stmt_new_continue(
+    struct source_location const* location,
+    struct stmt const* defer_begin,
+    struct stmt const* defer_end)
 {
     assert(location != NULL);
+    assert(defer_begin == NULL || defer_begin->kind == STMT_DEFER);
+    assert(defer_end == NULL || defer_end->kind == STMT_DEFER);
 
     struct stmt* const self = stmt_new(location, STMT_CONTINUE);
+    self->data.continue_.defer_begin = defer_begin;
+    self->data.continue_.defer_end = defer_end;
     return self;
 }
 
@@ -1010,12 +1040,16 @@ stmt_new_dump(struct source_location const* location, struct expr const* expr)
 }
 
 struct stmt*
-stmt_new_return(struct source_location const* location, struct expr const* expr)
+stmt_new_return(
+    struct source_location const* location,
+    struct expr const* expr,
+    struct stmt const* defer)
 {
     assert(location != NULL);
 
     struct stmt* const self = stmt_new(location, STMT_RETURN);
     self->data.return_.expr = expr;
+    self->data.return_.defer = defer;
     return self;
 }
 
@@ -1506,16 +1540,22 @@ struct block*
 block_new(
     struct source_location const* location,
     struct symbol_table* symbol_table,
-    struct stmt const* const* stmts)
+    struct stmt const* const* stmts,
+    struct stmt const* defer_begin,
+    struct stmt const* defer_end)
 {
     assert(location != NULL);
     assert(symbol_table != NULL);
+    assert(defer_begin == NULL || defer_begin->kind == STMT_DEFER);
+    assert(defer_end == NULL || defer_end->kind == STMT_DEFER);
 
     struct block* const self = xalloc(NULL, sizeof(*self));
     memset(self, 0x00, sizeof(*self));
     self->location = location;
     self->symbol_table = symbol_table;
     self->stmts = stmts;
+    self->defer_begin = defer_begin;
+    self->defer_end = defer_end;
     return self;
 }
 

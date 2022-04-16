@@ -886,6 +886,7 @@ enum token_kind {
     TOKEN_EXTERN,
     TOKEN_DUMP,
     TOKEN_RETURN,
+    TOKEN_DEFER,
     TOKEN_IF,
     TOKEN_ELIF,
     TOKEN_ELSE,
@@ -1103,6 +1104,7 @@ struct cst_stmt {
     struct source_location const* location;
     enum cst_stmt_kind {
         CST_STMT_DECL,
+        CST_STMT_DEFER,
         CST_STMT_IF,
         CST_STMT_FOR_RANGE,
         CST_STMT_FOR_EXPR,
@@ -1115,6 +1117,7 @@ struct cst_stmt {
     } kind;
     union {
         struct cst_decl const* decl;
+        struct cst_block const* defer;
         struct {
             sbuf(struct cst_conditional const* const) conditionals;
         } if_;
@@ -1143,6 +1146,9 @@ struct cst_stmt {
 };
 struct cst_stmt*
 cst_stmt_new_decl(struct cst_decl const* decl);
+struct cst_stmt*
+cst_stmt_new_defer(
+    struct source_location const* location, struct cst_block const* block);
 struct cst_stmt*
 cst_stmt_new_if(struct cst_conditional const* const* conditionals);
 struct cst_stmt*
@@ -1916,17 +1922,24 @@ symbol_table_lookup_local(struct symbol_table const* self, char const* name);
 struct stmt {
     struct source_location const* location;
     enum stmt_kind {
+        STMT_DEFER,
         STMT_IF,
         STMT_FOR_RANGE,
         STMT_FOR_EXPR,
-        STMT_BREAK, /* no .data member */
-        STMT_CONTINUE, /* no .data member */
+        STMT_BREAK,
+        STMT_CONTINUE,
         STMT_DUMP,
         STMT_RETURN,
         STMT_ASSIGN,
         STMT_EXPR,
     } kind;
     union {
+        struct {
+            // The previous defer statment that should be evaluated after this
+            // defer statement is evaluated. Singly-linked list of STMT_DEFER.
+            struct stmt const* prev; // optional (NULL => no defer)
+            struct block const* body;
+        } defer;
         struct {
             sbuf(struct conditional const* const) conditionals;
         } if_;
@@ -1941,10 +1954,19 @@ struct stmt {
             struct block const* body;
         } for_expr;
         struct {
+            struct stmt const* defer_begin; // optional
+            struct stmt const* defer_end; // optional
+        } break_;
+        struct {
+            struct stmt const* defer_begin; // optional
+            struct stmt const* defer_end; // optional
+        } continue_;
+        struct {
             struct expr const* expr;
         } dump;
         struct {
             struct expr const* expr; // optional
+            struct stmt const* defer; // optonal
         } return_;
         struct {
             struct expr const* lhs;
@@ -1953,6 +1975,11 @@ struct stmt {
         struct expr const* expr;
     } data;
 };
+struct stmt*
+stmt_new_defer(
+    struct source_location const* location,
+    struct stmt const* prev,
+    struct block const* body);
 struct stmt*
 stmt_new_if(struct conditional const* const* conditionals);
 struct stmt*
@@ -1968,14 +1995,22 @@ stmt_new_for_expr(
     struct expr const* expr,
     struct block const* body);
 struct stmt*
-stmt_new_break(struct source_location const* location);
+stmt_new_break(
+    struct source_location const* location,
+    struct stmt const* defer_begin,
+    struct stmt const* defer_end);
 struct stmt*
-stmt_new_continue(struct source_location const* location);
+stmt_new_continue(
+    struct source_location const* location,
+    struct stmt const* defer_begin,
+    struct stmt const* defer_end);
 struct stmt*
 stmt_new_dump(struct source_location const* location, struct expr const* expr);
 struct stmt*
 stmt_new_return(
-    struct source_location const* location, struct expr const* expr);
+    struct source_location const* location,
+    struct expr const* expr,
+    struct stmt const* defer);
 struct stmt*
 stmt_new_assign(
     struct source_location const* location,
@@ -2248,12 +2283,18 @@ struct block {
     struct source_location const* location;
     struct symbol_table* symbol_table; // not owned
     sbuf(struct stmt const* const) stmts;
+    // Defer code generation will start with this defer.
+    struct stmt const* defer_begin; // optional
+    // Defer code generation will stop at this defer.
+    struct stmt const* defer_end; // optional
 };
 struct block*
 block_new(
     struct source_location const* location,
     struct symbol_table* symbol_table,
-    struct stmt const* const* stmts);
+    struct stmt const* const* stmts,
+    struct stmt const* defer_begin,
+    struct stmt const* defer_end);
 
 struct value {
     struct type const* type;

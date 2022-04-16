@@ -36,6 +36,13 @@ struct resolver {
     // when a loop body is being resolved, and set to false once the loop body
     // is finished resolving.
     bool is_within_loop;
+    // Current defer evaluated within the current loop. Used to manage defers
+    // for break and continue statements.
+    struct stmt const* current_loop_defer; // optional (NULL => no defer)
+
+    // Pointer to the head of the current defer statement list node to be
+    // evaluated.
+    struct stmt const* current_defer; // optional (NULL => no defer)
 
     // Functions to be completed at the end of the resolve phase after all
     // top-level declarations have been resolved. Incomplete functions defer
@@ -184,6 +191,8 @@ static struct stmt const* // optional
 resolve_stmt(struct resolver* resolver, struct cst_stmt const* stmt);
 static struct stmt const* // optional
 resolve_stmt_decl(struct resolver* resolver, struct cst_stmt const* stmt);
+static struct stmt const*
+resolve_stmt_defer(struct resolver* resolver, struct cst_stmt const* stmt);
 static struct stmt const*
 resolve_stmt_if(struct resolver* resolver, struct cst_stmt const* stmt);
 static struct stmt const*
@@ -1877,6 +1886,9 @@ resolve_stmt(struct resolver* resolver, struct cst_stmt const* stmt)
     case CST_STMT_DECL: {
         return resolve_stmt_decl(resolver, stmt);
     }
+    case CST_STMT_DEFER: {
+        return resolve_stmt_defer(resolver, stmt);
+    }
     case CST_STMT_IF: {
         return resolve_stmt_if(resolver, stmt);
     }
@@ -1963,6 +1975,28 @@ resolve_stmt_decl(struct resolver* resolver, struct cst_stmt const* stmt)
 
     UNREACHABLE();
     return NULL;
+}
+
+static struct stmt const*
+resolve_stmt_defer(struct resolver* resolver, struct cst_stmt const* stmt)
+{
+    assert(resolver != NULL);
+    assert(!resolver_is_global(resolver));
+    assert(stmt != NULL);
+    assert(stmt->kind == CST_STMT_DEFER);
+
+    struct symbol_table* const symbol_table =
+        symbol_table_new(resolver->current_symbol_table);
+    struct block const* const body =
+        resolve_block(resolver, symbol_table, stmt->data.defer);
+    symbol_table_freeze(symbol_table);
+
+    struct stmt* const resolved =
+        stmt_new_defer(stmt->location, resolver->current_defer, body);
+    resolver->current_defer = resolved;
+
+    freeze(resolved);
+    return resolved;
 }
 
 static struct stmt const*
@@ -2062,11 +2096,16 @@ resolve_stmt_for_range(struct resolver* resolver, struct cst_stmt const* stmt)
         symbol_table, loop_var_symbol->name, loop_var_symbol, false);
 
     bool const save_is_within_loop = resolver->is_within_loop;
+    struct stmt const* const save_current_loop_defer =
+        resolver->current_loop_defer;
+
     resolver->is_within_loop = true;
+    resolver->current_loop_defer = resolver->current_defer;
     struct block const* const body =
         resolve_block(resolver, symbol_table, stmt->data.for_range.body);
     resolver->current_rbp_offset = save_rbp_offset;
     resolver->is_within_loop = save_is_within_loop;
+    resolver->current_loop_defer = save_current_loop_defer;
 
     // Freeze the symbol table now that the block has been resolved and no new
     // symbols will be added.
@@ -2099,10 +2138,15 @@ resolve_stmt_for_expr(struct resolver* resolver, struct cst_stmt const* stmt)
         symbol_table_new(resolver->current_symbol_table);
 
     bool const save_is_within_loop = resolver->is_within_loop;
+    struct stmt const* const save_current_loop_defer =
+        resolver->current_loop_defer;
+
     resolver->is_within_loop = true;
+    resolver->current_loop_defer = resolver->current_defer;
     struct block const* const body =
         resolve_block(resolver, symbol_table, stmt->data.for_expr.body);
     resolver->is_within_loop = save_is_within_loop;
+    resolver->current_loop_defer = save_current_loop_defer;
 
     // Freeze the symbol table now that the block has been resolved and no new
     // symbols will be added.
@@ -2126,7 +2170,8 @@ resolve_stmt_break(struct resolver* resolver, struct cst_stmt const* stmt)
         fatal(stmt->location, "break statement outside of loop");
     }
 
-    struct stmt* const resolved = stmt_new_break(stmt->location);
+    struct stmt* const resolved = stmt_new_break(
+        stmt->location, resolver->current_defer, resolver->current_loop_defer);
 
     freeze(resolved);
     return resolved;
@@ -2144,7 +2189,8 @@ resolve_stmt_continue(struct resolver* resolver, struct cst_stmt const* stmt)
         fatal(stmt->location, "continue statement outside of loop");
     }
 
-    struct stmt* const resolved = stmt_new_continue(stmt->location);
+    struct stmt* const resolved = stmt_new_continue(
+        stmt->location, resolver->current_defer, resolver->current_loop_defer);
 
     freeze(resolved);
     return resolved;
@@ -2194,7 +2240,8 @@ resolve_stmt_return(struct resolver* resolver, struct cst_stmt const* stmt)
         }
     }
 
-    struct stmt* const resolved = stmt_new_return(stmt->location, expr);
+    struct stmt* const resolved =
+        stmt_new_return(stmt->location, expr, resolver->current_defer);
 
     freeze(resolved);
     return resolved;
@@ -3858,6 +3905,7 @@ resolve_block(
         resolver->current_symbol_table;
     resolver->current_symbol_table = symbol_table;
     int const save_rbp_offset = resolver->current_rbp_offset;
+    struct stmt const* save_current_defer = resolver->current_defer;
 
     sbuf(struct stmt const*) stmts = NULL;
     for (size_t i = 0; i < sbuf_count(block->stmts); ++i) {
@@ -3869,12 +3917,17 @@ resolve_block(
     }
     sbuf_freeze(stmts);
 
-    struct block* const resolved =
-        block_new(block->location, symbol_table, stmts);
+    struct block* const resolved = block_new(
+        block->location,
+        symbol_table,
+        stmts,
+        resolver->current_defer,
+        save_current_defer);
 
     freeze(resolved);
     resolver->current_symbol_table = save_symbol_table;
     resolver->current_rbp_offset = save_rbp_offset;
+    resolver->current_defer = save_current_defer;
     return resolved;
 }
 
