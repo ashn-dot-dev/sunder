@@ -49,8 +49,8 @@ $ make <targets> CC=clang CFLAGS='$(GNU_REL)'              # clang/gcc (release)
 The `install` target will install the Sunder toolchain into the directory
 specified by `$SUNDER_HOME` (default `$HOME/.sunder`). Run `make install` with
 `$SUNDER_HOME` specified as the directory of your choice, add `$SUNDER_HOME` to
-your `.profile` (or equivalent), and then finally add `$SUNDER_HOME/bin` to your
-`$PATH`.
+your `.profile` (or equivalent), and then finally add `$SUNDER_HOME/bin` to
+your `$PATH`.
 
 ```sh
 $ make install
@@ -66,7 +66,7 @@ fi
 ```
 
 Verify that the compiler has been successfully installed by running
-`sunder-compile --help`. You may have to source your `.profile` in new shells
+`sunder-compile --h`. You may have to source your `.profile` in new shells
 until the start of your next login session.
 
 ## Using the Sunder Compiler
@@ -91,16 +91,14 @@ If this option is not provided then the output executable will default to the
 name `a.out`.
 
 The intermediate files `OUT.asm` and `OUT.o` (output executable name plus
-`.asm` and `.o` extensions) are generated during compilation and then
-subsequently removed after the output executable has been created. The `-k`
-flag will instruct the compiler *not* to remove these files (useful for
-debugging).
+`.asm` and `.o` extensions) are generated during compilation and subsequently
+removed after the output executable has been created. The `-k` flag will
+instruct the compiler *not* to remove these files (useful for debugging).
 
 ```sh
 $ sunder-compile -k -o hello hello.sunder
 $ ls hello*
 hello  hello.asm  hello.o  hello.sunder
-
 ```
 
 ## License
