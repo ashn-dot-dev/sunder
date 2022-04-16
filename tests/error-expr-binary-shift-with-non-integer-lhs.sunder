@@ -1,0 +1,5 @@
+const x = true << 1u;
+################################################################################
+# [error-expr-binary-shift-with-non-integer-lhs.sunder:1] error: invalid left-hand argument of type `bool` in binary `<<` expression
+# const x = true << 1u;
+#                ^
