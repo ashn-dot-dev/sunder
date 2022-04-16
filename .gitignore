@@ -1,4 +1,7 @@
 sunder-compile
+hello
+greet
+
 *.out
 *.o
 *.asm

@@ -81,7 +81,7 @@ func main() void {
 ```
 
 ```sh
-$ sunder-compile -o hello hello.sunder
+$ sunder-compile -o hello examples/hello.sunder
 $ ./hello
 Hello, world!
 ```
@@ -99,6 +99,47 @@ instruct the compiler *not* to remove these files (useful for debugging).
 $ sunder-compile -k -o hello hello.sunder
 $ ls hello*
 hello  hello.asm  hello.o  hello.sunder
+```
+
+## Using Sunder as a Scripting Language
+Sunder can be used for scripting by adding `#!/usr/local/env sunder-run` (or
+equivalent) as the first line of a Sunder source file and executing that source
+file directly from the command line.
+
+```sunder
+#!/usr/bin/env sunder-run
+import "std";
+
+func main() void {
+    std::print_line(std::out(), "What is your name?\n> ");
+
+    var allocator = std::general_allocator::init();
+    defer {
+        allocator.fini();
+    }
+
+    var result = std::read_line(std::input(), std::allocator::init[[typeof(allocator)]](&allocator));
+    if result.is_error() {
+        std::print_line(std::err(), result.error());
+        std::exit(std::EXIT_FAILURE);
+    }
+
+    var line = result.value();
+    if line.is_empty() {
+        std::print_line(std::err(), "unexpected empty line");
+        std::exit(std::EXIT_FAILURE);
+    }
+
+    var name = line.value();
+    std::print_format_line(std::out(), "Nice to meet you {}!", (:[]std::formatter)[std::formatter::init[[[]byte]](&name)]);
+}
+```
+
+```sh
+$ ./examples/greet.sunder
+What is your name?
+> Alice
+Nice to meet you Alice!
 ```
 
 ## License
