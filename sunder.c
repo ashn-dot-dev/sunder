@@ -294,30 +294,30 @@ lookup_module(char const* path)
 void
 validate_main_is_defined_correctly(void)
 {
-    struct symbol const* main = NULL;
+    struct symbol const* main_symbol = NULL;
     for (size_t i = 0; i < sbuf_count(context()->static_symbols); ++i) {
         struct symbol const* const symbol = context()->static_symbols[i];
         if (symbol->name == context()->interned.main) {
-            main = symbol;
+            main_symbol = symbol;
             break;
         }
     }
 
-    if (main == NULL) {
+    if (main_symbol == NULL) {
         fatal(NULL, "main is not defined");
     }
 
-    if (main->kind != SYMBOL_FUNCTION) {
-        fatal(main->location, "main is not defined as a function");
+    if (main_symbol->kind != SYMBOL_FUNCTION) {
+        fatal(main_symbol->location, "main is not defined as a function");
     }
 
     struct type const* const expected_type =
         type_unique_function(NULL, context()->builtin.void_);
-    if (main->data.function->type != expected_type) {
+    if (main_symbol->data.function->type != expected_type) {
         fatal(
-            main->location,
+            main_symbol->location,
             "main has invalid type `%s` (expected `%s`)",
-            main->data.function->type->name,
+            main_symbol->data.function->type->name,
             expected_type->name);
     }
 }
