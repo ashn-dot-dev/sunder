@@ -141,6 +141,7 @@ context_init(void)
     s_context.interned.empty = intern_cstr("");
     s_context.interned.builtin = intern_cstr("builtin");
     s_context.interned.return_ = intern_cstr("return");
+    s_context.interned.main = intern_cstr("main");
     s_context.interned.any = intern_cstr("any");
     s_context.interned.void_ = intern_cstr("void");
     s_context.interned.bool_ = intern_cstr("bool");
@@ -288,4 +289,35 @@ lookup_module(char const* path)
         }
     }
     return NULL;
+}
+
+void
+validate_main_is_defined_correctly(void)
+{
+    struct symbol const* main = NULL;
+    for (size_t i = 0; i < sbuf_count(context()->static_symbols); ++i) {
+        struct symbol const* const symbol = context()->static_symbols[i];
+        if (symbol->name == context()->interned.main) {
+            main = symbol;
+            break;
+        }
+    }
+
+    if (main == NULL) {
+        fatal(NULL, "main is not defined");
+    }
+
+    if (main->kind != SYMBOL_FUNCTION) {
+        fatal(main->location, "main is not defined as a function");
+    }
+
+    struct type const* const expected_type =
+        type_unique_function(NULL, context()->builtin.void_);
+    if (main->data.function->type != expected_type) {
+        fatal(
+            main->location,
+            "main has invalid type `%s` (expected `%s`)",
+            main->data.function->type->name,
+            expected_type->name);
+    }
 }

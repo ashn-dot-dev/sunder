@@ -765,6 +765,7 @@ struct context {
         char const* empty;   // ""
         char const* builtin; // "builtin"
         char const* return_; // "return"
+        char const* main;    // "main"
         char const* any;     // "any"
         char const* void_;   // "void"
         char const* bool_;   // "bool"
@@ -865,6 +866,9 @@ struct module const*
 load_module(char const* name, char const* path);
 struct module const*
 lookup_module(char const* path);
+
+void
+validate_main_is_defined_correctly(void);
 
 ////////////////////////////////////////////////////////////////////////////////
 //////// lex.c /////////////////////////////////////////////////////////////////

@@ -29,6 +29,7 @@ main(int argc, char** argv)
     atexit(context_fini);
 
     load_module(path, canonical_path(path));
+    validate_main_is_defined_correctly();
     codegen(opt_o, opt_k);
 
     return EXIT_SUCCESS;
