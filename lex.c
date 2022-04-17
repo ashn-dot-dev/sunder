@@ -1,6 +1,7 @@
 // Copyright 2021-2022 The Sunder Project Authors
 // SPDX-License-Identifier: Apache-2.0
 #include <assert.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include "sunder.h"
@@ -361,6 +362,19 @@ advance_character(struct lexer* self, char const* what)
     case '\\': {
         self->current += 2;
         return '\\';
+    }
+    case 'x': {
+        if (!safe_isxdigit(self->current[2])
+            || !safe_isxdigit(self->current[3])) {
+            struct source_location const location = {
+                self->module->name, self->current_line, self->current};
+            fatal(&location, "invalid hexadecimal escape sequence");
+        }
+        int const result =
+            ((int)strtol((char[]){(char)self->current[2], '\0'}, NULL, 16) << 4)
+            | (int)strtol((char[]){(char)self->current[3], '\0'}, NULL, 16);
+        self->current += 4;
+        return result;
     }
     default: {
         struct source_location const location = {

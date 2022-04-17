@@ -4,6 +4,7 @@ const nl: byte = '\n';
 const squote: byte = '\'';
 const dquote: byte = '\"';
 const bslash: byte = '\\';
+const hexamp: byte = '\x40';
 
 func print(ch: byte) void {
     var buf: [4u]byte = (:[4u]byte)['>', ch, '<', '\n'];
@@ -21,6 +22,7 @@ func main() void {
     print(squote);
     print(dquote);
     print(bslash);
+    print(hexamp);
 }
 ################################################################################
 # >	<
@@ -29,3 +31,4 @@ func main() void {
 # >'<
 # >"<
 # >\<
+# >@<

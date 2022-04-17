@@ -1,0 +1,31 @@
+import "std/core.sunder";
+
+func normal() void {
+    # Skipping '\0' and since it is a pain to check.
+    # Using newline for the escaped hex sequence.
+    const str = "hello\t\n\'\"\x0A";
+    std::print_format_line(
+        std::out(),
+        "{}",
+        (:[]std::formatter)[
+            std::formatter::init[[[]byte]](&str)]);
+}
+
+func escaped() void {
+    const str = "hello\t\n\'\"\x10\xAB";
+    std::print_format_line(
+        std::out(),
+        "{e}",
+        (:[]std::formatter)[
+            std::formatter::init[[[]byte]](&str)]);
+}
+
+func main() void {
+    normal();
+    escaped();
+}
+################################################################################
+# hello	
+# '"
+#
+# hello\t\n\'\"\x10\xAB

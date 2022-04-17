@@ -236,6 +236,25 @@ extend []byte func format(self: *[]byte, writer: std::writer, fmt: []byte) std::
                 }
                 continue;
             }
+            if c < ' ' or c > '~' {
+                const DIGITS = (:[]byte)[
+                    '0', '1', '2', '3', '4', '5', '6', '7',
+                    '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'
+                ];
+                var hex = (:[]byte)[
+                    DIGITS[(:usize)c & 0xF0 >> 4],
+                    DIGITS[(:usize)c & 0x0F]
+                ];
+                result = std::write_format(
+                    writer,
+                    "\\x{}",
+                    (:[]std::formatter)[
+                        std::formatter::init[[[]byte]](&hex)]);
+                if result.is_error() {
+                    return result;
+                }
+                continue;
+            }
             result = std::write_all(writer, (:[]byte){&c, 1});
             if result.is_error() {
                 return result;
