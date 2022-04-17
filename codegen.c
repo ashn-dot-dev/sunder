@@ -977,6 +977,7 @@ codegen_stmt_defer(struct stmt const* stmt, size_t id)
 {
     assert(stmt != NULL);
     assert(stmt->kind == STMT_DEFER);
+    (void)stmt;
     (void)id;
 
     // No code generation is performed for defer statements as defers are
