@@ -5,8 +5,8 @@ import "std/page_allocator.sunder";
 import "sys";
 
 struct general_allocator_element {
-    var _prev: *general_allocator_element;
-    var _next: *general_allocator_element;
+    var _prev: *general_allocator_element; # nullable
+    var _next: *general_allocator_element; # nullable
 
     var _start: *byte;
     var _align: usize;
