@@ -30,7 +30,7 @@ struct general_allocator {
 
     func init() general_allocator {
         return (:general_allocator){
-            ._elements = (:*general_allocator_element)0u
+            ._elements = std::ptr::null[[general_allocator_element]]()
         };
     }
 
@@ -50,8 +50,8 @@ struct general_allocator {
         var bytes = result.value();
         var element = (:*general_allocator_element)bytes;
         *element = (:general_allocator_element){
-            ._prev = (:*general_allocator_element)0u,
-            ._next = (:*general_allocator_element)0u,
+            ._prev = std::ptr::null[[general_allocator_element]](),
+            ._next = std::ptr::null[[general_allocator_element]](),
             ._start = std::ptr::add[[byte]](bytes, offset),
             ._align = align,
             ._size = size
@@ -74,8 +74,8 @@ struct general_allocator {
         var bytes = result.value();
         var element = (:*general_allocator_element)bytes;
         *element = (:general_allocator_element){
-            ._prev = (:*general_allocator_element)0u,
-            ._next = (:*general_allocator_element)0u,
+            ._prev = std::ptr::null[[general_allocator_element]](),
+            ._next = std::ptr::null[[general_allocator_element]](),
             ._start = std::ptr::add[[byte]](bytes, offset),
             ._align = align,
             ._size = new_size
@@ -114,7 +114,7 @@ struct general_allocator {
 
         var is_only_element = self.*._elements == element and prev == next;
         if is_only_element {
-            self.*._elements = (:*general_allocator_element)0u;
+            self.*._elements = std::ptr::null[[general_allocator_element]]();
             return;
         }
 
