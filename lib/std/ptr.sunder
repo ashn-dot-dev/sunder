@@ -1,5 +1,9 @@
 namespace std::ptr;
 
+func null[[T]]() *T {
+    return (:*T)0u;
+}
+
 func is_null[[T]](ptr: *T) bool {
     return (:usize)ptr == 0;
 }
