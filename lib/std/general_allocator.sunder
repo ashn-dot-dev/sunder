@@ -1,6 +1,6 @@
 namespace std;
 import "std/core.sunder";
-import "std/cptr.sunder";
+import "std/ptr.sunder";
 import "std/page_allocator.sunder";
 import "sys";
 
@@ -52,7 +52,7 @@ struct general_allocator {
         *element = (:general_allocator_element){
             ._prev = (:*general_allocator_element)0u,
             ._next = (:*general_allocator_element)0u,
-            ._start = std::cptr::add[[byte]](bytes, offset),
+            ._start = std::ptr::add[[byte]](bytes, offset),
             ._align = align,
             ._size = size
         };
@@ -63,7 +63,7 @@ struct general_allocator {
 
     func reallocate(self: *general_allocator, ptr: *byte, align: usize, old_size: usize, new_size: usize) std::result[[*byte, []byte]] {
         var offset = std::forward_align(sizeof(general_allocator_element), align);
-        var element = (:*general_allocator_element)std::cptr::sub[[byte]](ptr, offset);
+        var element = (:*general_allocator_element)std::ptr::sub[[byte]](ptr, offset);
         self.*._remove_element(element);
 
         var result = std::page_allocator::the().*.reallocate((:*byte)element, sys::PAGE_SIZE, old_size + offset, new_size + offset);
@@ -76,7 +76,7 @@ struct general_allocator {
         *element = (:general_allocator_element){
             ._prev = (:*general_allocator_element)0u,
             ._next = (:*general_allocator_element)0u,
-            ._start = std::cptr::add[[byte]](bytes, offset),
+            ._start = std::ptr::add[[byte]](bytes, offset),
             ._align = align,
             ._size = new_size
         };
@@ -87,7 +87,7 @@ struct general_allocator {
 
     func deallocate(self: *general_allocator, ptr: *byte, align: usize, size: usize) void {
         var offset = std::forward_align(sizeof(general_allocator_element), align);
-        var element = (:*general_allocator_element)std::cptr::sub[[byte]](ptr, offset);
+        var element = (:*general_allocator_element)std::ptr::sub[[byte]](ptr, offset);
 
         self.*._remove_element(element);
         std::page_allocator::the().*.deallocate((:*byte)element, sys::PAGE_SIZE, size + offset);

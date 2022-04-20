@@ -24,7 +24,7 @@ func main() void {
         std::exit(std::EXIT_FAILURE);
     }
 
-    var path = std::cstr::to_bytes(*std::cptr::add[[*byte]](sys::argv, 1));
+    var path = std::cstr::to_bytes(*std::ptr::add[[*byte]](sys::argv, 1));
     var result = std::file::open(path, std::OPEN_READ);
     if result.is_error() {
         var error = result.error();
