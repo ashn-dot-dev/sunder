@@ -926,8 +926,6 @@ enum token_kind {
     TOKEN_RPAREN, // )
     TOKEN_LBRACE, // {
     TOKEN_RBRACE, // }
-    TOKEN_LBRACKET_LBRACKET, // [[
-    TOKEN_RBRACKET_RBRACKET, // ]]
     TOKEN_LBRACKET, // [
     TOKEN_RBRACKET, // ]
     TOKEN_COMMA, // ,

@@ -151,7 +151,7 @@
 
 <symbol-element> ::= <identifier> <template-parameter-list>?
 
-<template-parameter-list> ::= "[[" <template-parameter> ("," <template-parameter>)* "]]"
+<template-parameter-list> ::= "[" "[" <template-parameter> ("," <template-parameter>)* "]" "]"
 
 <template-parameter> ::= <identifier>
 

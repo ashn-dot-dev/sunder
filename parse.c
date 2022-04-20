@@ -1375,10 +1375,11 @@ parse_symbol_element(struct parser* parser)
     assert(parser != NULL);
 
     struct cst_identifier const* const identifier = parse_identifier(parser);
-    struct cst_template_argument const* const* const template_arguments =
-        check_current(parser, TOKEN_LBRACKET_LBRACKET)
-        ? parse_template_argument_list(parser)
-        : NULL;
+    struct cst_template_argument const* const* template_arguments = NULL;
+    if (check_current(parser, TOKEN_LBRACKET)
+        && check_peek(parser, TOKEN_LBRACKET)) {
+        template_arguments = parse_template_argument_list(parser);
+    }
 
     struct cst_symbol_element* const product =
         cst_symbol_element_new(identifier, template_arguments);
@@ -1393,13 +1394,14 @@ parse_template_parameter_list(struct parser* parser)
     assert(parser != NULL);
 
     sbuf(struct cst_template_parameter const*) template_parameters = NULL;
-    if (!check_current(parser, TOKEN_LBRACKET_LBRACKET)) {
+    if (!check_current(parser, TOKEN_LBRACKET)) {
         return template_parameters;
     }
 
-    struct token const* const lbracket =
-        expect_current(parser, TOKEN_LBRACKET_LBRACKET);
-    if (check_current(parser, TOKEN_RBRACKET_RBRACKET)) {
+    struct token const* const lbracket = expect_current(parser, TOKEN_LBRACKET);
+    expect_current(parser, TOKEN_LBRACKET);
+
+    if (check_current(parser, TOKEN_RBRACKET)) {
         fatal(
             &lbracket->location,
             "template parameter list declared with zero parameters");
@@ -1411,7 +1413,8 @@ parse_template_parameter_list(struct parser* parser)
         sbuf_push(template_parameters, parse_template_parameter(parser));
     }
 
-    expect_current(parser, TOKEN_RBRACKET_RBRACKET);
+    expect_current(parser, TOKEN_RBRACKET);
+    expect_current(parser, TOKEN_RBRACKET);
 
     sbuf_freeze(template_parameters);
     return template_parameters;
@@ -1435,11 +1438,11 @@ parse_template_argument_list(struct parser* parser)
 {
     assert(parser != NULL);
 
-    struct token const* const lbracket =
-        expect_current(parser, TOKEN_LBRACKET_LBRACKET);
+    struct token const* const lbracket = expect_current(parser, TOKEN_LBRACKET);
+    expect_current(parser, TOKEN_LBRACKET);
 
     sbuf(struct cst_template_argument const*) template_arguments = NULL;
-    if (check_current(parser, TOKEN_RBRACKET_RBRACKET)) {
+    if (check_current(parser, TOKEN_RBRACKET)) {
         fatal(
             &lbracket->location,
             "template argument list declared with zero arguments");
@@ -1451,7 +1454,8 @@ parse_template_argument_list(struct parser* parser)
         sbuf_push(template_arguments, parse_template_argument(parser));
     }
 
-    expect_current(parser, TOKEN_RBRACKET_RBRACKET);
+    expect_current(parser, TOKEN_RBRACKET);
+    expect_current(parser, TOKEN_RBRACKET);
 
     sbuf_freeze(template_arguments);
     return template_arguments;

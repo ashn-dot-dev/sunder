@@ -1,0 +1,8 @@
+struct foo[[T]] {
+    const INDEX: T = 1;
+}
+
+func main() void {
+    var x = (:[][]ssize)[(:[]ssize)[0x123, 0x456], (:[]ssize)[0x789, 0xABC, 0xDEF]];
+    x[0][foo[[usize]]::INDEX];
+}
