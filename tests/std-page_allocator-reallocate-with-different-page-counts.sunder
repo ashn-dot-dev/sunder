@@ -1,0 +1,27 @@
+# Verify that reallocating where the new total size requires a different number
+# of pages than the old total size does not lead to any unexpected behavior.
+
+import "std/core.sunder";
+import "std/page_allocator.sunder";
+import "sys";
+
+func main() void {
+    var allocator = std::allocator::init[[std::page_allocator]](std::page_allocator::the());
+
+    var bytes = std::new_slice[[byte]](allocator, 0);
+    defer {
+        std::delete_slice[[byte]](allocator, bytes);
+    }
+
+    var MAX = sys::PAGE_SIZE * 5 + 1;
+    for i in 0:(MAX + 1) {
+        bytes = std::resize_slice[[byte]](allocator, bytes, i);
+        # Write to all the bytes to make sure no page fault occurs.
+        std::fill_slice[[byte]](bytes, (:byte)i);
+    }
+    for i in 0:(MAX + 1) {
+        bytes = std::resize_slice[[byte]](allocator, bytes, MAX - i);
+        # Write to all the bytes to make sure no page fault occurs.
+        std::fill_slice[[byte]](bytes, (:byte)i);
+    }
+}
