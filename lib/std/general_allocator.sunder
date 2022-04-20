@@ -35,7 +35,7 @@ struct general_allocator {
     }
 
     func fini(self: *general_allocator) void {
-        for self.*._elements != (:*general_allocator_element)0u {
+        for not std::ptr::is_null[[std::general_allocator_element]](self.*._elements) {
             self.*.deallocate(self.*._elements.*._start, self.*._elements.*._align, self.*._elements.*._size);
         }
     }
@@ -94,8 +94,7 @@ struct general_allocator {
     }
 
     func _insert_element(self: *general_allocator, element: *general_allocator_element) void {
-        var is_first_element = self.*._elements == (:*general_allocator_element)0u;
-        if is_first_element {
+        if std::ptr::is_null[[std::general_allocator_element]](self.*._elements) {
             element.*._prev = element;
             element.*._next = element;
             self.*._elements = element;
@@ -137,7 +136,7 @@ struct general_allocator_iterator {
     }
 
     func advance(self: *general_allocator_iterator) bool {
-        if self.*._general_allocator.*._elements == (:*general_allocator_element)0u {
+        if std::ptr::is_null[[std::general_allocator_element]](self.*._general_allocator.*._elements) {
             return false; # end-of-iteration
         }
 
