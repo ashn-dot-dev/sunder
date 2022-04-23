@@ -26,7 +26,7 @@ struct general_allocator_element {
 }
 
 struct general_allocator {
-    var _elements: *general_allocator_element;
+    var _elements: *general_allocator_element; # nullable
 
     func init() general_allocator {
         return (:general_allocator){
