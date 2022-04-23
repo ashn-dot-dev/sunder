@@ -52,7 +52,7 @@ bin/sunder-compile: $(SUNDER_COMPILE_OBJS)
 build: bin/sunder-compile
 
 test: build
-	(cd tests/ && sh test-all.sh)
+	(cd tests/ && sh test.sh)
 
 examples: build
 	(cd examples/ && sh examples.build.sh)

@@ -1,49 +1,57 @@
 #!/bin/sh
-export SUNDER_HOME="$(realpath ..)"
-export SUNDER_IMPORT_PATH="${SUNDER_HOME}/lib"
 
-usage() {
-    cat <<EOF
-Usage: $(basename $0) FILE
-
-Options:
-  -h --help     Print this help message and exit.
-EOF
-}
-
-while test "$#" -gt 0; do
-case "$1" in
-    -h|--help)
-        usage
+for arg in "$@"; do
+case "${arg}" in
+    -h|--help|help)
+        echo "Usage: $(basename $0) [FILE]"
         exit 0
         ;;
     *)
-        break
         ;;
 esac
 done
 
-if [ "$#" -ne 1 ]; then
-    echo 'error: invalid number of arguments'
-    usage
-    exit 1
-fi
-TEST_FILE="$1"
+export SUNDER_HOME="$(realpath ..)"
+export SUNDER_IMPORT_PATH="${SUNDER_HOME}/lib"
 
-echo "[= RUN ${TEST_FILE} =]"
-RECEIVED=$(\
-    cd $(dirname "${TEST_FILE}") && \
-    "${SUNDER_HOME}/bin/sunder-run" $(basename "${TEST_FILE}") 2>&1)
-EXPECTED=$(\
-    sed -n '/^########\(########\)*/,$p' "${TEST_FILE}" |\
-    sed '1d' |\
-    sed 's/^# \?//g')
-if [ "${EXPECTED}" = "${RECEIVED}" ]; then
-    echo '[= PASS =]' && exit 0
+TESTSRUN=0
+FAILURES=0
+
+test() {
+    TEST="$1"
+
+    echo "[= RUN ${TEST} =]"
+    RECEIVED=$(\
+        cd $(dirname "${TEST}") && \
+        "${SUNDER_HOME}/bin/sunder-run" $(basename "${TEST}") 2>&1)
+    EXPECTED=$(\
+        sed -n '/^########\(########\)*/,$p' "${TEST}" |\
+        sed '1d' |\
+        sed 's/^# \?//g')
+    if [ "${EXPECTED}" = "${RECEIVED}" ]; then
+        echo '[= PASS =]'
+    else
+        echo "EXPECTED:"
+        echo "${EXPECTED}" | sed 's/^/> /g'
+        echo "RECEIVED:"
+        echo "${RECEIVED}" | sed 's/^/> /g'
+        echo '[= FAIL =]'
+        FAILURES=$((FAILURES + 1))
+    fi
+    TESTSRUN=$((TESTSRUN + 1))
+}
+
+if [ "$#" -ne 0 ]; then
+    TESTS="$@"
 else
-    echo "EXPECTED:"
-    echo "${EXPECTED}" | sed 's/^/> /g'
-    echo "RECEIVED:"
-    echo "${RECEIVED}" | sed 's/^/> /g'
-    echo '[= FAIL =]' && exit 1
+    TESTS=$(echo *.sunder | sort)
 fi
+
+for t in ${TESTS}; do
+    test "${t}"
+done
+
+echo "TESTS RUN => ${TESTSRUN}"
+echo "FAILURES  => ${FAILURES}"
+
+[ "${FAILURES}" -eq 0 ] || exit 1
