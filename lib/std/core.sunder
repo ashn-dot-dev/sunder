@@ -266,6 +266,24 @@ extend []byte func format(self: *[]byte, writer: std::writer, fmt: []byte) std::
     std::formatter::invalid_format_specifier(fmt);
 }
 
+struct ptr[[T]] { # namespace
+    func is_null(ptr: *T) bool {
+        return (:usize)ptr == 0;
+    }
+
+    func null() *T {
+        return (:*T)0u;
+    }
+
+    func add(ptr: *T, n: usize) *T {
+        return (:*T)((:usize)ptr + n * sizeof(typeof(*ptr)));
+    }
+
+    func sub(ptr: *T, n: usize) *T {
+        return (:*T)((:usize)ptr - n * sizeof(typeof(*ptr)));
+    }
+}
+
 struct result[[T, E]] {
     var _value: T;
     var _error: E;

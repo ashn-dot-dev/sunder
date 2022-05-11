@@ -1,14 +1,14 @@
-import "std/ptr.sunder";
+import "std/core.sunder";
 
 func main() void {
     var a: u16 = 0xBEEF;
     var b: u32 = 0xCAFEF00D;
 
-    dump std::ptr::is_null[[u16]](&a);
-    dump std::ptr::is_null[[u16]]((:*u16)0u);
+    dump std::ptr[[u16]]::is_null(&a);
+    dump std::ptr[[u16]]::is_null((:*u16)0u);
 
-    dump std::ptr::is_null[[u32]](&b);
-    dump std::ptr::is_null[[u32]]((:*u32)0u);
+    dump std::ptr[[u32]]::is_null(&b);
+    dump std::ptr[[u32]]::is_null((:*u32)0u);
 }
 ################################################################################
 # 00

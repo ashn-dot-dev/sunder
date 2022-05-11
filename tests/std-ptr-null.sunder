@@ -1,4 +1,4 @@
-import "std/ptr.sunder";
+import "std/core.sunder";
 
 struct foo {
     var a: u32;
@@ -6,12 +6,12 @@ struct foo {
 }
 
 func main() void {
-    dump std::ptr::null[[u8]]();
-    dump std::ptr::null[[u16]]();
-    dump std::ptr::null[[u32]]();
-    dump std::ptr::null[[u64]]();
-    dump std::ptr::null[[foo]]();
-    dump std::ptr::is_null[[ssize]](std::ptr::null[[ssize]]());
+    dump std::ptr[[u8]]::null();
+    dump std::ptr[[u16]]::null();
+    dump std::ptr[[u32]]::null();
+    dump std::ptr[[u64]]::null();
+    dump std::ptr[[foo]]::null();
+    dump std::ptr[[ssize]]::is_null(std::ptr[[ssize]]::null());
 }
 ################################################################################
 # 00 00 00 00 00 00 00 00
