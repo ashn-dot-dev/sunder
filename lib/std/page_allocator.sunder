@@ -87,7 +87,7 @@ struct page_allocator {
             copy_size = new_size;
         }
 
-        std::copy_slice[[byte]]((:[]byte){new, copy_size}, (:[]byte){ptr, copy_size});
+        std::slice[[byte]]::copy((:[]byte){new, copy_size}, (:[]byte){ptr, copy_size});
         self.*.deallocate(ptr, align, old_size);
         return std::result[[*byte, []byte]]::init_value(new);
     }

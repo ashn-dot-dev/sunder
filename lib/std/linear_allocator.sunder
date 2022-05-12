@@ -69,7 +69,7 @@ struct linear_allocator {
             return result;
         }
         var new: *byte = result.value();
-        std::copy_slice[[byte]]((:[]byte){new, old_size}, (:[]byte){ptr, old_size});
+        std::slice[[byte]]::copy((:[]byte){new, old_size}, (:[]byte){ptr, old_size});
         return std::result[[*byte, []byte]]::init_value(new);
     }
 

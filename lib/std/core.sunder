@@ -288,6 +288,102 @@ struct slice[[T]] { # namespace
     func is(lhs: []T, rhs: []T) bool {
         return *(:**T)&lhs == *(:**T)&rhs and countof(lhs) == countof(rhs);
     }
+
+    # Copy the elements of `source` into `destination`.The source and
+    # destination buffers must contain the same number of elements.
+    func copy(destination: []T, source: []T) void {
+        if countof(destination) != countof(source) {
+            std::panic("source and destination buffers have different sizes");
+        }
+
+        if countof(source) == 0 {
+            # Nothing to copy.
+            return;
+        }
+
+        # If the copy operation is being performed on two slices into the same
+        # buffer then the direction in which the copy is performed does matter.
+        # Say there is some buffer:
+        #
+        #    0  1  2  3  4
+        #   [A][B][C][D][E]
+        #
+        # and the following copy operation is performed:
+        #
+        #   std::slice[[T]]::copy(buf[0:3], buf[1:4]);
+        #
+        # With a forwards copy the correct result is produced:
+        #
+        #    0  1  2  3  4
+        #   [A][B][C][D][E] <- initial buffer
+        #   [B][B][C][D][E] <- copy first element
+        #   [B][C][C][D][E] <- copy second element
+        #   [B][C][D][D][E] <- copy third element
+        #
+        # But with a backwards copy an incorrect result is produced:
+        #
+        #    0  1  2  3  4
+        #   [A][B][C][D][E] <- initial buffer
+        #   [A][B][D][D][E] <- copy first element
+        #   [A][D][D][D][E] <- copy second element
+        #   [D][D][D][D][E] <- copy third element
+        #
+        # So when the start of `destination` appears before the start of
+        # `source` the copy must be performed forwards, and when the start of
+        # `source` appears before the start of `destination` then copy must be
+        # performed backwards. When the start of `destination` and the start of
+        # `source` are the same, the copy is arbitrarily chosen to be performed
+        # forwards.
+        if &destination[0] <= &source[0] {
+            # Copy forwards.
+            for i in 0:countof(source) {
+                destination[i] = source[i];
+            }
+        }
+        else {
+            # Copy backwards.
+            for i in 0:countof(source) {
+                var index: usize = countof(source) - 1 - i;
+                destination[index] = source[index];
+            }
+        }
+    }
+
+    # Set every element of the provided slice to the provided value.
+    func fill(slice: []T, value: T) void {
+        for i in 0:countof(slice) {
+            slice[i] = value;
+        }
+    }
+
+    func new(allocator: std::allocator, count: usize) []T {
+        var result = allocator.allocate(alignof(T), count * sizeof(T));
+        if result.is_error() {
+            std::panic(result.error());
+        }
+        return (:[]T){(:*T)result.value(), count};
+    }
+
+    func resize(allocator: std::allocator, slice: []T, new_count: usize) []T {
+        var cur_count: usize = countof(slice);
+        var cur_size: usize = cur_count * sizeof(T);
+        var new_size: usize = new_count * sizeof(T);
+
+        var cur_pointer: *byte = *((:**byte)&slice);
+        var result = allocator.reallocate(cur_pointer, alignof(T), cur_size, new_size);
+        if result.is_error() {
+            std::panic(result.error());
+        }
+
+        return (:[]T){(:*T)result.value(), new_count};
+    }
+
+    func delete(allocator: std::allocator, slice: []T) void {
+        var pointer: *byte = *((:**byte)&slice);
+        var size: usize = countof(slice) * sizeof(T);
+        allocator.deallocate(pointer, alignof(T), size);
+    }
+
 }
 
 struct result[[T, E]] {
@@ -721,13 +817,13 @@ func err() std::writer {
 #
 # On failure, this function returns a static string describing the failure.
 func read_all(reader: std::reader, allocator: std::allocator) std::result[[[]byte, []byte]] {
-    var bytes = std::new_slice[[byte]](allocator, 0);
+    var bytes = std::slice[[byte]]::new(allocator, 0);
 
     var buf = (:[4096]byte)[0...];
     for true {
         var result = reader.read(buf[0:countof(buf)]);
         if result.is_error() {
-            std::delete_slice[[byte]](allocator, bytes);
+            std::slice[[byte]]::delete(allocator, bytes);
             return std::result[[[]byte, []byte]]::init_error(result.error());
         }
 
@@ -738,8 +834,8 @@ func read_all(reader: std::reader, allocator: std::allocator) std::result[[[]byt
 
         var cur_count = countof(bytes);
         var new_count = cur_count + read_size;
-        bytes = std::resize_slice[[byte]](allocator, bytes, new_count);
-        std::copy_slice[[byte]](bytes[cur_count:new_count], buf[0:read_size]);
+        bytes = std::slice[[byte]]::resize(allocator, bytes, new_count);
+        std::slice[[byte]]::copy(bytes[cur_count:new_count], buf[0:read_size]);
     }
 
     return std::result[[[]byte, []byte]]::init_value(bytes);
@@ -759,13 +855,13 @@ func read_all(reader: std::reader, allocator: std::allocator) std::result[[[]byt
 #
 # On failure, this function returns a static string describing the failure.
 func read_line(reader: std::reader, allocator: std::allocator) std::result[[std::optional[[[]byte]], []byte]] {
-    var bytes = std::new_slice[[byte]](allocator, 0);
+    var bytes = std::slice[[byte]]::new(allocator, 0);
 
     var c = std::zeroed[[byte]]();
     for true {
         var result = reader.read((:[]byte){&c, 1});
         if result.is_error() {
-            std::delete_slice[[byte]](allocator, bytes);
+            std::slice[[byte]]::delete(allocator, bytes);
             return std::result[[std::optional[[[]byte]], []byte]]::init_error(result.error());
         }
 
@@ -773,7 +869,7 @@ func read_line(reader: std::reader, allocator: std::allocator) std::result[[std:
         if read_size == 0 {
             if countof(bytes) == 0 {
                 # End-of-input encountered while reading an empty line.
-                std::delete_slice[[byte]](allocator, bytes);
+                std::slice[[byte]]::delete(allocator, bytes);
                 return std::result[[std::optional[[[]byte]], []byte]]::init_value(std::optional[[[]byte]]::init_empty());
             }
             # End-of-input encountered while reading a non-empty line.
@@ -787,8 +883,8 @@ func read_line(reader: std::reader, allocator: std::allocator) std::result[[std:
 
         var cur_count = countof(bytes);
         var new_count = cur_count + read_size;
-        bytes = std::resize_slice[[byte]](allocator, bytes, new_count);
-        std::copy_slice[[byte]](bytes[cur_count:new_count], (:[]byte){&c, 1});
+        bytes = std::slice[[byte]]::resize(allocator, bytes, new_count);
+        std::slice[[byte]]::copy(bytes[cur_count:new_count], (:[]byte){&c, 1});
 
     }
 
@@ -1005,100 +1101,6 @@ func new[[T]](allocator: std::allocator) *T {
 
 func delete[[T]](allocator: std::allocator, object: *T) void {
     allocator.deallocate((:*byte)object, alignof(T), sizeof(T));
-}
-
-func new_slice[[T]](allocator: std::allocator, count: usize) []T {
-    var result = allocator.allocate(alignof(T), count * sizeof(T));
-    if result.is_error() {
-        std::panic(result.error());
-    }
-    return (:[]T){(:*T)result.value(), count};
-}
-
-func resize_slice[[T]](allocator: std::allocator, slice: []T, new_count: usize) []T {
-    var cur_count: usize = countof(slice);
-    var cur_size: usize = cur_count * sizeof(T);
-    var new_size: usize = new_count * sizeof(T);
-
-    var cur_pointer: *byte = *((:**byte)&slice);
-    var result = allocator.reallocate(cur_pointer, alignof(T), cur_size, new_size);
-    if result.is_error() {
-        std::panic(result.error());
-    }
-
-    return (:[]T){(:*T)result.value(), new_count};
-}
-
-func delete_slice[[T]](allocator: std::allocator, slice: []T) void {
-    var pointer: *byte = *((:**byte)&slice);
-    var size: usize = countof(slice) * sizeof(T);
-    allocator.deallocate(pointer, alignof(T), size);
-}
-
-# Copy the elements of `source` into `destination`.The source and destination
-# buffers must contain the same number of elements.
-func copy_slice[[T]](destination: []T, source: []T) void {
-    if countof(destination) != countof(source) {
-        std::panic("source and destination buffers have different sizes");
-    }
-
-    if countof(source) == 0 {
-        # Nothing to copy.
-        return;
-    }
-
-    # If the copy operation is being performed on two slices into the same
-    # buffer then the direction in which the copy is performed does matter. Say
-    # there is some buffer:
-    #
-    #    0  1  2  3  4
-    #   [A][B][C][D][E]
-    #
-    # and the following copy operation is performed:
-    #
-    #   std::copy_slice(buf[0:3], buf[1:4]);
-    #
-    # With a forwards copy one gets the correct result:
-    #
-    #    0  1  2  3  4
-    #   [A][B][C][D][E] <- initial buffer
-    #   [B][B][C][D][E] <- copy first element
-    #   [B][C][C][D][E] <- copy second element
-    #   [B][C][D][D][E] <- copy third element
-    #
-    # But with a backwards copy one gets an incorrect result:
-    #
-    #    0  1  2  3  4
-    #   [A][B][C][D][E] <- initial buffer
-    #   [A][B][D][D][E] <- copy first element
-    #   [A][D][D][D][E] <- copy second element
-    #   [D][D][D][D][E] <- copy third element
-    #
-    # So when the start of `destination` appears before the start of `source`
-    # the copy must be performed forwards, and when the start of `source`
-    # appears before the start of `destination` then copy must be performed
-    # backwards. When the start of `destination` and the start of `source` are
-    # the same, the copy is arbitrarily chosen to be performed forwards.
-    if &destination[0] <= &source[0] {
-        # Copy forwards.
-        for i in 0:countof(source) {
-            destination[i] = source[i];
-        }
-    }
-    else {
-        # Copy backwards.
-        for i in 0:countof(source) {
-            var index: usize = countof(source) - 1 - i;
-            destination[index] = source[index];
-        }
-    }
-}
-
-# Set every element of the provided slice to the provided value.
-func fill_slice[[T]](slice: []T, value: T) void {
-    for i in 0:countof(slice) {
-        slice[i] = value;
-    }
 }
 
 # Returns a signed integer less than, equal to, or greater than zero if `lhs`

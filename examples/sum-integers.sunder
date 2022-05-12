@@ -25,7 +25,7 @@ func main() void {
         }
 
         sum = sum + parse_result.value();
-        std::delete_slice[[byte]](allocator, line.value());
+        std::slice[[byte]]::delete(allocator, line.value());
     }
     std::print_format_line(
         std::out(),

@@ -64,7 +64,7 @@ struct file {
             return std::result[[std::file, []byte]]::init_error(sys::ERRNO_STRINGS[(:usize)sys::EINVAL]);
         }
         var path_cstr = (:[sys::PATH_MAX]byte)[0...];
-        std::copy_slice[[byte]](path_cstr[0:countof(path)], path);
+        std::slice[[byte]]::copy(path_cstr[0:countof(path)], path);
 
         var sysret = sys::open(&path_cstr[0], flags, 0o666);
         if sysret < 0 {

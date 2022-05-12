@@ -30,7 +30,7 @@ struct string {
 
     func fini(self: *string) void {
         if self.*._capacity != 0 {
-            std::delete_slice[[byte]](self.*._allocator, (:[]byte){self.*._start, self.*._capacity});
+            std::slice[[byte]]::delete(self.*._allocator, (:[]byte){self.*._start, self.*._capacity});
         }
     }
 
@@ -67,14 +67,14 @@ struct string {
         }
 
         if self.*._capacity == 0 {
-            var new = std::new_slice[[byte]](self.*._allocator, capacity);
+            var new = std::slice[[byte]]::new(self.*._allocator, capacity);
             self.*._start = &new[0];
             self.*._capacity = capacity;
             return;
         }
 
         var cur = (:[]byte){self.*._start, self.*._capacity};
-        var new = std::resize_slice[[byte]](self.*._allocator, cur, capacity);
+        var new = std::slice[[byte]]::resize(self.*._allocator, cur, capacity);
         self.*._start = &new[0];
         self.*._capacity = capacity;
     }
@@ -90,7 +90,7 @@ struct string {
     func write(self: *string, buf: []byte) std::result[[usize, []byte]] {
         var end = self.*._count;
         self.*.resize(end + countof(buf));
-        std::copy_slice[[byte]](self.*.data()[end : end + countof(buf)], buf);
+        std::slice[[byte]]::copy(self.*.data()[end : end + countof(buf)], buf);
         return std::result[[usize, []byte]]::init_value(countof(buf));
     }
 }

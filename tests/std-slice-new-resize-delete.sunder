@@ -8,20 +8,20 @@ func main() void {
 
     # Using std::page_allocator since it was the first allocator that happened
     # to be implemented in the standard library.
-    var slice: []u16 = std::new_slice[[u16]](allocator, 2048);
+    var slice: []u16 = std::slice[[u16]]::new(allocator, 2048);
     for i in 0:countof(slice) {
         slice[i] = 0xBEEF;
     }
 
-    slice = std::resize_slice[[u16]](allocator, slice, 4096);
+    slice = std::slice[[u16]]::resize(allocator, slice, 4096);
     for i in 0:countof(slice) {
         slice[i] = 0xF00D;
     }
 
-    slice = std::resize_slice[[u16]](allocator, slice, 1000);
+    slice = std::slice[[u16]]::resize(allocator, slice, 1000);
     for i in 0:countof(slice) {
         slice[i] = 0xCAFE;
     }
 
-    std::delete_slice[[u16]](allocator, slice);
+    std::slice[[u16]]::delete(allocator, slice);
 }

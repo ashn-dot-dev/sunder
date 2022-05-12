@@ -17,7 +17,7 @@ func test0() void {
         }
         var bytes = optional.value();
         std::print_line(std::out(), bytes);
-        std::delete_slice[[byte]](allocator, bytes);
+        std::slice[[byte]]::delete(allocator, bytes);
     }
 
     file.close();
@@ -38,7 +38,7 @@ func test1() void {
         }
         var bytes = optional.value();
         std::print_line(std::out(), bytes);
-        std::delete_slice[[byte]](allocator, bytes);
+        std::slice[[byte]]::delete(allocator, bytes);
     }
 
     file.close();
@@ -56,7 +56,7 @@ func test2() void {
     var optional = read_result.value();
     var bytes = optional.value();
     std::print_line(std::out(), bytes);
-    std::delete_slice[[byte]](allocator, bytes);
+    std::slice[[byte]]::delete(allocator, bytes);
 
     file.close();
 }

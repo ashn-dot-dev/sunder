@@ -8,20 +8,20 @@ import "sys";
 func main() void {
     var allocator = std::allocator::init[[std::page_allocator]](std::page_allocator::the());
 
-    var bytes = std::new_slice[[byte]](allocator, 0);
+    var bytes = std::slice[[byte]]::new(allocator, 0);
     defer {
-        std::delete_slice[[byte]](allocator, bytes);
+        std::slice[[byte]]::delete(allocator, bytes);
     }
 
     var MAX = sys::PAGE_SIZE * 5 + 1;
     for i in 0:(MAX + 1) {
-        bytes = std::resize_slice[[byte]](allocator, bytes, i);
+        bytes = std::slice[[byte]]::resize(allocator, bytes, i);
         # Write to all the bytes to make sure no page fault occurs.
-        std::fill_slice[[byte]](bytes, (:byte)i);
+        std::slice[[byte]]::fill(bytes, (:byte)i);
     }
     for i in 0:(MAX + 1) {
-        bytes = std::resize_slice[[byte]](allocator, bytes, MAX - i);
+        bytes = std::slice[[byte]]::resize(allocator, bytes, MAX - i);
         # Write to all the bytes to make sure no page fault occurs.
-        std::fill_slice[[byte]](bytes, (:byte)i);
+        std::slice[[byte]]::fill(bytes, (:byte)i);
     }
 }

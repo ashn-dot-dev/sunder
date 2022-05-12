@@ -18,7 +18,7 @@ struct vector[[T]] {
 
     func fini(self: *vector[[T]]) void {
         if self.*._capacity != 0 {
-            std::delete_slice[[T]](self.*._allocator, (:[]T){self.*._start, self.*._capacity});
+            std::slice[[T]]::delete(self.*._allocator, (:[]T){self.*._start, self.*._capacity});
         }
     }
 
@@ -44,14 +44,14 @@ struct vector[[T]] {
         }
 
         if self.*._capacity == 0 {
-            var new = std::new_slice[[T]](self.*._allocator, capacity);
+            var new = std::slice[[T]]::new(self.*._allocator, capacity);
             self.*._start = &new[0];
             self.*._capacity = capacity;
             return;
         }
 
         var cur = (:[]T){self.*._start, self.*._capacity};
-        var new = std::resize_slice[[T]](self.*._allocator, cur, capacity);
+        var new = std::slice[[T]]::resize(self.*._allocator, cur, capacity);
         self.*._start = &new[0];
         self.*._capacity = capacity;
     }
@@ -88,7 +88,7 @@ struct vector[[T]] {
         var mem: []T = (:[]T){self.*._start, self.*._capacity};
         var src: []T = mem[index     : index + n];
         var dst: []T = mem[index + 1 : index + n + 1];
-        std::copy_slice[[T]](dst, src);
+        std::slice[[T]]::copy(dst, src);
         self.*._count = self.*._count + 1;
 
         # [A][B][ ][C][D][E]
@@ -108,7 +108,7 @@ struct vector[[T]] {
         var src: []T = mem[index + 1 : index + n + 1];
         var dst: []T = mem[index     : index + n];
         var res = mem[index];
-        std::copy_slice[[T]](dst, src);
+        std::slice[[T]]::copy(dst, src);
         self.*._count = self.*._count - 1;
         return res;
     }

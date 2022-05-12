@@ -35,7 +35,7 @@ struct hash_map[[K, V]] {
 
     func fini(self: *hash_map[[K, V]]) void {
         if countof(self.*._elements) != 0 {
-            std::delete_slice[[hash_map_element[[K, V]]]](self.*._allocator, self.*._elements);
+            std::slice[[hash_map_element[[K, V]]]]::delete(self.*._allocator, self.*._elements);
         }
     }
 
@@ -68,8 +68,8 @@ struct hash_map[[K, V]] {
             # Initial insert. An initial slice count of 16 was chosen
             # semi-arbitrarily. The initial slice count must be two or greater
             # in order to prevent the lookup loop from spinning forever.
-            self.*._elements = std::new_slice[[hash_map_element[[K, V]]]](self.*._allocator, 16);
-            std::fill_slice[[hash_map_element[[K, V]]]](self.*._elements, std::zeroed[[hash_map_element[[K, V]]]]());
+            self.*._elements = std::slice[[hash_map_element[[K, V]]]]::new(self.*._allocator, 16);
+            std::slice[[hash_map_element[[K, V]]]]::fill(self.*._elements, std::zeroed[[hash_map_element[[K, V]]]]());
         }
         elif 2 * (self.*._q + 1) > countof(self.*._elements) {
             # Insert at 50% occupancy. Create a new hash map with double the
@@ -77,7 +77,7 @@ struct hash_map[[K, V]] {
             # pairs, and then replace this map with the new map.
             var new = (:hash_map[[K, V]]){
                 ._allocator = self.*._allocator,
-                ._elements = std::new_slice[[hash_map_element[[K, V]]]](self.*._allocator, countof(self.*._elements) * 2),
+                ._elements = std::slice[[hash_map_element[[K, V]]]]::new(self.*._allocator, countof(self.*._elements) * 2),
                 ._n = 0,
                 ._q = 0
             };
@@ -86,7 +86,7 @@ struct hash_map[[K, V]] {
                     new.insert(self.*._elements[i]._key, self.*._elements[i]._value);
                 }
             }
-            std::delete_slice[[hash_map_element[[K, V]]]](self.*._allocator, self.*._elements);
+            std::slice[[hash_map_element[[K, V]]]]::delete(self.*._allocator, self.*._elements);
             *self = new;
         }
 
