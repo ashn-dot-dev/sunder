@@ -284,6 +284,12 @@ struct ptr[[T]] { # namespace
     }
 }
 
+struct slice[[T]] { # namespace
+    func is(lhs: []T, rhs: []T) bool {
+        return *(:**T)&lhs == *(:**T)&rhs and countof(lhs) == countof(rhs);
+    }
+}
+
 struct result[[T, E]] {
     var _value: T;
     var _error: E;

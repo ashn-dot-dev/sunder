@@ -1,0 +1,15 @@
+import "std/core.sunder";
+
+func main() void {
+    var x = (:[]u16)[1, 2, 3];
+    var y = (:[]u16)[4, 5, 6];
+    dump std::slice[[u16]]::is(x, y);
+    dump std::slice[[u16]]::is(x, x);
+
+    # Separate string literals should never compare the same.
+    dump std::slice[[byte]]::is("foo", "bar");
+}
+################################################################################
+# 00
+# 01
+# 00
