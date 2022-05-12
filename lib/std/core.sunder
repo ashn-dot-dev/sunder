@@ -383,7 +383,6 @@ struct slice[[T]] { # namespace
         var size: usize = countof(slice) * sizeof(T);
         allocator.deallocate(pointer, alignof(T), size);
     }
-
 }
 
 struct result[[T, E]] {
