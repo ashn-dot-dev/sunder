@@ -1,0 +1,14 @@
+# Routines for byte sequences.
+namespace std::str;
+
+func starts_with(str: []byte, target: []byte) bool {
+    if countof(str) < countof(target) {
+        return false;
+    }
+    for i in 0:countof(target) {
+        if str[i] != target[i] {
+            return false;
+        }
+    }
+    return true;
+}

@@ -1,0 +1,26 @@
+import "std/core.sunder";
+import "std/str.sunder";
+
+func main() void {
+    dump std::str::starts_with("", "");
+    dump std::str::starts_with("a", "");
+    dump std::str::starts_with("", "a");
+
+    dump void::init();
+
+    dump std::str::starts_with("foobar", "f");
+    dump std::str::starts_with("foobar", "fo");
+    dump std::str::starts_with("foobar", "foo");
+    dump std::str::starts_with("foobar", "fooo");
+    dump std::str::starts_with("foobar", "bar");
+}
+################################################################################
+# 01
+# 01
+# 00
+#
+# 01
+# 01
+# 01
+# 00
+# 00
