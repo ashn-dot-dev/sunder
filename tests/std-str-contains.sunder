@@ -1,0 +1,36 @@
+import "std/core.sunder";
+import "std/str.sunder";
+
+func main() void {
+    dump std::str::contains("", "");
+    dump std::str::contains("a", "");
+    dump std::str::contains("", "a");
+
+    dump void::init();
+
+    dump std::str::contains("foobar", "f");
+    dump std::str::contains("foobar", "fo");
+    dump std::str::contains("foobar", "foo");
+    dump std::str::contains("foobar", "fooo");
+    dump std::str::contains("foobar", "bar");
+
+    dump void::init();
+
+    dump std::str::contains("foobar", "foobar");
+    dump std::str::contains("foobar", "barfoo");
+    dump std::str::contains("foobar", "foobarg");
+}
+################################################################################
+# 01
+# 01
+# 00
+#
+# 01
+# 01
+# 01
+# 00
+# 01
+#
+# 01
+# 00
+# 00

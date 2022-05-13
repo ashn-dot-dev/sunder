@@ -5,11 +5,13 @@ func starts_with(str: []byte, target: []byte) bool {
     if countof(str) < countof(target) {
         return false;
     }
+
     for i in 0:countof(target) {
         if str[i] != target[i] {
             return false;
         }
     }
+
     return true;
 }
 
@@ -17,11 +19,37 @@ func ends_with(str: []byte, target: []byte) bool {
     if countof(str) < countof(target) {
         return false;
     }
+
     var start = countof(str) - countof(target);
     for i in 0:countof(target) {
         if str[start+i] != target[i] {
             return false;
         }
     }
+
     return true;
+}
+
+func contains(str: []byte, target: []byte) bool {
+    if countof(str) < countof(target) {
+        return false;
+    }
+
+    var start = 0u;
+    for start <= (countof(str) - countof(target)) {
+        var i = 0u;
+        for i < countof(target) {
+            if str[start+i] != target[i] {
+                break;
+            }
+            i = i + 1;
+        }
+
+        if i == countof(target) {
+            return true;
+        }
+        start = start + i + 1;
+    }
+
+    return false;
 }
