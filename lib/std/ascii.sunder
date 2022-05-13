@@ -1,4 +1,4 @@
-# Routines ASCII byets and byte sequences.
+# Routines for ASCII bytes and ASCII byte sequences.
 namespace std::ascii;
 
 func is_space(char: byte) bool {
