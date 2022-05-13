@@ -1,0 +1,22 @@
+import "std/core.sunder";
+import "std/general_allocator.sunder";
+
+func main() void {
+    var allocator = std::general_allocator::init();
+
+    var result = allocator.allocate(9, 4096);
+    std::print_line(std::out(), result.error());
+
+    var result = allocator.allocate(123, 4096);
+    std::print_line(std::out(), result.error());
+
+    var result = allocator.allocate(8, 0);
+    var result = allocator.reallocate(result.value(), 9, 0, 1);
+    std::print_line(std::out(), result.error());
+
+    allocator.fini();
+}
+################################################################################
+# invalid alignment
+# invalid alignment
+# invalid alignment

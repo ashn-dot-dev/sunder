@@ -1,0 +1,15 @@
+import "std/core.sunder";
+import "std/page_allocator.sunder";
+
+func main() void {
+    var allocator = *std::page_allocator::the();
+
+    var result = allocator.allocate(9, 4096);
+    std::print_line(std::out(), result.error());
+
+    var result = allocator.allocate(123, 4096);
+    std::print_line(std::out(), result.error());
+}
+################################################################################
+# invalid alignment
+# invalid alignment
