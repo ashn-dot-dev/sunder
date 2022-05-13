@@ -193,7 +193,7 @@ const ENOTRECOVERABLE: ssize = 131;
 const ERFKILL:         ssize = 132;
 const EHWPOISON:       ssize = 133;
 
-const ERRNO_STRINGS: [134][]byte = (:[134][]byte)[
+const ERRNO_STRS: [134][]byte = (:[134][]byte)[
     "Undefined errno value",                             # Undefined errno value (0)
     "Operation not permitted",                           # EPERM (1)
     "No such file or directory",                         # ENOENT (2)

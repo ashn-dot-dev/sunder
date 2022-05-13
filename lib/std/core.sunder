@@ -716,7 +716,7 @@ struct input_reader {
 
         var sysret = sys::read(sys::STDIN_FILENO, &buf[0u], countof(buf));
         if sysret < 0 {
-            return std::result[[usize, []byte]]::init_error(sys::ERRNO_STRINGS[(:usize)-sysret]);
+            return std::result[[usize, []byte]]::init_error(sys::ERRNO_STRS[(:usize)-sysret]);
         }
 
         return std::result[[usize, []byte]]::init_value((:usize)sysret);
@@ -736,7 +736,7 @@ struct out_writer {
 
         var sysret = sys::write(sys::STDOUT_FILENO, &buf[0u], countof(buf));
         if sysret < 0 {
-            return std::result[[usize, []byte]]::init_error(sys::ERRNO_STRINGS[(:usize)-sysret]);
+            return std::result[[usize, []byte]]::init_error(sys::ERRNO_STRS[(:usize)-sysret]);
         }
 
         return std::result[[usize, []byte]]::init_value((:usize)sysret);
@@ -756,7 +756,7 @@ struct err_writer {
 
         var sysret = sys::write(sys::STDERR_FILENO, &buf[0u], countof(buf));
         if sysret < 0 {
-            return std::result[[usize, []byte]]::init_error(sys::ERRNO_STRINGS[(:usize)-sysret]);
+            return std::result[[usize, []byte]]::init_error(sys::ERRNO_STRS[(:usize)-sysret]);
         }
 
         return std::result[[usize, []byte]]::init_value((:usize)sysret);

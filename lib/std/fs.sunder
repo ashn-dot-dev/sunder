@@ -31,11 +31,11 @@ struct file {
         var flags: s32 = 0;
         if mode == 0 {
             # OPEN_READ, OPEN_WRITE, or OPEN_APPEND must be selected.
-            return std::result[[std::file, []byte]]::init_error(sys::ERRNO_STRINGS[(:usize)sys::EINVAL]);
+            return std::result[[std::file, []byte]]::init_error(sys::ERRNO_STRS[(:usize)sys::EINVAL]);
         }
         if (mode & OPEN_WRITE != 0) and (mode & OPEN_APPEND != 0) {
             # Attempted open with both non-appending and appending write modes.
-            return std::result[[std::file, []byte]]::init_error(sys::ERRNO_STRINGS[(:usize)sys::EINVAL]);
+            return std::result[[std::file, []byte]]::init_error(sys::ERRNO_STRS[(:usize)sys::EINVAL]);
         }
 
         if (mode & OPEN_READ != 0) and (mode & OPEN_WRITE != 0) {
@@ -61,14 +61,14 @@ struct file {
             # Path is too long. The path must be less than sys::PATH_MAX bytes
             # so that a NUL-terminated buffer of sys::PATH_MAX bytes may be
             # constructed without a buffer overflow.
-            return std::result[[std::file, []byte]]::init_error(sys::ERRNO_STRINGS[(:usize)sys::EINVAL]);
+            return std::result[[std::file, []byte]]::init_error(sys::ERRNO_STRS[(:usize)sys::EINVAL]);
         }
         var path_cstr = (:[sys::PATH_MAX]byte)[0...];
         std::slice[[byte]]::copy(path_cstr[0:countof(path)], path);
 
         var sysret = sys::open(&path_cstr[0], flags, 0o666);
         if sysret < 0 {
-            return std::result[[std::file, []byte]]::init_error(sys::ERRNO_STRINGS[(:usize)-sysret]);
+            return std::result[[std::file, []byte]]::init_error(sys::ERRNO_STRS[(:usize)-sysret]);
         }
 
         return std::result[[std::file, []byte]]::init_value((:std::file){.fd = sysret});
@@ -77,7 +77,7 @@ struct file {
     func close(self: *file) std::result[[void, []byte]] {
         var sysret = sys::close((:u32)self.*.fd);
         if sysret < 0 {
-            return std::result[[void, []byte]]::init_error(sys::ERRNO_STRINGS[(:usize)-sysret]);
+            return std::result[[void, []byte]]::init_error(sys::ERRNO_STRS[(:usize)-sysret]);
         }
 
         return std::result[[void, []byte]]::init_value(std::zeroed[[void]]());
@@ -90,7 +90,7 @@ struct file {
 
         var sysret = sys::read((:u32)self.*.fd, &buf[0u], countof(buf));
         if sysret < 0 {
-            return std::result[[usize, []byte]]::init_error(sys::ERRNO_STRINGS[(:usize)-sysret]);
+            return std::result[[usize, []byte]]::init_error(sys::ERRNO_STRS[(:usize)-sysret]);
         }
 
         return std::result[[usize, []byte]]::init_value((:usize)sysret);
@@ -103,7 +103,7 @@ struct file {
 
         var sysret = sys::write((:u32)self.*.fd, &buf[0u], countof(buf));
         if sysret < 0 {
-            return std::result[[usize, []byte]]::init_error(sys::ERRNO_STRINGS[(:usize)-sysret]);
+            return std::result[[usize, []byte]]::init_error(sys::ERRNO_STRS[(:usize)-sysret]);
         }
 
         return std::result[[usize, []byte]]::init_value((:usize)sysret);
@@ -120,7 +120,7 @@ struct file {
         # explicitly defining the behavior when seeking past the end of a file.
         var sysret = sys::lseek((:u32)self.*.fd, offset, (:u32)from);
         if sysret < 0 {
-            return std::result[[void, []byte]]::init_error(sys::ERRNO_STRINGS[(:usize)-sysret]);
+            return std::result[[void, []byte]]::init_error(sys::ERRNO_STRS[(:usize)-sysret]);
         }
 
         return std::result[[void, []byte]]::init_value(std::zeroed[[void]]());
@@ -129,7 +129,7 @@ struct file {
     func tell(self: *file) std::result[[usize, []byte]] {
         var sysret = sys::lseek((:u32)self.*.fd, 0, sys::SEEK_CUR);
         if sysret < 0 {
-            return std::result[[usize, []byte]]::init_error(sys::ERRNO_STRINGS[(:usize)-sysret]);
+            return std::result[[usize, []byte]]::init_error(sys::ERRNO_STRS[(:usize)-sysret]);
         }
 
         return std::result[[usize, []byte]]::init_value((:usize)sysret);
