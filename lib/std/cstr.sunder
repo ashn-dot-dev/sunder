@@ -10,5 +10,5 @@ func count(s: *byte) usize {
 }
 
 func to_str(s: *byte) []byte {
-    return (:[]byte){s, count(s)};
+    return (:[]byte){s, std::cstr::count(s)};
 }
