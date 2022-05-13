@@ -9,6 +9,6 @@ func count(s: *byte) usize {
     return (:usize)cur - (:usize)s;
 }
 
-func to_bytes(s: *byte) []byte {
+func to_str(s: *byte) []byte {
     return (:[]byte){s, count(s)};
 }

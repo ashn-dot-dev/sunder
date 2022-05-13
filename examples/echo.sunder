@@ -8,7 +8,7 @@ func main() void {
             std::print(std::out(), " ");
         }
         var arg: *byte = *std::ptr[[*byte]]::add(sys::argv, i);
-        std::print(std::out(), std::cstr::to_bytes(arg));
+        std::print(std::out(), std::cstr::to_str(arg));
     }
     std::print(std::out(), "\n");
 }
