@@ -129,7 +129,7 @@ func main() void {
         std::exit(std::EXIT_FAILURE);
     }
 
-    var name = line.value();
+    var name = std::ascii::trimmed(line.value());
     std::print_format_line(std::out(), "Nice to meet you {}!", (:[]std::formatter)[std::formatter::init[[typeof(name)]](&name)]);
 }
 ```
