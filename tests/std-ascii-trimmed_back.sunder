@@ -1,0 +1,20 @@
+import "std/core.sunder";
+import "std/ascii.sunder";
+
+func main() void {
+    std::print_line(std::out(), std::ascii::trimmed_back("foo"));
+    std::print_line(std::out(), std::ascii::trimmed_back("foo "));
+    std::print_line(std::out(), std::ascii::trimmed_back("foo\t"));
+    std::print_line(std::out(), std::ascii::trimmed_back("foo \t "));
+    std::print_line(std::out(), std::ascii::trimmed_back(""));
+    std::print_line(std::out(), std::ascii::trimmed_back(" foo"));
+    std::print_line(std::out(), std::ascii::trimmed_back(" foo "));
+}
+################################################################################
+# foo
+# foo
+# foo
+# foo
+#
+#  foo
+#  foo
