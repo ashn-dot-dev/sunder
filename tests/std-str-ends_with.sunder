@@ -1,0 +1,26 @@
+import "std/core.sunder";
+import "std/str.sunder";
+
+func main() void {
+    dump std::str::ends_with("", "");
+    dump std::str::ends_with("a", "");
+    dump std::str::ends_with("", "a");
+
+    dump void::init();
+
+    dump std::str::ends_with("foobar", "r");
+    dump std::str::ends_with("foobar", "ar");
+    dump std::str::ends_with("foobar", "bar");
+    dump std::str::ends_with("foobar", "bbar");
+    dump std::str::ends_with("foobar", "foo");
+}
+################################################################################
+# 01
+# 01
+# 00
+#
+# 01
+# 01
+# 01
+# 00
+# 00

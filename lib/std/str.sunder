@@ -12,3 +12,16 @@ func starts_with(str: []byte, target: []byte) bool {
     }
     return true;
 }
+
+func ends_with(str: []byte, target: []byte) bool {
+    if countof(str) < countof(target) {
+        return false;
+    }
+    var start = countof(str) - countof(target);
+    for i in 0:countof(target) {
+        if str[start+i] != target[i] {
+            return false;
+        }
+    }
+    return true;
+}
