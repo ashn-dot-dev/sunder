@@ -1,0 +1,42 @@
+import "std/core.sunder";
+import "std/ascii.sunder";
+
+func main() void {
+    dump std::ascii::is_lower('a');
+    dump std::ascii::is_lower('b');
+    dump std::ascii::is_lower('c');
+    dump std::ascii::is_lower('z');
+
+    dump void::init();
+
+    dump std::ascii::is_lower('A');
+    dump std::ascii::is_lower('B');
+    dump std::ascii::is_lower('C');
+    dump std::ascii::is_lower('Z');
+
+    dump void::init();
+
+    dump std::ascii::is_lower('~');
+    dump std::ascii::is_lower('\n');
+    dump std::ascii::is_lower('\t');
+    dump std::ascii::is_lower(' ');
+    dump std::ascii::is_lower('@');
+    dump std::ascii::is_lower('[');
+}
+################################################################################
+# 01
+# 01
+# 01
+# 01
+#
+# 00
+# 00
+# 00
+# 00
+#
+# 00
+# 00
+# 00
+# 00
+# 00
+# 00

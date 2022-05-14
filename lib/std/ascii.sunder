@@ -1,6 +1,10 @@
 # Routines for ASCII bytes and ASCII byte sequences.
 namespace std::ascii;
 
+func is_lower(char: byte) bool {
+    return 'a' <= (:usize)char and (:usize)char <= 'z';
+}
+
 func is_space(char: byte) bool {
     return char == ' '
         or char == '\t'
