@@ -5,6 +5,13 @@ func is_lower(char: byte) bool {
     return 'a' <= char and char <= 'z';
 }
 
+func to_lower(char: byte) byte {
+    if std::ascii::is_upper(char) {
+        return char | 0x20;
+    }
+    return char;
+}
+
 func is_upper(char: byte) bool {
     return 'A' <= char and char <= 'Z';
 }
