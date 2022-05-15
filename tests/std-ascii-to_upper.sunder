@@ -1,0 +1,42 @@
+import "std/core.sunder";
+import "std/ascii.sunder";
+
+func main() void {
+    dump std::ascii::to_upper('a') == 'A';
+    dump std::ascii::to_upper('b') == 'B';
+    dump std::ascii::to_upper('c') == 'C';
+    dump std::ascii::to_upper('z') == 'Z';
+
+    dump void::init();
+
+    dump std::ascii::to_upper('A') == 'A';
+    dump std::ascii::to_upper('B') == 'B';
+    dump std::ascii::to_upper('C') == 'C';
+    dump std::ascii::to_upper('Z') == 'Z';
+
+    dump void::init();
+
+    dump std::ascii::to_upper('~') == '~';
+    dump std::ascii::to_upper('\n') == '\n';
+    dump std::ascii::to_upper('\t') == '\t';
+    dump std::ascii::to_upper(' ') == ' ';
+    dump std::ascii::to_upper('@') == '@';
+    dump std::ascii::to_upper('[') == '[';
+}
+################################################################################
+# 01
+# 01
+# 01
+# 01
+#
+# 01
+# 01
+# 01
+# 01
+#
+# 01
+# 01
+# 01
+# 01
+# 01
+# 01

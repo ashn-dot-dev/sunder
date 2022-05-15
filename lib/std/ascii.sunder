@@ -9,6 +9,13 @@ func is_upper(char: byte) bool {
     return 'A' <= char and char <= 'Z';
 }
 
+func to_upper(char: byte) byte {
+    if std::ascii::is_lower(char) {
+        return char & 0x5F;
+    }
+    return char;
+}
+
 func is_space(char: byte) bool {
     return char == ' '
         or char == '\t'
