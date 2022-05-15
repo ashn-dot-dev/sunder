@@ -45,7 +45,9 @@ struct int {
         if c == 'x' {
             return std::write_all(writer, "hexadecimal\n");
         }
+
         std::formatter::invalid_format_specifier(fmt);
+        return std::zeroed[[std::result[[void, []byte]]]]();
     }
 }
 

@@ -126,6 +126,8 @@ struct hash_map[[K, V]] {
 
             index = std::rem[[usize]](index + 1, countof(self.*._elements));
         }
+
+        return std::zeroed[[std::optional[[V]]]](); # unreachable
     }
 
     func remove(self: *hash_map[[K, V]], key: K) std::optional[[V]] {
@@ -156,11 +158,7 @@ struct hash_map_iterator[[K, V]] {
     }
 
     func advance(self: *hash_map_iterator[[K, V]]) bool {
-        for true {
-            if not self.*._iterator.advance() {
-                return false; # end-of-iteration
-            }
-
+        for self.*._iterator.advance() {
             var current = self.*._iterator.current();
             if current.*._state != hash_map_element[[K, V]]::_STATE_USE {
                 continue;
@@ -168,6 +166,8 @@ struct hash_map_iterator[[K, V]] {
 
             return true;
         }
+
+        return false; # end-of-iteration
     }
 
     func current(self: *hash_map_iterator[[K, V]]) *hash_map_element[[K, V]] {

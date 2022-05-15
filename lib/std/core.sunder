@@ -264,6 +264,7 @@ extend []byte func format(self: *[]byte, writer: std::writer, fmt: []byte) std::
     }
 
     std::formatter::invalid_format_specifier(fmt);
+    return std::zeroed[[std::result[[void, []byte]]]](); # unreachable
 }
 
 struct ptr[[T]] { # namespace

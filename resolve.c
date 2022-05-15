@@ -1860,6 +1860,8 @@ complete_function(
     assert(resolver != NULL);
     assert(incomplete != NULL);
 
+    struct function* const function = incomplete->function;
+
     // Complete the function.
     assert(resolver->current_function == NULL);
     assert(resolver->current_rbp_offset == 0x0);
@@ -1869,10 +1871,9 @@ complete_function(
     char const* const save_static_addr_prefix =
         resolver->current_static_addr_prefix;
     resolver->current_symbol_name_prefix = NULL; // local identifiers
-    resolver->current_static_addr_prefix =
-        incomplete->function->address->data.static_.name;
-    resolver->current_function = incomplete->function;
-    incomplete->function->body = resolve_block(
+    resolver->current_static_addr_prefix = function->address->data.static_.name;
+    resolver->current_function = function;
+    function->body = resolve_block(
         resolver,
         incomplete->symbol_table,
         incomplete->decl->data.function.body);
@@ -1880,6 +1881,38 @@ complete_function(
     resolver->current_static_addr_prefix = save_static_addr_prefix;
     resolver->current_function = NULL;
     assert(resolver->current_rbp_offset == 0x0);
+
+    // Produce an error if the last statement of a non-void returning function
+    // is *not* a return statement. Even if the last statement is an if-else
+    // block with a return in each arm of the statement we should still produce
+    // an error as idiomatic Sunder code should use
+    //
+    //      if condition {
+    //          return early_return_value;
+    //      }
+    //      return other_return_value;
+    //
+    // instead of
+    //
+    //      if condition {
+    //          return first_return_value;
+    //      }
+    //      else {
+    //          return other_return_value;
+    //      }
+    assert(function->type->kind == TYPE_FUNCTION);
+    bool func_has_void_return =
+        function->type->data.function.return_type->kind == TYPE_VOID;
+    sbuf(struct stmt const* const) const stmts = function->body->stmts;
+    bool const non_void_returning_func_does_not_end_with_return =
+        !func_has_void_return
+        && (sbuf_count(stmts) == 0
+            || stmts[sbuf_count(stmts) - 1]->kind != STMT_RETURN);
+    if (non_void_returning_func_does_not_end_with_return) {
+        fatal(
+            incomplete->decl->location,
+            "Non-void-returning function does not end with a return statement");
+    }
 }
 
 static struct stmt const*

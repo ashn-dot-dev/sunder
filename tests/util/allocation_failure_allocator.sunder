@@ -10,6 +10,7 @@ struct allocation_failure_allocator {
     # succeeded, so any provided pointer is invalid.
     func reallocate(self: *allocation_failure_allocator, ptr: *byte, align: usize, old_size: usize, new_size: usize) std::result[[*byte, []byte]] {
         std::panic("attempted allocation_failure_allocator reallocation");
+        return std::zeroed[[std::result[[*byte, []byte]]]](); # unreachable
     }
 
     # Deallocation will panic since a call to allocate should never have
