@@ -899,10 +899,24 @@ func write_all(writer: std::writer, buf: []byte) std::result[[void, []byte]] {
     for written < countof(buf) {
         var result = writer.write(buf[written:countof(buf)]);
         if result.is_error() {
-            return  std::result[[void, []byte]]::init_error(result.error());
+            return std::result[[void, []byte]]::init_error(result.error());
         }
         written = written + result.value();
     }
+    return std::result[[void, []byte]]::init_value(void::init());
+}
+
+func write_line(writer: std::writer, buf: []byte) std::result[[void, []byte]] {
+    var result = std::write_all(writer, buf);
+    if result.is_error() {
+        return std::result[[void, []byte]]::init_error(result.error());
+    }
+
+    var result = std::write_all(writer, "\n");
+    if result.is_error() {
+        return std::result[[void, []byte]]::init_error(result.error());
+    }
+
     return std::result[[void, []byte]]::init_value(void::init());
 }
 
@@ -1045,8 +1059,10 @@ func print(writer: std::writer, str: []byte) void {
 }
 
 func print_line(writer: std::writer, str: []byte) void {
-    std::print(writer, str);
-    std::print(writer, "\n");
+    var result = std::write_line(writer, str);
+    if result.is_error() {
+        std::panic(result.error());
+    }
 }
 
 func print_format(writer: std::writer, format: []byte, args: []std::formatter) void {
