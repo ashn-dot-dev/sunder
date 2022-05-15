@@ -294,6 +294,15 @@ order_decl(struct orderer* orderer, struct cst_decl const* decl)
         order_typespec(orderer, decl->data.extern_variable.typespec);
         return;
     }
+    case CST_DECL_EXTERN_FUNCTION: {
+        struct cst_function_parameter const* const* const function_parameters =
+            decl->data.extern_function.function_parameters;
+        for (size_t i = 0; i < sbuf_count(function_parameters); ++i) {
+            order_function_parameter(orderer, function_parameters[i]);
+        }
+        order_typespec(orderer, decl->data.extern_function.return_typespec);
+        return;
+    }
     }
 
     UNREACHABLE();

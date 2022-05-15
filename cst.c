@@ -197,6 +197,28 @@ cst_decl_new_extern_variable(
     return self;
 }
 
+struct cst_decl*
+cst_decl_new_extern_function(
+    struct source_location const* location,
+    struct cst_identifier const* identifier,
+    struct cst_function_parameter const* const* function_parameters,
+    struct cst_typespec const* return_typespec)
+{
+    assert(location != NULL);
+    assert(identifier != NULL);
+    assert(return_typespec != NULL);
+
+    struct cst_decl* const self = xalloc(NULL, sizeof(*self));
+    memset(self, 0x00, sizeof(*self));
+    self->kind = CST_DECL_EXTERN_FUNCTION;
+    self->location = location;
+    self->name = identifier->name;
+    self->data.extern_function.identifier = identifier;
+    self->data.extern_function.function_parameters = function_parameters;
+    self->data.extern_function.return_typespec = return_typespec;
+    return self;
+}
+
 static struct cst_stmt*
 cst_stmt_new(struct source_location const* location, enum cst_stmt_kind kind)
 {

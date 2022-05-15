@@ -1019,6 +1019,7 @@ struct cst_decl {
         CST_DECL_EXTEND,
         CST_DECL_ALIAS,
         CST_DECL_EXTERN_VARIABLE,
+        CST_DECL_EXTERN_FUNCTION,
     } kind;
     union {
         struct {
@@ -1062,6 +1063,12 @@ struct cst_decl {
             struct cst_identifier const* identifier;
             struct cst_typespec const* typespec;
         } extern_variable;
+        struct {
+            struct cst_identifier const* identifier;
+            sbuf(struct cst_function_parameter const* const)
+                function_parameters;
+            struct cst_typespec const* return_typespec;
+        } extern_function;
     } data;
 };
 struct cst_decl*
@@ -1105,6 +1112,12 @@ cst_decl_new_extern_variable(
     struct source_location const* location,
     struct cst_identifier const* identifier,
     struct cst_typespec const* typespec);
+struct cst_decl*
+cst_decl_new_extern_function(
+    struct source_location const* location,
+    struct cst_identifier const* identifier,
+    struct cst_function_parameter const* const* function_parameters,
+    struct cst_typespec const* return_typespec);
 
 struct cst_stmt {
     struct source_location const* location;
@@ -2258,7 +2271,8 @@ struct function {
     sbuf(struct symbol const* const) symbol_parameters;
     // Initialized to NULL on struct creation.
     struct symbol const* symbol_return;
-    // Initialized to NULL on struct creation.
+    // Initialized to NULL on struct creation. Set to non-NULL for non-extern
+    // functions completed during the resolve phase.
     struct block const* body;
 
     // Offset required to store all local variables in this function.

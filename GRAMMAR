@@ -11,6 +11,7 @@
          | <decl-extend>
          | <decl-alias>
          | <decl-extern-variable>
+         | <decl-extern-function>
 
 <decl-variable> ::= "var" <identifier> ":" <typespec> "=" <expr> ";"
 
@@ -25,6 +26,8 @@
 <decl-alias> ::= "alias" <identifier> "=" <symbol> ";"
 
 <decl-extern-variable> ::= "extern" "var" <identifier> ":" <typespec> ";"
+
+<decl-extern-function> ::= "extern" "func" <identifier> "(" <parameter-list> ")" <typespec> ";"
 
 <stmt> ::= <stmt-decl>
          | <stmt-defer>

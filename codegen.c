@@ -909,6 +909,13 @@ codegen_static_function(struct symbol const* symbol)
     struct function const* const function =
         symbol_xget_value(symbol)->data.function;
 
+    if (function->body == NULL) {
+        // Symbol is defined externally.
+        appendln("global %s", symbol_xget_address(symbol)->data.static_.name);
+        appendch('\n');
+        return;
+    }
+
     assert(symbol_xget_address(symbol)->data.static_.offset == 0);
     appendln("global %s", symbol_xget_address(symbol)->data.static_.name);
     appendln("%s:", symbol_xget_address(symbol)->data.static_.name);

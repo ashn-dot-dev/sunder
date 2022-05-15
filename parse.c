@@ -53,6 +53,8 @@ static struct cst_decl const*
 parse_decl_alias(struct parser* parser);
 static struct cst_decl const*
 parse_decl_extern_variable(struct parser* parser);
+static struct cst_decl const*
+parse_decl_extern_function(struct parser* parser);
 
 static struct cst_stmt const*
 parse_stmt(struct parser* parser);
@@ -374,6 +376,10 @@ parse_decl(struct parser* parser)
         return parse_decl_extern_variable(parser);
     }
 
+    if (check_current(parser, TOKEN_EXTERN) && check_peek(parser, TOKEN_FUNC)) {
+        return parse_decl_extern_function(parser);
+    }
+
     fatal(
         &parser->current_token->location,
         "expected declaration, found `%s`",
@@ -530,6 +536,29 @@ parse_decl_extern_variable(struct parser* parser)
 
     struct cst_decl* const product =
         cst_decl_new_extern_variable(location, identifier, typespec);
+
+    freeze(product);
+    return product;
+}
+
+static struct cst_decl const*
+parse_decl_extern_function(struct parser* parser)
+{
+    assert(parser != NULL);
+
+    struct source_location const* const location =
+        &expect_current(parser, TOKEN_EXTERN)->location;
+    expect_current(parser, TOKEN_FUNC);
+    struct cst_identifier const* const identifier = parse_identifier(parser);
+    expect_current(parser, TOKEN_LPAREN);
+    sbuf(struct cst_function_parameter const* const) const function_parameters =
+        parse_function_parameter_list(parser);
+    expect_current(parser, TOKEN_RPAREN);
+    struct cst_typespec const* const return_typespec = parse_typespec(parser);
+    expect_current(parser, TOKEN_SEMICOLON);
+
+    struct cst_decl* const product = cst_decl_new_extern_function(
+        location, identifier, function_parameters, return_typespec);
 
     freeze(product);
     return product;

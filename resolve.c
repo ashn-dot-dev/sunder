@@ -177,6 +177,9 @@ resolve_decl_alias(struct resolver* resolver, struct cst_decl const* decl);
 static struct symbol const*
 resolve_decl_extern_variable(
     struct resolver* resolver, struct cst_decl const* decl);
+static struct symbol const*
+resolve_decl_extern_function(
+    struct resolver* resolver, struct cst_decl const* decl);
 
 static void
 complete_struct(
@@ -1320,6 +1323,9 @@ resolve_decl(struct resolver* resolver, struct cst_decl const* decl)
     case CST_DECL_EXTERN_VARIABLE: {
         return resolve_decl_extern_variable(resolver, decl);
     }
+    case CST_DECL_EXTERN_FUNCTION: {
+        return resolve_decl_extern_function(resolver, decl);
+    }
     }
 
     UNREACHABLE();
@@ -1776,6 +1782,68 @@ resolve_decl_extern_variable(
     return symbol;
 }
 
+static struct symbol const*
+resolve_decl_extern_function(
+    struct resolver* resolver, struct cst_decl const* decl)
+{
+    assert(resolver != NULL);
+    assert(decl != NULL);
+    assert(decl->kind == CST_DECL_EXTERN_FUNCTION);
+    assert(resolver_is_global(resolver));
+
+    sbuf(struct cst_function_parameter const* const) const function_parameters =
+        decl->data.extern_function.function_parameters;
+
+    // Create the type corresponding to the function.
+    struct type const** parameter_types = NULL;
+    sbuf_resize(parameter_types, sbuf_count(function_parameters));
+    for (size_t i = 0; i < sbuf_count(function_parameters); ++i) {
+        parameter_types[i] =
+            resolve_typespec(resolver, function_parameters[i]->typespec);
+        if (parameter_types[i]->size == SIZEOF_UNSIZED) {
+            fatal(
+                function_parameters[i]->typespec->location,
+                "declaration of function parameter with unsized type `%s`",
+                parameter_types[i]->name);
+        }
+    }
+    sbuf_freeze(parameter_types);
+
+    struct type const* const return_type =
+        resolve_typespec(resolver, decl->data.extern_function.return_typespec);
+    if (return_type->size == SIZEOF_UNSIZED) {
+        fatal(
+            decl->data.extern_function.return_typespec->location,
+            "declaration of function with unsized return type `%s`",
+            return_type->name);
+    }
+
+    struct type const* function_type =
+        type_unique_function(parameter_types, return_type);
+
+    struct address const* const address =
+        resolver_reserve_storage_static(resolver, decl->name);
+
+    // Create a new incomplete function, a value that evaluates to that
+    // function, and the address of that function/value.
+    struct function* const function = function_new(
+        decl->data.extern_function.identifier->name, function_type, address);
+    freeze(function);
+
+    struct value* const value = value_new_function(function);
+    value_freeze(value);
+    function->value = value;
+
+    struct symbol* const symbol = symbol_new_function(decl->location, function);
+    freeze(symbol);
+
+    symbol_table_insert(
+        resolver->current_symbol_table, symbol->name, symbol, false);
+    register_static_symbol(symbol); // Extern functions are always static.
+
+    return symbol;
+}
+
 static void
 complete_struct(
     struct resolver* resolver,
@@ -2008,6 +2076,13 @@ resolve_stmt_decl(struct resolver* resolver, struct cst_stmt const* stmt)
         fatal(
             decl->location,
             "local declaration of extern variable `%s`",
+            decl->name);
+        return NULL;
+    }
+    case CST_DECL_EXTERN_FUNCTION: {
+        fatal(
+            decl->location,
+            "local declaration of extern function `%s`",
             decl->name);
         return NULL;
     }
