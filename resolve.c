@@ -2096,14 +2096,17 @@ resolve_stmt_for_range(struct resolver* resolver, struct cst_stmt const* stmt)
     assert(stmt != NULL);
     assert(stmt->kind == CST_STMT_FOR_RANGE);
 
-    struct expr const* begin =
-        resolve_expr(resolver, stmt->data.for_range.begin);
-    begin = shallow_implicit_cast(context()->builtin.usize, begin);
-    if (begin->type != context()->builtin.usize) {
-        fatal(
-            begin->location,
-            "illegal range-begin-expression with non-usize type `%s`",
-            begin->type->name);
+    struct expr const* begin = expr_new_integer(
+        stmt->location, context()->builtin.usize, context()->zero);
+    if (stmt->data.for_range.begin != NULL) {
+        begin = resolve_expr(resolver, stmt->data.for_range.begin);
+        begin = shallow_implicit_cast(context()->builtin.usize, begin);
+        if (begin->type != context()->builtin.usize) {
+            fatal(
+                begin->location,
+                "illegal range-begin-expression with non-usize type `%s`",
+                begin->type->name);
+        }
     }
 
     struct expr const* end = resolve_expr(resolver, stmt->data.for_range.end);

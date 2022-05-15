@@ -228,7 +228,6 @@ cst_stmt_new_for_range(
 {
     assert(location != NULL);
     assert(identifier != NULL);
-    assert(begin != NULL);
     assert(end != NULL);
     assert(body != NULL);
 

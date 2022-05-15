@@ -160,7 +160,7 @@ extend []byte func compare(lhs: *[]byte, rhs: *[]byte) ssize {
     var lhs_data = *lhs;
     var rhs_data = *rhs;
     var count = std::min[[usize]](countof(lhs_data), countof(rhs_data));
-    for i in 0:count {
+    for i in count {
         if lhs_data[i] != rhs_data[i] {
             return (:ssize)lhs_data[i] - (:ssize)rhs_data[i];
         }
@@ -173,7 +173,7 @@ extend []byte func hash(self: *[]byte) usize {
     # five bits of the hash before the multiplcation in order to prevent
     # overflow.
     var hash = 5381u;
-    for i in 0:countof(*self) {
+    for i in countof(*self) {
         const MASK = 0xf800000000000000u; # XXX: usize assumed 64-bit
         hash = (hash & MASK) * 33 + (:usize)self.*[i];
     }
@@ -192,7 +192,7 @@ extend []byte func format(self: *[]byte, writer: std::writer, fmt: []byte) std::
     # Format specifier: "e"
     if countof(fmt) == 1 and fmt[0] == 'e' {
         var result = std::zeroed[[std::result[[void, []byte]]]]();
-        for i in 0:countof(*self) {
+        for i in countof(*self) {
             var c: byte = self.*[i];
             if c == '\0' {
                 result = std::write_all(writer, "\\0");
@@ -337,13 +337,13 @@ struct slice[[T]] { # namespace
         # forwards.
         if &destination[0] <= &source[0] {
             # Copy forwards.
-            for i in 0:countof(source) {
+            for i in countof(source) {
                 destination[i] = source[i];
             }
         }
         else {
             # Copy backwards.
-            for i in 0:countof(source) {
+            for i in countof(source) {
                 var index: usize = countof(source) - 1 - i;
                 destination[index] = source[index];
             }
@@ -352,7 +352,7 @@ struct slice[[T]] { # namespace
 
     # Set every element of the provided slice to the provided value.
     func fill(slice: []T, value: T) void {
-        for i in 0:countof(slice) {
+        for i in countof(slice) {
             slice[i] = value;
         }
     }
@@ -1449,7 +1449,7 @@ struct _int { # namespace
             magnitude = div;
         }
 
-        for i in 0:countof(digits_prefix) {
+        for i in countof(digits_prefix) {
             output[output_index] = digits_prefix[countof(digits_prefix) - i - 1];
             output_index = output_index - 1;
         }

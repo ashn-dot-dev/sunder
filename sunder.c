@@ -165,6 +165,7 @@ context_init(void)
     struct bigint* const ident = bigint_new_cstr(str_literal);                 \
     bigint_freeze(ident);                                                      \
     s_context.ident = ident;
+    INIT_BIGINT_CONSTANT(zero, "0")
     INIT_BIGINT_CONSTANT(u8_min, "+0x00")
     INIT_BIGINT_CONSTANT(u8_max, "+0xFF")
     INIT_BIGINT_CONSTANT(s8_min, "-128")

@@ -677,13 +677,25 @@ parse_stmt_for(struct parser* parser)
         struct cst_identifier const* const identifier =
             parse_identifier(parser);
         expect_current(parser, TOKEN_IN);
-        struct cst_expr const* const begin = parse_expr(parser);
-        expect_current(parser, TOKEN_COLON);
-        struct cst_expr const* const end = parse_expr(parser);
+
+        struct cst_expr const* begin = parse_expr(parser);
+        if (check_current(parser, TOKEN_COLON)) {
+            expect_current(parser, TOKEN_COLON);
+            struct cst_expr const* const end = parse_expr(parser);
+            struct cst_block const* const body = parse_block(parser);
+
+            struct cst_stmt* const product =
+                cst_stmt_new_for_range(location, identifier, begin, end, body);
+
+            freeze(product);
+            return product;
+        }
+
+        struct cst_expr const* const end = begin;
         struct cst_block const* const body = parse_block(parser);
 
         struct cst_stmt* const product =
-            cst_stmt_new_for_range(location, identifier, begin, end, body);
+            cst_stmt_new_for_range(location, identifier, NULL, end, body);
 
         freeze(product);
         return product;

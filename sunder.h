@@ -788,6 +788,7 @@ struct context {
     } interned;
 
     // Integer (bigint) constants.
+    struct bigint const* zero;
     struct bigint const* u8_min;
     struct bigint const* u8_max;
     struct bigint const* s8_min;
@@ -1128,7 +1129,7 @@ struct cst_stmt {
         } if_;
         struct {
             struct cst_identifier const* identifier;
-            struct cst_expr const* begin;
+            struct cst_expr const* begin; // optional
             struct cst_expr const* end;
             struct cst_block const* body;
         } for_range;
