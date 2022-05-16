@@ -865,9 +865,15 @@ codegen_static_object(struct symbol const* symbol)
     assert(symbol->kind == SYMBOL_VARIABLE || symbol->kind == SYMBOL_CONSTANT);
     assert(symbol_xget_address(symbol)->kind == ADDRESS_STATIC);
 
-    if (symbol->kind == SYMBOL_VARIABLE
-        && symbol->data.variable.value == NULL) {
-        // Symbol is defined externally.
+    bool const is_extern_variable = symbol->kind == SYMBOL_VARIABLE && symbol->data.variable.value == NULL;
+    if (is_extern_variable) {
+        // From the NASM 2.15.05 manual, Section 7.5:
+        // > If a variable is declared both GLOBAL and EXTERN, or if it is
+        // > declared as EXTERN and then defined, it will be treated as GLOBAL.
+        // > If a variable is declared both as COMMON and EXTERN, it will be
+        // > treated as COMMON.
+        appendln("extern %s", symbol_xget_address(symbol)->data.static_.name);
+        appendch('\n');
         return;
     }
 
@@ -909,9 +915,14 @@ codegen_static_function(struct symbol const* symbol)
     struct function const* const function =
         symbol_xget_value(symbol)->data.function;
 
-    if (function->body == NULL) {
-        // Symbol is defined externally.
-        appendln("global %s", symbol_xget_address(symbol)->data.static_.name);
+    bool const is_extern_function = function->body == NULL;
+    if (is_extern_function) {
+        // From the NASM 2.15.05 manual, Section 7.5:
+        // > If a variable is declared both GLOBAL and EXTERN, or if it is
+        // > declared as EXTERN and then defined, it will be treated as GLOBAL.
+        // > If a variable is declared both as COMMON and EXTERN, it will be
+        // > treated as COMMON.
+        appendln("extern %s", symbol_xget_address(symbol)->data.static_.name);
         appendch('\n');
         return;
     }
@@ -2706,13 +2717,35 @@ codegen_lvalue_unary(struct expr const* expr, size_t id)
 }
 
 void
-codegen(char const* const opt_o, bool opt_k)
+codegen(char const* const opt_o, bool opt_k, char const* const* opt_l)
 {
     assert(opt_o != NULL);
 
     out = string_new(NULL, 0u);
     struct string* const asm_path = string_new_fmt("%s.asm", opt_o);
     struct string* const obj_path = string_new_fmt("%s.o", opt_o);
+
+    sbuf(char const*) nasm_argv = NULL;
+    sbuf_push(nasm_argv, "nasm");
+    sbuf_push(nasm_argv, "-w+error=all");
+    sbuf_push(nasm_argv, "-f");
+    sbuf_push(nasm_argv, "elf64");
+    sbuf_push(nasm_argv, "-O0");
+    sbuf_push(nasm_argv, "-g");
+    sbuf_push(nasm_argv, "-F");
+    sbuf_push(nasm_argv, "dwarf");
+    sbuf_push(nasm_argv, string_start(asm_path));
+    sbuf_push(nasm_argv, (char const*)NULL);
+
+    sbuf(char const*) ld_argv = NULL;
+    sbuf_push(ld_argv, "ld");
+    sbuf_push(ld_argv, "-o");
+    sbuf_push(ld_argv, opt_o);
+    sbuf_push(ld_argv, string_start(obj_path));
+    for (size_t i = 0; i < sbuf_count(opt_l); ++i) {
+        sbuf_push(ld_argv, opt_l[i]);
+    }
+    sbuf_push(ld_argv, (char const*)NULL);
 
     codegen_sys();
     appendch('\n');
@@ -2733,21 +2766,10 @@ codegen(char const* const opt_o, bool opt_k)
         goto cleanup;
     }
 
-    // clang-format off
-    char const* const nasm_argv[] = {
-        "nasm", "-w+error=all", "-f", "elf64", "-O0", "-g", "-F", "dwarf",
-        string_start(asm_path), (char const*)NULL
-    };
-    // clang-format on
     if ((err = spawnvpw(nasm_argv))) {
         goto cleanup;
     }
 
-    // clang-format off
-    char const* const ld_argv[] = {
-        "ld", "-o",  opt_o, string_start(obj_path), (char const*)NULL
-    };
-    // clang-format on
     if ((err = spawnvpw(ld_argv))) {
         goto cleanup;
     }
@@ -2757,6 +2779,8 @@ cleanup:
         (void)remove(string_start(asm_path));
         (void)remove(string_start(obj_path));
     }
+    sbuf_fini(nasm_argv);
+    sbuf_fini(ld_argv);
     string_del(asm_path);
     string_del(obj_path);
     string_del(out);

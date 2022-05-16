@@ -2415,6 +2415,6 @@ eval_lvalue(struct expr const* expr);
 //////// codegen.c /////////////////////////////////////////////////////////////
 
 void
-codegen(char const* const opt_o, bool opt_k);
+codegen(char const* const opt_o, bool opt_k, char const* const* opt_l);
 
 #endif // SUNDER_H_INCLUDED

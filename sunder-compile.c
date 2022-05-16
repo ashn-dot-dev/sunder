@@ -10,19 +10,23 @@
 #include "sunder.h"
 
 // clang-format off
-static char const* path = NULL;
-static bool        opt_k = false;
-static char const* opt_o = "a.out";
+static char const*       path = NULL;
+static bool              opt_k = false;
+static sbuf(char const*) opt_l = NULL;
+static char const*       opt_o = "a.out";
 // clang-format on
 
 static void
 usage(void);
 static void
 argparse(int argc, char** argv);
+static void
+fini(void);
 
 int
 main(int argc, char** argv)
 {
+    atexit(fini);
     argparse(argc, argv);
 
     context_init();
@@ -30,7 +34,7 @@ main(int argc, char** argv)
 
     load_module(path, canonical_path(path));
     validate_main_is_defined_correctly();
-    codegen(opt_o, opt_k);
+    codegen(opt_o, opt_k, opt_l);
 
     return EXIT_SUCCESS;
 }
@@ -44,6 +48,7 @@ usage(void)
    "",
    "Options:",
    "  -k        Keep intermediate files (.o and .asm).",
+   "  -l OPT    Pass OPT directly to the linker.",
    "  -o OUT    Write output excutable to OUT (default a.out).",
    "  -h        Display usage information and exit.",
     };
@@ -57,10 +62,14 @@ static void
 argparse(int argc, char** argv)
 {
     int c = 0;
-    while ((c = getopt(argc, argv, "ko:h")) != -1) {
+    while ((c = getopt(argc, argv, "kl:o:h")) != -1) {
         switch (c) {
         case 'k': {
             opt_k = true;
+            break;
+        }
+        case 'l': {
+            sbuf_push(opt_l, optarg);
             break;
         }
         case 'o': {
@@ -89,4 +98,10 @@ argparse(int argc, char** argv)
     if (path == NULL) {
         fatal(NULL, "no input file");
     }
+}
+
+static void
+fini(void)
+{
+    sbuf_fini(opt_l);
 }
