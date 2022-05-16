@@ -2747,13 +2747,13 @@ codegen(char const* const opt_o, bool opt_k, char const* const* opt_l)
     }
     sbuf_push(ld_argv, (char const*)NULL);
 
-    codegen_sys();
     appendch('\n');
     codegen_static_constants();
     appendch('\n');
     codegen_static_variables();
     appendch('\n');
     codegen_static_functions();
+    codegen_sys();
 
     int err = 0;
     if ((err = file_write_all(
