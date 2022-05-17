@@ -865,7 +865,8 @@ codegen_static_object(struct symbol const* symbol)
     assert(symbol->kind == SYMBOL_VARIABLE || symbol->kind == SYMBOL_CONSTANT);
     assert(symbol_xget_address(symbol)->kind == ADDRESS_STATIC);
 
-    bool const is_extern_variable = symbol->kind == SYMBOL_VARIABLE && symbol->data.variable.value == NULL;
+    bool const is_extern_variable =
+        symbol->kind == SYMBOL_VARIABLE && symbol->data.variable.value == NULL;
     if (is_extern_variable) {
         // From the NASM 2.15.05 manual, Section 7.5:
         // > If a variable is declared both GLOBAL and EXTERN, or if it is
@@ -2717,7 +2718,8 @@ codegen_lvalue_unary(struct expr const* expr, size_t id)
 }
 
 void
-codegen(bool opt_c, bool opt_k, char const* const* opt_l, char const* const opt_o)
+codegen(
+    bool opt_c, bool opt_k, char const* const* opt_l, char const* const opt_o)
 {
     assert(opt_o != NULL);
 
