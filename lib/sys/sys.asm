@@ -240,9 +240,9 @@ sys.argc: dq 0 ; extern var argc: usize;
 sys.argv: dq 0 ; extern var argv: **byte;
 sys.envp: dq 0 ; extern var envp: **byte;
 
-
 ; PROGRAM ENTRY POINT
 ; ===================
+%ifdef __entry
 section .text
 global _start
 _start:
@@ -262,3 +262,4 @@ _start:
     mov rax, __SYS_EXIT
     mov rdi, __EXIT_SUCCESS
     syscall
+%endif

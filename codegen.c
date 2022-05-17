@@ -2717,7 +2717,7 @@ codegen_lvalue_unary(struct expr const* expr, size_t id)
 }
 
 void
-codegen(char const* const opt_o, bool opt_k, char const* const* opt_l)
+codegen(bool opt_c, bool opt_k, char const* const* opt_l, char const* const opt_o)
 {
     assert(opt_o != NULL);
 
@@ -2747,12 +2747,16 @@ codegen(char const* const opt_o, bool opt_k, char const* const* opt_l)
     }
     sbuf_push(ld_argv, (char const*)NULL);
 
-    appendch('\n');
+    if (!opt_c) {
+        appendln("%%define __entry");
+        appendch('\n');
+    }
     codegen_static_constants();
     appendch('\n');
     codegen_static_variables();
     appendch('\n');
     codegen_static_functions();
+    appendch('\n');
     codegen_sys();
 
     int err = 0;
@@ -2770,13 +2774,15 @@ codegen(char const* const opt_o, bool opt_k, char const* const* opt_l)
         goto cleanup;
     }
 
-    if ((err = spawnvpw(ld_argv))) {
+    if (!opt_c && (err = spawnvpw(ld_argv))) {
         goto cleanup;
     }
 
 cleanup:
     if (!opt_k) {
         (void)remove(string_start(asm_path));
+    }
+    if (!opt_k && !opt_c) {
         (void)remove(string_start(obj_path));
     }
     sbuf_fini(nasm_argv);

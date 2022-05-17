@@ -11,6 +11,7 @@
 
 // clang-format off
 static char const*       path = NULL;
+static bool              opt_c = false;
 static bool              opt_k = false;
 static sbuf(char const*) opt_l = NULL;
 static char const*       opt_o = "a.out";
@@ -33,8 +34,10 @@ main(int argc, char** argv)
     atexit(context_fini);
 
     load_module(path, canonical_path(path));
-    validate_main_is_defined_correctly();
-    codegen(opt_o, opt_k, opt_l);
+    if (!opt_c) {
+        validate_main_is_defined_correctly();
+    }
+    codegen(opt_c, opt_k, opt_l, opt_o);
 
     return EXIT_SUCCESS;
 }
@@ -47,9 +50,10 @@ usage(void)
    "Usage: sunder-compile [OPTION]... FILE",
    "",
    "Options:",
+   "  -c        Compile to an object file, but do not link.",
    "  -k        Keep intermediate files (.o and .asm).",
    "  -l OPT    Pass OPT directly to the linker.",
-   "  -o OUT    Write output excutable to OUT (default a.out).",
+   "  -o OUT    Write output executable to OUT (default a.out).",
    "  -h        Display usage information and exit.",
     };
     // clang-format on
@@ -62,8 +66,12 @@ static void
 argparse(int argc, char** argv)
 {
     int c = 0;
-    while ((c = getopt(argc, argv, "kl:o:h")) != -1) {
+    while ((c = getopt(argc, argv, "ckl:o:h")) != -1) {
         switch (c) {
+        case 'c': {
+            opt_c = true;
+            break;
+        }
         case 'k': {
             opt_k = true;
             break;
