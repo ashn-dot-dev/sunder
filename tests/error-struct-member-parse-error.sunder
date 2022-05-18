@@ -1,0 +1,7 @@
+struct foo {
+    1 + 1;
+}
+################################################################################
+# [error-struct-member-parse-error.sunder:2] error: expected member variable, member constant, or member function, found `integer(1)`
+#     1 + 1;
+#     ^

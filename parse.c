@@ -1584,7 +1584,7 @@ parse_member(struct parser* parser)
 
     fatal(
         &parser->current_token->location,
-        "expected member variable or member function, found `%s`",
+        "expected member variable, member constant, or member function, found `%s`",
         token_to_new_cstr(parser->current_token));
     return NULL;
 }
