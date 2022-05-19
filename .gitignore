@@ -5,6 +5,8 @@ greet
 *.out
 *.o
 *.asm
+*.tmp
+
 !nasm-test.asm
 !lib/sys/sys.asm
-*.tmp
+!examples/custom-sys-asm/sys.asm

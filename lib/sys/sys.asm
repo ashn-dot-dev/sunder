@@ -166,6 +166,22 @@ __dump_lookup_table: db \
     'F0', 'F1', 'F2', 'F3', 'F4', 'F5', 'F6', 'F7', \
     'F8', 'F9', 'FA', 'FB', 'FC', 'FD', 'FE', 'FF'
 
+; BUILTIN INTEGER DIVIDE BY ZERO HANDLER
+; ======================================
+section .text
+__fatal_integer_divide_by_zero:
+    push rbp
+    mov rbp, rsp
+
+    mov rax, __SYS_WRITE
+    mov rdi, __STDERR_FILENO
+    mov rsi, __fatal_integer_divide_by_zero_msg_start
+    mov rdx, __fatal_integer_divide_by_zero_msg_count
+    syscall
+
+    mov rax, __SYS_EXIT
+    mov rdi, __EXIT_FAILURE
+    syscall
 
 ; BUILTIN OUT-OF-RANGE INTEGER RESULT HANDLER
 ; ===========================================
@@ -188,28 +204,9 @@ section .rodata
 __fatal_integer_out_of_range_msg_start: db "fatal: arithmetic operation produces out-of-range result", 0x0A
 __fatal_integer_out_of_range_msg_count: equ $ - __fatal_integer_out_of_range_msg_start
 
-
-; BUILTIN INTEGER DIVIDE BY ZERO HANDLER
-; ======================================
-section .text
-__fatal_integer_divide_by_zero:
-    push rbp
-    mov rbp, rsp
-
-    mov rax, __SYS_WRITE
-    mov rdi, __STDERR_FILENO
-    mov rsi, __fatal_integer_divide_by_zero_msg_start
-    mov rdx, __fatal_integer_divide_by_zero_msg_count
-    syscall
-
-    mov rax, __SYS_EXIT
-    mov rdi, __EXIT_FAILURE
-    syscall
-
 section .rodata
 __fatal_integer_divide_by_zero_msg_start: db "fatal: divide by zero", 0x0A
 __fatal_integer_divide_by_zero_msg_count: equ $ - __fatal_integer_divide_by_zero_msg_start
-
 
 ; BUILTIN INDEX OUT-OF-BOUNDS HANDLER
 ; ===================================
@@ -231,7 +228,6 @@ __fatal_index_out_of_bounds:
 section .rodata
 __fatal_index_out_of_bounds_msg_start: db "fatal: index out-of-bounds", 0x0A
 __fatal_index_out_of_bounds_msg_count: equ $ - __fatal_index_out_of_bounds_msg_start
-
 
 ; SYS DEFINITIONS (lib/sys/sys.sunder)
 ; ====================================

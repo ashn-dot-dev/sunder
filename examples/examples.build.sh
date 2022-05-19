@@ -9,3 +9,8 @@ for f in *.sunder; do
     echo $CMD
     eval $CMD
 done
+
+export SUNDER_SYSASM_PATH=custom-sys-asm/sys.asm
+CMD="${SUNDER_HOME}/bin/sunder-compile -o custom-sys-asm/custom-sys-asm custom-sys-asm/main.sunder"
+echo $CMD
+eval $CMD

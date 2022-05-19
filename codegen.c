@@ -836,25 +836,34 @@ codegen_static_functions(void)
 static void
 codegen_sys(void)
 {
-    char const* SUNDER_HOME = getenv("SUNDER_HOME");
-    if (SUNDER_HOME == NULL) {
-        fatal(NULL, "missing environment variable SUNDER_HOME");
+    struct string* path = NULL;
+
+    char const* const SUNDER_SYSASM_PATH = getenv("SUNDER_SYSASM_PATH");
+    if (SUNDER_SYSASM_PATH != NULL) {
+        // User is explicitly overriding the default `sys.asm` file.
+        path = string_new_fmt("%s", SUNDER_SYSASM_PATH);
     }
-    struct string* const core =
-        string_new_fmt("%s/lib/sys/sys.asm", SUNDER_HOME);
+    else {
+        // Use the default `sys.asm` file, `$SUNDER_HOME/lib/sys/sys.asm`.
+        char const* const SUNDER_HOME = getenv("SUNDER_HOME");
+        if (SUNDER_HOME == NULL) {
+            fatal(NULL, "missing environment variable SUNDER_HOME");
+        }
+        path = string_new_fmt("%s/lib/sys/sys.asm", SUNDER_HOME);
+    }
 
     void* buf = NULL;
     size_t buf_size = 0;
-    if (file_read_all(string_start(core), &buf, &buf_size)) {
+    if (file_read_all(string_start(path), &buf, &buf_size)) {
         fatal(
             NULL,
             "failed to read '%s' with error '%s'",
-            string_start(core),
+            string_start(path),
             strerror(errno));
     }
     append("%.*s", (int)buf_size, (char const*)buf);
 
-    string_del(core);
+    string_del(path);
     xalloc(buf, XALLOC_FREE);
 }
 
