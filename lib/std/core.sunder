@@ -170,7 +170,7 @@ extend []byte func compare(lhs: *[]byte, rhs: *[]byte) ssize {
 
 extend []byte func hash(self: *[]byte) usize {
     # Implementation of djb2 with an additional statement that zeroes the upper
-    # five bits of the hash before the multiplcation in order to prevent
+    # five bits of the hash before the multiplication in order to prevent
     # overflow.
     var hash = 5381u;
     for i in countof(*self) {
@@ -290,7 +290,7 @@ struct slice[[T]] { # namespace
         return *(:**T)&lhs == *(:**T)&rhs and countof(lhs) == countof(rhs);
     }
 
-    # Copy the elements of `source` into `destination`.The source and
+    # Copy the elements of `source` into `destination`. The source and
     # destination buffers must contain the same number of elements.
     func copy(destination: []T, source: []T) void {
         if countof(destination) != countof(source) {
@@ -516,8 +516,8 @@ struct writer {
         };
     }
 
-    # Attempt to write `countof(buf)` bytes using the provided writer. The
-    # write operation must not mutate the contents of `buf`.
+    # Attempt to write `countof(buf)` bytes to the provided writer. The write
+    # operation must not mutate the contents of `buf`.
     #
     # On success, this function returns the number of bytes written, which may
     # be less than `countof(buf)` in the event of a partial write.
@@ -693,8 +693,8 @@ struct allocator {
     # allocator.
     #
     # On success, this function returns a pointer to the start of the
-    # reallocated block, which may have same address as the input `ptr` argument
-    # in the event of a no-op reallocation.
+    # reallocated block, which may have same address as the input `ptr`
+    # argument in the event of a no-op reallocation.
     #
     # On failure, this function returns a static string describing the failure.
     func reallocate(self: *allocator, ptr: *byte, align: usize, old_size: usize, new_size: usize) std::result[[*byte, []byte]] {
@@ -843,10 +843,10 @@ func read_all(reader: std::reader, allocator: std::allocator) std::result[[[]byt
 
 # Read from the provided reader, invoking the reader's `read` function
 # repeatedly until a newline is encountered, an end-of-input condition is
-# reached, or an error occurs. If an end-of-input condition is encountered while
-# reading a line, and the line is empty, an empty optional is returned. If an
-# end-of-input condition is encountered while reading a non-empty line, it is
-# treated as a newline.
+# reached, or an error occurs. If an end-of-input condition is encountered
+# while reading a line, and the line is empty, an empty optional is returned.
+# If an end-of-input condition is encountered while reading a non-empty line,
+# it is treated as a newline.
 #
 # On success, this function returns a non-empty optional slice of bytes
 # containing the read line without the ending newline, allocated using the
@@ -891,9 +891,11 @@ func read_line(reader: std::reader, allocator: std::allocator) std::result[[std:
     return std::result[[std::optional[[[]byte]], []byte]]::init_value(std::optional[[[]byte]]::init_value(bytes));
 }
 
-# Write `countof(buf)` bytes using the provided writer, invoking the writer's
+# Write `countof(buf)` bytes to the provided writer, invoking the writer's
 # `write` function repeatedly until either all bytes have been written or an
 # error occurs.
+#
+# On failure, this function returns a static string describing the failure.
 func write_all(writer: std::writer, buf: []byte) std::result[[void, []byte]] {
     var written: usize = 0;
     for written < countof(buf) {
@@ -906,6 +908,11 @@ func write_all(writer: std::writer, buf: []byte) std::result[[void, []byte]] {
     return std::result[[void, []byte]]::init_value(void::init());
 }
 
+# Write `countof(buf)` bytes, followed by a newline, to the provided writer,
+# invoking the writer's `write` function repeatedly until either all bytes have
+# been written or an error occurs.
+#
+# On failure, this function returns a static string describing the failure.
 func write_line(writer: std::writer, buf: []byte) std::result[[void, []byte]] {
     var result = std::write_all(writer, buf);
     if result.is_error() {
@@ -920,6 +927,11 @@ func write_line(writer: std::writer, buf: []byte) std::result[[void, []byte]] {
     return std::result[[void, []byte]]::init_value(void::init());
 }
 
+# Write formatted bytes to the provided writer, invoking the writer's `write`
+# function repeatedly until either all bytes have been written or an error
+# occurs.
+#
+# On failure, this function returns a static string describing the failure.
 func write_format(writer: std::writer, format: []byte, args: []std::formatter) std::result[[void, []byte]] {
     # Current format argument index.
     var arg: usize = 0;
@@ -1223,7 +1235,7 @@ func zeroed[[T]]() T {
 #
 # Some template functions, such as std::_int::compare, are implemented with a
 # generic integer template type parameter T, but will only ever be instantiated
-# twice, once for std::umax and std::smax.
+# twice, once for std::umax and once for std::smax.
 #
 # Other functions, such as std::_int::init_from_str_common and
 # std::_int::format_common, contain a single common implementation for all
