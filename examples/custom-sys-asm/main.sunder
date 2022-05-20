@@ -1,0 +1,11 @@
+func main() void {
+    # The custom sys.asm does not output any text when a dump statement is
+    # used, so this line should not write to any of the standard IO streams.
+    dump 0xDEADBEEFu32;
+
+    # Create a divide-by-zero error on purpose. This should cause the program
+    # to exit with failure status.
+    var a = 123u;
+    var b = 0u;
+    var c = a / b;
+}
