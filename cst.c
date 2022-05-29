@@ -523,16 +523,6 @@ cst_expr_new_grouped(
 }
 
 struct cst_expr*
-cst_expr_new_syscall(
-    struct source_location const* location,
-    struct cst_expr const* const* arguments)
-{
-    struct cst_expr* const self = cst_expr_new(location, CST_EXPR_SYSCALL);
-    self->data.syscall.arguments = arguments;
-    return self;
-}
-
-struct cst_expr*
 cst_expr_new_call(
     struct source_location const* location,
     struct cst_expr const* func,

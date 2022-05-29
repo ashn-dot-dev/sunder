@@ -101,9 +101,6 @@ eval_rvalue(struct expr const* expr)
     case EXPR_CAST: {
         return eval_rvalue_cast(expr);
     }
-    case EXPR_SYSCALL: {
-        fatal(expr->location, "constant expression contains system call");
-    }
     case EXPR_CALL: {
         fatal(expr->location, "constant expression contains function call");
     }
@@ -1008,7 +1005,6 @@ eval_lvalue(struct expr const* expr)
     case EXPR_ARRAY_SLICE: /* fallthrough */
     case EXPR_STRUCT: /* fallthrough */
     case EXPR_CAST: /* fallthrough */
-    case EXPR_SYSCALL: /* fallthrough */
     case EXPR_CALL: /* fallthrough */
     case EXPR_ACCESS_SLICE: /* fallthrough */
     case EXPR_SIZEOF: /* fallthrough */

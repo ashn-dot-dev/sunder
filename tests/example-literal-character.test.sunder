@@ -1,3 +1,5 @@
+import "std";
+
 const nul: byte = '\0';
 const ht: byte = '\t';
 const nl: byte = '\n';
@@ -6,23 +8,20 @@ const dquote: byte = '\"';
 const bslash: byte = '\\';
 const hexamp: byte = '\x40';
 
-func print(ch: byte) void {
-    var buf: [4u]byte = (:[4u]byte)['>', ch, '<', '\n'];
-    const SYS_WRITE: ssize = 1s;
-    const STDOUT_FILENO: ssize = 1s;
-    syscall(SYS_WRITE, STDOUT_FILENO, &buf, 4u);
+func printch(ch: byte) void {
+    std::print_line(std::out(), (:[]byte)['>', ch, '<']);
 }
 
 func main() void {
     # A NUL byte \0 embedded in this source file as part of the expected output
     # would create an invalid source encoding. Skip testing the NUL byte and
     # assume that the global `nul` constant produced the correct bytes literal.
-    print(ht);
-    print(nl);
-    print(squote);
-    print(dquote);
-    print(bslash);
-    print(hexamp);
+    printch(ht);
+    printch(nl);
+    printch(squote);
+    printch(dquote);
+    printch(bslash);
+    printch(hexamp);
 }
 ################################################################################
 # >	<

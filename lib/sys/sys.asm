@@ -9,8 +9,17 @@ __STDIN_FILENO:  equ 0
 __STDOUT_FILENO: equ 1
 __STDERR_FILENO: equ 2
 
-__SYS_WRITE: equ 1
-__SYS_EXIT:  equ 60
+__SYS_READ:   equ 0;
+__SYS_WRITE:  equ 1
+__SYS_OPEN:   equ 2;
+__SYS_CLOSE:  equ 3;
+__SYS_LSEEK:  equ 8;
+__SYS_MMAP:   equ 9;
+__SYS_MUNMAP: equ 11;
+__SYS_FORK:   equ 57;
+__SYS_EXECVE: equ 59;
+__SYS_EXIT:   equ 60;
+__SYS_WAIT4:  equ 61;
 
 ; BUILTIN DUMP SUBROUTINE
 ; =======================
@@ -235,6 +244,205 @@ section .data
 sys.argc: dq 0 ; extern var argc: usize;
 sys.argv: dq 0 ; extern var argv: **byte;
 sys.envp: dq 0 ; extern var envp: **byte;
+
+; Linux x64 syscall kernel interface format:
+; + rax => [in] syscall number
+;          [out] return value (negative indicates -ERRNO)
+; + rdi => [in] parameter 1
+; + rsi => [in] parameter 2
+; + rdx => [in] parameter 3
+; + r10 => [in] parameter 4
+; + r8  => [in] parameter 5
+; + r9  => [in] parameter 6
+
+; linux/fs/read_write.c:
+; SYSCALL_DEFINE3(read, unsigned int, fd, char __user *, buf, size_t, count)
+global sys.read
+sys.read:
+    push rbp
+    mov rbp, rsp
+
+    mov rax, __SYS_READ
+    mov rdi, [rbp + 0x20] ; fd
+    mov rsi, [rbp + 0x18] ; buf
+    mov rdx, [rbp + 0x10] ; count
+    syscall
+    mov [rbp + 0x28], rax
+
+    mov rsp, rbp
+    pop rbp
+    ret
+
+; linux/fs/read_write.c:
+; SYSCALL_DEFINE3(write, unsigned int, fd, const char __user *, buf, size_t, count)
+global sys.write
+sys.write:
+    push rbp
+    mov rbp, rsp
+
+    mov rax, __SYS_WRITE
+    mov rdi, [rbp + 0x20] ; fd
+    mov rsi, [rbp + 0x18] ; buf
+    mov rdx, [rbp + 0x10] ; count
+    syscall
+    mov [rbp + 0x28], rax
+
+    mov rsp, rbp
+    pop rbp
+    ret
+
+; linux/fs/open.c:
+; SYSCALL_DEFINE3(open, const char __user *, filename, int, flags, umode_t, mode)
+global sys.open
+sys.open:
+    push rbp
+    mov rbp, rsp
+
+    mov rax, __SYS_OPEN
+    mov rdi, [rbp + 0x20] ; filename
+    mov rsi, [rbp + 0x18] ; flags
+    mov rdx, [rbp + 0x10] ; mode
+    syscall
+    mov [rbp + 0x28], rax
+
+    mov rsp, rbp
+    pop rbp
+    ret
+
+; linux/fs/open.c:
+; SYSCALL_DEFINE1(close, unsigned int, fd)
+global sys.close
+sys.close:
+    push rbp
+    mov rbp, rsp
+
+    mov rax, __SYS_CLOSE
+    mov rdi, [rbp + 0x10] ; fd
+    syscall
+    mov [rbp + 0x18], rax
+
+    mov rsp, rbp
+    pop rbp
+    ret
+
+; linux/fs/read_write.c:
+; SYSCALL_DEFINE3(lseek, unsigned int, fd, off_t, offset, unsigned int, whence)
+global sys.lseek
+sys.lseek:
+    push rbp
+    mov rbp, rsp
+
+    mov rax, __SYS_LSEEK
+    mov rdi, [rbp + 0x20] ; fd
+    mov rsi, [rbp + 0x18] ; offset
+    mov rdx, [rbp + 0x10] ; whence
+    syscall
+    mov [rbp + 0x28], rax
+
+    mov rsp, rbp
+    pop rbp
+    ret
+
+; arch/x86/kernel/sys_x86_64.c:
+; SYSCALL_DEFINE6(mmap, unsigned long, addr, unsigned long, len, unsigned long, prot, unsigned long, flags, unsigned long, fd, unsigned long, off)
+global sys.mmap:
+sys.mmap:
+    push rbp
+    mov rbp, rsp
+
+    mov rax, __SYS_MMAP
+    mov rdi, [rbp + 0x38] ; addr
+    mov rsi, [rbp + 0x30] ; len
+    mov rdx, [rbp + 0x28] ; prot
+    mov r10, [rbp + 0x20] ; flags
+    mov r8,  [rbp + 0x18] ; fd
+    mov r9,  [rbp + 0x10] ; off
+    syscall
+    mov [rbp + 0x40], rax
+
+    mov rsp, rbp
+    pop rbp
+    ret
+
+; linux/mm/mmap.c:
+; SYSCALL_DEFINE2(munmap, unsigned long, addr, size_t, len)
+global sys.munmap
+sys.munmap:
+    push rbp
+    mov rbp, rsp
+
+    mov rax, __SYS_MUNMAP
+    mov rdi, [rbp + 0x18] ; addr
+    mov rsi, [rbp + 0x10] ; len
+    syscall
+    mov [rbp + 0x20], rax
+
+    mov rsp, rbp
+    pop rbp
+    ret
+
+; linux/kernel/fork.c:
+; SYSCALL_DEFINE0(fork)
+global sys.fork
+sys.fork:
+    push rbp
+    mov rbp, rsp
+
+    mov rax, __SYS_FORK
+    syscall
+    mov [rbp + 0x10], rax
+
+    mov rsp, rbp
+    pop rbp
+    ret
+
+# linux/fs/exec.c
+# SYSCALL_DEFINE3(execve, const char __user *, filename, const char __user *const __user *, argv, const char __user *const __user *, envp)
+global sys.execve
+sys.execve:
+    push rbp
+    mov rbp, rsp
+
+    mov rax, __SYS_EXECVE
+    mov rdi, [rbp + 0x20] ; filename
+    mov rsi, [rbp + 0x18] ; argv
+    mov rdx, [rbp + 0x10] ; envp
+    syscall
+    mov [rbp + 0x28], rax
+
+    mov rsp, rbp
+    pop rbp
+    ret
+
+; linux/kernel/exit.c:
+; SYSCALL_DEFINE1(exit, int, error_code)
+global sys.exit
+sys.exit:
+    push rbp
+    mov rbp, rsp
+
+    mov rax, __SYS_EXIT
+    mov rdi, [rbp + 0x10] ; error_code
+    syscall
+
+# linux/kernel/exit.c:
+# SYSCALL_DEFINE4(wait4, pid_t, upid, int __user *, stat_addr, int, options, struct rusage __user *, ru)
+global sys.wait4
+sys.wait4:
+    push rbp
+    mov rbp, rsp
+
+    mov rax, __SYS_WAIT4
+    mov rdi, [rbp + 0x28] ; upid
+    mov rsi, [rbp + 0x20] ; stat_addr
+    mov rdx, [rbp + 0x18] ; options
+    mov r10, [rbp + 0x10] ; ru
+    syscall
+    mov [rbp + 0x30], rax
+
+    mov rsp, rbp
+    pop rbp
+    ret
 
 ; PROGRAM ENTRY POINT
 ; ===================

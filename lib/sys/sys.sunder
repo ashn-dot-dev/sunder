@@ -49,18 +49,6 @@ alias umode_t = ushort;
 alias pid_t   = sint;
 alias off_t   = slong;
 
-const SYS_READ:   ssize = 0;
-const SYS_WRITE:  ssize = 1;
-const SYS_OPEN:   ssize = 2;
-const SYS_CLOSE:  ssize = 3;
-const SYS_LSEEK:  ssize = 8;
-const SYS_MMAP:   ssize = 9;
-const SYS_MUNMAP: ssize = 11;
-const SYS_FORK:   ssize = 57;
-const SYS_EXECVE: ssize = 59;
-const SYS_EXIT:   ssize = 60;
-const SYS_WAIT4:  ssize = 61;
-
 const EPERM:           ssize = 1;
 const ENOENT:          ssize = 2;
 const ESRCH:           ssize = 3;
@@ -444,71 +432,17 @@ struct rusage {
     var ru_nivcsw:   slong;
 }
 
-# linux/fs/read_write.c:
-# SYSCALL_DEFINE3(read, unsigned int, fd, char __user *, buf, size_t, count)
-func read(fd: uint, buf: *char, count: usize) ssize {
-    return syscall(SYS_READ, fd, buf, count);
-}
-
-# linux/fs/read_write.c:
-# SYSCALL_DEFINE3(write, unsigned int, fd, const char __user *, buf, size_t, count)
-func write(fd: uint, buf: *char, count: usize) ssize {
-    return syscall(SYS_WRITE, fd, buf, count);
-}
-
-# linux/fs/open.c:
-# SYSCALL_DEFINE3(open, const char __user *, filename, int, flags, umode_t, mode)
-func open(filename: *char, flags: sint, mode: umode_t) ssize {
-    return syscall(SYS_OPEN, filename, flags, mode);
-}
-
-# linux/fs/open.c:
-# SYSCALL_DEFINE1(close, unsigned int, fd)
-func close(fd: uint) ssize {
-    return syscall(SYS_CLOSE, fd);
-}
-
-# linux/fs/read_write.c:
-# SYSCALL_DEFINE3(lseek, unsigned int, fd, off_t, offset, unsigned int, whence)
-func lseek(fd: uint, offset: off_t, whence: uint) ssize {
-    return syscall(SYS_LSEEK, fd, offset, whence);
-}
-
-# arch/x86/kernel/sys_x86_64.c:
-# SYSCALL_DEFINE6(mmap, unsigned long, addr, unsigned long, len, unsigned long, prot, unsigned long, flags, unsigned long, fd, unsigned long, off)
-func mmap(addr: ulong, len: ulong, prot: ulong, flags: ulong, fd: ulong, off: ulong) ssize {
-    return syscall(SYS_MMAP, addr, len, prot, flags, fd, off);
-}
-
-# linux/mm/mmap.c:
-# SYSCALL_DEFINE2(munmap, unsigned long, addr, size_t, len)
-func munmap(addr: ulong, len: usize) ssize {
-    return syscall(SYS_MUNMAP, addr, len);
-}
-
-# linux/kernel/fork.c:
-# SYSCALL_DEFINE0(fork)
-func fork() ssize {
-    return syscall(SYS_FORK);
-}
-
-# linux/fs/exec.c
-# SYSCALL_DEFINE3(execve, const char __user *, filename, const char __user *const __user *, argv, const char __user *const __user *, envp)
-func execve(filename: *byte, argv: **byte, envp: **byte) ssize {
-    return syscall(SYS_EXECVE, filename, argv, envp);
-}
-
-# linux/kernel/exit.c:
-# SYSCALL_DEFINE1(exit, int, error_code)
-func exit(error_code: sint) void {
-    syscall(SYS_EXIT, error_code);
-}
-
-# linux/kernel/exit.c:
-# SYSCALL_DEFINE4(wait4, pid_t, upid, int __user *, stat_addr, int, options, struct rusage __user *, ru)
-func wait4(upid: pid_t, stat_addr: *sint, options: sint, ru: *rusage) ssize {
-    return syscall(SYS_WAIT4, upid, stat_addr, options, ru);
-}
+extern func read(fd: uint, buf: *char, count: usize) ssize;
+extern func write(fd: uint, buf: *char, count: usize) ssize;
+extern func open(filename: *char, flags: sint, mode: umode_t) ssize;
+extern func close(fd: uint) ssize;
+extern func lseek(fd: uint, offset: off_t, whence: uint) ssize;
+extern func mmap(addr: ulong, len: ulong, prot: ulong, flags: ulong, fd: ulong, off: ulong) ssize;
+extern func munmap(addr: ulong, len: usize) ssize;
+extern func fork() ssize;
+extern func execve(filename: *byte, argv: **byte, envp: **byte) ssize;
+extern func exit(error_code: sint) void;
+extern func wait4(upid: pid_t, stat_addr: *sint, options: sint, ru: *rusage) ssize;
 
 # linux/tools/include/nolibc/nolibc.h:
 # #define WEXITSTATUS(status)   (((status) & 0xff00) >> 8)

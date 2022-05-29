@@ -1277,19 +1277,6 @@ expr_new_cast(
 }
 
 struct expr*
-expr_new_syscall(
-    struct source_location const* location, struct expr const* const* arguments)
-{
-    assert(location != NULL);
-    assert(arguments != NULL);
-
-    struct expr* const self =
-        expr_new(location, context()->builtin.ssize, EXPR_SYSCALL);
-    self->data.syscall.arguments = arguments;
-    return self;
-}
-
-struct expr*
 expr_new_call(
     struct source_location const* location,
     struct expr const* function,
@@ -1490,7 +1477,6 @@ expr_is_lvalue(struct expr const* self)
     case EXPR_ARRAY_SLICE: /* fallthrough */
     case EXPR_STRUCT: /* fallthrough */
     case EXPR_CAST: /* fallthrough */
-    case EXPR_SYSCALL: /* fallthrough */
     case EXPR_CALL: /* fallthrough */
     case EXPR_ACCESS_SLICE: /* fallthrough */
     case EXPR_SIZEOF: /* fallthrough */

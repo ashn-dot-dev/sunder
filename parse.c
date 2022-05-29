@@ -125,8 +125,6 @@ parse_expr_bytes(struct parser* parser);
 static struct cst_expr const*
 parse_expr_lparen(struct parser* parser);
 static struct cst_expr const*
-parse_expr_syscall(struct parser* parser);
-static struct cst_expr const*
 parse_expr_led_lparen(struct parser* parser, struct cst_expr const* lhs);
 static struct cst_expr const*
 parse_expr_led_lbracket(struct parser* parser, struct cst_expr const* lhs);
@@ -890,9 +888,6 @@ token_kind_nud(enum token_kind kind)
     case TOKEN_LPAREN: {
         return parse_expr_lparen;
     }
-    case TOKEN_SYSCALL: {
-        return parse_expr_syscall;
-    }
     case TOKEN_SIZEOF: {
         return parse_expr_sizeof;
     }
@@ -1171,29 +1166,6 @@ parse_expr_lparen(struct parser* parser)
 
     struct cst_expr* const product =
         cst_expr_new_cast(location, typespec, expr);
-
-    freeze(product);
-    return product;
-}
-
-static struct cst_expr const*
-parse_expr_syscall(struct parser* parser)
-{
-    assert(parser != NULL);
-
-    struct source_location const* const location =
-        &expect_current(parser, TOKEN_SYSCALL)->location;
-    expect_current(parser, TOKEN_LPAREN);
-    sbuf(struct cst_expr const*) exprs = NULL;
-    sbuf_push(exprs, parse_expr(parser));
-    while (!check_current(parser, TOKEN_RPAREN)) {
-        expect_current(parser, TOKEN_COMMA);
-        sbuf_push(exprs, parse_expr(parser));
-    }
-    sbuf_freeze(exprs);
-    expect_current(parser, TOKEN_RPAREN);
-
-    struct cst_expr* const product = cst_expr_new_syscall(location, exprs);
 
     freeze(product);
     return product;

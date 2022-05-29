@@ -239,8 +239,6 @@ resolve_expr_struct(struct resolver* resolver, struct cst_expr const* expr);
 static struct expr const*
 resolve_expr_cast(struct resolver* resolver, struct cst_expr const* expr);
 static struct expr const*
-resolve_expr_syscall(struct resolver* resolver, struct cst_expr const* expr);
-static struct expr const*
 resolve_expr_call(struct resolver* resolver, struct cst_expr const* expr);
 static struct expr const*
 resolve_expr_access_index(
@@ -2465,9 +2463,6 @@ resolve_expr(struct resolver* resolver, struct cst_expr const* expr)
     case CST_EXPR_GROUPED: {
         return resolve_expr(resolver, expr->data.grouped.expr);
     }
-    case CST_EXPR_SYSCALL: {
-        return resolve_expr_syscall(resolver, expr);
-    }
     case CST_EXPR_CALL: {
         return resolve_expr_call(resolver, expr);
     }
@@ -3037,55 +3032,6 @@ resolve_expr_cast(struct resolver* resolver, struct cst_expr const* expr)
     }
 
     struct expr* const resolved = expr_new_cast(expr->location, type, rhs);
-
-    freeze(resolved);
-    return resolved;
-}
-
-static struct expr const*
-resolve_expr_syscall(struct resolver* resolver, struct cst_expr const* expr)
-{
-    assert(resolver != NULL);
-    assert(expr != NULL);
-    assert(expr->kind == CST_EXPR_SYSCALL);
-
-    sbuf(struct cst_expr const* const) arguments = expr->data.syscall.arguments;
-    size_t const arguments_count = sbuf_count(arguments);
-
-    // Sanity-check assert. The parser should have reported a fatal error if
-    // fewer than SYSCALL_ARGUMENTS_MIN were provided.
-    assert(arguments_count >= SYSCALL_ARGUMENTS_MIN);
-
-    if (arguments_count > SYSCALL_ARGUMENTS_MAX) {
-        fatal(
-            expr->location,
-            "%zu syscall arguments provided (maximum %zu allowed)",
-            arguments_count,
-            SYSCALL_ARGUMENTS_MAX);
-    }
-
-    sbuf(struct expr const*) exprs = NULL;
-    for (size_t i = 0; i < sbuf_count(arguments); ++i) {
-        struct expr const* const arg = resolve_expr(resolver, arguments[i]);
-        if (arg->type->size == SIZEOF_UNSIZED) {
-            fatal(
-                arg->location,
-                "unsized type `%s` in syscall expression",
-                arg->type->name);
-        }
-
-        bool const valid_type =
-            type_is_any_integer(arg->type) || arg->type->kind == TYPE_POINTER;
-        if (!valid_type) {
-            fatal(
-                arg->location,
-                "expected integer or pointer type (received `%s`)",
-                arg->type->name);
-        }
-        sbuf_push(exprs, arg);
-    }
-    sbuf_freeze(exprs);
-    struct expr* const resolved = expr_new_syscall(expr->location, exprs);
 
     freeze(resolved);
     return resolved;

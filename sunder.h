@@ -900,7 +900,6 @@ enum token_kind {
     TOKEN_IN,
     TOKEN_BREAK,
     TOKEN_CONTINUE,
-    TOKEN_SYSCALL,
     TOKEN_ALIGNOF,
     TOKEN_COUNTOF,
     TOKEN_SIZEOF,
@@ -1216,7 +1215,6 @@ struct cst_expr {
         CST_EXPR_CAST,
         CST_EXPR_GROUPED,
         // Postfix Expressions
-        CST_EXPR_SYSCALL,
         CST_EXPR_CALL,
         CST_EXPR_ACCESS_INDEX,
         CST_EXPR_ACCESS_SLICE,
@@ -1260,9 +1258,6 @@ struct cst_expr {
         struct {
             struct cst_expr const* expr;
         } grouped;
-        struct cst_stmt_syscall {
-            sbuf(struct cst_expr const* const) arguments;
-        } syscall;
         struct {
             struct cst_expr const* func;
             sbuf(struct cst_expr const* const) arguments;
@@ -1341,10 +1336,6 @@ cst_expr_new_cast(
 struct cst_expr*
 cst_expr_new_grouped(
     struct source_location const* location, struct cst_expr const* expr);
-struct cst_expr*
-cst_expr_new_syscall(
-    struct source_location const* location,
-    struct cst_expr const* const* arguments);
 struct cst_expr*
 cst_expr_new_call(
     struct source_location const* location,
@@ -2038,12 +2029,6 @@ stmt_new_assign(
 struct stmt*
 stmt_new_expr(struct source_location const* location, struct expr const* expr);
 
-// Minimum and maximum number of syscall arguments (including the syscall
-// number) passed to a syscall expression. This is based on the Linux syscall
-// convention which allows for a maximum of six parameters plus the syscall
-// number to be passed via registers.
-#define SYSCALL_ARGUMENTS_MIN ((size_t)1)
-#define SYSCALL_ARGUMENTS_MAX ((size_t)7)
 struct expr {
     struct source_location const* location;
     struct type const* type;
@@ -2057,7 +2042,6 @@ struct expr {
         EXPR_ARRAY_SLICE,
         EXPR_STRUCT,
         EXPR_CAST,
-        EXPR_SYSCALL,
         EXPR_CALL,
         EXPR_ACCESS_INDEX,
         EXPR_ACCESS_SLICE,
@@ -2095,9 +2079,6 @@ struct expr {
         struct {
             struct expr const* expr;
         } cast;
-        struct {
-            sbuf(struct expr const* const) arguments;
-        } syscall;
         struct {
             // Expression resulting in a callable function.
             struct expr const* function;
@@ -2205,10 +2186,6 @@ expr_new_cast(
     struct source_location const* location,
     struct type const* type,
     struct expr const* expr);
-struct expr*
-expr_new_syscall(
-    struct source_location const* location,
-    struct expr const* const* arguments);
 struct expr*
 expr_new_call(
     struct source_location const* location,

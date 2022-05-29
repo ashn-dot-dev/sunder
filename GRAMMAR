@@ -76,7 +76,6 @@
          | <expr-struct>
          | <expr-cast>
          | <expr-grouped>
-         | <expr-syscall>
          | <expr-call>
          | <expr-access-index>
          | <expr-access-slice>
@@ -104,8 +103,6 @@
 <expr-cast> ::= "(" ":" <typespec> ")" <expr>
 
 <expr-grouped> ::= "(" <expr> ")"
-
-<expr-syscall> ::= "syscall" "(" <expr> ("," <expr>)* ")"
 
 <expr-call> ::= <expr> "(" (<expr> ("," <expr>)*)? ")"
 

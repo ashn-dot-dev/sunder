@@ -744,8 +744,6 @@ codegen_rvalue_struct(struct expr const* expr, size_t id);
 static void
 codegen_rvalue_cast(struct expr const* expr, size_t id);
 static void
-codegen_rvalue_syscall(struct expr const* expr, size_t id);
-static void
 codegen_rvalue_call(struct expr const* expr, size_t id);
 static void
 codegen_rvalue_access_index(struct expr const* expr, size_t id);
@@ -1307,7 +1305,6 @@ codegen_rvalue(struct expr const* expr)
         TABLE_ENTRY(EXPR_ARRAY_SLICE, codegen_rvalue_array_slice),
         TABLE_ENTRY(EXPR_STRUCT, codegen_rvalue_struct),
         TABLE_ENTRY(EXPR_CAST, codegen_rvalue_cast),
-        TABLE_ENTRY(EXPR_SYSCALL, codegen_rvalue_syscall),
         TABLE_ENTRY(EXPR_CALL, codegen_rvalue_call),
         TABLE_ENTRY(EXPR_ACCESS_INDEX, codegen_rvalue_access_index),
         TABLE_ENTRY(EXPR_ACCESS_SLICE, codegen_rvalue_access_slice),
@@ -1594,47 +1591,6 @@ codegen_rvalue_cast(struct expr const* expr, size_t id)
 
     // MOV the casted-to data back onto the stack.
     appendli("mov [rsp], rax");
-}
-
-static void
-codegen_rvalue_syscall(struct expr const* expr, size_t id)
-{
-    assert(expr != NULL);
-    assert(expr->kind == EXPR_SYSCALL);
-    (void)id;
-
-    struct expr const* const* const arguments = expr->data.syscall.arguments;
-    size_t const count = sbuf_count(arguments);
-    for (size_t i = 0; i < count; ++i) {
-        assert(arguments[i]->type->size <= 8);
-        codegen_rvalue(arguments[i]);
-    }
-
-    assert(count != 0);
-    assert(count <= 7);
-    if (count == 7) {
-        appendli("pop r9 ; syscall parameter 6");
-    }
-    if (count >= 6) {
-        appendli("pop r8 ; syscall parameter 5");
-    }
-    if (count >= 5) {
-        appendli("pop r10 ; syscall parameter 4");
-    }
-    if (count >= 4) {
-        appendli("pop rdx ; syscall parameter 3");
-    }
-    if (count >= 3) {
-        appendli("pop rsi ; syscall parameter 2");
-    }
-    if (count >= 2) {
-        appendli("pop rdi ; syscall parameter 1");
-    }
-    if (count >= 1) {
-        appendli("pop rax ; syscall number");
-    }
-    appendli("syscall");
-    appendli("push rax ; syscall result");
 }
 
 static void

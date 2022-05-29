@@ -366,14 +366,6 @@ order_expr(struct orderer* orderer, struct cst_expr const* expr)
         order_expr(orderer, expr->data.grouped.expr);
         return;
     }
-    case CST_EXPR_SYSCALL: {
-        sbuf(struct cst_expr const* const) const arguments =
-            expr->data.syscall.arguments;
-        for (size_t i = 0; i < sbuf_count(arguments); ++i) {
-            order_expr(orderer, arguments[i]);
-        }
-        return;
-    }
     case CST_EXPR_CALL: {
         order_expr(orderer, expr->data.call.func);
         sbuf(struct cst_expr const* const) const arguments =

@@ -1,3 +1,5 @@
+import "std";
+
 const hello: []byte = "Hello, world!\n";
 const nul: []byte = ">\0<\n";
 const ht: []byte = ">\t<\n";
@@ -6,25 +8,19 @@ const squote: []byte = ">\'<\n";
 const dquote: []byte = ">\"<\n";
 const bslash: []byte = ">\\<\n";
 
-func print(buf: *byte, count: usize) void {
-    const SYS_WRITE: ssize = 1s;
-    const STDOUT_FILENO: ssize = 1s;
-    syscall(SYS_WRITE, STDOUT_FILENO, buf, count);
-}
-
 func main() void {
-    print(&hello[0u], 14u);
+    std::print(std::out(), hello);
 
     # A NUL byte \0 embedded in this source file as part of the expected output
     # would create an invalid source encoding. Skip testing the NUL byte and
     # assume that the global `nul` constant produced the correct bytes literal.
-    print(&ht[0u], 4u);
-    print(&nl[0u], 4u);
-    print(&squote[0u], 4u);
-    print(&dquote[0u], 4u);
-    print(&bslash[0u], 4u);
+    std::print(std::out(), ht);
+    std::print(std::out(), nl);
+    std::print(std::out(), squote);
+    std::print(std::out(), dquote);
+    std::print(std::out(), bslash);
 
-    print(&"foobar\n"[3u:7u][0u], 4u);
+    std::print(std::out(), "foobar\n"[3u:7u]);
 
     var b: []byte = "lorem ipsum dolor sit amet";
     var c: []byte = "consectetur adipiscing elit";
