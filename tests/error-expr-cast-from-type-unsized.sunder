@@ -1,7 +1,0 @@
-func main() void {
-    dump (:u8)123456;
-}
-################################################################################
-# [error-expr-cast-from-type-unsized.sunder:2] error: invalid cast from unsized type `integer` to `u8`
-#     dump (:u8)123456;
-#               ^

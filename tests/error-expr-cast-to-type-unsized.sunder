@@ -1,7 +1,0 @@
-func main() void {
-    dump (:typeof(123456))123456u;
-}
-################################################################################
-# [error-expr-cast-to-type-unsized.sunder:2] error: invalid cast to unsized type `integer` from `usize`
-#     dump (:typeof(123456))123456u;
-#                           ^

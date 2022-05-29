@@ -1,0 +1,8 @@
+func main() void {
+    func foo() void {
+    }
+}
+################################################################################
+# [error-nested-function-declaration.test.sunder:2] error: nested function declaration
+#     func foo() void {
+#     ^

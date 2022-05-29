@@ -1,0 +1,19 @@
+struct foo {
+    var x: u16;
+
+    func fn(self: *foo) void {
+    }
+}
+
+func main() void {
+    # Calling member function fn on an lvalue foo is valid.
+    var f: foo = (:foo){.x = 123};
+    f.fn();
+
+    # Calling member function fn on an rvalue foo is invalid.
+    (:foo){.x = 123}.x();
+}
+################################################################################
+# [error-expr-call-member-function-non-lvalue.test.sunder:14] error: attempted to call member function `x` on non-lvalue instance of type `foo`
+#     (:foo){.x = 123}.x();
+#     ^

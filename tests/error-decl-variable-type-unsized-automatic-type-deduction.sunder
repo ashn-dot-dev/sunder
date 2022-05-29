@@ -1,5 +1,0 @@
-var x = 123;
-################################################################################
-# [error-decl-variable-type-unsized-automatic-type-deduction.sunder:1] error: declaration of variable with unsized type `integer`
-# var x = 123;
-# ^

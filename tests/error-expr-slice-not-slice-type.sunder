@@ -1,6 +1,0 @@
-const a: [3u]byte = (:[3u]byte)[0xAAy, 0xBBy, 0xCCy];
-const b: []byte = (:ssize){&a[0u], 3u};
-################################################################################
-# [error-expr-slice-not-slice-type.sunder:2] error: expected `}`, found `&`
-# const b: []byte = (:ssize){&a[0u], 3u};
-#                            ^

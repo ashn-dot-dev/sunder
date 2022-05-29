@@ -1,8 +1,0 @@
-func main() void {
-    var foo: [3u]u64 = (:[3u]u64)[0xAu64, 0xBu64, 0xCu64];
-    syscall(0s, foo);
-}
-################################################################################
-# [error-syscall-argument-size-too-large.sunder:3] error: expected integer or pointer type (received `[3]u64`)
-#     syscall(0s, foo);
-#                 ^

@@ -1,0 +1,7 @@
+func main() void {
+    123;
+}
+################################################################################
+# [error-stmt-expr-type-unsized.test.sunder:2] error: statement-expression produces result of unsized type `integer`
+#     123;
+#     ^

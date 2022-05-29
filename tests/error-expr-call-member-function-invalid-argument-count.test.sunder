@@ -1,0 +1,15 @@
+struct foo {
+    var x: u16;
+
+    func fn(self: *foo, p: usize, q: ssize) void {
+    }
+}
+
+func main() void {
+    var f: foo = (:foo){.x = 123};
+    f.fn(123u);
+}
+################################################################################
+# [error-expr-call-member-function-invalid-argument-count.test.sunder:10] error: member function with type `func(*foo, usize, ssize) void` expects 2 argument(s) (1 provided)
+#     f.fn(123u);
+#         ^

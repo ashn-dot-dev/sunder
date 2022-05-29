@@ -1,5 +1,0 @@
-const foo: ssize = syscall(123s, 456s);
-################################################################################
-# [error-const-expr-syscall.sunder:1] error: constant expression contains system call
-# const foo: ssize = syscall(123s, 456s);
-#                    ^

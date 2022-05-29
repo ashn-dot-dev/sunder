@@ -1,0 +1,8 @@
+func foo() void {
+    return 1s;
+}
+################################################################################
+# [error-return-expr-in-function-with-void-return.test.sunder:2] error: incompatible type `ssize` (expected `void`)
+#     return 1s;
+#            ^
+

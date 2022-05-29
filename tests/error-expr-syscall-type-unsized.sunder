@@ -1,7 +1,0 @@
-func main() void {
-    syscall(60s, 123);
-}
-################################################################################
-# [error-expr-syscall-type-unsized.sunder:2] error: unsized type `integer` in syscall expression
-#     syscall(60s, 123);
-#                  ^

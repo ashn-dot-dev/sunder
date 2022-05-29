@@ -1,7 +1,0 @@
-const array: [3u]ssize = (:[3u]ssize)[1s, 3s, 5s];
-const slice: []ssize = (:[]ssize){&array[1u], 2u};
-const x: []ssize = slice[0u:1u];
-################################################################################
-# [error-expr-access-slice-lhs-slice-in-const-expr.sunder:3] error: slicing with left-hand-type `[]ssize` not supported in compile-time expressions
-# const x: []ssize = slice[0u:1u];
-#                         ^

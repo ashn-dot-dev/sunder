@@ -1,0 +1,8 @@
+func main() void {
+    const a: [3u]ssize = (:[3u]ssize)[1s, 3s, 5s];
+    const x: ssize = a[123u];
+}
+################################################################################
+# [error-expr-access-index-array-rvalue-out-of-bounds-const.test.sunder:3] error: index out-of-bounds (array count is 3, received 123)
+#     const x: ssize = a[123u];
+#                        ^

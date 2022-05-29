@@ -1,5 +1,0 @@
-const foo: bool = 123s;
-################################################################################
-# [error-illegal-type-conversion-in-declaration.sunder:1] error: incompatible type `ssize` (expected `bool`)
-# const foo: bool = 123s;
-#                   ^

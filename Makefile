@@ -52,7 +52,10 @@ bin/sunder-compile: $(SUNDER_COMPILE_OBJS)
 build: bin/sunder-compile
 
 test: build
-	(cd tests/ && sh test.sh)
+	SUNDER_HOME="$(realpath .)" \
+	SUNDER_IMPORT_PATH="$(realpath .)/lib" \
+	sh bin/sunder-test
+
 
 examples: build
 	(cd examples/ && sh examples.build.sh)

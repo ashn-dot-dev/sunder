@@ -1,7 +1,0 @@
-func main() void {
-    continue;
-}
-################################################################################
-# [error-stmt-continue-outside-of-loop.sunder:2] error: continue statement outside of loop
-#     continue;
-#     ^

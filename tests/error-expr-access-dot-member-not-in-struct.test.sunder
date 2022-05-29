@@ -1,0 +1,15 @@
+struct foo {
+    var x: u16;
+    var y: u16;
+}
+
+func main() void {
+    var f: foo = (:foo){.x = 123, .y = 456};
+    f.x;
+    f.y;
+    f.z;
+}
+################################################################################
+# [error-expr-access-dot-member-not-in-struct.test.sunder:10] error: struct `foo` has no member `z`
+#     f.z;
+#     ^

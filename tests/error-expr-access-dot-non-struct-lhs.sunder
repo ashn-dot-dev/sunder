@@ -1,7 +1,0 @@
-func main() void {
-    1u16.x;
-}
-################################################################################
-# [error-expr-access-dot-non-struct-lhs.sunder:2] error: attempted member access on non-struct type `u16`
-#     1u16.x;
-#     ^

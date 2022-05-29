@@ -1,0 +1,11 @@
+func v() void {
+    # nothing
+}
+
+func main() void {
+    v() < v();
+}
+################################################################################
+# [error-expr-binary-lt-void.test.sunder:6] error: invalid arguments of type `void` in binary `<` expression
+#     v() < v();
+#         ^

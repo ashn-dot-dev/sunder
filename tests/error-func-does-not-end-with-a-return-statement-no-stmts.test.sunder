@@ -1,0 +1,10 @@
+func foo() bool {
+}
+
+func main() void {
+    var x = foo();
+}
+################################################################################
+# [error-func-does-not-end-with-a-return-statement-no-stmts.test.sunder:1] error: Non-void-returning function does not end with a return statement
+# func foo() bool {
+# ^

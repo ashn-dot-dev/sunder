@@ -1,0 +1,9 @@
+func main() void {
+    var x: ssize = 1s;
+    var y: usize = 2u;
+    x = y;
+}
+################################################################################
+# [error-illegal-type-conversion-in-assignment.test.sunder:4] error: incompatible type `usize` (expected `ssize`)
+#     x = y;
+#       ^

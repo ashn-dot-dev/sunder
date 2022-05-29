@@ -1,0 +1,5 @@
+const a: [3u]byte = (:ssize)[0xAAy, 0xBBy, 0xCCy];
+################################################################################
+# [error-expr-array-not-array-type.test.sunder:1] error: unrecognized prefix token `[` in expression
+# const a: [3u]byte = (:ssize)[0xAAy, 0xBBy, 0xCCy];
+#                             ^

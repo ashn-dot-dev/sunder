@@ -1,5 +1,0 @@
-const foo: ssize = 0x123zu;
-################################################################################
-# [error-integer-literal-unknown-suffix.sunder:1] error: unknown integer literal suffix `zu`
-# const foo: ssize = 0x123zu;
-#                    ^

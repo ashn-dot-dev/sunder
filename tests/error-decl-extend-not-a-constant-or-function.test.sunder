@@ -1,0 +1,5 @@
+extend u16 struct foo { }
+################################################################################
+# [error-decl-extend-not-a-constant-or-function.test.sunder:1] error: type extension declaration must be a constant or function
+# extend u16 struct foo { }
+# ^

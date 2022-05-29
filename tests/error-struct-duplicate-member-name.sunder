@@ -1,8 +1,0 @@
-struct foo {
-    var x: ssize;
-    var x: ssize;
-}
-################################################################################
-# [error-struct-duplicate-member-name.sunder:3] error: duplicate definition of member `x`
-#     var x: ssize;
-#     ^

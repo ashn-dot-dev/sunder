@@ -1,0 +1,8 @@
+func main() void {
+    var a: u16 = 123u16;
+    a[0u:1u];
+}
+################################################################################
+# [error-expr-access-slice-invalid-lhs-type.test.sunder:3] error: illegal slice operation with left-hand-side of type `u16`
+#     a[0u:1u];
+#     ^

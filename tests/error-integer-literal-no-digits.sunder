@@ -1,5 +1,0 @@
-const foo: ssize = 0xs;
-################################################################################
-# [error-integer-literal-no-digits.sunder:1] error: integer literal has no digits
-# const foo: ssize = 0xs;
-#                      ^

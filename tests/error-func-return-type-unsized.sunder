@@ -1,7 +1,0 @@
-func f() typeof(123) {
-    return 123;
-}
-################################################################################
-# [error-func-return-type-unsized.sunder:1] error: declaration of function with unsized return type `integer`
-# func f() typeof(123) {
-#          ^

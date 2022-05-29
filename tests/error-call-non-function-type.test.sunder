@@ -1,0 +1,8 @@
+const foo: ssize = 1s;
+func main() void {
+    foo(3s, 5s);
+}
+################################################################################
+# [error-call-non-function-type.test.sunder:3] error: non-callable type `ssize` used in function call expression
+#     foo(3s, 5s);
+#        ^

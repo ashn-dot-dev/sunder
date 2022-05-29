@@ -1,0 +1,9 @@
+func main() void {
+    var array: [3u]ssize = (:[3u]ssize)[1s, 3s, 5s];
+    var slice: []ssize = (:[]ssize){&array[0u], 3u};
+    slice != slice;
+}
+################################################################################
+# [error-expr-binary-ne-slice.test.sunder:4] error: invalid arguments of type `[]ssize` in binary `!=` expression
+#     slice != slice;
+#           ^

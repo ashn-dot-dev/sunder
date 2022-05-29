@@ -1,5 +1,0 @@
-const a: byte = '\xZA';
-################################################################################
-# [error-invalid-escape-sequence-hex-literal-first-digit.sunder:1] error: invalid hexadecimal escape sequence
-# const a: byte = '\xZA';
-#                  ^

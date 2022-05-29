@@ -1,0 +1,7 @@
+func main() void {
+    1 & 2;
+}
+################################################################################
+# [error-expr-binary-bitwise-type-unsized.test.sunder:2] error: unsized types `integer` in binary `&` expression have no bit-representation
+#     1 & 2;
+#       ^

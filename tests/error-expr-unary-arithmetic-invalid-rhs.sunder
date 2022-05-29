@@ -1,5 +1,0 @@
-const foo: ssize = +true;
-################################################################################
-# [error-expr-unary-arithmetic-invalid-rhs.sunder:1] error: invalid argument of type `bool` in unary `+` expression
-# const foo: ssize = +true;
-#                    ^

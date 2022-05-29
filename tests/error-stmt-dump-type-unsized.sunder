@@ -1,7 +1,0 @@
-func main() void {
-    dump 123;
-}
-################################################################################
-# [error-stmt-dump-type-unsized.sunder:2] error: type `integer` has no defined size
-#     dump 123;
-#     ^

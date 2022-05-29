@@ -1,0 +1,64 @@
+#!/bin/sh
+set -u
+
+usage() {
+    cat <<EOF
+Usage: $(basename $0) [FILE...]
+
+Options:
+  -h        Display usage information and exit.
+EOF
+}
+
+for arg in "$@"; do
+case "$1" in
+    -h)
+        usage
+        exit 0
+        ;;
+    *)
+        ;;
+esac
+done
+
+TESTSRUN=0
+FAILURES=0
+
+test() {
+    TEST="$1"
+
+    echo "[= TEST ${TEST} =]"
+    RECEIVED=$(\
+        cd $(dirname "${TEST}") && \
+        "${SUNDER_HOME}/bin/sunder-run" $(basename "${TEST}") 2>&1)
+    EXPECTED=$(\
+        sed -n '/^########\(########\)*/,$p' "${TEST}" |\
+        sed '1d' |\
+        sed 's/^# \?//g')
+    if [ "${EXPECTED}" = "${RECEIVED}" ]; then
+        echo '[= PASS =]'
+    else
+        echo "EXPECTED:"
+        echo "${EXPECTED}" | sed 's/^/> /g'
+        echo "RECEIVED:"
+        echo "${RECEIVED}" | sed 's/^/> /g'
+        echo '[= FAIL =]'
+        FAILURES=$((FAILURES + 1))
+    fi
+    TESTSRUN=$((TESTSRUN + 1))
+}
+
+if [ "$#" -ne 0 ]; then
+    TESTS="$@"
+else
+    TESTS=$(find -name '*.test.sunder' | sort)
+fi
+
+for t in ${TESTS}; do
+    test "${t}"
+done
+
+echo "TESTS RUN => ${TESTSRUN}"
+echo "FAILURES  => ${FAILURES}"
+
+[ "${FAILURES}" -eq 0 ] || exit 1

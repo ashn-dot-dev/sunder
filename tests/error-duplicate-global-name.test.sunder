@@ -1,0 +1,7 @@
+const foo: ssize = bar;
+const bar: ssize = 1s;
+const foo: ssize = 0u;
+################################################################################
+# [error-duplicate-global-name.test.sunder:3] error: redeclaration of `foo` previously declared at [error-duplicate-global-name.test.sunder:1]
+# const foo: ssize = 0u;
+# ^

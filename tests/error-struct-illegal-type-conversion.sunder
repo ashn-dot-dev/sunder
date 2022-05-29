@@ -1,9 +1,0 @@
-struct foo {
-    var x: u8;
-}
-
-const a: foo = (:foo){.x = 123u16};
-################################################################################
-# [error-struct-illegal-type-conversion.sunder:5] error: incompatible type `u16` (expected `u8`)
-# const a: foo = (:foo){.x = 123u16};
-#                            ^

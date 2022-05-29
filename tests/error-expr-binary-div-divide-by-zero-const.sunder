@@ -1,5 +1,0 @@
-const x: ssize = 123s / 0s;
-################################################################################
-# [error-expr-binary-div-divide-by-zero-const.sunder:1] error: divide by zero (123 / 0)
-# const x: ssize = 123s / 0s;
-#                       ^

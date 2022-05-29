@@ -1,0 +1,5 @@
+const foo: bar = 1s;
+################################################################################
+# [error-use-of-undeclared-identifier-typespec.test.sunder:1] error: use of undeclared identifier `bar`
+# const foo: bar = 1s;
+#            ^

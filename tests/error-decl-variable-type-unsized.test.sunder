@@ -1,0 +1,5 @@
+var x: typeof(123) = 123;
+################################################################################
+# [error-decl-variable-type-unsized.test.sunder:1] error: declaration of variable with unsized type `integer`
+# var x: typeof(123) = 123;
+# ^

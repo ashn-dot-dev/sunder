@@ -1,6 +1,0 @@
-func foo[[]](x: usize, y: ssize) void {
-}
-################################################################################
-# [error-template-function-no-parameters.sunder:1] error: template parameter list declared with zero parameters
-# func foo[[]](x: usize, y: ssize) void {
-#         ^

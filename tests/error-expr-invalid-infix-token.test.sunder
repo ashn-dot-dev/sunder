@@ -1,0 +1,7 @@
+func main() void {
+    123s , 345s;
+}
+################################################################################
+# [error-expr-invalid-infix-token.test.sunder:2] error: expected `;`, found `,`
+#     123s , 345s;
+#          ^

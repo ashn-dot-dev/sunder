@@ -1,0 +1,5 @@
+extern var foo: typeof(123);
+################################################################################
+# [error-decl-extern-var-type-unsized.test.sunder:1] error: declaration of extern variable with unsized type `integer`
+# extern var foo: typeof(123);
+#                 ^

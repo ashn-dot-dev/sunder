@@ -1,0 +1,7 @@
+const foo: ssize = bar;
+const bar: ssize = baz;
+const baz: ssize = foo;
+################################################################################
+# [error-circular-dependency.test.sunder:1] error: circular dependency created by declaration of `foo`
+# const foo: ssize = bar;
+# ^

@@ -1,28 +1,31 @@
 #!/bin/sh
+set -u
 
 usage() {
     cat <<EOF
-Usage: $(basename $0) FILE ARGS...
+Usage: $(basename $0) FILE [ARGS...]
 
 Options:
   -h        Display usage information and exit.
 EOF
 }
 
-while test "$#" -eq 0; do
+if [ "$#" -eq 0 ]; then
     usage
     exit 0
-done
+fi
 
+for arg in "$@"; do
 case "$1" in
     -h)
         usage
         exit 0
         ;;
     *)
-        break
         ;;
 esac
+done
+
 FILE="${1}"
 
 if [ -z "${SUNDER_HOME}" ]; then

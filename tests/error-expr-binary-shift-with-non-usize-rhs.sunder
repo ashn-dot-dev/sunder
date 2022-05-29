@@ -1,5 +1,0 @@
-const x = 1s << 1s;
-################################################################################
-# [error-expr-binary-shift-with-non-usize-rhs.sunder:1] error: invalid non-usize right-hand argument of type `ssize` in binary `<<` expression
-# const x = 1s << 1s;
-#              ^

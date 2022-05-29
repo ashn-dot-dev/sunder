@@ -1,0 +1,6 @@
+func f(x: typeof(123)) void {
+}
+################################################################################
+# [error-func-parameter-type-unsized.test.sunder:1] error: declaration of function parameter with unsized type `integer`
+# func f(x: typeof(123)) void {
+#           ^
