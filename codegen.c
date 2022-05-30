@@ -2756,17 +2756,17 @@ codegen(
     appendch('\n');
     codegen_global_labels();
     appendch('\n');
+    if (!opt_c) {
+        appendln("%%define __entry");
+        appendch('\n');
+    }
+    codegen_sys();
     codegen_static_constants();
     appendch('\n');
     codegen_static_variables();
     appendch('\n');
     codegen_static_functions();
     appendch('\n');
-    if (!opt_c) {
-        appendln("%%define __entry");
-        appendch('\n');
-    }
-    codegen_sys();
 
     int err = 0;
     if ((err = file_write_all(
