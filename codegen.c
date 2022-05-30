@@ -681,6 +681,8 @@ mov_rax_reg_a_with_zero_or_sign_extend(struct type const* type)
 }
 
 static void
+codegen_extern_labels(void);
+static void
 codegen_static_constants(void);
 static void
 codegen_static_variables(void);
@@ -784,6 +786,32 @@ static void
 codegen_lvalue_unary(struct expr const* expr, size_t id);
 
 static void
+codegen_extern_labels(void)
+{
+    appendln("; FORWARD DECLARATION OF EXTERN OBJECT/FUNCTION LABELS");
+
+    for (size_t i = 0; i < sbuf_count(context()->static_symbols); ++i) {
+        struct symbol const* const symbol = context()->static_symbols[i];
+
+        bool const is_extern_variable = symbol->kind == SYMBOL_VARIABLE
+            && symbol->data.variable.value == NULL;
+        bool const is_extern_function = symbol->kind == SYMBOL_FUNCTION
+            && symbol_xget_value(symbol)->data.function->body == NULL;
+        if (is_extern_variable || is_extern_function) {
+            // From the NASM 2.15.05 manual, Section 7.5:
+            // > If a variable is declared both GLOBAL and EXTERN, or if it is
+            // > declared as EXTERN and then defined, it will be treated as
+            // > GLOBAL. If a variable is declared both as COMMON and EXTERN,
+            // > it will be treated as COMMON.
+            struct address const* const address = symbol_xget_address(symbol);
+            assert(address->kind == ADDRESS_STATIC);
+            char const* const label = address->data.static_.name;
+            appendln("extern %s", label);
+        }
+    }
+}
+
+static void
 codegen_static_constants(void)
 {
     appendln("; STATIC CONSTANTS");
@@ -875,13 +903,7 @@ codegen_static_object(struct symbol const* symbol)
     bool const is_extern_variable =
         symbol->kind == SYMBOL_VARIABLE && symbol->data.variable.value == NULL;
     if (is_extern_variable) {
-        // From the NASM 2.15.05 manual, Section 7.5:
-        // > If a variable is declared both GLOBAL and EXTERN, or if it is
-        // > declared as EXTERN and then defined, it will be treated as GLOBAL.
-        // > If a variable is declared both as COMMON and EXTERN, it will be
-        // > treated as COMMON.
-        appendln("extern %s", symbol_xget_address(symbol)->data.static_.name);
-        appendch('\n');
+        // Forward label was already emitted.
         return;
     }
 
@@ -890,7 +912,8 @@ codegen_static_object(struct symbol const* symbol)
         // Zero-sized objects should take up zero space. Attempting to take the
         // address of a zero-sized symbol should always produce a pointer with
         // the value zero.
-        appendln("%s: equ __nil", symbol_xget_address(symbol)->data.static_.name);
+        appendln(
+            "%s: equ __nil", symbol_xget_address(symbol)->data.static_.name);
         return;
     }
 
@@ -926,13 +949,7 @@ codegen_static_function(struct symbol const* symbol)
 
     bool const is_extern_function = function->body == NULL;
     if (is_extern_function) {
-        // From the NASM 2.15.05 manual, Section 7.5:
-        // > If a variable is declared both GLOBAL and EXTERN, or if it is
-        // > declared as EXTERN and then defined, it will be treated as GLOBAL.
-        // > If a variable is declared both as COMMON and EXTERN, it will be
-        // > treated as COMMON.
-        appendln("extern %s", symbol_xget_address(symbol)->data.static_.name);
-        appendch('\n');
+        // Forward label was already emitted.
         return;
     }
 
@@ -2719,6 +2736,8 @@ codegen(
         appendln("%%define __entry");
         appendch('\n');
     }
+    codegen_extern_labels();
+    appendch('\n');
     codegen_static_constants();
     appendch('\n');
     codegen_static_variables();
