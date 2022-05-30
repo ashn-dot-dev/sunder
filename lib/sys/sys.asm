@@ -396,8 +396,8 @@ sys.fork:
     pop rbp
     ret
 
-# linux/fs/exec.c
-# SYSCALL_DEFINE3(execve, const char __user *, filename, const char __user *const __user *, argv, const char __user *const __user *, envp)
+; linux/fs/exec.c
+; SYSCALL_DEFINE3(execve, const char __user *, filename, const char __user *const __user *, argv, const char __user *const __user *, envp)
 global sys.execve
 sys.execve:
     push rbp
@@ -425,8 +425,8 @@ sys.exit:
     mov rdi, [rbp + 0x10] ; error_code
     syscall
 
-# linux/kernel/exit.c:
-# SYSCALL_DEFINE4(wait4, pid_t, upid, int __user *, stat_addr, int, options, struct rusage __user *, ru)
+; linux/kernel/exit.c:
+; SYSCALL_DEFINE4(wait4, pid_t, upid, int __user *, stat_addr, int, options, struct rusage __user *, ru)
 global sys.wait4
 sys.wait4:
     push rbp
