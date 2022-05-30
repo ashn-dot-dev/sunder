@@ -257,7 +257,6 @@ sys.envp: dq 0 ; extern var envp: **byte;
 
 ; linux/fs/read_write.c:
 ; SYSCALL_DEFINE3(read, unsigned int, fd, char __user *, buf, size_t, count)
-global sys.read
 sys.read:
     push rbp
     mov rbp, rsp
@@ -275,7 +274,6 @@ sys.read:
 
 ; linux/fs/read_write.c:
 ; SYSCALL_DEFINE3(write, unsigned int, fd, const char __user *, buf, size_t, count)
-global sys.write
 sys.write:
     push rbp
     mov rbp, rsp
@@ -293,7 +291,6 @@ sys.write:
 
 ; linux/fs/open.c:
 ; SYSCALL_DEFINE3(open, const char __user *, filename, int, flags, umode_t, mode)
-global sys.open
 sys.open:
     push rbp
     mov rbp, rsp
@@ -311,7 +308,6 @@ sys.open:
 
 ; linux/fs/open.c:
 ; SYSCALL_DEFINE1(close, unsigned int, fd)
-global sys.close
 sys.close:
     push rbp
     mov rbp, rsp
@@ -327,7 +323,6 @@ sys.close:
 
 ; linux/fs/read_write.c:
 ; SYSCALL_DEFINE3(lseek, unsigned int, fd, off_t, offset, unsigned int, whence)
-global sys.lseek
 sys.lseek:
     push rbp
     mov rbp, rsp
@@ -345,7 +340,6 @@ sys.lseek:
 
 ; arch/x86/kernel/sys_x86_64.c:
 ; SYSCALL_DEFINE6(mmap, unsigned long, addr, unsigned long, len, unsigned long, prot, unsigned long, flags, unsigned long, fd, unsigned long, off)
-global sys.mmap:
 sys.mmap:
     push rbp
     mov rbp, rsp
@@ -366,7 +360,6 @@ sys.mmap:
 
 ; linux/mm/mmap.c:
 ; SYSCALL_DEFINE2(munmap, unsigned long, addr, size_t, len)
-global sys.munmap
 sys.munmap:
     push rbp
     mov rbp, rsp
@@ -383,7 +376,6 @@ sys.munmap:
 
 ; linux/kernel/fork.c:
 ; SYSCALL_DEFINE0(fork)
-global sys.fork
 sys.fork:
     push rbp
     mov rbp, rsp
@@ -398,7 +390,6 @@ sys.fork:
 
 ; linux/fs/exec.c
 ; SYSCALL_DEFINE3(execve, const char __user *, filename, const char __user *const __user *, argv, const char __user *const __user *, envp)
-global sys.execve
 sys.execve:
     push rbp
     mov rbp, rsp
@@ -416,7 +407,6 @@ sys.execve:
 
 ; linux/kernel/exit.c:
 ; SYSCALL_DEFINE1(exit, int, error_code)
-global sys.exit
 sys.exit:
     push rbp
     mov rbp, rsp
@@ -427,7 +417,6 @@ sys.exit:
 
 ; linux/kernel/exit.c:
 ; SYSCALL_DEFINE4(wait4, pid_t, upid, int __user *, stat_addr, int, options, struct rusage __user *, ru)
-global sys.wait4
 sys.wait4:
     push rbp
     mov rbp, rsp
