@@ -683,6 +683,8 @@ mov_rax_reg_a_with_zero_or_sign_extend(struct type const* type)
 static void
 codegen_extern_labels(void);
 static void
+codegen_global_labels(void);
+static void
 codegen_static_constants(void);
 static void
 codegen_static_variables(void);
@@ -788,8 +790,7 @@ codegen_lvalue_unary(struct expr const* expr, size_t id);
 static void
 codegen_extern_labels(void)
 {
-    appendln("; FORWARD DECLARATION OF EXTERN OBJECT/FUNCTION LABELS");
-
+    appendln("; FORWARD DECLARATIONS OF EXTERN OBJECT/FUNCTION LABELS");
     for (size_t i = 0; i < sbuf_count(context()->static_symbols); ++i) {
         struct symbol const* const symbol = context()->static_symbols[i];
 
@@ -805,8 +806,26 @@ codegen_extern_labels(void)
             // > it will be treated as COMMON.
             struct address const* const address = symbol_xget_address(symbol);
             assert(address->kind == ADDRESS_STATIC);
+            assert(symbol_xget_address(symbol)->data.static_.offset == 0);
             char const* const label = address->data.static_.name;
             appendln("extern %s", label);
+        }
+    }
+}
+
+static void
+codegen_global_labels(void)
+{
+    appendln("; FORWARD DECLARATIONS OF GLOBAL FUNCTION LABELS");
+    for (size_t i = 0; i < sbuf_count(context()->static_symbols); ++i) {
+        struct symbol const* const symbol = context()->static_symbols[i];
+        bool const is_global_function = symbol->kind == SYMBOL_FUNCTION
+            && symbol_xget_value(symbol)->data.function->body != NULL;
+        if (is_global_function) {
+            struct address const* const address = symbol_xget_address(symbol);
+            assert(address->kind == ADDRESS_STATIC);
+            assert(address->data.static_.offset == 0);
+            appendln("global %s", address->data.static_.name);
         }
     }
 }
@@ -953,9 +972,10 @@ codegen_static_function(struct symbol const* symbol)
         return;
     }
 
-    assert(symbol_xget_address(symbol)->data.static_.offset == 0);
-    appendln("global %s", symbol_xget_address(symbol)->data.static_.name);
-    appendln("%s:", symbol_xget_address(symbol)->data.static_.name);
+    struct address const* const address = symbol_xget_address(symbol);
+    assert(address->kind == ADDRESS_STATIC);
+    assert(address->data.static_.offset == 0);
+    appendln("%s:", address->data.static_.name);
     appendli("; PROLOGUE");
     // Save previous frame pointer.
     // With this push, the stack should now be 16-byte aligned.
@@ -2732,11 +2752,9 @@ codegen(
     }
     sbuf_push(ld_argv, (char const*)NULL);
 
-    if (!opt_c) {
-        appendln("%%define __entry");
-        appendch('\n');
-    }
     codegen_extern_labels();
+    appendch('\n');
+    codegen_global_labels();
     appendch('\n');
     codegen_static_constants();
     appendch('\n');
@@ -2744,6 +2762,10 @@ codegen(
     appendch('\n');
     codegen_static_functions();
     appendch('\n');
+    if (!opt_c) {
+        appendln("%%define __entry");
+        appendch('\n');
+    }
     codegen_sys();
 
     int err = 0;
