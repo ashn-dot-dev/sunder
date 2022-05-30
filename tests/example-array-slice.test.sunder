@@ -1,7 +1,14 @@
+var zero_sized_variable: []u16 = (:[]u16)[];
+const zero_sized_constant: []u16 = (:[]u16)[];
+
+var d: []u16 = (:[]u16)[];
 const a: []u16 = (:[]u16)[0xAAAA, 0xBBBB, 0xCCCC];
 var b: []u16 = (:[]u16)[0xAAAA, 0xBBBB, 0xCCCC];
 
 func main() void {
+    dump zero_sized_variable;
+    dump zero_sized_constant;
+
     dump countof(a);
     dump a[0];
     dump a[1];
@@ -31,6 +38,8 @@ func main() void {
     dump (:[]u16)[0xDEAD, 0xBEEF][1];
 }
 ################################################################################
+# 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+# 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
 # 03 00 00 00 00 00 00 00
 # AA AA
 # BB BB

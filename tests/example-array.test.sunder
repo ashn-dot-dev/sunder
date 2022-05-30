@@ -1,3 +1,6 @@
+var zero_sized_variable: [0]u16 = (:[0]u16)[];
+const zero_sized_constant: [0]u16 = (:[0]u16)[];
+
 const arr0: [3u]ssize = (:[3u]ssize)[1s, 3s, 5s];
 var arr1: [3u]ssize = (:[3u]ssize)[1s, 3s, 5s];
 
@@ -22,6 +25,9 @@ const array_of_zero_sized_objects: [2u][0u]void =
     ];
 
 func main() void {
+    dump zero_sized_variable;
+    dump zero_sized_constant;
+
     const arr2: [3u]ssize = (:[3u]ssize)[1s, 3s, 5s];
     var arr3: [3u]ssize = (:[3u]ssize)[1s, 3s, 5s];
 
@@ -91,6 +97,8 @@ func main() void {
 }
 
 ################################################################################
+#
+#
 # 01 00 00 00 00 00 00 00 03 00 00 00 00 00 00 00 05 00 00 00 00 00 00 00
 # 01 00 00 00 00 00 00 00 03 00 00 00 00 00 00 00 05 00 00 00 00 00 00 00
 # 01 00 00 00 00 00 00 00 03 00 00 00 00 00 00 00 05 00 00 00 00 00 00 00

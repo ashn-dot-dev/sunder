@@ -890,6 +890,7 @@ codegen_static_object(struct symbol const* symbol)
         // Zero-sized objects should take up zero space. Attempting to take the
         // address of a zero-sized symbol should always produce a pointer with
         // the value zero.
+        appendln("%s: equ __nil", symbol_xget_address(symbol)->data.static_.name);
         return;
     }
 
