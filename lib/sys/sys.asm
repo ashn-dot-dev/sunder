@@ -1,7 +1,5 @@
 ; BUILTIN CONSTANT VALUES
 ; =======================
-__nil: equ 0
-
 __EXIT_SUCCESS: equ 0
 __EXIT_FAILURE: equ 1
 

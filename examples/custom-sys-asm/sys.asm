@@ -1,7 +1,3 @@
-; BUILTIN CONSTANT VALUES
-; =======================
-__nil: equ 0
-
 ; BUILTIN DUMP SUBROUTINE
 ; =======================
 section .text

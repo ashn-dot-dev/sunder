@@ -270,7 +270,7 @@ append_dx_data(struct value const* value)
     case TYPE_POINTER: {
         struct address const* const address = &value->data.pointer;
         if (value->type->data.pointer.base->size == 0) {
-            append("__nil");
+            append("0");
             return;
         }
         assert(address->kind == ADDRESS_STATIC);
@@ -973,7 +973,7 @@ codegen_static_object(struct symbol const* symbol)
         // address of a zero-sized symbol should always produce a pointer with
         // the value zero.
         appendln(
-            "%s: equ __nil", symbol_xget_address(symbol)->data.static_.name);
+            "%s: equ 0 ; nil", symbol_xget_address(symbol)->data.static_.name);
         return;
     }
 
@@ -1903,7 +1903,7 @@ codegen_rvalue_access_slice_lhs_array(struct expr const* expr, size_t id)
     appendli("mul rbx"); // offset = begin * sizeof(element_type)
     appendli("push rax"); // push offset
 
-    // NOTE: The call to codegen_lvalue will push __nil for slices with elements
+    // NOTE: The call to codegen_lvalue will push nil for slices with elements
     // of size zero, so we don't need a special case for that here.
     codegen_lvalue(expr->data.access_slice.lhs);
     appendli("pop rax"); // start
@@ -2632,7 +2632,7 @@ codegen_lvalue_symbol(struct expr const* expr, size_t id)
         // address of a zero-sized symbol should always produce a pointer with
         // the value zero.
         appendli(
-            "push __nil ; address of type `%s` with size zero",
+            "push 0 ; address of type `%s` with size zero (nil)",
             expr->type->name);
         return;
     }
@@ -2669,7 +2669,7 @@ codegen_lvalue_access_index_lhs_array(struct expr const* expr, size_t id)
     struct type const* const lhs_type = expr->data.access_index.lhs->type;
     struct type const* const element_type = lhs_type->data.array.base;
     if (element_type->size == 0) {
-        appendli("push __nil");
+        appendli("push 0 ; nil");
         return;
     }
 
@@ -2699,7 +2699,7 @@ codegen_lvalue_access_index_lhs_slice(struct expr const* expr, size_t id)
     struct type const* const lhs_type = expr->data.access_index.lhs->type;
     struct type const* const element_type = lhs_type->data.slice.base;
     if (element_type->size == 0) {
-        appendli("push __nil");
+        appendli("push 0 ; nil");
         return;
     }
 
@@ -2801,6 +2801,7 @@ codegen(
         appendln("%%define __entry");
         appendch('\n');
     }
+    appendln("%%define __entry");
     codegen_sysasm();
     appendch('\n');
     codegen_fatals();
