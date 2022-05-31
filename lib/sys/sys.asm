@@ -175,68 +175,43 @@ __dump_lookup_table: db \
     'F0', 'F1', 'F2', 'F3', 'F4', 'F5', 'F6', 'F7', \
     'F8', 'F9', 'FA', 'FB', 'FC', 'FD', 'FE', 'FF'
 
-; BUILTIN INTEGER DIVIDE BY ZERO HANDLER
-; ======================================
+; BUILTIN FATAL SUBROUTINE
+; ========================
+; func fatal(msg_start: *byte, msg_count: usize) void
+;
+; ## Stack
+; +--------------------+ <- rbp + 0x20
+; | msg_start          |
+; +--------------------+ <- rbp + 0x18
+; | msg_count          |
+; +--------------------+ <- rbp + 0x10
+; | return address     |
+; +--------------------+ <- rbp + 0x08
+; | saved rbp          |
+; +--------------------+ <- rbp
 section .text
-__fatal_integer_divide_by_zero:
+__fatal:
     push rbp
     mov rbp, rsp
 
     mov rax, __SYS_WRITE
     mov rdi, __STDERR_FILENO
-    mov rsi, __fatal_integer_divide_by_zero_msg_start
-    mov rdx, __fatal_integer_divide_by_zero_msg_count
+    mov rsi, __fatal_preamble_start
+    mov rdx, __fatal_preamble_count
+    syscall
+
+    mov rax, __SYS_WRITE
+    mov rdi, __STDERR_FILENO
+    mov rsi, [rbp + 0x18] ; msg_start
+    mov rdx, [rbp + 0x10] ; msg_count
     syscall
 
     mov rax, __SYS_EXIT
     mov rdi, __EXIT_FAILURE
     syscall
 
-section .rodata
-__fatal_integer_divide_by_zero_msg_start: db "fatal: divide by zero", 0x0A
-__fatal_integer_divide_by_zero_msg_count: equ $ - __fatal_integer_divide_by_zero_msg_start
-
-; BUILTIN INTEGER OUT-OF-RANGE HANDLER
-; ====================================
-section .text
-__fatal_integer_out_of_range:
-    push rbp
-    mov rbp, rsp
-
-    mov rax, __SYS_WRITE
-    mov rdi, __STDERR_FILENO
-    mov rsi, __fatal_integer_out_of_range_msg_start
-    mov rdx, __fatal_integer_out_of_range_msg_count
-    syscall
-
-    mov rax, __SYS_EXIT
-    mov rdi, __EXIT_FAILURE
-    syscall
-
-section .rodata
-__fatal_integer_out_of_range_msg_start: db "fatal: arithmetic operation produces out-of-range result", 0x0A
-__fatal_integer_out_of_range_msg_count: equ $ - __fatal_integer_out_of_range_msg_start
-
-; BUILTIN INDEX OUT-OF-BOUNDS HANDLER
-; ===================================
-section .text
-__fatal_index_out_of_bounds:
-    push rbp
-    mov rbp, rsp
-
-    mov rax, __SYS_WRITE
-    mov rdi, __STDERR_FILENO
-    mov rsi, __fatal_index_out_of_bounds_msg_start
-    mov rdx, __fatal_index_out_of_bounds_msg_count
-    syscall
-
-    mov rax, __SYS_EXIT
-    mov rdi, __EXIT_FAILURE
-    syscall
-
-section .rodata
-__fatal_index_out_of_bounds_msg_start: db "fatal: index out-of-bounds", 0x0A
-__fatal_index_out_of_bounds_msg_count: equ $ - __fatal_index_out_of_bounds_msg_start
+__fatal_preamble_start: db "fatal: "
+__fatal_preamble_count: equ $ - __fatal_preamble_start;
 
 ; SYS DEFINITIONS (lib/sys/sys.sunder)
 ; ====================================

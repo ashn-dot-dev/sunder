@@ -691,7 +691,9 @@ codegen_static_variables(void);
 static void
 codegen_static_functions(void);
 static void
-codegen_sys(void);
+codegen_sysasm(void);
+static void
+codegen_fatals(void);
 
 static void
 codegen_static_object(struct symbol const* symbol);
@@ -879,7 +881,7 @@ codegen_static_functions(void)
 }
 
 static void
-codegen_sys(void)
+codegen_sysasm(void)
 {
     struct string* path = NULL;
 
@@ -910,6 +912,45 @@ codegen_sys(void)
 
     string_del(path);
     xalloc(buf, XALLOC_FREE);
+}
+
+static void
+codegen_fatals(void)
+{
+    //clang-format off
+    // Builtin integer divide by zero handler.
+    appendln("section .text");
+    appendln("__fatal_integer_divide_by_zero:");
+    appendln("    push __fatal_integer_divide_by_zero_msg_start");
+    appendln("    push __fatal_integer_divide_by_zero_msg_count");
+    appendln("    call __fatal");
+    appendch('\n');
+    appendln("section .rodata");
+    appendln("__fatal_integer_divide_by_zero_msg_start: db \"divide by zero\", 0x0A");
+    appendln("__fatal_integer_divide_by_zero_msg_count: equ $ - __fatal_integer_divide_by_zero_msg_start");
+
+    // Builtin integer out-of-range handler.
+    appendln("section .text");
+    appendln("__fatal_integer_out_of_range:");
+    appendln("    push __fatal_integer_out_of_range_msg_start");
+    appendln("    push __fatal_integer_out_of_range_msg_count");
+    appendln("    call __fatal");
+    appendch('\n');
+    appendln("section .rodata");
+    appendln("__fatal_integer_out_of_range_msg_start: db \"arithmetic operation produces out-of-range result\", 0x0A");
+    appendln("__fatal_integer_out_of_range_msg_count: equ $ - __fatal_integer_out_of_range_msg_start");
+
+    // Builtin index out-of-bounds handler.
+    appendln("section .text");
+    appendln("__fatal_index_out_of_bounds:");
+    appendln("    push __fatal_index_out_of_bounds_msg_start");
+    appendln("    push __fatal_index_out_of_bounds_msg_count");
+    appendln("    call __fatal");
+    appendch('\n');
+    appendln("section .rodata");
+    appendln("__fatal_index_out_of_bounds_msg_start: db \"index out-of-bounds\", 0x0A");
+    appendln("__fatal_index_out_of_bounds_msg_count: equ $ - __fatal_index_out_of_bounds_msg_start");
+    //clang-format on
 }
 
 static void
@@ -2760,7 +2801,9 @@ codegen(
         appendln("%%define __entry");
         appendch('\n');
     }
-    codegen_sys();
+    codegen_sysasm();
+    appendch('\n');
+    codegen_fatals();
     appendch('\n');
     codegen_static_constants();
     appendch('\n');
