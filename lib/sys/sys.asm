@@ -192,6 +192,10 @@ __fatal_integer_divide_by_zero:
     mov rdi, __EXIT_FAILURE
     syscall
 
+section .rodata
+__fatal_integer_divide_by_zero_msg_start: db "fatal: divide by zero", 0x0A
+__fatal_integer_divide_by_zero_msg_count: equ $ - __fatal_integer_divide_by_zero_msg_start
+
 ; BUILTIN OUT-OF-RANGE INTEGER RESULT HANDLER
 ; ===========================================
 section .text
@@ -212,10 +216,6 @@ __fatal_integer_out_of_range:
 section .rodata
 __fatal_integer_out_of_range_msg_start: db "fatal: arithmetic operation produces out-of-range result", 0x0A
 __fatal_integer_out_of_range_msg_count: equ $ - __fatal_integer_out_of_range_msg_start
-
-section .rodata
-__fatal_integer_divide_by_zero_msg_start: db "fatal: divide by zero", 0x0A
-__fatal_integer_divide_by_zero_msg_count: equ $ - __fatal_integer_divide_by_zero_msg_start
 
 ; BUILTIN INDEX OUT-OF-BOUNDS HANDLER
 ; ===================================
