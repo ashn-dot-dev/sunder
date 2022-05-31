@@ -196,8 +196,8 @@ section .rodata
 __fatal_integer_divide_by_zero_msg_start: db "fatal: divide by zero", 0x0A
 __fatal_integer_divide_by_zero_msg_count: equ $ - __fatal_integer_divide_by_zero_msg_start
 
-; BUILTIN OUT-OF-RANGE INTEGER RESULT HANDLER
-; ===========================================
+; BUILTIN INTEGER OUT-OF-RANGE HANDLER
+; ====================================
 section .text
 __fatal_integer_out_of_range:
     push rbp

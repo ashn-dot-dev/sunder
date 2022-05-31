@@ -14,24 +14,12 @@ __dump:
     ret
 
 ; BUILTIN INTEGER DIVIDE BY ZERO HANDLER
+; BUILTIN INTEGER OUT-OF-RANGE HANDLER
+; BUILTIN INDEX OUT-OF-BOUNDS HANDLER
 ; ======================================
 section .text
 __fatal_integer_divide_by_zero:
-    mov rax, __SYS_EXIT
-    mov rdi, __EXIT_FAILURE
-    syscall
-
-; BUILTIN OUT-OF-RANGE INTEGER RESULT HANDLER
-; ===========================================
-section .text
 __fatal_integer_out_of_range:
-    mov rax, __SYS_EXIT
-    mov rdi, __EXIT_FAILURE
-    syscall
-
-; BUILTIN INDEX OUT-OF-BOUNDS HANDLER
-; ===================================
-section .text
 __fatal_index_out_of_bounds:
     mov rax, __SYS_EXIT
     mov rdi, __EXIT_FAILURE
