@@ -2761,12 +2761,12 @@ codegen(
         appendch('\n');
     }
     codegen_sys();
+    appendch('\n');
     codegen_static_constants();
     appendch('\n');
     codegen_static_variables();
     appendch('\n');
     codegen_static_functions();
-    appendch('\n');
 
     int err = 0;
     if ((err = file_write_all(
