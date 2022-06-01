@@ -917,7 +917,7 @@ codegen_sysasm(void)
 static void
 codegen_fatals(void)
 {
-    //clang-format off
+    // clang-format off
     // Builtin integer divide by zero handler.
     appendln("section .text");
     appendln("__fatal_integer_divide_by_zero:");
@@ -950,7 +950,7 @@ codegen_fatals(void)
     appendln("section .rodata");
     appendln("__fatal_index_out_of_bounds_msg_start: db \"index out-of-bounds\", 0x0A");
     appendln("__fatal_index_out_of_bounds_msg_count: equ $ - __fatal_index_out_of_bounds_msg_start");
-    //clang-format on
+    // clang-format on
 }
 
 static void
