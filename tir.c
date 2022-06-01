@@ -1194,7 +1194,7 @@ expr_new_bytes(
 }
 
 struct expr*
-expr_new_array(
+expr_new_array_list(
     struct source_location const* location,
     struct type const* type,
     struct expr const* const* elements,
@@ -1204,9 +1204,26 @@ expr_new_array(
     assert(type != NULL);
     assert(type->kind == TYPE_ARRAY);
 
-    struct expr* const self = expr_new(location, type, EXPR_ARRAY);
-    self->data.array.elements = elements;
-    self->data.array.ellipsis = ellipsis;
+    struct expr* const self = expr_new(location, type, EXPR_ARRAY_LIST);
+    self->data.array_list.elements = elements;
+    self->data.array_list.ellipsis = ellipsis;
+    return self;
+}
+
+struct expr*
+expr_new_slice_list(
+    struct source_location const* location,
+    struct type const* type,
+    struct symbol const* array_symbol,
+    struct expr const* const* elements)
+{
+    assert(location != NULL);
+    assert(type != NULL);
+    assert(type->kind == TYPE_SLICE);
+
+    struct expr* const self = expr_new(location, type, EXPR_SLICE_LIST);
+    self->data.slice_list.array_symbol = array_symbol;
+    self->data.slice_list.elements = elements;
     return self;
 }
 
@@ -1226,23 +1243,6 @@ expr_new_slice(
     struct expr* const self = expr_new(location, type, EXPR_SLICE);
     self->data.slice.pointer = pointer;
     self->data.slice.count = count;
-    return self;
-}
-
-struct expr*
-expr_new_array_slice(
-    struct source_location const* location,
-    struct type const* type,
-    struct symbol const* array_symbol,
-    struct expr const* const* elements)
-{
-    assert(location != NULL);
-    assert(type != NULL);
-    assert(type->kind == TYPE_SLICE);
-
-    struct expr* const self = expr_new(location, type, EXPR_ARRAY_SLICE);
-    self->data.array_slice.array_symbol = array_symbol;
-    self->data.array_slice.elements = elements;
     return self;
 }
 
@@ -1472,9 +1472,9 @@ expr_is_lvalue(struct expr const* self)
     case EXPR_BOOLEAN: /* fallthrough */
     case EXPR_INTEGER: /* fallthrough */
     case EXPR_BYTES: /* fallthrough */
-    case EXPR_ARRAY: /* fallthrough */
+    case EXPR_ARRAY_LIST: /* fallthrough */
+    case EXPR_SLICE_LIST: /* fallthrough */
     case EXPR_SLICE: /* fallthrough */
-    case EXPR_ARRAY_SLICE: /* fallthrough */
     case EXPR_STRUCT: /* fallthrough */
     case EXPR_CAST: /* fallthrough */
     case EXPR_CALL: /* fallthrough */

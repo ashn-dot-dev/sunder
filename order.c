@@ -287,7 +287,7 @@ order_decl(struct orderer* orderer, struct cst_decl const* decl)
         return;
     }
     case CST_DECL_ALIAS: {
-        order_symbol(orderer, decl->data.alias.symbol);
+        order_typespec(orderer, decl->data.alias.typespec);
         return;
     }
     case CST_DECL_EXTERN_VARIABLE: {
@@ -325,28 +325,20 @@ order_expr(struct orderer* orderer, struct cst_expr const* expr)
     case CST_EXPR_BYTES: {
         return;
     }
-    case CST_EXPR_ARRAY: {
+    case CST_EXPR_LIST: {
         sbuf(struct cst_expr const* const) const elements =
-            expr->data.array.elements;
+            expr->data.list.elements;
         for (size_t i = 0; i < sbuf_count(elements); ++i) {
             order_expr(orderer, elements[i]);
         }
-        if (expr->data.array.ellipsis != NULL) {
-            order_expr(orderer, expr->data.array.ellipsis);
+        if (expr->data.list.ellipsis != NULL) {
+            order_expr(orderer, expr->data.list.ellipsis);
         }
         return;
     }
     case CST_EXPR_SLICE: {
         order_expr(orderer, expr->data.slice.pointer);
         order_expr(orderer, expr->data.slice.count);
-        return;
-    }
-    case CST_EXPR_ARRAY_SLICE: {
-        sbuf(struct cst_expr const* const) const elements =
-            expr->data.array.elements;
-        for (size_t i = 0; i < sbuf_count(elements); ++i) {
-            order_expr(orderer, elements[i]);
-        }
         return;
     }
     case CST_EXPR_STRUCT: {

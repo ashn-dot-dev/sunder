@@ -1,0 +1,5 @@
+const x = &"foobar"[0];
+################################################################################
+# [error-expr-access-index-lhs-slice-lvalue-in-const-expr.test.sunder:1] error: constant expression contains lvalue slice indexing operation
+# const x = &"foobar"[0];
+#                    ^

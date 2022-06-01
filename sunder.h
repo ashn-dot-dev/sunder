@@ -1056,7 +1056,7 @@ struct cst_decl {
         } extend;
         struct {
             struct cst_identifier const* identifier;
-            struct cst_symbol const* symbol;
+            struct cst_typespec const* typespec;
         } alias;
         struct {
             struct cst_identifier const* identifier;
@@ -1105,7 +1105,7 @@ struct cst_decl*
 cst_decl_new_alias(
     struct source_location const* location,
     struct cst_identifier const* identifier,
-    struct cst_symbol const* symbol);
+    struct cst_typespec const* typespec);
 struct cst_decl*
 cst_decl_new_extern_variable(
     struct source_location const* location,
@@ -1208,9 +1208,8 @@ struct cst_expr {
         CST_EXPR_INTEGER,
         CST_EXPR_CHARACTER,
         CST_EXPR_BYTES,
-        CST_EXPR_ARRAY,
+        CST_EXPR_LIST,
         CST_EXPR_SLICE,
-        CST_EXPR_ARRAY_SLICE,
         CST_EXPR_STRUCT,
         CST_EXPR_CAST,
         CST_EXPR_GROUPED,
@@ -1237,16 +1236,12 @@ struct cst_expr {
             struct cst_typespec const* typespec;
             sbuf(struct cst_expr const* const) elements;
             struct cst_expr const* ellipsis; // optional
-        } array;
+        } list;
         struct {
             struct cst_typespec const* typespec;
             struct cst_expr const* pointer;
             struct cst_expr const* count;
         } slice;
-        struct {
-            struct cst_typespec const* typespec;
-            sbuf(struct cst_expr const* const) elements;
-        } array_slice;
         struct {
             struct cst_typespec const* typespec;
             sbuf(struct cst_member_initializer const* const) initializers;
@@ -1307,7 +1302,7 @@ struct cst_expr*
 cst_expr_new_bytes(
     struct source_location const* location, struct string const* bytes);
 struct cst_expr*
-cst_expr_new_array(
+cst_expr_new_list(
     struct source_location const* location,
     struct cst_typespec const* typespec,
     struct cst_expr const* const* elements,
@@ -1318,11 +1313,6 @@ cst_expr_new_slice(
     struct cst_typespec const* typespec,
     struct cst_expr const* pointer,
     struct cst_expr const* count);
-struct cst_expr*
-cst_expr_new_array_slice(
-    struct source_location const* location,
-    struct cst_typespec const* typespec,
-    struct cst_expr const* const* elements);
 struct cst_expr*
 cst_expr_new_struct(
     struct source_location const* location,
@@ -2037,9 +2027,9 @@ struct expr {
         EXPR_BOOLEAN,
         EXPR_INTEGER,
         EXPR_BYTES,
-        EXPR_ARRAY,
+        EXPR_ARRAY_LIST,
+        EXPR_SLICE_LIST,
         EXPR_SLICE,
-        EXPR_ARRAY_SLICE,
         EXPR_STRUCT,
         EXPR_CAST,
         EXPR_CALL,
@@ -2062,15 +2052,15 @@ struct expr {
         struct {
             sbuf(struct expr const* const) elements;
             struct expr const* ellipsis; // optional
-        } array;
+        } array_list;
+        struct {
+            struct symbol const* array_symbol;
+            sbuf(struct expr const* const) elements;
+        } slice_list;
         struct {
             struct expr const* pointer;
             struct expr const* count;
         } slice;
-        struct {
-            struct symbol const* array_symbol;
-            sbuf(struct expr const* const) elements;
-        } array_slice;
         struct {
             // List of elements corresponding the member variables defined by
             // the struct type.
@@ -2159,23 +2149,23 @@ expr_new_bytes(
     struct address const* address,
     size_t count);
 struct expr*
-expr_new_array(
+expr_new_array_list(
     struct source_location const* location,
     struct type const* type,
     struct expr const* const* elements,
     struct expr const* ellipsis);
+struct expr*
+expr_new_slice_list(
+    struct source_location const* location,
+    struct type const* type,
+    struct symbol const* array_symbol,
+    struct expr const* const* elements);
 struct expr*
 expr_new_slice(
     struct source_location const* location,
     struct type const* type,
     struct expr const* pointer,
     struct expr const* count);
-struct expr*
-expr_new_array_slice(
-    struct source_location const* location,
-    struct type const* type,
-    struct symbol const* array_symbol,
-    struct expr const* const* elements);
 struct expr*
 expr_new_struct(
     struct source_location const* location,

@@ -740,11 +740,11 @@ codegen_rvalue_integer(struct expr const* expr, size_t id);
 static void
 codegen_rvalue_bytes(struct expr const* expr, size_t id);
 static void
-codegen_rvalue_array(struct expr const* expr, size_t id);
+codegen_rvalue_array_list(struct expr const* expr, size_t id);
+static void
+codegen_rvalue_slice_list(struct expr const* expr, size_t id);
 static void
 codegen_rvalue_slice(struct expr const* expr, size_t id);
-static void
-codegen_rvalue_array_slice(struct expr const* expr, size_t id);
 static void
 codegen_rvalue_struct(struct expr const* expr, size_t id);
 static void
@@ -1379,9 +1379,9 @@ codegen_rvalue(struct expr const* expr)
         TABLE_ENTRY(EXPR_BOOLEAN, codegen_rvalue_boolean),
         TABLE_ENTRY(EXPR_INTEGER, codegen_rvalue_integer),
         TABLE_ENTRY(EXPR_BYTES, codegen_rvalue_bytes),
-        TABLE_ENTRY(EXPR_ARRAY, codegen_rvalue_array),
+        TABLE_ENTRY(EXPR_ARRAY_LIST, codegen_rvalue_array_list),
+        TABLE_ENTRY(EXPR_SLICE_LIST, codegen_rvalue_slice_list),
         TABLE_ENTRY(EXPR_SLICE, codegen_rvalue_slice),
-        TABLE_ENTRY(EXPR_ARRAY_SLICE, codegen_rvalue_array_slice),
         TABLE_ENTRY(EXPR_STRUCT, codegen_rvalue_struct),
         TABLE_ENTRY(EXPR_CAST, codegen_rvalue_cast),
         TABLE_ENTRY(EXPR_CALL, codegen_rvalue_call),
@@ -1475,10 +1475,10 @@ codegen_rvalue_bytes(struct expr const* expr, size_t id)
 }
 
 static void
-codegen_rvalue_array(struct expr const* expr, size_t id)
+codegen_rvalue_array_list(struct expr const* expr, size_t id)
 {
     assert(expr != NULL);
-    assert(expr->kind == EXPR_ARRAY);
+    assert(expr->kind == EXPR_ARRAY_LIST);
     assert(expr->type->kind == TYPE_ARRAY);
 
     // Make space for the array.
@@ -1492,7 +1492,8 @@ codegen_rvalue_array(struct expr const* expr, size_t id)
     // array elements. Additionally pushing/popping to and from the stack uses
     // 8-byte alignment, but arrays may have element alignment that does not
     // cleanly match the stack alignment (e.g. [count]bool).
-    sbuf(struct expr const* const) const elements = expr->data.array.elements;
+    sbuf(struct expr const* const) const elements =
+        expr->data.array_list.elements;
     struct type const* const element_type = expr->type->data.array.base;
     size_t const element_size = element_type->size;
     // TODO: This loop is manually unrolled here, but should probably be turned
@@ -1515,8 +1516,8 @@ codegen_rvalue_array(struct expr const* expr, size_t id)
 
     size_t const count = expr->type->data.array.count;
     if (sbuf_count(elements) < count) { // ellipsis
-        assert(expr->data.array.ellipsis != NULL);
-        assert(expr->data.array.ellipsis->type == element_type);
+        assert(expr->data.array_list.ellipsis != NULL);
+        assert(expr->data.array_list.ellipsis->type == element_type);
 
         // Number of elements already filled in.
         size_t const completed = sbuf_count(elements);
@@ -1524,7 +1525,7 @@ codegen_rvalue_array(struct expr const* expr, size_t id)
         size_t const remaining = count - sbuf_count(elements);
 
         appendln("%s%zu_ellipsis_bgn:", LABEL_EXPR, id);
-        codegen_rvalue(expr->data.array.ellipsis);
+        codegen_rvalue(expr->data.array_list.ellipsis);
         appendli("mov rbx, rsp");
         appendli("add rbx, %zu", ceil8zu(element_size)); // array start
         appendli("add rbx, %zu", element_size * completed); // array offset
@@ -1544,6 +1545,37 @@ codegen_rvalue_array(struct expr const* expr, size_t id)
 }
 
 static void
+codegen_rvalue_slice_list(struct expr const* expr, size_t id)
+{
+    assert(expr != NULL);
+    assert(expr->kind == EXPR_SLICE_LIST);
+    assert(expr->type->kind == TYPE_SLICE);
+    (void)id;
+
+    // Evaluate the elements of the array-slice as if they were part of an
+    // array rvalue. After evaluating the pseudo-array the contents of the
+    // pseudo-array are copied from the stack into the underlying array backing
+    // the array-slice.
+    struct expr* const array_expr = expr_new_array_list(
+        expr->location,
+        symbol_xget_type(expr->data.slice_list.array_symbol),
+        expr->data.slice_list.elements,
+        NULL);
+    codegen_rvalue_array_list(array_expr, id);
+    xalloc(array_expr, XALLOC_FREE);
+
+    push_address(symbol_xget_address(expr->data.slice_list.array_symbol));
+    appendli("pop rbx ; address of the array-slice backing array");
+    copy_rsp_rbx_via_rcx(
+        symbol_xget_type(expr->data.slice_list.array_symbol)->size);
+    pop(symbol_xget_type(expr->data.slice_list.array_symbol)->size);
+
+    // Evaluate a slice constructed from the backing array.
+    appendli("push %zu", sbuf_count(expr->data.slice_list.elements));
+    push_address(symbol_xget_address(expr->data.slice_list.array_symbol));
+}
+
+static void
 codegen_rvalue_slice(struct expr const* expr, size_t id)
 {
     assert(expr != NULL);
@@ -1558,37 +1590,6 @@ codegen_rvalue_slice(struct expr const* expr, size_t id)
     // +---------+ <-- rsp
     codegen_rvalue(expr->data.slice.count);
     codegen_rvalue(expr->data.slice.pointer);
-}
-
-static void
-codegen_rvalue_array_slice(struct expr const* expr, size_t id)
-{
-    assert(expr != NULL);
-    assert(expr->kind == EXPR_ARRAY_SLICE);
-    assert(expr->type->kind == TYPE_SLICE);
-    (void)id;
-
-    // Evaluate the elements of the array-slice as if they were part of an
-    // array rvalue. After evaluating the pseudo-array the contents of the
-    // pseudo-array are copied from the stack into the underlying array backing
-    // the array-slice.
-    struct expr* const array_expr = expr_new_array(
-        expr->location,
-        symbol_xget_type(expr->data.array_slice.array_symbol),
-        expr->data.array_slice.elements,
-        NULL);
-    codegen_rvalue_array(array_expr, id);
-    xalloc(array_expr, XALLOC_FREE);
-
-    push_address(symbol_xget_address(expr->data.array_slice.array_symbol));
-    appendli("pop rbx ; address of the array-slice backing array");
-    copy_rsp_rbx_via_rcx(
-        symbol_xget_type(expr->data.array_slice.array_symbol)->size);
-    pop(symbol_xget_type(expr->data.array_slice.array_symbol)->size);
-
-    // Evaluate a slice constructed from the backing array.
-    appendli("push %zu", sbuf_count(expr->data.array_slice.elements));
-    push_address(symbol_xget_address(expr->data.array_slice.array_symbol));
 }
 
 static void

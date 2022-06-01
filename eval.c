@@ -18,11 +18,11 @@ eval_rvalue_integer(struct expr const* expr);
 static struct value*
 eval_rvalue_bytes(struct expr const* expr);
 static struct value*
-eval_rvalue_array(struct expr const* expr);
+eval_rvalue_array_list(struct expr const* expr);
+static struct value*
+eval_rvalue_slice_list(struct expr const* expr);
 static struct value*
 eval_rvalue_slice(struct expr const* expr);
-static struct value*
-eval_rvalue_array_slice(struct expr const* expr);
 static struct value*
 eval_rvalue_struct(struct expr const* expr);
 static struct value*
@@ -86,14 +86,14 @@ eval_rvalue(struct expr const* expr)
     case EXPR_BYTES: {
         return eval_rvalue_bytes(expr);
     }
-    case EXPR_ARRAY: {
-        return eval_rvalue_array(expr);
+    case EXPR_ARRAY_LIST: {
+        return eval_rvalue_array_list(expr);
+    }
+    case EXPR_SLICE_LIST: {
+        return eval_rvalue_slice_list(expr);
     }
     case EXPR_SLICE: {
         return eval_rvalue_slice(expr);
-    }
-    case EXPR_ARRAY_SLICE: {
-        return eval_rvalue_array_slice(expr);
     }
     case EXPR_STRUCT: {
         return eval_rvalue_struct(expr);
@@ -196,23 +196,45 @@ eval_rvalue_bytes(struct expr const* expr)
 }
 
 static struct value*
-eval_rvalue_array(struct expr const* expr)
+eval_rvalue_array_list(struct expr const* expr)
 {
     assert(expr != NULL);
-    assert(expr->kind == EXPR_ARRAY);
+    assert(expr->kind == EXPR_ARRAY_LIST);
 
-    sbuf(struct expr const* const) elements = expr->data.array.elements;
+    sbuf(struct expr const* const) elements = expr->data.array_list.elements;
     sbuf(struct value*) evaled_elements = NULL;
     for (size_t i = 0; i < sbuf_count(elements); ++i) {
         sbuf_push(evaled_elements, eval_rvalue(elements[i]));
     }
 
     struct value* evaled_ellipsis = NULL;
-    if (expr->data.array.ellipsis != NULL) {
-        evaled_ellipsis = eval_rvalue(expr->data.array.ellipsis);
+    if (expr->data.array_list.ellipsis != NULL) {
+        evaled_ellipsis = eval_rvalue(expr->data.array_list.ellipsis);
     }
 
     return value_new_array(expr->type, evaled_elements, evaled_ellipsis);
+}
+
+static struct value*
+eval_rvalue_slice_list(struct expr const* expr)
+{
+    assert(expr != NULL);
+    assert(expr->kind == EXPR_SLICE_LIST);
+    assert(expr->type->kind == TYPE_SLICE);
+
+    struct address const* const address =
+        symbol_xget_address(expr->data.slice_list.array_symbol);
+    assert(address->kind == ADDRESS_STATIC);
+    struct value* const pointer = value_new_pointer(
+        type_unique_pointer(expr->type->data.slice.base), *address);
+
+    sbuf(struct expr const* const) const elements =
+        expr->data.slice_list.elements;
+    struct value* const count =
+        value_new_integer(context()->builtin.usize, bigint_new(BIGINT_ZERO));
+    uz_to_bigint(count->data.integer, sbuf_count(elements));
+
+    return value_new_slice(expr->type, pointer, count);
 }
 
 static struct value*
@@ -223,28 +245,6 @@ eval_rvalue_slice(struct expr const* expr)
 
     struct value* const pointer = eval_rvalue(expr->data.slice.pointer);
     struct value* const count = eval_rvalue(expr->data.slice.count);
-    return value_new_slice(expr->type, pointer, count);
-}
-
-static struct value*
-eval_rvalue_array_slice(struct expr const* expr)
-{
-    assert(expr != NULL);
-    assert(expr->kind == EXPR_ARRAY_SLICE);
-    assert(expr->type->kind == TYPE_SLICE);
-
-    struct address const* const address =
-        symbol_xget_address(expr->data.array_slice.array_symbol);
-    assert(address->kind == ADDRESS_STATIC);
-    struct value* const pointer = value_new_pointer(
-        type_unique_pointer(expr->type->data.slice.base), *address);
-
-    sbuf(struct expr const* const) const elements =
-        expr->data.array_slice.elements;
-    struct value* const count =
-        value_new_integer(context()->builtin.usize, bigint_new(BIGINT_ZERO));
-    uz_to_bigint(count->data.integer, sbuf_count(elements));
-
     return value_new_slice(expr->type, pointer, count);
 }
 
@@ -1000,9 +1000,9 @@ eval_lvalue(struct expr const* expr)
     case EXPR_BOOLEAN: /* fallthrough */
     case EXPR_INTEGER: /* fallthrough */
     case EXPR_BYTES: /* fallthrough */
-    case EXPR_ARRAY: /* fallthrough */
+    case EXPR_ARRAY_LIST: /* fallthrough */
+    case EXPR_SLICE_LIST: /* fallthrough */
     case EXPR_SLICE: /* fallthrough */
-    case EXPR_ARRAY_SLICE: /* fallthrough */
     case EXPR_STRUCT: /* fallthrough */
     case EXPR_CAST: /* fallthrough */
     case EXPR_CALL: /* fallthrough */
@@ -1040,6 +1040,14 @@ eval_lvalue_access_index(struct expr const* expr)
 {
     assert(expr != NULL);
     assert(expr->kind == EXPR_ACCESS_INDEX);
+
+    if (expr->data.access_index.lhs->type->kind == TYPE_SLICE) {
+        // Disallow indexing of an lvalue slice at compile time as indexing the
+        // slice would be quivalent to dereferencing an arbitrary pointer.
+        fatal(
+            expr->location,
+            "constant expression contains lvalue slice indexing operation");
+    }
 
     struct value* const lhs = eval_lvalue(expr->data.access_index.lhs);
     struct value* const idx = eval_rvalue(expr->data.access_index.idx);

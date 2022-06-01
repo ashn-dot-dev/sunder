@@ -161,11 +161,11 @@ struct cst_decl*
 cst_decl_new_alias(
     struct source_location const* location,
     struct cst_identifier const* identifier,
-    struct cst_symbol const* symbol)
+    struct cst_typespec const* typespec)
 {
     assert(location != NULL);
     assert(identifier != NULL);
-    assert(symbol != NULL);
+    assert(typespec != NULL);
 
     struct cst_decl* const self = xalloc(NULL, sizeof(*self));
     memset(self, 0x00, sizeof(*self));
@@ -173,7 +173,7 @@ cst_decl_new_alias(
     self->location = location;
     self->name = identifier->name;
     self->data.alias.identifier = identifier;
-    self->data.alias.symbol = symbol;
+    self->data.alias.typespec = typespec;
     return self;
 }
 
@@ -431,7 +431,7 @@ cst_expr_new_bytes(
 }
 
 struct cst_expr*
-cst_expr_new_array(
+cst_expr_new_list(
     struct source_location const* location,
     struct cst_typespec const* typespec,
     struct cst_expr const* const* elements,
@@ -440,10 +440,10 @@ cst_expr_new_array(
     assert(location != NULL);
     assert(typespec != NULL);
 
-    struct cst_expr* const self = cst_expr_new(location, CST_EXPR_ARRAY);
-    self->data.array.typespec = typespec;
-    self->data.array.elements = elements;
-    self->data.array.ellipsis = ellipsis;
+    struct cst_expr* const self = cst_expr_new(location, CST_EXPR_LIST);
+    self->data.list.typespec = typespec;
+    self->data.list.elements = elements;
+    self->data.list.ellipsis = ellipsis;
     return self;
 }
 
@@ -463,21 +463,6 @@ cst_expr_new_slice(
     self->data.slice.typespec = typespec;
     self->data.slice.pointer = pointer;
     self->data.slice.count = count;
-    return self;
-}
-
-struct cst_expr*
-cst_expr_new_array_slice(
-    struct source_location const* location,
-    struct cst_typespec const* typespec,
-    struct cst_expr const* const* elements)
-{
-    assert(location != NULL);
-    assert(typespec != NULL);
-
-    struct cst_expr* const self = cst_expr_new(location, CST_EXPR_ARRAY_SLICE);
-    self->data.array_slice.typespec = typespec;
-    self->data.array_slice.elements = elements;
     return self;
 }
 

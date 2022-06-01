@@ -2,30 +2,52 @@ import "std";
 
 alias i32 = s32;
 var a: i32 = 123;
-var b: i32 = 123s32;
 
-alias signed32 = s32;
-const c = (:signed32)123s;
+alias unsigned8 = u8;
+const b = (:unsigned8)123s;
 
-alias standard = std;
-alias writer_result = standard::result[[usize, []byte]];
+alias array_of_unsigned8 = [4]unsigned8;
+const c: array_of_unsigned8 = (:array_of_unsigned8)[0xAA, 0xBB, 0xCC...];
 
-alias println = standard::print_line;
+alias slice_of_unsigned8 = []unsigned8;
+const d: slice_of_unsigned8 = (:slice_of_unsigned8)[0xAA, 0xBB, 0xCC];
 
 alias foo = s64;
+
+alias some_result = std::result[[unsigned8, []byte]];
+
+struct empty_struct { }
+alias some_empty_struct = empty_struct;
+
+struct non_empty_struct {
+    var a: u16;
+    var b: u16;
+}
+alias some_non_empty_struct = non_empty_struct;
 
 func main() void {
     dump a;
     dump b;
-    dump c;
 
     alias foo = s32;
+    var bar: foo = -1;
+    dump bar;
 
-    var r = writer_result::init_error("foo");
-    println(std::out(), r.error());
+    var r = some_result::init_error("foo");
+    std::print_line(std::out(), r.error());
+
+    var i: i32 = 123;
+    dump i32::hash(&i);
+
+    alias str = []byte;
+    var slice_literal = (:str){&"foobar"[0], countof("foobar")};
+
+    var struct_literal = (:some_empty_struct){};
+    var struct_literal = (:some_non_empty_struct){.a = 123, .b = 456};
 }
 ################################################################################
 # 7B 00 00 00
-# 7B 00 00 00
-# 7B 00 00 00
+# 7B
+# FF FF FF FF
 # foo
+# 7B 00 00 00 00 00 00 00

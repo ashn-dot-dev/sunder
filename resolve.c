@@ -228,12 +228,9 @@ resolve_expr_character(struct resolver* resolver, struct cst_expr const* expr);
 static struct expr const*
 resolve_expr_bytes(struct resolver* resolver, struct cst_expr const* expr);
 static struct expr const*
-resolve_expr_array(struct resolver* resolver, struct cst_expr const* expr);
+resolve_expr_list(struct resolver* resolver, struct cst_expr const* expr);
 static struct expr const*
 resolve_expr_slice(struct resolver* resolver, struct cst_expr const* expr);
-static struct expr const*
-resolve_expr_array_slice(
-    struct resolver* resolver, struct cst_expr const* expr);
 static struct expr const*
 resolve_expr_struct(struct resolver* resolver, struct cst_expr const* expr);
 static struct expr const*
@@ -1740,8 +1737,9 @@ resolve_decl_alias(struct resolver* resolver, struct cst_decl const* decl)
     assert(decl != NULL);
     assert(decl->kind == CST_DECL_ALIAS);
 
-    struct symbol const* const symbol =
-        xget_symbol(resolver, decl->data.alias.symbol);
+    struct type const* const type =
+        resolve_typespec(resolver, decl->data.alias.typespec);
+    struct symbol* const symbol = symbol_new_type(decl->location, type);
     symbol_table_insert(
         resolver->current_symbol_table, decl->name, symbol, false);
 
@@ -2445,14 +2443,11 @@ resolve_expr(struct resolver* resolver, struct cst_expr const* expr)
     case CST_EXPR_BYTES: {
         return resolve_expr_bytes(resolver, expr);
     }
-    case CST_EXPR_ARRAY: {
-        return resolve_expr_array(resolver, expr);
+    case CST_EXPR_LIST: {
+        return resolve_expr_list(resolver, expr);
     }
     case CST_EXPR_SLICE: {
         return resolve_expr_slice(resolver, expr);
-    }
-    case CST_EXPR_ARRAY_SLICE: {
-        return resolve_expr_array_slice(resolver, expr);
     }
     case CST_EXPR_STRUCT: {
         return resolve_expr_struct(resolver, expr);
@@ -2686,128 +2681,77 @@ resolve_expr_bytes(struct resolver* resolver, struct cst_expr const* expr)
 }
 
 static struct expr const*
-resolve_expr_array(struct resolver* resolver, struct cst_expr const* expr)
+resolve_expr_list(struct resolver* resolver, struct cst_expr const* expr)
 {
     assert(resolver != NULL);
     assert(expr != NULL);
-    assert(expr->kind == CST_EXPR_ARRAY);
+    assert(expr->kind == CST_EXPR_LIST);
 
     struct type const* const type =
-        resolve_typespec(resolver, expr->data.array.typespec);
-    if (type->kind != TYPE_ARRAY) {
+        resolve_typespec(resolver, expr->data.list.typespec);
+    if (type->kind != TYPE_ARRAY && type->kind != TYPE_SLICE) {
         fatal(
-            expr->data.array.typespec->location,
-            "expected array type (received `%s`)",
+            expr->data.list.typespec->location,
+            "expected array or slice type (received `%s`)",
+            type->name);
+    }
+    struct type const* const base = type->kind == TYPE_ARRAY
+        ? type->data.array.base
+        : type->data.slice.base;
+
+    if (type->kind == TYPE_ARRAY) {
+        sbuf(struct cst_expr const* const) elements = expr->data.list.elements;
+        sbuf(struct expr const*) resolved_elements = NULL;
+        for (size_t i = 0; i < sbuf_count(elements); ++i) {
+            struct expr const* resolved_element =
+                resolve_expr(resolver, elements[i]);
+            resolved_element = shallow_implicit_cast(base, resolved_element);
+            check_type_compatibility(
+                resolved_element->location, resolved_element->type, base);
+            sbuf_push(resolved_elements, resolved_element);
+        }
+        sbuf_freeze(resolved_elements);
+
+        struct expr const* resolved_ellipsis = NULL;
+        if (expr->data.list.ellipsis != NULL) {
+            resolved_ellipsis =
+                resolve_expr(resolver, expr->data.list.ellipsis);
+            resolved_ellipsis = shallow_implicit_cast(base, resolved_ellipsis);
+            check_type_compatibility(
+                resolved_ellipsis->location, resolved_ellipsis->type, base);
+        }
+
+        if ((type->data.array.count != sbuf_count(resolved_elements))
+            && resolved_ellipsis == NULL) {
+            fatal(
+                expr->location,
+                "array of type `%s` created with %zu elements (expected %zu)",
+                type->name,
+                sbuf_count(resolved_elements),
+                type->data.array.count);
+        }
+
+        struct expr* const resolved = expr_new_array_list(
+            expr->location, type, resolved_elements, resolved_ellipsis);
+
+        freeze(resolved);
+        return resolved;
+    }
+
+    assert(type->kind == TYPE_SLICE);
+    if (expr->data.list.ellipsis != NULL) {
+        fatal(
+            expr->data.list.ellipsis->location,
+            "ellipsis element is not allowed in slice lists",
             type->name);
     }
 
-    sbuf(struct cst_expr const* const) elements = expr->data.array.elements;
-    sbuf(struct expr const*) resolved_elements = NULL;
-    for (size_t i = 0; i < sbuf_count(elements); ++i) {
-        struct expr const* resolved_element =
-            resolve_expr(resolver, elements[i]);
-        resolved_element =
-            shallow_implicit_cast(type->data.array.base, resolved_element);
-        check_type_compatibility(
-            resolved_element->location,
-            resolved_element->type,
-            type->data.array.base);
-        sbuf_push(resolved_elements, resolved_element);
-    }
-    sbuf_freeze(resolved_elements);
-
-    struct expr const* resolved_ellipsis = NULL;
-    if (expr->data.array.ellipsis != NULL) {
-        resolved_ellipsis = resolve_expr(resolver, expr->data.array.ellipsis);
-        resolved_ellipsis =
-            shallow_implicit_cast(type->data.array.base, resolved_ellipsis);
-        check_type_compatibility(
-            resolved_ellipsis->location,
-            resolved_ellipsis->type,
-            type->data.array.base);
-    }
-
-    if ((type->data.array.count != sbuf_count(resolved_elements))
-        && resolved_ellipsis == NULL) {
-        fatal(
-            expr->location,
-            "array of type `%s` created with %zu elements (expected %zu)",
-            type->name,
-            sbuf_count(resolved_elements),
-            type->data.array.count);
-    }
-
-    struct expr* const resolved = expr_new_array(
-        expr->location, type, resolved_elements, resolved_ellipsis);
-
-    freeze(resolved);
-    return resolved;
-}
-
-static struct expr const*
-resolve_expr_slice(struct resolver* resolver, struct cst_expr const* expr)
-{
-    assert(resolver != NULL);
-    assert(expr != NULL);
-    assert(expr->kind == CST_EXPR_SLICE);
-
-    struct type const* const type =
-        resolve_typespec(resolver, expr->data.slice.typespec);
-    if (type->kind != TYPE_SLICE) {
-        fatal(
-            expr->data.slice.typespec->location,
-            "expected slice type (received `%s`)",
-            type->name);
-    }
-
-    struct expr const* const pointer =
-        resolve_expr(resolver, expr->data.slice.pointer);
-    if (pointer->type->kind != TYPE_POINTER) {
-        fatal(
-            pointer->location,
-            "expression of type `%s` is not a pointer",
-            pointer->type->name);
-    }
-    struct type const* const slice_pointer_type =
-        type_unique_pointer(type->data.slice.base);
-    check_type_compatibility(
-        pointer->location, pointer->type, slice_pointer_type);
-
-    struct expr const* count = resolve_expr(resolver, expr->data.slice.count);
-    count = shallow_implicit_cast(context()->builtin.usize, count);
-    check_type_compatibility(
-        count->location, count->type, context()->builtin.usize);
-
-    struct expr* const resolved =
-        expr_new_slice(expr->location, type, pointer, count);
-
-    freeze(resolved);
-    return resolved;
-}
-
-static struct expr const*
-resolve_expr_array_slice(struct resolver* resolver, struct cst_expr const* expr)
-{
-    assert(resolver != NULL);
-    assert(expr != NULL);
-    assert(expr->kind == CST_EXPR_ARRAY_SLICE);
-
-    struct type const* const type =
-        resolve_typespec(resolver, expr->data.array_slice.typespec);
-    if (type->kind != TYPE_SLICE) {
-        fatal(
-            expr->data.slice.typespec->location,
-            "expected slice type (received `%s`)",
-            type->name);
-    }
-
-    sbuf(struct cst_expr const* const) elements =
-        expr->data.array_slice.elements;
+    sbuf(struct cst_expr const* const) elements = expr->data.list.elements;
     size_t const elements_count = sbuf_count(elements);
 
     static size_t id = 0;
     struct string* const array_name_string =
-        string_new_fmt("__array_slice_elements_%zu", id++);
+        string_new_fmt("__slice_list_elements_%zu", id++);
     char const* const array_name = intern_cstr(string_start(array_name_string));
     string_del(array_name_string);
 
@@ -2870,8 +2814,49 @@ resolve_expr_array_slice(struct resolver* resolver, struct cst_expr const* expr)
     }
     sbuf_freeze(resolved_elements);
 
-    struct expr* const resolved = expr_new_array_slice(
+    struct expr* const resolved = expr_new_slice_list(
         expr->location, type, array_symbol, resolved_elements);
+
+    freeze(resolved);
+    return resolved;
+}
+
+static struct expr const*
+resolve_expr_slice(struct resolver* resolver, struct cst_expr const* expr)
+{
+    assert(resolver != NULL);
+    assert(expr != NULL);
+    assert(expr->kind == CST_EXPR_SLICE);
+
+    struct type const* const type =
+        resolve_typespec(resolver, expr->data.slice.typespec);
+    if (type->kind != TYPE_SLICE) {
+        fatal(
+            expr->data.slice.typespec->location,
+            "expected slice type (received `%s`)",
+            type->name);
+    }
+
+    struct expr const* const pointer =
+        resolve_expr(resolver, expr->data.slice.pointer);
+    if (pointer->type->kind != TYPE_POINTER) {
+        fatal(
+            pointer->location,
+            "expression of type `%s` is not a pointer",
+            pointer->type->name);
+    }
+    struct type const* const slice_pointer_type =
+        type_unique_pointer(type->data.slice.base);
+    check_type_compatibility(
+        pointer->location, pointer->type, slice_pointer_type);
+
+    struct expr const* count = resolve_expr(resolver, expr->data.slice.count);
+    count = shallow_implicit_cast(context()->builtin.usize, count);
+    check_type_compatibility(
+        count->location, count->type, context()->builtin.usize);
+
+    struct expr* const resolved =
+        expr_new_slice(expr->location, type, pointer, count);
 
     freeze(resolved);
     return resolved;

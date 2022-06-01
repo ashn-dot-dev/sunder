@@ -509,11 +509,11 @@ parse_decl_alias(struct parser* parser)
         &expect_current(parser, TOKEN_ALIAS)->location;
     struct cst_identifier const* const identifier = parse_identifier(parser);
     expect_current(parser, TOKEN_ASSIGN);
-    struct cst_symbol const* const symbol = parse_symbol(parser);
+    struct cst_typespec const* const typespec = parse_typespec(parser);
     expect_current(parser, TOKEN_SEMICOLON);
 
     struct cst_decl* const product =
-        cst_decl_new_alias(location, identifier, symbol);
+        cst_decl_new_alias(location, identifier, typespec);
 
     freeze(product);
     return product;
@@ -1077,8 +1077,7 @@ parse_expr_lparen(struct parser* parser)
     struct cst_typespec const* const typespec = parse_typespec(parser);
     expect_current(parser, TOKEN_RPAREN);
 
-    if (check_current(parser, TOKEN_LBRACKET)
-        && typespec->kind == TYPESPEC_ARRAY) {
+    if (check_current(parser, TOKEN_LBRACKET)) {
         // <expr-array>
         expect_current(parser, TOKEN_LBRACKET);
         sbuf(struct cst_expr const*) elements = NULL;
@@ -1101,14 +1100,27 @@ parse_expr_lparen(struct parser* parser)
         expect_current(parser, TOKEN_RBRACKET);
 
         struct cst_expr* const product =
-            cst_expr_new_array(location, typespec, elements, ellipsis);
+            cst_expr_new_list(location, typespec, elements, ellipsis);
 
         freeze(product);
         return product;
     }
 
-    if (check_current(parser, TOKEN_LBRACE)
-        && typespec->kind == TYPESPEC_SLICE) {
+    if (check_current(parser, TOKEN_LBRACE)) {
+        if (check_peek(parser, TOKEN_RBRACE) || check_peek(parser, TOKEN_DOT)) {
+            // <expr-struct>
+            expect_current(parser, TOKEN_LBRACE);
+            sbuf(struct cst_member_initializer const* const) initializers =
+                parse_member_initializer_list(parser);
+            expect_current(parser, TOKEN_RBRACE);
+
+            struct cst_expr* const product =
+                cst_expr_new_struct(location, typespec, initializers);
+
+            freeze(product);
+            return product;
+        }
+
         // <expr-slice>
         expect_current(parser, TOKEN_LBRACE);
         struct cst_expr const* const pointer = parse_expr(parser);
@@ -1118,43 +1130,6 @@ parse_expr_lparen(struct parser* parser)
 
         struct cst_expr* const product =
             cst_expr_new_slice(location, typespec, pointer, count);
-
-        freeze(product);
-        return product;
-    }
-
-    if (check_current(parser, TOKEN_LBRACKET)
-        && typespec->kind == TYPESPEC_SLICE) {
-        // <expr-array-slice>
-        expect_current(parser, TOKEN_LBRACKET);
-        sbuf(struct cst_expr const*) elements = NULL;
-        while (!check_current(parser, TOKEN_RBRACKET)) {
-            if (sbuf_count(elements) != 0u) {
-                expect_current(parser, TOKEN_COMMA);
-            }
-
-            sbuf_push(elements, parse_expr(parser));
-        }
-        sbuf_freeze(elements);
-        expect_current(parser, TOKEN_RBRACKET);
-
-        struct cst_expr* const product =
-            cst_expr_new_array_slice(location, typespec, elements);
-
-        freeze(product);
-        return product;
-    }
-
-    if (check_current(parser, TOKEN_LBRACE)
-        && typespec->kind != TYPESPEC_SLICE) {
-        // <expr-struct>
-        expect_current(parser, TOKEN_LBRACE);
-        sbuf(struct cst_member_initializer const* const) initializers =
-            parse_member_initializer_list(parser);
-        expect_current(parser, TOKEN_RBRACE);
-
-        struct cst_expr* const product =
-            cst_expr_new_struct(location, typespec, initializers);
 
         freeze(product);
         return product;
