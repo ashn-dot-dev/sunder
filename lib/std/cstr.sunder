@@ -1,4 +1,3 @@
-# Routines for NUL-terminated byte sequences a.k.a cstrings.
 namespace std::cstr;
 
 func count(s: *byte) usize {

@@ -1,4 +1,3 @@
-# Routines for byte sequences.
 namespace std::str;
 
 func starts_with(str: []byte, target: []byte) bool {

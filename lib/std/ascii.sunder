@@ -1,4 +1,3 @@
-# Routines for ASCII bytes and ASCII byte sequences.
 namespace std::ascii;
 
 func is_lower(char: byte) bool {
