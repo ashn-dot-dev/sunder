@@ -1,0 +1,7 @@
+func main() void {
+    (:[]ssize)[123, 456...];
+}
+################################################################################
+# [error-slice-list-ellipsis-element.test.sunder:2] error: ellipsis element is not allowed in slice lists
+#     (:[]ssize)[123, 456...];
+#                     ^
