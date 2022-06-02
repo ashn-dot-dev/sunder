@@ -783,7 +783,7 @@ bitarr_or(
 // (2) magnitude: The absolute value of the bigint, presented through this API
 //     as an infinitely long sequence of bits with little endian ordering.
 //
-// The internals of struct bigint are designed such that initializing an
+// The internals of struct bigint are designed such that initializing a
 // bigint with:
 //      struct bigint foo = {0};
 // or
