@@ -1,0 +1,59 @@
+namespace std;
+import "std/core.sunder";
+import "std/cstr.sunder";
+import "sys";
+
+struct argument_iterator {
+    var _argv: **byte;
+    var _bytes: []byte;
+    var _index: std::optional[[usize]];
+
+    # Initialize an argument iterator using the arguments provided by the
+    # hosted environment at program startup. The behavior of this function is
+    # undefined for programs executing in a freestanding environment. The
+    # behavior of this function is undefined if the Sunder `main` function was
+    # not used as the program entry point.
+    func init() argument_iterator {
+        return argument_iterator::init_from_argv(sys::argv);
+    }
+
+    # Initialize an argument iterator from a C-style argument vector. The
+    # provided argv *must* contain a NULL-terminated list of NUL-terminated
+    # strings in accordance ISO/IEC 9899:1999 section 5.1.2.2.1.
+    func init_from_argv(argv: **byte) argument_iterator {
+        return (:argument_iterator){
+            ._argv = argv,
+            ._bytes = std::zeroed[[[]byte]](),
+            ._index = std::optional[[usize]]::init_empty()
+        };
+    }
+
+    func advance(self: *argument_iterator) bool {
+        if self.*._index.is_empty() {
+            self.*._index = std::optional[[usize]]::init_value(0); # start-of-iteration
+        }
+        else {
+            self.*._index = std::optional[[usize]]::init_value(self.*._index.value() + 1);
+        }
+
+        var arg = std::ptr[[*byte]]::add(self.*._argv, self.*._index.value());
+        if std::ptr[[byte]]::is_null(*arg) {
+            return false; # end of iteration
+        }
+
+        self.*._bytes = std::cstr::as_str(*arg);
+        return true;
+    }
+
+    func current(self: *argument_iterator) *[]byte {
+        if self.*._index.is_empty() {
+            std::panic("invalid iterator");
+        }
+
+        var arg = std::ptr[[*byte]]::add(self.*._argv, self.*._index.value());
+        if std::ptr[[byte]]::is_null(*arg) {
+            std::panic("invalid iterator");
+        }
+        return &self.*._bytes;
+    }
+}

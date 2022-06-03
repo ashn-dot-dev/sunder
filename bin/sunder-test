@@ -38,11 +38,6 @@ test() {
     if [ "${EXPECTED}" = "${RECEIVED}" ]; then
         echo '[= PASS =]'
     else
-        echo "======== EXPECTED ========"
-        printf '%s\n' "${EXPECTED}" | sed 's/^/# /g'
-        echo "======== RECEIVED ========"
-        printf '%s\n' "${RECEIVED}" | sed 's/^/# /g'
-        echo "========== DIFF =========="
         TMPDIR=$(mktemp -d)
         trap '{ rm -rf -- "${TMPDIR}"; }' EXIT
         printf '%s\n' "${EXPECTED}" >"${TMPDIR}/expected"
