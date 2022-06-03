@@ -121,8 +121,9 @@ struct general_allocator {
         var prev = element.*._prev;
         var next = element.*._next;
 
-        var is_only_element = self.*._elements == element and prev == next;
+        var is_only_element = prev == element and next == element;
         if is_only_element {
+            if self.*._elements != element { std::panic("unreachable"); }
             self.*._elements = std::ptr[[general_allocator_element]]::null();
             return;
         }

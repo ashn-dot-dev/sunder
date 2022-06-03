@@ -1252,7 +1252,7 @@ struct _int { # namespace
     }
 
     func init_from_str_common(str: []byte, radix: usize, is_signed: bool, max: umax) std::result[[umax, []byte]] {
-        if radix != 0 and (radix < 2 or radix > 36) {
+        if radix != 0 and radix != 2 and radix != 8 and radix != 10 and radix != 16 {
             return std::result[[umax, []byte]]::init_error("invalid radix");
         }
 

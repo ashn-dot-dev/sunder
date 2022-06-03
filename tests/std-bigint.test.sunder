@@ -1,0 +1,376 @@
+import "std";
+
+func display_bigint_internals(bigint: *std::bigint) void {
+    var sign = "0";
+    if bigint.*._sign == +1 {
+        sign = "+";
+    }
+    if bigint.*._sign == -1 {
+        sign = "-";
+    }
+    var limb_count = countof(bigint.*._limbs);
+    std::print_format(
+        std::out(),
+        "SIGN: {}, LIMB COUNT: {}, LIMBS: [",
+        (:[]std::formatter)[
+            std::formatter::init[[[]byte]](&sign),
+            std::formatter::init[[usize]](&limb_count)]);
+    for i in limb_count {
+        std::print_format(
+            std::out(),
+            "{X}",
+            (:[]std::formatter)[
+                std::formatter::init[[u32]](&bigint.*._limbs[i])]);
+        if i != limb_count - 1 {
+            std::print(std::out(), ", ");
+        }
+    }
+    std::print_line(std::out(), "]");
+}
+
+func test_init_from_str_success(allocator: std::allocator, str: []byte, radix: usize) void {
+    std::print_format_line(
+        std::out(),
+        "input str: \"{e}\"",
+        (:[]std::formatter)[std::formatter::init[[[]byte]](&str)]);
+    var result = std::bigint::init_from_str(allocator, str, radix);
+    var bigint = result.value();
+    defer { bigint.fini(); }
+    display_bigint_internals(&bigint);
+    std::print_format_line(
+        std::out(),
+        "{}",
+        (:[]std::formatter)[std::formatter::init[[std::bigint]](&bigint)]);
+}
+
+func test_init_from_str_failure(allocator: std::allocator, str: []byte, radix: usize) void {
+    std::print_format_line(
+        std::out(),
+        "input str: \"{e}\"",
+        (:[]std::formatter)[std::formatter::init[[[]byte]](&str)]);
+    var result = std::bigint::init_from_str(allocator, str, radix);
+    std::print_line(std::out(), result.error());
+}
+
+func test_compare(allocator: std::allocator, lhs_str: []byte, rhs_str: []byte) void {
+    var lhs_result = std::bigint::init_from_str(allocator, lhs_str, 0);
+    var lhs = lhs_result.value();
+    defer { lhs.fini(); }
+
+    var rhs_result = std::bigint::init_from_str(allocator, rhs_str, 0);
+    var rhs = rhs_result.value();
+    defer { rhs.fini(); }
+
+    var cmp = std::bigint::compare(&lhs, &rhs);
+
+    std::print_format_line(
+        std::out(),
+        "{} compare {} => {}",
+        (:[]std::formatter)[
+            std::formatter::init[[std::bigint]](&lhs),
+            std::formatter::init[[std::bigint]](&rhs),
+            std::formatter::init[[ssize]](&cmp)]);
+}
+
+func main() void {
+    var general_allocator = std::general_allocator::init();
+    defer { general_allocator.fini(); }
+    var allocator = std::allocator::init[[typeof(general_allocator)]](&general_allocator);
+
+    var bigint = std::bigint::init(allocator);
+    defer { bigint.fini(); }
+    display_bigint_internals(&bigint);
+
+    std::print(std::out(), "\n");
+
+    test_init_from_str_success(allocator, "0", 0);
+    std::print(std::out(), "\n");
+    test_init_from_str_success(allocator, "+0", 0);
+    std::print(std::out(), "\n");
+    test_init_from_str_success(allocator, "-0", 0);
+    std::print(std::out(), "\n");
+    test_init_from_str_success(allocator, "1", 0);
+    std::print(std::out(), "\n");
+    test_init_from_str_success(allocator, "+1", 0);
+    std::print(std::out(), "\n");
+    test_init_from_str_success(allocator, "-1", 0);
+    std::print(std::out(), "\n");
+    test_init_from_str_success(allocator, "2", 0);
+    std::print(std::out(), "\n");
+    test_init_from_str_success(allocator, "+2", 0);
+    std::print(std::out(), "\n");
+    test_init_from_str_success(allocator, "-2", 0);
+    std::print(std::out(), "\n");
+    test_init_from_str_success(allocator, "0xA", 0);
+    std::print(std::out(), "\n");
+    test_init_from_str_success(allocator, "+0xA", 0);
+    std::print(std::out(), "\n");
+    test_init_from_str_success(allocator, "-0xA", 0);
+    std::print(std::out(), "\n");
+    test_init_from_str_success(allocator, "0xAA", 0);
+    std::print(std::out(), "\n");
+    test_init_from_str_success(allocator, "+0xAA", 0);
+    std::print(std::out(), "\n");
+    test_init_from_str_success(allocator, "-0xAA", 0);
+    std::print(std::out(), "\n");
+    test_init_from_str_success(allocator, "0xFF", 0);
+    std::print(std::out(), "\n");
+    test_init_from_str_success(allocator, "+0xFF", 0);
+    std::print(std::out(), "\n");
+    test_init_from_str_success(allocator, "-0xFF", 0);
+    std::print(std::out(), "\n");
+    test_init_from_str_success(allocator, "0xBEEFBEEFBEEFBEEFBEEFBEEFBEEFBEEF", 0);
+    std::print(std::out(), "\n");
+    test_init_from_str_success(allocator, "-1234567890123456789012345678901234567890", 0);
+
+    std::print(std::out(), "\n");
+
+    test_init_from_str_success(allocator, "0", 10);
+    std::print(std::out(), "\n");
+    test_init_from_str_success(allocator, "0", 2);
+    std::print(std::out(), "\n");
+    test_init_from_str_success(allocator, "0", 8);
+    std::print(std::out(), "\n");
+    test_init_from_str_success(allocator, "0", 16);
+
+    std::print(std::out(), "\n");
+
+    # The following tests all use the same number.
+    test_init_from_str_success(allocator, "253798150800771361190604828513884159727", 10);
+    std::print(std::out(), "\n");
+    test_init_from_str_success(allocator, "10111110111011111011111011101111101111101110111110111110111011111011111011101111101111101110111110111110111011111011111011101111", 2);
+    std::print(std::out(), "\n");
+    test_init_from_str_success(allocator, "2767373735757567676737373575756767673737357", 8);
+    std::print(std::out(), "\n");
+    test_init_from_str_success(allocator, "BEEFBEEFBEEFBEEFBEEFBEEFBEEFBEEF", 16);
+
+    std::print(std::out(), "\n");
+
+    test_init_from_str_failure(allocator, "", 0);
+    std::print(std::out(), "\n");
+    test_init_from_str_failure(allocator, "+", 0);
+    std::print(std::out(), "\n");
+    test_init_from_str_failure(allocator, "-", 0);
+    std::print(std::out(), "\n");
+    test_init_from_str_failure(allocator, "x0", 0);
+    std::print(std::out(), "\n");
+    test_init_from_str_failure(allocator, "0x", 0);
+    std::print(std::out(), "\n");
+    test_init_from_str_failure(allocator, "0A", 0);
+    std::print(std::out(), "\n");
+    test_init_from_str_failure(allocator, "123 ", 0);
+    std::print(std::out(), "\n");
+    test_init_from_str_failure(allocator, " 123", 0);
+
+    std::print(std::out(), "\n");
+
+    test_compare(allocator, "0", "0");
+    std::print(std::out(), "\n");
+    test_compare(allocator, "+0", "-0");
+    std::print(std::out(), "\n");
+    test_compare(allocator, "-0", "+0");
+    std::print(std::out(), "\n");
+    test_compare(allocator, "123", "123");
+    std::print(std::out(), "\n");
+    test_compare(allocator, "+123", "-123");
+    std::print(std::out(), "\n");
+    test_compare(allocator, "-123", "+123");
+    std::print(std::out(), "\n");
+    test_compare(allocator, "0xBEEFBEEFBEEFBEEFBEEFBEEFBEEFBEEF", "0xBEEFBEEFBEEFBEEFBEEFBEEFBEEFBEEF");
+    std::print(std::out(), "\n");
+    test_compare(allocator, "+0xBEEFBEEFBEEFBEEFBEEFBEEFBEEFBEEF", "-0xBEEFBEEFBEEFBEEFBEEFBEEFBEEFBEEF");
+    std::print(std::out(), "\n");
+    test_compare(allocator, "-0xBEEFBEEFBEEFBEEFBEEFBEEFBEEFBEEF", "+0xBEEFBEEFBEEFBEEFBEEFBEEFBEEFBEEF");
+
+    std::print(std::out(), "\n");
+
+    # Test zero divided non-zero equals zero.
+    var lhs = std::bigint::init_from_str(allocator, "0", 0);
+    var lhs = lhs.value();
+    var rhs = std::bigint::init_from_str(allocator, "1", 0);
+    var rhs = rhs.value();
+    var div = std::bigint::init(allocator);
+    defer {
+        lhs.fini();
+        rhs.fini();
+        div.fini();
+    }
+    std::bigint::div(&div, &lhs, &rhs);
+    display_bigint_internals(&div);
+
+    std::print(std::out(), "\n");
+
+    # Test a panic from divide by zero.
+    var lhs = std::bigint::init_from_str(allocator, "1", 0);
+    var lhs = lhs.value();
+    var rhs = std::bigint::init_from_str(allocator, "0", 0);
+    var rhs = rhs.value();
+    var div = std::bigint::init(allocator);
+    defer {
+        lhs.fini();
+        rhs.fini();
+        div.fini();
+    }
+    std::bigint::div(&div, &lhs, &rhs);
+    std::panic("unreachable");
+}
+################################################################################
+# SIGN: 0, LIMB COUNT: 0, LIMBS: []
+#
+# input str: "0"
+# SIGN: 0, LIMB COUNT: 0, LIMBS: []
+# 0
+#
+# input str: "+0"
+# SIGN: 0, LIMB COUNT: 0, LIMBS: []
+# 0
+#
+# input str: "-0"
+# SIGN: 0, LIMB COUNT: 0, LIMBS: []
+# 0
+#
+# input str: "1"
+# SIGN: +, LIMB COUNT: 1, LIMBS: [0x1]
+# 1
+#
+# input str: "+1"
+# SIGN: +, LIMB COUNT: 1, LIMBS: [0x1]
+# 1
+#
+# input str: "-1"
+# SIGN: -, LIMB COUNT: 1, LIMBS: [0x1]
+# -1
+#
+# input str: "2"
+# SIGN: +, LIMB COUNT: 1, LIMBS: [0x2]
+# 2
+#
+# input str: "+2"
+# SIGN: +, LIMB COUNT: 1, LIMBS: [0x2]
+# 2
+#
+# input str: "-2"
+# SIGN: -, LIMB COUNT: 1, LIMBS: [0x2]
+# -2
+#
+# input str: "0xA"
+# SIGN: +, LIMB COUNT: 1, LIMBS: [0xA]
+# 10
+#
+# input str: "+0xA"
+# SIGN: +, LIMB COUNT: 1, LIMBS: [0xA]
+# 10
+#
+# input str: "-0xA"
+# SIGN: -, LIMB COUNT: 1, LIMBS: [0xA]
+# -10
+#
+# input str: "0xAA"
+# SIGN: +, LIMB COUNT: 1, LIMBS: [0xAA]
+# 170
+#
+# input str: "+0xAA"
+# SIGN: +, LIMB COUNT: 1, LIMBS: [0xAA]
+# 170
+#
+# input str: "-0xAA"
+# SIGN: -, LIMB COUNT: 1, LIMBS: [0xAA]
+# -170
+#
+# input str: "0xFF"
+# SIGN: +, LIMB COUNT: 1, LIMBS: [0xFF]
+# 255
+#
+# input str: "+0xFF"
+# SIGN: +, LIMB COUNT: 1, LIMBS: [0xFF]
+# 255
+#
+# input str: "-0xFF"
+# SIGN: -, LIMB COUNT: 1, LIMBS: [0xFF]
+# -255
+#
+# input str: "0xBEEFBEEFBEEFBEEFBEEFBEEFBEEFBEEF"
+# SIGN: +, LIMB COUNT: 4, LIMBS: [0xBEEFBEEF, 0xBEEFBEEF, 0xBEEFBEEF, 0xBEEFBEEF]
+# 253798150800771361190604828513884159727
+#
+# input str: "-1234567890123456789012345678901234567890"
+# SIGN: -, LIMB COUNT: 5, LIMBS: [0xCE3F0AD2, 0xACBC5F96, 0xC0DBF3B8, 0xA0C92075, 0x3]
+# -1234567890123456789012345678901234567890
+#
+# input str: "0"
+# SIGN: 0, LIMB COUNT: 0, LIMBS: []
+# 0
+#
+# input str: "0"
+# SIGN: 0, LIMB COUNT: 0, LIMBS: []
+# 0
+#
+# input str: "0"
+# SIGN: 0, LIMB COUNT: 0, LIMBS: []
+# 0
+#
+# input str: "0"
+# SIGN: 0, LIMB COUNT: 0, LIMBS: []
+# 0
+#
+# input str: "253798150800771361190604828513884159727"
+# SIGN: +, LIMB COUNT: 4, LIMBS: [0xBEEFBEEF, 0xBEEFBEEF, 0xBEEFBEEF, 0xBEEFBEEF]
+# 253798150800771361190604828513884159727
+#
+# input str: "10111110111011111011111011101111101111101110111110111110111011111011111011101111101111101110111110111110111011111011111011101111"
+# SIGN: +, LIMB COUNT: 4, LIMBS: [0xBEEFBEEF, 0xBEEFBEEF, 0xBEEFBEEF, 0xBEEFBEEF]
+# 253798150800771361190604828513884159727
+#
+# input str: "2767373735757567676737373575756767673737357"
+# SIGN: +, LIMB COUNT: 4, LIMBS: [0xBEEFBEEF, 0xBEEFBEEF, 0xBEEFBEEF, 0xBEEFBEEF]
+# 253798150800771361190604828513884159727
+#
+# input str: "BEEFBEEFBEEFBEEFBEEFBEEFBEEFBEEF"
+# SIGN: +, LIMB COUNT: 4, LIMBS: [0xBEEFBEEF, 0xBEEFBEEF, 0xBEEFBEEF, 0xBEEFBEEF]
+# 253798150800771361190604828513884159727
+#
+# input str: ""
+# integer contains no digits
+#
+# input str: "+"
+# integer contains invalid digit
+#
+# input str: "-"
+# integer contains invalid digit
+#
+# input str: "x0"
+# integer contains invalid digit
+#
+# input str: "0x"
+# integer contains no digits
+#
+# input str: "0A"
+# integer contains invalid digit
+#
+# input str: "123 "
+# integer contains invalid digit
+#
+# input str: " 123"
+# integer contains invalid digit
+#
+# 0 compare 0 => 0
+#
+# 0 compare 0 => 0
+#
+# 0 compare 0 => 0
+#
+# 123 compare 123 => 0
+#
+# 123 compare -123 => 1
+#
+# -123 compare 123 => -1
+#
+# 253798150800771361190604828513884159727 compare 253798150800771361190604828513884159727 => 0
+#
+# 253798150800771361190604828513884159727 compare -253798150800771361190604828513884159727 => 1
+#
+# -253798150800771361190604828513884159727 compare 253798150800771361190604828513884159727 => -1
+#
+# SIGN: 0, LIMB COUNT: 0, LIMBS: []
+#
+# panic: divide by zero

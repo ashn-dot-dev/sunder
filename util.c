@@ -1348,7 +1348,17 @@ bigint_mul(
         }
         unsigned k = 0;
         for (size_t i = 0; i < m; ++i) {
-            unsigned const t = (unsigned)(u[i] * v[j]) + w[i + j] + k;
+            unsigned u_limb = 0;
+            if (i < lhs->count) {
+                u_limb = u[i];
+            }
+
+            unsigned v_limb = 0;
+            if (j < rhs->count) {
+                v_limb = v[j];
+            }
+
+            unsigned const t = (unsigned)(u_limb * v_limb) + w[i + j] + k;
             w[i + j] = (uint8_t)(t % b);
             k = t / b;
             assert(k <= b && "k will always be in the range 0 <= k < b");

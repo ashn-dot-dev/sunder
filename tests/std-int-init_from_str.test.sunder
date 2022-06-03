@@ -1,6 +1,30 @@
 import "std/core.sunder";
 
 func nominal_dec() void {
+    var result = ssize::init_from_str("0", 0);
+    var int = result.value();
+    std::print_format_line(
+        std::out(),
+        "{}",
+        (:[]std::formatter)[
+            std::formatter::init[[ssize]](&int)]);
+
+    var result = ssize::init_from_str("1", 0);
+    var int = result.value();
+    std::print_format_line(
+        std::out(),
+        "{}",
+        (:[]std::formatter)[
+            std::formatter::init[[ssize]](&int)]);
+
+    var result = ssize::init_from_str("2", 0);
+    var int = result.value();
+    std::print_format_line(
+        std::out(),
+        "{}",
+        (:[]std::formatter)[
+            std::formatter::init[[ssize]](&int)]);
+
     var result = ssize::init_from_str("123456", 0);
     var int = result.value();
     std::print_format_line(
@@ -9,8 +33,8 @@ func nominal_dec() void {
         (:[]std::formatter)[
             std::formatter::init[[ssize]](&int)]);
 
-    result = ssize::init_from_str("123456", 10);
-    int = result.value();
+    var result = ssize::init_from_str("123456", 10);
+    var int = result.value();
     std::print_format_line(
         std::out(),
         "{}",
@@ -19,6 +43,30 @@ func nominal_dec() void {
 }
 
 func nominal_dec_pos() void {
+    var result = ssize::init_from_str("+0", 0);
+    var int = result.value();
+    std::print_format_line(
+        std::out(),
+        "{}",
+        (:[]std::formatter)[
+            std::formatter::init[[ssize]](&int)]);
+
+    var result = ssize::init_from_str("+1", 0);
+    var int = result.value();
+    std::print_format_line(
+        std::out(),
+        "{}",
+        (:[]std::formatter)[
+            std::formatter::init[[ssize]](&int)]);
+
+    var result = ssize::init_from_str("+2", 0);
+    var int = result.value();
+    std::print_format_line(
+        std::out(),
+        "{}",
+        (:[]std::formatter)[
+            std::formatter::init[[ssize]](&int)]);
+
     var result = ssize::init_from_str("+123456", 0);
     var int = result.value();
     std::print_format_line(
@@ -29,6 +77,31 @@ func nominal_dec_pos() void {
 }
 
 func nominal_dec_neg() void {
+    var result = ssize::init_from_str("-0", 0);
+    var int = result.value();
+    std::print_format_line(
+        std::out(),
+        "{}",
+        (:[]std::formatter)[
+            std::formatter::init[[ssize]](&int)]);
+
+
+    var result = ssize::init_from_str("-1", 0);
+    var int = result.value();
+    std::print_format_line(
+        std::out(),
+        "{}",
+        (:[]std::formatter)[
+            std::formatter::init[[ssize]](&int)]);
+
+    var result = ssize::init_from_str("-2", 0);
+    var int = result.value();
+    std::print_format_line(
+        std::out(),
+        "{}",
+        (:[]std::formatter)[
+            std::formatter::init[[ssize]](&int)]);
+
     var result = ssize::init_from_str("-123456", 0);
     var int = result.value();
     std::print_format_line(
@@ -47,8 +120,8 @@ func nominal_bin() void {
         (:[]std::formatter)[
             std::formatter::init[[ssize]](&int)]);
 
-    result = ssize::init_from_str("10010101", 2);
-    int = result.value();
+    var result = ssize::init_from_str("10010101", 2);
+    var int = result.value();
     std::print_format_line(
         std::out(),
         "{b}",
@@ -65,8 +138,8 @@ func nominal_oct() void {
         (:[]std::formatter)[
             std::formatter::init[[ssize]](&int)]);
 
-    result = ssize::init_from_str("666", 8);
-    int = result.value();
+    var result = ssize::init_from_str("666", 8);
+    var int = result.value();
     std::print_format_line(
         std::out(),
         "{o}",
@@ -83,8 +156,8 @@ func nominal_hex() void {
         (:[]std::formatter)[
             std::formatter::init[[ssize]](&int)]);
 
-    result = ssize::init_from_str("deadBEEF", 16);
-    int = result.value();
+    var result = ssize::init_from_str("deadBEEF", 16);
+    var int = result.value();
     std::print_format_line(
         std::out(),
         "{X}",
@@ -96,10 +169,10 @@ func error_invalid_radix() void {
     var result = ssize::init_from_str("0", 1);
     std::print_line(std::out(), result.error());
 
-    result = ssize::init_from_str("0", 37);
+    var result = ssize::init_from_str("0", 37);
     std::print_line(std::out(), result.error());
 
-    result = ssize::init_from_str("0", 1000);
+    var result = ssize::init_from_str("0", 1000);
     std::print_line(std::out(), result.error());
 }
 
@@ -107,13 +180,13 @@ func error_integer_contains_no_digits() void {
     var result = ssize::init_from_str("", 0);
     std::print_line(std::out(), result.error());
 
-    result = ssize::init_from_str("0b", 0);
+    var result = ssize::init_from_str("0b", 0);
     std::print_line(std::out(), result.error());
 
-    result = ssize::init_from_str("0o", 0);
+    var result = ssize::init_from_str("0o", 0);
     std::print_line(std::out(), result.error());
 
-    result = ssize::init_from_str("0x", 0);
+    var result = ssize::init_from_str("0x", 0);
     std::print_line(std::out(), result.error());
 }
 
@@ -121,13 +194,13 @@ func error_integer_contains_invalid_digit() void {
     var result = ssize::init_from_str("123A", 0);
     std::print_line(std::out(), result.error());
 
-    result = ssize::init_from_str("0b12", 0);
+    var result = ssize::init_from_str("0b12", 0);
     std::print_line(std::out(), result.error());
 
-    result = ssize::init_from_str("0o1239", 0);
+    var result = ssize::init_from_str("0o1239", 0);
     std::print_line(std::out(), result.error());
 
-    result = ssize::init_from_str("0x123G", 0);
+    var result = ssize::init_from_str("0x123G", 0);
     std::print_line(std::out(), result.error());
 }
 
@@ -195,9 +268,18 @@ func main() void {
     error_integer_out_of_range();
 }
 ################################################################################
+# 0
+# 1
+# 2
 # 123456
 # 123456
+# 0
+# 1
+# 2
 # 123456
+# 0
+# -1
+# -2
 # -123456
 # 0b10010101
 # 0b10010101
