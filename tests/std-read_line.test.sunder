@@ -3,7 +3,7 @@ import "std/fs.sunder";
 import "std/page_allocator.sunder";
 
 func test0() void {
-    var open_result = std::file::open("data.txt", std::OPEN_READ);
+    var open_result = std::file::open("data.txt", std::file::OPEN_READ);
     var file: std::file = open_result.value();
 
     var reader = std::reader::init[[std::file]](&file);
@@ -24,7 +24,7 @@ func test0() void {
 }
 
 func test1() void {
-    var open_result = std::file::open("data-no-ending-newline.txt", std::OPEN_READ);
+    var open_result = std::file::open("data-no-ending-newline.txt", std::file::OPEN_READ);
     var file: std::file = open_result.value();
 
     var reader = std::reader::init[[std::file]](&file);
@@ -46,7 +46,7 @@ func test1() void {
 
 # Read a single line and report the result.
 func test2() void {
-    var open_result = std::file::open("data.txt", std::OPEN_READ);
+    var open_result = std::file::open("data.txt", std::file::OPEN_READ);
     var file: std::file = open_result.value();
 
     var reader = std::reader::init[[std::file]](&file);

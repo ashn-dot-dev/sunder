@@ -3,7 +3,7 @@ import "std";
 import "sys";
 
 func cat(filename: []byte) void {
-    var result = std::file::open(filename, std::OPEN_READ);
+    var result = std::file::open(filename, std::file::OPEN_READ);
     if result.is_error() {
         var error = result.error();
         std::print_format_line(

@@ -3,7 +3,7 @@ import "std/fs.sunder";
 import "std/page_allocator.sunder";
 
 func main() void {
-    var open_result = std::file::open("data.txt", std::OPEN_READ);
+    var open_result = std::file::open("data.txt", std::file::OPEN_READ);
     var file: std::file = open_result.value();
 
     var reader = std::reader::init[[std::file]](&file);

@@ -3,7 +3,7 @@ import "std/fs.sunder";
 import "sys/sys.sunder";
 
 func main() void {
-    var open_result: std::result[[std::file, []byte]] = std::file::open("data.tmp", std::OPEN_READ | std::OPEN_WRITE);
+    var open_result: std::result[[std::file, []byte]] = std::file::open("data.tmp", std::file::OPEN_READ | std::file::OPEN_WRITE);
     var file: std::file = open_result.value();
     var tell_result: std::result[[usize, []byte]] = std::zeroed[[std::result[[usize, []byte]]]]();
 
@@ -15,23 +15,23 @@ func main() void {
     tell_result = file.tell();
     dump tell_result.value();
 
-    file.seek(0, std::SEEK_START);
+    file.seek(0, std::file::SEEK_START);
     tell_result = file.tell();
     dump tell_result.value();
 
-    file.seek(1, std::SEEK_START);
+    file.seek(1, std::file::SEEK_START);
     tell_result = file.tell();
     dump tell_result.value();
 
-    file.seek(0, std::SEEK_END);
+    file.seek(0, std::file::SEEK_END);
     tell_result = file.tell();
     dump tell_result.value();
 
-    file.seek(-1, std::SEEK_END);
+    file.seek(-1, std::file::SEEK_END);
     tell_result = file.tell();
     dump tell_result.value();
 
-    file.seek(-3, std::SEEK_CURRENT);
+    file.seek(-3, std::file::SEEK_CURRENT);
     tell_result = file.tell();
     dump tell_result.value();
 
@@ -39,7 +39,7 @@ func main() void {
     tell_result = file.tell();
     dump tell_result.value();
 
-    file.seek(0, std::SEEK_START);
+    file.seek(0, std::file::SEEK_START);
     var buf: [512]byte = (:[512]byte)[0...];
     var read_result: std::result[[usize, []byte]] = file.read(buf[0:countof(buf)]);
     std::print_line(std::out(), buf[0:read_result.value()]);

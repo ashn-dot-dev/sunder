@@ -4,13 +4,13 @@ import "std/fs.sunder";
 const path: []byte = "data.tmp";
 
 func main() void {
-    var open_result: std::result[[std::file, []byte]] = std::file::open(path, std::OPEN_WRITE);
+    var open_result: std::result[[std::file, []byte]] = std::file::open(path, std::file::OPEN_WRITE);
     var file: std::file = open_result.value();
     var writer: std::writer = std::writer::init[[std::file]](&file);
     std::print(writer, "FOO BAR BAZ");
     file.close();
 
-    open_result = std::file::open(path, std::OPEN_READ);
+    open_result = std::file::open(path, std::file::OPEN_READ);
     file = open_result.value();
     var reader: std::reader = std::reader::init[[std::file]](&file);
     var buf: [512]byte = (:[512]byte)[0...];

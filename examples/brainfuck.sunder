@@ -25,7 +25,7 @@ func main() void {
     }
 
     var path = std::cstr::as_str(*std::ptr[[*byte]]::add(sys::argv, 1));
-    var result = std::file::open(path, std::OPEN_READ);
+    var result = std::file::open(path, std::file::OPEN_READ);
     if result.is_error() {
         var error = result.error();
         std::print_format_line(
