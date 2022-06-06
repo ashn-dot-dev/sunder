@@ -137,7 +137,7 @@ struct bigint {
         self.*._limbs = std::slice[[u32]]::resize(self.*._allocator, self.*._limbs, countof(from.*._limbs));
 
         if self.*._sign != 0 {
-            if countof(self.*._limbs) == 0 { std::panic("unreachable"); }
+            std::assert(countof(self.*._limbs) != 0);
             std::slice[[u32]]::copy(self.*._limbs, from.*._limbs);
         }
     }
@@ -150,7 +150,7 @@ struct bigint {
             return -1;
         }
 
-        if lhs.*._sign != rhs.*._sign { std::panic("unreachable"); }
+        std::assert(lhs.*._sign == rhs.*._sign);
         var sign = lhs.*._sign;
         if countof(lhs.*._limbs) > countof(rhs.*._limbs) {
             return sign;
@@ -159,7 +159,7 @@ struct bigint {
             return -sign;
         }
 
-        if countof(lhs.*._limbs) != countof(rhs.*._limbs) { std::panic("unreachable"); }
+        std::assert(countof(lhs.*._limbs) == countof(rhs.*._limbs));
         var count = countof(lhs.*._limbs);
         for i in count {
             var limb_idx = count - i - 1;
@@ -202,12 +202,12 @@ struct bigint {
         defer { output.fini(); }
 
         if magnitude._sign == 0 {
-            if countof(self.*._limbs) != 0 { std::panic("unreachable"); }
+            std::assert(countof(self.*._limbs) == 0);
             # Write a single zero digit.
             output.insert(0u, '0');
         }
         for magnitude._sign != 0 {
-            if countof(self.*._limbs) == 0 { std::panic("unreachable"); }
+            std::assert(countof(self.*._limbs) != 0);
 
             var div = bigint::init(self.*._allocator);
             defer { div.fini(); }
@@ -219,7 +219,7 @@ struct bigint {
                 output.insert(0u, '0');
             }
             elif rem._sign == +1 {
-                if countof(rem._limbs) != 1 { std::panic("unreachable"); }
+                std::assert(countof(rem._limbs) == 1);
                 const DIGITS_TABLE = (:[]byte)[
                     '0', '1', '2', '3', '4',
                     '5', '6', '7', '8', '9'
@@ -289,7 +289,7 @@ struct bigint {
 
         # (+lhs) + (+rhs) == +(lhs + rhs)
         # (-lhs) + (-rhs) == -(lhs + rhs)
-        if lhs.*._sign != rhs.*._sign { std::panic("unreachable"); }
+        std::assert(lhs.*._sign == rhs.*._sign);
         var sign = lhs.*._sign;
         var limb_count = 1 + std::max[[usize]](countof(lhs.*._limbs), countof(rhs.*._limbs));
         var tmp_res = (:bigint){
@@ -313,7 +313,7 @@ struct bigint {
             tmp_res._limbs[i] = (:u32)tot;
             carry = (:u64)(tot > (:u64)u32::MAX);
         }
-        if carry != 0 { std::panic("unreachable"); }
+        std::assert(carry == 0);
 
         tmp_res._normalize();
         bigint::assign(res, &tmp_res);
@@ -351,7 +351,7 @@ struct bigint {
 
         # (+lhs) - (+rhs) == +(lhs - rhs)
         # (-lhs) - (-rhs) == -(lhs - rhs)
-        if lhs.*._sign != rhs.*._sign { std::panic("unreachable"); }
+        std::assert(lhs.*._sign == rhs.*._sign);
         var sign = lhs.*._sign;
         # Note that the expression (lhs - rhs) will require flipping the sign
         # of the result if the magnitude of lhs is greater than the magnitude
@@ -390,7 +390,7 @@ struct bigint {
             tmp_res._limbs[i] = (:u32)tot;
             borrow = (:u64)(tot > (:u64)u32::MAX); # this might cause breakage, maybe switch to singed 64 bit
         }
-        if borrow != 0 { std::panic("unreachable"); }
+        std::assert(borrow == 0);
 
         if (neg) {
             bigint::neg(&tmp_res, &tmp_res);
@@ -444,7 +444,7 @@ struct bigint {
                 var t: u64 = u_limb * v_limb + (:u64)w[i + j] + k;
                 w[i + j] = (:u32)std::rem[[u64]](t, b);
                 k = t / b;
-                if not (k <= b) { std::panic("unreachable: k will always be in the range 0 <= k < b"); }
+                assert(k <= b);
             }
             w[j + m] = (:u32)k;
         }

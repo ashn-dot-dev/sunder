@@ -1088,6 +1088,13 @@ func print_format_line(writer: std::writer, format: []byte, args: []std::formatt
     std::print(writer, "\n");
 }
 
+# Panics if the provided condition does not evaluate as true.
+func assert(condition: bool) void {
+    if not condition {
+        std::panic("assert failure");
+    }
+}
+
 # Align the provided memory address up to the nearest the specified alignment.
 # The provided alignment must be zero or a power of two.
 func forward_align(addr: usize, align: usize) usize {
