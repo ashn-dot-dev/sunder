@@ -565,12 +565,6 @@ struct formatter {
         return self.*.itable.*.format(self.*.object, writer, fmt);
     }
 
-    func invalid_format_string(format: []byte) void {
-        std::panic_format(
-            "invalid format string \"{e}\"\n",
-            (:[]std::formatter)[std::formatter::init[[[]byte]](&format)]);
-    }
-
     func panic_invalid_format_specifier(fmt: []byte) void {
         std::panic_format(
             "invalid format specifier \"{e}\"\n",
@@ -953,6 +947,10 @@ func write_format(writer: std::writer, format: []byte, args: []std::formatter) s
     var start: usize = 0;
     var end: usize = start;
 
+    # Format message passed to `std::panic` when an invalid format string is
+    # encountered. This message contains a format specifier for the `fmt` str.
+    const INVALID_FORMAT_STRING_MESSAGE = "invalid format string \"{e}\"\n";
+
     for end < countof(format) {
         if state == STATE_WALKING {
             if format[end] != '{' and format[end] != '}' {
@@ -967,7 +965,7 @@ func write_format(writer: std::writer, format: []byte, args: []std::formatter) s
                 #      ^
                 # "some}"
                 #      ^ End-of-format-string '{' or '}' character.
-                std::formatter::invalid_format_string(format);
+                std::panic_format(INVALID_FORMAT_STRING_MESSAGE, (:[]std::formatter)[std::formatter::init[[[]byte]](&format)]);
             }
 
             if format[end] == format[end + 1] {
@@ -987,7 +985,7 @@ func write_format(writer: std::writer, format: []byte, args: []std::formatter) s
             if format[end] == '}' {
                 # "some}text"
                 #      ^ End-of-fmt when not in the fmt-parsing state.
-                std::formatter::invalid_format_string(format);
+                std::panic_format(INVALID_FORMAT_STRING_MESSAGE, (:[]std::formatter)[std::formatter::init[[[]byte]](&format)]);
             }
 
             # "some{fmt}text"
@@ -1019,7 +1017,7 @@ func write_format(writer: std::writer, format: []byte, args: []std::formatter) s
                 # "some{f}}t}text"
                 #        ^^ Escaped '{' or '}' character is not allowed inside
                 #           a fmt string.
-                std::formatter::invalid_format_string(format);
+                std::panic_format(INVALID_FORMAT_STRING_MESSAGE, (:[]std::formatter)[std::formatter::init[[[]byte]](&format)]);
             }
 
             # "some{fmt}text"
@@ -1041,7 +1039,7 @@ func write_format(writer: std::writer, format: []byte, args: []std::formatter) s
     # "some{fmt"
     #          ^ End-of-format-string reached while in the formatting state.
     if state == STATE_FMTTING {
-        std::formatter::invalid_format_string(format);
+        std::panic_format(INVALID_FORMAT_STRING_MESSAGE, (:[]std::formatter)[std::formatter::init[[[]byte]](&format)]);
     }
 
     # "some{fmt}text"
