@@ -603,8 +603,9 @@ struct iterator[[T]] {
     # position of the iterator. The reference may be invalidated by the next
     # call to `advance` or by finalization of the backing iterator object.
     #
-    # If the backing iterator has reached an end-of-iteration condition, then
-    # the backing `current` function should panic.
+    # If the backing iterator has not begun iteration, or if the backing
+    # iterator has reached an end-of-iteration condition, then the backing
+    # `current` function should panic.
     func current(self: *iterator[[T]]) *T {
         return self.*.itable.*.current(self.*.object);
     }
