@@ -263,7 +263,7 @@ extend []byte func format(self: *[]byte, writer: std::writer, fmt: []byte) std::
         return std::result[[void, []byte]]::init_value(void::init());
     }
 
-    std::formatter::invalid_format_specifier(fmt);
+    std::formatter::panic_invalid_format_specifier(fmt);
     return std::zeroed[[std::result[[void, []byte]]]](); # unreachable
 }
 
@@ -558,7 +558,7 @@ struct formatter {
     # specifier implemented by the type, then the backing `format` function
     # should call
     #
-    #   std::formatter::invalid_format_specifier(fmt)
+    #   std::formatter::panic_invalid_format_specifier(fmt)
     #
     # which will terminate the program with failure status.
     func format(self: *formatter, writer: std::writer, fmt: []byte) std::result[[void, []byte]] {
@@ -571,7 +571,7 @@ struct formatter {
             (:[]std::formatter)[std::formatter::init[[[]byte]](&format)]);
     }
 
-    func invalid_format_specifier(fmt: []byte) void {
+    func panic_invalid_format_specifier(fmt: []byte) void {
         std::panic_format(
             "invalid format specifier \"{e}\"\n",
             (:[]std::formatter)[std::formatter::init[[[]byte]](&fmt)]);
@@ -1394,7 +1394,7 @@ struct _int { # namespace
     func format_common(magnitude: umax, is_negative: bool, writer: std::writer, fmt: []byte) std::result[[void, []byte]] {
         # All non-default format specifiers have a length of one byte.
         if countof(fmt) > 1 {
-            std::formatter::invalid_format_specifier(fmt);
+            std::formatter::panic_invalid_format_specifier(fmt);
         }
 
         const DIGITS_TABLE_COUNT: usize = 16;
@@ -1434,7 +1434,7 @@ struct _int { # namespace
                 digits_table = DIGITS_TABLE_UPPER[0:DIGITS_TABLE_COUNT];
             }
             else {
-                std::formatter::invalid_format_specifier(fmt);
+                std::formatter::panic_invalid_format_specifier(fmt);
             }
         }
 

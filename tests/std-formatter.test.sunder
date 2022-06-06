@@ -10,7 +10,7 @@ struct name {
 
     func format(self: *name, writer: std::writer, fmt: []byte) std::result[[void, []byte]] {
         if countof(fmt) != 0 {
-            std::formatter::invalid_format_specifier(fmt);
+            std::formatter::panic_invalid_format_specifier(fmt);
         }
 
         # Just assume all these writes will succeed lmao.
@@ -46,7 +46,7 @@ struct int {
             return std::write_all(writer, "hexadecimal\n");
         }
 
-        std::formatter::invalid_format_specifier(fmt);
+        std::formatter::panic_invalid_format_specifier(fmt);
         return std::zeroed[[std::result[[void, []byte]]]]();
     }
 }

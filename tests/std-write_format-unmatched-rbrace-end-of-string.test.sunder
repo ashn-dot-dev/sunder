@@ -5,7 +5,7 @@ struct person {
 
     func format(self: *person, writer: std::writer, fmt: []byte) std::result[[void, []byte]] {
         if countof(fmt) != 0 {
-            std::formatter::invalid_format_specifier(fmt);
+            std::formatter::panic_invalid_format_specifier(fmt);
         }
         return std::write_all(writer, self.*.name);
     }

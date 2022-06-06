@@ -186,7 +186,7 @@ struct bigint {
     # "b", "o", "x", and "X".
     func format(self: *bigint, writer: std::writer, fmt: []byte) std::result[[void, []byte]] {
         if countof(fmt) != 0 {
-            std::formatter::invalid_format_specifier(fmt);
+            std::formatter::panic_invalid_format_specifier(fmt);
         }
 
         var magnitude = bigint::init_from_bigint(self.*._allocator, self);
