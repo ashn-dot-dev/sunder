@@ -1,0 +1,29 @@
+import "std/core.sunder";
+import "std/argument.sunder";
+import "std/general_allocator.sunder";
+import "util/argv.sunder";
+
+func main() void {
+    var allocator = std::general_allocator::init();
+    defer {
+        allocator.fini();
+    }
+
+    var allocator = std::allocator::init[[typeof(allocator)]](&allocator);
+    var parser = std::argument_parser::init_from_argv(
+        (:[]std::argopt)[
+            std::argopt::init("a", false),
+            std::argopt::init("b", false)
+        ],
+        util::argv::new(allocator, (:[][]byte)[
+            "arg0",
+            "-a",
+            "-b",
+            "-c"
+        ])
+    );
+
+    for parser.advance() { }
+}
+################################################################################
+# error: unrecognized option `c`

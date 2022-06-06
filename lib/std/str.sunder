@@ -52,3 +52,32 @@ func contains(str: []byte, target: []byte) bool {
 
     return false;
 }
+
+func compare(lhs: []byte, rhs: []byte) ssize {
+    alias type = []byte;
+    return type::compare(&lhs, &rhs);
+}
+
+func eq(lhs: []byte, rhs: []byte) bool {
+    return std::str::compare(lhs, rhs) == 0;
+}
+
+func ne(lhs: []byte, rhs: []byte) bool {
+    return std::str::compare(lhs, rhs) != 0;
+}
+
+func lt(lhs: []byte, rhs: []byte) bool {
+    return std::str::compare(lhs, rhs) < 0;
+}
+
+func le(lhs: []byte, rhs: []byte) bool {
+    return std::str::compare(lhs, rhs) <= 0;
+}
+
+func gt(lhs: []byte, rhs: []byte) bool {
+    return std::str::compare(lhs, rhs) > 0;
+}
+
+func ge(lhs: []byte, rhs: []byte) bool {
+    return std::str::compare(lhs, rhs) >= 0;
+}

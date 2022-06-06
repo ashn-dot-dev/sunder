@@ -1,6 +1,5 @@
 # Simplified (non-POSIX-compliant) version of `cat`.
 import "std";
-import "sys";
 
 func cat(filename: []byte) void {
     var result = std::file::open(filename, std::file::OPEN_READ);
@@ -43,8 +42,15 @@ func cat(filename: []byte) void {
 }
 
 func main() void {
-    for i in 1:sys::argc {
-        var arg: *byte = *std::ptr[[*byte]]::add(sys::argv, i);
-        cat(std::cstr::as_str(arg));
+    var parser = std::argument_parser::init((:[]std::argopt)[
+        std::argopt::init("u", false) # Accepted but ignored.
+    ]);
+    for parser.advance() {
+        if parser.check_option("u") {
+            continue;
+        }
+
+        var arg = parser.argument();
+        cat(parser.argument_value());
     }
 }

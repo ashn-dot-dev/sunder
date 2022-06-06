@@ -1,0 +1,180 @@
+import "std/core.sunder";
+import "std/argument.sunder";
+import "std/general_allocator.sunder";
+import "util/argv.sunder";
+
+func dump_parser_info(parser: *std::argument_parser) void {
+    var opt = parser.*.option();
+    std::print(std::out(), "parser option   => ");
+    if opt.is_value() {
+        std::print_line(std::out(), opt.value());
+    }
+    else {
+        std::print_line(std::out(), "<empty>");
+    }
+
+    var arg = parser.*.argument();
+    std::print(std::out(), "parser argument => ");
+    if arg.is_value() {
+        std::print_line(std::out(), arg.value());
+    }
+    else {
+        std::print_line(std::out(), "<empty>");
+    }
+}
+
+func main() void {
+    var allocator = std::general_allocator::init();
+    defer {
+        allocator.fini();
+    }
+    var allocator = std::allocator::init[[typeof(allocator)]](&allocator);
+
+    var options = (:[]std::argopt)[];
+    var argv = util::argv::new(allocator, (:[][]byte)[]);
+    var parser = std::argument_parser::init_from_argv(options, argv);
+
+    dump parser.advance();
+    dump_parser_info(&parser);
+
+    std::print(std::out(), "\n"); ##############################################
+
+    var options = (:[]std::argopt)[];
+    var argv = util::argv::new(allocator, (:[][]byte)["arg0"]);
+    var parser = std::argument_parser::init_from_argv(options, argv);
+
+    dump parser.advance();
+    dump_parser_info(&parser);
+
+    std::print(std::out(), "\n"); ##############################################
+
+    var options = (:[]std::argopt)[];
+    var argv = util::argv::new(allocator, (:[][]byte)[
+        "arg0",
+        "arg1",
+        "arg2"
+    ]);
+    var parser = std::argument_parser::init_from_argv(options, argv);
+    dump parser.advance();
+    dump_parser_info(&parser);
+    dump parser.advance();
+    dump_parser_info(&parser);
+    dump parser.advance();
+    dump_parser_info(&parser);
+
+    std::print(std::out(), "\n"); ##############################################
+
+    var options = (:[]std::argopt)[
+        std::argopt::init("foo", false),
+        std::argopt::init("bar", true)
+    ];
+    var argv = util::argv::new(allocator, (:[][]byte)[
+        "arg0",
+        "arg1",
+        "-foo",
+        "--foo",
+        "---foo",
+        "arg5",
+        "-bar",
+        "arg7",
+        "--bar",
+        "arg9",
+        "-",
+        "--", # <-- marks the rest of the arguments as verbatim
+        "--foo",
+        "--bar",
+        "--bar",
+        "--",
+        "arg15"
+    ]);
+    var parser = std::argument_parser::init_from_argv(options, argv);
+    dump parser.advance();
+    dump_parser_info(&parser);
+    dump parser.advance();
+    dump_parser_info(&parser);
+    dump parser.advance();
+    dump_parser_info(&parser);
+    dump parser.advance();
+    dump_parser_info(&parser);
+    dump parser.advance();
+    dump_parser_info(&parser);
+    dump parser.advance();
+    dump_parser_info(&parser);
+    dump parser.advance();
+    dump_parser_info(&parser);
+    dump parser.advance();
+    dump_parser_info(&parser);
+    dump parser.advance();
+    dump_parser_info(&parser);
+    dump parser.advance();
+    dump_parser_info(&parser);
+    dump parser.advance();
+    dump_parser_info(&parser);
+    dump parser.advance();
+    dump_parser_info(&parser);
+    dump parser.advance();
+    dump_parser_info(&parser);
+    dump parser.advance();
+    dump_parser_info(&parser);
+}
+################################################################################
+# 00
+# parser option   => <empty>
+# parser argument => <empty>
+#
+# 00
+# parser option   => <empty>
+# parser argument => <empty>
+#
+# 01
+# parser option   => <empty>
+# parser argument => arg1
+# 01
+# parser option   => <empty>
+# parser argument => arg2
+# 00
+# parser option   => <empty>
+# parser argument => <empty>
+#
+# 01
+# parser option   => <empty>
+# parser argument => arg1
+# 01
+# parser option   => foo
+# parser argument => <empty>
+# 01
+# parser option   => foo
+# parser argument => <empty>
+# 01
+# parser option   => foo
+# parser argument => <empty>
+# 01
+# parser option   => <empty>
+# parser argument => arg5
+# 01
+# parser option   => bar
+# parser argument => arg7
+# 01
+# parser option   => bar
+# parser argument => arg9
+# 01
+# parser option   => <empty>
+# parser argument => -
+# 01
+# parser option   => <empty>
+# parser argument => --foo
+# 01
+# parser option   => <empty>
+# parser argument => --bar
+# 01
+# parser option   => <empty>
+# parser argument => --bar
+# 01
+# parser option   => <empty>
+# parser argument => --
+# 01
+# parser option   => <empty>
+# parser argument => arg15
+# 00
+# parser option   => <empty>
+# parser argument => <empty>
