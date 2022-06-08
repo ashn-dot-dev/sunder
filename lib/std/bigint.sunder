@@ -177,13 +177,28 @@ struct bigint {
         return 0;
     }
 
+    func hash(self: *bigint) usize {
+        # TODO: This hash function was chosen because it was easy to implement,
+        # so the uniformity of the hash has *not* been properly evaluated.
+        if self.*._sign == 0 {
+            return 0;
+        }
+
+        var hash: u64 = 0;
+        for i in countof(self.*._limbs) {
+            hash = hash & ~(1u64 << 63) + (:u64)self.*._limbs[i];
+        }
+
+        return (:usize)hash;
+    }
+
     # Accepted format specifiers:
     #   ""  => decimal (default)
     #
     # TODO: Currently, only the default format specifier is supported in order
     # to keep this function simple. In the future is would be nice to add the
-    # rest of the format specifiers the the builtin integer types support: "d",
-    # "b", "o", "x", and "X".
+    # rest of the format specifiers that the builtin integer types support:
+    # "d", "b", "o", "x", and "X".
     func format(self: *bigint, writer: std::writer, fmt: []byte) std::result[[void, []byte]] {
         if countof(fmt) != 0 {
             std::formatter::panic_invalid_format_specifier(fmt);

@@ -6,16 +6,19 @@ struct hash_map_element[[K, V]] {
     const _STATE_USE: usize = 1;
     const _STATE_DEL: usize = 2;
     var _state: usize;
-    var _key: K;
-    var _value: V;
 
-    func key(self: *hash_map_element[[K, V]]) K {
-        return self.*._key;
-    }
+    # The key associated with this element.
+    #
+    # The hash function and compare function of this key type are used for
+    # insertion and lookup within the hash map. As such, mutation of the `key`
+    # member would invalidate this element's corresponding hash map, and any
+    # program that *does* perform such mutation is considered ill-formed.
+    var key: K;
 
-    func value(self: *hash_map_element[[K, V]]) V {
-        return self.*._value;
-    }
+    # The value associated with this element.
+    #
+    # Mutation of this member is permitted in well-formed programs.
+    var value: V;
 }
 
 struct hash_map[[K, V]] {
@@ -55,8 +58,8 @@ struct hash_map[[K, V]] {
 
         var index = std::rem[[usize]](key.hash(), countof(self.*._elements));
         for self.*._elements[index]._state != hash_map_element[[K, V]]::_STATE_NIL {
-            if self.*._elements[index]._state == hash_map_element[[K, V]]::_STATE_USE and std::eq[[K]](&key, &self.*._elements[index]._key) {
-                return std::optional[[V]]::init_value(self.*._elements[index]._value);
+            if self.*._elements[index]._state == hash_map_element[[K, V]]::_STATE_USE and std::eq[[K]](&key, &self.*._elements[index].key) {
+                return std::optional[[V]]::init_value(self.*._elements[index].value);
             }
             index = std::rem[[usize]](index + 1, countof(self.*._elements));
         }
@@ -83,7 +86,7 @@ struct hash_map[[K, V]] {
             };
             for i in 0:countof(self.*._elements) {
                 if self.*._elements[i]._state == hash_map_element[[K, V]]::_STATE_USE {
-                    new.insert(self.*._elements[i]._key, self.*._elements[i]._value);
+                    new.insert(self.*._elements[i].key, self.*._elements[i].value);
                 }
             }
             std::slice[[hash_map_element[[K, V]]]]::delete(self.*._allocator, self.*._elements);
@@ -95,8 +98,8 @@ struct hash_map[[K, V]] {
             if self.*._elements[index]._state == hash_map_element[[K, V]]::_STATE_NIL {
                 self.*._elements[index] = (:hash_map_element[[K, V]]){
                     ._state = hash_map_element[[K, V]]::_STATE_USE,
-                    ._key = key,
-                    ._value = value
+                    .key = key,
+                    .value = value
                 };
                 self.*._n = self.*._n + 1;
                 self.*._q = self.*._q + 1;
@@ -106,20 +109,20 @@ struct hash_map[[K, V]] {
             if self.*._elements[index]._state == hash_map_element[[K, V]]::_STATE_DEL {
                 self.*._elements[index] = (:hash_map_element[[K, V]]){
                     ._state = hash_map_element[[K, V]]::_STATE_USE,
-                    ._key = key,
-                    ._value = value
+                    .key = key,
+                    .value = value
                 };
                 self.*._n = self.*._n + 1;
                 return std::optional[[V]]::init_empty();
             }
 
             # _STATE_USE
-            if std::eq[[K]](&key, &self.*._elements[index]._key) {
-                var existing = self.*._elements[index]._value;
+            if std::eq[[K]](&key, &self.*._elements[index].key) {
+                var existing = self.*._elements[index].value;
                 self.*._elements[index] = (:hash_map_element[[K, V]]){
                     ._state = hash_map_element[[K, V]]::_STATE_USE,
-                    ._key = key,
-                    ._value = value
+                    .key = key,
+                    .value = value
                 };
                 return std::optional[[V]]::init_value(existing);
             }
@@ -137,10 +140,10 @@ struct hash_map[[K, V]] {
 
         var index = std::rem[[usize]](key.hash(), countof(self.*._elements));
         for self.*._elements[index]._state != hash_map_element[[K, V]]::_STATE_NIL {
-            if self.*._elements[index]._state == hash_map_element[[K, V]]::_STATE_USE and std::eq[[K]](&key, &self.*._elements[index]._key) {
+            if self.*._elements[index]._state == hash_map_element[[K, V]]::_STATE_USE and std::eq[[K]](&key, &self.*._elements[index].key) {
                 self.*._elements[index]._state = hash_map_element[[K, V]]::_STATE_DEL;
                 self.*._n = self.*._n - 1;
-                return std::optional[[V]]::init_value(self.*._elements[index]._value);
+                return std::optional[[V]]::init_value(self.*._elements[index].value);
             }
             index = std::rem[[usize]](index + 1, countof(self.*._elements));
         }

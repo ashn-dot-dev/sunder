@@ -1,0 +1,7 @@
+func main() void {
+    var x: usize = 1 << 2;
+}
+################################################################################
+# [error-expr-binary-shiftl-with-unsized-lhs.test.sunder:2] error: unsized type `integer` in binary `<<` expression has no bit-representation
+#     var x: usize = 1 << 2;
+#                      ^

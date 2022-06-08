@@ -21,14 +21,12 @@ func main() void {
 
     var iterator = std::hash_map_iterator[[std::string, []byte]]::init(&map);
     for iterator.advance() {
-        var key = iterator.current().*.key();
-        var val = iterator.current().*.value();
         std::print_format_line(
             std::out(),
             "\"{e}\" : \"{e}\"",
             (:[]std::formatter)[
-                std::formatter::init[[std::string]](&key),
-                std::formatter::init[[[]byte]](&val)]);
+                std::formatter::init[[std::string]](&iterator.current().*.key),
+                std::formatter::init[[[]byte]](&iterator.current().*.value)]);
     }
 }
 ################################################################################

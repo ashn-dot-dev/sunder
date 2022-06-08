@@ -1,0 +1,7 @@
+func main() void {
+    var x: usize = ~1;
+}
+################################################################################
+# [error-expr-unary-bitnot-with-unsized-rhs.test.sunder:2] error: unsized type `integer` in unary `~` expression has no bit-representation
+#     var x: usize = ~1;
+#                    ^

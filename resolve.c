@@ -998,6 +998,7 @@ shallow_implicit_cast(struct type const* type, struct expr const* expr)
 
     // FROM untyped integer TO byte.
     if (type->kind == TYPE_BYTE && expr->type->kind == TYPE_INTEGER) {
+        assert(expr->kind == EXPR_INTEGER);
         struct bigint const* const min = context()->u8_min;
         struct bigint const* const max = context()->u8_max;
 
@@ -1030,6 +1031,7 @@ shallow_implicit_cast(struct type const* type, struct expr const* expr)
     // FROM untyped integer TO typed integer.
     if (type_is_any_integer(type) && type->kind != TYPE_INTEGER
         && expr->type->kind == TYPE_INTEGER) {
+        assert(expr->kind == EXPR_INTEGER);
         assert(type->data.integer.min != NULL);
         assert(type->data.integer.max != NULL);
         struct bigint const* const min = type->data.integer.min;
@@ -3539,6 +3541,13 @@ resolve_expr_unary_bitwise(
     assert(rhs != NULL);
     (void)resolver;
 
+    if (rhs->type->size == SIZEOF_UNSIZED) {
+        fatal(
+            &op->location,
+            "unsized type `%s` in unary `%s` expression has no bit-representation",
+            rhs->type->name,
+            token_kind_to_cstr(op->kind));
+    }
     if (!(rhs->type->kind == TYPE_BYTE || type_is_any_integer(rhs->type))) {
         fatal(
             rhs->location,
@@ -3750,6 +3759,13 @@ resolve_expr_binary_shift(
         fatal(
             &op->location,
             "invalid left-hand argument of type `%s` in binary `%s` expression",
+            lhs->type->name,
+            token_kind_to_cstr(op->kind));
+    }
+    if (lhs->type->size == SIZEOF_UNSIZED) {
+        fatal(
+            &op->location,
+            "unsized type `%s` in binary `%s` expression has no bit-representation",
             lhs->type->name,
             token_kind_to_cstr(op->kind));
     }
