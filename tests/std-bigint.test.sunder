@@ -31,7 +31,7 @@ func display_bigint_internals(bigint: *std::bigint) void {
 func test_init_from_int[[T]](allocator: std::allocator, int: T) void {
     std::print_format_line(
         std::out(),
-        "input int: \"{}\"",
+        "input int: {}",
         (:[]std::formatter)[std::formatter::init[[T]](&int)]);
     var bigint = std::bigint::init_from_int[[T]](allocator, int);
     defer { bigint.fini(); }
@@ -40,6 +40,21 @@ func test_init_from_int[[T]](allocator: std::allocator, int: T) void {
         std::out(),
         "{}",
         (:[]std::formatter)[std::formatter::init[[std::bigint]](&bigint)]);
+}
+
+func test_to_int_roundtrip[[T]](allocator: std::allocator, int: T) void {
+    std::print_format_line(
+        std::out(),
+        "input int: {}",
+        (:[]std::formatter)[std::formatter::init[[T]](&int)]);
+    var bigint = std::bigint::init_from_int[[T]](allocator, int);
+    defer { bigint.fini(); }
+    var result = std::bigint::to_int[[T]](&bigint);
+    var int = result.value();
+    std::print_format_line(
+        std::out(),
+        "output int: {}",
+        (:[]std::formatter)[std::formatter::init[[T]](&int)]);
 }
 
 func test_init_from_str_success(allocator: std::allocator, str: []byte, radix: usize) void {
@@ -126,6 +141,20 @@ func main() void {
     test_init_from_int[[s64]](allocator, 0);
     test_init_from_int[[s64]](allocator, s64::MIN);
     test_init_from_int[[s64]](allocator, s64::MAX);
+
+    std::print(std::out(), "\n");
+
+    test_to_int_roundtrip[[u8]](allocator, u8::MIN);
+    test_to_int_roundtrip[[u8]](allocator, u8::MAX);
+    std::print(std::out(), "\n");
+    test_to_int_roundtrip[[u64]](allocator, u64::MIN);
+    test_to_int_roundtrip[[u64]](allocator, u64::MAX);
+    std::print(std::out(), "\n");
+    test_to_int_roundtrip[[s8]](allocator, s8::MIN);
+    test_to_int_roundtrip[[s8]](allocator, s8::MAX);
+    std::print(std::out(), "\n");
+    test_to_int_roundtrip[[s64]](allocator, s64::MIN);
+    test_to_int_roundtrip[[s64]](allocator, s64::MAX);
 
     std::print(std::out(), "\n");
 
@@ -263,73 +292,93 @@ func main() void {
 ################################################################################
 # SIGN: 0, LIMB COUNT: 0, LIMBS: []
 #
-# input int: "0"
+# input int: 0
 # SIGN: 0, LIMB COUNT: 0, LIMBS: []
 # 0
-# input int: "255"
+# input int: 255
 # SIGN: +, LIMB COUNT: 1, LIMBS: [0xFF]
 # 255
 #
-# input int: "0"
+# input int: 0
 # SIGN: 0, LIMB COUNT: 0, LIMBS: []
 # 0
-# input int: "65535"
+# input int: 65535
 # SIGN: +, LIMB COUNT: 1, LIMBS: [0xFFFF]
 # 65535
 #
-# input int: "0"
+# input int: 0
 # SIGN: 0, LIMB COUNT: 0, LIMBS: []
 # 0
-# input int: "4294967295"
+# input int: 4294967295
 # SIGN: +, LIMB COUNT: 1, LIMBS: [0xFFFFFFFF]
 # 4294967295
 #
-# input int: "0"
+# input int: 0
 # SIGN: 0, LIMB COUNT: 0, LIMBS: []
 # 0
-# input int: "18446744073709551615"
+# input int: 18446744073709551615
 # SIGN: +, LIMB COUNT: 2, LIMBS: [0xFFFFFFFF, 0xFFFFFFFF]
 # 18446744073709551615
 #
-# input int: "0"
+# input int: 0
 # SIGN: 0, LIMB COUNT: 0, LIMBS: []
 # 0
-# input int: "-128"
+# input int: -128
 # SIGN: -, LIMB COUNT: 1, LIMBS: [0x80]
 # -128
-# input int: "127"
+# input int: 127
 # SIGN: +, LIMB COUNT: 1, LIMBS: [0x7F]
 # 127
 #
-# input int: "0"
+# input int: 0
 # SIGN: 0, LIMB COUNT: 0, LIMBS: []
 # 0
-# input int: "-32768"
+# input int: -32768
 # SIGN: -, LIMB COUNT: 1, LIMBS: [0x8000]
 # -32768
-# input int: "32767"
+# input int: 32767
 # SIGN: +, LIMB COUNT: 1, LIMBS: [0x7FFF]
 # 32767
 #
-# input int: "0"
+# input int: 0
 # SIGN: 0, LIMB COUNT: 0, LIMBS: []
 # 0
-# input int: "-2147483648"
+# input int: -2147483648
 # SIGN: -, LIMB COUNT: 1, LIMBS: [0x80000000]
 # -2147483648
-# input int: "2147483647"
+# input int: 2147483647
 # SIGN: +, LIMB COUNT: 1, LIMBS: [0x7FFFFFFF]
 # 2147483647
 #
-# input int: "0"
+# input int: 0
 # SIGN: 0, LIMB COUNT: 0, LIMBS: []
 # 0
-# input int: "-9223372036854775808"
+# input int: -9223372036854775808
 # SIGN: -, LIMB COUNT: 2, LIMBS: [0x0, 0x80000000]
 # -9223372036854775808
-# input int: "9223372036854775807"
+# input int: 9223372036854775807
 # SIGN: +, LIMB COUNT: 2, LIMBS: [0xFFFFFFFF, 0x7FFFFFFF]
 # 9223372036854775807
+#
+# input int: 0
+# output int: 0
+# input int: 255
+# output int: 255
+#
+# input int: 0
+# output int: 0
+# input int: 18446744073709551615
+# output int: 18446744073709551615
+#
+# input int: -128
+# output int: -128
+# input int: 127
+# output int: 127
+#
+# input int: -9223372036854775808
+# output int: -9223372036854775808
+# input int: 9223372036854775807
+# output int: 9223372036854775807
 #
 # input str: "0"
 # SIGN: 0, LIMB COUNT: 0, LIMBS: []

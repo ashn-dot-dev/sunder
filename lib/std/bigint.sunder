@@ -1,5 +1,7 @@
 namespace std;
 import "std/core.sunder";
+import "std/linear_allocator.sunder";
+import "std/string.sunder";
 import "std/vector.sunder";
 
 struct bigint {
@@ -164,6 +166,15 @@ struct bigint {
 
     func fini(self: *bigint) void {
         std::slice[[u32]]::delete(self.*._allocator, self.*._limbs);
+    }
+
+    func to_int[[T]](self: *bigint) std::result[[T, []byte]] {
+        std::assert(sizeof(T) <= sizeof(u64));
+        var buf = (:[64]byte)[0...]; # More than enough space.
+        var allocator = std::linear_allocator::init(buf[0:countof(buf)]);
+        var allocator = std::allocator::init[[typeof(allocator)]](&allocator);
+        var string = std::string::init_from_format(allocator, "{}", (:[]std::formatter)[std::formatter::init[[bigint]](self)]);
+        return T::init_from_str(string.data(), 0);
     }
 
     func assign(self: *bigint, from: *bigint) void {

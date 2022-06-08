@@ -1352,6 +1352,14 @@ struct _int { # namespace
         }
 
         if sign == -1 {
+            # Special case for the minimum value of a two's complement `smax`
+            # which will produce an integer out-of-range error when multiplied
+            # by negative one.
+            if accum == (:umax)smax::MAX + 1 {
+                var value = (:umax)smax::MAX + 1;
+                return std::result[[umax, []byte]]::init_value(value);
+            }
+
             var value = (:umax)(-1 * (:smax)accum);
             return std::result[[umax, []byte]]::init_value(value);
         }

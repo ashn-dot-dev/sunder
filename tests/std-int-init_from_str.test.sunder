@@ -152,6 +152,14 @@ func nominal_hex() void {
     var int = result.value();
     std::print_format_line(
         std::out(),
+        "{x}",
+        (:[]std::formatter)[
+            std::formatter::init[[ssize]](&int)]);
+
+    var result = ssize::init_from_str("0xDEADbeef", 0);
+    var int = result.value();
+    std::print_format_line(
+        std::out(),
         "{X}",
         (:[]std::formatter)[
             std::formatter::init[[ssize]](&int)]);
@@ -163,6 +171,40 @@ func nominal_hex() void {
         "{X}",
         (:[]std::formatter)[
             std::formatter::init[[ssize]](&int)]);
+}
+
+func nominal_min_and_max() void {
+    var result = u64::init_from_str("0x0", 0);
+    var int = result.value();
+    std::print_format_line(
+        std::out(),
+        "{X}",
+        (:[]std::formatter)[
+            std::formatter::init[[u64]](&int)]);
+
+    var result = u64::init_from_str("0xFFFFFFFFFFFFFFFF", 0);
+    var int = result.value();
+    std::print_format_line(
+        std::out(),
+        "{X}",
+        (:[]std::formatter)[
+            std::formatter::init[[u64]](&int)]);
+
+    var result = s64::init_from_str("-9223372036854775808", 0);
+    var int = result.value();
+    std::print_format_line(
+        std::out(),
+        "{d}",
+        (:[]std::formatter)[
+            std::formatter::init[[s64]](&int)]);
+
+    var result = s64::init_from_str("9223372036854775807", 0);
+    var int = result.value();
+    std::print_format_line(
+        std::out(),
+        "{d}",
+        (:[]std::formatter)[
+            std::formatter::init[[s64]](&int)]);
 }
 
 func error_invalid_radix() void {
@@ -261,6 +303,7 @@ func main() void {
     nominal_bin();
     nominal_oct();
     nominal_hex();
+    nominal_min_and_max();
 
     error_invalid_radix();
     error_integer_contains_no_digits();
@@ -285,8 +328,13 @@ func main() void {
 # 0b10010101
 # 0o666
 # 0o666
+# 0xdeadbeef
 # 0xDEADBEEF
 # 0xDEADBEEF
+# 0x0
+# 0xFFFFFFFFFFFFFFFF
+# -9223372036854775808
+# 9223372036854775807
 # invalid radix
 # invalid radix
 # invalid radix
