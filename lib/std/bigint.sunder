@@ -35,6 +35,44 @@ struct bigint {
         return self;
     }
 
+    func init_from_int[[T]](allocator: std::allocator, int: T) bigint {
+        std::assert(sizeof(T) <= sizeof(u64));
+        if int >= 0 {
+            var self = (:bigint){
+                ._allocator = allocator,
+                ._sign = +1s,
+                ._limbs = std::slice[[u32]]::new(allocator, 2)
+            };
+            self._limbs[0] = (:u32)int;
+            self._limbs[1] = (:u32)(int >> 32);
+            self._normalize();
+            return self;
+        }
+
+        var magnitude: u64 = std::zeroed[[u64]]();
+        # Special case for the minimum value of a two's complement signed
+        # integer, which will produce an integer out-of-range error when
+        # multiplied by negative one, as the negated (positive) value is
+        # un-representable as a two's complement signed type `T`.
+        std::assert(T::MIN < 0);
+        if int == T::MIN {
+            magnitude = (:u64)T::MAX + 1;
+        }
+        else {
+            magnitude = (:u64)((:T)-1s * int);
+        }
+
+        var self = (:bigint){
+            ._allocator = allocator,
+            ._sign = -1s,
+            ._limbs = std::slice[[u32]]::new(allocator, 2)
+        };
+        self._limbs[0] = (:u32)magnitude;
+        self._limbs[1] = (:u32)(magnitude >> 32);
+        self._normalize();
+        return self;
+    }
+
     func init_from_str(allocator: std::allocator, str: []byte, radix: usize) std::result[[bigint, []byte]] {
         if radix != 0 and radix != 2 and radix != 8 and radix != 10 and radix != 16 {
             return std::result[[bigint, []byte]]::init_error("invalid radix");

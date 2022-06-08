@@ -601,8 +601,9 @@ xget_symbol(struct resolver* resolver, struct cst_symbol const* target)
         char const* const name = element->identifier->name;
 
         if (lhs->kind == SYMBOL_NAMESPACE) {
-            symbol =
-                symbol_table_lookup_local(lhs->data.namespace.symbols, name);
+            struct symbol_table const* const symbols =
+                lhs->data.namespace.symbols;
+            symbol = symbol_table_lookup_local(symbols, name);
             if (symbol == NULL) {
                 fatal(
                     element->location,
@@ -622,8 +623,8 @@ xget_symbol(struct resolver* resolver, struct cst_symbol const* target)
         }
 
         if (lhs->kind == SYMBOL_TYPE) {
-            symbol =
-                symbol_table_lookup_local(symbol_xget_type(lhs)->symbols, name);
+            struct type const* const type = symbol_xget_type(lhs);
+            symbol = symbol_table_lookup_local(type->symbols, name);
             if (symbol == NULL) {
                 fatal(
                     element->location,

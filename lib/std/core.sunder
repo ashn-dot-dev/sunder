@@ -1379,9 +1379,9 @@ struct _int { # namespace
         }
 
         # Special case for the minimum value of a two's complement signed
-        # integer which will produce an integer out-of-range error when
+        # integer, which will produce an integer out-of-range error when
         # multiplied by negative one, as the negated (positive) value is
-        # un-representable as a two's complement signed type T.
+        # un-representable as a two's complement signed type `T`.
         if value == T::MIN {
             return (:umax)T::MAX + 1;
         }
