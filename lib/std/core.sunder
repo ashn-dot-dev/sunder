@@ -1242,14 +1242,14 @@ func zeroed[[T]]() T {
 # INTERNAL
 # Utility functions for builtin integer types. These functions are implemented
 # in a way that tries to avoid creating template instantiations for large
-# bodies of code as a way to shorten compile times and reduce binary size.
+# bodies of code in order to shorten compile times and reduce binary size.
 #
-# Some template functions, such as std::_int::compare, are implemented with a
-# generic integer template type parameter T, but will only ever be instantiated
-# twice, once for std::umax and once for std::smax.
+# Some template functions, such as `std::_int::compare`, are implemented with a
+# generic integer template type parameter `T`, but will only ever be instantiated
+# twice, once for `std::umax` and once for `std::smax`.
 #
-# Other functions, such as std::_int::init_from_str_common and
-# std::_int::format_common, contain a single common implementation for all
+# Other functions, such as `std::_int::init_from_str_common` and
+# `std::_int::format_common`, contain a single common implementation for all
 # integer types, and take additional type & value information as function
 # parameters in order to customize the function's behavior.
 struct _int { # namespace
@@ -1378,10 +1378,10 @@ struct _int { # namespace
             return (:umax)value;
         }
 
-        # Special case for the minimum value of a two's complement signed integer
-        # which will produce an integer out-of-range error when multiplied by
-        # negative one, as the negated (positive) value is un-representable as a
-        # two's complement signed type T.
+        # Special case for the minimum value of a two's complement signed
+        # integer which will produce an integer out-of-range error when
+        # multiplied by negative one, as the negated (positive) value is
+        # un-representable as a two's complement signed type T.
         if value == T::MIN {
             return (:umax)T::MAX + 1;
         }
