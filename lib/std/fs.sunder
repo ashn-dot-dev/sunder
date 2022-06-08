@@ -3,7 +3,14 @@ import "std/core.sunder";
 import "sys";
 
 struct file {
-    var fd: ssize;
+    # The Linux kernel uses `unsigned int fd` for the file descriptor parameter
+    # of system calls instead of the traditional `int fd` parameter seen in
+    # libc. The internal `struct fd` associated with this processes' file
+    # descriptor table is indexed using this unsigned integer, with
+    # out-of-bounds file descriptors producing an EBADF syscall error. The
+    # `std::file` struct uses an `unsigned int` (`sys::uint` in Sunder) to
+    # match the kernel data type.
+    var _fd: sys::uint;
 
     # Open a file for reading.
     const OPEN_READ: usize = 0b001;
@@ -60,11 +67,12 @@ struct file {
             return std::result[[std::file, []byte]]::init_error(sys::ERRNO_STRS[(:usize)-sysret]);
         }
 
-        return std::result[[std::file, []byte]]::init_value((:std::file){.fd = sysret});
+        var file = (:std::file){._fd = (:sys::uint)sysret};
+        return std::result[[std::file, []byte]]::init_value(file);
     }
 
     func close(self: *file) std::result[[void, []byte]] {
-        var sysret = sys::close((:u32)self.*.fd);
+        var sysret = sys::close(self.*._fd);
         if sysret < 0 {
             return std::result[[void, []byte]]::init_error(sys::ERRNO_STRS[(:usize)-sysret]);
         }
@@ -77,7 +85,7 @@ struct file {
             return std::result[[usize, []byte]]::init_value(0);
         }
 
-        var sysret = sys::read((:u32)self.*.fd, &buf[0u], countof(buf));
+        var sysret = sys::read(self.*._fd, &buf[0u], countof(buf));
         if sysret < 0 {
             return std::result[[usize, []byte]]::init_error(sys::ERRNO_STRS[(:usize)-sysret]);
         }
@@ -90,7 +98,7 @@ struct file {
             return std::result[[usize, []byte]]::init_value(0);
         }
 
-        var sysret = sys::write((:u32)self.*.fd, &buf[0u], countof(buf));
+        var sysret = sys::write(self.*._fd, &buf[0u], countof(buf));
         if sysret < 0 {
             return std::result[[usize, []byte]]::init_error(sys::ERRNO_STRS[(:usize)-sysret]);
         }
@@ -114,7 +122,7 @@ struct file {
         # whatever the underlying system implementation does, but this drifts
         # into the realm of non-portable/undefined behavior. Consider
         # explicitly defining the behavior when seeking past the end of a file.
-        var sysret = sys::lseek((:u32)self.*.fd, offset, (:u32)from);
+        var sysret = sys::lseek(self.*._fd, offset, (:sys::uint)from);
         if sysret < 0 {
             return std::result[[void, []byte]]::init_error(sys::ERRNO_STRS[(:usize)-sysret]);
         }
@@ -123,7 +131,7 @@ struct file {
     }
 
     func tell(self: *file) std::result[[usize, []byte]] {
-        var sysret = sys::lseek((:u32)self.*.fd, 0, sys::SEEK_CUR);
+        var sysret = sys::lseek(self.*._fd, 0, sys::SEEK_CUR);
         if sysret < 0 {
             return std::result[[usize, []byte]]::init_error(sys::ERRNO_STRS[(:usize)-sysret]);
         }

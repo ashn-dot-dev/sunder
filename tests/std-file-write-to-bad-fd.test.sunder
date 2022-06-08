@@ -2,7 +2,7 @@ import "std/core.sunder";
 import "std/fs.sunder";
 
 func main() void {
-    var file: std::file = (:std::file){.fd = 0xBEEFCAFE};
+    var file: std::file = (:std::file){._fd = 0xBEEFCAFE};
     var res: std::result[[usize, []byte]] = file.write("nope");
     std::print_line(std::out(), res.error());
 }
