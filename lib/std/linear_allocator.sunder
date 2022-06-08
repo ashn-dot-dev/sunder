@@ -20,11 +20,6 @@ struct linear_allocator {
             return std::result[[*byte, []byte]]::init_value((:*byte)0u);
         }
 
-        var is_power_of_two: bool = (align & (align - 1)) == 0;
-        if not is_power_of_two {
-            return std::result[[*byte, []byte]]::init_error(std::allocator::ERROR_INVALID_ALIGNMENT);
-        }
-
         var buf_addr: usize = (:usize)*((:**byte)&self.*._buf);
         var cur_addr: usize = buf_addr + self.*._cur_offset;
         var offset: usize = std::forward_align(cur_addr, align) - buf_addr;

@@ -1096,7 +1096,6 @@ func assert(condition: bool) void {
 }
 
 # Align the provided memory address up to the nearest the specified alignment.
-# The provided alignment must be zero or a power of two.
 func forward_align(addr: usize, align: usize) usize {
     if align == 0 {
         return addr;
@@ -1109,17 +1108,23 @@ func forward_align(addr: usize, align: usize) usize {
     # check here without the `x == 0 or ...` component that would normally
     # be required to prevent underflow.
     var align_is_power_of_two = (align & (align - 1)) == 0;
-    if not align_is_power_of_two {
-        std::panic("alignment is not a power of two");
+    if align_is_power_of_two {
+        # Same as (addr % align) but faster as `align` is a power of two.
+        var modulo = addr & (align - 1);
+
+        # If the address is not aligned, then push the address to the next
+        # value which is aligned.
+        if modulo != 0 {
+            addr = addr + (align - modulo);
+        }
+
+        return addr;
     }
 
-    # Same as (addr % align) but faster as `align` is a power of two.
-    var modulo = addr & (align - 1);
-
-    if modulo != 0 {
-        # If the address is not aligned, push the address to the next value
-        # which is aligned.
-        addr = addr + (align - modulo);
+    # Align is not a power of two. Count up until the address meets the
+    # specified alignment.
+    for std::rem[[usize]](addr, align) != 0 {
+        addr = addr + 1;
     }
 
     return addr;

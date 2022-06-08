@@ -1,0 +1,86 @@
+import "std/core.sunder";
+
+func test(addr: usize, align: usize) void {
+    var answer = std::forward_align(addr, align);
+    std::print_format_line(
+        std::out(),
+        "forward align {} to {} => {}",
+        (:[]std::formatter)[
+            std::formatter::init[[usize]](&addr),
+            std::formatter::init[[usize]](&align),
+            std::formatter::init[[usize]](&answer)]);
+}
+
+func main() void {
+    test(0, 0);
+    test(0, 1);
+    test(0, 2);
+    test(0, 3);
+    test(0, 4);
+    test(0, 8);
+    test(0, 256);
+    test(0, 257);
+
+    std::print(std::out(), "\n");
+
+    test(1, 0);
+    test(1, 1);
+    test(1, 2);
+    test(1, 3);
+    test(1, 4);
+    test(1, 8);
+    test(1, 256);
+
+    std::print(std::out(), "\n");
+
+    test(5, 0);
+    test(5, 1);
+    test(5, 2);
+    test(5, 3);
+    test(5, 4);
+    test(5, 8);
+    test(5, 256);
+
+    std::print(std::out(), "\n");
+
+    test(257, 0);
+    test(257, 1);
+    test(257, 2);
+    test(257, 3);
+    test(257, 4);
+    test(257, 8);
+    test(257, 256);
+}
+################################################################################
+# forward align 0 to 0 => 0
+# forward align 0 to 1 => 0
+# forward align 0 to 2 => 0
+# forward align 0 to 3 => 0
+# forward align 0 to 4 => 0
+# forward align 0 to 8 => 0
+# forward align 0 to 256 => 0
+# forward align 0 to 257 => 0
+#
+# forward align 1 to 0 => 1
+# forward align 1 to 1 => 1
+# forward align 1 to 2 => 2
+# forward align 1 to 3 => 3
+# forward align 1 to 4 => 4
+# forward align 1 to 8 => 8
+# forward align 1 to 256 => 256
+#
+# forward align 5 to 0 => 5
+# forward align 5 to 1 => 5
+# forward align 5 to 2 => 6
+# forward align 5 to 3 => 6
+# forward align 5 to 4 => 8
+# forward align 5 to 8 => 8
+# forward align 5 to 256 => 256
+#
+# forward align 257 to 0 => 257
+# forward align 257 to 1 => 257
+# forward align 257 to 2 => 258
+# forward align 257 to 3 => 258
+# forward align 257 to 4 => 260
+# forward align 257 to 8 => 264
+# forward align 257 to 256 => 512

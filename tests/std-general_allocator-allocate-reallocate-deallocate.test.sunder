@@ -4,10 +4,15 @@ import "std/general_allocator.sunder";
 func main() void {
     var general_allocator = std::general_allocator::init();
 
+    # Standard use case.
     var result = general_allocator.allocate(8, 512);
     var result = general_allocator.reallocate(result.value(), 8, 512, 8192);
     var result = general_allocator.reallocate(result.value(), 8, 8192, 0);
     general_allocator.deallocate(result.value(), 8, 8192);
+
+    # Non-power-of-two alignment.
+    var result = general_allocator.allocate(17, 512);
+    general_allocator.deallocate(result.value(), 17, 512);
 
     var allocator = std::allocator::init[[std::general_allocator]](&general_allocator);
     var pointers = (:[1000]*byte)[(:*byte)0u...];

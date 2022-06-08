@@ -40,11 +40,6 @@ struct general_allocator {
     }
 
     func allocate(self: *general_allocator, align: usize, size: usize) std::result[[*byte, []byte]] {
-        var is_power_of_two: bool = align != 0 and (align & (align - 1)) == 0;
-        if not is_power_of_two {
-            return std::result[[*byte, []byte]]::init_error(std::allocator::ERROR_INVALID_ALIGNMENT);
-        }
-
         var offset = std::forward_align(sizeof(general_allocator_element), align);
         var result = std::page_allocator::the().*.allocate(sys::PAGE_SIZE, offset + size);
         if result.is_error() {
@@ -66,11 +61,6 @@ struct general_allocator {
     }
 
     func reallocate(self: *general_allocator, ptr: *byte, align: usize, old_size: usize, new_size: usize) std::result[[*byte, []byte]] {
-        var is_power_of_two: bool = align != 0 and (align & (align - 1)) == 0;
-        if not is_power_of_two {
-            return std::result[[*byte, []byte]]::init_error(std::allocator::ERROR_INVALID_ALIGNMENT);
-        }
-
         var offset = std::forward_align(sizeof(general_allocator_element), align);
         var element = (:*general_allocator_element)std::ptr[[byte]]::sub(ptr, offset);
         self.*._remove_element(element);
