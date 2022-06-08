@@ -1,25 +1,36 @@
 import "std/core.sunder";
-import "std/hash_map.sunder";
 import "std/general_allocator.sunder";
+import "std/hash_map.sunder";
 import "std/string.sunder";
 
 func main() void {
-    var general_allocator = std::general_allocator::init();
-    var allocator = std::allocator::init[[std::general_allocator]](&general_allocator);
+    var allocator = std::general_allocator::init();
+    defer {
+        allocator.fini();
+    }
+    var allocator = std::allocator::init[[typeof(allocator)]](&allocator);
 
     var map = std::hash_map[[std::string, []byte]]::init(allocator);
+    defer {
+        map.fini();
+    }
 
     map.insert(std::string::init_from_str(allocator, "foo"), "foo value");
-    map.insert(std::string::init_from_str(allocator, "bar"), "bar value");
+    map.insert(std::string::init_from_str(allocator, "bar"), "bar value 1");
+    map.insert(std::string::init_from_str(allocator, "bar"), "bar value 2");
 
     var iterator = std::hash_map_iterator[[std::string, []byte]]::init(&map);
     for iterator.advance() {
-        std::print_line(std::out(), iterator.current().*.value());
+        var key = iterator.current().*.key();
+        var val = iterator.current().*.value();
+        std::print_format_line(
+            std::out(),
+            "\"{e}\" : \"{e}\"",
+            (:[]std::formatter)[
+                std::formatter::init[[std::string]](&key),
+                std::formatter::init[[[]byte]](&val)]);
     }
-
-    map.fini();
-    general_allocator.fini();
 }
 ################################################################################
-# bar value
-# foo value
+# "bar" : "bar value 2"
+# "foo" : "foo value"

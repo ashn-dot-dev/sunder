@@ -61,6 +61,11 @@ struct string {
         return data.hash();
     }
 
+    func format(self: *string, writer: std::writer, fmt: []byte) std::result[[void, []byte]] {
+        var data = self.*.data();
+        return data.format(writer, fmt);
+    }
+
     func reserve(self: *string, capacity: usize) void {
         if capacity <= self.*._capacity {
             return;
