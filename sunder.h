@@ -116,7 +116,8 @@ canonical_path(char const* path);
 char const* // interned
 directory_path(char const* path);
 
-// Excludes `.` and `..`
+// Excludes `.` and `..`.
+// Files are returned in lexicographically sorted order.
 char const* /* interned */* /* sbuf */
 directory_files(char const* path);
 

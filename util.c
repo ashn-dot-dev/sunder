@@ -20,6 +20,15 @@
 
 STATIC_ASSERT(CHAR_BIT_IS_8, CHAR_BIT == 8);
 
+static int
+cstr_vpcmp(void const* lhs, void const* rhs)
+{
+    assert(lhs != NULL);
+    assert(rhs != NULL);
+
+    return strcmp(*(char const**)lhs, *(char const**)rhs);
+}
+
 int
 safe_isalnum(int c)
 {
@@ -266,6 +275,9 @@ directory_files(char const* path)
     }
 
     (void)closedir(dir);
+
+    qsort(files, sbuf_count(files), sizeof(char const*), cstr_vpcmp);
+
     return files;
 }
 
