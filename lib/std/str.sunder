@@ -1,4 +1,5 @@
 namespace std::str;
+import "std/core.sunder";
 
 func starts_with(str: []byte, target: []byte) bool {
     if countof(str) < countof(target) {
