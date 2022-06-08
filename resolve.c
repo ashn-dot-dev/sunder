@@ -1745,7 +1745,10 @@ resolve_decl_alias(struct resolver* resolver, struct cst_decl const* decl)
     struct symbol* const symbol = symbol_new_type(decl->location, type);
     freeze(symbol);
     symbol_table_insert(
-        resolver->current_symbol_table, decl->name, symbol, false);
+        resolver->current_symbol_table,
+        decl->name,
+        symbol,
+        !resolver_is_global(resolver));
 
     return symbol;
 }
