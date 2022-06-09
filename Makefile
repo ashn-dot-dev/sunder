@@ -3,7 +3,7 @@
 .PHONY: \
 	all \
 	build \
-	test \
+	check \
 	examples \
 	install \
 	format \
@@ -32,7 +32,7 @@ INCS =
 
 SUNDER_HOME="$$HOME/.sunder"
 
-all: build test examples
+all: build
 
 SUNDER_COMPILE_OBJS = \
 	sunder-compile.o \
@@ -51,11 +51,10 @@ bin/sunder-compile: $(SUNDER_COMPILE_OBJS)
 
 build: bin/sunder-compile
 
-test: build
+check: build
 	SUNDER_HOME="$(realpath .)" \
 	SUNDER_IMPORT_PATH="$(realpath .)/lib" \
 	sh bin/sunder-test
-
 
 examples: build
 	(cd examples/ && sh examples.build.sh)

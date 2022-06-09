@@ -17,15 +17,17 @@ $ apt-get install build-essential clang clang-format nasm
 
 ## Building
 ### Quick Version
-Run `make all` to build the compiler and run the test suite.
-To rebuild from scratch run `make clean all`.
+Run `make all` to build the compiler.
+
+Run `make check examples` to run the test suite and compile the example
+programs under the `examples` directory.
 
 ### Long Version
 The top-level `Makefile` contains the following important targets:
 
 + `build` => Build the compiler.
-+ `test` => Run the test suite for the language and standard library.
-+ `examples` => Build the example programs under the `examples` directory.
++ `check` => Run the test suite for the language and standard library.
++ `examples` => Compile the example programs under the `examples` directory.
 + `format` => Run `clang-format` over the compiler sources.
 + `clean` => Remove build artifacts.
 
