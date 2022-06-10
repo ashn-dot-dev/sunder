@@ -14,10 +14,6 @@ struct incomplete_function {
 
 struct resolver {
     struct module* module;
-    // TODO: Currently current_symbol_name_prefix is unused, but it *should* be
-    // used to produce the full name of symbols as they are constructed via the
-    // symbol factory functions.
-    char const* current_symbol_name_prefix; // Optional (NULL => no prefix).
     char const* current_static_addr_prefix; // Optional (NULL => no prefix).
     struct function* current_function; // NULL if not in a function.
     struct symbol_table* current_symbol_table;
@@ -1718,13 +1714,10 @@ resolve_decl_extend(struct resolver* resolver, struct cst_decl const* decl)
     //
     // Look for a similar comment under complete_struct which also shares this
     // problem.
-    char const* const save_symbol_name_prefix =
-        resolver->current_symbol_name_prefix;
     char const* const save_static_addr_prefix =
         resolver->current_static_addr_prefix;
     struct symbol_table* const save_symbol_table =
         resolver->current_symbol_table;
-    resolver->current_symbol_name_prefix = normalize(NULL, type->name, 0);
     resolver->current_static_addr_prefix = normalize(NULL, type->name, 0);
     resolver->current_symbol_table = symbol_table;
 
@@ -1732,7 +1725,6 @@ resolve_decl_extend(struct resolver* resolver, struct cst_decl const* decl)
         resolve_decl(resolver, decl->data.extend.decl);
     symbol_table_insert(type->symbols, decl->name, symbol, false);
 
-    resolver->current_symbol_name_prefix = save_symbol_name_prefix;
     resolver->current_static_addr_prefix = save_static_addr_prefix;
     resolver->current_symbol_table = save_symbol_table;
 
@@ -1886,8 +1878,6 @@ complete_struct(
     (void)xxx_member_variables_ref;
     // Add all member definitions to the struct in the order that they were
     // defined in.
-    char const* const save_symbol_name_prefix =
-        resolver->current_symbol_name_prefix;
     char const* const save_static_addr_prefix =
         resolver->current_static_addr_prefix;
     struct symbol_table* const save_symbol_table =
@@ -1898,8 +1888,6 @@ complete_struct(
     //
     // Look for a similar comment under resolve_decl_extend which also shares
     // this problem.
-    resolver->current_symbol_name_prefix =
-        normalize(NULL, symbol_xget_type(symbol)->name, 0);
     resolver->current_static_addr_prefix =
         normalize(NULL, symbol_xget_type(symbol)->name, 0);
     resolver->current_symbol_table = struct_symbols;
@@ -1924,7 +1912,6 @@ complete_struct(
         }
         UNREACHABLE();
     }
-    resolver->current_symbol_name_prefix = save_symbol_name_prefix;
     resolver->current_static_addr_prefix = save_static_addr_prefix;
     resolver->current_symbol_table = save_symbol_table;
 
@@ -1944,18 +1931,14 @@ complete_function(
     assert(resolver->current_function == NULL);
     assert(resolver->current_rbp_offset == 0x0);
     assert(!resolver->is_within_loop);
-    char const* const save_symbol_name_prefix =
-        resolver->current_symbol_name_prefix;
     char const* const save_static_addr_prefix =
         resolver->current_static_addr_prefix;
-    resolver->current_symbol_name_prefix = NULL; // local identifiers
     resolver->current_static_addr_prefix = function->address->data.static_.name;
     resolver->current_function = function;
     function->body = resolve_block(
         resolver,
         incomplete->symbol_table,
         incomplete->decl->data.function.body);
-    resolver->current_symbol_name_prefix = save_symbol_name_prefix;
     resolver->current_static_addr_prefix = save_static_addr_prefix;
     resolver->current_function = NULL;
     assert(resolver->current_rbp_offset == 0x0);
@@ -4295,7 +4278,6 @@ resolve(struct module* module)
             resolver->current_export_table = export_table;
         }
 
-        resolver->current_symbol_name_prefix = nsname;
         resolver->current_static_addr_prefix = nsaddr;
     }
 
