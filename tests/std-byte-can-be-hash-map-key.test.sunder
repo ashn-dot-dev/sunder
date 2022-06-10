@@ -1,0 +1,39 @@
+import "std/core.sunder";
+import "std/general_allocator.sunder";
+import "std/hash_map.sunder";
+
+func main() void {
+    var allocator = std::general_allocator::init();
+    defer {
+        allocator.fini();
+    }
+    var allocator = std::allocator::init[[typeof(allocator)]](&allocator);
+
+    var map = std::hash_map[[byte, []byte]]::init(allocator);
+    defer {
+        map.fini();
+    }
+
+    map.insert(byte::MIN, "value 1");
+    map.insert(byte::MAX, "value 2");
+    map.insert(100y, "value 3");
+    map.insert(150y, "value 4");
+    map.insert(200y, "value 5");
+
+    var iterator = std::hash_map_iterator[[byte, []byte]]::init(&map);
+    for iterator.advance() {
+        var key_as_u8 = (:u8)iterator.current().*.key;
+        std::print_format_line(
+            std::out(),
+            "{} : \"{e}\"",
+            (:[]std::formatter)[
+                std::formatter::init[[u8]](&key_as_u8),
+                std::formatter::init[[[]byte]](&iterator.current().*.value)]);
+    }
+}
+################################################################################
+# 0 : "value 1"
+# 100 : "value 3"
+# 150 : "value 4"
+# 200 : "value 5"
+# 255 : "value 2"

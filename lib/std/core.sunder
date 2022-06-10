@@ -6,6 +6,17 @@ alias smax = sys::smax;
 
 extend void func init() void { }
 
+extend byte const MIN: byte = 0x00;
+extend byte const MAX: byte = 0xFF;
+extend byte func compare(lhs: *byte, rhs: *byte) ssize {
+    if lhs < rhs { return -1; }
+    if lhs > rhs { return +1; }
+    return 0;
+}
+extend byte func hash(self: *byte) usize {
+    return (:usize)*self;
+}
+
 extend u8 const MIN: u8 = 0x00;
 extend u8 const MAX: u8 = 0xFF;
 extend u8 func init_from_str(str: []byte, radix: usize) std::result[[u8, []byte]] {
@@ -1371,12 +1382,8 @@ struct _int { # namespace
     # smax casting, requiring only two template instantiations for all integer
     # types.
     func compare[[T]](lhs: T, rhs: T) ssize {
-        if lhs < rhs {
-            return -1;
-        }
-        if lhs > rhs {
-            return +1;
-        }
+        if lhs < rhs { return -1; }
+        if lhs > rhs { return +1; }
         return 0;
     }
 
