@@ -8,22 +8,22 @@ sources:
 tasks:
   - c99-debug: |
       cd sunder
-      make clean all CFLAGS='$(C99_DBG)'
+      make clean check examples CFLAGS='$(C99_DBG)'
   - c99-release: |
       cd sunder
-      make clean all CFLAGS='$(C99_REL)'
+      make clean check examples CFLAGS='$(C99_REL)'
   - clang-debug: |
       cd sunder
-      make clean all CC=clang CFLAGS='$(GNU_DBG)'
+      make clean check examples CC=clang CFLAGS='$(GNU_DBG)'
   - clang-release: |
       cd sunder
-      make clean all CC=clang CFLAGS='$(GNU_REL)'
+      make clean check examples CC=clang CFLAGS='$(GNU_REL)'
   - gcc-debug: |
       cd sunder
-      make clean all CC=gcc CFLAGS='$(GNU_DBG)'
+      make clean check examples CC=gcc CFLAGS='$(GNU_DBG)'
   - gcc-release: |
       cd sunder
-      make clean all CC=gcc CFLAGS='$(GNU_REL)'
+      make clean check examples CC=gcc CFLAGS='$(GNU_REL)'
 triggers:
   - action: email
     condition: failure
