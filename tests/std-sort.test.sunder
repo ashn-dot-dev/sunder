@@ -1,0 +1,116 @@
+import "std/core.sunder";
+
+struct foo {
+    var bytes: []byte;
+    var value: ssize;
+
+    func compare(lhs: *foo, rhs: *foo) ssize {
+        return ssize::compare(&lhs.*.value, &rhs.*.value);
+    }
+}
+
+func main() void {
+    var slice = (:[]ssize)[1, 2, 3, 4, 5];
+    std::sort[[ssize]](slice);
+    for i in countof(slice) {
+        std::print_format_line(
+            std::out(),
+            "{}",
+            (:[]std::formatter)[std::formatter::init[[ssize]](&slice[i])]);
+    }
+
+    std::print(std::out(), "\n");
+
+    var slice = (:[]ssize)[5, 4, 3, 2, 1];
+    std::sort[[ssize]](slice);
+    for i in countof(slice) {
+        std::print_format_line(
+            std::out(),
+            "{}",
+            (:[]std::formatter)[std::formatter::init[[ssize]](&slice[i])]);
+    }
+
+    std::print(std::out(), "\n");
+
+    var slice = (:[]ssize)[3, 2, 5, 4, 1];
+    std::sort[[ssize]](slice);
+    for i in countof(slice) {
+        std::print_format_line(
+            std::out(),
+            "{}",
+            (:[]std::formatter)[std::formatter::init[[ssize]](&slice[i])]);
+    }
+
+    std::print(std::out(), "\n");
+
+    var slice = (:[]ssize)[1, 2, 4, 3, 5];
+    std::sort[[ssize]](slice);
+    for i in countof(slice) {
+        std::print_format_line(
+            std::out(),
+            "{}",
+            (:[]std::formatter)[std::formatter::init[[ssize]](&slice[i])]);
+    }
+
+    std::print(std::out(), "\n");
+
+    var slice = (:[][]byte)["Devon", "Bob", "Carl", "Alice"];
+    std::sort[[[]byte]](slice);
+    for i in countof(slice) {
+        std::print_format_line(
+            std::out(),
+            "{}",
+            (:[]std::formatter)[std::formatter::init[[[]byte]](&slice[i])]);
+    }
+
+    std::print(std::out(), "\n");
+
+    var slice = (:[]foo)[
+        (:foo){.bytes = "B", .value = -100},
+        (:foo){.bytes = "F", .value = +200},
+        (:foo){.bytes = "A", .value = -200},
+        (:foo){.bytes = "C", .value = +50},
+        (:foo){.bytes = "E", .value = +100},
+        (:foo){.bytes = "D", .value = +50}
+    ];
+    std::sort[[foo]](slice);
+    for i in countof(slice) {
+        std::print_line(std::out(), slice[i].bytes);
+    }
+}
+################################################################################
+# 1
+# 2
+# 3
+# 4
+# 5
+#
+# 1
+# 2
+# 3
+# 4
+# 5
+#
+# 1
+# 2
+# 3
+# 4
+# 5
+#
+# 1
+# 2
+# 3
+# 4
+# 5
+#
+# Alice
+# Bob
+# Carl
+# Devon
+#
+# A
+# B
+# C
+# D
+# E
+# F
