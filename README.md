@@ -17,7 +17,7 @@ $ apt-get install build-essential clang clang-format nasm
 
 ## Building
 ### Quick Version
-Run `make all` to build the compiler.
+Run `make build` to build the compiler.
 
 Run `make check examples` to run the test suite and compile the example
 programs under the `examples` directory.
