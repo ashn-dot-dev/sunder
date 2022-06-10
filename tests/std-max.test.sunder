@@ -1,13 +1,32 @@
 import "std/core.sunder";
+import "std/bigint.sunder";
+import "std/general_allocator.sunder";
+
+func test_value[[T]](lhs: T, rhs: T) void {
+    dump *std::max[[T]](&lhs, &rhs);
+}
 
 func main() void {
-    dump std::max[[u16]](0xBEEF, 0xCAFE);
-    dump std::max[[u16]](0xCAFE, 0xBEEF);
-    dump std::max[[s16]](-123, +123);
-    dump std::max[[s16]](+123, -123);
-    dump std::max[[ssize]](-123, +123);
-    dump std::max[[ssize]](+123, -123);
-    dump std::max[[ssize]](0, 0);
+    test_value[[u16]](0xBEEF, 0xCAFE);
+    test_value[[u16]](0xCAFE, 0xBEEF);
+    test_value[[s16]](-123, +123);
+    test_value[[s16]](+123, -123);
+    test_value[[ssize]](-123, +123);
+    test_value[[ssize]](+123, -123);
+    test_value[[ssize]](0, 0);
+
+    var general_allocator = std::general_allocator::init();
+    defer { general_allocator.fini(); }
+    var allocator = std::allocator::init[[typeof(general_allocator)]](&general_allocator);
+
+    var x = std::bigint::init_from_str(allocator, "+12345678901234567890", 0);
+    var x = x.value();
+    defer { x.fini(); }
+    var y = std::bigint::init_from_str(allocator, "-12345678901234567890", 0);
+    var y = y.value();
+    defer { y.fini(); }
+    var max = std::max[[std::bigint]](&x, &y);
+    std::print_format_line(std::out(), "{}", (:[]std::formatter)[std::formatter::init[[std::bigint]](max)]);
 }
 ################################################################################
 # FE CA
@@ -17,3 +36,4 @@ func main() void {
 # 7B 00 00 00 00 00 00 00
 # 7B 00 00 00 00 00 00 00
 # 00 00 00 00 00 00 00 00
+# 12345678901234567890

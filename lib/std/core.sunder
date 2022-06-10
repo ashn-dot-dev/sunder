@@ -170,7 +170,9 @@ extend ssize func format(self: *ssize, writer: std::writer, fmt: []byte) std::re
 extend []byte func compare(lhs: *[]byte, rhs: *[]byte) ssize {
     var lhs_data = *lhs;
     var rhs_data = *rhs;
-    var count = std::min[[usize]](countof(lhs_data), countof(rhs_data));
+    var lhs_count = countof(lhs_data);
+    var rhs_count = countof(rhs_data);
+    var count = *std::min[[usize]](&lhs_count, &rhs_count);
     for i in count {
         if lhs_data[i] != rhs_data[i] {
             return (:ssize)lhs_data[i] - (:ssize)rhs_data[i];
@@ -1210,17 +1212,17 @@ func sort[[T]](slice: []T) void {
     }
 }
 
-# Returns the minimum value of `x` and `y`, both of primitive type `T`.
-func min[[T]](x: T, y: T) T {
-    if x < y {
+# Returns the minimum value of `x` and `y`.
+func min[[T]](x: *T, y: *T) *T {
+    if std::lt[[T]](x, y) {
         return x;
     }
     return y;
 }
 
-# Returns the maximum value of `x` and `y`, both of primitive type `T`.
-func max[[T]](x: T, y: T) T {
-    if x > y {
+# Returns the maximum value of `x` and `y`.
+func max[[T]](x: *T, y: *T) *T {
+    if std::gt[[T]](x, y) {
         return x;
     }
     return y;

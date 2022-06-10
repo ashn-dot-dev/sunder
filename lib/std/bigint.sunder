@@ -355,7 +355,9 @@ struct bigint {
         # (-lhs) + (-rhs) == -(lhs + rhs)
         std::assert(lhs.*._sign == rhs.*._sign);
         var sign = lhs.*._sign;
-        var limb_count = 1 + std::max[[usize]](countof(lhs.*._limbs), countof(rhs.*._limbs));
+        var lhs_limb_count = countof(lhs.*._limbs);
+        var rhs_limb_count = countof(rhs.*._limbs);
+        var limb_count = 1 + *std::max[[usize]](&lhs_limb_count, &rhs_limb_count);
         var tmp_res = (:bigint){
             ._allocator = res.*._allocator,
             ._sign = sign,
@@ -432,7 +434,9 @@ struct bigint {
             rhs = tmp;
         }
 
-        var limb_count = std::max[[usize]](countof(lhs.*._limbs), countof(rhs.*._limbs));
+        var lhs_limb_count = countof(lhs.*._limbs);
+        var rhs_limb_count = countof(rhs.*._limbs);
+        var limb_count = *std::max[[usize]](&lhs_limb_count, &rhs_limb_count);
         var tmp_res = (:bigint){
             ._allocator = res.*._allocator,
             ._sign = sign,
