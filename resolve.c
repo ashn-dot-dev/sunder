@@ -732,8 +732,8 @@ xget_template_instance(
     // the duplicate and/or redundant logic.
     assert(decl->kind == CST_DECL_FUNCTION || decl->kind == CST_DECL_STRUCT);
     if (decl->kind == CST_DECL_FUNCTION) {
-        sbuf(struct cst_template_parameter const* const)
-            const template_parameters = decl->data.function.template_parameters;
+        sbuf(struct cst_identifier const* const) const template_parameters =
+            decl->data.function.template_parameters;
         size_t const template_parameters_count =
             sbuf_count(template_parameters);
         size_t const template_arguments_count = sbuf_count(template_arguments);
@@ -773,7 +773,7 @@ xget_template_instance(
         freeze(instance_identifier);
         // Replace template parameters. Zero template parameters means this
         // function is no longer a template.
-        sbuf(struct cst_template_parameter const* const)
+        sbuf(struct cst_identifier const* const)
             const instance_template_parameters = NULL;
         // Function parameters do not change. When the actual function is
         // resolved it will do so inside a symbol table where a template
@@ -804,12 +804,11 @@ xget_template_instance(
             // TODO: Should we use the template parameter location or the
             // template argument location for the type symbol location?
             struct symbol* const symbol = symbol_new_type(
-                template_parameters[i]->identifier->location,
-                template_types[i]);
+                template_parameters[i]->location, template_types[i]);
             freeze(symbol);
             symbol_table_insert(
                 instance_symbol_table,
-                template_parameters[i]->identifier->name,
+                template_parameters[i]->name,
                 symbol,
                 false);
         }
@@ -855,8 +854,8 @@ xget_template_instance(
         return resolved_symbol;
     }
     if (decl->kind == CST_DECL_STRUCT) {
-        sbuf(struct cst_template_parameter const* const)
-            const template_parameters = decl->data.struct_.template_parameters;
+        sbuf(struct cst_identifier const* const) const template_parameters =
+            decl->data.struct_.template_parameters;
         size_t const template_parameters_count =
             sbuf_count(template_parameters);
         size_t const template_arguments_count = sbuf_count(template_arguments);
@@ -896,7 +895,7 @@ xget_template_instance(
         freeze(instance_identifier);
         // Replace template parameters. Zero template parameters means this
         // struct is no longer a template.
-        sbuf(struct cst_template_parameter const* const)
+        sbuf(struct cst_identifier const* const)
             const instance_template_parameters = NULL;
         // Struct members do not change. When the actual struct is resolved it
         // will do so inside a symbol table where a template parameter's name
@@ -921,12 +920,11 @@ xget_template_instance(
             // TODO: Should we use the template parameter location or the
             // template argument location for the type symbol location?
             struct symbol* const symbol = symbol_new_type(
-                template_parameters[i]->identifier->location,
-                template_types[i]);
+                template_parameters[i]->location, template_types[i]);
             freeze(symbol);
             symbol_table_insert(
                 instance_symbol_table,
-                template_parameters[i]->identifier->name,
+                template_parameters[i]->name,
                 symbol,
                 false);
         }
@@ -1461,7 +1459,7 @@ resolve_decl_function(struct resolver* resolver, struct cst_decl const* decl)
     assert(decl->kind == CST_DECL_FUNCTION);
 
     // Check for declaration of a template function.
-    sbuf(struct cst_template_parameter const* const) const template_parameters =
+    sbuf(struct cst_identifier const* const) const template_parameters =
         decl->data.function.template_parameters;
     if (sbuf_count(template_parameters) != 0) {
         struct symbol_table* const symbols =
@@ -1624,7 +1622,7 @@ resolve_decl_struct(struct resolver* resolver, struct cst_decl const* decl)
     assert(decl->kind == CST_DECL_STRUCT);
 
     // Check for declaration of a template function.
-    sbuf(struct cst_template_parameter const* const) const template_parameters =
+    sbuf(struct cst_identifier const* const) const template_parameters =
         decl->data.struct_.template_parameters;
     if (sbuf_count(template_parameters) != 0) {
         struct symbol_table* const symbols =

@@ -149,10 +149,8 @@ parse_symbol(struct parser* parser);
 static struct cst_symbol_element*
 parse_symbol_element(struct parser* parser);
 
-static struct cst_template_parameter const* const*
+static struct cst_identifier const* const*
 parse_template_parameter_list(struct parser* parser);
-static struct cst_template_parameter const*
-parse_template_parameter(struct parser* parser);
 
 static struct cst_template_argument const* const*
 parse_template_argument_list(struct parser* parser);
@@ -441,7 +439,7 @@ parse_decl_function(struct parser* parser)
     struct source_location const* const location =
         &expect_current(parser, TOKEN_FUNC)->location;
     struct cst_identifier const* const identifier = parse_identifier(parser);
-    sbuf(struct cst_template_parameter const* const) const template_parameters =
+    sbuf(struct cst_identifier const* const) const template_parameters =
         parse_template_parameter_list(parser);
     expect_current(parser, TOKEN_LPAREN);
     sbuf(struct cst_function_parameter const* const) const function_parameters =
@@ -470,7 +468,7 @@ parse_decl_struct(struct parser* parser)
     struct source_location const* const location =
         &expect_current(parser, TOKEN_STRUCT)->location;
     struct cst_identifier const* const identifier = parse_identifier(parser);
-    sbuf(struct cst_template_parameter const* const) const template_parameters =
+    sbuf(struct cst_identifier const* const) const template_parameters =
         parse_template_parameter_list(parser);
     expect_current(parser, TOKEN_LBRACE);
     sbuf(struct cst_member const* const) members = parse_member_list(parser);
@@ -1376,12 +1374,12 @@ parse_symbol_element(struct parser* parser)
     return product;
 }
 
-static struct cst_template_parameter const* const*
+static struct cst_identifier const* const*
 parse_template_parameter_list(struct parser* parser)
 {
     assert(parser != NULL);
 
-    sbuf(struct cst_template_parameter const*) template_parameters = NULL;
+    sbuf(struct cst_identifier const*) template_parameters = NULL;
     if (!check_current(parser, TOKEN_LBRACKET)) {
         return template_parameters;
     }
@@ -1395,10 +1393,10 @@ parse_template_parameter_list(struct parser* parser)
             "template parameter list declared with zero parameters");
     }
 
-    sbuf_push(template_parameters, parse_template_parameter(parser));
+    sbuf_push(template_parameters, parse_identifier(parser));
     while (check_current(parser, TOKEN_COMMA)) {
         advance_token(parser);
-        sbuf_push(template_parameters, parse_template_parameter(parser));
+        sbuf_push(template_parameters, parse_identifier(parser));
     }
 
     expect_current(parser, TOKEN_RBRACKET);
@@ -1406,19 +1404,6 @@ parse_template_parameter_list(struct parser* parser)
 
     sbuf_freeze(template_parameters);
     return template_parameters;
-}
-
-static struct cst_template_parameter const*
-parse_template_parameter(struct parser* parser)
-{
-    assert(parser != NULL);
-
-    struct cst_identifier const* const identifier = parse_identifier(parser);
-    struct cst_template_parameter* const product =
-        cst_template_parameter_new(identifier->location, identifier);
-
-    freeze(product);
-    return product;
 }
 
 static struct cst_template_argument const* const*

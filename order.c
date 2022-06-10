@@ -206,7 +206,7 @@ order_decl(struct orderer* orderer, struct cst_decl const* decl)
         return;
     }
     case CST_DECL_FUNCTION: {
-        struct cst_template_parameter const* const* const template_parameters =
+        sbuf(struct cst_identifier const* const) const template_parameters =
             decl->data.function.template_parameters;
         if (sbuf_count(template_parameters) != 0) {
             // TODO: Not sure how we want to handle ordering of generic
@@ -228,7 +228,7 @@ order_decl(struct orderer* orderer, struct cst_decl const* decl)
         return;
     }
     case CST_DECL_STRUCT: {
-        struct cst_template_parameter const* const* const template_parameters =
+        sbuf(struct cst_identifier const* const) const template_parameters =
             decl->data.struct_.template_parameters;
         if (sbuf_count(template_parameters) != 0) {
             // TODO: Not sure how we want to handle ordering of generic

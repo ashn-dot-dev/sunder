@@ -149,9 +149,7 @@
 
 <symbol-element> ::= <identifier> <template-argument-list>?
 
-<template-parameter-list> ::= "[" "[" <template-parameter> ("," <template-parameter>)* "]" "]"
-
-<template-parameter> ::= <identifier>
+<template-parameter-list> ::= "[" "[" <identifier> ("," <identifier>)* "]" "]"
 
 <template-argument-list> ::= <template-argument>+
 

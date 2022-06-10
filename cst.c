@@ -93,7 +93,7 @@ struct cst_decl*
 cst_decl_new_function(
     struct source_location const* location,
     struct cst_identifier const* identifier,
-    struct cst_template_parameter const* const* template_parameters,
+    struct cst_identifier const* const* template_parameters,
     struct cst_function_parameter const* const* function_parameters,
     struct cst_typespec const* return_typespec,
     struct cst_block const* body)
@@ -120,7 +120,7 @@ struct cst_decl*
 cst_decl_new_struct(
     struct source_location const* location,
     struct cst_identifier const* identifier,
-    struct cst_template_parameter const* const* template_parameters,
+    struct cst_identifier const* const* template_parameters,
     struct cst_member const* const* members)
 {
     assert(location != NULL);
@@ -698,21 +698,6 @@ cst_symbol_element_new(
     self->location = identifier->location;
     self->identifier = identifier;
     self->template_arguments = template_arguments;
-    return self;
-}
-
-struct cst_template_parameter*
-cst_template_parameter_new(
-    struct source_location const* location,
-    struct cst_identifier const* identifier)
-{
-    assert(location != NULL);
-    assert(identifier != NULL);
-
-    struct cst_template_parameter* const self = xalloc(NULL, sizeof(*self));
-    memset(self, 0x00, sizeof(*self));
-    self->location = location;
-    self->identifier = identifier;
     return self;
 }
 

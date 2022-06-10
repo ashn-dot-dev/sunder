@@ -1036,8 +1036,7 @@ struct cst_decl {
             struct cst_identifier const* identifier;
             // A template parameter list with count zero indicates that this
             // function was declared without template parameters.
-            sbuf(struct cst_template_parameter const* const)
-                template_parameters;
+            sbuf(struct cst_identifier const* const) template_parameters;
             sbuf(struct cst_function_parameter const* const)
                 function_parameters;
             struct cst_typespec const* return_typespec;
@@ -1047,8 +1046,7 @@ struct cst_decl {
             struct cst_identifier const* identifier;
             // A template parameter list with count zero indicates that this
             // struct was declared without template parameters.
-            sbuf(struct cst_template_parameter const* const)
-                template_parameters;
+            sbuf(struct cst_identifier const* const) template_parameters;
             sbuf(struct cst_member const* const) members;
         } struct_;
         struct {
@@ -1087,7 +1085,7 @@ struct cst_decl*
 cst_decl_new_function(
     struct source_location const* location,
     struct cst_identifier const* identifier,
-    struct cst_template_parameter const* const* template_parameters,
+    struct cst_identifier const* const* template_parameters,
     struct cst_function_parameter const* const* function_parameters,
     struct cst_typespec const* return_typespec,
     struct cst_block const* body);
@@ -1095,7 +1093,7 @@ struct cst_decl*
 cst_decl_new_struct(
     struct source_location const* location,
     struct cst_identifier const* identifier,
-    struct cst_template_parameter const* const* template_parameters,
+    struct cst_identifier const* const* template_parameters,
     struct cst_member const* const* members);
 struct cst_decl*
 cst_decl_new_extend(
@@ -1413,19 +1411,6 @@ struct cst_symbol_element*
 cst_symbol_element_new(
     struct cst_identifier const* identifier,
     struct cst_template_argument const* const* template_arguments);
-
-// TODO: After removing the colon from the <template-parameter> production, a
-// template parameter just an <identifier>. Can cst_template_parameter be
-// removed completely? If constant values (i.e. non-type template parameters)
-// are ever added then this production would still be needed.
-struct cst_template_parameter {
-    struct source_location const* location;
-    struct cst_identifier const* identifier;
-};
-struct cst_template_parameter*
-cst_template_parameter_new(
-    struct source_location const* location,
-    struct cst_identifier const* identifier);
 
 // TODO: After removing the colon from the <template-argument> production, a
 // template argument just a <typespec>. Can cst_template_argument be removed
