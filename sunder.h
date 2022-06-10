@@ -1405,25 +1405,12 @@ struct cst_symbol_element {
     struct cst_identifier const* identifier;
     // Template argument count of zero indicates that this symbol element has no
     // template arguments.
-    sbuf(struct cst_template_argument const* const) template_arguments;
+    sbuf(struct cst_typespec const* const) template_arguments;
 };
 struct cst_symbol_element*
 cst_symbol_element_new(
     struct cst_identifier const* identifier,
-    struct cst_template_argument const* const* template_arguments);
-
-// TODO: After removing the colon from the <template-argument> production, a
-// template argument just a <typespec>. Can cst_template_argument be removed
-// completely? If constant values (i.e. non-type template parameters) are ever
-// added then this production would still be needed.
-struct cst_template_argument {
-    struct source_location const* location;
-    struct cst_typespec const* typespec;
-};
-struct cst_template_argument*
-cst_template_argument_new(
-    struct source_location const* location,
-    struct cst_typespec const* typespec);
+    struct cst_typespec const* const* template_arguments);
 
 struct cst_function_parameter {
     struct source_location const* location;

@@ -152,10 +152,8 @@ parse_symbol_element(struct parser* parser);
 static struct cst_identifier const* const*
 parse_template_parameter_list(struct parser* parser);
 
-static struct cst_template_argument const* const*
+static struct cst_typespec const* const*
 parse_template_argument_list(struct parser* parser);
-static struct cst_template_argument const*
-parse_template_argument(struct parser* parser);
 
 static struct cst_function_parameter const* const*
 parse_function_parameter_list(struct parser* parser);
@@ -1361,7 +1359,7 @@ parse_symbol_element(struct parser* parser)
     assert(parser != NULL);
 
     struct cst_identifier const* const identifier = parse_identifier(parser);
-    struct cst_template_argument const* const* template_arguments = NULL;
+    struct cst_typespec const* const* template_arguments = NULL;
     if (check_current(parser, TOKEN_LBRACKET)
         && check_peek(parser, TOKEN_LBRACKET)) {
         template_arguments = parse_template_argument_list(parser);
@@ -1406,7 +1404,7 @@ parse_template_parameter_list(struct parser* parser)
     return template_parameters;
 }
 
-static struct cst_template_argument const* const*
+static struct cst_typespec const* const*
 parse_template_argument_list(struct parser* parser)
 {
     assert(parser != NULL);
@@ -1414,17 +1412,17 @@ parse_template_argument_list(struct parser* parser)
     struct token const* const lbracket = expect_current(parser, TOKEN_LBRACKET);
     expect_current(parser, TOKEN_LBRACKET);
 
-    sbuf(struct cst_template_argument const*) template_arguments = NULL;
+    sbuf(struct cst_typespec const*) template_arguments = NULL;
     if (check_current(parser, TOKEN_RBRACKET)) {
         fatal(
             &lbracket->location,
             "template argument list contains zero template arguments");
     }
 
-    sbuf_push(template_arguments, parse_template_argument(parser));
+    sbuf_push(template_arguments, parse_typespec(parser));
     while (check_current(parser, TOKEN_COMMA)) {
         advance_token(parser);
-        sbuf_push(template_arguments, parse_template_argument(parser));
+        sbuf_push(template_arguments, parse_typespec(parser));
     }
 
     expect_current(parser, TOKEN_RBRACKET);
@@ -1432,19 +1430,6 @@ parse_template_argument_list(struct parser* parser)
 
     sbuf_freeze(template_arguments);
     return template_arguments;
-}
-
-static struct cst_template_argument const*
-parse_template_argument(struct parser* parser)
-{
-    assert(parser != NULL);
-
-    struct cst_typespec const* const typespec = parse_typespec(parser);
-    struct cst_template_argument* const product =
-        cst_template_argument_new(typespec->location, typespec);
-
-    freeze(product);
-    return product;
 }
 
 static struct cst_function_parameter const* const*

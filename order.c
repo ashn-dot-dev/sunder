@@ -50,11 +50,7 @@ static void
 order_expr(struct orderer* orderer, struct cst_expr const* expr);
 static void
 order_template_argument_list(
-    struct orderer* orderer,
-    struct cst_template_argument const* const* arguments);
-static void
-order_template_argument(
-    struct orderer* orderer, struct cst_template_argument const* argument);
+    struct orderer* orderer, struct cst_typespec const* const* arguments);
 static void
 order_function_parameter(
     struct orderer* orderer, struct cst_function_parameter const* parameter);
@@ -410,24 +406,13 @@ order_expr(struct orderer* orderer, struct cst_expr const* expr)
 
 static void
 order_template_argument_list(
-    struct orderer* orderer,
-    struct cst_template_argument const* const* arguments)
+    struct orderer* orderer, struct cst_typespec const* const* arguments)
 {
     assert(orderer != NULL);
 
     for (size_t i = 0; i < sbuf_count(arguments); ++i) {
-        order_template_argument(orderer, arguments[i]);
+        order_typespec(orderer, arguments[i]);
     }
-}
-
-static void
-order_template_argument(
-    struct orderer* orderer, struct cst_template_argument const* argument)
-{
-    assert(orderer != NULL);
-    assert(argument != NULL);
-
-    order_typespec(orderer, argument->typespec);
 }
 
 static void

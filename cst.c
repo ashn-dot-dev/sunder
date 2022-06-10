@@ -689,7 +689,7 @@ cst_symbol_new(
 struct cst_symbol_element*
 cst_symbol_element_new(
     struct cst_identifier const* identifier,
-    struct cst_template_argument const* const* template_arguments)
+    struct cst_typespec const* const* template_arguments)
 {
     assert(identifier != NULL);
 
@@ -698,20 +698,6 @@ cst_symbol_element_new(
     self->location = identifier->location;
     self->identifier = identifier;
     self->template_arguments = template_arguments;
-    return self;
-}
-
-struct cst_template_argument*
-cst_template_argument_new(
-    struct source_location const* location, struct cst_typespec const* typespec)
-{
-    assert(location != NULL);
-    assert(typespec != NULL);
-
-    struct cst_template_argument* const self = xalloc(NULL, sizeof(*self));
-    memset(self, 0x00, sizeof(*self));
-    self->location = location;
-    self->typespec = typespec;
     return self;
 }
 

@@ -119,7 +119,7 @@ xget_template_instance(
     struct resolver* resolver,
     struct source_location const* location,
     struct symbol const* symbol,
-    struct cst_template_argument const* const* const template_arguments);
+    struct cst_typespec const* const* const template_arguments);
 
 static void
 check_type_compatibility(
@@ -667,7 +667,7 @@ xget_template_instance(
     struct resolver* resolver,
     struct source_location const* location,
     struct symbol const* symbol,
-    struct cst_template_argument const* const* const template_arguments)
+    struct cst_typespec const* const* const template_arguments)
 {
     assert(resolver != NULL);
     assert(location != NULL);
@@ -751,7 +751,7 @@ xget_template_instance(
         for (size_t i = 0; i < template_arguments_count; ++i) {
             sbuf_push(
                 template_types,
-                resolve_typespec(resolver, template_arguments[i]->typespec));
+                resolve_typespec(resolver, template_arguments[i]));
         }
         sbuf_freeze(template_types);
 
@@ -873,7 +873,7 @@ xget_template_instance(
         for (size_t i = 0; i < template_arguments_count; ++i) {
             sbuf_push(
                 template_types,
-                resolve_typespec(resolver, template_arguments[i]->typespec));
+                resolve_typespec(resolver, template_arguments[i]));
         }
         sbuf_freeze(template_types);
 
@@ -3051,9 +3051,8 @@ resolve_expr_call(struct resolver* resolver, struct cst_expr const* expr)
         struct cst_expr const* const lhs = dot->data.access_member.lhs;
         char const* const name =
             dot->data.access_member.member->identifier->name;
-        sbuf(struct cst_template_argument const* const)
-            const template_arguments =
-                dot->data.access_member.member->template_arguments;
+        sbuf(struct cst_typespec const* const) const template_arguments =
+            dot->data.access_member.member->template_arguments;
 
         struct expr const* const instance = resolve_expr(resolver, lhs);
         if (!expr_is_lvalue(instance)) {
