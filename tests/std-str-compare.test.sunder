@@ -1,4 +1,5 @@
-import "std";
+import "std/core.sunder";
+import "std/str.sunder";
 
 func check(lhs: []byte, rhs: []byte) void {
     var eq = (:u8)std::eq[[[]byte]](&lhs, &rhs);
