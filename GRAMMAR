@@ -107,7 +107,7 @@
 
 <expr-access-slice> ::= <expr> "[" <expr> ":" <expr> "]"
 
-<expr-access-member> ::= <expr> "." <identifier>
+<expr-access-member> ::= <expr> "." <identifier> <template-argument-list>?
 
 <expr-access-dereference> ::= <expr> ".*"
 

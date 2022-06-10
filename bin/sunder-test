@@ -1,5 +1,5 @@
 #!/bin/sh
-set -u
+set -eu
 
 usage() {
     cat <<EOF
@@ -28,9 +28,13 @@ test() {
     TEST="$1"
 
     echo "[= TEST ${TEST} =]"
+
+    set +e
     RECEIVED=$(\
         cd $(dirname "${TEST}") && \
         "${SUNDER_HOME}/bin/sunder-run" $(basename "${TEST}") 2>&1)
+    set -e
+
     EXPECTED=$(\
         sed -n '/^########\(########\)*/,$p' "${TEST}" |\
         sed '1d' |\
@@ -42,7 +46,7 @@ test() {
         trap '{ rm -rf -- "${TMPDIR}"; }' EXIT
         printf '%s\n' "${EXPECTED}" >"${TMPDIR}/expected"
         printf '%s\n' "${RECEIVED}" >"${TMPDIR}/received"
-        diff "${TMPDIR}/expected" "${TMPDIR}/received"
+        diff "${TMPDIR}/expected" "${TMPDIR}/received" || true
         echo '[= FAIL =]'
         FAILURES=$((FAILURES + 1))
     fi

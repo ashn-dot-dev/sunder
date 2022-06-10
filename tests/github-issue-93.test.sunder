@@ -1,0 +1,18 @@
+struct foo {
+    var value: u32;
+
+    func as[[T]](self: *foo) T {
+        return (:T)self.*.value;
+    }
+}
+
+func main() void {
+    var x = (:foo){.value = 0xDEADBEEF};
+    dump x.value;
+    dump foo::as[[usize]](&x);
+    dump x.as[[usize]]();
+}
+################################################################################
+# EF BE AD DE
+# EF BE AD DE 00 00 00 00
+# EF BE AD DE 00 00 00 00

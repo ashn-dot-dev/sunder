@@ -1225,10 +1225,10 @@ parse_expr_led_dot(struct parser* parser, struct cst_expr const* lhs)
 
     struct source_location const* const location =
         &expect_current(parser, TOKEN_DOT)->location;
-    struct cst_identifier const* const identifier = parse_identifier(parser);
+    struct cst_symbol_element const* member = parse_symbol_element(parser);
 
     struct cst_expr* const product =
-        cst_expr_new_access_member(location, lhs, identifier);
+        cst_expr_new_access_member(location, lhs, member);
 
     freeze(product);
     return product;
@@ -1433,7 +1433,7 @@ parse_template_argument_list(struct parser* parser)
     if (check_current(parser, TOKEN_RBRACKET)) {
         fatal(
             &lbracket->location,
-            "template argument list declared with zero arguments");
+            "template argument list contains zero template arguments");
     }
 
     sbuf_push(template_arguments, parse_template_argument(parser));

@@ -1269,7 +1269,7 @@ struct cst_expr {
         } access_slice;
         struct {
             struct cst_expr const* lhs;
-            struct cst_identifier const* identifier;
+            struct cst_symbol_element const* member;
         } access_member;
         struct {
             struct cst_expr const* lhs;
@@ -1347,7 +1347,7 @@ struct cst_expr*
 cst_expr_new_access_member(
     struct source_location const* location,
     struct cst_expr const* lhs,
-    struct cst_identifier const* identifier);
+    struct cst_symbol_element const* member);
 struct cst_expr*
 cst_expr_new_access_dereference(
     struct source_location const* location, struct cst_expr const* lhs);
@@ -1761,7 +1761,7 @@ type_unique_slice(struct type const* base);
 // Returns a symbol pointer for the member function on success.
 // Returns NULL on failure.
 struct symbol const*
-type_member_function_symbol(struct type const* self, char const* name);
+type_member_symbol(struct type const* self, char const* name);
 // Returns a pointer to the member function `name` of the provided type.
 // Returns a pointer to the member function on success.
 // Returns NULL on failure.

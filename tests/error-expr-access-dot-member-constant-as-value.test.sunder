@@ -1,0 +1,15 @@
+struct foo {
+    var x: usize;
+
+    const c: u16 = 123;
+}
+
+func main() void {
+    var f: foo = (:foo){.x = 123};
+    f.x;
+    f.c;
+}
+################################################################################
+# [error-expr-access-dot-member-constant-as-value.test.sunder:10] error: attempted to take the value of member constant `c` on type `foo`
+#     f.c;
+#      ^

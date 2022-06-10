@@ -1,0 +1,16 @@
+struct foo {
+    var value: u32;
+
+    func as[[T]](self: *foo) T {
+        return (:T)self.*.value;
+    }
+}
+
+func main() void {
+    var x = (:foo){.value = 0xDEADBEEF};
+    dump x.as();
+}
+################################################################################
+# [error-expr-call-member-function-no-template-instantiation.test.sunder:11] error: template instantiation of `as` requires a template argument list
+#     dump x.as();
+#            ^

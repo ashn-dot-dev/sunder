@@ -672,7 +672,6 @@ xget_template_instance(
     assert(resolver != NULL);
     assert(location != NULL);
     assert(symbol != NULL);
-    assert(sbuf_count(template_arguments) != 0);
 
     switch (symbol->kind) {
     case SYMBOL_TYPE: {
@@ -708,6 +707,16 @@ xget_template_instance(
             "attempted template instantiation of namespace `%s`",
             symbol->name);
     }
+    }
+
+    // Here we *know* that this should be a template instantiation, because
+    // parsing a template list as `[[]]` will produce a parse error with the
+    // message "template argument list contains zero template arguments".
+    if (sbuf_count(template_arguments) == 0) {
+        fatal(
+            location,
+            "template instantiation of `%s` requires a template argument list",
+            symbol->name);
     }
 
     // To instantiate the function template we replace the template parameters
@@ -3042,7 +3051,11 @@ resolve_expr_call(struct resolver* resolver, struct cst_expr const* expr)
     if (expr->data.call.func->kind == CST_EXPR_ACCESS_MEMBER) {
         struct cst_expr const* const dot = expr->data.call.func;
         struct cst_expr const* const lhs = dot->data.access_member.lhs;
-        char const* const name = dot->data.access_member.identifier->name;
+        char const* const name =
+            dot->data.access_member.member->identifier->name;
+        sbuf(struct cst_template_argument const* const)
+            const template_arguments =
+                dot->data.access_member.member->template_arguments;
 
         struct expr const* const instance = resolve_expr(resolver, lhs);
         if (!expr_is_lvalue(instance)) {
@@ -3064,15 +3077,30 @@ resolve_expr_call(struct resolver* resolver, struct cst_expr const* expr)
             }
         }
 
-        struct function const* const function =
-            type_member_function(instance->type, name);
-        if (function == NULL) {
+        struct symbol const* symbol = type_member_symbol(instance->type, name);
+        if (symbol == NULL) {
             fatal(
                 instance->location,
                 "type `%s` has no member function `%s`",
                 instance->type->name,
                 name);
         }
+        if (symbol->kind == SYMBOL_TEMPLATE) {
+            symbol = xget_template_instance(
+                resolver,
+                dot->data.access_member.member->location,
+                symbol,
+                template_arguments);
+        }
+
+        if (symbol->kind != SYMBOL_FUNCTION) {
+            fatal(
+                instance->location,
+                "type `%s` has no member function `%s`",
+                instance->type->name,
+                name);
+        }
+        struct function const* const function = symbol->data.function;
         struct type const* function_type = function->type;
 
         struct type const* const selfptr_type =
@@ -3140,17 +3168,14 @@ resolve_expr_call(struct resolver* resolver, struct cst_expr const* expr)
             }
         }
 
-        struct symbol const* const member_function_symbol =
-            type_member_function_symbol(instance->type, name);
-        assert(member_function_symbol != NULL);
-        struct expr* member_function_expr = member_function_expr =
-            expr_new_symbol(
-                dot->data.access_member.identifier->location,
-                member_function_symbol);
-        freeze(member_function_expr);
+        assert(symbol != NULL);
+        assert(symbol->kind == SYMBOL_FUNCTION);
+        struct expr* member_expr = expr_new_symbol(
+            dot->data.access_member.member->identifier->location, symbol);
+        freeze(member_expr);
 
         struct expr* const resolved =
-            expr_new_call(expr->location, member_function_expr, arguments);
+            expr_new_call(expr->location, member_expr, arguments);
 
         freeze(resolved);
         return resolved;
@@ -3310,11 +3335,20 @@ resolve_expr_access_member(
             lhs->type->name);
     }
 
-    char const* const member_name = expr->data.access_member.identifier->name;
+    char const* const member_name =
+        expr->data.access_member.member->identifier->name;
 
     struct member_variable const* const member_variable_def =
         type_struct_member_variable(lhs->type, member_name);
     if (member_variable_def != NULL) {
+        if (sbuf_count(expr->data.access_member.member->template_arguments)
+            != 0) {
+            fatal(
+                expr->location,
+                "attempted template instantiation of member variable `%s` on type `%s`",
+                member_name,
+                lhs->type->name);
+        }
         struct expr* const resolved = expr_new_access_member_variable(
             expr->location, lhs, member_variable_def);
 
@@ -3322,16 +3356,34 @@ resolve_expr_access_member(
         return resolved;
     }
 
-    struct function const* const member_function_def =
-        type_member_function(lhs->type, member_name);
-    if (member_function_def != NULL) {
+    struct symbol const* const member_symbol =
+        type_member_symbol(lhs->type, member_name);
+
+    if (member_symbol != NULL && member_symbol->kind == SYMBOL_CONSTANT) {
         fatal(
             expr->location,
-            "attempted to take the value of member function `%s` on type `%s`",
-            member_function_def->name,
+            "attempted to take the value of member constant `%s` on type `%s`",
+            member_symbol->name,
             lhs->type->name);
     }
 
+    if (member_symbol != NULL && member_symbol->kind == SYMBOL_FUNCTION) {
+        fatal(
+            expr->location,
+            "attempted to take the value of member function `%s` on type `%s`",
+            member_symbol->name,
+            lhs->type->name);
+    }
+
+    if (member_symbol != NULL && member_symbol->kind == SYMBOL_TEMPLATE) {
+        fatal(
+            expr->location,
+            "attempted to take the value of member template `%s` on type `%s`",
+            member_symbol->name,
+            lhs->type->name);
+    }
+
+    assert(member_symbol == NULL);
     fatal(
         lhs->location,
         "struct `%s` has no member `%s`",

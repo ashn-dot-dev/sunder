@@ -1,0 +1,15 @@
+func usize_to_ssize(val: usize) ssize {
+    return (:ssize)val;
+}
+struct foo {
+    var function: func(usize) ssize;
+}
+
+func main() void {
+    var x = (:foo){.function = usize_to_ssize};
+    dump x.function[[u16]](123);
+}
+################################################################################
+# [error-expr-call-member-variable-function-with-template-instantiation.test.sunder:10] error: attempted template instantiation of member variable `function` on type `foo`
+#     dump x.function[[u16]](123);
+#           ^

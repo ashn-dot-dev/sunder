@@ -49,7 +49,7 @@ func test_to_int_roundtrip[[T]](allocator: std::allocator, int: T) void {
         (:[]std::formatter)[std::formatter::init[[T]](&int)]);
     var bigint = std::bigint::init_from_int[[T]](allocator, int);
     defer { bigint.fini(); }
-    var result = std::bigint::to_int[[T]](&bigint);
+    var result = bigint.to_int[[T]]();
     var int = result.value();
     std::print_format_line(
         std::out(),

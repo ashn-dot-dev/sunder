@@ -526,7 +526,7 @@ type_unique_slice(struct type const* base)
 }
 
 struct symbol const*
-type_member_function_symbol(struct type const* self, char const* name)
+type_member_symbol(struct type const* self, char const* name)
 {
     assert(self != NULL);
     assert(name != NULL);
@@ -540,7 +540,7 @@ type_member_function(struct type const* self, char const* name)
     assert(self != NULL);
     assert(name != NULL);
 
-    struct symbol const* const symbol = type_member_function_symbol(self, name);
+    struct symbol const* const symbol = type_member_symbol(self, name);
     if (symbol == NULL) {
         return NULL;
     }
