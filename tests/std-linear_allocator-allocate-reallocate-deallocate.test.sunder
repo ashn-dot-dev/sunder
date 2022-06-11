@@ -83,7 +83,7 @@ func main() void {
     std::assert(linear_allocator._old_offset == 0);
     std::assert(linear_allocator._cur_offset == 3);
     var res = allocator.allocate(5, 2); # Allocate with an alignment of 5.
-    std::assert(std::rem[[usize]]((:usize)res.value(), 5) == 0);
+    std::assert(((:usize)res.value() % 5) == 0);
     linear_allocator.deallocate_all();
 
     # Resize, expanding the tail allocation.

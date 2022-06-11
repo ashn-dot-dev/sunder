@@ -828,6 +828,21 @@ eval_rvalue_binary(struct expr const* expr)
         res = value_new_integer(expr->type, r);
         break;
     }
+    case BOP_REM: {
+        assert(type_is_any_integer(lhs->type));
+        assert(type_is_any_integer(rhs->type));
+        if (bigint_cmp(rhs->data.integer, BIGINT_ZERO) == 0) {
+            fatal(
+                expr->location,
+                "divide by zero (%s %% %s)",
+                bigint_to_new_cstr(lhs->data.integer, NULL),
+                bigint_to_new_cstr(rhs->data.integer, NULL));
+        }
+        struct bigint* const r = bigint_new(BIGINT_ZERO);
+        bigint_divrem(NULL, r, lhs->data.integer, rhs->data.integer);
+        res = value_new_integer(expr->type, r);
+        break;
+    }
     case BOP_BITOR: {
         assert(
             lhs->type->kind == TYPE_BOOL || lhs->type->kind == TYPE_BYTE

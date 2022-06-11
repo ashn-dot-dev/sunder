@@ -2484,7 +2484,8 @@ codegen_rvalue_binary(struct expr const* expr, size_t id)
         appendli("call __fatal_integer_out_of_range");
         return;
     }
-    case BOP_DIV: {
+    case BOP_DIV: /* fallthrough */
+    case BOP_REM: {
         assert(expr->data.binary.lhs->type->size >= 1u);
         assert(expr->data.binary.lhs->type->size <= 8u);
         assert(expr->data.binary.rhs->type->size >= 1u);
@@ -2525,6 +2526,8 @@ codegen_rvalue_binary(struct expr const* expr, size_t id)
             assert(type_is_unsigned_integer(xhs_type));
             // Clear the upper portion of the dividend.
             appendli("xor rdx, rdx");
+            // Zero extend the dividend into itself.
+            mov_rax_reg_a_with_zero_or_sign_extend(xhs_type);
         }
         appendli("mov rcx, 0");
         appendli(
@@ -2535,7 +2538,28 @@ codegen_rvalue_binary(struct expr const* expr, size_t id)
         appendli("call __fatal_integer_divide_by_zero");
         appendli("%s%zu_op:", LABEL_EXPR, id);
         appendli("%s %s", div, rhs_reg);
-        appendli("push rax");
+
+        // https://www.felixcloutier.com/x86/div
+        // https://www.felixcloutier.com/x86/idiv
+        //
+        // Operand Size            | Dividend | Divisor | Quotient | Remainder
+        // Word/byte               | AX       | r/m8    | AL       | AH
+        // Doubleword/word         | DX:AX    | r/m16   | AX       | DX
+        // Quadword/doubleword     | EDX:EAX  | r/m32   | EAX      | EDX
+        // Doublequadword/quadword | RDX:RAX  | r/m64   | RAX      | RDX
+        if (expr->data.binary.op == BOP_DIV) {
+            appendli("push rax");
+        }
+        else {
+            assert(expr->data.binary.op == BOP_REM);
+            if (xhs_type->size == 1) {
+                appendli("mov al, ah");
+                appendli("push rax");
+            }
+            else {
+                appendli("push rdx");
+            }
+        }
         return;
     }
     case BOP_BITOR: {

@@ -56,12 +56,12 @@ struct hash_map[[K, V]] {
             return std::optional[[V]]::init_empty();
         }
 
-        var index = std::rem[[usize]](key.hash(), countof(self.*._elements));
+        var index = key.hash() % countof(self.*._elements);
         for self.*._elements[index]._state != hash_map_element[[K, V]]::_STATE_NIL {
             if self.*._elements[index]._state == hash_map_element[[K, V]]::_STATE_USE and std::eq[[K]](&key, &self.*._elements[index].key) {
                 return std::optional[[V]]::init_value(self.*._elements[index].value);
             }
-            index = std::rem[[usize]](index + 1, countof(self.*._elements));
+            index = (index + 1) % countof(self.*._elements);
         }
         return std::optional[[V]]::init_empty();
     }
@@ -93,7 +93,7 @@ struct hash_map[[K, V]] {
             *self = new;
         }
 
-        var index = std::rem[[usize]](key.hash(), countof(self.*._elements));
+        var index = key.hash() % countof(self.*._elements);
         for true {
             if self.*._elements[index]._state == hash_map_element[[K, V]]::_STATE_NIL {
                 self.*._elements[index] = (:hash_map_element[[K, V]]){
@@ -127,7 +127,7 @@ struct hash_map[[K, V]] {
                 return std::optional[[V]]::init_value(existing);
             }
 
-            index = std::rem[[usize]](index + 1, countof(self.*._elements));
+            index = (index + 1) % countof(self.*._elements);
         }
 
         return std::zeroed[[std::optional[[V]]]](); # unreachable
@@ -138,14 +138,14 @@ struct hash_map[[K, V]] {
             return std::optional[[V]]::init_empty();
         }
 
-        var index = std::rem[[usize]](key.hash(), countof(self.*._elements));
+        var index = key.hash() % countof(self.*._elements);
         for self.*._elements[index]._state != hash_map_element[[K, V]]::_STATE_NIL {
             if self.*._elements[index]._state == hash_map_element[[K, V]]::_STATE_USE and std::eq[[K]](&key, &self.*._elements[index].key) {
                 self.*._elements[index]._state = hash_map_element[[K, V]]::_STATE_DEL;
                 self.*._n = self.*._n - 1;
                 return std::optional[[V]]::init_value(self.*._elements[index].value);
             }
-            index = std::rem[[usize]](index + 1, countof(self.*._elements));
+            index = (index + 1) % countof(self.*._elements);
         }
         return std::optional[[V]]::init_empty();
     }

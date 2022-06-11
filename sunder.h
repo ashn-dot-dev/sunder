@@ -919,6 +919,7 @@ enum token_kind {
     TOKEN_DASH, // -
     TOKEN_STAR, // *
     TOKEN_FSLASH, // /
+    TOKEN_PERCENT, // %
     TOKEN_TILDE, // ~
     TOKEN_PIPE, // |
     TOKEN_CARET, // ^
@@ -2097,6 +2098,7 @@ struct expr {
                 BOP_SUB,
                 BOP_MUL,
                 BOP_DIV,
+                BOP_REM,
                 BOP_BITOR,
                 BOP_BITXOR,
                 BOP_BITAND,

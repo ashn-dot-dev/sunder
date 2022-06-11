@@ -510,7 +510,7 @@ struct bigint {
                 }
 
                 var t: u64 = u_limb * v_limb + (:u64)w[i + j] + k;
-                w[i + j] = (:u32)std::rem[[u64]](t, b);
+                w[i + j] = (:u32)(t % b);
                 k = t / b;
                 assert(k <= b);
             }
@@ -657,7 +657,7 @@ struct bigint {
         }
 
         var plimb: *u32 = &self.*._limbs[limb_idx];
-        var mask = 1u32 << std::rem[[usize]](n, bigint::_BITS_PER_LIMB);
+        var mask = 1u32 << (n % bigint::_BITS_PER_LIMB);
         if (value) {
             *plimb = *plimb | mask;
         }
@@ -680,7 +680,7 @@ struct bigint {
         }
 
         var limb = self.*._limbs[n / bigint::_BITS_PER_LIMB];
-        var mask = 1u32 << std::rem[[usize]](n, bigint::_BITS_PER_LIMB);
+        var mask = 1u32 << (n % bigint::_BITS_PER_LIMB);
         return (limb & mask) != 0;
     }
 
@@ -693,7 +693,7 @@ struct bigint {
         }
 
         bigint::_magnitude_shiftl_limbs(self, nbits / bigint::_BITS_PER_LIMB);
-        for n in std::rem[[usize]](nbits, bigint::_BITS_PER_LIMB) {
+        for n in (nbits % bigint::_BITS_PER_LIMB) {
             if (self.*._limbs[countof(self.*._limbs) - 1] & 0x80000000u32) != 0 {
                 self.*._resize(countof(self.*._limbs) + 1);
                 self.*._limbs[countof(self.*._limbs) - 1] = 0x00000000u32;

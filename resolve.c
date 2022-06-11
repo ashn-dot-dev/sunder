@@ -3726,6 +3726,9 @@ resolve_expr_binary(struct resolver* resolver, struct cst_expr const* expr)
     case TOKEN_FSLASH: {
         return resolve_expr_binary_arithmetic(resolver, op, BOP_DIV, lhs, rhs);
     }
+    case TOKEN_PERCENT: {
+        return resolve_expr_binary_arithmetic(resolver, op, BOP_REM, lhs, rhs);
+    }
     case TOKEN_PIPE: {
         return resolve_expr_binary_bitwise(resolver, op, BOP_BITOR, lhs, rhs);
     }

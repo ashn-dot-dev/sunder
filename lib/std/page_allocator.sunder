@@ -66,8 +66,8 @@ struct page_allocator {
     }
 
     func reallocate(self: *page_allocator, ptr: *byte, align: usize, old_size: usize, new_size: usize) std::result[[*byte, []byte]] {
-        var old_page_count = old_size / sys::PAGE_SIZE + (:usize)(std::rem[[usize]](old_size, sys::PAGE_SIZE) != 0);
-        var new_page_count = new_size / sys::PAGE_SIZE + (:usize)(std::rem[[usize]](new_size, sys::PAGE_SIZE) != 0);
+        var old_page_count = old_size / sys::PAGE_SIZE + (:usize)((old_size % sys::PAGE_SIZE) != 0);
+        var new_page_count = new_size / sys::PAGE_SIZE + (:usize)((new_size % sys::PAGE_SIZE) != 0);
         if old_page_count == new_page_count {
             # Re-use existing allocated page(s).
             return std::result[[*byte, []byte]]::init_value(ptr);

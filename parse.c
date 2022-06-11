@@ -833,6 +833,7 @@ token_kind_precedence(enum token_kind kind)
     }
     case TOKEN_STAR: /* fallthrough */
     case TOKEN_FSLASH: /* fallthrough */
+    case TOKEN_PERCENT: /* fallthrough */
     case TOKEN_SHL: /* fallthrough */
     case TOKEN_SHR: /* fallthrough */
     case TOKEN_AMPERSAND: {
@@ -937,6 +938,7 @@ token_kind_led(enum token_kind kind)
     case TOKEN_DASH: /* fallthrough */
     case TOKEN_STAR: /* fallthrough */
     case TOKEN_FSLASH: /* fallthrough */
+    case TOKEN_PERCENT: /* fallthrough */
     case TOKEN_PIPE: /* fallthrough */
     case TOKEN_CARET: /* fallthrough */
     case TOKEN_AMPERSAND: {

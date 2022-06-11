@@ -3,22 +3,18 @@ import "std";
 func main() void {
     const N: usize = 100;
     for i in 1:N+1 {
-        if std::rem[[usize]](i, 3) == 0 and std::rem[[usize]](i, 5) == 0 {
+        if i % 3 == 0 and i % 5 == 0 {
             std::print_line(std::out(), "FizzBuzz");
             continue;
         }
-        if std::rem[[usize]](i, 3) == 0 {
+        if i % 3 == 0 {
             std::print_line(std::out(), "Fizz");
             continue;
         }
-        if std::rem[[usize]](i, 5) == 0 {
+        if i % 5 == 0 {
             std::print_line(std::out(), "Buzz");
             continue;
         }
-        std::print_format_line(
-            std::out(),
-            "{}",
-            (:[]std::formatter)[
-                std::formatter::init[[usize]](&i)]);
+        std::print_format_line(std::out(), "{}", (:[]std::formatter)[std::formatter::init[[usize]](&i)]);
     }
 }
