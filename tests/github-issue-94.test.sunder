@@ -1,4 +1,6 @@
-import "std";
+import "std/core.sunder";
+import "std/general_allocator.sunder";
+import "std/bigint.sunder";
 
 func test_add(allocator: std::allocator) void {
     var res = std::bigint::init(allocator);

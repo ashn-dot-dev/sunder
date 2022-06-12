@@ -453,10 +453,10 @@ struct bigint {
             if i < countof(rhs.*._limbs) {
                 rhs_limb = (:u64)rhs.*._limbs[i]; # upcast
             }
-            var tot: u64 = (lhs_limb - rhs_limb) - borrow;
+            var tot: u64 = std::wrapping_sub[[u64]](std::wrapping_sub[[u64]](lhs_limb, rhs_limb), borrow);
 
             tmp_res._limbs[i] = (:u32)tot;
-            borrow = (:u64)(tot > (:u64)u32::MAX); # this might cause breakage, maybe switch to singed 64 bit
+            borrow = (:u64)(tot > (:u64)u32::MAX);
         }
         std::assert(borrow == 0);
 

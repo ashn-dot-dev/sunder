@@ -1,0 +1,25 @@
+import "std/core.sunder";
+import "std/general_allocator.sunder";
+import "std/bigint.sunder";
+
+func main() void {
+    var allocator = std::general_allocator::init();
+    defer {
+        allocator.fini();
+    }
+    var allocator = std::allocator::init[[typeof(allocator)]](&allocator);
+
+    var res = std::bigint::init(allocator);
+    var lhs = std::bigint::init_from_str(allocator, "23683804034828013499051778376295261514260767120149", 0);
+    var lhs = lhs.value();
+    var rhs = std::bigint::init_from_str(allocator, "-22381747887658630369484257092659804022968970706773", 0);
+    var rhs = rhs.value();
+
+    std::bigint::add(&res, &lhs, &rhs);
+    std::print_format_line(std::out(), "{}", (:[]std::formatter)[std::formatter::init[[std::bigint]](&res)]);
+    std::bigint::sub(&res, &lhs, &rhs);
+    std::print_format_line(std::out(), "{}", (:[]std::formatter)[std::formatter::init[[std::bigint]](&res)]);
+}
+################################################################################
+# 1302056147169383129567521283635457491291796413376
+# 46065551922486643868536035468955065537229737826922
