@@ -445,6 +445,34 @@ sys.wrapping_add:
     pop rbp
     ret
 
+; func wrapping_sub(lhs: usize, rhs: usize) usize
+;
+; ## Stack
+; +--------------------+ <- rbp + 0x28
+; | return value       |
+; +--------------------+ <- rbp + 0x20
+; | lhs                |
+; +--------------------+ <- rbp + 0x18
+; | rhs                |
+; +--------------------+ <- rbp + 0x10
+; | return address     |
+; +--------------------+ <- rbp + 0x08
+; | saved rbp          |
+; +--------------------+ <- rbp
+section .text
+sys.wrapping_sub:
+    push rbp
+    mov rbp, rsp
+
+    mov rax, [rbp + 0x18] ; lhs
+    mov rbx, [rbp + 0x10] ; rhs
+    sub rax, rbx
+    mov [rbp + 0x20], rax
+
+    mov rsp, rbp
+    pop rbp
+    ret
+
 ; PROGRAM ENTRY POINT
 ; ===================
 %ifdef __entry

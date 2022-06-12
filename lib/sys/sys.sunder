@@ -451,3 +451,4 @@ extern var argv: **byte;
 extern var envp: **byte;
 
 extern func wrapping_add(lhs: usize, rhs: usize) usize;
+extern func wrapping_sub(lhs: usize, rhs: usize) usize;
