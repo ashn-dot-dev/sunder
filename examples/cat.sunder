@@ -49,8 +49,6 @@ func main() void {
         if parser.check_option("u") {
             continue;
         }
-
-        var arg = parser.argument();
         cat(parser.argument_value());
     }
 }
