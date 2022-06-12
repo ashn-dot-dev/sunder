@@ -1539,17 +1539,14 @@ func delete[[T]](allocator: std::allocator, object: *T) void {
 }
 
 func wrapping_add[[T]](lhs: T, rhs: T) T {
-    std::assert(sizeof(T) <= sizeof(umax));
     return (:T)sys::wrapping_add((:usize)lhs, (:usize)rhs);
 }
 
 func wrapping_sub[[T]](lhs: T, rhs: T) T {
-    std::assert(sizeof(T) <= sizeof(umax));
     return (:T)sys::wrapping_sub((:usize)lhs, (:usize)rhs);
 }
 
 func wrapping_mul[[T]](lhs: T, rhs: T) T {
-    std::assert(sizeof(T) <= sizeof(umax));
     return (:T)sys::wrapping_mul((:usize)lhs, (:usize)rhs);
 }
 
