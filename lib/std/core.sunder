@@ -1538,14 +1538,17 @@ func delete[[T]](allocator: std::allocator, object: *T) void {
     allocator.deallocate((:*byte)object, alignof(T), sizeof(T));
 }
 
+# Returns the two's complement wrapping result of `lhs + rhs`.
 func wrapping_add[[T]](lhs: T, rhs: T) T {
     return (:T)sys::wrapping_add((:usize)lhs, (:usize)rhs);
 }
 
+# Returns the two's complement wrapping result of `lhs - rhs`.
 func wrapping_sub[[T]](lhs: T, rhs: T) T {
     return (:T)sys::wrapping_sub((:usize)lhs, (:usize)rhs);
 }
 
+# Returns the two's complement wrapping result of `lhs * rhs`.
 func wrapping_mul[[T]](lhs: T, rhs: T) T {
     return (:T)sys::wrapping_mul((:usize)lhs, (:usize)rhs);
 }
