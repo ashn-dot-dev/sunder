@@ -16,10 +16,6 @@ namespace sys;
 # signed   long long | 8    | 8         | s64
 # unsigned long long | 8    | 8         | u64
 #
-# musl/include/alltypes.h.in:
-# TYPEDEF signed _Int64   intmax_t;
-# TYPEDEF unsigned _Int64 uintmax_t;
-#
 # linux/include/linux/types.h:
 # typedef unsigned short        umode_t;
 # typedef __kernel_off_t        off_t;
