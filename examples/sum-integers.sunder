@@ -1,35 +1,47 @@
-# Sum ssize integers from standard input an end-of-file condition is reached.
+# Sum integers from standard input an end-of-file condition is reached.
 import "std";
 
 func main() void {
     var reader = std::input();
-    var allocator = std::allocator::init[[std::page_allocator]](std::page_allocator::the());
+    var allocator = std::general_allocator::init();
+    defer {
+        allocator.fini();
+    }
+    var allocator = std::allocator::init[[typeof(allocator)]](&allocator);
 
-    var sum: ssize = 0;
+    var sum = std::bigint::init(allocator);
+    defer {
+        sum.fini();
+    }
+
     for true {
-        var read_line_result = std::read_line(std::input(), allocator);
-        if read_line_result.is_error() {
-            std::print_line(std::err(), read_line_result.error());
+        var result = std::read_line(std::input(), allocator);
+        if result.is_error() {
+            std::print_line(std::err(), result.error());
             std::exit(std::EXIT_FAILURE);
         }
 
-        var line = read_line_result.value();
+        var line = result.value();
         if line.is_empty() {
             break;
         }
+        defer {
+            std::slice[[byte]]::delete(allocator, line.value());
+        }
 
-        var parse_result = ssize::init_from_str(line.value(), 0);
-        if parse_result.is_error() {
-            std::print_line(std::err(), parse_result.error());
+        var result = std::bigint::init_from_str(allocator, line.value(), 0);
+        if result.is_error() {
+            std::print_line(std::err(), result.error());
             std::exit(std::EXIT_FAILURE);
         }
 
-        sum = sum + parse_result.value();
-        std::slice[[byte]]::delete(allocator, line.value());
+        var value = result.value();
+        defer {
+            value.fini();
+        }
+
+        std::bigint::add(&sum, &sum, &value);
     }
-    std::print_format_line(
-        std::out(),
-        "{}",
-        (:[]std::formatter)[
-            std::formatter::init[[ssize]](&sum)]);
+
+    std::print_format_line(std::out(), "{}", (:[]std::formatter)[std::formatter::init[[std::bigint]](&sum)]);
 }
