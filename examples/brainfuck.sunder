@@ -46,8 +46,9 @@ func main() void {
     defer {
         allocator.fini();
     }
+    var allocator = std::allocator::init[[typeof(allocator)]](&allocator);
 
-    var result = std::read_all(std::reader::init[[std::file]](&file), std::allocator::init[[typeof(allocator)]](&allocator));
+    var result = std::read_all(std::reader::init[[std::file]](&file), allocator);
     if result.is_error() {
         var error = result.error();
         std::print_format_line(
@@ -61,7 +62,7 @@ func main() void {
     var source = result.value();
     var source_size: usize = countof(source);
 
-    var stack = std::vector[[usize]]::init(std::allocator::init[[typeof(allocator)]](&allocator));
+    var stack = std::vector[[usize]]::init(allocator);
     var source_index: usize = 0;
     for source_index < source_size {
         var cur: byte = source[source_index];
