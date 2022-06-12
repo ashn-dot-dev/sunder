@@ -473,6 +473,34 @@ sys.wrapping_sub:
     pop rbp
     ret
 
+; func wrapping_mul(lhs: usize, rhs: usize) usize
+;
+; ## Stack
+; +--------------------+ <- rbp + 0x28
+; | return value       |
+; +--------------------+ <- rbp + 0x20
+; | lhs                |
+; +--------------------+ <- rbp + 0x18
+; | rhs                |
+; +--------------------+ <- rbp + 0x10
+; | return address     |
+; +--------------------+ <- rbp + 0x08
+; | saved rbp          |
+; +--------------------+ <- rbp
+section .text
+sys.wrapping_mul:
+    push rbp
+    mov rbp, rsp
+
+    mov rax, [rbp + 0x18] ; lhs
+    mov rbx, [rbp + 0x10] ; rhs
+    mul rbx
+    mov [rbp + 0x20], rax
+
+    mov rsp, rbp
+    pop rbp
+    ret
+
 ; PROGRAM ENTRY POINT
 ; ===================
 %ifdef __entry

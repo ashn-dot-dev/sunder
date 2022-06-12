@@ -1,0 +1,39 @@
+import "std/core.sunder";
+
+func test[[T]](lhs: T, rhs: T) void {
+    var result: T = std::wrapping_mul[[T]](lhs, rhs);
+    std::print_format_line(std::out(), "{X}", (:[]std::formatter)[std::formatter::init[[T]](&result)]);
+}
+
+func test_compare_s64[[T]](lhs: T, rhs: T) void {
+    var a: T = std::wrapping_mul[[T]](lhs, rhs);
+    var b: T = (:T)((:s64)lhs * (:s64)rhs);
+    std::assert(a == b);
+}
+
+func main() void {
+    test[[u8]](123, 123);
+    test[[u8]](u8::MAX, u8::MAX);
+    test[[u16]](u16::MAX, u16::MAX);
+    test[[u32]](u32::MAX, u32::MAX);
+    test[[u64]](u64::MAX, u64::MAX);
+
+    std::print(std::out(), "\n");
+
+    test[[s8]](+123, +123);
+    test[[s8]](-123, -123);
+    test[[s8]](s8::MAX, s8::MAX);
+    test[[s16]](s16::MAX, s16::MAX);
+    test[[s32]](s32::MAX, s32::MAX);
+    test[[s64]](s64::MAX, s64::MAX);
+
+    test_compare_s64[[s8]](+123, +123);
+    test_compare_s64[[s8]](+123, -123);
+    test_compare_s64[[s8]](-123, +123);
+    test_compare_s64[[s8]](-123, -123);
+
+    test_compare_s64[[s16]](s16::MAX, s16::MAX);
+    test_compare_s64[[s16]](s16::MAX, s16::MIN);
+    test_compare_s64[[s16]](s16::MIN, s16::MAX);
+    test_compare_s64[[s16]](s16::MIN, s16::MIN);
+}

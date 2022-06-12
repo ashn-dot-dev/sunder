@@ -1548,6 +1548,11 @@ func wrapping_sub[[T]](lhs: T, rhs: T) T {
     return (:T)sys::wrapping_sub((:usize)lhs, (:usize)rhs);
 }
 
+func wrapping_mul[[T]](lhs: T, rhs: T) T {
+    std::assert(sizeof(T) <= sizeof(umax));
+    return (:T)sys::wrapping_mul((:usize)lhs, (:usize)rhs);
+}
+
 # Returns a signed integer less than, equal to, or greater than zero if `lhs`
 # is found, respectively, to be less than, equal to, or greater than `rhs`.
 func compare[[T]](lhs: *T, rhs: *T) ssize {
