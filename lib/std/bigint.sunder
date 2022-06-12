@@ -365,7 +365,7 @@ struct bigint {
         };
 
         var carry: u64 = 0;
-        for i in countof(res.*._limbs) {
+        for i in countof(tmp_res._limbs) {
             var lhs_limb: u64 = 0;
             if i < countof(lhs.*._limbs) {
                 lhs_limb = (:u64)lhs.*._limbs[i]; # upcast
@@ -444,7 +444,7 @@ struct bigint {
         };
 
         var borrow: u64 = 0;
-        for i in countof(res.*._limbs) {
+        for i in countof(tmp_res._limbs) {
             var lhs_limb: u64 = 0;
             if i < countof(lhs.*._limbs) {
                 lhs_limb = (:u64)lhs.*._limbs[i]; # upcast
