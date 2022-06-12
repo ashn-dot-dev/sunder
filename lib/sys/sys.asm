@@ -213,11 +213,6 @@ __fatal_preamble_count: equ $ - __fatal_preamble_start;
 
 ; SYS DEFINITIONS (lib/sys/sys.sunder)
 ; ====================================
-section .data
-sys.argc: dq 0 ; extern var argc: usize;
-sys.argv: dq 0 ; extern var argv: **byte;
-sys.envp: dq 0 ; extern var envp: **byte;
-
 ; Linux x64 syscall kernel interface format:
 ; + rax => [in] syscall number
 ;          [out] return value (negative indicates -ERRNO)
@@ -412,6 +407,39 @@ sys.wait4:
     mov r10, [rbp + 0x10] ; ru
     syscall
     mov [rbp + 0x30], rax
+
+    mov rsp, rbp
+    pop rbp
+    ret
+
+section .data
+sys.argc: dq 0 ; extern var argc: usize;
+sys.argv: dq 0 ; extern var argv: **byte;
+sys.envp: dq 0 ; extern var envp: **byte;
+
+; func wrapping_add(lhs: usize, rhs: usize) usize
+;
+; ## Stack
+; +--------------------+ <- rbp + 0x28
+; | return value       |
+; +--------------------+ <- rbp + 0x20
+; | lhs                |
+; +--------------------+ <- rbp + 0x18
+; | rhs                |
+; +--------------------+ <- rbp + 0x10
+; | return address     |
+; +--------------------+ <- rbp + 0x08
+; | saved rbp          |
+; +--------------------+ <- rbp
+section .text
+sys.wrapping_add:
+    push rbp
+    mov rbp, rsp
+
+    mov rax, [rbp + 0x18] ; lhs
+    mov rbx, [rbp + 0x10] ; rhs
+    add rax, rbx
+    mov [rbp + 0x20], rax
 
     mov rsp, rbp
     pop rbp

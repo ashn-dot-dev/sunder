@@ -449,3 +449,5 @@ func WEXITSTATUS(status: sint) sint {
 extern var argc: usize;
 extern var argv: **byte;
 extern var envp: **byte;
+
+extern func wrapping_add(lhs: usize, rhs: usize) usize;
