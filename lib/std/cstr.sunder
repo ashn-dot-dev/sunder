@@ -8,6 +8,6 @@ func count(s: *byte) usize {
     return (:usize)cur - (:usize)s;
 }
 
-func as_str(s: *byte) []byte {
+func view_str(s: *byte) []byte {
     return (:[]byte){s, std::cstr::count(s)};
 }

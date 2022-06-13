@@ -31,16 +31,18 @@ func is_whitespace(char: byte) bool {
         or char == 0x0D; # carriage return
 }
 
-func trimmed(str: []byte) []byte {
+func view_trimmed(str: []byte) []byte {
+    # Trim front.
     var start = 0u;
     for start < countof(str) and std::ascii::is_whitespace(str[start]) {
         start = start + 1;
     }
-    str = str[start:countof(str)];
 
+    # Trim back.
     var end = countof(str);
-    for end != 0 and std::ascii::is_whitespace(str[end - 1]) {
+    for end != start and std::ascii::is_whitespace(str[end - 1]) {
         end = end - 1;
     }
-    return str[0:end];
+
+    return str[start:end];
 }

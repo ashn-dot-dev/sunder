@@ -43,7 +43,7 @@ struct argument_iterator {
             return false; # end of iteration
         }
 
-        self.*._bytes = std::cstr::as_str(*arg);
+        self.*._bytes = std::cstr::view_str(*arg);
         return true;
     }
 

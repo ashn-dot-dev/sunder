@@ -112,7 +112,7 @@ equivalent) as the first line of a Sunder source file.
 import "std";
 
 func main() void {
-    std::print_line(std::out(), "What is your name?\n> ");
+    std::print(std::out(), "What is your name?\n> ");
 
     var allocator = std::general_allocator::init();
     defer {
@@ -131,7 +131,7 @@ func main() void {
         std::exit(std::EXIT_FAILURE);
     }
 
-    var name = std::ascii::trimmed(line.value());
+    var name = std::ascii::view_trimmed(line.value());
     std::print_format_line(std::out(), "Nice to meet you {}!", (:[]std::formatter)[std::formatter::init[[typeof(name)]](&name)]);
 }
 ```
