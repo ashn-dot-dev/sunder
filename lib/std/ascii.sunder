@@ -32,14 +32,15 @@ func is_whitespace(char: byte) bool {
 }
 
 func view_trimmed(str: []byte) []byte {
-    # Trim front.
     var start = 0u;
-    for start < countof(str) and std::ascii::is_whitespace(str[start]) {
+    var end = countof(str);
+
+    # Trim front.
+    for start != end and std::ascii::is_whitespace(str[start]) {
         start = start + 1;
     }
 
     # Trim back.
-    var end = countof(str);
     for end != start and std::ascii::is_whitespace(str[end - 1]) {
         end = end - 1;
     }
