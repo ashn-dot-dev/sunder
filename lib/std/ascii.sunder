@@ -22,7 +22,7 @@ func to_upper(char: byte) byte {
     return char;
 }
 
-func is_space(char: byte) bool {
+func is_whitespace(char: byte) bool {
     return char == ' '
         or char == '\t'
         or char == '\n'
@@ -33,7 +33,7 @@ func is_space(char: byte) bool {
 
 func trimmed_front(str: []byte) []byte {
     var start = 0u;
-    for start < countof(str) and std::ascii::is_space(str[start]) {
+    for start < countof(str) and std::ascii::is_whitespace(str[start]) {
         start = start + 1;
     }
     return str[start:countof(str)];
@@ -41,7 +41,7 @@ func trimmed_front(str: []byte) []byte {
 
 func trimmed_back(str: []byte) []byte {
     var end = countof(str);
-    for end != 0 and std::ascii::is_space(str[end - 1]) {
+    for end != 0 and std::ascii::is_whitespace(str[end - 1]) {
         end = end - 1;
     }
     return str[0:end];
