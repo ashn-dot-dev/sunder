@@ -5,13 +5,13 @@ func is_lowercase(char: byte) bool {
 }
 
 func to_lowercase(char: byte) byte {
-    if std::ascii::is_upper(char) {
+    if std::ascii::is_uppercase(char) {
         return char | 0x20;
     }
     return char;
 }
 
-func is_upper(char: byte) bool {
+func is_uppercase(char: byte) bool {
     return 'A' <= char and char <= 'Z';
 }
 
