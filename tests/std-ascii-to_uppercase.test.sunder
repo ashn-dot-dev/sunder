@@ -1,0 +1,42 @@
+import "std/core.sunder";
+import "std/ascii.sunder";
+
+func main() void {
+    dump std::ascii::to_uppercase('a') == 'A';
+    dump std::ascii::to_uppercase('b') == 'B';
+    dump std::ascii::to_uppercase('c') == 'C';
+    dump std::ascii::to_uppercase('z') == 'Z';
+
+    dump void::init();
+
+    dump std::ascii::to_uppercase('A') == 'A';
+    dump std::ascii::to_uppercase('B') == 'B';
+    dump std::ascii::to_uppercase('C') == 'C';
+    dump std::ascii::to_uppercase('Z') == 'Z';
+
+    dump void::init();
+
+    dump std::ascii::to_uppercase('~') == '~';
+    dump std::ascii::to_uppercase('\n') == '\n';
+    dump std::ascii::to_uppercase('\t') == '\t';
+    dump std::ascii::to_uppercase(' ') == ' ';
+    dump std::ascii::to_uppercase('@') == '@';
+    dump std::ascii::to_uppercase('[') == '[';
+}
+################################################################################
+# 01
+# 01
+# 01
+# 01
+#
+# 01
+# 01
+# 01
+# 01
+#
+# 01
+# 01
+# 01
+# 01
+# 01
+# 01
