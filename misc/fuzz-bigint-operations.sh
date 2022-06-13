@@ -1,20 +1,37 @@
 #!/bin/sh
 # Run from the misc directory.
-MIN='-99999999999999999999999999999999999999999999999999'
+#
+# NOTE: Python uses a different algorithm for div and mod where Sunder matches
+# the behavior of C99, so for now negative numbers are *not* used as they will
+# produce different results between the three test programs.
+set -eu
+
+MIN='0'
 MAX='+99999999999999999999999999999999999999999999999999'
 
-LHS=$(python3 -c "import random; print(random.randint($MIN, $MAX))")
-RHS=$(python3 -c "import random; print(random.randint($MIN, $MAX))")
+sunder-compile -o fuzz-bigint-operations.sunder.out fuzz-bigint-operations.sunder
+c99            -o fuzz-bigint-operations.c.out      fuzz-bigint-operations.c
 
-echo "LHS: ${LHS}"
-echo "RHS: ${RHS}"
-EXPECTED=$(python3    fuzz-bigint-operations.py     $LHS $RHS 2>&1)
-RECEIVED=$(sunder-run fuzz-bigint-operations.sunder $LHS $RHS 2>&1)
+test() {
+    LHS=$(python3 -c "import random; print(random.randint($MIN, $MAX))")
+    RHS=$(python3 -c "import random; print(random.randint($MIN, $MAX))")
 
-if [ "${EXPECTED}" != "${RECEIVED}" ]; then
-    printf 'EXPECTED:\n%s\n' "${EXPECTED}"
-    printf 'RECEIVED:\n%s\n' "${RECEIVED}"
-    exit 1
-fi
+    echo "LHS: ${LHS}"
+    echo "RHS: ${RHS}"
+    set -e
+    PYTHON=$(python3 fuzz-bigint-operations.py           $LHS $RHS 2>&1)
+    SUNDER=$(        ./fuzz-bigint-operations.sunder.out $LHS $RHS 2>&1)
+    C99SRC=$(        ./fuzz-bigint-operations.c.out      $LHS $RHS 2>&1)
+    set -e
 
-echo 'PASSED'
+    if [ "${PYTHON}" != "${SUNDER}" -o "${PYTHON}" != "${C99SRC}" ]; then
+        printf 'PYTHON:\n%s\n' "${PYTHON}"
+        printf '\n'
+        printf 'SUNDER:\n%s\n' "${SUNDER}"
+        printf '\n'
+        printf 'C99SRC:\n%s\n' "${C99SRC}"
+        exit 1
+    fi
+}
+
+while true; do test; done
