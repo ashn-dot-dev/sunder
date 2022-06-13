@@ -1,0 +1,42 @@
+import "std/core.sunder";
+import "std/ascii.sunder";
+
+func main() void {
+    dump std::ascii::is_lowercase('a');
+    dump std::ascii::is_lowercase('b');
+    dump std::ascii::is_lowercase('c');
+    dump std::ascii::is_lowercase('z');
+
+    dump void::init();
+
+    dump std::ascii::is_lowercase('A');
+    dump std::ascii::is_lowercase('B');
+    dump std::ascii::is_lowercase('C');
+    dump std::ascii::is_lowercase('Z');
+
+    dump void::init();
+
+    dump std::ascii::is_lowercase('~');
+    dump std::ascii::is_lowercase('\n');
+    dump std::ascii::is_lowercase('\t');
+    dump std::ascii::is_lowercase(' ');
+    dump std::ascii::is_lowercase('@');
+    dump std::ascii::is_lowercase('[');
+}
+################################################################################
+# 01
+# 01
+# 01
+# 01
+#
+# 00
+# 00
+# 00
+# 00
+#
+# 00
+# 00
+# 00
+# 00
+# 00
+# 00

@@ -1,6 +1,6 @@
 namespace std::ascii;
 
-func is_lower(char: byte) bool {
+func is_lowercase(char: byte) bool {
     return 'a' <= char and char <= 'z';
 }
 
@@ -16,7 +16,7 @@ func is_upper(char: byte) bool {
 }
 
 func to_upper(char: byte) byte {
-    if std::ascii::is_lower(char) {
+    if std::ascii::is_lowercase(char) {
         return char & 0x5F;
     }
     return char;
