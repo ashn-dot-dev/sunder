@@ -587,46 +587,45 @@ extend []byte func format(self: *[]byte, writer: std::writer, fmt: []byte) std::
 
     # Format specifier: "e"
     if countof(fmt) == 1 and fmt[0] == 'e' {
-        var result = std::zeroed[[std::result[[void, []byte]]]]();
         for i in countof(*self) {
             var c: byte = self.*[i];
             if c == '\0' {
-                result = std::write_all(writer, "\\0");
+                var result = std::write_all(writer, "\\0");
                 if result.is_error() {
                     return result;
                 }
                 continue;
             }
             if c == '\t' {
-                result = std::write_all(writer, "\\t");
+                var result = std::write_all(writer, "\\t");
                 if result.is_error() {
                     return result;
                 }
                 continue;
             }
             if c == '\n' {
-                result = std::write_all(writer, "\\n");
+                var result = std::write_all(writer, "\\n");
                 if result.is_error() {
                     return result;
                 }
                 continue;
             }
             if c == '\'' {
-                result = std::write_all(writer, "\\\'");
+                var result = std::write_all(writer, "\\\'");
                 if result.is_error() {
                     return result;
                 }
                 continue;
             }
             if c == '\"' {
-                result = std::write_all(writer, "\\\"");
+                var result = std::write_all(writer, "\\\"");
                 if result.is_error() {
                     return result;
                 }
                 continue;
             }
             if c == '\\' {
-                result = std::write_all(writer, "\\\\");
+                var result = std::write_all(writer, "\\\\");
                 if result.is_error() {
                     return result;
                 }
@@ -641,7 +640,7 @@ extend []byte func format(self: *[]byte, writer: std::writer, fmt: []byte) std::
                     DIGITS[(:usize)c & 0xF0 >> 4],
                     DIGITS[(:usize)c & 0x0F]
                 ];
-                result = std::write_format(
+                var result = std::write_format(
                     writer,
                     "\\x{}",
                     (:[]std::formatter)[
@@ -651,7 +650,7 @@ extend []byte func format(self: *[]byte, writer: std::writer, fmt: []byte) std::
                 }
                 continue;
             }
-            result = std::write_all(writer, (:[]byte){&c, 1});
+            var result = std::write_all(writer, (:[]byte){&c, 1});
             if result.is_error() {
                 return result;
             }
