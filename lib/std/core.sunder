@@ -1048,11 +1048,6 @@ struct allocator_itable {
 }
 
 struct allocator {
-    # Attempted allocation with an alignment not supported by the allocator.
-    const ERROR_INVALID_ALIGNMENT = "invalid alignment";
-    # Attempted allocation that could not be fulfilled.
-    const ERROR_ALLOCATION_FAILURE = "allocation failure";
-
     var itable: *std::allocator_itable;
     var object: *any;
 

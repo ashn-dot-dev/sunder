@@ -25,7 +25,7 @@ struct linear_allocator {
         var offset: usize = std::forward_align(cur_addr, align) - buf_addr;
 
         if offset + size > countof(self.*._buf) {
-            return std::result[[*byte, []byte]]::init_error(std::allocator::ERROR_ALLOCATION_FAILURE);
+            return std::result[[*byte, []byte]]::init_error("allocation failure");
         }
 
         self.*._old_offset = self.*._cur_offset;
@@ -50,7 +50,7 @@ struct linear_allocator {
 
         if is_tail_allocation {
             if (new_size - old_size) > (countof(self.*._buf) - self.*._cur_offset) {
-                return std::result[[*byte, []byte]]::init_error(std::allocator::ERROR_ALLOCATION_FAILURE);
+                return std::result[[*byte, []byte]]::init_error("allocation failure");
             }
             self.*._cur_offset = self.*._cur_offset + (new_size - old_size);
             return std::result[[*byte, []byte]]::init_value(ptr);

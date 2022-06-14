@@ -5,11 +5,11 @@ func main() void {
     var allocator = *std::page_allocator::the();
 
     var result = allocator.allocate(9, 4096);
-    dump std::slice[[byte]]::is(result.error(), std::allocator::ERROR_INVALID_ALIGNMENT);
+    std::print_line(std::out(), result.error());
 
     var result = allocator.allocate(123, 4096);
-    dump std::slice[[byte]]::is(result.error(), std::allocator::ERROR_INVALID_ALIGNMENT);
+    std::print_line(std::out(), result.error());
 }
 ################################################################################
-# 01
-# 01
+# invalid alignment
+# invalid alignment

@@ -3,7 +3,7 @@ import "std/core.sunder";
 
 struct allocation_failure_allocator {
     func allocate(self: *allocation_failure_allocator, align: usize, size: usize) std::result[[*byte, []byte]] {
-        return std::result[[*byte, []byte]]::init_error(std::allocator::ERROR_ALLOCATION_FAILURE);
+        return std::result[[*byte, []byte]]::init_error("allocation failure");
     }
 
     # Reallocation will panic since a call to allocate should never have
