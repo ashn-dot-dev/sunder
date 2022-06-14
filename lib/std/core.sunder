@@ -682,10 +682,6 @@ struct ptr[[T]] { # namespace
 }
 
 struct slice[[T]] { # namespace
-    func is(lhs: []T, rhs: []T) bool {
-        return *(:**T)&lhs == *(:**T)&rhs and countof(lhs) == countof(rhs);
-    }
-
     # Copy the elements of `source` into `destination`. The source and
     # destination buffers must contain the same number of elements.
     func copy(destination: []T, source: []T) void {
