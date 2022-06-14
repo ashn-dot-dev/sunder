@@ -30,7 +30,7 @@ CC = c99
 CFLAGS = $(C99_DBG)
 INCS =
 
-SUNDER_HOME="$$HOME/.sunder"
+SUNDER_HOME=$$HOME/.sunder
 
 all: build
 
@@ -60,9 +60,9 @@ examples: build
 	(cd examples/ && sh examples.build.sh)
 
 install: build
-	mkdir -p $(SUNDER_HOME)
-	cp -r bin/ $(SUNDER_HOME)
-	cp -r lib/ $(SUNDER_HOME)
+	mkdir -p "$(SUNDER_HOME)"
+	cp -r bin/ "$(SUNDER_HOME)"
+	cp -r lib/ "$(SUNDER_HOME)"
 
 format:
 	clang-format -i *.h *.c
