@@ -757,6 +757,7 @@ struct slice[[T]] { # namespace
         }
     }
 
+    # Allocate a slice of `count` elements using the provided allocator.
     func new(allocator: std::allocator, count: usize) []T {
         var result = allocator.allocate(alignof(T), count * sizeof(T));
         if result.is_error() {
@@ -765,6 +766,8 @@ struct slice[[T]] { # namespace
         return (:[]T){(:*T)result.value(), count};
     }
 
+    # Resize the provided slice to `new_count` elements using the provided
+    # allocator.
     func resize(allocator: std::allocator, slice: []T, new_count: usize) []T {
         var cur_count: usize = countof(slice);
         var cur_size: usize = cur_count * sizeof(T);
@@ -779,6 +782,7 @@ struct slice[[T]] { # namespace
         return (:[]T){(:*T)result.value(), new_count};
     }
 
+    # Deallocate the provided slice using the provided allocator.
     func delete(allocator: std::allocator, slice: []T) void {
         var pointer: *byte = *((:**byte)&slice);
         var size: usize = countof(slice) * sizeof(T);
