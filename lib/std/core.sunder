@@ -666,18 +666,22 @@ extend []byte func format(self: *[]byte, writer: std::writer, fmt: []byte) std::
 struct ptr[[T]] { # namespace
     var __namespace__: any;
 
+    # Returns true if the provided pointer is null.
     func is_null(ptr: *T) bool {
         return (:usize)ptr == 0;
     }
 
+    # Returns the null pointer value for type `*T`.
     func null() *T {
         return (:*T)0u;
     }
 
+    # Equivalent to the C operation `ptr + n`.
     func add(ptr: *T, n: usize) *T {
         return (:*T)((:usize)ptr + n * sizeof(typeof(*ptr)));
     }
 
+    # Equivalent to the C operation `ptr - n`.
     func sub(ptr: *T, n: usize) *T {
         return (:*T)((:usize)ptr - n * sizeof(typeof(*ptr)));
     }
