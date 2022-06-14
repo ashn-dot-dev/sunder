@@ -33,7 +33,7 @@ done
 
 printf '\n'
 
-echo "const ERRNO_STRINGS: [$(($MAX + 1))][]byte = (:[$(($MAX + 1))][]byte)["
+echo "const ERRNO_STRINGS: [][]byte = (:[][]byte)["
 for i in $(seq 0 "${MAX}"); do
     COMMA=','
     if [ "${i}" = "${MAX}" ]; then
