@@ -1533,6 +1533,7 @@ func forward_align(addr: usize, align: usize) usize {
     return addr;
 }
 
+# Allocate an object of type `T` using the provided allocator.
 func new[[T]](allocator: std::allocator) *T {
     var result = allocator.allocate(alignof(T), sizeof(T));
     if result.is_error() {
@@ -1541,6 +1542,7 @@ func new[[T]](allocator: std::allocator) *T {
     return (:*T)result.value();
 }
 
+# Deallocate the provided object of type `T` using the provided allocator.
 func delete[[T]](allocator: std::allocator, object: *T) void {
     allocator.deallocate((:*byte)object, alignof(T), sizeof(T));
 }
