@@ -664,6 +664,8 @@ extend []byte func format(self: *[]byte, writer: std::writer, fmt: []byte) std::
 }
 
 struct ptr[[T]] { # namespace
+    var __namespace__: any;
+
     func is_null(ptr: *T) bool {
         return (:usize)ptr == 0;
     }
@@ -682,6 +684,8 @@ struct ptr[[T]] { # namespace
 }
 
 struct slice[[T]] { # namespace
+    var __namespace__: any;
+
     # Copy the elements of `source` into `destination`. The source and
     # destination buffers must contain the same number of elements.
     func copy(destination: []T, source: []T) void {
