@@ -1,5 +1,4 @@
 import "std/core.sunder";
-import "std/cstr.sunder";
 import "sys/sys.sunder"; # Declares sys::argc and sys::argv as extern.
 
 func main() void {

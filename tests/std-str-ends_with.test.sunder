@@ -1,5 +1,4 @@
 import "std/core.sunder";
-import "std/str.sunder";
 
 func main() void {
     dump std::str::ends_with("", "");

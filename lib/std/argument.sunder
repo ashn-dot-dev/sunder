@@ -1,7 +1,5 @@
 namespace std;
 import "std/core.sunder";
-import "std/cstr.sunder";
-import "std/str.sunder";
 import "sys";
 
 struct argument_iterator {

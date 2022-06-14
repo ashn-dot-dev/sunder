@@ -789,6 +789,108 @@ struct slice[[T]] { # namespace
     }
 }
 
+struct str { # namespace
+    var __namespace__: any;
+
+    # Returns true if `str` starts with `target`.
+    func starts_with(str: []byte, target: []byte) bool {
+        if countof(str) < countof(target) {
+            return false;
+        }
+
+        for i in 0:countof(target) {
+            if str[i] != target[i] {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    # Returns true if `str` ends with `target`.
+    func ends_with(str: []byte, target: []byte) bool {
+        if countof(str) < countof(target) {
+            return false;
+        }
+
+        var start = countof(str) - countof(target);
+        for i in 0:countof(target) {
+            if str[start+i] != target[i] {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    # Returns true if `str` contains `target`.
+    func contains(str: []byte, target: []byte) bool {
+        if countof(str) < countof(target) {
+            return false;
+        }
+
+        var start = 0u;
+        for start <= (countof(str) - countof(target)) {
+            var i = 0u;
+            for i < countof(target) {
+                if str[start+i] != target[i] {
+                    break;
+                }
+                i = i + 1;
+            }
+
+            if i == countof(target) {
+                return true;
+            }
+            start = start + i + 1;
+        }
+
+        return false;
+    }
+
+    func eq(lhs: []byte, rhs: []byte) bool {
+        return lhs.compare(&rhs) == 0;
+    }
+
+    func ne(lhs: []byte, rhs: []byte) bool {
+        return lhs.compare(&rhs) != 0;
+    }
+
+    func lt(lhs: []byte, rhs: []byte) bool {
+        return lhs.compare(&rhs) < 0;
+    }
+
+    func le(lhs: []byte, rhs: []byte) bool {
+        return lhs.compare(&rhs) <= 0;
+    }
+
+    func gt(lhs: []byte, rhs: []byte) bool {
+        return lhs.compare(&rhs) > 0;
+    }
+
+    func ge(lhs: []byte, rhs: []byte) bool {
+        return lhs.compare(&rhs) >= 0;
+    }
+}
+
+struct cstr { # namespace
+    var __namespace__: any;
+
+    # Returns the number of bytes in `cstr` before the NUL terminator.
+    func count(cstr: *byte) usize {
+        var cur: *byte = cstr;
+        for *cur != 0x00 {
+            cur = (:*byte)((:usize)cur + 1u);
+        }
+        return (:usize)cur - (:usize)cstr;
+    }
+
+    # Returns a view of `cstr` as if it were a byte slice.
+    func view_str(cstr: *byte) []byte {
+        return (:[]byte){cstr, std::cstr::count(cstr)};
+    }
+}
+
 struct result[[T, E]] {
     var _value: T;
     var _error: E;
