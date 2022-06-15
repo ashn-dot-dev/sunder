@@ -10,10 +10,15 @@
 	clean
 .SILENT: clean
 
-C99_DBG = -O0 -g
-C99_REL = -DNDEBUG
+SUNDER_HOME = $$HOME/.sunder
+SUNDER_DEFAULT_BACKEND = yasm
+
+C99_BASE = -DSUNDER_DEFAULT_BACKEND=$(SUNDER_DEFAULT_BACKEND)
+C99_DBG = $(C99_BASE) -O0 -g
+C99_REL = $(C99_BASE) -DNDEBUG
 
 GNU_BASE = \
+	$(C99_BASE) \
 	-std=c99 -pedantic-errors \
 	-Wall -Wextra \
 	-Werror=conversion \
@@ -28,9 +33,6 @@ SANITIZE = -fsanitize=address -fsanitize=leak -fsanitize=undefined
 
 CC = c99
 CFLAGS = $(C99_DBG)
-INCS =
-
-SUNDER_HOME=$$HOME/.sunder
 
 all: build
 
@@ -47,7 +49,7 @@ SUNDER_COMPILE_OBJS = \
 	eval.o \
 	codegen.o
 bin/sunder-compile: $(SUNDER_COMPILE_OBJS)
-	$(CC) -o $@ $(INCS) $(CFLAGS) $(SUNDER_COMPILE_OBJS)
+	$(CC) -o $@ $(CFLAGS) $(SUNDER_COMPILE_OBJS)
 
 build: bin/sunder-compile
 
@@ -75,4 +77,4 @@ clean:
 
 .SUFFIXES: .c .o
 .c.o:
-	$(CC) -o $@ -c $(INCS) $(CFLAGS) $<
+	$(CC) -o $@ -c $(CFLAGS) $<

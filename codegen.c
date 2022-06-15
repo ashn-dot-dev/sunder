@@ -7,6 +7,7 @@
 #include <string.h>
 #include "sunder.h"
 
+char const* backend = STRINGIFY(SUNDER_DEFAULT_BACKEND);
 static struct string* out = NULL;
 static struct function const* current_function = NULL;
 static size_t current_loop_id; // Used for generating break & continue lables.
@@ -275,7 +276,7 @@ append_dx_data(struct value const* value)
         }
         assert(address->kind == ADDRESS_STATIC);
         append(
-            "(%s + %zu)",
+            "($%s + %zu)",
             address->data.static_.name,
             address->data.static_.offset);
         return;
@@ -409,7 +410,7 @@ push_address(struct address const* address)
     switch (address->kind) {
     case ADDRESS_STATIC: {
         appendli(
-            "push %s + %zu",
+            "push $%s + %zu",
             address->data.static_.name,
             address->data.static_.offset);
         break;
@@ -437,7 +438,7 @@ push_at_address(size_t size, struct address const* address)
     switch (address->kind) {
     case ADDRESS_STATIC:
         addr = cstr_new_fmt(
-            "(%s + %zu)",
+            "($%s + %zu)",
             address->data.static_.name,
             address->data.static_.offset);
         break;
@@ -652,7 +653,12 @@ mov_rax_reg_a_with_zero_or_sign_extend(struct type const* type)
     case TYPE_S16: /* fallthrough */
     case TYPE_S32: {
         // Move with Sign-Extension
-        appendli("movsx rax, %s", reg);
+        //
+        // MOVSX r64, r/m8
+        // MOVSX r64, r/m16
+        // MOVSXD r64, r/m32
+        char const* const mov = type->size == 4 ? "movsxd" : "movsx";
+        appendli("%s rax, %s", mov, reg);
         break;
     }
     case TYPE_U64: /* fallthrough */
@@ -680,8 +686,12 @@ mov_rax_reg_a_with_zero_or_sign_extend(struct type const* type)
     }
 }
 
+// Populates an xalloc-allocated buffer.
 static void
-codegen_extern_labels(void);
+load_sysasm(void** buf, size_t* buf_size);
+
+static void
+codegen_extern_labels(void const* sysasm_buf, size_t sysasm_buf_size);
 static void
 codegen_global_labels(void);
 static void
@@ -690,8 +700,6 @@ static void
 codegen_static_variables(void);
 static void
 codegen_static_functions(void);
-static void
-codegen_sysasm(void);
 static void
 codegen_fatals(void);
 
@@ -790,7 +798,37 @@ static void
 codegen_lvalue_unary(struct expr const* expr, size_t id);
 
 static void
-codegen_extern_labels(void)
+load_sysasm(void** buf, size_t* buf_size)
+{
+    struct string* path = NULL;
+
+    char const* const SUNDER_SYSASM_PATH = getenv("SUNDER_SYSASM_PATH");
+    if (SUNDER_SYSASM_PATH != NULL) {
+        // User is explicitly overriding the default `sys.asm` file.
+        path = string_new_fmt("%s", SUNDER_SYSASM_PATH);
+    }
+    else {
+        // Use the default `sys.asm` file, `${SUNDER_HOME}/lib/sys/sys.asm`.
+        char const* const SUNDER_HOME = getenv("SUNDER_HOME");
+        if (SUNDER_HOME == NULL) {
+            fatal(NULL, "missing environment variable SUNDER_HOME");
+        }
+        path = string_new_fmt("%s/lib/sys/sys.asm", SUNDER_HOME);
+    }
+
+    if (file_read_all(string_start(path), buf, buf_size)) {
+        fatal(
+            NULL,
+            "failed to read '%s' with error '%s'",
+            string_start(path),
+            strerror(errno));
+    }
+
+    string_del(path);
+}
+
+static void
+codegen_extern_labels(void const* sysasm_buf, size_t sysasm_buf_size)
 {
     appendln("; FORWARD DECLARATIONS OF EXTERN OBJECT/FUNCTION LABELS");
     for (size_t i = 0; i < sbuf_count(context()->static_symbols); ++i) {
@@ -800,18 +838,70 @@ codegen_extern_labels(void)
             && symbol->data.variable.value == NULL;
         bool const is_extern_function = symbol->kind == SYMBOL_FUNCTION
             && symbol_xget_value(symbol)->data.function->body == NULL;
-        if (is_extern_variable || is_extern_function) {
-            // From the NASM 2.15.05 manual, Section 7.5:
-            // > If a variable is declared both GLOBAL and EXTERN, or if it is
-            // > declared as EXTERN and then defined, it will be treated as
-            // > GLOBAL. If a variable is declared both as COMMON and EXTERN,
-            // > it will be treated as COMMON.
-            struct address const* const address = symbol_xget_address(symbol);
-            assert(address->kind == ADDRESS_STATIC);
-            assert(symbol_xget_address(symbol)->data.static_.offset == 0);
-            char const* const label = address->data.static_.name;
-            appendln("extern %s", label);
+        if (!(is_extern_variable || is_extern_function)) {
+            continue;
         }
+
+        // From the NASM 2.14.02 manual, Section 7.5:
+        // > If a variable is declared both GLOBAL and EXTERN, or if it is
+        // > declared as EXTERN and then defined, it will be treated as GLOBAL.
+        // > If a variable is declared both as COMMON and EXTERN, it will be
+        // > treated as COMMON.
+        //
+        // If the chosen backend is nasm version>=2.14 then every extern
+        // variable and function can be forward declared as EXTERN, and nasm
+        // would adjust the symbol type if the symbol was later defined within
+        // sys.asm. However, yasm does *not* support this symbol conversion. In
+        // order to accommodate both assemblers, the sys.asm source is scanned
+        // to see if there are any labels that match the extern address name,
+        // in which case that symbol will be skipped.
+        struct address const* const address = symbol_xget_address(symbol);
+        assert(address->kind == ADDRESS_STATIC);
+        assert(symbol_xget_address(symbol)->data.static_.offset == 0);
+        char const* const label = address->data.static_.name;
+        size_t const label_size = strlen(label);
+
+        char const* cur = sysasm_buf;
+        char const* const end = cur + sysasm_buf_size - label_size;
+        size_t const find_count = label_size + STR_LITERAL_COUNT(":");
+        bool found = false;
+        for (; cur < end; ++cur) {
+            if (!(cur == sysasm_buf || cur[-1] == '\n')) {
+                // Not at the start of a line.
+                continue;
+            }
+
+            // From the NASM 2.14.02 manual, Section 3.1:
+            // > An identifier may also be prefixed with a $ to indicate that
+            // > it is intended to be read as an identifier and not a reserved
+            // > word; thus, if some other module you are linking with defines
+            // > a symbol called eax, you can refer to $eax in NASM code to
+            // > distinguish the symbol from the register.
+            if (cur[0] == '$') {
+                // The label could potentially take the form:
+                //      $<identifier>:
+                // Skip the leading '$'.
+                cur += 1;
+            }
+
+            if ((size_t)(end - cur) < find_count) {
+                // Not enough room to fit the label.
+                break;
+            }
+
+            bool const label_matches = 0 == memcmp(cur, label, label_size);
+            if (label_matches && cur[label_size] == ':') {
+                // Start of the line contains the text `<label>:`.
+                found = true;
+                break;
+            }
+        }
+
+        if (found) {
+            appendln("; Extern label `%s` defined within sys asm...", label);
+            continue;
+        }
+        appendln("extern $%s", label);
     }
 }
 
@@ -827,7 +917,7 @@ codegen_global_labels(void)
             struct address const* const address = symbol_xget_address(symbol);
             assert(address->kind == ADDRESS_STATIC);
             assert(address->data.static_.offset == 0);
-            appendln("global %s", address->data.static_.name);
+            appendln("global $%s", address->data.static_.name);
         }
     }
 }
@@ -878,40 +968,6 @@ codegen_static_functions(void)
         }
         codegen_static_function(symbol);
     }
-}
-
-static void
-codegen_sysasm(void)
-{
-    struct string* path = NULL;
-
-    char const* const SUNDER_SYSASM_PATH = getenv("SUNDER_SYSASM_PATH");
-    if (SUNDER_SYSASM_PATH != NULL) {
-        // User is explicitly overriding the default `sys.asm` file.
-        path = string_new_fmt("%s", SUNDER_SYSASM_PATH);
-    }
-    else {
-        // Use the default `sys.asm` file, `$SUNDER_HOME/lib/sys/sys.asm`.
-        char const* const SUNDER_HOME = getenv("SUNDER_HOME");
-        if (SUNDER_HOME == NULL) {
-            fatal(NULL, "missing environment variable SUNDER_HOME");
-        }
-        path = string_new_fmt("%s/lib/sys/sys.asm", SUNDER_HOME);
-    }
-
-    void* buf = NULL;
-    size_t buf_size = 0;
-    if (file_read_all(string_start(path), &buf, &buf_size)) {
-        fatal(
-            NULL,
-            "failed to read '%s' with error '%s'",
-            string_start(path),
-            strerror(errno));
-    }
-    append("%.*s", (int)buf_size, (char const*)buf);
-
-    string_del(path);
-    xalloc(buf, XALLOC_FREE);
 }
 
 static void
@@ -973,12 +1029,12 @@ codegen_static_object(struct symbol const* symbol)
         // address of a zero-sized symbol should always produce a pointer with
         // the value zero.
         appendln(
-            "%s: equ 0 ; nil", symbol_xget_address(symbol)->data.static_.name);
+            "$%s: equ 0 ; nil", symbol_xget_address(symbol)->data.static_.name);
         return;
     }
 
     assert(symbol_xget_address(symbol)->data.static_.offset == 0);
-    append("%s:", symbol_xget_address(symbol)->data.static_.name);
+    append("$%s:", symbol_xget_address(symbol)->data.static_.name);
     if (type->kind != TYPE_ARRAY && type->kind != TYPE_STRUCT) {
         // Only genreate the dx type for non-arrays / non-structs as
         // arrays/struct have thir own special way of initializing data from a
@@ -1016,7 +1072,7 @@ codegen_static_function(struct symbol const* symbol)
     struct address const* const address = symbol_xget_address(symbol);
     assert(address->kind == ADDRESS_STATIC);
     assert(address->data.static_.offset == 0);
-    appendln("%s:", address->data.static_.name);
+    appendln("$%s:", address->data.static_.name);
     appendli("; PROLOGUE");
     // Save previous frame pointer.
     // With this push, the stack should now be 16-byte aligned.
@@ -2796,17 +2852,39 @@ codegen(
     struct string* const asm_path = string_new_fmt("%s.asm", opt_o);
     struct string* const obj_path = string_new_fmt("%s.o", opt_o);
 
-    sbuf(char const*) nasm_argv = NULL;
-    sbuf_push(nasm_argv, "nasm");
-    sbuf_push(nasm_argv, "-w+error=all");
-    sbuf_push(nasm_argv, "-f");
-    sbuf_push(nasm_argv, "elf64");
-    sbuf_push(nasm_argv, "-O0");
-    sbuf_push(nasm_argv, "-g");
-    sbuf_push(nasm_argv, "-F");
-    sbuf_push(nasm_argv, "dwarf");
-    sbuf_push(nasm_argv, string_start(asm_path));
-    sbuf_push(nasm_argv, (char const*)NULL);
+    char const* const SUNDER_BACKEND = getenv("SUNDER_BACKEND");
+    if (SUNDER_BACKEND != NULL) {
+        // User is explicitly overriding the default Sunder backend.
+        backend = SUNDER_BACKEND;
+    }
+    sbuf(char const*) backend_argv = NULL;
+    if (0 == strcmp(backend, "nasm")) {
+        sbuf_push(backend_argv, "nasm");
+        sbuf_push(backend_argv, "-o");
+        sbuf_push(backend_argv, string_start(obj_path));
+        sbuf_push(backend_argv, "-w+error=all");
+        sbuf_push(backend_argv, "-f");
+        sbuf_push(backend_argv, "elf64");
+        sbuf_push(backend_argv, "-O0");
+        sbuf_push(backend_argv, "-gdwarf");
+        sbuf_push(backend_argv, string_start(asm_path));
+        sbuf_push(backend_argv, (char const*)NULL);
+    }
+    else if (0 == strcmp(backend, "yasm")) {
+        sbuf_push(backend_argv, "yasm");
+        sbuf_push(backend_argv, "-o");
+        sbuf_push(backend_argv, string_start(obj_path));
+        sbuf_push(backend_argv, "-w+error=all");
+        sbuf_push(backend_argv, "-f");
+        sbuf_push(backend_argv, "elf64");
+        sbuf_push(backend_argv, "-O0");
+        sbuf_push(backend_argv, "-gdwarf2");
+        sbuf_push(backend_argv, string_start(asm_path));
+        sbuf_push(backend_argv, (char const*)NULL);
+    }
+    else {
+        fatal(NULL, "unrecognized backend `%s`", backend);
+    }
 
     sbuf(char const*) ld_argv = NULL;
     sbuf_push(ld_argv, "ld");
@@ -2818,7 +2896,11 @@ codegen(
     }
     sbuf_push(ld_argv, (char const*)NULL);
 
-    codegen_extern_labels();
+    void* sysasm_buf = NULL;
+    size_t sysasm_buf_size = 0;
+    load_sysasm(&sysasm_buf, &sysasm_buf_size);
+
+    codegen_extern_labels(sysasm_buf, sysasm_buf_size);
     appendch('\n');
     codegen_global_labels();
     appendch('\n');
@@ -2826,8 +2908,7 @@ codegen(
         appendln("%%define __entry");
         appendch('\n');
     }
-    appendln("%%define __entry");
-    codegen_sysasm();
+    append("%.*s", (int)sysasm_buf_size, (char const*)sysasm_buf);
     appendch('\n');
     codegen_fatals();
     appendch('\n');
@@ -2848,7 +2929,7 @@ codegen(
         goto cleanup;
     }
 
-    if ((err = spawnvpw(nasm_argv))) {
+    if ((err = spawnvpw(backend_argv))) {
         goto cleanup;
     }
 
@@ -2863,7 +2944,8 @@ cleanup:
     if (!opt_k && !opt_c) {
         (void)remove(string_start(obj_path));
     }
-    sbuf_fini(nasm_argv);
+    xalloc(sysasm_buf, XALLOC_FREE);
+    sbuf_fini(backend_argv);
     sbuf_fini(ld_argv);
     string_del(asm_path);
     string_del(obj_path);

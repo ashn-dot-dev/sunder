@@ -6,13 +6,13 @@ Sunder is a C-like systems programming language and compiler for x86-64 Linux.
 + Supported toolchain containing:
   + C99 compiler (POSIX `c99`, `clang`, `gcc`, etc.)
   + `ld`
-+ [`nasm`](https://www.nasm.us/)
++ [`nasm`](https://www.nasm.us/) *or* [`yasm`](https://yasm.tortall.net/)
 + `clang-format` (development only)
 
 Dependencies can be installed on Debian-based distros (amd64) with:
 
 ```sh
-$ apt-get install build-essential clang clang-format nasm
+$ apt-get install build-essential clang clang-format nasm yasm
 ```
 
 ## Building
@@ -102,6 +102,19 @@ $ sunder-compile -k -o hello examples/hello.sunder
 $ ls hello*
 hello  hello.asm  hello.o
 ```
+
+The following environment variables affect compiler behavior:
+
++ `SUNDER_BACKEND` => Selects the backend to be used for object file
+  generation. Currently, `SUNDER_BACKEND=nasm` and `SUNDER_BACKEND=yasm` are
+  supported. If this environment variable is not set, then the default backend,
+  specified at build-time within the top-level `Makefile`, is used.
++ `SUNDER_IMPORT_PATH` => Colon-separated list of directories specifying the
+  module search path for `import` statements.
++ `SUNDER_SYSASM_PATH` => Location of the platform specific `sys.asm` file that
+  defines the program entry point as well as low-level operating system and
+  hardware abstractions. If this environment variable is not set, then the
+  default path, `${SUNDER_HOME}/lib/sys/sys.asm`, is used.
 
 ## Using Sunder as a Scripting Language
 Sunder can be used for scripting by adding `#!/usr/bin/env sunder-run` (or

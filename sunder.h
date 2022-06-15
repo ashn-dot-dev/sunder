@@ -25,6 +25,9 @@ struct string;
 #    define NORETURN /* nothing */
 #endif
 
+#define STRINGIFY(a) STRINGIFY_(a)
+#define STRINGIFY_(a) #a
+
 // C99 compatible max_align_t.
 // clang-format off
 typedef union {

@@ -1,7 +1,3 @@
-extern func __fatal_integer_out_of_range() void; # declared in sys.asm
+extern func _start() void; # declared in sys.asm
 
-func main() void {
-    __fatal_integer_out_of_range();
-}
-################################################################################
-# fatal: arithmetic operation produces out-of-range result
+func main() void { }

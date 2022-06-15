@@ -3,12 +3,16 @@ packages:
   - build-essential
   - clang
   - nasm
+  - yasm
 sources:
   - https://git.sr.ht/~ashn/sunder
 tasks:
-  - c99-debug: |
+  - c99-debug-yasm: |
       cd sunder
-      make clean check examples CFLAGS='$(C99_DBG)'
+      make clean check examples CFLAGS='$(C99_DBG)' SUNDER_DEFAULT_BACKEND=yasm
+  - c99-debug-nasm: |
+      cd sunder
+      make clean check examples CFLAGS='$(C99_DBG)' SUNDER_DEFAULT_BACKEND=nasm
   - c99-release: |
       cd sunder
       make clean check examples CFLAGS='$(C99_REL)'
