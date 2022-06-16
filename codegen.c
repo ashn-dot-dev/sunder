@@ -409,6 +409,11 @@ push_address(struct address const* address)
 
     switch (address->kind) {
     case ADDRESS_STATIC: {
+        if (address->data.static_.offset == 0) {
+            // More aesthetically pleasing without the `+ offset` component.
+            appendli("push $%s", address->data.static_.name);
+            break;
+        }
         appendli(
             "push $%s + %zu",
             address->data.static_.name,
