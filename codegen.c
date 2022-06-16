@@ -24,12 +24,12 @@ static size_t unique_id = 0; // Used for generating unique names and labels.
 // The <description> is used to denote what section of TIR node generation is
 // taking place as well as provide the necessary labels for jumps.
 //
-// For each stmt and expr node, the local labels:
+// For some stmt and expr nodes, the local labels:
 //      .__<TIR-node-type>_<unique_id>_bgn:
 // and
 //      .__<TIR-node-type>_<unique_id>_end:
 // are generated to denote the beginning and end of code generation for that
-// node. These labels are always present and may be used for jump targets.
+// node for use as a jump target.
 #define LABEL_STMT ".__STMT_"
 #define LABEL_EXPR ".__EXPR_"
 
@@ -1127,10 +1127,10 @@ codegen_stmt(struct stmt const* stmt)
 
     size_t const id = unique_id++;
     char const* const cstr = table[stmt->kind].kind_cstr;
-    appendln("%s%zu_bgn:", LABEL_STMT, id);
+    appendli("; STMT %zu BEGIN", id);
     appendli_location(stmt->location, "%s (ID %zu)", cstr, id);
     table[stmt->kind].codegen_fn(stmt, id);
-    appendln("%s%zu_end:", LABEL_STMT, id);
+    appendli("; STMT %zu END", id);
 }
 
 static void
@@ -1180,6 +1180,8 @@ codegen_stmt_if(struct stmt const* stmt, size_t id)
         codegen_block(conditionals[i]->body);
         appendli("jmp %s%zu_end", LABEL_STMT, id);
     }
+
+    appendli("%s%zu_end:", LABEL_STMT, id);
 }
 
 static void
@@ -1223,6 +1225,7 @@ codegen_stmt_for_range(struct stmt const* stmt, size_t id)
             ->data.local.rbp_offset);
     appendli("jmp %s%zu_condition", LABEL_STMT, id);
 
+    appendli("%s%zu_end: ; used for break and continue", LABEL_STMT, id);
     current_loop_id = save_current_loop_id;
 }
 
@@ -1247,6 +1250,7 @@ codegen_stmt_for_expr(struct stmt const* stmt, size_t id)
     appendln("%s%zu_body_end:", LABEL_STMT, id);
     appendli("jmp %s%zu_condition", LABEL_STMT, id);
 
+    appendli("%s%zu_end: ; used for break and continue", LABEL_STMT, id);
     current_loop_id = save_current_loop_id;
 }
 
@@ -1454,11 +1458,11 @@ codegen_rvalue(struct expr const* expr)
 
     size_t const id = unique_id++;
     char const* const cstr = table[expr->kind].kind_cstr;
-    appendln("%s%zu_bgn:", LABEL_EXPR, id);
+    appendli("; EXPR RVALUE %zu BEGIN", id);
     appendli_location(expr->location, "%s (ID %zu, RVALUE)", cstr, id);
     assert(table[expr->kind].codegen_fn != NULL);
     table[expr->kind].codegen_fn(expr, id);
-    appendln("%s%zu_end:", LABEL_EXPR, id);
+    appendli("; EXPR RVALUE %zu END", id);
 }
 
 static void
@@ -2242,7 +2246,8 @@ codegen_rvalue_binary(struct expr const* expr, size_t id)
 
         appendln("%s%zu_false:", LABEL_EXPR, id);
         appendli("push 0x00");
-        appendli("jmp %s%zu_end", LABEL_EXPR, id);
+
+        appendln("%s%zu_end:", LABEL_EXPR, id);
         return;
     }
     case BOP_AND: {
@@ -2275,7 +2280,8 @@ codegen_rvalue_binary(struct expr const* expr, size_t id)
 
         appendln("%s%zu_false:", LABEL_EXPR, id);
         appendli("push 0x00");
-        appendli("jmp %s%zu_end", LABEL_EXPR, id);
+
+        appendln("%s%zu_end:", LABEL_EXPR, id);
         return;
     }
     case BOP_SHL: {
@@ -2297,6 +2303,8 @@ codegen_rvalue_binary(struct expr const* expr, size_t id)
         mov_rax_reg_a_with_zero_or_sign_extend(expr->data.binary.lhs->type);
         appendli("shl rax, cl");
         appendli("push rax");
+
+        appendln("%s%zu_end:", LABEL_EXPR, id);
         return;
     }
     case BOP_SHR: {
@@ -2332,6 +2340,8 @@ codegen_rvalue_binary(struct expr const* expr, size_t id)
             type_is_signed_integer(expr->data.binary.lhs->type) ? "sar"
                                                                 : "shr");
         appendli("push rax");
+
+        appendln("%s%zu_end:", LABEL_EXPR, id);
         return;
     }
     case BOP_EQ: {
@@ -2493,6 +2503,8 @@ codegen_rvalue_binary(struct expr const* expr, size_t id)
         appendli("push rax");
         appendli("%s %s%zu_end", jmp_not_overflow, LABEL_EXPR, id);
         appendli("call __fatal_integer_out_of_range");
+
+        appendln("%s%zu_end:", LABEL_EXPR, id);
         return;
     }
     case BOP_SUB: {
@@ -2516,6 +2528,8 @@ codegen_rvalue_binary(struct expr const* expr, size_t id)
         appendli("push rax");
         appendli("%s %s%zu_end", jmp_not_overflow, LABEL_EXPR, id);
         appendli("call __fatal_integer_out_of_range");
+
+        appendln("%s%zu_end:", LABEL_EXPR, id);
         return;
     }
     case BOP_MUL: {
@@ -2538,6 +2552,8 @@ codegen_rvalue_binary(struct expr const* expr, size_t id)
         appendli("push rax");
         appendli("jno %s%zu_end", LABEL_EXPR, id);
         appendli("call __fatal_integer_out_of_range");
+
+        appendln("%s%zu_end:", LABEL_EXPR, id);
         return;
     }
     case BOP_DIV: /* fallthrough */
@@ -2694,11 +2710,11 @@ codegen_lvalue(struct expr const* expr)
 
     size_t const id = unique_id++;
     char const* const cstr = table[expr->kind].kind_cstr;
-    appendln("%s%zu_bgn:", LABEL_EXPR, id);
+    appendli("; EXPR LVALUE %zu BEGIN", id);
     appendli_location(expr->location, "%s (ID %zu, LVALUE)", cstr, id);
     assert(table[expr->kind].codegen_fn != NULL);
     table[expr->kind].codegen_fn(expr, id);
-    appendln("%s%zu_end:", LABEL_EXPR, id);
+    appendli("; EXPR LVALUE %zu END", id);
 }
 
 static void
