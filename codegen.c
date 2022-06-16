@@ -1088,17 +1088,13 @@ codegen_static_function(struct symbol const* symbol)
     codegen_block(function->body);
     current_function = NULL;
 
-    appendli("; END-OF-FUNCTION");
     if (function->type->data.function.return_type == context()->builtin.void_) {
         appendli("; EPILOGUE (implicit-return)");
         appendli("mov rsp, rbp");
         appendli("pop rbp");
         appendli("ret");
     }
-    else {
-        appendli("; Segfault if no return statement occured.");
-        appendli("mov r15, [0x0000000000000000]");
-    }
+    appendli("; END-OF-FUNCTION");
     appendch('\n');
 }
 
