@@ -264,6 +264,7 @@ extend integer func _format_smax(int: std::smax, writer: std::writer, fmt: []byt
 
 extend byte const MIN: byte = 0x00;
 extend byte const MAX: byte = 0xFF;
+extend byte const BITS: usize = 8;
 extend byte func compare(lhs: *byte, rhs: *byte) ssize {
     return integer::_compare[[std::umax]]((:std::umax)*lhs, (:std::umax)*rhs);
 }
@@ -441,7 +442,7 @@ extend []byte func hash(self: *[]byte) usize {
     # overflow.
     var hash = 5381u;
     for i in countof(*self) {
-        const MASK = 0xf800000000000000u; # XXX: usize assumed 64-bit
+        const MASK = 0b11111u << ((sizeof(usize) * byte::BITS) - 5);
         hash = (hash & MASK) * 33 + (:usize)self.*[i];
     }
     return hash;
