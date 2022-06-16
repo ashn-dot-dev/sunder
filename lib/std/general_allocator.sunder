@@ -113,7 +113,7 @@ struct general_allocator {
 
         var is_only_element = prev == element and next == element;
         if is_only_element {
-            if self.*._elements != element { std::panic("unreachable"); }
+            std::assert(self.*._elements == element);
             self.*._elements = std::ptr[[general_allocator_element]]::null();
             return;
         }

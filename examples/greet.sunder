@@ -15,12 +15,12 @@ func main() void {
         std::exit(std::EXIT_FAILURE);
     }
 
-    var line = result.value();
-    if line.is_empty() {
-        std::print_line(std::err(), "unexpected empty line");
+    var optional = result.value();
+    if optional.is_empty() or countof(optional.value()) == 0 {
+        std::print_line(std::err(), "error: unexpected empty input");
         std::exit(std::EXIT_FAILURE);
     }
 
-    var name = std::ascii::view_trimmed(line.value());
+    var name = std::ascii::view_trimmed(optional.value());
     std::print_format_line(std::out(), "Nice to meet you {}!", (:[]std::formatter)[std::formatter::init[[typeof(name)]](&name)]);
 }

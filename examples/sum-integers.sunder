@@ -21,26 +21,31 @@ func main() void {
             std::exit(std::EXIT_FAILURE);
         }
 
-        var line = result.value();
-        if line.is_empty() {
+        var optional = result.value();
+        if optional.is_empty() {
+            # End-of-input.
             break;
         }
         defer {
-            std::slice[[byte]]::delete(allocator, line.value());
+            std::slice[[byte]]::delete(allocator, optional.value());
         }
 
-        var result = std::bigint::init_from_str(allocator, line.value(), 0);
+        if countof(optional.value()) == 0 {
+            # Skip line consisting of a single '\n'.
+            continue;
+        }
+
+        var result = std::bigint::init_from_str(allocator, optional.value(), 0);
         if result.is_error() {
             std::print_line(std::err(), result.error());
             std::exit(std::EXIT_FAILURE);
         }
-
-        var value = result.value();
+        var int = result.value();
         defer {
-            value.fini();
+            int.fini();
         }
 
-        std::bigint::add(&sum, &sum, &value);
+        std::bigint::add(&sum, &sum, &int);
     }
 
     std::print_format_line(std::out(), "{}", (:[]std::formatter)[std::formatter::init[[std::bigint]](&sum)]);

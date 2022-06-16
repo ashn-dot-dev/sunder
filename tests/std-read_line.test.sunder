@@ -1,13 +1,34 @@
 import "std/core.sunder";
-import "std/fs.sunder";
-import "std/page_allocator.sunder";
+import "std/general_allocator.sunder";
 
-func test0() void {
-    var open_result = std::file::open("data.txt", std::file::OPEN_READ);
-    var file: std::file = open_result.value();
+struct readable_str {
+    var str: []byte;
+    var idx: usize;
 
-    var reader = std::reader::init[[std::file]](&file);
-    var allocator = std::allocator::init[[std::page_allocator]](std::page_allocator::the());
+    func init(str: []byte) readable_str {
+        return (:readable_str){
+            .str = str,
+            .idx = 0
+        };
+    }
+
+    func read(self: *readable_str, buf: []byte) std::result[[usize, []byte]] {
+        if self.*.idx >= countof(self.*.str) {
+            return std::result[[usize, []byte]]::init_value(0);
+        }
+
+        var str_count = countof(self.*.str) - self.*.idx;
+        var buf_count = countof(buf);
+        var min_count = *std::min[[usize]](&str_count, &buf_count);
+        std::slice[[byte]]::copy(buf[0:min_count], self.*.str[self.*.idx:(self.*.idx + min_count)]);
+        self.*.idx = self.*.idx + min_count;
+        return std::result[[usize, []byte]]::init_value(min_count);
+    }
+}
+
+func test(allocator: std::allocator, str: []byte) void {
+    var rstr = readable_str::init(str);
+    var reader = std::reader::init[[typeof(rstr)]](&rstr);
 
     for true {
         var read_result = std::read_line(reader, allocator);
@@ -16,60 +37,30 @@ func test0() void {
             break;
         }
         var bytes = optional.value();
+        defer { std::slice[[byte]]::delete(allocator, bytes); }
         std::print_line(std::out(), bytes);
-        std::slice[[byte]]::delete(allocator, bytes);
     }
-
-    file.close();
-}
-
-func test1() void {
-    var open_result = std::file::open("data-no-ending-newline.txt", std::file::OPEN_READ);
-    var file: std::file = open_result.value();
-
-    var reader = std::reader::init[[std::file]](&file);
-    var allocator = std::allocator::init[[std::page_allocator]](std::page_allocator::the());
-
-    for true {
-        var read_result = std::read_line(reader, allocator);
-        var optional = read_result.value();
-        if optional.is_empty() {
-            break;
-        }
-        var bytes = optional.value();
-        std::print_line(std::out(), bytes);
-        std::slice[[byte]]::delete(allocator, bytes);
-    }
-
-    file.close();
-}
-
-# Read a single line and report the result.
-func test2() void {
-    var open_result = std::file::open("data.txt", std::file::OPEN_READ);
-    var file: std::file = open_result.value();
-
-    var reader = std::reader::init[[std::file]](&file);
-    var allocator = std::allocator::init[[std::page_allocator]](std::page_allocator::the());
-
-    var read_result = std::read_line(reader, allocator);
-    var optional = read_result.value();
-    var bytes = optional.value();
-    std::print_line(std::out(), bytes);
-    std::slice[[byte]]::delete(allocator, bytes);
-
-    file.close();
 }
 
 func main() void {
-    test0();
-    test1();
-    test2();
+    var allocator = std::general_allocator::init();
+    defer { allocator.fini(); }
+    var allocator = std::allocator::init[[typeof(allocator)]](&allocator);
+
+    test(allocator, "LINE 1\n");
+    test(allocator, "LINE 1");
+    test(allocator, "LINE 1\nLINE 2\n");
+    test(allocator, "LINE 1\nLINE 2");
+    test(allocator, "");
+    test(allocator, "LINE 1\nLINE 2\nLINE 3\n");
 }
 ################################################################################
-# TEST DATA FILE LINE 1
-# TEST DATA FILE LINE 2
-# TEST DATA FILE LINE 1
-# TEST DATA FILE LINE 2
-# TEST DATA FILE LINE 3 (NO NEWLINE)
-# TEST DATA FILE LINE 1
+# LINE 1
+# LINE 1
+# LINE 1
+# LINE 2
+# LINE 1
+# LINE 2
+# LINE 1
+# LINE 2
+# LINE 3

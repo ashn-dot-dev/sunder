@@ -1094,6 +1094,33 @@ func read_all(reader: std::reader, allocator: std::allocator) std::result[[[]byt
 # an empty line, then an empty optional is returned.
 #
 # On failure, this function returns a static string describing the failure.
+#
+# Example:
+#   ```
+#   var result = std::read_line(reader, allocator);
+#   if result.is_error() {
+#       # Handle the error...
+#   }
+#   var optional = result.value();
+#   if optional.is_empty() {
+#       # End-of-input was encountered. Possibly the end of a file stream, or
+#       # EOF sent from a keyboard when reading standard input.
+#       #
+#       # Handle the empty optional...
+#   }
+#   defer {
+#       # Queue up the allocated buffer for deletion. This defer should be
+#       # omitted if the line is to be used/stored for further computation
+#       # outside of the current function/block.
+#       std::slice[[byte]]::delete(allocator, optional.value());
+#   }
+#   if countof(optional.value()) == 0 {
+#       # The read line consists of a single newline character, "\n", which was
+#       # trimmed away within `std::read_line`. Possibly an empty line in a
+#       # text file, or a user hitting Enter/Return without typing when reading
+#       # standard input.
+#   }
+#   ```
 func read_line(reader: std::reader, allocator: std::allocator) std::result[[std::optional[[[]byte]], []byte]] {
     var bytes = std::slice[[byte]]::new(allocator, 0);
 
