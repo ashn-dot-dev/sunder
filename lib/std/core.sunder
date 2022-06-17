@@ -758,7 +758,7 @@ struct cstr { # namespace
     }
 
     # Returns a view of `cstr` as if it were a byte slice.
-    func view_str(cstr: *byte) []byte {
+    func data(cstr: *byte) []byte {
         return (:[]byte){cstr, std::cstr::count(cstr)};
     }
 }

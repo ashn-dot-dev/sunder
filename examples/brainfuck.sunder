@@ -11,7 +11,7 @@ var cells_index: usize = 0;
 
 func main() void {
     if sys::argc != 2 {
-        var progname = std::cstr::view_str(*sys::argv);
+        var progname = std::cstr::data(*sys::argv);
         var expected = 1u;
         var received = sys::argc - 1u;
         std::print_format_line(
@@ -24,7 +24,7 @@ func main() void {
         std::exit(std::EXIT_FAILURE);
     }
 
-    var path = std::cstr::view_str(*std::ptr[[*byte]]::add(sys::argv, 1));
+    var path = std::cstr::data(*std::ptr[[*byte]]::add(sys::argv, 1));
     var result = std::file::open(path, std::file::OPEN_READ);
     if result.is_error() {
         var error = result.error();
