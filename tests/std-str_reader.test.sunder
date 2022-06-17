@@ -1,0 +1,42 @@
+import "std/core.sunder";
+
+func test(str: []byte) void {
+    var buf = (:[64]byte)[0...];
+
+    var reader = std::str_reader::init(str);
+    var reader = std::reader::init[[std::str_reader]](&reader);
+
+    var result = reader.read(buf[0:countof(buf)]);
+    std::assert(result.is_value()); # str_reader should never have a read error
+    var nread = result.value();
+
+    std::print_format_line(
+        std::out(),
+        "\"{}\"\n{} bytes read",
+        (:[]std::formatter)[
+            std::formatter::init[[[]byte]](&str),
+            std::formatter::init[[usize]](&nread)]);
+}
+
+func main() void {
+    test("");
+    std::print(std::out(), "\n");
+    test("ABC");
+    std::print(std::out(), "\n");
+    test("A\tB\nC");
+    std::print(std::out(), "\n");
+    test("the quick brown fox jumps over the lazy dog");
+}
+################################################################################
+# ""
+# 0 bytes read
+#
+# "ABC"
+# 3 bytes read
+#
+# "A	B
+# C"
+# 5 bytes read
+#
+# "the quick brown fox jumps over the lazy dog"
+# 43 bytes read

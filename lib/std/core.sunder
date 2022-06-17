@@ -949,6 +949,62 @@ struct formatter {
     }
 }
 
+struct str_reader {
+    var _str: []byte;
+    var _idx: usize;
+
+    func init(str: []byte) str_reader {
+        return (:str_reader){
+            ._str = str,
+            ._idx = 0
+        };
+    }
+
+    func read(self: *str_reader, buf: []byte) std::result[[usize, []byte]] {
+        std::assert(self.*._idx <= countof(self.*._str));
+        var cur_count = countof(self.*._str) - self.*._idx;
+        var buf_count = countof(buf);
+        var min_count = *std::min[[usize]](&cur_count, &buf_count);
+
+        var dst = buf[0:min_count];
+        var src = self.*._str[self.*._idx : self.*._idx + min_count];
+        std::slice[[byte]]::copy(dst, src);
+
+        self.*._idx = self.*._idx + min_count;
+        return std::result[[usize, []byte]]::init_value(min_count);
+    }
+}
+
+struct str_writer {
+    var _str: []byte;
+    var _idx: usize;
+
+    func init(str: []byte) str_writer {
+        return (:str_writer){
+            ._str = str,
+            ._idx = 0
+        };
+    }
+
+    func write(self: *str_writer, buf: []byte) std::result[[usize, []byte]] {
+        std::assert(self.*._idx <= countof(self.*._str));
+        if (self.*._idx == countof(self.*._str)) {
+            return std::result[[usize, []byte]]::init_error("buffer full");
+        }
+
+        var cur_count = countof(self.*._str) - self.*._idx;
+        var buf_count = countof(buf);
+        var min_count = *std::min[[usize]](&cur_count, &buf_count);
+
+        var src = buf[0:min_count];
+        var dst = self.*._str[self.*._idx : self.*._idx + min_count];
+        std::slice[[byte]]::copy(dst, src);
+
+        self.*._idx = self.*._idx + min_count;
+        return std::result[[usize, []byte]]::init_value(min_count);
+    }
+}
+
 struct input_reader {
     func read(self: *input_reader, buf: []byte) std::result[[usize, []byte]] {
         if countof(buf) == 0 {

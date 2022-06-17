@@ -1,0 +1,63 @@
+import "std/core.sunder";
+
+func test_success(str: []byte) void {
+    var buf = (:[64]byte)[0...];
+
+    var writer = std::str_writer::init(buf[0:countof(buf)]);
+    var writer = std::writer::init[[std::str_writer]](&writer);
+
+    var result = writer.write(str);
+    std::assert(result.is_value());
+    var nwritten = result.value();
+
+    std::print_format_line(
+        std::out(),
+        "\"{}\"\n{} bytes written",
+        (:[]std::formatter)[
+            std::formatter::init[[[]byte]](&str),
+            std::formatter::init[[usize]](&nwritten)]);
+}
+
+func main() void {
+    test_success("");
+    std::print(std::out(), "\n");
+    test_success("ABC");
+    std::print(std::out(), "\n");
+    test_success("A\tB\nC");
+    std::print(std::out(), "\n");
+    test_success("the quick brown fox jumps over the lazy dog");
+
+    std::print(std::out(), "\n");
+
+    var buf = (:[3]byte)[0...];
+    var writer = std::str_writer::init(buf[0:countof(buf)]);
+    var writer = std::writer::init[[std::str_writer]](&writer);
+    var result = writer.write("123");
+    var nwritten = result.value();
+    std::print_format_line(
+        std::out(),
+        "{} bytes written",
+        (:[]std::formatter)[
+            std::formatter::init[[usize]](&nwritten)]);
+    var result = writer.write("4");
+    std::print_line(std::out(), result.error());
+    var result = writer.write("5");
+    std::print_line(std::out(), result.error());
+}
+################################################################################
+# ""
+# 0 bytes written
+#
+# "ABC"
+# 3 bytes written
+#
+# "A	B
+# C"
+# 5 bytes written
+#
+# "the quick brown fox jumps over the lazy dog"
+# 43 bytes written
+#
+# 3 bytes written
+# buffer full
+# buffer full

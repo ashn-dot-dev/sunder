@@ -1,33 +1,8 @@
 import "std/core.sunder";
 import "std/general_allocator.sunder";
 
-struct readable_str {
-    var str: []byte;
-    var idx: usize;
-
-    func init(str: []byte) readable_str {
-        return (:readable_str){
-            .str = str,
-            .idx = 0
-        };
-    }
-
-    func read(self: *readable_str, buf: []byte) std::result[[usize, []byte]] {
-        if self.*.idx >= countof(self.*.str) {
-            return std::result[[usize, []byte]]::init_value(0);
-        }
-
-        var str_count = countof(self.*.str) - self.*.idx;
-        var buf_count = countof(buf);
-        var min_count = *std::min[[usize]](&str_count, &buf_count);
-        std::slice[[byte]]::copy(buf[0:min_count], self.*.str[self.*.idx:(self.*.idx + min_count)]);
-        self.*.idx = self.*.idx + min_count;
-        return std::result[[usize, []byte]]::init_value(min_count);
-    }
-}
-
 func test(allocator: std::allocator, str: []byte) void {
-    var rstr = readable_str::init(str);
+    var rstr = std::str_reader::init(str);
     var reader = std::reader::init[[typeof(rstr)]](&rstr);
 
     for true {
