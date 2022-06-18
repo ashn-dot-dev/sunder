@@ -28,17 +28,17 @@ func main() void {
     dump_elements[[u8]](&vec);
 
     # [A][B][C][D]
-    vec.remove(4);
+    var _ = vec.remove(4);
     dump vec.count();
     dump_elements[[u8]](&vec);
 
     # [A][B][D]
-    vec.remove(2);
+    var _ = vec.remove(2);
     dump vec.count();
     dump_elements[[u8]](&vec);
 
     # [B][D]
-    vec.remove(0);
+    var _ = vec.remove(0);
     dump vec.count();
     dump_elements[[u8]](&vec);
 
@@ -46,7 +46,7 @@ func main() void {
     # [B][D][!]
     #        ^
     #        + Element does no exist. Removing here should cause an error.
-    vec.remove(2);
+    var _ = vec.remove(2);
     dump vec.count();
     dump_elements[[u8]](&vec);
 }

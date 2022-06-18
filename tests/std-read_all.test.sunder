@@ -5,6 +5,9 @@ import "std/page_allocator.sunder";
 func main() void {
     var open_result = std::file::open("data.txt", std::file::OPEN_READ);
     var file: std::file = open_result.value();
+    defer {
+        file.fini();
+    }
 
     var reader = std::reader::init[[std::file]](&file);
     var allocator = std::allocator::init[[std::page_allocator]](std::page_allocator::the());
@@ -14,7 +17,6 @@ func main() void {
     std::print(std::out(), bytes);
 
     std::slice[[byte]]::delete(allocator, bytes);
-    file.close();
 }
 ################################################################################
 # TEST DATA FILE LINE 1

@@ -4,10 +4,10 @@ import "sys/sys.sunder";
 
 func main() void {
     var file: std::file = (:std::file){._fd = (:sys::uint)sys::STDOUT_FILENO};
-    file.write("Hello, file!\n");
+    var _ = file.write("Hello, file!\n");
 
     var writer: std::writer = std::writer::init[[std::file]](&file);
-    writer.write("Hello, file_writer!\n");
+    var _ = writer.write("Hello, file_writer!\n");
 }
 ################################################################################
 # Hello, file!

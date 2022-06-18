@@ -13,7 +13,7 @@ struct person {
 
 func main() void {
     var alice: person = (:person){.name = "Alice"};
-    std::write_format(std::out(), "baz}qux", (:[]std::formatter)[std::formatter::init[[person]](&alice)]);
+    var _ = std::write_format(std::out(), "baz}qux", (:[]std::formatter)[std::formatter::init[[person]](&alice)]);
 }
 ################################################################################
 # panic: invalid format string "baz}qux"

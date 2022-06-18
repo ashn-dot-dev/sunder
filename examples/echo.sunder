@@ -3,7 +3,7 @@ import "std";
 
 func main() void {
     var iter = std::argument_iterator::init();
-    iter.advance(); # Skip the program name.
+    std::assert(iter.advance()); # Skip the program name.
     var sep = "";
     for iter.advance() {
         std::print(std::out(), sep);

@@ -71,13 +71,21 @@ struct file {
         return std::result[[std::file, []byte]]::init_value(file);
     }
 
+    # Explicitly close the file. If this function is used to close the file
+    # then `std::file::fini` should *not* be used to deinitialize this object.
+    func fini(self: *file) void {
+        var _ = std::file::close(self); # Silently ignore error.
+    }
+
+    # Explicitly close the file. If this function is used to close the file
+    # then `std::file::fini` should *not* be used to deinitialize this object.
     func close(self: *file) std::result[[void, []byte]] {
         var sysret = sys::close(self.*._fd);
         if sysret < 0 {
             return std::result[[void, []byte]]::init_error(sys::ERRNO_STRS[(:usize)-sysret]);
         }
 
-        return std::result[[void, []byte]]::init_value(std::zeroed[[void]]());
+        return std::result[[void, []byte]]::init_value(void::init());
     }
 
     func read(self: *file, buf: []byte) std::result[[usize, []byte]] {

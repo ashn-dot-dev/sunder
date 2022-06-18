@@ -1,0 +1,11 @@
+func add(lhs: ssize, rhs: ssize) ssize {
+    return lhs + rhs;
+}
+
+func main() void {
+    add(123, 456);
+}
+################################################################################
+# [tests/warning-unused-return-value.sunder:6] warning: unused return value of type `ssize`
+#     add(123, 456);
+#        ^

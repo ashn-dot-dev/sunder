@@ -39,7 +39,7 @@ func main() void {
 
     var file = result.value();
     defer {
-        file.close();
+        file.fini();
     }
 
     var allocator = std::general_allocator::init();
