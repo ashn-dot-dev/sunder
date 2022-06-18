@@ -10,9 +10,10 @@ struct argument_iterator {
     # Initialize an argument iterator using the arguments provided by the
     # hosted environment at program startup.
     #
-    # The behavior of this function is undefined for programs executing in a
-    # freestanding environment. The behavior of this function is undefined if
-    # the Sunder `main` function was not used as the program entry point.
+    # The behavior of this function is implementation defined for programs
+    # executing in a freestanding environment. The behavior of this function is
+    # implementation defined if the Sunder `main` function was not used as the
+    # program entry point.
     func init() argument_iterator {
         return argument_iterator::init_from_argv(sys::argv);
     }
@@ -87,9 +88,10 @@ struct argument_parser {
     # hosted environment at program startup. The first argument (program name)
     # is skipped and *not* treated as an argument by the parser.
     #
-    # The behavior of this function is undefined for programs executing in a
-    # freestanding environment. The behavior of this function is undefined if
-    # the Sunder `main` function was not used as the program entry point.
+    # The behavior of this function is implementation defined for programs
+    # executing in a freestanding environment. The behavior of this function is
+    # implementation defined if the Sunder `main` function was not used as the
+    # program entry point.
     func init(options: []std::argopt) argument_parser {
         return std::argument_parser::init_from_argv(options, sys::argv);
     }
