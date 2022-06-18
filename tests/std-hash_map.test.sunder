@@ -77,12 +77,12 @@ func main() void {
         "{}",
         (:[]std::formatter)[
             std::formatter::init[[ssize]](&value_bar)]);
-    var removed_value = removed.value();
+    var removed = removed.value();
     std::print_format_line(
         std::out(),
         "Removed {}",
         (:[]std::formatter)[
-            std::formatter::init[[ssize]](&removed_value)]);
+            std::formatter::init[[ssize]](&removed.value)]);
 
     map.fini();
 
