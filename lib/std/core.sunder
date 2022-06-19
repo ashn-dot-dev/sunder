@@ -1731,7 +1731,7 @@ func sort[[T]](slice: []T) void {
     }
 }
 
-struct key_value[[K, V]] {
+struct key_value_pair[[K, V]] {
     var key: K;
     var value: V;
 }
