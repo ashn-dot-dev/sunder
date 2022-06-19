@@ -13,14 +13,14 @@ func main() void {
     var _ = map.insert("quz", 0xDEF);
 
     var hash_map_iterator = std::hash_map_iterator[[[]byte, ssize]]::init(&map);
-    var iter = std::iterator[[std::hash_map_element[[[]byte, ssize]]]]::init[[std::hash_map_iterator[[[]byte, ssize]]]](&hash_map_iterator);
+    var iter = std::iterator[[std::key_value_view[[[]byte, ssize]]]]::init[[std::hash_map_iterator[[[]byte, ssize]]]](&hash_map_iterator);
     for iter.advance() {
         std::print_format_line(
             std::out(),
             "{}, {X}",
             (:[]std::formatter)[
-                std::formatter::init[[[]byte]](&iter.current().*.key),
-                std::formatter::init[[ssize]](&iter.current().*.value)]);
+                std::formatter::init[[[]byte]](iter.current().*.key),
+                std::formatter::init[[ssize]](iter.current().*.value)]);
     }
 
     map.fini();

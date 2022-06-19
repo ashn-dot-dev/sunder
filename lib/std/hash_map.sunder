@@ -163,10 +163,12 @@ struct hash_map[[K, V]] {
 
 struct hash_map_iterator[[K, V]] {
     var _iterator: std::slice_iterator[[hash_map_element[[K, V]]]];
+    var _view: std::key_value_view[[K, V]];
 
     func init(map: *std::hash_map[[K, V]]) hash_map_iterator[[K, V]] {
         return (:hash_map_iterator[[K, V]]){
-            ._iterator = std::slice_iterator[[hash_map_element[[K, V]]]]::init(map.*._elements)
+            ._iterator = std::slice_iterator[[hash_map_element[[K, V]]]]::init(map.*._elements),
+            ._view = std::zeroed[[std::key_value_view[[K, V]]]]()
         };
     }
 
@@ -183,7 +185,12 @@ struct hash_map_iterator[[K, V]] {
         return false; # end-of-iteration
     }
 
-    func current(self: *hash_map_iterator[[K, V]]) *hash_map_element[[K, V]] {
-        return self.*._iterator.current();
+    func current(self: *hash_map_iterator[[K, V]]) *std::key_value_view[[K, V]] {
+        var element = self.*._iterator.current();
+        self.*._view = (:std::key_value_view[[K, V]]){
+            .key = &element.*.key,
+            .value = &element.*.value
+        };
+        return &self.*._view;
     }
 }

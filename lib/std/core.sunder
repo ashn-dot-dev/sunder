@@ -1734,8 +1734,12 @@ func sort[[T]](slice: []T) void {
     }
 }
 
-# Key-value pair. Intended for use in map operations.
 struct key_value[[K, V]] {
     var key: K;
     var value: V;
+}
+
+struct key_value_view[[K, V]] {
+    var key: *K;
+    var value: *V;
 }
