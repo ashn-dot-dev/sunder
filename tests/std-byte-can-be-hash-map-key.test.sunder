@@ -22,13 +22,13 @@ func main() void {
 
     var iterator = std::hash_map_iterator[[byte, []byte]]::init(&map);
     for iterator.advance() {
-        var key_as_u8 = (:u8)iterator.current().*.key;
+        var key_as_u8 = (:u8)*iterator.current().key;
         std::print_format_line(
             std::out(),
             "{} : \"{e}\"",
             (:[]std::formatter)[
                 std::formatter::init[[u8]](&key_as_u8),
-                std::formatter::init[[[]byte]](&iterator.current().*.value)]);
+                std::formatter::init[[[]byte]](iterator.current().value)]);
     }
 }
 ################################################################################

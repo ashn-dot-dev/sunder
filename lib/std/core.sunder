@@ -1430,7 +1430,7 @@ func print_format_line(writer: std::writer, format: []byte, args: []std::formatt
 
 struct iterator_itable[[T]] {
     var advance: func(*any) bool;
-    var current: func(*any) *T;
+    var current: func(*any) T;
 }
 
 struct iterator[[T]] {
@@ -1455,14 +1455,11 @@ struct iterator[[T]] {
         return self.*.itable.*.advance(self.*.object);
     }
 
-    # Returns a reference to the element in the iterable at the current
-    # position of the iterator. The reference may be invalidated by the next
-    # call to `advance` or by finalization of the backing iterator object.
-    #
-    # If the backing iterator has not begun iteration, or if the backing
-    # iterator has reached an end-of-iteration condition, then the backing
-    # `current` function should panic.
-    func current(self: *iterator[[T]]) *T {
+    # Returns the item at the current position of the iterator. If the backing
+    # iterator has not begun iteration, or if the backing iterator has reached
+    # an end-of-iteration condition, then the backing `current` function should
+    # panic.
+    func current(self: *iterator[[T]]) T {
         return self.*.itable.*.current(self.*.object);
     }
 }

@@ -19,8 +19,8 @@ func main() void {
             std::out(),
             "{}, {X}",
             (:[]std::formatter)[
-                std::formatter::init[[[]byte]](iter.current().*.key),
-                std::formatter::init[[ssize]](iter.current().*.value)]);
+                std::formatter::init[[[]byte]](iter.current().key),
+                std::formatter::init[[ssize]](iter.current().value)]);
     }
 
     map.fini();

@@ -7,7 +7,7 @@ func main() void {
     var sep = "";
     for iter.advance() {
         std::print(std::out(), sep);
-        std::print(std::out(), *iter.current());
+        std::print(std::out(), iter.current());
         sep = " "; # Arguments are separated by " ".
     }
     std::print(std::out(), "\n");

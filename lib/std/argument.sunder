@@ -4,7 +4,6 @@ import "sys";
 
 struct argument_iterator {
     var _argv: **byte;
-    var _bytes: []byte;
     var _index: std::optional[[usize]];
 
     # Initialize an argument iterator using the arguments provided by the
@@ -24,7 +23,6 @@ struct argument_iterator {
     func init_from_argv(argv: **byte) argument_iterator {
         return (:argument_iterator){
             ._argv = argv,
-            ._bytes = std::zeroed[[[]byte]](),
             ._index = std::optional[[usize]]::init_empty()
         };
     }
@@ -42,11 +40,10 @@ struct argument_iterator {
             return false; # end of iteration
         }
 
-        self.*._bytes = std::cstr::data(*arg);
         return true;
     }
 
-    func current(self: *argument_iterator) *[]byte {
+    func current(self: *argument_iterator) []byte {
         if self.*._index.is_empty() {
             std::panic("invalid iterator");
         }
@@ -55,7 +52,8 @@ struct argument_iterator {
         if std::ptr[[byte]]::is_null(*arg) {
             std::panic("invalid iterator");
         }
-        return &self.*._bytes;
+
+        return std::cstr::data(*arg);
     }
 }
 
@@ -122,7 +120,7 @@ struct argument_parser {
             return false;
         }
 
-        var str = *self.*._iterator.current();
+        var str = self.*._iterator.current();
         if self.*._verbatim {
             self.*._arg = std::optional[[[]byte]]::init_value(str);
             return true;
@@ -183,7 +181,7 @@ struct argument_parser {
                     std::formatter::init[[[]byte]](&str)]);
             std::exit(std::EXIT_FAILURE);
         }
-        self.*._arg = std::optional[[[]byte]]::init_value(*self.*._iterator.current());
+        self.*._arg = std::optional[[[]byte]]::init_value(self.*._iterator.current());
         return true;
     }
 

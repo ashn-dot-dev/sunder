@@ -94,12 +94,12 @@ func main() void {
         .root = std::optional[[*node]]::init_value(D)
     };
 
-    var tree_iterator = ::tree_iterator::init(&t);
-    var iter = std::iterator[[node]]::init[[::tree_iterator]](&tree_iterator);
+    var iter = tree_iterator::init(&t);
+    defer { iter.fini(); }
+    var iter = std::iterator[[*node]]::init[[tree_iterator]](&iter);
     for iter.advance() {
         std::print_line(std::out(), iter.current().*.value);
     }
-    tree_iterator.fini();
 
     std::delete[[node]](allocator, A);
     std::delete[[node]](allocator, B);

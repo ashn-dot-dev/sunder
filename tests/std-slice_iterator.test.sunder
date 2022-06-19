@@ -1,6 +1,6 @@
 import "std/core.sunder";
 
-func print_elements(iter: std::iterator[[u32]]) void {
+func print_elements(iter: std::iterator[[*u32]]) void {
     for iter.advance() {
         std::print_format_line(
             std::out(),
@@ -11,15 +11,15 @@ func print_elements(iter: std::iterator[[u32]]) void {
 }
 
 func main() void {
-    var slice_iterator = std::slice_iterator[[u32]]::init((:[]u32)[]);
-    print_elements(std::iterator[[u32]]::init[[std::slice_iterator[[u32]]]](&slice_iterator));
+    var iter = std::slice_iterator[[u32]]::init((:[]u32)[]);
+    print_elements(std::iterator[[*u32]]::init[[std::slice_iterator[[u32]]]](&iter));
 
-    var slice_iterator = std::slice_iterator[[u32]]::init((:[]u32)[1, 2, 3]);
-    print_elements(std::iterator[[u32]]::init[[std::slice_iterator[[u32]]]](&slice_iterator));
+    var iter = std::slice_iterator[[u32]]::init((:[]u32)[1, 2, 3]);
+    print_elements(std::iterator[[*u32]]::init[[std::slice_iterator[[u32]]]](&iter));
 
-    dump slice_iterator.advance();
-    dump slice_iterator.advance(); # Should be able to advance multiple times without panic.
-    dump slice_iterator.current(); # Iterator was used up. This should panic.
+    dump iter.advance();
+    dump iter.advance(); # Should be able to advance multiple times without panic.
+    dump iter.current(); # Iterator was used up. This should panic.
 }
 ################################################################################
 # 1
