@@ -13,12 +13,12 @@ struct hash_map_element[[K, V]] {
     # insertion and lookup within the hash map. As such, mutation of the `key`
     # member would invalidate this element's corresponding hash map, and any
     # program that *does* perform such mutation is considered ill-formed.
-    var key: K;
+    var _key: K;
 
     # The value associated with this element.
     #
     # Mutation of this member is permitted in well-formed programs.
-    var value: V;
+    var _value: V;
 }
 
 struct hash_map[[K, V]] {
@@ -58,8 +58,8 @@ struct hash_map[[K, V]] {
 
         var index = key.hash() % countof(self.*._elements);
         for self.*._elements[index]._state != hash_map_element[[K, V]]::_STATE_NIL {
-            if self.*._elements[index]._state == hash_map_element[[K, V]]::_STATE_USE and std::eq[[K]](&key, &self.*._elements[index].key) {
-                return std::optional[[V]]::init_value(self.*._elements[index].value);
+            if self.*._elements[index]._state == hash_map_element[[K, V]]::_STATE_USE and std::eq[[K]](&key, &self.*._elements[index]._key) {
+                return std::optional[[V]]::init_value(self.*._elements[index]._value);
             }
             index = (index + 1) % countof(self.*._elements);
         }
@@ -86,7 +86,7 @@ struct hash_map[[K, V]] {
             };
             for i in 0:countof(self.*._elements) {
                 if self.*._elements[i]._state == hash_map_element[[K, V]]::_STATE_USE {
-                    var existing = new.insert(self.*._elements[i].key, self.*._elements[i].value);
+                    var existing = new.insert(self.*._elements[i]._key, self.*._elements[i]._value);
                     std::assert(existing.is_empty());
                 }
             }
@@ -99,8 +99,8 @@ struct hash_map[[K, V]] {
             if self.*._elements[index]._state == hash_map_element[[K, V]]::_STATE_NIL {
                 self.*._elements[index] = (:hash_map_element[[K, V]]){
                     ._state = hash_map_element[[K, V]]::_STATE_USE,
-                    .key = key,
-                    .value = value
+                    ._key = key,
+                    ._value = value
                 };
                 self.*._n = self.*._n + 1;
                 self.*._q = self.*._q + 1;
@@ -110,24 +110,24 @@ struct hash_map[[K, V]] {
             if self.*._elements[index]._state == hash_map_element[[K, V]]::_STATE_DEL {
                 self.*._elements[index] = (:hash_map_element[[K, V]]){
                     ._state = hash_map_element[[K, V]]::_STATE_USE,
-                    .key = key,
-                    .value = value
+                    ._key = key,
+                    ._value = value
                 };
                 self.*._n = self.*._n + 1;
                 return std::optional[[std::key_value[[K, V]]]]::init_empty();
             }
 
             # _STATE_USE
-            if std::eq[[K]](&key, &self.*._elements[index].key) {
+            if std::eq[[K]](&key, &self.*._elements[index]._key) {
                 var existing = self.*._elements[index];
                 var kv = (:std::key_value[[K, V]]){
-                    .key = existing.key,
-                    .value = existing.value
+                    .key = existing._key,
+                    .value = existing._value
                 };
                 self.*._elements[index] = (:hash_map_element[[K, V]]){
                     ._state = hash_map_element[[K, V]]::_STATE_USE,
-                    .key = key,
-                    .value = value
+                    ._key = key,
+                    ._value = value
                 };
                 return std::optional[[std::key_value[[K, V]]]]::init_value(kv);
             }
@@ -146,10 +146,10 @@ struct hash_map[[K, V]] {
 
         var index = key.hash() % countof(self.*._elements);
         for self.*._elements[index]._state != hash_map_element[[K, V]]::_STATE_NIL {
-            if self.*._elements[index]._state == hash_map_element[[K, V]]::_STATE_USE and std::eq[[K]](&key, &self.*._elements[index].key) {
+            if self.*._elements[index]._state == hash_map_element[[K, V]]::_STATE_USE and std::eq[[K]](&key, &self.*._elements[index]._key) {
                 var kv = (:std::key_value[[K, V]]){
-                    .key = self.*._elements[index].key,
-                    .value = self.*._elements[index].value
+                    .key = self.*._elements[index]._key,
+                    .value = self.*._elements[index]._value
                 };
                 self.*._elements[index]._state = hash_map_element[[K, V]]::_STATE_DEL;
                 self.*._n = self.*._n - 1;
@@ -186,8 +186,8 @@ struct hash_map_iterator[[K, V]] {
     func current(self: *hash_map_iterator[[K, V]]) std::key_value_view[[K, V]] {
         var element = self.*._iterator.current();
         return (:std::key_value_view[[K, V]]){
-            .key = &element.*.key,
-            .value = &element.*.value
+            .key = &element.*._key,
+            .value = &element.*._value
         };
     }
 }
