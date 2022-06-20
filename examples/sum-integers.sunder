@@ -1,4 +1,4 @@
-# Sum integers from standard input an end-of-file condition is reached.
+# Sum integers from standard input until an end-of-file condition is reached.
 import "std";
 
 func main() void {
