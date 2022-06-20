@@ -14,9 +14,9 @@ struct name {
         }
 
         # Just assume all these writes will succeed lmao.
-        var _ = std::write_all(writer, self.*.first);
-        var _ = std::write_all(writer, " ");
-        var _ = std::write_all(writer, self.*.last);
+        std::write_all(writer, self.*.first);
+        std::write_all(writer, " ");
+        std::write_all(writer, self.*.last);
         return std::result[[void, []byte]]::init_value(void::init());
     }
 }
@@ -60,18 +60,18 @@ func main() void {
     var a_formatter: std::formatter = std::formatter::init[[name]](&a);
     var b_formatter: std::formatter = std::formatter::init[[name]](&b);
 
-    var _ = a_formatter.format(writer, "");
-    var _ = writer.write(" and ");
-    var _ = b_formatter.format(writer, "");
-    var _ = writer.write(" are amazing players!\n");
+    a_formatter.format(writer, "");
+    writer.write(" and ");
+    b_formatter.format(writer, "");
+    writer.write(" are amazing players!\n");
 
     var i: int = (:int){};
     var i_formatter: std::formatter = std::formatter::init[[int]](&i);
-    var _ = i_formatter.format(writer, "");
-    var _ = i_formatter.format(writer, "d");
-    var _ = i_formatter.format(writer, "b");
-    var _ = i_formatter.format(writer, "o");
-    var _ = i_formatter.format(writer, "x");
+    i_formatter.format(writer, "");
+    i_formatter.format(writer, "d");
+    i_formatter.format(writer, "b");
+    i_formatter.format(writer, "o");
+    i_formatter.format(writer, "x");
     var result: std::result[[void, []byte]] = i_formatter.format(writer, "nope");
     std::print_line(std::err(), result.error());
 }

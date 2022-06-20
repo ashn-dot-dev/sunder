@@ -111,7 +111,7 @@ func main() void {
     linear_allocator.deallocate_all();
     var res = allocator.allocate(alignof(byte), 1);
     ptr = res.value();
-    var _ = allocator.allocate(alignof(byte), 1023);
+    allocator.allocate(alignof(byte), 1023);
     std::assert(linear_allocator._old_offset == 1);
     std::assert(linear_allocator._cur_offset == 1024);
     var res = allocator.reallocate(ptr, alignof(byte), 1, 2);

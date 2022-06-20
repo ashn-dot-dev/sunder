@@ -106,8 +106,8 @@ struct argument_parser {
             ._arg = std::optional[[[]byte]]::init_empty()
         };
 
-        # Skip past the first argument (program name) if present.
-        var _ = self._iterator.advance();
+        # Skip past the first argument (program name).
+        self._iterator.advance();
 
         return self;
     }

@@ -14,11 +14,11 @@ func main() void {
         map.fini();
     }
 
-    var _ = map.insert(byte::MIN, "value 1");
-    var _ = map.insert(byte::MAX, "value 2");
-    var _ = map.insert(100y, "value 3");
-    var _ = map.insert(150y, "value 4");
-    var _ = map.insert(200y, "value 5");
+    map.insert(byte::MIN, "value 1");
+    map.insert(byte::MAX, "value 2");
+    map.insert(100y, "value 3");
+    map.insert(150y, "value 4");
+    map.insert(200y, "value 5");
 
     var iterator = std::hash_map_iterator[[byte, []byte]]::init(&map);
     for iterator.advance() {

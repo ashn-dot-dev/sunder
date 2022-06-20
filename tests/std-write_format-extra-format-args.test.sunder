@@ -14,7 +14,7 @@ struct person {
 func main() void {
     var alice: person = (:person){.name = "Alice"};
     var bob: person = (:person){.name = "Bob"};
-    var _ = std::write_format(
+    std::write_format(
         std::out(),
         "{} is alone",
         (:[]std::formatter)[

@@ -15,9 +15,9 @@ func main() void {
         map.fini();
     }
 
-    var _ = map.insert(std::string::init_from_str(allocator, "foo"), "foo value");
-    var _ = map.insert(std::string::init_from_str(allocator, "bar"), "bar value 1");
-    var _ = map.insert(std::string::init_from_str(allocator, "bar"), "bar value 2");
+    map.insert(std::string::init_from_str(allocator, "foo"), "foo value");
+    map.insert(std::string::init_from_str(allocator, "bar"), "bar value 1");
+    map.insert(std::string::init_from_str(allocator, "bar"), "bar value 2");
 
     var iterator = std::hash_map_iterator[[std::string, []byte]]::init(&map);
     for iterator.advance() {

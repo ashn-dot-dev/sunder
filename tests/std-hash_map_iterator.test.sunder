@@ -6,11 +6,11 @@ func main() void {
     var allocator = std::allocator::init[[std::page_allocator]](std::page_allocator::the());
     var map = std::hash_map[[[]byte, ssize]]::init(allocator);
 
-    var _ = map.insert("foo", 0x123);
-    var _ = map.insert("bar", 0x456);
-    var _ = map.insert("baz", 0x789);
-    var _ = map.insert("qux", 0xABC);
-    var _ = map.insert("quz", 0xDEF);
+    map.insert("foo", 0x123);
+    map.insert("bar", 0x456);
+    map.insert("baz", 0x789);
+    map.insert("qux", 0xABC);
+    map.insert("quz", 0xDEF);
 
     var hash_map_iterator = std::hash_map_iterator[[[]byte, ssize]]::init(&map);
     var iter = std::iterator[[std::key_value_view[[[]byte, ssize]]]]::init[[std::hash_map_iterator[[[]byte, ssize]]]](&hash_map_iterator);

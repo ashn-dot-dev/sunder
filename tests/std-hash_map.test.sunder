@@ -16,7 +16,7 @@ func main() void {
 
     dump void::init();
 
-    var _ = map.insert("foo", 123);
+    map.insert("foo", 123);
     var count = map.count();
     std::print_format_line(std::out(), "Count {}", (:[]std::formatter)[std::formatter::init[[usize]](&count)]);
     var lookup_foo = map.lookup("foo");
@@ -31,7 +31,7 @@ func main() void {
 
     dump void::init();
 
-    var _ = map.insert("foo", 456);
+    map.insert("foo", 456);
     var count = map.count();
     std::print_format_line(std::out(), "Count {}", (:[]std::formatter)[std::formatter::init[[usize]](&count)]);
     var lookup_foo = map.lookup("foo");
@@ -46,7 +46,7 @@ func main() void {
 
     dump void::init();
 
-    var _ = map.insert("bar", 789);
+    map.insert("bar", 789);
     var count = map.count();
     std::print_format_line(std::out(), "Count {}", (:[]std::formatter)[std::formatter::init[[usize]](&count)]);
     var lookup_foo = map.lookup("foo");
@@ -90,7 +90,7 @@ func main() void {
 
     var map = std::hash_map[[ssize, usize]]::init(allocator);
     for x in 0x123456:0x123456+100000 {
-        var _ = map.insert((:ssize)x, x);
+        map.insert((:ssize)x, x);
     }
     for x in 0x123456:0x123456+100000 {
         if not map.contains((:ssize)x) {
@@ -100,7 +100,7 @@ func main() void {
     var count = map.count();
     std::print_format_line(std::out(), "Count {}", (:[]std::formatter)[std::formatter::init[[usize]](&count)]);
     for x in 0x123456:0x123456+100000 {
-        var _ = map.remove((:ssize)x);
+        map.remove((:ssize)x);
     }
     var count = map.count();
     std::print_format_line(std::out(), "Count {}", (:[]std::formatter)[std::formatter::init[[usize]](&count)]);

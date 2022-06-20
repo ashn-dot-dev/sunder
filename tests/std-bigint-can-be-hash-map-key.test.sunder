@@ -16,15 +16,15 @@ func main() void {
     }
 
     var result = std::bigint::init_from_str(allocator, "0", 0);
-    var _ = map.insert(result.value(), "value 1");
+    map.insert(result.value(), "value 1");
     var result = std::bigint::init_from_str(allocator, "+0xBEEFBEEFBEEFBEEF", 0);
-    var _ = map.insert(result.value(), "value 2");
+    map.insert(result.value(), "value 2");
     var result = std::bigint::init_from_str(allocator, "-0xBEEFBEEFBEEFBEEF", 0);
-    var _ = map.insert(result.value(), "value 3");
+    map.insert(result.value(), "value 3");
     var result = std::bigint::init_from_str(allocator, "-0xBEEFBEEFBEEFBEEF", 0);
-    var _ = map.insert(result.value(), "value 4");
+    map.insert(result.value(), "value 4");
     var result = std::bigint::init_from_str(allocator, "0xFFFFFFFFFFFFFFFF", 0);
-    var _ = map.insert(result.value(), "value 5");
+    map.insert(result.value(), "value 5");
 
     var iterator = std::hash_map_iterator[[std::bigint, []byte]]::init(&map);
     for iterator.advance() {

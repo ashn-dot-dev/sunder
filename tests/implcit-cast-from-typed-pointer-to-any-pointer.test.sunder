@@ -14,7 +14,7 @@ func main() void {
     var g: func(*any, u32) *any = f;
 
     var my_x: u16 = 0xF00D;
-    var _ = g(&my_x, 0xDEADBEEF);
+    g(&my_x, 0xDEADBEEF);
 
     dump (:usize)b == (:usize)c;
     dump (:usize)b == (:usize)d;

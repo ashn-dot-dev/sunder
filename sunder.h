@@ -656,9 +656,6 @@ struct source_location {
 };
 
 void
-warning(struct source_location const* location, char const* fmt, ...);
-
-void
 error(struct source_location const* location, char const* fmt, ...);
 
 NORETURN void

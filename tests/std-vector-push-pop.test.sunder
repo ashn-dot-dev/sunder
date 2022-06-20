@@ -30,22 +30,22 @@ func main() void {
     dump_elements[[u8]](&vec);
 
     # [A][B]
-    var _ = vec.pop();
+    vec.pop();
     dump vec.count();
     dump_elements[[u8]](&vec);
 
     # [A]
-    var _ = vec.pop();
+    vec.pop();
     dump vec.count();
     dump_elements[[u8]](&vec);
 
     # Empty
-    var _ = vec.pop();
+    vec.pop();
     dump vec.count();
     dump_elements[[u8]](&vec);
 
     # Attempt to pop empty vec.
-    var _ = vec.pop();
+    vec.pop();
     dump vec.count();
     dump_elements[[u8]](&vec);
 }

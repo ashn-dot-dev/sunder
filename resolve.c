@@ -2414,14 +2414,6 @@ resolve_stmt_expr(struct resolver* resolver, struct cst_stmt const* stmt)
     }
     struct stmt* const resolved = stmt_new_expr(stmt->location, expr);
 
-    // Check for unused return value.
-    if (expr->kind == EXPR_CALL && expr->type->kind != TYPE_VOID) {
-        warning(
-            expr->location,
-            "unused return value of type `%s`",
-            expr->type->name);
-    }
-
     freeze(resolved);
     return resolved;
 }

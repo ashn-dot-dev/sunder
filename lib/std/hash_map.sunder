@@ -82,8 +82,8 @@ struct hash_map[[K, V]] {
         }
         elif 2 * (self.*._q + 1) > countof(self.*._elements) {
             # Insert at 50% occupancy. Create a new hash map with double the
-            # existing element count, populate that map with this map's
-            # key-value pairs, and then replace this map with the new map.
+            # existing element count, populate that map with this map's key-value
+            # pairs, and then replace this map with the new map.
             var new = (:hash_map[[K, V]]){
                 ._allocator = self.*._allocator,
                 ._elements = std::slice[[hash_map_element[[K, V]]]]::new(self.*._allocator, countof(self.*._elements) * 2),

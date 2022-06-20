@@ -2019,11 +2019,9 @@ freeze_fini(void)
 #define ANSI_ESC_DEFAULT "\x1b[0m"
 #define ANSI_ESC_BOLD    "\x1b[1m"
 #define ANSI_ESC_RED     "\x1b[31m"
-#define ANSI_ESC_YELLOW  "\x1b[33m"
 #define ANSI_ESC_CYAN    "\x1b[36m"
 
-#define ANSI_MSG_WARNING ANSI_ESC_BOLD ANSI_ESC_YELLOW
-#define ANSI_MSG_ERROR   ANSI_ESC_BOLD ANSI_ESC_RED
+#define ANSI_MSG_ERROR ANSI_ESC_BOLD ANSI_ESC_RED
 // clang-format on
 
 char*
@@ -2132,15 +2130,6 @@ messagev_(
         fprintf(stderr, "%.*s\n", (int)(line_end - line_start), line_start);
         fprintf(stderr, "%*s^\n", (int)(psrc - line_start), "");
     }
-}
-
-void
-warning(struct source_location const* location, char const* fmt, ...)
-{
-    va_list args;
-    va_start(args, fmt);
-    messagev_(location, "warning", ANSI_MSG_WARNING, fmt, args);
-    va_end(args);
 }
 
 void
