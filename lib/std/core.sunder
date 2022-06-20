@@ -1731,11 +1731,15 @@ func sort[[T]](slice: []T) void {
     }
 }
 
+# Key-value pair used in map operations.
 struct key_value_pair[[K, V]] {
     var key: K;
     var value: V;
 }
 
+# View of a key object and value object conceptually belonging to a key-value
+# pair, even if the key object and value object are stored separately. Used in
+# map operations.
 struct key_value_view[[K, V]] {
     var key: *K;
     var value: *V;
