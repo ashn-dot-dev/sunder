@@ -11,10 +11,10 @@ func main() void {
 
     var allocator = std::allocator::init[[typeof(allocator)]](&allocator);
     var parser = std::argument_parser::init_from_argv(
-        (:[]std::argopt)[
-            std::argopt::init("a", false),
-            std::argopt::init("b", false),
-            std::argopt::init("c", true)
+        (:[][]byte)[
+            "a",
+            "b",
+            "c:"
         ],
         util::argv::new(allocator, (:[][]byte)[
             "arg0",

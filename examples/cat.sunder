@@ -42,8 +42,8 @@ func cat(filename: []byte) void {
 }
 
 func main() void {
-    var parser = std::argument_parser::init((:[]std::argopt)[
-        std::argopt::init("u", false) # Accepted but ignored.
+    var parser = std::argument_parser::init((:[][]byte)[
+        "u" # Accepted but ignored.
     ]);
     for parser.advance() {
         if parser.check_option("u") {

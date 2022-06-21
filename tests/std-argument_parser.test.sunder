@@ -30,7 +30,7 @@ func main() void {
     }
     var allocator = std::allocator::init[[typeof(allocator)]](&allocator);
 
-    var options = (:[]std::argopt)[];
+    var options = (:[][]byte)[];
     var argv = util::argv::new(allocator, (:[][]byte)[]);
     var parser = std::argument_parser::init_from_argv(options, argv);
 
@@ -39,7 +39,7 @@ func main() void {
 
     std::print(std::out(), "\n"); ##############################################
 
-    var options = (:[]std::argopt)[];
+    var options = (:[][]byte)[];
     var argv = util::argv::new(allocator, (:[][]byte)["arg0"]);
     var parser = std::argument_parser::init_from_argv(options, argv);
 
@@ -48,7 +48,7 @@ func main() void {
 
     std::print(std::out(), "\n"); ##############################################
 
-    var options = (:[]std::argopt)[];
+    var options = (:[][]byte)[];
     var argv = util::argv::new(allocator, (:[][]byte)[
         "arg0",
         "arg1",
@@ -64,10 +64,7 @@ func main() void {
 
     std::print(std::out(), "\n"); ##############################################
 
-    var options = (:[]std::argopt)[
-        std::argopt::init("foo", false),
-        std::argopt::init("bar", true)
-    ];
+    var options = (:[][]byte)["foo", "bar:"];
     var argv = util::argv::new(allocator, (:[][]byte)[
         "arg0",
         "arg1",

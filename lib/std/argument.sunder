@@ -57,26 +57,8 @@ struct argument_iterator {
     }
 }
 
-struct argopt {
-    # Option string, such as "a" in `-a` or the "file" `--file foo.txt`.
-    #
-    # Parsed option arguments must be separated from their option string within
-    # the argument list, (e.g. `--file foo.txt` not `--file=foo.txt`.
-    var _str: []byte;
-
-    # True if the option requires an additional argument.
-    var _arg: bool;
-
-    func init(str: []byte, arg: bool) argopt {
-        return (:argopt){
-            ._str = str,
-            ._arg = arg
-        };
-    }
-}
-
 struct argument_parser {
-    var _options: []std::argopt;
+    var _options: [][]byte;
     var _iterator: argument_iterator;
     var _verbatim: bool;
     var _opt: std::optional[[[]byte]];
@@ -90,14 +72,14 @@ struct argument_parser {
     # executing in a freestanding environment. The behavior of this function is
     # implementation defined if the Sunder `main` function was not used as the
     # program entry point.
-    func init(options: []std::argopt) argument_parser {
+    func init(options: [][]byte) argument_parser {
         return std::argument_parser::init_from_argv(options, sys::argv);
     }
 
     # Initialize an argument parser from a C-style argument vector. The
     # provided argv *must* contain a NULL-terminated list of NUL-terminated
     # strings in accordance ISO/IEC 9899:1999 section 5.1.2.2.1.
-    func init_from_argv(options: []std::argopt, argv: **byte) argument_parser {
+    func init_from_argv(options: [][]byte, argv: **byte) argument_parser {
         var self = (:argument_parser){
             ._options = options,
             ._iterator = std::argument_iterator::init_from_argv(argv),
@@ -152,9 +134,18 @@ struct argument_parser {
             str = str[countof("-"):countof(str)];
         }
 
+        var should_parse_arg = false;
         var idx = std::optional[[usize]]::init_empty();
         for i in countof(self.*._options) {
-            if std::str::eq(str, self.*._options[i]._str) {
+            should_parse_arg = false;
+            var opt = self.*._options[i];
+
+            if std::str::ends_with(opt, ":") { # Required argument.
+                opt = str[0 : countof(opt) - 1];
+                should_parse_arg = true;
+            }
+
+            if std::str::eq(str, opt) {
                 idx = std::optional[[usize]]::init_value(i);
                 break;
             }
@@ -169,7 +160,7 @@ struct argument_parser {
         }
 
         self.*._opt = std::optional[[[]byte]]::init_value(str);
-        if not self.*._options[idx.value()]._arg {
+        if not should_parse_arg {
             return true;
         }
 

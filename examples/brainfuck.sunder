@@ -10,21 +10,32 @@ var cells = (:[30000]u8)[0...];
 var cells_index: usize = 0;
 
 func main() void {
-    if sys::argc != 2 {
-        var progname = std::cstr::data(*sys::argv);
-        var expected = 1u;
-        var received = sys::argc - 1u;
-        std::print_format_line(
-            std::err(),
-            "{}: invalid number of arguments (expected {}, received {})",
-            (:[]std::formatter)[
-                std::formatter::init[[[]byte]](&progname),
-                std::formatter::init[[usize]](&expected),
-                std::formatter::init[[usize]](&received)]);
-        std::exit(std::EXIT_FAILURE);
+    var progname = std::cstr::data(*sys::argv);
+    var path = std::optional[[[]byte]]::init_empty();
+
+    var parser = std::argument_parser::init((:[][]byte)[]);
+    for parser.advance() {
+        if path.is_value() {
+            std::print_format_line(
+                std::err(),
+                "{}: multiple files specified",
+                (:[]std::formatter)[
+                    std::formatter::init[[[]byte]](&progname)]);
+            std::exit(std::EXIT_FAILURE);
+        }
+        path = std::optional[[[]byte]]::init_value(parser.argument_value());
     }
 
-    var path = std::cstr::data(*std::ptr[[*byte]]::add(sys::argv, 1));
+    if path.is_empty() {
+        std::print_format_line(
+            std::err(),
+            "{}: no file specified",
+            (:[]std::formatter)[
+                std::formatter::init[[[]byte]](&progname)]);
+        std::exit(std::EXIT_FAILURE);
+    }
+    var path = path.value();
+
     var result = std::file::open(path, std::file::OPEN_READ);
     if result.is_error() {
         var error = result.error();
