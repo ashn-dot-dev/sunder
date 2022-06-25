@@ -11,6 +11,7 @@ __SYS_READ:    equ 0
 __SYS_WRITE:   equ 1
 __SYS_OPEN:    equ 2
 __SYS_CLOSE:   equ 3
+__SYS_STAT:    equ 4
 __SYS_LSEEK:   equ 8
 __SYS_MMAP:    equ 9
 __SYS_MUNMAP:  equ 11
@@ -293,6 +294,23 @@ sys.close:
     mov rdi, [rbp + 0x10] ; fd
     syscall
     mov [rbp + 0x18], rax
+
+    mov rsp, rbp
+    pop rbp
+    ret
+
+; linux/fs/stat.c:
+; SYSCALL_DEFINE2(stat, const char __user *, filename, struct __old_kernel_stat __user *, statbuf)
+section .text
+sys.stat:
+    push rbp
+    mov rbp, rsp
+
+    mov rax, __SYS_STAT
+    mov rdi, [rbp + 0x18] ; filename
+    mov rsi, [rbp + 0x10] ; statbuf
+    syscall
+    mov [rbp + 0x20], rax
 
     mov rsp, rbp
     pop rbp

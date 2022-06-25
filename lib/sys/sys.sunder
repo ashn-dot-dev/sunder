@@ -16,16 +16,58 @@ namespace sys;
 # signed   long long | 8    | 8         | s64
 # unsigned long long | 8    | 8         | u64
 #
+# POSIX types obtainted through GDB `whatis` on x64 Linux:
+# (gdb) whatis blkcnt_t
+# type = long
+# (gdb) whatis blksize_t
+# type = long
+# (gdb) whatis clock_t
+# type = long
+# (gdb) whatis clockid_t
+# type = int
+# (gdb) whatis dev_t
+# type = unsigned long
+# (gdb) whatis fsblkcnt_t
+# type = unsigned long
+# (gdb) whatis fsfilcnt_t
+# type = unsigned long
+# (gdb) whatis gid_t
+# type = unsigned int
+# (gdb) whatis id_t
+# type = unsigned int
+# (gdb) whatis ino_t
+# type = unsigned long
+# (gdb) whatis key_t
+# type = int
+# (gdb) whatis mode_t
+# type = unsigned int
+# (gdb) whatis nlink_t
+# type = unsigned long
+# (gdb) whatis off_t
+# type = long
+# (gdb) whatis pid_t
+# type = int
+# (gdb) whatis size_t
+# type = unsigned long
+# (gdb) whatis ssize_t
+# type = long
+# (gdb) whatis suseconds_t
+# type = long
+# (gdb) whatis time_t
+# type = long
+# (gdb) whatis timer_t
+# type = void *
+# (gdb) whatis uid_t
+# type = unsigned int
+#
 # linux/include/linux/types.h:
 # typedef unsigned short        umode_t;
-# typedef __kernel_off_t        off_t;
-# typedef __kernel_pid_t        pid_t;
 #
 # linux/include/uapi/asm-generic/posix_types.h:
 # typedef long              __kernel_long_t;
 # typedef unsigned long     __kernel_ulong_t;
-# typedef int               __kernel_pid_t
 # typedef __kernel_long_t   __kernel_off_t;
+
 alias char      = byte;
 alias schar     = s8;
 alias uchar     = u8;
@@ -41,9 +83,29 @@ alias ulonglong = u64;
 alias smax = s64;
 alias umax = u64;
 
+alias blkcnt_t    = slong;
+alias blksize_t   = slong;
+alias clock_t     = slong;
+alias clockid_t   = sint;
+alias dev_t       = ulong;
+alias fsblkcnt_t  = ulong;
+alias fsfilcnt_t  = ulong;
+alias gid_t       = uint;
+alias id_t        = uint;
+alias ino_t       = ulong;
+alias key_t       = sint;
+alias mode_t      = uint;
+alias nlink_t     = ulong;
+alias off_t       = slong;
+alias pid_t       = sint;
+alias size_t      = ulong;
+alias ssize_t     = slong;
+alias suseconds_t = slong;
+alias time_t      = slong;
+alias timer_t     = *any;
+alias uid_t       = uint;
+
 alias umode_t = ushort;
-alias pid_t   = sint;
-alias off_t   = slong;
 
 const EPERM:           ssize = 1;
 const ENOENT:          ssize = 2;
@@ -385,6 +447,93 @@ const XATTR_LIST_MAX: usize =  65536; # size of extended attribute namelist (64k
 # PAGE_SIZE is defined in terms of PAGE_SHIFT (12 on x86 and x64).
 const PAGE_SIZE: usize = 4096;
 
+struct timespec {
+    var tv_sec: time_t;
+    var tv_nsec: slong;
+}
+
+# The definition of the `struct stat` type appears to have different
+# (incompatible) definitions depending on where you look:
+#
+# + struct stat              => linux/include/uapi/asm-generic/stat.h
+# + struct __old_kernel_stat => linux/fs/stat.c
+# + struct stat              => glibc/sysdeps/unix/sysv/linux/bits/struct_stat.h
+# + struct stat              => musl/arch/x86_64/bits/stat.h
+#
+# Of these, glibc and musl seem to contain the only definitions that do not
+# corrupt the stack, and both have `sizeof(struct stat) == 144` on x64 Linux.
+# This definition is modeled after the musl definition.
+#
+# Examining the type in GDB with `ptype/o struct stat`:
+#   /* offset    |  size */  type = struct stat {
+#   /*    0      |     8 */    dev_t st_dev;
+#   /*    8      |     8 */    ino_t st_ino;
+#   /*   16      |     8 */    nlink_t st_nlink;
+#   /*   24      |     4 */    mode_t st_mode;
+#   /*   28      |     4 */    uid_t st_uid;
+#   /*   32      |     4 */    gid_t st_gid;
+#   /*   36      |     4 */    unsigned int __pad0;
+#   /*   40      |     8 */    dev_t st_rdev;
+#   /*   48      |     8 */    off_t st_size;
+#   /*   56      |     8 */    blksize_t st_blksize;
+#   /*   64      |     8 */    blkcnt_t st_blocks;
+#   /*   72      |    16 */    struct timespec {
+#   /*   72      |     8 */        time_t tv_sec;
+#   /*   80      |     8 */        long tv_nsec;
+#
+#                                  /* total size (bytes):   16 */
+#                              } st_atim;
+#   /*   88      |    16 */    struct timespec {
+#   /*   88      |     8 */        time_t tv_sec;
+#   /*   96      |     8 */        long tv_nsec;
+#
+#                                  /* total size (bytes):   16 */
+#                              } st_mtim;
+#   /*  104      |    16 */    struct timespec {
+#   /*  104      |     8 */        time_t tv_sec;
+#   /*  112      |     8 */        long tv_nsec;
+#
+#                                  /* total size (bytes):   16 */
+#                              } st_ctim;
+#   /*  120      |    24 */    long __unused[3];
+#
+#                              /* total size (bytes):  144 */
+#                            }
+struct stat_type {
+    var st_dev:         dev_t;      # Device.
+    var st_ino:         ino_t;      # File serial number.
+    var st_nlink:       nlink_t;    # Link count.
+    var st_mode:        mode_t;     # File mode.
+    var st_uid:         uid_t;      # User ID of the file's owner.
+    var st_gid:         gid_t;      # Group ID of the file's group.
+    var __pad0:         uint;
+    var st_rdev:        dev_t;      # Device number, if device.
+    var st_size:        off_t;      # Size of file, in bytes.
+    var st_blksize:     blksize_t;  # Optimal block size for I/O.
+    var st_blocks:      blkcnt_t;   # Number 512-byte blocks allocated.
+    var st_atim:        timespec;   # Time of last access.
+    var st_mtime:       timespec;   # Time of last modification.
+    var st_ctime:       timespec;   # Time of last status change.
+    var __unused:       [3]slong;
+}
+
+const S_IFMT:   mode_t = 0o170000; # Mask for S_I* file modes.
+const S_IFBLK:  mode_t = 0o060000; # Block special.
+const S_IFCHR:  mode_t = 0o020000; # Character special.
+const S_IFIFO:  mode_t = 0o010000; # FIFO special.
+const S_IFREG:  mode_t = 0o100000; # Regular.
+const S_IFDIR:  mode_t = 0o040000; # Directory.
+const S_IFLNK:  mode_t = 0o120000; # Symbolic link.
+const S_IFSOCK: mode_t = 0o140000; # Socket.
+
+func S_ISBLK (mode: mode_t) bool { return (mode & S_IFMT) == S_IFBLK;  }
+func S_ISCHR (mode: mode_t) bool { return (mode & S_IFMT) == S_IFCHR;  }
+func S_ISDIR (mode: mode_t) bool { return (mode & S_IFMT) == S_IFDIR;  }
+func S_ISFIFO(mode: mode_t) bool { return (mode & S_IFMT) == S_IFIFO;  }
+func S_ISLNK (mode: mode_t) bool { return (mode & S_IFMT) == S_IFLNK;  }
+func S_ISREG (mode: mode_t) bool { return (mode & S_IFMT) == S_IFREG;  }
+func S_ISSOCK(mode: mode_t) bool { return (mode & S_IFMT) == S_IFSOCK; }
+
 # linux/include/uapi/linux/time_types.h:
 ### struct __kernel_old_timeval {
 ###     __kernel_long_t tv_sec;
@@ -397,22 +546,22 @@ struct __kernel_old_timeval {
 
 # linux/include/uapi/linux/resource.h:
 ### struct rusage {
-###     struct __kernel_old_timeval ru_utime;   /* user time used */
-###     struct __kernel_old_timeval ru_stime;   /* system time used */
-###     __kernel_long_t ru_maxrss;      /* maximum resident set size */
-###     __kernel_long_t ru_ixrss;       /* integral shared memory size */
-###     __kernel_long_t ru_idrss;       /* integral unshared data size */
-###     __kernel_long_t ru_isrss;       /* integral unshared stack size */
-###     __kernel_long_t ru_minflt;      /* page reclaims */
-###     __kernel_long_t ru_majflt;      /* page faults */
-###     __kernel_long_t ru_nswap;       /* swaps */
-###     __kernel_long_t ru_inblock;     /* block input operations */
-###     __kernel_long_t ru_oublock;     /* block output operations */
-###     __kernel_long_t ru_msgsnd;      /* messages sent */
-###     __kernel_long_t ru_msgrcv;      /* messages received */
-###     __kernel_long_t ru_nsignals;    /* signals received */
-###     __kernel_long_t ru_nvcsw;       /* voluntary context switches */
-###     __kernel_long_t ru_nivcsw;      /* involuntary " */
+###         struct __kernel_old_timeval ru_utime;   /* user time used */
+###         struct __kernel_old_timeval ru_stime;   /* system time used */
+###         __kernel_long_t ru_maxrss;              /* maximum resident set size */
+###         __kernel_long_t ru_ixrss;               /* integral shared memory size */
+###         __kernel_long_t ru_idrss;               /* integral unshared data size */
+###         __kernel_long_t ru_isrss;               /* integral unshared stack size */
+###         __kernel_long_t ru_minflt;              /* page reclaims */
+###         __kernel_long_t ru_majflt;              /* page faults */
+###         __kernel_long_t ru_nswap;               /* swaps */
+###         __kernel_long_t ru_inblock;             /* block input operations */
+###         __kernel_long_t ru_oublock;             /* block output operations */
+###         __kernel_long_t ru_msgsnd;              /* messages sent */
+###         __kernel_long_t ru_msgrcv;              /* messages received */
+###         __kernel_long_t ru_nsignals;            /* signals received */
+###         __kernel_long_t ru_nvcsw;               /* voluntary context switches */
+###         __kernel_long_t ru_nivcsw;              /* involuntary " */
 ### };
 struct rusage {
     var ru_utime:    __kernel_old_timeval;
@@ -451,6 +600,7 @@ extern func read(fd: uint, buf: *char, count: usize) ssize;
 extern func write(fd: uint, buf: *char, count: usize) ssize;
 extern func open(filename: *char, flags: sint, mode: umode_t) ssize;
 extern func close(fd: uint) ssize;
+extern func stat(filename: *byte, statbuf: *stat_type) ssize;
 extern func lseek(fd: uint, offset: off_t, whence: uint) ssize;
 extern func mmap(addr: ulong, len: ulong, prot: ulong, flags: ulong, fd: ulong, off: ulong) ssize;
 extern func munmap(addr: ulong, len: usize) ssize;
