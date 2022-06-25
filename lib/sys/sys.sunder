@@ -428,6 +428,20 @@ struct rusage {
     var ru_nivcsw:   slong;
 }
 
+# linux/fs/readdir.c:
+### struct linux_dirent {
+###     unsigned long   d_ino;
+###     unsigned long   d_off;
+###     unsigned short  d_reclen;
+###     char            d_name[1];
+### };
+struct linux_dirent {
+    var d_ino: ulong;
+    var d_off: ulong;
+    var d_reclen: ushort;
+    var d_name: byte;
+}
+
 extern func read(fd: uint, buf: *char, count: usize) ssize;
 extern func write(fd: uint, buf: *char, count: usize) ssize;
 extern func open(filename: *char, flags: sint, mode: umode_t) ssize;
@@ -439,6 +453,7 @@ extern func fork() ssize;
 extern func execve(filename: *byte, argv: **byte, envp: **byte) ssize;
 extern func exit(error_code: sint) void;
 extern func wait4(upid: pid_t, stat_addr: *sint, options: sint, ru: *rusage) ssize;
+extern func getdents(fd: uint, dirent: *linux_dirent, count: uint) ssize;
 
 # linux/tools/include/nolibc/nolibc.h:
 # #define WEXITSTATUS(status)   (((status) & 0xff00) >> 8)

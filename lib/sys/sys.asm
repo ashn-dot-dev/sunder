@@ -7,17 +7,18 @@ __STDIN_FILENO:  equ 0
 __STDOUT_FILENO: equ 1
 __STDERR_FILENO: equ 2
 
-__SYS_READ:   equ 0;
-__SYS_WRITE:  equ 1
-__SYS_OPEN:   equ 2;
-__SYS_CLOSE:  equ 3;
-__SYS_LSEEK:  equ 8;
-__SYS_MMAP:   equ 9;
-__SYS_MUNMAP: equ 11;
-__SYS_FORK:   equ 57;
-__SYS_EXECVE: equ 59;
-__SYS_EXIT:   equ 60;
-__SYS_WAIT4:  equ 61;
+__SYS_READ:    equ 0;
+__SYS_WRITE:   equ 1
+__SYS_OPEN:    equ 2;
+__SYS_CLOSE:   equ 3;
+__SYS_LSEEK:   equ 8;
+__SYS_MMAP:    equ 9;
+__SYS_MUNMAP:  equ 11;
+__SYS_FORK:    equ 57;
+__SYS_EXECVE:  equ 59;
+__SYS_EXIT:    equ 60;
+__SYS_WAIT4:   equ 61;
+__SYS_GETDENTS equ 78;
 
 ; BUILTIN DUMP SUBROUTINE
 ; =======================
@@ -407,6 +408,24 @@ sys.wait4:
     mov r10, [rbp + 0x10] ; ru
     syscall
     mov [rbp + 0x30], rax
+
+    mov rsp, rbp
+    pop rbp
+    ret
+
+; linux/fs/readdir.c
+; SYSCALL_DEFINE3(getdents, unsigned int, fd, struct linux_dirent __user *, dirent, unsigned int, count)
+section .text
+sys.getdents:
+    push rbp
+    mov rbp, rsp
+
+    mov rax, __SYS_GETDENTS
+    mov rdi, [rbp + 0x20] ; fd
+    mov rsi, [rbp + 0x18] ; dirent
+    mov rdx, [rbp + 0x10] ; count
+    syscall
+    mov [rbp + 0x28], rax
 
     mov rsp, rbp
     pop rbp

@@ -3,13 +3,6 @@ import "std/core.sunder";
 import "sys";
 
 struct file {
-    # The Linux kernel uses `unsigned int fd` for the file descriptor parameter
-    # of system calls instead of the traditional `int fd` parameter seen in
-    # libc. The internal `struct fd` associated with this processes' file
-    # descriptor table is indexed using this unsigned integer, with
-    # out-of-bounds file descriptors producing an EBADF syscall error. The
-    # `std::file` struct uses an `unsigned int` (`sys::uint` in Sunder) to
-    # match the kernel data type.
     var _fd: sys::uint;
 
     # Open a file for reading.
@@ -24,7 +17,7 @@ struct file {
     const OPEN_APPEND: usize = 0b100;
 
     func open(path: []byte, mode: usize) std::result[[std::file, []byte]] {
-        var flags: s32 = 0;
+        var flags: sys::sint = 0;
         if mode == 0 {
             # OPEN_READ, OPEN_WRITE, or OPEN_APPEND must be selected.
             return std::result[[std::file, []byte]]::init_error(sys::ERRNO_STRS[(:usize)sys::EINVAL]);
@@ -77,7 +70,7 @@ struct file {
             return std::result[[void, []byte]]::init_error(sys::ERRNO_STRS[(:usize)-sysret]);
         }
 
-        return std::result[[void, []byte]]::init_value(std::zeroed[[void]]());
+        return std::result[[void, []byte]]::init_value(void::init());
     }
 
     func read(self: *file, buf: []byte) std::result[[usize, []byte]] {
@@ -137,5 +130,83 @@ struct file {
         }
 
         return std::result[[usize, []byte]]::init_value((:usize)sysret);
+    }
+}
+
+struct directory {
+    var _fd: sys::uint;
+    var _buf: [1024]byte;
+    var _buf_cur: usize;
+    var _buf_end: usize;
+    var _current: std::optional[[std::result[[[]byte, []byte]]]];
+
+    func open(path: []byte) std::result[[std::directory, []byte]] {
+        var flags: sys::sint = sys::O_RDONLY | sys::O_DIRECTORY | sys::O_CLOEXEC;
+
+        if countof(path) >= sys::PATH_MAX {
+            # Path is too long. The path must be less than sys::PATH_MAX bytes
+            # so that a NUL-terminated buffer of sys::PATH_MAX bytes may be
+            # constructed without a buffer overflow.
+            return std::result[[std::directory, []byte]]::init_error(sys::ERRNO_STRS[(:usize)sys::EINVAL]);
+        }
+        var path_cstr = (:[sys::PATH_MAX]byte)[0...];
+        std::slice[[byte]]::copy(path_cstr[0:countof(path)], path);
+
+        var sysret = sys::open(&path_cstr[0], flags, 0);
+        if sysret < 0 {
+            return std::result[[std::directory, []byte]]::init_error(sys::ERRNO_STRS[(:usize)-sysret]);
+        }
+
+        var directory = (:std::directory){
+            ._fd = (:sys::uint)sysret,
+            ._buf = (:[1024]byte)[0...],
+            ._buf_cur = 0,
+            ._buf_end = 0,
+            ._current = std::optional[[std::result[[[]byte, []byte]]]]::init_empty()
+        };
+        return std::result[[std::directory, []byte]]::init_value(directory);
+    }
+
+    func close(self: *directory) std::result[[void, []byte]] {
+        var sysret = sys::close(self.*._fd);
+        if sysret < 0 {
+            return std::result[[void, []byte]]::init_error(sys::ERRNO_STRS[(:usize)-sysret]);
+        }
+
+        return std::result[[void, []byte]]::init_value(void::init());
+    }
+
+    # Advance the current directory entry.
+    func advance(self: *directory) bool {
+        if self.*._buf_cur >= self.*._buf_end {
+            var sysret = sys::getdents(self.*._fd, (:*sys::linux_dirent)&self.*._buf[0], (:sys::uint)countof(self.*._buf));
+            if sysret == 0 {
+                self.*._current = std::optional[[std::result[[[]byte, []byte]]]]::init_empty();
+                return false; # end-of-iteration
+            }
+            if sysret < 0 {
+                var result = std::result[[[]byte, []byte]]::init_error(sys::ERRNO_STRS[(:usize)-sysret]);
+                self.*._current = std::optional[[std::result[[[]byte, []byte]]]]::init_value(result);
+                return true;
+            }
+
+            self.*._buf_cur = 0;
+            self.*._buf_end = (:usize)sysret;
+        }
+
+        var dirent = (:*sys::linux_dirent)&self.*._buf[self.*._buf_cur];
+        var result = std::result[[[]byte, []byte]]::init_value(std::cstr::data(&dirent.*.d_name));
+        self.*._current = std::optional[[std::result[[[]byte, []byte]]]]::init_value(result);
+        self.*._buf_cur = self.*._buf_cur + (:usize)dirent.*.d_reclen;
+        return true;
+    }
+
+    # Returns the current directory entry name or an error result if an IO
+    # error occurred while reading this directory.
+    func current(self: *directory) std::result[[[]byte, []byte]] {
+        if self.*._current.is_empty() {
+            std::panic("invalid iterator");
+        }
+        return self.*._current.value();
     }
 }
