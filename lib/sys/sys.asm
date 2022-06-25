@@ -436,7 +436,7 @@ sys.getdents:
 
 ; linux/fs/namei.c:
 ; SYSCALL_DEFINE2(mkdir, const char __user *, pathname, umode_t, mode)
-section .txt
+section .text
 sys.mkdir:
     push rbp
     mov rbp, rsp
@@ -453,7 +453,7 @@ sys.mkdir:
 
 ; linux/fs/namei.c:
 ; SYSCALL_DEFINE1(rmdir, const char __user *, pathname)
-section .txt
+section .text
 sys.rmdir:
     push rbp
     mov rbp, rsp
