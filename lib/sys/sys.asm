@@ -19,6 +19,9 @@ __SYS_EXECVE:  equ 59;
 __SYS_EXIT:    equ 60;
 __SYS_WAIT4:   equ 61;
 __SYS_GETDENTS equ 78;
+__SYS_MKDIR    equ 83;
+__SYS_RMDIR    equ 84;
+__SYS_UNLINK   equ 87;
 
 ; BUILTIN DUMP SUBROUTINE
 ; =======================
@@ -413,7 +416,7 @@ sys.wait4:
     pop rbp
     ret
 
-; linux/fs/readdir.c
+; linux/fs/readdir.c:
 ; SYSCALL_DEFINE3(getdents, unsigned int, fd, struct linux_dirent __user *, dirent, unsigned int, count)
 section .text
 sys.getdents:
@@ -426,6 +429,55 @@ sys.getdents:
     mov rdx, [rbp + 0x10] ; count
     syscall
     mov [rbp + 0x28], rax
+
+    mov rsp, rbp
+    pop rbp
+    ret
+
+; linux/fs/namei.c:
+; SYSCALL_DEFINE2(mkdir, const char __user *, pathname, umode_t, mode)
+section .txt
+sys.mkdir:
+    push rbp
+    mov rbp, rsp
+
+    mov rax, __SYS_MKDIR
+    mov rdi, [rbp + 0x18] ; pathname
+    mov rsi, [rbp + 0x10] ; mode
+    syscall
+    mov [rbp + 0x20], rax
+
+    mov rsp, rbp
+    pop rbp
+    ret
+
+; linux/fs/namei.c:
+; SYSCALL_DEFINE1(rmdir, const char __user *, pathname)
+section .txt
+sys.rmdir:
+    push rbp
+    mov rbp, rsp
+
+    mov rax, __SYS_RMDIR
+    mov rdi, [rbp + 0x10] ; pathname
+    syscall
+    mov [rbp + 0x18], rax
+
+    mov rsp, rbp
+    pop rbp
+    ret
+
+; linux/fs/namei.c:
+; SYSCALL_DEFINE1(unlink, const char __user *, pathname)
+section .text
+sys.unlink:
+    push rbp
+    mov rbp, rsp
+
+    mov rax, __SYS_UNLINK
+    mov rdi, [rbp + 0x10] ; pathname
+    syscall
+    mov [rbp + 0x18], rax
 
     mov rsp, rbp
     pop rbp

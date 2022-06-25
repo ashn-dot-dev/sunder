@@ -454,6 +454,9 @@ extern func execve(filename: *byte, argv: **byte, envp: **byte) ssize;
 extern func exit(error_code: sint) void;
 extern func wait4(upid: pid_t, stat_addr: *sint, options: sint, ru: *rusage) ssize;
 extern func getdents(fd: uint, dirent: *linux_dirent, count: uint) ssize;
+extern func mkdir(pathname: *byte, mode: umode_t) ssize;
+extern func rmdir(pathname: *byte) ssize;
+extern func unlink(pathname: *byte) ssize;
 
 # linux/tools/include/nolibc/nolibc.h:
 # #define WEXITSTATUS(status)   (((status) & 0xff00) >> 8)

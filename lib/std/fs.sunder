@@ -47,9 +47,6 @@ struct file {
         }
 
         if countof(path) >= sys::PATH_MAX {
-            # Path is too long. The path must be less than sys::PATH_MAX bytes
-            # so that a NUL-terminated buffer of sys::PATH_MAX bytes may be
-            # constructed without a buffer overflow.
             return std::result[[std::file, []byte]]::init_error(sys::ERRNO_STRS[(:usize)sys::EINVAL]);
         }
         var path_cstr = (:[sys::PATH_MAX]byte)[0...];
@@ -131,6 +128,33 @@ struct file {
 
         return std::result[[usize, []byte]]::init_value((:usize)sysret);
     }
+
+    # Create an empty file if it does not exist.
+    func create(path: []byte)  std::result[[void, []byte]] {
+        var result = std::file::open(path, std::file::OPEN_WRITE);
+        if result.is_error() {
+            return std::result[[void, []byte]]::init_error(result.error());
+        }
+
+        var file = result.value();
+        return file.close();
+    }
+
+    # Remove a file.
+    func remove(path: []byte) std::result[[void, []byte]] {
+        if countof(path) >= sys::PATH_MAX {
+            return std::result[[void, []byte]]::init_error(sys::ERRNO_STRS[(:usize)sys::EINVAL]);
+        }
+        var path_cstr = (:[sys::PATH_MAX]byte)[0...];
+        std::slice[[byte]]::copy(path_cstr[0:countof(path)], path);
+
+        var sysret = sys::unlink(&path_cstr[0]);
+        if sysret < 0 {
+            return std::result[[void, []byte]]::init_error(sys::ERRNO_STRS[(:usize)-sysret]);
+        }
+
+        return std::result[[void, []byte]]::init_value(void::init());
+    }
 }
 
 struct directory {
@@ -144,9 +168,6 @@ struct directory {
         var flags: sys::sint = sys::O_RDONLY | sys::O_DIRECTORY | sys::O_CLOEXEC;
 
         if countof(path) >= sys::PATH_MAX {
-            # Path is too long. The path must be less than sys::PATH_MAX bytes
-            # so that a NUL-terminated buffer of sys::PATH_MAX bytes may be
-            # constructed without a buffer overflow.
             return std::result[[std::directory, []byte]]::init_error(sys::ERRNO_STRS[(:usize)sys::EINVAL]);
         }
         var path_cstr = (:[sys::PATH_MAX]byte)[0...];
@@ -213,5 +234,37 @@ struct directory {
             std::panic("invalid iterator");
         }
         return self.*._current.value();
+    }
+
+    # Create an empty directory if it does not exist.
+    func create(path: []byte)  std::result[[void, []byte]] {
+        if countof(path) >= sys::PATH_MAX {
+            return std::result[[void, []byte]]::init_error(sys::ERRNO_STRS[(:usize)sys::EINVAL]);
+        }
+        var path_cstr = (:[sys::PATH_MAX]byte)[0...];
+        std::slice[[byte]]::copy(path_cstr[0:countof(path)], path);
+
+        var sysret = sys::mkdir(&path_cstr[0], 0o666);
+        if sysret < 0 {
+            return std::result[[void, []byte]]::init_error(sys::ERRNO_STRS[(:usize)-sysret]);
+        }
+
+        return std::result[[void, []byte]]::init_value(void::init());
+    }
+
+    # Remove an empty directory.
+    func remove(path: []byte) std::result[[void, []byte]] {
+        if countof(path) >= sys::PATH_MAX {
+            return std::result[[void, []byte]]::init_error(sys::ERRNO_STRS[(:usize)sys::EINVAL]);
+        }
+        var path_cstr = (:[sys::PATH_MAX]byte)[0...];
+        std::slice[[byte]]::copy(path_cstr[0:countof(path)], path);
+
+        var sysret = sys::rmdir(&path_cstr[0]);
+        if sysret < 0 {
+            return std::result[[void, []byte]]::init_error(sys::ERRNO_STRS[(:usize)-sysret]);
+        }
+
+        return std::result[[void, []byte]]::init_value(void::init());
     }
 }

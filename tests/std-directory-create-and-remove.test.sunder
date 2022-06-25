@@ -1,0 +1,12 @@
+import "std";
+
+func main() void {
+    var result = std::directory::create("some-directory.tmp");
+    std::assert(result.is_value());
+    var result = std::directory::open("some-directory.tmp");
+    std::assert(result.is_value());
+    var result = std::directory::remove("some-directory.tmp");
+    std::assert(result.is_value());
+    var result = std::directory::open("some-directory.tmp");
+    std::assert(result.is_error());
+}
