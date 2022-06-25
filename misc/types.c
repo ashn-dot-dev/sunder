@@ -1,10 +1,18 @@
-#include <sys/types.h>
+// musl-gcc -std=c99 -static -g misc/types.c
+#include <sys/resource.h>
 #include <sys/time.h>
+#include <sys/types.h>
 
 #include <time.h>
 
 int main()
 {
+    /* POSIX-2017 sys/resource.h */
+    struct rusage rusage_value;
+
+    /* POSIX-2017 sys/time.h */
+    struct timespec timespec_value;
+
     /* POSIX-2017 sys/types.h */
     blkcnt_t    blkcnt_t_value;
     blksize_t   blksize_t_value;
@@ -27,9 +35,6 @@ int main()
     time_t      time_t_value;
     timer_t     timer_t_value;
     uid_t       uid_t_value;
-
-    /* POSIX-2017 sys/time.h */
-    struct timespec timespec_value;
 
     /* time.h */
     struct timeval timeval_value;

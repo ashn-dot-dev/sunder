@@ -448,8 +448,13 @@ const XATTR_LIST_MAX: usize =  65536; # size of extended attribute namelist (64k
 const PAGE_SIZE: usize = 4096;
 
 struct timespec {
-    var tv_sec: time_t;
-    var tv_nsec: slong;
+    var tv_sec:     time_t;
+    var tv_nsec:    slong;
+}
+
+struct timeval {
+    var tv_sec:     time_t;
+    var tv_usec:    suseconds_t;
 }
 
 # The definition of the `struct stat` type appears to have different
@@ -464,41 +469,41 @@ struct timespec {
 # corrupt the stack, and both have `sizeof(struct stat) == 144` on x64 Linux.
 # This definition is modeled after the musl definition.
 #
-# Examining the type in GDB with `ptype/o struct stat`:
-#   /* offset    |  size */  type = struct stat {
-#   /*    0      |     8 */    dev_t st_dev;
-#   /*    8      |     8 */    ino_t st_ino;
-#   /*   16      |     8 */    nlink_t st_nlink;
-#   /*   24      |     4 */    mode_t st_mode;
-#   /*   28      |     4 */    uid_t st_uid;
-#   /*   32      |     4 */    gid_t st_gid;
-#   /*   36      |     4 */    unsigned int __pad0;
-#   /*   40      |     8 */    dev_t st_rdev;
-#   /*   48      |     8 */    off_t st_size;
-#   /*   56      |     8 */    blksize_t st_blksize;
-#   /*   64      |     8 */    blkcnt_t st_blocks;
-#   /*   72      |    16 */    struct timespec {
-#   /*   72      |     8 */        time_t tv_sec;
-#   /*   80      |     8 */        long tv_nsec;
+# (dbg) ptype/o struct stat
+# /* offset    |  size */  type = struct stat {
+# /*    0      |     8 */    dev_t st_dev;
+# /*    8      |     8 */    ino_t st_ino;
+# /*   16      |     8 */    nlink_t st_nlink;
+# /*   24      |     4 */    mode_t st_mode;
+# /*   28      |     4 */    uid_t st_uid;
+# /*   32      |     4 */    gid_t st_gid;
+# /*   36      |     4 */    unsigned int __pad0;
+# /*   40      |     8 */    dev_t st_rdev;
+# /*   48      |     8 */    off_t st_size;
+# /*   56      |     8 */    blksize_t st_blksize;
+# /*   64      |     8 */    blkcnt_t st_blocks;
+# /*   72      |    16 */    struct timespec {
+# /*   72      |     8 */        time_t tv_sec;
+# /*   80      |     8 */        long tv_nsec;
 #
-#                                  /* total size (bytes):   16 */
-#                              } st_atim;
-#   /*   88      |    16 */    struct timespec {
-#   /*   88      |     8 */        time_t tv_sec;
-#   /*   96      |     8 */        long tv_nsec;
+#                                /* total size (bytes):   16 */
+#                            } st_atim;
+# /*   88      |    16 */    struct timespec {
+# /*   88      |     8 */        time_t tv_sec;
+# /*   96      |     8 */        long tv_nsec;
 #
-#                                  /* total size (bytes):   16 */
-#                              } st_mtim;
-#   /*  104      |    16 */    struct timespec {
-#   /*  104      |     8 */        time_t tv_sec;
-#   /*  112      |     8 */        long tv_nsec;
+#                                /* total size (bytes):   16 */
+#                            } st_mtim;
+# /*  104      |    16 */    struct timespec {
+# /*  104      |     8 */        time_t tv_sec;
+# /*  112      |     8 */        long tv_nsec;
 #
-#                                  /* total size (bytes):   16 */
-#                              } st_ctim;
-#   /*  120      |    24 */    long __unused[3];
+#                                /* total size (bytes):   16 */
+#                            } st_ctim;
+# /*  120      |    24 */    long __unused[3];
 #
-#                              /* total size (bytes):  144 */
-#                            }
+#                            /* total size (bytes):  144 */
+#                          }
 struct stat_type {
     var st_dev:         dev_t;      # Device.
     var st_ino:         ino_t;      # File serial number.
@@ -534,52 +539,56 @@ func S_ISLNK (mode: mode_t) bool { return (mode & S_IFMT) == S_IFLNK;  }
 func S_ISREG (mode: mode_t) bool { return (mode & S_IFMT) == S_IFREG;  }
 func S_ISSOCK(mode: mode_t) bool { return (mode & S_IFMT) == S_IFSOCK; }
 
-# linux/include/uapi/linux/time_types.h:
-### struct __kernel_old_timeval {
-###     __kernel_long_t tv_sec;
-###     __kernel_long_t tv_usec;
-### };
-struct __kernel_old_timeval {
-    var tv_sec: slong;
-    var tv_usec: slong;
-}
-
-# linux/include/uapi/linux/resource.h:
-### struct rusage {
-###         struct __kernel_old_timeval ru_utime;   /* user time used */
-###         struct __kernel_old_timeval ru_stime;   /* system time used */
-###         __kernel_long_t ru_maxrss;              /* maximum resident set size */
-###         __kernel_long_t ru_ixrss;               /* integral shared memory size */
-###         __kernel_long_t ru_idrss;               /* integral unshared data size */
-###         __kernel_long_t ru_isrss;               /* integral unshared stack size */
-###         __kernel_long_t ru_minflt;              /* page reclaims */
-###         __kernel_long_t ru_majflt;              /* page faults */
-###         __kernel_long_t ru_nswap;               /* swaps */
-###         __kernel_long_t ru_inblock;             /* block input operations */
-###         __kernel_long_t ru_oublock;             /* block output operations */
-###         __kernel_long_t ru_msgsnd;              /* messages sent */
-###         __kernel_long_t ru_msgrcv;              /* messages received */
-###         __kernel_long_t ru_nsignals;            /* signals received */
-###         __kernel_long_t ru_nvcsw;               /* voluntary context switches */
-###         __kernel_long_t ru_nivcsw;              /* involuntary " */
-### };
+# (gdb) ptype/o struct rusage
+# /* offset    |  size */  type = struct rusage {
+# /*    0      |    16 */    struct timeval {
+# /*    0      |     8 */        time_t tv_sec;
+# /*    8      |     8 */        suseconds_t tv_usec;
+#
+#                                /* total size (bytes):   16 */
+#                            } ru_utime;
+# /*   16      |    16 */    struct timeval {
+# /*   16      |     8 */        time_t tv_sec;
+# /*   24      |     8 */        suseconds_t tv_usec;
+#
+#                                /* total size (bytes):   16 */
+#                            } ru_stime;
+# /*   32      |     8 */    long ru_maxrss;
+# /*   40      |     8 */    long ru_ixrss;
+# /*   48      |     8 */    long ru_idrss;
+# /*   56      |     8 */    long ru_isrss;
+# /*   64      |     8 */    long ru_minflt;
+# /*   72      |     8 */    long ru_majflt;
+# /*   80      |     8 */    long ru_nswap;
+# /*   88      |     8 */    long ru_inblock;
+# /*   96      |     8 */    long ru_oublock;
+# /*  104      |     8 */    long ru_msgsnd;
+# /*  112      |     8 */    long ru_msgrcv;
+# /*  120      |     8 */    long ru_nsignals;
+# /*  128      |     8 */    long ru_nvcsw;
+# /*  136      |     8 */    long ru_nivcsw;
+# /*  144      |   128 */    long __reserved[16];
+#
+#                            /* total size (bytes):  272 */
+#                          }
 struct rusage {
-    var ru_utime:    __kernel_old_timeval;
-    var ru_stime:    __kernel_old_timeval;
-    var ru_maxrss:   slong;
-    var ru_ixrss:    slong;
-    var ru_idrss:    slong;
-    var ru_isrss:    slong;
-    var ru_minflt:   slong;
-    var ru_majflt:   slong;
-    var ru_nswap:    slong;
-    var ru_inblock:  slong;
-    var ru_oublock:  slong;
-    var ru_msgsnd:   slong;
-    var ru_msgrcv:   slong;
-    var ru_nsignals: slong;
-    var ru_nvcsw:    slong;
-    var ru_nivcsw:   slong;
+    var ru_utime:       timeval;
+    var ru_stime:       timeval;
+    var ru_maxrss:      slong;
+    var ru_ixrss:       slong;
+    var ru_idrss:       slong;
+    var ru_isrss:       slong;
+    var ru_minflt:      slong;
+    var ru_majflt:      slong;
+    var ru_nswap:       slong;
+    var ru_inblock:     slong;
+    var ru_oublock:     slong;
+    var ru_msgsnd:      slong;
+    var ru_msgrcv:      slong;
+    var ru_nsignals:    slong;
+    var ru_nvcsw:       slong;
+    var ru_nivcsw:      slong;
+    var __reserved:     [16]slong;
 }
 
 # linux/fs/readdir.c:
