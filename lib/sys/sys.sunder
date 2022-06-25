@@ -353,6 +353,11 @@ const SEEK_SET: uint = 0x0;
 const SEEK_CUR: uint = 0x1;
 const SEEK_END: uint = 0x2;
 
+const F_OK: sint = 0b000;
+const R_OK: sint = 0b100;
+const W_OK: sint = 0b010;
+const X_OK: sint = 0b001;
+
 const PROT_NONE:  ulong = 0x0;
 const PROT_READ:  ulong = 0x1;
 const PROT_WRITE: ulong = 0x2;
@@ -449,6 +454,7 @@ extern func close(fd: uint) ssize;
 extern func lseek(fd: uint, offset: off_t, whence: uint) ssize;
 extern func mmap(addr: ulong, len: ulong, prot: ulong, flags: ulong, fd: ulong, off: ulong) ssize;
 extern func munmap(addr: ulong, len: usize) ssize;
+extern func access(filename: *byte, mode: sint) ssize;
 extern func fork() ssize;
 extern func execve(filename: *byte, argv: **byte, envp: **byte) ssize;
 extern func exit(error_code: sint) void;

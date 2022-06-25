@@ -7,21 +7,22 @@ __STDIN_FILENO:  equ 0
 __STDOUT_FILENO: equ 1
 __STDERR_FILENO: equ 2
 
-__SYS_READ:    equ 0;
+__SYS_READ:    equ 0
 __SYS_WRITE:   equ 1
-__SYS_OPEN:    equ 2;
-__SYS_CLOSE:   equ 3;
-__SYS_LSEEK:   equ 8;
-__SYS_MMAP:    equ 9;
-__SYS_MUNMAP:  equ 11;
-__SYS_FORK:    equ 57;
-__SYS_EXECVE:  equ 59;
-__SYS_EXIT:    equ 60;
-__SYS_WAIT4:   equ 61;
-__SYS_GETDENTS equ 78;
-__SYS_MKDIR    equ 83;
-__SYS_RMDIR    equ 84;
-__SYS_UNLINK   equ 87;
+__SYS_OPEN:    equ 2
+__SYS_CLOSE:   equ 3
+__SYS_LSEEK:   equ 8
+__SYS_MMAP:    equ 9
+__SYS_MUNMAP:  equ 11
+__SYS_ACCESS:  equ 21
+__SYS_FORK:    equ 57
+__SYS_EXECVE:  equ 59
+__SYS_EXIT:    equ 60
+__SYS_WAIT4:   equ 61
+__SYS_GETDENTS equ 78
+__SYS_MKDIR    equ 83
+__SYS_RMDIR    equ 84
+__SYS_UNLINK   equ 87
 
 ; BUILTIN DUMP SUBROUTINE
 ; =======================
@@ -346,6 +347,23 @@ sys.munmap:
     mov rax, __SYS_MUNMAP
     mov rdi, [rbp + 0x18] ; addr
     mov rsi, [rbp + 0x10] ; len
+    syscall
+    mov [rbp + 0x20], rax
+
+    mov rsp, rbp
+    pop rbp
+    ret
+
+; linux/fs/open.c:
+; SYSCALL_DEFINE2(access, const char __user *, filename, int, mode)
+section .text
+sys.access:
+    push rbp
+    mov rbp, rsp
+
+    mov rax, __SYS_ACCESS
+    mov rdi, [rbp + 0x18] ; filename
+    mov rsi, [rbp + 0x10] ; mode
     syscall
     mov [rbp + 0x20], rax
 

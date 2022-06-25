@@ -1,0 +1,15 @@
+import "sys";
+
+func main() void {
+    dump 0 == sys::access(&"sys-access.test.sunder\0"[0], sys::F_OK);
+    dump 0 == sys::access(&"sys-access.test.sunder\0"[0], sys::R_OK);
+    dump 0 == sys::access(&"sys-access.test.sunder\0"[0], sys::W_OK);
+    dump 0 == sys::access(&"sys-access.test.sunder\0"[0], sys::X_OK);
+    dump 0 == sys::access(&"sys-access.test.sunder\0"[0], sys::F_OK | sys::R_OK | sys::W_OK | sys::X_OK);
+}
+################################################################################
+# 01
+# 01
+# 01
+# 00
+# 00

@@ -31,7 +31,7 @@ test() {
 
     set +e
     RECEIVED=$(\
-        cd $(dirname "${TEST}") && \
+        cd $(dirname "${TEST}") 2>&1 && \
         "${SUNDER_HOME}/bin/sunder-run" $(basename "${TEST}") 2>&1)
     set -e
 
@@ -39,6 +39,7 @@ test() {
         sed -n '/^########\(########\)*/,$p' "${TEST}" |\
         sed '1d' |\
         sed 's/^# \?//g')
+
     if [ "${EXPECTED}" = "${RECEIVED}" ]; then
         echo '[= PASS =]'
     else
