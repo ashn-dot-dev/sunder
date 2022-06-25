@@ -44,7 +44,7 @@ SUNDER_COMPILE_OBJS = \
 	cst.o \
 	parse.o \
 	order.o \
-	tir.o \
+	ast.o \
 	resolve.o \
 	eval.o \
 	codegen.o

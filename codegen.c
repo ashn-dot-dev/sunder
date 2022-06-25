@@ -14,20 +14,20 @@ static size_t current_loop_id; // Used for generating break & continue lables.
 static size_t unique_id = 0; // Used for generating unique names and labels.
 
 // Local labels take the form:
-//      .__<TIR-node-type>_<unique-id>_<description>
+//      .__<AST-node-type>_<unique-id>_<description>
 //
-// The <TIR-node-type> is STMT for stmt nodes and EXPR for expr nodes.
+// The <AST-node-type> is STMT for stmt nodes and EXPR for expr nodes.
 //
 // The <unique-id> is generated for each node in the call to codegen_stmt,
 // codegen_rvalue, and codegen_lvalue.
 //
-// The <description> is used to denote what section of TIR node generation is
+// The <description> is used to denote what section of AST node generation is
 // taking place as well as provide the necessary labels for jumps.
 //
 // For some stmt and expr nodes, the local labels:
-//      .__<TIR-node-type>_<unique_id>_bgn:
+//      .__<AST-node-type>_<unique_id>_bgn:
 // and
-//      .__<TIR-node-type>_<unique_id>_end:
+//      .__<AST-node-type>_<unique_id>_end:
 // are generated to denote the beginning and end of code generation for that
 // node for use as a jump target.
 #define LABEL_STMT ".__STMT_"
