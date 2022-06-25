@@ -1,0 +1,36 @@
+# NOTE: This test will break when a new file is added to `sunder/tests/util`.
+import "std";
+
+func main() void {
+    var result = std::directory::open("util");
+    var dir = result.value();
+    defer {
+        dir.close();
+    }
+
+    var allocator = std::general_allocator::init();
+    defer { allocator.fini(); }
+    var allocator = std::allocator::init[[typeof(allocator)]](&allocator);
+    var vector = std::vector[[[]byte]]::init(allocator);
+
+    for dir.advance() {
+        var current = dir.current();
+        var name = current.value();
+
+        var str = std::slice[[byte]]::new(allocator, countof(name));
+        std::slice[[byte]]::copy(str, name);
+        vector.push(str);
+    }
+
+    # Sort so file ordering is deterministic on all filesystems.
+    std::sort[[[]byte]](vector.data());
+
+    for i in vector.count() {
+        std::print_line(std::out(), vector.data()[i]);
+    }
+}
+################################################################################
+# .
+# ..
+# allocation_failure_allocator.sunder
+# argv.sunder

@@ -136,7 +136,7 @@ struct file {
 struct directory {
     var _fd: sys::uint;
     var _buf: [1024]byte;
-    var _buf_cur: usize;
+    var _buf_idx: usize;
     var _buf_end: usize;
     var _current: std::optional[[std::result[[[]byte, []byte]]]];
 
@@ -160,7 +160,7 @@ struct directory {
         var directory = (:std::directory){
             ._fd = (:sys::uint)sysret,
             ._buf = (:[1024]byte)[0...],
-            ._buf_cur = 0,
+            ._buf_idx = 0,
             ._buf_end = 0,
             ._current = std::optional[[std::result[[[]byte, []byte]]]]::init_empty()
         };
@@ -178,7 +178,7 @@ struct directory {
 
     # Advance the current directory entry.
     func advance(self: *directory) bool {
-        if self.*._buf_cur >= self.*._buf_end {
+        if self.*._buf_idx >= self.*._buf_end {
             var sysret = sys::getdents(self.*._fd, (:*sys::linux_dirent)&self.*._buf[0], (:sys::uint)countof(self.*._buf));
             if sysret == 0 {
                 self.*._current = std::optional[[std::result[[[]byte, []byte]]]]::init_empty();
@@ -190,19 +190,24 @@ struct directory {
                 return true;
             }
 
-            self.*._buf_cur = 0;
+            self.*._buf_idx = 0;
             self.*._buf_end = (:usize)sysret;
         }
 
-        var dirent = (:*sys::linux_dirent)&self.*._buf[self.*._buf_cur];
+        var dirent = (:*sys::linux_dirent)&self.*._buf[self.*._buf_idx];
         var result = std::result[[[]byte, []byte]]::init_value(std::cstr::data(&dirent.*.d_name));
         self.*._current = std::optional[[std::result[[[]byte, []byte]]]]::init_value(result);
-        self.*._buf_cur = self.*._buf_cur + (:usize)dirent.*.d_reclen;
+        self.*._buf_idx = self.*._buf_idx + (:usize)dirent.*.d_reclen;
         return true;
     }
 
     # Returns the current directory entry name or an error result if an IO
     # error occurred while reading this directory.
+    #
+    # A value result may be invalidated by the next call to
+    # `std::directory::advance` or `std::directory::close`.
+    #
+    # An error result is a static string.
     func current(self: *directory) std::result[[[]byte, []byte]] {
         if self.*._current.is_empty() {
             std::panic("invalid iterator");

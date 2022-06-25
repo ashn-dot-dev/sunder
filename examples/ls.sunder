@@ -52,7 +52,6 @@ func main() void {
                     std::formatter::init[[[]byte]](&error)]);
         }
 
-        var current = dir.current();
         var name = current.value();
         std::print_line(std::out(), name);
     }
