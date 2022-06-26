@@ -349,9 +349,6 @@ push_at_address(size_t size, struct address const* address)
         UNREACHABLE();
     }
 
-    // TODO: Add unit tests for signed and unsigned integers with size 1, 2, 4,
-    // 8, and >8 to make sure that this cascade of mov operations on 8, then 4,
-    // then 2, then 1 byte objects behaves correctly for all cases.
     size_t cur = 0u;
     while ((size - cur) >= 8u) {
         appendli("mov rax, [%s + %#zu]", addr, cur);
@@ -374,14 +371,6 @@ push_at_address(size_t size, struct address const* address)
         appendli("mov al, [%s + %#zu]", addr, cur);
         appendli("mov [rsp + %#zx], al", cur);
     }
-    // NOTE: In relation to the above TODO, if the cascade logic does not work,
-    // then fall back to the dumb-memcpy version that it replaced (shown below).
-    /*
-    for (size_t i = 0; i < size; ++i) {
-        appendli("mov al, [%s + %#zu]", addr, i);
-        appendli("mov [rsp + %#zx], al", i);
-    }
-    */
 
     xalloc(addr, XALLOC_FREE);
 }
@@ -1233,9 +1222,6 @@ codegen_stmt_assign(struct stmt const* stmt, size_t id)
 
     appendli("pop rbx");
     size_t const size = stmt->data.assign.rhs->type->size;
-    // TODO: Add unit tests for signed and unsigned integers with size 1, 2, 4,
-    // 8, and >8 to make sure that this cascade of mov operations on 8, then 4,
-    // then 2, then 1 byte objects behaves correctly for all cases.
     size_t cur = 0u;
     while ((size - cur) >= 8u) {
         appendli("mov rax, [rsp + %#zu]", cur);
@@ -1258,14 +1244,6 @@ codegen_stmt_assign(struct stmt const* stmt, size_t id)
         appendli("mov al, [rsp + %#zu]", cur);
         appendli("mov [rbx + %#zx], al", cur);
     }
-    // NOTE: In relation to the above TODO, if the cascade logic does not work,
-    // then fall back to the dumb-memcpy version that it replaced (shown below).
-    /*
-    for (size_t i = 0; i < size; ++i) {
-        appendli("mov al, [rsp + %#zu]", i);
-        appendli("mov [rbx + %#zx], al", i);
-    }
-    */
     pop(size);
 }
 
@@ -1443,8 +1421,8 @@ codegen_rvalue_array_list(struct expr const* expr, size_t id)
     // into an actual asm loop for elements with trivial initialization.
     // Basically we should account for the scenario where a brainfuck
     // interpreter allocates an array 30000 zeroed bytes, which would cause the
-    // equivalent of memcpy(&my_array[index], &my_zero, 0x8) inline thousands of
-    // times.
+    // equivalent of memcpy(&my_array[index], &my_zero, 0x8) inlined thousands
+    // of times.
     for (size_t i = 0; i < sbuf_count(elements); ++i) {
         assert(elements[i]->type == element_type);
         codegen_rvalue(elements[i]);
