@@ -42,10 +42,10 @@ struct resolver {
 
     // Functions to be completed at the end of the resolve phase after all
     // top-level declarations have been resolved. Incomplete functions defer
-    // having their body's resolved so that mutually recursive functions (e.g. f
-    // calls g and g calls f) have access to each others' symbols in the global
-    // symbol table without requiring one function to be fully defined before
-    // the other.
+    // having their body's resolved so that mutually recursive functions (e.g.
+    // f calls g and g calls f) have access to each others' symbols in the
+    // global symbol table without requiring one function to be fully defined
+    // before the other.
     //
     // NOTE: This member must *NOT* be cached because template function
     // instantiations may resize the stretchy buffer.
