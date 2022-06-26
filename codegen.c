@@ -43,14 +43,10 @@ static void
 appendli_location(struct source_location const* location, char const* fmt, ...);
 static void
 appendch(char ch);
-// NASM Dx data type (db, dw, dq, etc.).
+// Declare NASM Dx data elements forming a static initializer.
 // https://nasm.us/doc/nasmdoc3.html#section-3.2.1
 static void
-append_dx_type(struct type const* type);
-// NASM Dx data elements forming a static initializer.
-// https://nasm.us/doc/nasmdoc3.html#section-3.2.1
-static void
-append_dx_data(struct value const* value);
+append_dx_static_initializer(struct value const* value);
 
 // All push_* functions align rsp to an 8-byte boundary.
 static void
@@ -171,65 +167,12 @@ appendch(char ch)
 }
 
 static void
-append_dx_type(struct type const* type)
-{
-    assert(out != NULL);
-    assert(type != NULL);
-    assert(type->size != 0);
-
-    switch (type->kind) {
-    case TYPE_ANY: /* fallthrough */
-    case TYPE_VOID: {
-        UNREACHABLE();
-    }
-    case TYPE_BOOL: /* fallthrough */
-    case TYPE_BYTE: /* fallthrough */
-    case TYPE_U8: /* fallthrough */
-    case TYPE_S8: /* fallthrough */
-    case TYPE_U16: /* fallthrough */
-    case TYPE_S16: /* fallthrough */
-    case TYPE_U32: /* fallthrough */
-    case TYPE_S32: /* fallthrough */
-    case TYPE_U64: /* fallthrough */
-    case TYPE_S64: /* fallthrough */
-    case TYPE_USIZE: /* fallthrough */
-    case TYPE_SSIZE: {
-        append("db");
-        return;
-    }
-    case TYPE_INTEGER: {
-        UNREACHABLE();
-    }
-    case TYPE_FUNCTION: /* fallthrough */
-    case TYPE_POINTER: {
-        append("dq");
-        return;
-    }
-    case TYPE_ARRAY: {
-        append_dx_type(type->data.array.base);
-        return;
-    }
-    case TYPE_SLICE: {
-        // pointer => dq
-        // count   => dq
-        append("dq");
-        return;
-    }
-    case TYPE_STRUCT: {
-        append("db");
-        return;
-    }
-    }
-
-    UNREACHABLE();
-}
-
-static void
-append_dx_data(struct value const* value)
+append_dx_static_initializer(struct value const* value)
 {
     assert(out != NULL);
     assert(value != NULL);
     assert(value->type->size != 0);
+    assert(value->type->size != SIZEOF_UNSIZED);
 
     switch (value->type->kind) {
     case TYPE_ANY: /* fallthrough */
@@ -250,10 +193,7 @@ append_dx_data(struct value const* value)
     case TYPE_SSIZE: {
         sbuf(uint8_t) const bytes = value_to_new_bytes(value);
         for (size_t i = 0; i < sbuf_count(bytes); ++i) {
-            if (i != 0) {
-                append(", ");
-            }
-            append("%#x", (unsigned)bytes[i]);
+            appendli("db %#x ; %s byte %zu", (unsigned)bytes[i], value->type->name, i);
         }
         sbuf_fini(bytes);
         return;
@@ -265,87 +205,46 @@ append_dx_data(struct value const* value)
         struct address const* const address = value->data.function->address;
         assert(address->kind == ADDRESS_STATIC);
         assert(address->data.static_.offset == 0);
-        append("%s", address->data.static_.name);
+        appendli("dq %s", address->data.static_.name);
         return;
     }
     case TYPE_POINTER: {
         struct address const* const address = &value->data.pointer;
         if (value->type->data.pointer.base->size == 0) {
-            append("0");
+            appendli("dq 0");
             return;
         }
+
         assert(address->kind == ADDRESS_STATIC);
-        append(
-            "($%s + %zu)",
-            address->data.static_.name,
-            address->data.static_.offset);
+        if (address->data.static_.offset == 0) {
+            appendli("dq $%s", address->data.static_.name);
+        }
+        else {
+            appendli(
+                "dq ($%s + %zu)",
+                address->data.static_.name,
+                address->data.static_.offset);
+        }
         return;
     }
     case TYPE_ARRAY: {
         sbuf(struct value*) const elements = value->data.array.elements;
-        struct value* const ellipsis = value->data.array.ellipsis;
-
-        // One dimensional arrays may use NASM's times prefix to repeat the
-        // ellipsis element. However if the array element is itself an array
-        // then it does not appear as if there is a way to nest times prefixes,
-        // so data for the entire array must be generated. Fortunately this is
-        // unlikely to be a case encountered by many users as ellipsis
-        // initialization is mainly used for zeroing one dimensional buffers.
-        if (value->type->data.array.base->kind == TYPE_ARRAY) {
-            size_t const count = value->type->data.array.count;
-            for (size_t i = 0; i < count; ++i) {
-                if (i != 0 && i < sbuf_count(elements)) {
-                    append(", ");
-                }
-
-                if (i < sbuf_count(elements)) {
-                    append_dx_data(elements[i]);
-                }
-                else {
-                    assert(ellipsis != NULL);
-                    append_dx_data(ellipsis);
-                }
+        struct value const* const ellipsis = value->data.array.ellipsis;
+        size_t const count                 = value->type->data.array.count;
+        for (size_t i = 0; i < count; ++i) {
+            if (i < sbuf_count(elements)) {
+                append_dx_static_initializer(elements[i]);
             }
-            return;
-        }
-
-        if (sbuf_count(elements) != 0) {
-            for (size_t i = 0; i < sbuf_count(elements); ++i) {
-                appendch('\n');
-                appendli("; element %zu", i);
-                append("    ");
-                append_dx_type(value->type->data.array.base);
-                appendch(' ');
-                append_dx_data(elements[i]);
+            else {
+                assert(ellipsis != NULL);
+                append_dx_static_initializer(ellipsis);
             }
-        }
-        if (ellipsis != NULL) {
-            size_t const times =
-                value->type->data.array.count - sbuf_count(elements);
-            appendch('\n');
-            appendli("; ellipsis element...");
-            append("    times %zu", times);
-            appendch(' ');
-            append_dx_type(value->type->data.array.base);
-            appendch(' ');
-            append_dx_data(ellipsis);
         }
         return;
     }
     case TYPE_SLICE: {
-        append_dx_data(value->data.slice.pointer);
-        append(", ");
-        // Due to an existing bug in the kinda hacky way that append_dx_type and
-        // append_dx_data work, the append_dx_data call on the pointer will
-        // correctly produce the dq address, but an append_dx_data on the usize
-        // count will be written out as bytes. Since both the pointer and the
-        // count need to be written in their qd representation, we manually
-        // write the dq value of the count here instead of making a call to
-        // append_dx_data.
-        char* const count_cstr =
-            bigint_to_new_cstr(value->data.slice.count->data.integer, NULL);
-        append("%s", count_cstr);
-        xalloc(count_cstr, XALLOC_FREE);
+        append_dx_static_initializer(value->data.slice.pointer);
+        append_dx_static_initializer(value->data.slice.count);
         return;
     }
     case TYPE_STRUCT: {
@@ -353,7 +252,6 @@ append_dx_data(struct value const* value)
             value->type->data.struct_.member_variables;
         size_t const member_variable_defs_count =
             sbuf_count(member_variable_defs);
-        appendch('\n');
         for (size_t i = 0; i < member_variable_defs_count; ++i) {
             struct member_variable const* const def = member_variable_defs + i;
             if (i != 0) {
@@ -362,7 +260,7 @@ append_dx_data(struct value const* value)
                 size_t const padding =
                     def->offset - (prev_def->offset + prev_def->type->size);
                 if (padding != 0) {
-                    appendln("    ; padding");
+                    appendli("; padding");
                     append("    db ");
                     for (size_t i = 0; i < padding; ++i) {
                         if (i != 0) {
@@ -373,22 +271,15 @@ append_dx_data(struct value const* value)
                     appendch('\n');
                 }
             }
+
+            appendli("; member variable %s: %s", def->name, def->type->name);
             struct value const* const val =
                 value->data.struct_.member_variables[i];
-
-            appendln(
-                "    ; member variable %s: %s", def->name, def->type->name);
-            append("    ");
-            append_dx_type(def->type);
-            appendch(' ');
-            append_dx_data(val);
-            appendch('\n');
+            append_dx_static_initializer(val);
         }
         return;
     }
     }
-
-    UNREACHABLE();
 }
 
 static void
@@ -1039,21 +930,8 @@ codegen_static_object(struct symbol const* symbol)
     }
 
     assert(symbol_xget_address(symbol)->data.static_.offset == 0);
-    append("$%s:", symbol_xget_address(symbol)->data.static_.name);
-    if (type->kind != TYPE_ARRAY && type->kind != TYPE_STRUCT) {
-        // Only genreate the dx type for non-arrays / non-structs as
-        // arrays/struct have thir own special way of initializing data from a
-        // combination of explicitly specified data.
-        //
-        // TODO: The fact that we need this special case here means that there
-        // is something not-quite-so-well thought out in the way that
-        // append_dx_type and append_dx_data were planned out. Look into
-        // alternative designs that provide a better abstraction.
-        appendch(' ');
-        append_dx_type(symbol_xget_type(symbol));
-        appendch(' ');
-    }
-    append_dx_data(symbol_xget_value(symbol));
+    append("$%s:\n", symbol_xget_address(symbol)->data.static_.name);
+    append_dx_static_initializer(symbol_xget_value(symbol));
     appendch('\n');
     return;
 }

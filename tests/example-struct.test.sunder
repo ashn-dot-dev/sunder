@@ -118,7 +118,6 @@ func main() void {
         .w = 1s32
     };
 
-
     # Same definition is used for bar_a and bar_b. Check to make sure they
     # produce the same byte representation.
     var bar_b: bar = (:bar){
