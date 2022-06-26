@@ -55,9 +55,9 @@ static void
 push_address(struct address const* address);
 static void
 push_at_address(size_t size, struct address const* address);
-// The pop function will round size up to an 8-byte boundary to match the push_*
-// functions so that one push/pop pair will restore the stack to it's previous
-// state.
+// The pop function will round size up to an 8-byte boundary to match the
+// push_* functions so that one push/pop pair will restore the stack to it's
+// previous state.
 static void
 pop(size_t size);
 
@@ -193,7 +193,11 @@ append_dx_static_initializer(struct value const* value)
     case TYPE_SSIZE: {
         sbuf(uint8_t) const bytes = value_to_new_bytes(value);
         for (size_t i = 0; i < sbuf_count(bytes); ++i) {
-            appendli("db %#x ; %s byte %zu", (unsigned)bytes[i], value->type->name, i);
+            appendli(
+                "db %#x ; %s byte %zu",
+                (unsigned)bytes[i],
+                value->type->name,
+                i);
         }
         sbuf_fini(bytes);
         return;
@@ -230,7 +234,7 @@ append_dx_static_initializer(struct value const* value)
     case TYPE_ARRAY: {
         sbuf(struct value*) const elements = value->data.array.elements;
         struct value const* const ellipsis = value->data.array.ellipsis;
-        size_t const count                 = value->type->data.array.count;
+        size_t const count = value->type->data.array.count;
         for (size_t i = 0; i < count; ++i) {
             if (i < sbuf_count(elements)) {
                 append_dx_static_initializer(elements[i]);
