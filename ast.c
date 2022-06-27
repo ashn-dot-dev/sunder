@@ -328,80 +328,8 @@ struct type*
 type_new_struct(char const* name, struct symbol_table* symbols)
 {
     struct type* const self = type_new(name, 0, 0, symbols, TYPE_STRUCT);
-    self->data.struct_.next_offset = 0;
     self->data.struct_.member_variables = NULL;
     return self;
-}
-
-void
-type_struct_add_member_variable(
-    struct type* self, char const* name, struct type const* type)
-{
-    assert(self != NULL);
-    assert(name != NULL);
-    assert(type != NULL);
-
-    if (self->name == type->name) {
-        fatal(
-            NULL,
-            "struct `%s` contains a member variable of its own type",
-            self->name);
-    }
-
-    // Member variables with size zero are part of the struct, but do not
-    // contribute to the size or alignment of the struct.
-    if (type->size == 0) {
-        struct member_variable const m = {
-            .name = name,
-            .type = type,
-            .offset = self->data.struct_.next_offset,
-        };
-        sbuf_push(self->data.struct_.member_variables, m);
-        return;
-    }
-
-    assert(type->size != 0);
-    assert(type->align != 0);
-
-    // Increase the offset into the struct until the start of the added member
-    // variable is aligned to a valid byte boundary.
-    //
-    // TODO: Do we need any additional calculation(s) here to account for the
-    // natural alignment of the stack? Currently we are using 8-byte stack
-    // alignment (even though technically x64 has a max alignment of 16), but
-    // this check for "do we need to increase the next offset" does not include
-    // any mention of the natural stack alignment.
-    while (self->data.struct_.next_offset % type->align != 0) {
-        self->data.struct_.next_offset += 1;
-    }
-
-    // Push the added member variable onto the back of the struct's list of
-    // members (ordered by offset).
-    struct member_variable const m = {
-        .name = name,
-        .type = type,
-        .offset = self->data.struct_.next_offset,
-    };
-    sbuf_push(self->data.struct_.member_variables, m);
-
-    // Adjust the struct alignment to match the alignment of the first
-    // non-zero-sized non-zero-aligned member. This case should only ever occur
-    // if the size and alignment are both zero.
-    assert((self->size == 0) == (self->align == 0));
-    if (self->align == 0) {
-        self->align = type->align;
-    }
-
-    // Adjust the struct size to fit all members plus array stride padding.
-    self->size = self->data.struct_.next_offset + type->size;
-    assert(self->align != 0);
-    while (self->size % self->align != 0) {
-        self->size += 1;
-    }
-
-    // Future member variables will search for a valid offset starting at one
-    // byte past the added member variable.
-    self->data.struct_.next_offset += type->size;
 }
 
 long

@@ -1865,7 +1865,7 @@ complete_struct(
     size_t const members_count = sbuf_count(members);
 
     // XXX: Evil const cast.
-    struct type* type = (struct type*)symbol_xget_type(symbol);
+    struct type* struct_type = (struct type*)symbol_xget_type(symbol);
     // XXX: Evil const cast.
     struct symbol_table* const struct_symbols =
         (struct symbol_table*)symbol_xget_type(symbol)->symbols;
@@ -1891,14 +1891,103 @@ complete_struct(
     resolver->current_static_addr_prefix =
         normalize(NULL, symbol_xget_type(symbol)->name, 0);
     resolver->current_symbol_table = struct_symbols;
+
+    // Offset of the next member variable that would be added to this struct.
+    // Updated every time a member variable is added to the struct.
+    //
+    //      # size == 0
+    //      # next_offset == 0
+    //      struct foo { }
+    //
+    //      # size == 2
+    //      # next_offset == 2 (after adding x)
+    //      struct foo {
+    //          var x: u16 # bytes 0->1
+    //      }
+    //
+    //      # size == 4
+    //      # next_offset == 3 (after adding y)
+    //      struct foo {
+    //          var x: u16 # bytes 0->1
+    //          var y: u8  # byte  2
+    //                     # byte  3 (stride padding)
+    //      }
+    //
+    //      # size == 16
+    //      # next_offset == 16 (after adding z)
+    //      struct foo {
+    //          var x: u16 # bytes 0->1
+    //          var y: u8  # byte  2
+    //                     # bytes 3->7 (padding)
+    //          var z: u64 # bytes 8->15
+    //      }
+    size_t next_offset = 0;
     for (size_t i = 0; i < members_count; ++i) {
         struct cst_member const* const member = members[i];
         switch (member->kind) {
         case CST_MEMBER_VARIABLE: {
+            char const* const member_name = member->name;
             struct type const* const member_type =
                 resolve_typespec(resolver, member->data.variable.typespec);
-            type_struct_add_member_variable(type, member->name, member_type);
-            xxx_member_variables_ref = type->data.struct_.member_variables;
+
+            if (struct_type->name == member_type->name) {
+                fatal(
+                    NULL,
+                    "struct `%s` contains a member variable of its own type",
+                    struct_type->name);
+            }
+
+            // Member variables with size zero are part of the struct, but do
+            // not contribute to the size or alignment of the struct.
+            if (member_type->size == 0) {
+                struct member_variable const m = {
+                    .name = member_name,
+                    .type = member_type,
+                    .offset = next_offset,
+                };
+                sbuf_push(struct_type->data.struct_.member_variables, m);
+                continue;
+            }
+
+            assert(member_type->size != 0);
+            assert(member_type->align != 0);
+
+            // Increase the offset into the struct until the start of the added
+            // member variable is aligned to a valid byte boundary.
+            while (next_offset % member_type->align != 0) {
+                next_offset += 1;
+            }
+
+            // Push the added member variable onto the back of the struct's
+            // list of members (ordered by offset).
+            struct member_variable const m = {
+                .name = member_name,
+                .type = member_type,
+                .offset = next_offset,
+            };
+            sbuf_push(struct_type->data.struct_.member_variables, m);
+
+            // Adjust the struct alignment to match the alignment of the first
+            // non-zero-sized non-zero-aligned member. This case should only
+            // ever occur if the size and alignment are both zero.
+            assert((struct_type->size == 0) == (struct_type->align == 0));
+            if (struct_type->align == 0) {
+                struct_type->align = member_type->align;
+            }
+
+            // Adjust the struct size to fit all members plus array stride
+            // padding.
+            struct_type->size = next_offset + member_type->size;
+            assert(struct_type->align != 0);
+            while (struct_type->size % struct_type->align != 0) {
+                struct_type->size += 1;
+            }
+
+            // Future member variables will search for a valid offset starting
+            // at one byte past the added member variable.
+            next_offset += member_type->size;
+
+            xxx_member_variables_ref = struct_type->data.struct_.member_variables;
             continue;
         }
         case CST_MEMBER_CONSTANT: {
@@ -1915,7 +2004,7 @@ complete_struct(
     resolver->current_static_addr_prefix = save_static_addr_prefix;
     resolver->current_symbol_table = save_symbol_table;
 
-    sbuf_freeze(type->data.struct_.member_variables);
+    sbuf_freeze(struct_type->data.struct_.member_variables);
 }
 
 static void

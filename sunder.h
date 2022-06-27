@@ -1624,37 +1624,6 @@ struct type {
             struct type const* base;
         } slice;
         struct {
-            // Offset of the next member variable that would be added to this
-            // struct. Initialized to zero upon struct creation and updated
-            // every time a member variable is added to the struct.
-            //
-            //      # size == 0
-            //      # next_offset == 0
-            //      struct foo { }
-            //
-            //      # size == 2
-            //      # next_offset == 2 (after adding x)
-            //      struct foo {
-            //          var x: u16 # bytes 0->1
-            //      }
-            //
-            //      # size == 4
-            //      # next_offset == 3 (after adding y)
-            //      struct foo {
-            //          var x: u16 # bytes 0->1
-            //          var y: u8  # byte  2
-            //                     # byte  3 (stride padding)
-            //      }
-            //
-            //      # size == 16
-            //      # next_offset == 16 (after adding z)
-            //      struct foo {
-            //          var x: u16 # bytes 0->1
-            //          var y: u8  # byte  2
-            //                     # bytes 3->7 (padding)
-            //          var z: u64 # bytes 8->15
-            //      }
-            size_t next_offset;
             // List of member variables within the struct ordered by offset into
             // the struct (i.e. their declaration order).
             struct member_variable {
@@ -1707,10 +1676,6 @@ type_new_slice(struct type const* base);
 // Create a new struct with no members (size zero and alignment zero).
 struct type*
 type_new_struct(char const* name, struct symbol_table* symbols);
-// Add a member variable definition to the end of the provided struct type.
-void
-type_struct_add_member_variable(
-    struct type* self, char const* name, struct type const* type);
 // Returns the index of the member variable `name` of the provided struct type.
 // Returns a non-negative integer index on success.
 // Returns a -1 on failure.
