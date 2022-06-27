@@ -256,8 +256,18 @@ append_dx_static_initializer(struct value const* value)
             value->type->data.struct_.member_variables;
         size_t const member_variable_defs_count =
             sbuf_count(member_variable_defs);
-        for (size_t i = 0; i < member_variable_defs_count; ++i) {
+
+        sbuf(struct value*) const member_variable_vals =
+            value->data.struct_.member_variables;
+        size_t const member_variable_vals_count =
+            sbuf_count(member_variable_vals);
+
+        assert(member_variable_defs_count == member_variable_vals_count);
+        size_t const member_variable_count = member_variable_vals_count;
+
+        for (size_t i = 0; i < member_variable_count; ++i) {
             struct member_variable const* const def = member_variable_defs + i;
+
             if (i != 0) {
                 struct member_variable const* const prev_def =
                     member_variable_defs + (i - 1);
@@ -277,9 +287,7 @@ append_dx_static_initializer(struct value const* value)
             }
 
             appendli("; member variable %s: %s", def->name, def->type->name);
-            struct value const* const val =
-                value->data.struct_.member_variables[i];
-            append_dx_static_initializer(val);
+            append_dx_static_initializer(member_variable_vals[i]);
         }
         return;
     }
