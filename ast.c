@@ -328,6 +328,7 @@ struct type*
 type_new_struct(char const* name, struct symbol_table* symbols)
 {
     struct type* const self = type_new(name, 0, 0, symbols, TYPE_STRUCT);
+    self->data.struct_.is_complete = false;
     self->data.struct_.member_variables = NULL;
     return self;
 }

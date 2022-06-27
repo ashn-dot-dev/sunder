@@ -1625,6 +1625,10 @@ struct type {
             struct type const* base;
         } slice;
         struct {
+            // True if this type has been completed. Initially, all structs are
+            // added as incomplete types and are marked as complete once all
+            // member variable declarations have been resolved.
+            bool is_complete;
             // List of member variables within the struct ordered by offset
             // into the struct (i.e. their declaration order).
             struct member_variable {

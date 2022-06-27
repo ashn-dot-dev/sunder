@@ -1888,6 +1888,20 @@ complete_struct(
         normalize(NULL, symbol_xget_type(symbol)->name, 0);
     resolver->current_symbol_table = struct_symbols;
 
+    // If the struct contains no member variable declarations, then the struct
+    // should be marked as complete since the size and alignment will always be
+    // zero. Default assume that the struct is complete, then iterate through
+    // the rest of the member declarations to see if the struct should actually
+    // still be marked as incomplete.
+    struct_type->data.struct_.is_complete = true;
+    for (size_t i = 0; i < members_count; ++i) {
+        struct cst_member const* const future_member = members[i];
+        if (future_member->kind == CST_MEMBER_VARIABLE) {
+            struct_type->data.struct_.is_complete = false;
+            break;
+        }
+    }
+
     // Offset of the next member variable that would be added to this struct.
     // Updated every time a member variable is added to the struct.
     //
@@ -1925,12 +1939,13 @@ complete_struct(
             char const* const member_name = member->name;
             struct type const* const member_type =
                 resolve_typespec(resolver, member->data.variable.typespec);
-
-            if (struct_type->name == member_type->name) {
+            if (member_type->kind == TYPE_STRUCT
+                && !member_type->data.struct_.is_complete) {
                 fatal(
-                    NULL,
-                    "struct `%s` contains a member variable of its own type",
-                    struct_type->name);
+                    member->location,
+                    "struct `%s` contains a member variable of incomplete struct type `%s`",
+                    struct_type->name,
+                    member_type->name);
             }
 
             // Member variables with size zero are part of the struct, but do
@@ -1982,9 +1997,35 @@ complete_struct(
             // Future member variables will search for a valid offset starting
             // at one byte past the added member variable.
             next_offset += member_type->size;
+
+            // If this is the last member variable declaration within the
+            // struct, then the struct's final size and alignment are known,
+            // so the struct can be marked as complete. Default assume that the
+            // struct is complete, then iterate through the rest of the member
+            // declarations to see if the struct should actually still be
+            // marked as incomplete.
+            struct_type->data.struct_.is_complete = true;
+            for (size_t j = i + 1; j < members_count; ++j) {
+                struct cst_member const* const future_member = members[j];
+                if (future_member->kind == CST_MEMBER_VARIABLE) {
+                    struct_type->data.struct_.is_complete = false;
+                    break;
+                }
+            }
             continue;
         }
         case CST_MEMBER_CONSTANT: {
+            struct type const* const member_type = resolve_typespec(
+                resolver, member->data.constant.decl->data.constant.typespec);
+            if (member_type->kind == TYPE_STRUCT
+                && !member_type->data.struct_.is_complete) {
+                fatal(
+                    member->location,
+                    "struct `%s` contains a member constant of incomplete struct type `%s`",
+                    struct_type->name,
+                    member_type->name);
+            }
+
             resolve_decl_constant(resolver, member->data.constant.decl);
             continue;
         }
@@ -1993,6 +2034,7 @@ complete_struct(
             continue;
         }
         }
+
         UNREACHABLE();
     }
     resolver->current_static_addr_prefix = save_static_addr_prefix;
