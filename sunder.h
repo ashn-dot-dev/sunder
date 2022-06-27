@@ -1605,7 +1605,8 @@ struct type {
             // NOTE: The min and max fields are "optional" in the sense that
             // they are not defined for all types satisfying the
             // type_is_any_integer function. The type kind TYPE_INTEGER will
-            // have these as NULL as integers of this type have no defined size.
+            // have these as NULL as integers of this type have no defined
+            // size.
             struct bigint const* min; // optional
             struct bigint const* max; // optional
         } integer;
@@ -1624,8 +1625,8 @@ struct type {
             struct type const* base;
         } slice;
         struct {
-            // List of member variables within the struct ordered by offset into
-            // the struct (i.e. their declaration order).
+            // List of member variables within the struct ordered by offset
+            // into the struct (i.e. their declaration order).
             struct member_variable {
                 char const* name; // interned
                 struct type const* type;

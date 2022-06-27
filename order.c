@@ -465,15 +465,15 @@ order_typespec(struct orderer* orderer, struct cst_typespec const* typespec)
         // pointer or slice type will also always have the same size regardless
         // of the base element type. A struct containing a pointer member will
         // always use one machine word for that pointer member, an array of
-        // slices will always use two machine words for each array element, etc.
-        // Since pointer and slice base types have a size (and alignment) that
-        // does *not* depend on their base element type, we may skip ordering
-        // the base element type during the ordering phase.
+        // slices will always use two machine words for each array element,
+        // etc. Since pointer and slice base types have a size (and alignment)
+        // that does *not* depend on their base element type, we may skip
+        // ordering the base element type during the ordering phase.
         //
         // Not requiring information on a base element type of a pointer type
-        // (or pointer component of a DIY slice type) matches the behavior of C,
-        // as pointer types may be used before their base type definition has
-        // been completed (e.g. in the case of self-referential structs).
+        // (or pointer component of a DIY slice type) matches the behavior of
+        // C, as pointer types may be used before their base type definition
+        // has been completed (e.g. in the case of self-referential structs).
         //
         //     struct x {
         //         /* var pointer: *x; */
@@ -506,16 +506,16 @@ order_symbol(struct orderer* orderer, struct cst_symbol const* symbol)
     // symbols within *this* module.
     //
     // If this module does not have a namespace then order the symbol based on
-    // its first symbol element. If that element corresponds to a declaration in
-    // this module (e.g. a struct) then the symbol will be correctly ordered. If
-    // that element does not correspond to a declaration in this module then
-    // again the order_name will silently ignore it assuming it is defined
-    // elsewhere.
+    // its first symbol element. If that element corresponds to a declaration
+    // in this module (e.g. a struct) then the symbol will be correctly
+    // ordered. If that element does not correspond to a declaration in this
+    // module then again the order_name will silently ignore it assuming it is
+    // defined elsewhere.
     struct cst_namespace const* const namespace =
         orderer->module->cst->namespace;
     if (namespace == NULL) {
-        // Module does not have a namespace. Perform ordering based on the first
-        // symbol element in the symbol.
+        // Module does not have a namespace. Perform ordering based on the
+        // first symbol element in the symbol.
         order_identifier(orderer, symbol->elements[0]->identifier);
         order_template_argument_list(
             orderer, symbol->elements[0]->template_arguments);
@@ -525,9 +525,9 @@ order_symbol(struct orderer* orderer, struct cst_symbol const* symbol)
     size_t const namespace_count = sbuf_count(namespace->identifiers);
     assert(namespace_count >= 1);
     if (sbuf_count(symbol->elements) < namespace_count) {
-        // Current symbol refers to some declaration under a parent namespace or
-        // the parent namespace itself. Let the resolution of the symbol occur
-        // during the resolve phase.
+        // Current symbol refers to some declaration under a parent namespace
+        // or the parent namespace itself. Let the resolution of the symbol
+        // occur during the resolve phase.
         return;
     }
 
