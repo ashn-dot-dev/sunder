@@ -1870,12 +1870,8 @@ complete_struct(
     struct symbol_table* const struct_symbols =
         (struct symbol_table*)symbol_xget_type(symbol)->symbols;
 
-    // XXX: A "direct leak" is detected if we encounter a fatal error while
-    // resolving the member constants and declarations below even though we
-    // hold a valid path to the buffer through the `type` pointer. Always keep
-    // a reference to the the stretchy buffer so that ASAN does not complain.
-    sbuf(struct member_variable const) xxx_member_variables_ref = NULL;
-    (void)xxx_member_variables_ref;
+    sbuf(struct member_variable) member_variables = NULL;
+
     // Add all member definitions to the struct in the order that they were
     // defined in.
     char const* const save_static_addr_prefix =
@@ -1945,7 +1941,7 @@ complete_struct(
                     .type = member_type,
                     .offset = next_offset,
                 };
-                sbuf_push(struct_type->data.struct_.member_variables, m);
+                sbuf_push(member_variables, m);
                 continue;
             }
 
@@ -1965,7 +1961,7 @@ complete_struct(
                 .type = member_type,
                 .offset = next_offset,
             };
-            sbuf_push(struct_type->data.struct_.member_variables, m);
+            sbuf_push(member_variables, m);
 
             // Adjust the struct alignment to match the alignment of the first
             // non-zero-sized non-zero-aligned member. This case should only
@@ -1986,8 +1982,6 @@ complete_struct(
             // Future member variables will search for a valid offset starting
             // at one byte past the added member variable.
             next_offset += member_type->size;
-
-            xxx_member_variables_ref = struct_type->data.struct_.member_variables;
             continue;
         }
         case CST_MEMBER_CONSTANT: {
@@ -2004,7 +1998,8 @@ complete_struct(
     resolver->current_static_addr_prefix = save_static_addr_prefix;
     resolver->current_symbol_table = save_symbol_table;
 
-    sbuf_freeze(struct_type->data.struct_.member_variables);
+    sbuf_freeze(member_variables);
+    struct_type->data.struct_.member_variables = member_variables;
 }
 
 static void
