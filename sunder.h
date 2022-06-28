@@ -937,7 +937,7 @@ enum token_kind {
     TOKEN_ELLIPSIS, // ...
     TOKEN_DOT_STAR, // .*
     TOKEN_DOT, // .
-    TOKEN_COLON_COLON, // :
+    TOKEN_COLON_COLON, // ::
     TOKEN_COLON, // :
     TOKEN_SEMICOLON, // ;
     // Identifiers and Non-Keyword Literals
