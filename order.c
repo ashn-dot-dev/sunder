@@ -338,6 +338,7 @@ order_expr(struct orderer* orderer, struct cst_expr const* expr)
         return;
     }
     case CST_EXPR_STRUCT: {
+        order_typespec(orderer, expr->data.struct_.typespec);
         sbuf(struct cst_member_initializer const* const) const initializers =
             expr->data.struct_.initializers;
         for (size_t i = 0; i < sbuf_count(initializers); ++i) {

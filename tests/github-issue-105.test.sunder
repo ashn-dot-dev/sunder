@@ -1,0 +1,9 @@
+const a = (:foo){};
+
+struct foo {
+    var x: []byte;
+}
+################################################################################
+# [github-issue-105.test.sunder:1] error: missing initializer for member variable `x`
+# const a = (:foo){};
+#           ^
