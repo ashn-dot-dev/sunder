@@ -31,8 +31,8 @@ test() {
 
     set +e
     RECEIVED=$(\
-        cd $(dirname "${TEST}") 2>&1 && \
-        "${SUNDER_HOME}/bin/sunder-run" $(basename "${TEST}") 2>&1)
+        cd "$(dirname "${TEST}")" 2>&1 && \
+        "${SUNDER_HOME}/bin/sunder-run" "$(basename "${TEST}")" 2>&1)
     set -e
 
     EXPECTED=$(\
