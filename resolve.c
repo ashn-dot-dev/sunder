@@ -2777,8 +2777,8 @@ resolve_expr_bytes(struct resolver* resolver, struct cst_expr const* expr)
         resolver_reserve_storage_static(resolver, "__bytes");
 
     size_t const count = string_count(expr->data.bytes);
-    struct type const* const type =
-        type_unique_array(count + 1 /*NUL*/, context()->builtin.byte);
+    struct type const* const type = type_unique_array(
+        expr->location, count + 1 /*NUL*/, context()->builtin.byte);
     // TODO: Allocating a value for each and every byte in the bytes literal
     // feels wasteful. It may be worth investigating some specific ascii or
     // asciiz static object that would use the expr's string directly and then
@@ -2883,8 +2883,8 @@ resolve_expr_list(struct resolver* resolver, struct cst_expr const* expr)
     char const* const array_name = intern_cstr(string_start(array_name_string));
     string_del(array_name_string);
 
-    struct type const* const array_type =
-        type_unique_array(elements_count, type->data.slice.base);
+    struct type const* const array_type = type_unique_array(
+        expr->location, elements_count, type->data.slice.base);
 
     bool const is_global = resolver_is_global(resolver);
     bool const is_static = is_global || resolver->is_within_const_decl;
@@ -4339,7 +4339,7 @@ resolve_typespec_array(
 
     struct type const* const base =
         resolve_typespec(resolver, typespec->data.array.base);
-    return type_unique_array(count, base);
+    return type_unique_array(typespec->location, count, base);
 }
 
 static struct type const*

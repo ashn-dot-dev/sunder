@@ -411,9 +411,18 @@ type_unique_pointer(struct type const* base)
 }
 
 struct type const*
-type_unique_array(size_t count, struct type const* base)
+type_unique_array(
+    struct source_location const* location,
+    size_t count,
+    struct type const* base)
 {
     assert(base != NULL);
+
+    size_t const size = count * base->size;
+    bool const size_overflow = count != 0 && size / count != base->size;
+    if (size_overflow || size > SIZEOF_MAX) {
+        fatal(location, "array size exceeds the maximum allowable object size");
+    }
 
     struct type* const type = type_new_array(count, base);
     struct symbol const* const existing =

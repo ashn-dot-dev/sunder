@@ -1569,6 +1569,15 @@ order(struct module* module);
 // code generation phases will fail for unsized types.
 #define SIZEOF_UNSIZED ((size_t)SIZE_MAX)
 #define ALIGNOF_UNSIZED ((size_t)SIZE_MAX)
+STATIC_ASSERT(size_t_is_64_bit, sizeof(size_t) == 8);
+
+// Maximum allowable object size. The `sizeof` a type must not exceed the
+// maximum value of a `ptrdiff_t` (`ssize::MAX` or `s64::max` on x64), so that
+// pointer difference calculations between two pointers into an object of that
+// type may always be safely calculated.
+#define SIZEOF_MAX ((size_t)PTRDIFF_MAX)
+STATIC_ASSERT(ptrdiff_t_eq_size_t, sizeof(ptrdiff_t) == sizeof(size_t));
+
 struct type {
     char const* name; // Canonical human-readable type-name (interned)
     size_t size; // sizeof
@@ -1697,8 +1706,13 @@ type_unique_function(
     struct type const* const* parameter_types, struct type const* return_type);
 struct type const*
 type_unique_pointer(struct type const* base);
+// Uses the provided source location for an error message in the event that the
+// unique array type has a size that exceeds the maximum allowed object size.
 struct type const*
-type_unique_array(size_t count, struct type const* base);
+type_unique_array(
+    struct source_location const* location,
+    size_t count,
+    struct type const* base);
 struct type const*
 type_unique_slice(struct type const* base);
 
