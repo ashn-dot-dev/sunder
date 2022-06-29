@@ -13,9 +13,9 @@
          | <decl-extern-variable>
          | <decl-extern-function>
 
-<decl-variable> ::= "var" <identifier> ":" <typespec> "=" <expr> ";"
+<decl-variable> ::= "var" <identifier> (":" <typespec>)? "=" <expr> ";"
 
-<decl-constant> ::= "const" <identifier> ":" <typespec> "=" <expr> ";"
+<decl-constant> ::= "const" <identifier> (":" <typespec>)? "=" <expr> ";"
 
 <decl-function> ::= "func" <identifier> <template-parameter-list>? "(" <parameter-list> ")" <typespec> <block>
 
