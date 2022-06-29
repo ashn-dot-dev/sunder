@@ -1409,7 +1409,7 @@ resolve_decl_constant(struct resolver* resolver, struct cst_decl const* decl)
 
     struct expr const* expr = resolve_expr(resolver, decl->data.constant.expr);
 
-    struct type const* const type = decl->data.variable.typespec != NULL
+    struct type const* const type = decl->data.constant.typespec != NULL
         ? resolve_typespec(resolver, decl->data.constant.typespec)
         : expr->type;
     if (type->size == SIZEOF_UNSIZED) {
