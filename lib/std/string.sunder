@@ -61,7 +61,7 @@ struct string {
         return data.hash();
     }
 
-    func format(self: *string, writer: std::writer, fmt: []byte) std::result[[void, []byte]] {
+    func format(self: *string, writer: std::writer, fmt: []byte) std::result[[void, std::error]] {
         var data = self.*.data();
         return data.format(writer, fmt);
     }
@@ -92,10 +92,10 @@ struct string {
         self.*._count = count;
     }
 
-    func write(self: *string, buf: []byte) std::result[[usize, []byte]] {
+    func write(self: *string, buf: []byte) std::result[[usize, std::error]] {
         var end = self.*._count;
         self.*.resize(end + countof(buf));
         std::slice[[byte]]::copy(self.*.data()[end : end + countof(buf)], buf);
-        return std::result[[usize, []byte]]::init_value(countof(buf));
+        return std::result[[usize, std::error]]::init_value(countof(buf));
     }
 }

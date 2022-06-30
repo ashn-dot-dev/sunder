@@ -111,7 +111,7 @@ func format_test10() void {
     var args: [1]std::formatter = (:[1]std::formatter)[a_fmtr];
     var result = std::write_format(std::out(), "{l}\n", args[0:countof(args)]);
 
-    std::print_line(std::err(), result.error());
+    std::print_line(std::err(), result.error().*.data);
 }
 
 func main() void {

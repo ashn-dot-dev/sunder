@@ -3,7 +3,7 @@ import "std/core.sunder";
 struct person {
     var name: []byte;
 
-    func format(self: *person, writer: std::writer, fmt: []byte) std::result[[void, []byte]] {
+    func format(self: *person, writer: std::writer, fmt: []byte) std::result[[void, std::error]] {
         if countof(fmt) != 0 {
             std::formatter::panic_invalid_format_specifier(fmt);
         }
@@ -12,7 +12,7 @@ struct person {
 }
 
 struct int {
-    func format(self: *int, writer: std::writer, fmt: []byte) std::result[[void, []byte]] {
+    func format(self: *int, writer: std::writer, fmt: []byte) std::result[[void, std::error]] {
         if countof(fmt) == 0 {
             return std::write_all(writer, "decimal");
         }
@@ -31,7 +31,7 @@ struct int {
             return std::write_all(writer, "hexadecimal");
         }
         std::formatter::panic_invalid_format_specifier(fmt);
-        return std::zeroed[[std::result[[void, []byte]]]](); # unreachable
+        return std::zeroed[[std::result[[void, std::error]]]](); # unreachable
     }
 }
 

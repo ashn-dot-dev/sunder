@@ -11,7 +11,7 @@ func main() void {
 
     var result = std::read_line(std::input(), std::allocator::init[[typeof(allocator)]](&allocator));
     if result.is_error() {
-        std::print_line(std::err(), result.error());
+        std::print_line(std::err(), result.error().*.data);
         std::exit(std::EXIT_FAILURE);
     }
 

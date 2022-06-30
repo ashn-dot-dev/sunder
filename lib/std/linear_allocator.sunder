@@ -20,10 +20,10 @@ struct linear_allocator {
         return linear_allocator::init((:[]byte){buf_start, buf_count});
     }
 
-    func allocate(self: *linear_allocator, align: usize, size: usize) std::result[[*byte, []byte]] {
+    func allocate(self: *linear_allocator, align: usize, size: usize) std::result[[*byte, std::error]] {
         if size == 0 {
             # Nothing to allocate.
-            return std::result[[*byte, []byte]]::init_value((:*byte)0u);
+            return std::result[[*byte, std::error]]::init_value((:*byte)0u);
         }
 
         var buf_addr: usize = (:usize)*((:**byte)&self.*._buf);
@@ -31,15 +31,15 @@ struct linear_allocator {
         var offset: usize = std::forward_align(cur_addr, align) - buf_addr;
 
         if offset + size > countof(self.*._buf) {
-            return std::result[[*byte, []byte]]::init_error("allocation failure");
+            return std::result[[*byte, std::error]]::init_error(std::error::ALLOCATION_FAILURE);
         }
 
         self.*._old_offset = self.*._cur_offset;
         self.*._cur_offset = offset + size;
-        return std::result[[*byte, []byte]]::init_value(&self.*._buf[offset]);
+        return std::result[[*byte, std::error]]::init_value(&self.*._buf[offset]);
     }
 
-    func reallocate(self: *linear_allocator, ptr: *byte, align: usize, old_size: usize, new_size: usize) std::result[[*byte, []byte]] {
+    func reallocate(self: *linear_allocator, ptr: *byte, align: usize, old_size: usize, new_size: usize) std::result[[*byte, std::error]] {
         var offset = (:usize)ptr - (:usize)*((:**byte)&self.*._buf);
 
         # True if the provided block of memory came from the most recent
@@ -51,15 +51,15 @@ struct linear_allocator {
             if is_tail_allocation {
                 self.*._cur_offset = self.*._cur_offset - (old_size - new_size);
             }
-            return std::result[[*byte, []byte]]::init_value(ptr);
+            return std::result[[*byte, std::error]]::init_value(ptr);
         }
 
         if is_tail_allocation {
             if (new_size - old_size) > (countof(self.*._buf) - self.*._cur_offset) {
-                return std::result[[*byte, []byte]]::init_error("allocation failure");
+                return std::result[[*byte, std::error]]::init_error(std::error::ALLOCATION_FAILURE);
             }
             self.*._cur_offset = self.*._cur_offset + (new_size - old_size);
-            return std::result[[*byte, []byte]]::init_value(ptr);
+            return std::result[[*byte, std::error]]::init_value(ptr);
         }
 
         # Reallocation of memory that did *not* come from the most recent
@@ -71,7 +71,7 @@ struct linear_allocator {
         }
         var new: *byte = result.value();
         std::slice[[byte]]::copy((:[]byte){new, old_size}, (:[]byte){ptr, old_size});
-        return std::result[[*byte, []byte]]::init_value(new);
+        return std::result[[*byte, std::error]]::init_value(new);
     }
 
     func deallocate(self: *linear_allocator, ptr: *byte, align: usize, size: usize) void {

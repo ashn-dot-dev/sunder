@@ -2,15 +2,15 @@ namespace util;
 import "std/core.sunder";
 
 struct allocation_failure_allocator {
-    func allocate(self: *allocation_failure_allocator, align: usize, size: usize) std::result[[*byte, []byte]] {
-        return std::result[[*byte, []byte]]::init_error("allocation failure");
+    func allocate(self: *allocation_failure_allocator, align: usize, size: usize) std::result[[*byte, std::error]] {
+        return std::result[[*byte, std::error]]::init_error(std::error::ALLOCATION_FAILURE);
     }
 
     # Reallocation will panic since a call to allocate should never have
     # succeeded, so any provided pointer is invalid.
-    func reallocate(self: *allocation_failure_allocator, ptr: *byte, align: usize, old_size: usize, new_size: usize) std::result[[*byte, []byte]] {
+    func reallocate(self: *allocation_failure_allocator, ptr: *byte, align: usize, old_size: usize, new_size: usize) std::result[[*byte, std::error]] {
         std::panic("attempted allocation_failure_allocator reallocation");
-        return std::zeroed[[std::result[[*byte, []byte]]]](); # unreachable
+        return std::zeroed[[std::result[[*byte, std::error]]]](); # unreachable
     }
 
     # Deallocation will panic since a call to allocate should never have

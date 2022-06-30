@@ -4,13 +4,12 @@ import "std";
 func cat(filename: []byte) void {
     var result = std::file::open(filename, std::file::OPEN_READ);
     if result.is_error() {
-        var error = result.error();
         std::print_format_line(
             std::err(),
             "{}: {}",
             (:[]std::formatter)[
                 std::formatter::init[[[]byte]](&filename),
-                std::formatter::init[[[]byte]](&error)]);
+                std::formatter::init[[[]byte]](&result.error().*.data)]);
         std::exit(std::EXIT_FAILURE);
     }
 
@@ -23,13 +22,12 @@ func cat(filename: []byte) void {
     for true {
         var result = file.read(buf[0:countof(buf)]);
         if result.is_error() {
-            var error = result.error();
             std::print_format_line(
                 std::err(),
                 "{}: {}",
                 (:[]std::formatter)[
                     std::formatter::init[[[]byte]](&filename),
-                    std::formatter::init[[[]byte]](&error)]);
+                    std::formatter::init[[[]byte]](&result.error().*.data)]);
             std::exit(std::EXIT_FAILURE);
         }
 

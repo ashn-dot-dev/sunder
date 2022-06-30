@@ -16,15 +16,15 @@ struct file {
     # Data is appended to the end of the file when written.
     const OPEN_APPEND: usize = 0b100;
 
-    func open(path: []byte, mode: usize) std::result[[std::file, []byte]] {
+    func open(path: []byte, mode: usize) std::result[[std::file, std::error]] {
         var flags: sys::sint = 0;
         if mode == 0 {
             # OPEN_READ, OPEN_WRITE, or OPEN_APPEND must be selected.
-            return std::result[[std::file, []byte]]::init_error(sys::ERRNO_STRS[(:usize)sys::EINVAL]);
+            return std::result[[std::file, std::error]]::init_error(std::error::INVALID_ARGUMENT);
         }
         if (mode & OPEN_WRITE != 0) and (mode & OPEN_APPEND != 0) {
             # Attempted open with both non-appending and appending write modes.
-            return std::result[[std::file, []byte]]::init_error(sys::ERRNO_STRS[(:usize)sys::EINVAL]);
+            return std::result[[std::file, std::error]]::init_error(std::error::INVALID_ARGUMENT);
         }
 
         if (mode & OPEN_READ != 0) and (mode & OPEN_WRITE != 0) {
@@ -47,53 +47,53 @@ struct file {
         }
 
         if countof(path) >= sys::PATH_MAX {
-            return std::result[[std::file, []byte]]::init_error(sys::ERRNO_STRS[(:usize)sys::EINVAL]);
+            return std::result[[std::file, std::error]]::init_error((:std::error)&sys::ERRNO_STRS[(:usize)sys::EINVAL]);
         }
         var path_cstr = (:[sys::PATH_MAX]byte)[0...];
         std::slice[[byte]]::copy(path_cstr[0:countof(path)], path);
 
         var sysret = sys::open(&path_cstr[0], flags, 0o666);
         if sysret < 0 {
-            return std::result[[std::file, []byte]]::init_error(sys::ERRNO_STRS[(:usize)-sysret]);
+            return std::result[[std::file, std::error]]::init_error((:std::error)&sys::ERRNO_STRS[(:usize)-sysret]);
         }
 
         var file = (:std::file){._fd = (:sys::uint)sysret};
-        return std::result[[std::file, []byte]]::init_value(file);
+        return std::result[[std::file, std::error]]::init_value(file);
     }
 
-    func close(self: *file) std::result[[void, []byte]] {
+    func close(self: *file) std::result[[void, std::error]] {
         var sysret = sys::close(self.*._fd);
         if sysret < 0 {
-            return std::result[[void, []byte]]::init_error(sys::ERRNO_STRS[(:usize)-sysret]);
+            return std::result[[void, std::error]]::init_error((:std::error)&sys::ERRNO_STRS[(:usize)-sysret]);
         }
 
-        return std::result[[void, []byte]]::init_value(void::init());
+        return std::result[[void, std::error]]::init_value(void::init());
     }
 
-    func read(self: *file, buf: []byte) std::result[[usize, []byte]] {
+    func read(self: *file, buf: []byte) std::result[[usize, std::error]] {
         if countof(buf) == 0 {
-            return std::result[[usize, []byte]]::init_value(0);
+            return std::result[[usize, std::error]]::init_value(0);
         }
 
         var sysret = sys::read(self.*._fd, &buf[0u], countof(buf));
         if sysret < 0 {
-            return std::result[[usize, []byte]]::init_error(sys::ERRNO_STRS[(:usize)-sysret]);
+            return std::result[[usize, std::error]]::init_error((:std::error)&sys::ERRNO_STRS[(:usize)-sysret]);
         }
 
-        return std::result[[usize, []byte]]::init_value((:usize)sysret);
+        return std::result[[usize, std::error]]::init_value((:usize)sysret);
     }
 
-    func write(self: *file, buf: []byte) std::result[[usize, []byte]] {
+    func write(self: *file, buf: []byte) std::result[[usize, std::error]] {
         if countof(buf) == 0 {
-            return std::result[[usize, []byte]]::init_value(0);
+            return std::result[[usize, std::error]]::init_value(0);
         }
 
         var sysret = sys::write(self.*._fd, &buf[0u], countof(buf));
         if sysret < 0 {
-            return std::result[[usize, []byte]]::init_error(sys::ERRNO_STRS[(:usize)-sysret]);
+            return std::result[[usize, std::error]]::init_error((:std::error)&sys::ERRNO_STRS[(:usize)-sysret]);
         }
 
-        return std::result[[usize, []byte]]::init_value((:usize)sysret);
+        return std::result[[usize, std::error]]::init_value((:usize)sysret);
     }
 
     # Seek from the start of the file.
@@ -103,7 +103,7 @@ struct file {
     # Seek from the end of the file.
     const SEEK_END: usize = (:usize)sys::SEEK_END;
 
-    func seek(self: *file, offset: ssize, from: usize) std::result[[void, []byte]] {
+    func seek(self: *file, offset: ssize, from: usize) std::result[[void, std::error]] {
         # TODO: Seeking past the end of a file with `lseek` on Linux and then
         # writing to that position will create a "hole" that is read as NUL
         # bytes by subsequent read operations until the hole is filled in.
@@ -114,26 +114,26 @@ struct file {
         # explicitly defining the behavior when seeking past the end of a file.
         var sysret = sys::lseek(self.*._fd, offset, (:sys::uint)from);
         if sysret < 0 {
-            return std::result[[void, []byte]]::init_error(sys::ERRNO_STRS[(:usize)-sysret]);
+            return std::result[[void, std::error]]::init_error((:std::error)&sys::ERRNO_STRS[(:usize)-sysret]);
         }
 
-        return std::result[[void, []byte]]::init_value(std::zeroed[[void]]());
+        return std::result[[void, std::error]]::init_value(std::zeroed[[void]]());
     }
 
-    func tell(self: *file) std::result[[usize, []byte]] {
+    func tell(self: *file) std::result[[usize, std::error]] {
         var sysret = sys::lseek(self.*._fd, 0, sys::SEEK_CUR);
         if sysret < 0 {
-            return std::result[[usize, []byte]]::init_error(sys::ERRNO_STRS[(:usize)-sysret]);
+            return std::result[[usize, std::error]]::init_error((:std::error)&sys::ERRNO_STRS[(:usize)-sysret]);
         }
 
-        return std::result[[usize, []byte]]::init_value((:usize)sysret);
+        return std::result[[usize, std::error]]::init_value((:usize)sysret);
     }
 
     # Create an empty file if it does not exist.
-    func create(path: []byte)  std::result[[void, []byte]] {
+    func create(path: []byte)  std::result[[void, std::error]] {
         var result = std::file::open(path, std::file::OPEN_WRITE);
         if result.is_error() {
-            return std::result[[void, []byte]]::init_error(result.error());
+            return std::result[[void, std::error]]::init_error(result.error());
         }
 
         var file = result.value();
@@ -141,19 +141,19 @@ struct file {
     }
 
     # Remove a file.
-    func remove(path: []byte) std::result[[void, []byte]] {
+    func remove(path: []byte) std::result[[void, std::error]] {
         if countof(path) >= sys::PATH_MAX {
-            return std::result[[void, []byte]]::init_error(sys::ERRNO_STRS[(:usize)sys::EINVAL]);
+            return std::result[[void, std::error]]::init_error((:std::error)&sys::ERRNO_STRS[(:usize)sys::EINVAL]);
         }
         var path_cstr = (:[sys::PATH_MAX]byte)[0...];
         std::slice[[byte]]::copy(path_cstr[0:countof(path)], path);
 
         var sysret = sys::unlink(&path_cstr[0]);
         if sysret < 0 {
-            return std::result[[void, []byte]]::init_error(sys::ERRNO_STRS[(:usize)-sysret]);
+            return std::result[[void, std::error]]::init_error((:std::error)&sys::ERRNO_STRS[(:usize)-sysret]);
         }
 
-        return std::result[[void, []byte]]::init_value(void::init());
+        return std::result[[void, std::error]]::init_value(void::init());
     }
 }
 
@@ -162,20 +162,20 @@ struct directory {
     var _buf: [1024]byte;
     var _buf_idx: usize;
     var _buf_end: usize;
-    var _current: std::optional[[std::result[[[]byte, []byte]]]];
+    var _current: std::optional[[std::result[[[]byte, std::error]]]];
 
-    func open(path: []byte) std::result[[std::directory, []byte]] {
+    func open(path: []byte) std::result[[std::directory, std::error]] {
         var flags: sys::sint = sys::O_RDONLY | sys::O_DIRECTORY | sys::O_CLOEXEC;
 
         if countof(path) >= sys::PATH_MAX {
-            return std::result[[std::directory, []byte]]::init_error(sys::ERRNO_STRS[(:usize)sys::EINVAL]);
+            return std::result[[std::directory, std::error]]::init_error((:std::error)&sys::ERRNO_STRS[(:usize)sys::EINVAL]);
         }
         var path_cstr = (:[sys::PATH_MAX]byte)[0...];
         std::slice[[byte]]::copy(path_cstr[0:countof(path)], path);
 
         var sysret = sys::open(&path_cstr[0], flags, 0);
         if sysret < 0 {
-            return std::result[[std::directory, []byte]]::init_error(sys::ERRNO_STRS[(:usize)-sysret]);
+            return std::result[[std::directory, std::error]]::init_error((:std::error)&sys::ERRNO_STRS[(:usize)-sysret]);
         }
 
         var directory = (:std::directory){
@@ -183,18 +183,18 @@ struct directory {
             ._buf = (:[1024]byte)[0...],
             ._buf_idx = 0,
             ._buf_end = 0,
-            ._current = std::optional[[std::result[[[]byte, []byte]]]]::init_empty()
+            ._current = std::optional[[std::result[[[]byte, std::error]]]]::init_empty()
         };
-        return std::result[[std::directory, []byte]]::init_value(directory);
+        return std::result[[std::directory, std::error]]::init_value(directory);
     }
 
-    func close(self: *directory) std::result[[void, []byte]] {
+    func close(self: *directory) std::result[[void, std::error]] {
         var sysret = sys::close(self.*._fd);
         if sysret < 0 {
-            return std::result[[void, []byte]]::init_error(sys::ERRNO_STRS[(:usize)-sysret]);
+            return std::result[[void, std::error]]::init_error((:std::error)&sys::ERRNO_STRS[(:usize)-sysret]);
         }
 
-        return std::result[[void, []byte]]::init_value(void::init());
+        return std::result[[void, std::error]]::init_value(void::init());
     }
 
     # Advance the current directory entry.
@@ -202,12 +202,12 @@ struct directory {
         if self.*._buf_idx >= self.*._buf_end {
             var sysret = sys::getdents(self.*._fd, (:*sys::linux_dirent)&self.*._buf[0], (:sys::uint)countof(self.*._buf));
             if sysret == 0 {
-                self.*._current = std::optional[[std::result[[[]byte, []byte]]]]::init_empty();
+                self.*._current = std::optional[[std::result[[[]byte, std::error]]]]::init_empty();
                 return false; # end-of-iteration
             }
             if sysret < 0 {
-                var result = std::result[[[]byte, []byte]]::init_error(sys::ERRNO_STRS[(:usize)-sysret]);
-                self.*._current = std::optional[[std::result[[[]byte, []byte]]]]::init_value(result);
+                var result = std::result[[[]byte, std::error]]::init_error((:std::error)&sys::ERRNO_STRS[(:usize)-sysret]);
+                self.*._current = std::optional[[std::result[[[]byte, std::error]]]]::init_value(result);
                 return true;
             }
 
@@ -216,8 +216,8 @@ struct directory {
         }
 
         var dirent = (:*sys::linux_dirent)&self.*._buf[self.*._buf_idx];
-        var result = std::result[[[]byte, []byte]]::init_value(std::cstr::data(&dirent.*.d_name));
-        self.*._current = std::optional[[std::result[[[]byte, []byte]]]]::init_value(result);
+        var result = std::result[[[]byte, std::error]]::init_value(std::cstr::data(&dirent.*.d_name));
+        self.*._current = std::optional[[std::result[[[]byte, std::error]]]]::init_value(result);
         self.*._buf_idx = self.*._buf_idx + (:usize)dirent.*.d_reclen;
         return true;
     }
@@ -229,7 +229,7 @@ struct directory {
     # `std::directory::advance` or `std::directory::close`.
     #
     # An error result is a static string.
-    func current(self: *directory) std::result[[[]byte, []byte]] {
+    func current(self: *directory) std::result[[[]byte, std::error]] {
         if self.*._current.is_empty() {
             std::panic("invalid iterator");
         }
@@ -237,34 +237,34 @@ struct directory {
     }
 
     # Create an empty directory if it does not exist.
-    func create(path: []byte)  std::result[[void, []byte]] {
+    func create(path: []byte)  std::result[[void, std::error]] {
         if countof(path) >= sys::PATH_MAX {
-            return std::result[[void, []byte]]::init_error(sys::ERRNO_STRS[(:usize)sys::EINVAL]);
+            return std::result[[void, std::error]]::init_error((:std::error)&sys::ERRNO_STRS[(:usize)sys::EINVAL]);
         }
         var path_cstr = (:[sys::PATH_MAX]byte)[0...];
         std::slice[[byte]]::copy(path_cstr[0:countof(path)], path);
 
         var sysret = sys::mkdir(&path_cstr[0], 0o666);
         if sysret < 0 {
-            return std::result[[void, []byte]]::init_error(sys::ERRNO_STRS[(:usize)-sysret]);
+            return std::result[[void, std::error]]::init_error((:std::error)&sys::ERRNO_STRS[(:usize)-sysret]);
         }
 
-        return std::result[[void, []byte]]::init_value(void::init());
+        return std::result[[void, std::error]]::init_value(void::init());
     }
 
     # Remove an empty directory.
-    func remove(path: []byte) std::result[[void, []byte]] {
+    func remove(path: []byte) std::result[[void, std::error]] {
         if countof(path) >= sys::PATH_MAX {
-            return std::result[[void, []byte]]::init_error(sys::ERRNO_STRS[(:usize)sys::EINVAL]);
+            return std::result[[void, std::error]]::init_error((:std::error)&sys::ERRNO_STRS[(:usize)sys::EINVAL]);
         }
         var path_cstr = (:[sys::PATH_MAX]byte)[0...];
         std::slice[[byte]]::copy(path_cstr[0:countof(path)], path);
 
         var sysret = sys::rmdir(&path_cstr[0]);
         if sysret < 0 {
-            return std::result[[void, []byte]]::init_error(sys::ERRNO_STRS[(:usize)-sysret]);
+            return std::result[[void, std::error]]::init_error((:std::error)&sys::ERRNO_STRS[(:usize)-sysret]);
         }
 
-        return std::result[[void, []byte]]::init_value(void::init());
+        return std::result[[void, std::error]]::init_value(void::init());
     }
 }

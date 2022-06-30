@@ -78,7 +78,7 @@ func test_init_from_str_failure(allocator: std::allocator, str: []byte, radix: u
         "input str: \"{e}\"",
         (:[]std::formatter)[std::formatter::init[[[]byte]](&str)]);
     var result = std::bigint::init_from_str(allocator, str, radix);
-    std::print_line(std::out(), result.error());
+    std::print_line(std::out(), result.error().*.data);
 }
 
 func test_compare(allocator: std::allocator, lhs_str: []byte, rhs_str: []byte) void {
@@ -493,28 +493,28 @@ func main() void {
 # 253798150800771361190604828513884159727
 #
 # input str: ""
-# integer contains no digits
+# parse failure
 #
 # input str: "+"
-# integer contains invalid digit
+# parse failure
 #
 # input str: "-"
-# integer contains invalid digit
+# parse failure
 #
 # input str: "x0"
-# integer contains invalid digit
+# parse failure
 #
 # input str: "0x"
-# integer contains no digits
+# parse failure
 #
 # input str: "0A"
-# integer contains invalid digit
+# parse failure
 #
 # input str: "123 "
-# integer contains invalid digit
+# parse failure
 #
 # input str: " 123"
-# integer contains invalid digit
+# parse failure
 #
 # 0 compare 0 => 0
 #

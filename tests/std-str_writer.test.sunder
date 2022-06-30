@@ -40,9 +40,9 @@ func main() void {
         (:[]std::formatter)[
             std::formatter::init[[usize]](&nwritten)]);
     var result = writer.write("4");
-    std::print_line(std::out(), result.error());
+    std::print_line(std::out(), result.error().*.data);
     var result = writer.write("5");
-    std::print_line(std::out(), result.error());
+    std::print_line(std::out(), result.error().*.data);
 }
 ################################################################################
 # ""

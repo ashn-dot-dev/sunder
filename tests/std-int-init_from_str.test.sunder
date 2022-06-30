@@ -209,91 +209,91 @@ func nominal_min_and_max() void {
 
 func error_invalid_radix() void {
     var result = ssize::init_from_str("0", 1);
-    std::print_line(std::out(), result.error());
+    std::print_line(std::out(), result.error().*.data);
 
     var result = ssize::init_from_str("0", 37);
-    std::print_line(std::out(), result.error());
+    std::print_line(std::out(), result.error().*.data);
 
     var result = ssize::init_from_str("0", 1000);
-    std::print_line(std::out(), result.error());
+    std::print_line(std::out(), result.error().*.data);
 }
 
 func error_integer_contains_no_digits() void {
     var result = ssize::init_from_str("", 0);
-    std::print_line(std::out(), result.error());
+    std::print_line(std::out(), result.error().*.data);
 
     var result = ssize::init_from_str("0b", 0);
-    std::print_line(std::out(), result.error());
+    std::print_line(std::out(), result.error().*.data);
 
     var result = ssize::init_from_str("0o", 0);
-    std::print_line(std::out(), result.error());
+    std::print_line(std::out(), result.error().*.data);
 
     var result = ssize::init_from_str("0x", 0);
-    std::print_line(std::out(), result.error());
+    std::print_line(std::out(), result.error().*.data);
 }
 
 func error_integer_contains_invalid_digit() void {
     var result = ssize::init_from_str("123A", 0);
-    std::print_line(std::out(), result.error());
+    std::print_line(std::out(), result.error().*.data);
 
     var result = ssize::init_from_str("0b12", 0);
-    std::print_line(std::out(), result.error());
+    std::print_line(std::out(), result.error().*.data);
 
     var result = ssize::init_from_str("0o1239", 0);
-    std::print_line(std::out(), result.error());
+    std::print_line(std::out(), result.error().*.data);
 
     var result = ssize::init_from_str("0x123G", 0);
-    std::print_line(std::out(), result.error());
+    std::print_line(std::out(), result.error().*.data);
 }
 
 func error_integer_out_of_range() void {
     var result_u8 = u8::init_from_str("0x100", 0);
-    std::print_line(std::out(), result_u8.error());
+    std::print_line(std::out(), result_u8.error().*.data);
 
     var result_u16 = u16::init_from_str("0x10000", 0);
-    std::print_line(std::out(), result_u16.error());
+    std::print_line(std::out(), result_u16.error().*.data);
 
     var result_u32 = u32::init_from_str("0x100000000", 0);
-    std::print_line(std::out(), result_u32.error());
+    std::print_line(std::out(), result_u32.error().*.data);
 
     var result_u64 = u64::init_from_str("0x10000000000000000", 0);
-    std::print_line(std::out(), result_u64.error());
+    std::print_line(std::out(), result_u64.error().*.data);
 
     # Specifically trigger overflow that would occur when adding the last digit
     # in a left->right decimal parse with a "uintmax_t" u64 value. This is a
     # white-box test case.
     var result_u64_addition_overflow = u64::init_from_str("18446744073709551616", 0);
-    std::print_line(std::out(), result_u64_addition_overflow.error());
+    std::print_line(std::out(), result_u64_addition_overflow.error().*.data);
 
     var result_s8_overflow = s8::init_from_str("0x80", 0);
-    std::print_line(std::out(), result_s8_overflow.error());
+    std::print_line(std::out(), result_s8_overflow.error().*.data);
 
     var result_s16_overflow = s16::init_from_str("0x8000", 0);
-    std::print_line(std::out(), result_s16_overflow.error());
+    std::print_line(std::out(), result_s16_overflow.error().*.data);
 
     var result_s32_overflow = s32::init_from_str("0x80000000", 0);
-    std::print_line(std::out(), result_s32_overflow.error());
+    std::print_line(std::out(), result_s32_overflow.error().*.data);
 
     var result_s64_overflow = s64::init_from_str("0x8000000000000000", 0);
-    std::print_line(std::out(), result_s64_overflow.error());
+    std::print_line(std::out(), result_s64_overflow.error().*.data);
 
     var result_s8_underflow = s8::init_from_str("-129", 0);
-    std::print_line(std::out(), result_s8_underflow.error());
+    std::print_line(std::out(), result_s8_underflow.error().*.data);
 
     var result_s16_underflow = s16::init_from_str("-32769", 0);
-    std::print_line(std::out(), result_s16_underflow.error());
+    std::print_line(std::out(), result_s16_underflow.error().*.data);
 
     var result_s32_underflow = s32::init_from_str("-2147483649", 0);
-    std::print_line(std::out(), result_s32_underflow.error());
+    std::print_line(std::out(), result_s32_underflow.error().*.data);
 
     var result_s64_underflow = s64::init_from_str("-9223372036854775809", 0);
-    std::print_line(std::out(), result_s64_underflow.error());
+    std::print_line(std::out(), result_s64_underflow.error().*.data);
 
     var result_ssize_huge_overflow = ssize::init_from_str("+1234567890123456789012345678901234567890", 0);
-    std::print_line(std::out(), result_ssize_huge_overflow.error());
+    std::print_line(std::out(), result_ssize_huge_overflow.error().*.data);
 
     var result_ssize_huge_underflow = ssize::init_from_str("-1234567890123456789012345678901234567890", 0);
-    std::print_line(std::out(), result_ssize_huge_underflow.error());
+    std::print_line(std::out(), result_ssize_huge_underflow.error().*.data);
 }
 
 func main() void {
@@ -335,29 +335,29 @@ func main() void {
 # 0xFFFFFFFFFFFFFFFF
 # -9223372036854775808
 # 9223372036854775807
-# invalid radix
-# invalid radix
-# invalid radix
-# integer contains no digits
-# integer contains no digits
-# integer contains no digits
-# integer contains no digits
-# integer contains invalid digit
-# integer contains invalid digit
-# integer contains invalid digit
-# integer contains invalid digit
-# integer out-of-range
-# integer out-of-range
-# integer out-of-range
-# integer out-of-range
-# integer out-of-range
-# integer out-of-range
-# integer out-of-range
-# integer out-of-range
-# integer out-of-range
-# integer out-of-range
-# integer out-of-range
-# integer out-of-range
-# integer out-of-range
-# integer out-of-range
-# integer out-of-range
+# invalid argument
+# invalid argument
+# invalid argument
+# parse failure
+# parse failure
+# parse failure
+# parse failure
+# parse failure
+# parse failure
+# parse failure
+# parse failure
+# result out-of-range
+# result out-of-range
+# result out-of-range
+# result out-of-range
+# result out-of-range
+# result out-of-range
+# result out-of-range
+# result out-of-range
+# result out-of-range
+# result out-of-range
+# result out-of-range
+# result out-of-range
+# result out-of-range
+# result out-of-range
+# result out-of-range

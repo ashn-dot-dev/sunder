@@ -5,11 +5,12 @@ func main() void {
     var allocator = *std::page_allocator::the();
 
     var result = allocator.allocate(9, 4096);
-    std::print_line(std::out(), result.error());
+    std::print_line(std::out(), result.error().*.data);
 
     var result = allocator.allocate(123, 4096);
-    std::print_line(std::out(), result.error());
+    std::print_line(std::out(), result.error().*.data);
 }
 ################################################################################
-# invalid alignment
-# invalid alignment
+# invalid argument
+# invalid argument
+

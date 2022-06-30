@@ -39,7 +39,7 @@ struct general_allocator {
         }
     }
 
-    func allocate(self: *general_allocator, align: usize, size: usize) std::result[[*byte, []byte]] {
+    func allocate(self: *general_allocator, align: usize, size: usize) std::result[[*byte, std::error]] {
         var offset = std::forward_align(sizeof(general_allocator_element), align);
         var result = std::page_allocator::the().*.allocate(sys::PAGE_SIZE, offset + size);
         if result.is_error() {
@@ -57,10 +57,10 @@ struct general_allocator {
         };
 
         self.*._insert_element(element);
-        return std::result[[*byte, []byte]]::init_value(element.*._start);
+        return std::result[[*byte, std::error]]::init_value(element.*._start);
     }
 
-    func reallocate(self: *general_allocator, ptr: *byte, align: usize, old_size: usize, new_size: usize) std::result[[*byte, []byte]] {
+    func reallocate(self: *general_allocator, ptr: *byte, align: usize, old_size: usize, new_size: usize) std::result[[*byte, std::error]] {
         var offset = std::forward_align(sizeof(general_allocator_element), align);
         var element = (:*general_allocator_element)std::ptr[[byte]]::sub(ptr, offset);
         self.*._remove_element(element);
@@ -81,7 +81,7 @@ struct general_allocator {
         };
 
         self.*._insert_element(element);
-        return std::result[[*byte, []byte]]::init_value(element.*._start);
+        return std::result[[*byte, std::error]]::init_value(element.*._start);
     }
 
     func deallocate(self: *general_allocator, ptr: *byte, align: usize, size: usize) void {

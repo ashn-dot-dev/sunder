@@ -239,141 +239,141 @@ const ENOTRECOVERABLE: ssize = 131;
 const ERFKILL:         ssize = 132;
 const EHWPOISON:       ssize = 133;
 
-const ERRNO_STRS: [][]byte = (:[][]byte)[
-    "Undefined errno value",                             # Undefined errno value (0)
-    "Operation not permitted",                           # EPERM (1)
-    "No such file or directory",                         # ENOENT (2)
-    "No such process",                                   # ESRCH (3)
-    "Interrupted system call",                           # EINTR (4)
-    "Input/output error",                                # EIO (5)
-    "No such device or address",                         # ENXIO (6)
-    "Argument list too long",                            # E2BIG (7)
-    "Exec format error",                                 # ENOEXEC (8)
-    "Bad file descriptor",                               # EBADF (9)
-    "No child processes",                                # ECHILD (10)
-    "Resource temporarily unavailable",                  # EAGAIN (11)
-    "Cannot allocate memory",                            # ENOMEM (12)
-    "Permission denied",                                 # EACCES (13)
-    "Bad address",                                       # EFAULT (14)
-    "Block device required",                             # ENOTBLK (15)
-    "Device or resource busy",                           # EBUSY (16)
-    "File exists",                                       # EEXIST (17)
-    "Invalid cross-device link",                         # EXDEV (18)
-    "No such device",                                    # ENODEV (19)
-    "Not a directory",                                   # ENOTDIR (20)
-    "Is a directory",                                    # EISDIR (21)
-    "Invalid argument",                                  # EINVAL (22)
-    "Too many open files in system",                     # ENFILE (23)
-    "Too many open files",                               # EMFILE (24)
-    "Inappropriate ioctl for device",                    # ENOTTY (25)
-    "Text file busy",                                    # ETXTBSY (26)
-    "File too large",                                    # EFBIG (27)
-    "No space left on device",                           # ENOSPC (28)
-    "Illegal seek",                                      # ESPIPE (29)
-    "Read-only file system",                             # EROFS (30)
-    "Too many links",                                    # EMLINK (31)
-    "Broken pipe",                                       # EPIPE (32)
-    "Numerical argument out of domain",                  # EDOM (33)
-    "Numerical result out of range",                     # ERANGE (34)
-    "Resource deadlock avoided",                         # EDEADLK (35)
-    "File name too long",                                # ENAMETOOLONG (36)
-    "No locks available",                                # ENOLCK (37)
-    "Function not implemented",                          # ENOSYS (38)
-    "Directory not empty",                               # ENOTEMPTY (39)
-    "Too many levels of symbolic links",                 # ELOOP (40)
-    "Undefined errno value",                             # Undefined errno value (41)
-    "No message of desired type",                        # ENOMSG (42)
-    "Identifier removed",                                # EIDRM (43)
-    "Channel number out of range",                       # ECHRNG (44)
-    "Level 2 not synchronized",                          # EL2NSYNC (45)
-    "Level 3 halted",                                    # EL3HLT (46)
-    "Level 3 reset",                                     # EL3RST (47)
-    "Link number out of range",                          # ELNRNG (48)
-    "Protocol driver not attached",                      # EUNATCH (49)
-    "No CSI structure available",                        # ENOCSI (50)
-    "Level 2 halted",                                    # EL2HLT (51)
-    "Invalid exchange",                                  # EBADE (52)
-    "Invalid request descriptor",                        # EBADR (53)
-    "Exchange full",                                     # EXFULL (54)
-    "No anode",                                          # ENOANO (55)
-    "Invalid request code",                              # EBADRQC (56)
-    "Invalid slot",                                      # EBADSLT (57)
-    "Undefined errno value",                             # Undefined errno value (58)
-    "Bad font file format",                              # EBFONT (59)
-    "Device not a stream",                               # ENOSTR (60)
-    "No data available",                                 # ENODATA (61)
-    "Timer expired",                                     # ETIME (62)
-    "Out of streams resources",                          # ENOSR (63)
-    "Machine is not on the network",                     # ENONET (64)
-    "Package not installed",                             # ENOPKG (65)
-    "Object is remote",                                  # EREMOTE (66)
-    "Link has been severed",                             # ENOLINK (67)
-    "Advertise error",                                   # EADV (68)
-    "Srmount error",                                     # ESRMNT (69)
-    "Communication error on send",                       # ECOMM (70)
-    "Protocol error",                                    # EPROTO (71)
-    "Multihop attempted",                                # EMULTIHOP (72)
-    "RFS specific error",                                # EDOTDOT (73)
-    "Bad message",                                       # EBADMSG (74)
-    "Value too large for defined data type",             # EOVERFLOW (75)
-    "Name not unique on network",                        # ENOTUNIQ (76)
-    "File descriptor in bad state",                      # EBADFD (77)
-    "Remote address changed",                            # EREMCHG (78)
-    "Can not access a needed shared library",            # ELIBACC (79)
-    "Accessing a corrupted shared library",              # ELIBBAD (80)
-    ".lib section in a.out corrupted",                   # ELIBSCN (81)
-    "Attempting to link in too many shared libraries",   # ELIBMAX (82)
-    "Cannot exec a shared library directly",             # ELIBEXEC (83)
-    "Invalid or incomplete multibyte or wide character", # EILSEQ (84)
-    "Interrupted system call should be restarted",       # ERESTART (85)
-    "Streams pipe error",                                # ESTRPIPE (86)
-    "Too many users",                                    # EUSERS (87)
-    "Socket operation on non-socket",                    # ENOTSOCK (88)
-    "Destination address required",                      # EDESTADDRREQ (89)
-    "Message too long",                                  # EMSGSIZE (90)
-    "Protocol wrong type for socket",                    # EPROTOTYPE (91)
-    "Protocol not available",                            # ENOPROTOOPT (92)
-    "Protocol not supported",                            # EPROTONOSUPPORT (93)
-    "Socket type not supported",                         # ESOCKTNOSUPPORT (94)
-    "Operation not supported",                           # EOPNOTSUPP (95)
-    "Protocol family not supported",                     # EPFNOSUPPORT (96)
-    "Address family not supported by protocol",          # EAFNOSUPPORT (97)
-    "Address already in use",                            # EADDRINUSE (98)
-    "Cannot assign requested address",                   # EADDRNOTAVAIL (99)
-    "Network is down",                                   # ENETDOWN (100)
-    "Network is unreachable",                            # ENETUNREACH (101)
-    "Network dropped connection on reset",               # ENETRESET (102)
-    "Software caused connection abort",                  # ECONNABORTED (103)
-    "Connection reset by peer",                          # ECONNRESET (104)
-    "No buffer space available",                         # ENOBUFS (105)
-    "Transport endpoint is already connected",           # EISCONN (106)
-    "Transport endpoint is not connected",               # ENOTCONN (107)
-    "Cannot send after transport endpoint shutdown",     # ESHUTDOWN (108)
-    "Too many references: cannot splice",                # ETOOMANYREFS (109)
-    "Connection timed out",                              # ETIMEDOUT (110)
-    "Connection refused",                                # ECONNREFUSED (111)
-    "Host is down",                                      # EHOSTDOWN (112)
-    "No route to host",                                  # EHOSTUNREACH (113)
-    "Operation already in progress",                     # EALREADY (114)
-    "Operation now in progress",                         # EINPROGRESS (115)
-    "Stale file handle",                                 # ESTALE (116)
-    "Structure needs cleaning",                          # EUCLEAN (117)
-    "Not a XENIX named type file",                       # ENOTNAM (118)
-    "No XENIX semaphores available",                     # ENAVAIL (119)
-    "Is a named type file",                              # EISNAM (120)
-    "Remote I/O error",                                  # EREMOTEIO (121)
-    "Disk quota exceeded",                               # EDQUOT (122)
-    "No medium found",                                   # ENOMEDIUM (123)
-    "Wrong medium type",                                 # EMEDIUMTYPE (124)
-    "Operation canceled",                                # ECANCELED (125)
-    "Required key not available",                        # ENOKEY (126)
-    "Key has expired",                                   # EKEYEXPIRED (127)
-    "Key has been revoked",                              # EKEYREVOKED (128)
-    "Key was rejected by service",                       # EKEYREJECTED (129)
-    "Owner died",                                        # EOWNERDEAD (130)
-    "State not recoverable",                             # ENOTRECOVERABLE (131)
-    "Operation not possible due to RF-kill",             # ERFKILL (132)
-    "Memory page has hardware error"                     # EHWPOISON (133)
+const ERRNO_STRS = (:[][]byte)[
+    "[system error 0] Undefined errno value",
+    "[system error EPERM] Operation not permitted",
+    "[system error ENOENT] No such file or directory",
+    "[system error ESRCH] No such process",
+    "[system error EINTR] Interrupted system call",
+    "[system error EIO] Input/output error",
+    "[system error ENXIO] No such device or address",
+    "[system error E2BIG] Argument list too long",
+    "[system error ENOEXEC] Exec format error",
+    "[system error EBADF] Bad file descriptor",
+    "[system error ECHILD] No child processes",
+    "[system error EAGAIN] Resource temporarily unavailable",
+    "[system error ENOMEM] Cannot allocate memory",
+    "[system error EACCES] Permission denied",
+    "[system error EFAULT] Bad address",
+    "[system error ENOTBLK] Block device required",
+    "[system error EBUSY] Device or resource busy",
+    "[system error EEXIST] File exists",
+    "[system error EXDEV] Invalid cross-device link",
+    "[system error ENODEV] No such device",
+    "[system error ENOTDIR] Not a directory",
+    "[system error EISDIR] Is a directory",
+    "[system error EINVAL] Invalid argument",
+    "[system error ENFILE] Too many open files in system",
+    "[system error EMFILE] Too many open files",
+    "[system error ENOTTY] Inappropriate ioctl for device",
+    "[system error ETXTBSY] Text file busy",
+    "[system error EFBIG] File too large",
+    "[system error ENOSPC] No space left on device",
+    "[system error ESPIPE] Illegal seek",
+    "[system error EROFS] Read-only file system",
+    "[system error EMLINK] Too many links",
+    "[system error EPIPE] Broken pipe",
+    "[system error EDOM] Numerical argument out of domain",
+    "[system error ERANGE] Numerical result out of range",
+    "[system error EDEADLK] Resource deadlock avoided",
+    "[system error ENAMETOOLONG] File name too long",
+    "[system error ENOLCK] No locks available",
+    "[system error ENOSYS] Function not implemented",
+    "[system error ENOTEMPTY] Directory not empty",
+    "[system error ELOOP] Too many levels of symbolic links",
+    "[system error 41] Undefined errno value",
+    "[system error ENOMSG] No message of desired type",
+    "[system error EIDRM] Identifier removed",
+    "[system error ECHRNG] Channel number out of range",
+    "[system error EL2NSYNC] Level 2 not synchronized",
+    "[system error EL3HLT] Level 3 halted",
+    "[system error EL3RST] Level 3 reset",
+    "[system error ELNRNG] Link number out of range",
+    "[system error EUNATCH] Protocol driver not attached",
+    "[system error ENOCSI] No CSI structure available",
+    "[system error EL2HLT] Level 2 halted",
+    "[system error EBADE] Invalid exchange",
+    "[system error EBADR] Invalid request descriptor",
+    "[system error EXFULL] Exchange full",
+    "[system error ENOANO] No anode",
+    "[system error EBADRQC] Invalid request code",
+    "[system error EBADSLT] Invalid slot",
+    "[system error 58] Undefined errno value",
+    "[system error EBFONT] Bad font file format",
+    "[system error ENOSTR] Device not a stream",
+    "[system error ENODATA] No data available",
+    "[system error ETIME] Timer expired",
+    "[system error ENOSR] Out of streams resources",
+    "[system error ENONET] Machine is not on the network",
+    "[system error ENOPKG] Package not installed",
+    "[system error EREMOTE] Object is remote",
+    "[system error ENOLINK] Link has been severed",
+    "[system error EADV] Advertise error",
+    "[system error ESRMNT] Srmount error",
+    "[system error ECOMM] Communication error on send",
+    "[system error EPROTO] Protocol error",
+    "[system error EMULTIHOP] Multihop attempted",
+    "[system error EDOTDOT] RFS specific error",
+    "[system error EBADMSG] Bad message",
+    "[system error EOVERFLOW] Value too large for defined data type",
+    "[system error ENOTUNIQ] Name not unique on network",
+    "[system error EBADFD] File descriptor in bad state",
+    "[system error EREMCHG] Remote address changed",
+    "[system error ELIBACC] Can not access a needed shared library",
+    "[system error ELIBBAD] Accessing a corrupted shared library",
+    "[system error ELIBSCN] .lib section in a.out corrupted",
+    "[system error ELIBMAX] Attempting to link in too many shared libraries",
+    "[system error ELIBEXEC] Cannot exec a shared library directly",
+    "[system error EILSEQ] Invalid or incomplete multibyte or wide character",
+    "[system error ERESTART] Interrupted system call should be restarted",
+    "[system error ESTRPIPE] Streams pipe error",
+    "[system error EUSERS] Too many users",
+    "[system error ENOTSOCK] Socket operation on non-socket",
+    "[system error EDESTADDRREQ] Destination address required",
+    "[system error EMSGSIZE] Message too long",
+    "[system error EPROTOTYPE] Protocol wrong type for socket",
+    "[system error ENOPROTOOPT] Protocol not available",
+    "[system error EPROTONOSUPPORT] Protocol not supported",
+    "[system error ESOCKTNOSUPPORT] Socket type not supported",
+    "[system error EOPNOTSUPP] Operation not supported",
+    "[system error EPFNOSUPPORT] Protocol family not supported",
+    "[system error EAFNOSUPPORT] Address family not supported by protocol",
+    "[system error EADDRINUSE] Address already in use",
+    "[system error EADDRNOTAVAIL] Cannot assign requested address",
+    "[system error ENETDOWN] Network is down",
+    "[system error ENETUNREACH] Network is unreachable",
+    "[system error ENETRESET] Network dropped connection on reset",
+    "[system error ECONNABORTED] Software caused connection abort",
+    "[system error ECONNRESET] Connection reset by peer",
+    "[system error ENOBUFS] No buffer space available",
+    "[system error EISCONN] Transport endpoint is already connected",
+    "[system error ENOTCONN] Transport endpoint is not connected",
+    "[system error ESHUTDOWN] Cannot send after transport endpoint shutdown",
+    "[system error ETOOMANYREFS] Too many references: cannot splice",
+    "[system error ETIMEDOUT] Connection timed out",
+    "[system error ECONNREFUSED] Connection refused",
+    "[system error EHOSTDOWN] Host is down",
+    "[system error EHOSTUNREACH] No route to host",
+    "[system error EALREADY] Operation already in progress",
+    "[system error EINPROGRESS] Operation now in progress",
+    "[system error ESTALE] Stale file handle",
+    "[system error EUCLEAN] Structure needs cleaning",
+    "[system error ENOTNAM] Not a XENIX named type file",
+    "[system error ENAVAIL] No XENIX semaphores available",
+    "[system error EISNAM] Is a named type file",
+    "[system error EREMOTEIO] Remote I/O error",
+    "[system error EDQUOT] Disk quota exceeded",
+    "[system error ENOMEDIUM] No medium found",
+    "[system error EMEDIUMTYPE] Wrong medium type",
+    "[system error ECANCELED] Operation canceled",
+    "[system error ENOKEY] Required key not available",
+    "[system error EKEYEXPIRED] Key has expired",
+    "[system error EKEYREVOKED] Key has been revoked",
+    "[system error EKEYREJECTED] Key was rejected by service",
+    "[system error EOWNERDEAD] Owner died",
+    "[system error ENOTRECOVERABLE] State not recoverable",
+    "[system error ERFKILL] Operation not possible due to RF-kill",
+    "[system error EHWPOISON] Memory page has hardware error"
 ];
 
 const STDIN_FILENO:  uint = 0;

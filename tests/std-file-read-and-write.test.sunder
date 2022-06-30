@@ -5,15 +5,17 @@ import "sys/sys.sunder";
 const path: []byte = "data.tmp";
 
 func main() void {
-    var open_result: std::result[[std::file, []byte]] = std::file::open(path, std::file::OPEN_READ | std::file::OPEN_WRITE);
-    var file: std::file = open_result.value();
-    var reader: std::reader = std::reader::init[[std::file]](&file);
-    var writer: std::writer = std::writer::init[[std::file]](&file);
+    var result = std::file::open(path, std::file::OPEN_READ | std::file::OPEN_WRITE);
+    var file = result.value();
+
+    var reader = std::reader::init[[std::file]](&file);
+    var writer = std::writer::init[[std::file]](&file);
     std::print_line(writer, "SOME TEXT");
+
     file.seek(0, std::file::SEEK_START);
-    var buf: [512]byte = (:[512]byte)[0...];
-    var read_result: std::result[[usize, []byte]] = reader.read(buf[0:countof(buf)]);
-    std::print_line(std::out(), buf[0:read_result.value()]);
+    var buf = (:[512]byte)[0...];
+    var result = reader.read(buf[0:countof(buf)]);
+    std::print_line(std::out(), buf[0:result.value()]);
     file.close();
 }
 ################################################################################

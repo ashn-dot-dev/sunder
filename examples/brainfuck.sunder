@@ -38,13 +38,12 @@ func main() void {
 
     var result = std::file::open(path, std::file::OPEN_READ);
     if result.is_error() {
-        var error = result.error();
         std::print_format_line(
             std::err(),
             "{}: {}",
             (:[]std::formatter)[
                 std::formatter::init[[[]byte]](&path),
-                std::formatter::init[[[]byte]](&error)]);
+                std::formatter::init[[[]byte]](&result.error().*.data)]);
         std::exit(std::EXIT_FAILURE);
     }
 
@@ -61,13 +60,12 @@ func main() void {
 
     var result = std::read_all(std::reader::init[[std::file]](&file), allocator);
     if result.is_error() {
-        var error = result.error();
         std::print_format_line(
             std::err(),
             "{}: {}",
             (:[]std::formatter)[
                 std::formatter::init[[[]byte]](&path),
-                std::formatter::init[[[]byte]](&error)]);
+                std::formatter::init[[[]byte]](&result.error().*.data)]);
         std::exit(std::EXIT_FAILURE);
     }
     var source = result.value();

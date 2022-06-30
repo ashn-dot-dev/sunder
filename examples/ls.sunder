@@ -25,13 +25,12 @@ func main() void {
 
     var result = std::directory::open(path.value());
     if result.is_error() {
-        var error = result.error();
         std::print_format_line(
             std::err(),
             "{}: {}",
             (:[]std::formatter)[
                 std::formatter::init[[[]byte]](&progname),
-                std::formatter::init[[[]byte]](&error)]);
+                std::formatter::init[[[]byte]](&result.error().*.data)]);
         std::exit(std::EXIT_FAILURE);
     }
 
@@ -43,13 +42,12 @@ func main() void {
     for dir.advance() {
         var current = dir.current();
         if current.is_error() {
-            var error = result.error();
             std::print_format_line(
                 std::err(),
                 "{}: {}",
                 (:[]std::formatter)[
                     std::formatter::init[[[]byte]](&progname),
-                    std::formatter::init[[[]byte]](&error)]);
+                    std::formatter::init[[[]byte]](&result.error().*.data)]);
         }
 
         var name = current.value();

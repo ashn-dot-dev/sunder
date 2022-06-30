@@ -3,7 +3,7 @@ import "std/core.sunder";
 struct person {
     var name: []byte;
 
-    func format(self: *person, writer: std::writer, fmt: []byte) std::result[[void, []byte]] {
+    func format(self: *person, writer: std::writer, fmt: []byte) std::result[[void, std::error]] {
         if countof(fmt) != 0 {
             std::formatter::panic_invalid_format_specifier(fmt);
         }

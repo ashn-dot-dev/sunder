@@ -17,7 +17,7 @@ func main() void {
     for true {
         var result = std::read_line(std::input(), allocator);
         if result.is_error() {
-            std::print_line(std::err(), result.error());
+            std::print_line(std::err(), result.error().*.data);
             std::exit(std::EXIT_FAILURE);
         }
 
@@ -37,7 +37,7 @@ func main() void {
 
         var result = std::bigint::init_from_str(allocator, optional.value(), 0);
         if result.is_error() {
-            std::print_line(std::err(), result.error());
+            std::print_line(std::err(), result.error().*.data);
             std::exit(std::EXIT_FAILURE);
         }
         var int = result.value();

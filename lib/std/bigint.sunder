@@ -75,9 +75,9 @@ struct bigint {
         return self;
     }
 
-    func init_from_str(allocator: std::allocator, str: []byte, radix: usize) std::result[[bigint, []byte]] {
+    func init_from_str(allocator: std::allocator, str: []byte, radix: usize) std::result[[bigint, std::error]] {
         if radix != 0 and radix != 2 and radix != 8 and radix != 10 and radix != 16 {
-            return std::result[[bigint, []byte]]::init_error("invalid radix");
+            return std::result[[bigint, std::error]]::init_error(std::error::INVALID_ARGUMENT);
         }
 
         var cur: usize = 0;
@@ -123,7 +123,7 @@ struct bigint {
 
         # Parse digits.
         if cur == end {
-            return std::result[[bigint, []byte]]::init_error("integer contains no digits");
+            return std::result[[bigint, std::error]]::init_error(std::error::PARSE_FAILURE);
         }
         var self = bigint::init(allocator);
         for cur != end {
@@ -142,12 +142,12 @@ struct bigint {
             }
             else {
                 self.fini();
-                return std::result[[bigint, []byte]]::init_error("integer contains invalid digit");
+                return std::result[[bigint, std::error]]::init_error(std::error::PARSE_FAILURE);
             }
 
             if digit >= radix {
                 self.fini();
-                return std::result[[bigint, []byte]]::init_error("integer contains invalid digit");
+                return std::result[[bigint, std::error]]::init_error(std::error::PARSE_FAILURE);
             }
 
             var digit_bigint = (:bigint){
@@ -161,14 +161,14 @@ struct bigint {
 
         self._sign = sign;
         self._normalize();
-        return std::result[[bigint, []byte]]::init_value(self);
+        return std::result[[bigint, std::error]]::init_value(self);
     }
 
     func fini(self: *bigint) void {
         std::slice[[u32]]::delete(self.*._allocator, self.*._limbs);
     }
 
-    func to_int[[T]](self: *bigint) std::result[[T, []byte]] {
+    func to_int[[T]](self: *bigint) std::result[[T, std::error]] {
         std::assert(sizeof(T) <= sizeof(u64));
         var buf = (:[64]byte)[0...]; # More than enough space.
         var allocator = std::linear_allocator::init(buf[0:countof(buf)]);
@@ -243,7 +243,7 @@ struct bigint {
     # to keep this function simple. In the future is would be nice to add the
     # rest of the format specifiers that the builtin integer types support:
     # "d", "b", "o", "x", and "X".
-    func format(self: *bigint, writer: std::writer, fmt: []byte) std::result[[void, []byte]] {
+    func format(self: *bigint, writer: std::writer, fmt: []byte) std::result[[void, std::error]] {
         if countof(fmt) != 0 {
             std::formatter::panic_invalid_format_specifier(fmt);
         }
