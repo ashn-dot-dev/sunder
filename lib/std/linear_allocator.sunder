@@ -14,6 +14,12 @@ struct linear_allocator {
         };
     }
 
+    func init_from_slice[[T]](slice: []T) linear_allocator {
+        var buf_start: *byte = *((:**byte)&slice);
+        var buf_count: usize = countof(slice) * sizeof(T);
+        return linear_allocator::init((:[]byte){buf_start, buf_count});
+    }
+
     func allocate(self: *linear_allocator, align: usize, size: usize) std::result[[*byte, []byte]] {
         if size == 0 {
             # Nothing to allocate.
