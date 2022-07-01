@@ -540,12 +540,6 @@ string_resize(struct string* self, size_t count);
 // Fatally exits after printing an error message if idx is out of bounds.
 void
 string_insert(struct string* self, size_t idx, char const* start, size_t count);
-// Remove count bytes at position idx from the string.
-// Bytes with position greater than idx are moved forward count bytes.
-// Fatally exits after printing an error message if the slice to be removed
-// indexes out of bounds.
-void
-string_remove(struct string* self, size_t idx, size_t count);
 
 // Append count bytes of start onto the end of the string.
 void

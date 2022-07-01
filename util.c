@@ -1739,21 +1739,6 @@ string_insert(struct string* self, size_t idx, char const* start, size_t count)
 }
 
 void
-string_remove(struct string* self, size_t idx, size_t count)
-{
-    assert(self != NULL);
-    if ((idx + count) > self->count) {
-        fatal(NULL, "[%s] Invalid index,count %zu,%zu", __func__, idx, count);
-    }
-
-    if (count == 0) {
-        return;
-    }
-    memmove(self->start + idx, self->start + idx + count, self->count - count);
-    string_resize(self, self->count - count);
-}
-
-void
 string_append(struct string* self, char const* start, size_t count)
 {
     assert(self != NULL);
