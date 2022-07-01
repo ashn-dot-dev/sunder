@@ -392,7 +392,7 @@ eval_rvalue_access_index(struct expr const* expr)
         fatal(
             expr->data.access_index.idx->location,
             "index out-of-range (received %s)",
-            bigint_to_new_cstr(idx_bigint, NULL));
+            bigint_to_new_cstr(idx_bigint));
     }
 
     if (lhs->type->kind == TYPE_ARRAY) {
@@ -448,7 +448,7 @@ eval_rvalue_access_slice(struct expr const* expr)
         fatal(
             expr->data.access_slice.begin->location,
             "index out-of-range (received %s)",
-            bigint_to_new_cstr(begin_bigint, NULL));
+            bigint_to_new_cstr(begin_bigint));
     }
     assert(end->type->kind == TYPE_USIZE);
     struct bigint const* const end_bigint = end->data.integer;
@@ -457,7 +457,7 @@ eval_rvalue_access_slice(struct expr const* expr)
         fatal(
             expr->data.access_slice.end->location,
             "index out-of-range (received %s)",
-            bigint_to_new_cstr(end_bigint, NULL));
+            bigint_to_new_cstr(end_bigint));
     }
 
     if (lhs->type->kind == TYPE_ARRAY) {
@@ -584,8 +584,8 @@ eval_rvalue_unary(struct expr const* expr)
             fatal(
                 expr->location,
                 "arithmetic operation produces out-of-range result (-(%s) == %s)",
-                bigint_to_new_cstr(rhs->data.integer, NULL),
-                bigint_to_new_cstr(r, NULL));
+                bigint_to_new_cstr(rhs->data.integer),
+                bigint_to_new_cstr(r));
         }
         value_del(rhs);
         return value_new_integer(expr->type, r);
@@ -701,7 +701,7 @@ eval_rvalue_binary(struct expr const* expr)
             fatal(
                 expr->data.access_index.idx->location,
                 "shift count out-of-range (received %s)",
-                bigint_to_new_cstr(rhs->data.integer, NULL));
+                bigint_to_new_cstr(rhs->data.integer));
         }
 
         bitarr_shiftl(res_bits, res_bits, shift_count);
@@ -730,7 +730,7 @@ eval_rvalue_binary(struct expr const* expr)
             fatal(
                 expr->data.access_index.idx->location,
                 "shift count out-of-range (received %s)",
-                bigint_to_new_cstr(rhs->data.integer, NULL));
+                bigint_to_new_cstr(rhs->data.integer));
         }
 
         bitarr_shiftr(res_bits, res_bits, shift_count, is_negative);
@@ -774,9 +774,9 @@ eval_rvalue_binary(struct expr const* expr)
             fatal(
                 expr->location,
                 "arithmetic operation produces out-of-range result (%s + %s == %s)",
-                bigint_to_new_cstr(lhs->data.integer, NULL),
-                bigint_to_new_cstr(rhs->data.integer, NULL),
-                bigint_to_new_cstr(r, NULL));
+                bigint_to_new_cstr(lhs->data.integer),
+                bigint_to_new_cstr(rhs->data.integer),
+                bigint_to_new_cstr(r));
         }
         res = value_new_integer(expr->type, r);
         break;
@@ -790,9 +790,9 @@ eval_rvalue_binary(struct expr const* expr)
             fatal(
                 expr->location,
                 "arithmetic operation produces out-of-range result (%s - %s == %s)",
-                bigint_to_new_cstr(lhs->data.integer, NULL),
-                bigint_to_new_cstr(rhs->data.integer, NULL),
-                bigint_to_new_cstr(r, NULL));
+                bigint_to_new_cstr(lhs->data.integer),
+                bigint_to_new_cstr(rhs->data.integer),
+                bigint_to_new_cstr(r));
         }
         res = value_new_integer(expr->type, r);
         break;
@@ -806,9 +806,9 @@ eval_rvalue_binary(struct expr const* expr)
             fatal(
                 expr->location,
                 "arithmetic operation produces out-of-range result (%s * %s == %s)",
-                bigint_to_new_cstr(lhs->data.integer, NULL),
-                bigint_to_new_cstr(rhs->data.integer, NULL),
-                bigint_to_new_cstr(r, NULL));
+                bigint_to_new_cstr(lhs->data.integer),
+                bigint_to_new_cstr(rhs->data.integer),
+                bigint_to_new_cstr(r));
         }
         res = value_new_integer(expr->type, r);
         break;
@@ -820,8 +820,8 @@ eval_rvalue_binary(struct expr const* expr)
             fatal(
                 expr->location,
                 "divide by zero (%s / %s)",
-                bigint_to_new_cstr(lhs->data.integer, NULL),
-                bigint_to_new_cstr(rhs->data.integer, NULL));
+                bigint_to_new_cstr(lhs->data.integer),
+                bigint_to_new_cstr(rhs->data.integer));
         }
         struct bigint* const r = bigint_new(BIGINT_ZERO);
         bigint_divrem(r, NULL, lhs->data.integer, rhs->data.integer);
@@ -835,8 +835,8 @@ eval_rvalue_binary(struct expr const* expr)
             fatal(
                 expr->location,
                 "divide by zero (%s %% %s)",
-                bigint_to_new_cstr(lhs->data.integer, NULL),
-                bigint_to_new_cstr(rhs->data.integer, NULL));
+                bigint_to_new_cstr(lhs->data.integer),
+                bigint_to_new_cstr(rhs->data.integer));
         }
         struct bigint* const r = bigint_new(BIGINT_ZERO);
         bigint_divrem(NULL, r, lhs->data.integer, rhs->data.integer);
@@ -1078,7 +1078,7 @@ eval_lvalue_access_index(struct expr const* expr)
         fatal(
             expr->data.access_index.idx->location,
             "index out-of-range (received %s)",
-            bigint_to_new_cstr(idx->data.integer, NULL));
+            bigint_to_new_cstr(idx->data.integer));
     }
 
     assert(expr->data.access_index.lhs->type->kind == TYPE_ARRAY);
@@ -1087,7 +1087,7 @@ eval_lvalue_access_index(struct expr const* expr)
             expr->data.access_index.idx->location,
             "index out-of-bounds (array count is %zu, received %s)",
             lhs->type->data.array.count,
-            bigint_to_new_cstr(idx->data.integer, NULL));
+            bigint_to_new_cstr(idx->data.integer));
     }
 
     assert(lhs->data.pointer.kind == ADDRESS_STATIC);

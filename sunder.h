@@ -493,45 +493,10 @@ bigint_magnitude_bit_get(struct bigint const* self, size_t n);
 void
 bigint_magnitude_bit_set(struct bigint* self, size_t n, int value);
 
-// Returns an xalloc-allocated cstring representation of the provided
-// bigint as specified by the provided format string.
-// If fmt is NULL then default formatting is used.
-//
-// Returns a NUL-terminated string on success.
-// Returns NULL if an invalid format string was provided.
-//
-// Format string grammar: "[flags][width][specifier]"
-// Note that the format directive character, %, is *NOT* used in the format
-// string grammar.
-//
-// Flags (optional):
-//   #      Prefix the digits of the output string with "0b", "0o", "0x", or
-//          "0x" when used in conjunction with the "b", "o", "x", or "X"
-//          specifiers, respectively. Note that "0x" is used for both the "x"
-//          and "X" specifiers.
-//   0      Left pad the output string up to the field width using zeros.
-//          Default behavior is to pad with spaces.
-//   +      Prefix the numeric representation of the output string with a plus
-//          or minus sign (+ or -), even for positive numbers. Default behavior
-//          is to only add the minus sign for negative numbers.
-//   -      Left justify the output string within the provided field width.
-//   space  Prefix the numeric representation of the output string with a space
-//          if no sign would be written otherwise.
-//
-// Width (optional):
-//   Decimal digit string with nonzero first digit specifying the minimum
-//   length of the output string.
-//
-// Specifier (required):
-//   d      The provided bigint will be represented using decimal notation.
-//   b      The provided bigint will be represented using binary notation.
-//   o      The provided bigint will be represented using octal notation.
-//   x      The provided bigint will be represented using hexadecimal notation
-//          with *lower case* alphanumeric digits.
-//   X      The provided bigint will be represented using hexadecimal notation
-//          with *UPPER CASE* alphanumeric digits.
+// Returns an xalloc-allocated cstring representation of the provided bigint
+// formatted as a decimal number.
 char*
-bigint_to_new_cstr(struct bigint const* self, char const* fmt);
+bigint_to_new_cstr(struct bigint const* self);
 
 // Allocate and initialize a string from the first count bytes of start.
 struct string*

@@ -1075,8 +1075,8 @@ expr_new_integer(
         type_is_any_integer(type) && type->kind != TYPE_INTEGER;
 
     if (is_byte && bigint_cmp(value, context()->u8_min) < 0) {
-        char* const lit_cstr = bigint_to_new_cstr(value, NULL);
-        char* const min_cstr = bigint_to_new_cstr(context()->u8_min, NULL);
+        char* const lit_cstr = bigint_to_new_cstr(value);
+        char* const min_cstr = bigint_to_new_cstr(context()->u8_min);
         fatal(
             location,
             "out-of-range byte literal (%s < %s)",
@@ -1084,8 +1084,8 @@ expr_new_integer(
             min_cstr);
     }
     if (is_byte && bigint_cmp(value, context()->u8_max) > 0) {
-        char* const lit_cstr = bigint_to_new_cstr(value, NULL);
-        char* const max_cstr = bigint_to_new_cstr(context()->u8_max, NULL);
+        char* const lit_cstr = bigint_to_new_cstr(value);
+        char* const max_cstr = bigint_to_new_cstr(context()->u8_max);
         fatal(
             location,
             "out-of-range byte literal (%s > %s)",
@@ -1093,8 +1093,8 @@ expr_new_integer(
             max_cstr);
     }
     if (is_sized_integer && bigint_cmp(value, type->data.integer.min) < 0) {
-        char* const lit_cstr = bigint_to_new_cstr(value, NULL);
-        char* const min_cstr = bigint_to_new_cstr(type->data.integer.min, NULL);
+        char* const lit_cstr = bigint_to_new_cstr(value);
+        char* const min_cstr = bigint_to_new_cstr(type->data.integer.min);
         fatal(
             location,
             "out-of-range integer literal (%s < %s)",
@@ -1102,8 +1102,8 @@ expr_new_integer(
             min_cstr);
     }
     if (is_sized_integer && bigint_cmp(value, type->data.integer.max) > 0) {
-        char* const lit_cstr = bigint_to_new_cstr(value, NULL);
-        char* const max_cstr = bigint_to_new_cstr(type->data.integer.max, NULL);
+        char* const lit_cstr = bigint_to_new_cstr(value);
+        char* const max_cstr = bigint_to_new_cstr(type->data.integer.max);
         fatal(
             location,
             "out-of-range integer literal (%s > %s)",

@@ -1012,8 +1012,8 @@ shallow_implicit_cast(struct type const* type, struct expr const* expr)
                 "out-of-range conversion from `%s` to `%s` (%s < %s)",
                 expr->type->name,
                 type->name,
-                bigint_to_new_cstr(expr->data.integer, NULL),
-                bigint_to_new_cstr(min, NULL));
+                bigint_to_new_cstr(expr->data.integer),
+                bigint_to_new_cstr(min));
         }
         if (bigint_cmp(expr->data.integer, max) > 0) {
             fatal(
@@ -1021,8 +1021,8 @@ shallow_implicit_cast(struct type const* type, struct expr const* expr)
                 "out-of-range conversion from `%s` to `%s` (%s > %s)",
                 expr->type->name,
                 type->name,
-                bigint_to_new_cstr(expr->data.integer, NULL),
-                bigint_to_new_cstr(max, NULL));
+                bigint_to_new_cstr(expr->data.integer),
+                bigint_to_new_cstr(max));
         }
 
         struct expr* const result =
@@ -1047,8 +1047,8 @@ shallow_implicit_cast(struct type const* type, struct expr const* expr)
                 "out-of-range conversion from `%s` to `%s` (%s < %s)",
                 expr->type->name,
                 type->name,
-                bigint_to_new_cstr(expr->data.integer, NULL),
-                bigint_to_new_cstr(min, NULL));
+                bigint_to_new_cstr(expr->data.integer),
+                bigint_to_new_cstr(min));
         }
         if (bigint_cmp(expr->data.integer, max) > 0) {
             fatal(
@@ -1056,8 +1056,8 @@ shallow_implicit_cast(struct type const* type, struct expr const* expr)
                 "out-of-range conversion from `%s` to `%s` (%s > %s)",
                 expr->type->name,
                 type->name,
-                bigint_to_new_cstr(expr->data.integer, NULL),
-                bigint_to_new_cstr(max, NULL));
+                bigint_to_new_cstr(expr->data.integer),
+                bigint_to_new_cstr(max));
         }
 
         struct expr* const result =
@@ -4333,7 +4333,7 @@ resolve_typespec_array(
         fatal(
             count_expr->location,
             "array count too large (received %s)",
-            bigint_to_new_cstr(count_value->data.integer, NULL));
+            bigint_to_new_cstr(count_value->data.integer));
     }
     value_del(count_value);
 

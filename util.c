@@ -151,9 +151,8 @@ xalloc(void* ptr, size_t size)
     return ptr;
 }
 
-// Prepend othr_size bytes from othr onto the xalloc-allocated buffer of
-// size *psize pointed to by *pdata, updating the address of *pdata if
-// necessary.
+// Prepend othr_size bytes from othr onto the xalloc-allocated buffer of size
+// *psize pointed to by *pdata, updating the address of *pdata if necessary.
 static void
 xalloc_prepend(void** pdata, size_t* psize, void const* othr, size_t othr_size)
 {
@@ -174,9 +173,8 @@ xalloc_prepend(void** pdata, size_t* psize, void const* othr, size_t othr_size)
     *psize = new_size;
 }
 
-// Append othr_size bytes from othr onto the xalloc-allocated buffer of
-// size *psize pointed to by *pdata, updating the address of *pdata if
-// necessary.
+// Append othr_size bytes from othr onto the xalloc-allocated buffer of size
+// *psize pointed to by *pdata, updating the address of *pdata if necessary.
 static void
 xalloc_append(void** pdata, size_t* psize, void const* othr, size_t othr_size)
 {
@@ -1554,147 +1552,36 @@ bigint_magnitude_bit_set(struct bigint* self, size_t n, int value)
     bigint__normalize_(self);
 }
 
-// clang-format off
-#define BIGINT_FMT_FLAG_HASH_  ((unsigned)0)
-#define BIGINT_FMT_FLAG_ZERO_  ((unsigned)1)
-#define BIGINT_FMT_FLAG_PLUS_  ((unsigned)2)
-#define BIGINT_FMT_FLAG_MINUS_ ((unsigned)3)
-#define BIGINT_FMT_FLAG_SPACE_ ((unsigned)4)
-// clang-format on
 char*
-bigint_to_new_cstr(struct bigint const* self, char const* fmt)
+bigint_to_new_cstr(struct bigint const* self)
 {
     assert(self != NULL);
 
-    // Parse format string.
-    unsigned flags = 0;
-    size_t width = 0;
-    char specifier = 'd';
-    if (fmt != NULL) {
-        // Flags
-        while (*fmt != '\0' && strchr("#0+- ", *fmt) != NULL) {
-            flags |= (unsigned)(*fmt == '#') << BIGINT_FMT_FLAG_HASH_;
-            flags |= (unsigned)(*fmt == '0') << BIGINT_FMT_FLAG_ZERO_;
-            flags |= (unsigned)(*fmt == '+') << BIGINT_FMT_FLAG_PLUS_;
-            flags |= (unsigned)(*fmt == '-') << BIGINT_FMT_FLAG_MINUS_;
-            flags |= (unsigned)(*fmt == ' ') << BIGINT_FMT_FLAG_SPACE_;
-            fmt += 1;
-        }
-        // Width
-        char* fmt_ =
-            (char*)fmt; // Needed due to broken const behavior of strtol.
-        if (safe_isdigit(*fmt)) {
-            width = (size_t)strtol(fmt, &fmt_, 10);
-        }
-        fmt = fmt_;
-        // Specifier
-        char const* whichspec = strchr("dboxX", *fmt);
-        if (*fmt == '\0' || whichspec == NULL) {
-            return NULL;
-        }
-        specifier = *whichspec;
-        fmt += 1;
-        // Invalid trailing digits.
-        if (*fmt != '\0') {
-            return NULL;
-        }
-        // Match clang/gcc behavior:
-        //      "flag '0' is ignored when flag '-' is present"
-        if (flags & (1u << BIGINT_FMT_FLAG_MINUS_)) {
-            flags &= (unsigned)~(1u << BIGINT_FMT_FLAG_ZERO_);
-        }
-    }
+    void* cstr = NULL;
+    size_t cstr_size = 0;
 
-    // Prefix.
-    void* prefix = NULL;
-    size_t prefix_size = 0;
-    if (self->sign == +1 && (flags & (1u << BIGINT_FMT_FLAG_PLUS_))) {
-        xalloc_append(&prefix, &prefix_size, "+", 1);
-    }
-    if (self->sign == +1 && (flags & (1u << BIGINT_FMT_FLAG_SPACE_))) {
-        xalloc_append(&prefix, &prefix_size, " ", 1);
-    }
+    // Prefix
     if (self->sign == -1) {
-        xalloc_append(&prefix, &prefix_size, "-", 1);
-    }
-    if (flags & (1u << BIGINT_FMT_FLAG_HASH_)) {
-        if (specifier == 'b') {
-            xalloc_append(&prefix, &prefix_size, "0b", 2);
-        }
-        if (specifier == 'o') {
-            xalloc_append(&prefix, &prefix_size, "0o", 2);
-        }
-        if (specifier == 'x') {
-            xalloc_append(&prefix, &prefix_size, "0x", 2);
-        }
-        if (specifier == 'X') {
-            xalloc_append(&prefix, &prefix_size, "0x", 2);
-        }
+        xalloc_append(&cstr, &cstr_size, "-", 1);
     }
 
-    // Digits.
+    // Digits
     void* digits = NULL;
     size_t digits_size = 0;
     char digit_buf[BIGINT__LIMB_BITS_ + STR_LITERAL_COUNT("\0")] = {0};
-    if (specifier == 'd') {
-        struct bigint DEC = {0};
-        struct bigint SELF = {0};
-        bigint_abs(&SELF, self);
-        while (bigint_cmp(&SELF, BIGINT_ZERO) != 0) {
-            bigint_divrem(&SELF, &DEC, &SELF, BIGINT_DEC);
-            assert(DEC.count <= 1);
-            assert(DEC.limbs == NULL || DEC.limbs[0] < 10);
-            sprintf(digit_buf, "%d", DEC.limbs != NULL ? (int)DEC.limbs[0] : 0);
-            xalloc_prepend(&digits, &digits_size, digit_buf, strlen(digit_buf));
-        }
-        bigint__fini_(&DEC);
-        bigint__fini_(&SELF);
+
+    struct bigint DEC = {0};
+    struct bigint SELF = {0};
+    bigint_abs(&SELF, self);
+    while (bigint_cmp(&SELF, BIGINT_ZERO) != 0) {
+        bigint_divrem(&SELF, &DEC, &SELF, BIGINT_DEC);
+        assert(DEC.count <= 1);
+        assert(DEC.limbs == NULL || DEC.limbs[0] < 10);
+        sprintf(digit_buf, "%d", DEC.limbs != NULL ? (int)DEC.limbs[0] : 0);
+        xalloc_prepend(&digits, &digits_size, digit_buf, strlen(digit_buf));
     }
-    else if (specifier == 'b') {
-        for (size_t i = self->count - 1; i < self->count; --i) {
-            sprintf(
-                digit_buf,
-                "%c%c%c%c%c%c%c%c",
-                ((int)self->limbs[i] >> 7) & 0x01 ? '1' : '0',
-                ((int)self->limbs[i] >> 6) & 0x01 ? '1' : '0',
-                ((int)self->limbs[i] >> 5) & 0x01 ? '1' : '0',
-                ((int)self->limbs[i] >> 4) & 0x01 ? '1' : '0',
-                ((int)self->limbs[i] >> 3) & 0x01 ? '1' : '0',
-                ((int)self->limbs[i] >> 2) & 0x01 ? '1' : '0',
-                ((int)self->limbs[i] >> 1) & 0x01 ? '1' : '0',
-                ((int)self->limbs[i] >> 0) & 0x01 ? '1' : '0');
-            xalloc_append(&digits, &digits_size, digit_buf, strlen(digit_buf));
-        }
-    }
-    else if (specifier == 'o') {
-        struct bigint OCT = {0};
-        struct bigint SELF = {0};
-        bigint_abs(&SELF, self);
-        while (bigint_cmp(&SELF, BIGINT_ZERO) != 0) {
-            bigint_divrem(&SELF, &OCT, &SELF, BIGINT_OCT);
-            assert(OCT.count <= 1);
-            assert(OCT.limbs == NULL || OCT.limbs[0] < 8);
-            sprintf(digit_buf, "%o", OCT.limbs != NULL ? (int)OCT.limbs[0] : 0);
-            xalloc_prepend(&digits, &digits_size, digit_buf, strlen(digit_buf));
-        }
-        bigint__fini_(&OCT);
-        bigint__fini_(&SELF);
-    }
-    else if (specifier == 'x') {
-        for (size_t i = self->count - 1; i < self->count; --i) {
-            sprintf(digit_buf, "%02x", (int)self->limbs[i]);
-            xalloc_append(&digits, &digits_size, digit_buf, strlen(digit_buf));
-        }
-    }
-    else if (specifier == 'X') {
-        for (size_t i = self->count - 1; i < self->count; --i) {
-            sprintf(digit_buf, "%02X", (int)self->limbs[i]);
-            xalloc_append(&digits, &digits_size, digit_buf, strlen(digit_buf));
-        }
-    }
-    else {
-        fatal(NULL, "Unreachable!");
-    }
+    bigint__fini_(&DEC);
+    bigint__fini_(&SELF);
 
     if (digits_size != 0) {
         // Remove leading zeros.
@@ -1710,40 +1597,10 @@ bigint_to_new_cstr(struct bigint const* self, char const* fmt)
         xalloc_append(&digits, &digits_size, "0", 1);
     }
 
-    // Width.
-    void* widths = NULL;
-    size_t widths_size = 0;
-    if ((prefix_size + digits_size) < width) {
-        char pad = ' ';
-        if (flags & (1u << BIGINT_FMT_FLAG_ZERO_)) {
-            assert(!(flags & (1u << BIGINT_FMT_FLAG_MINUS_)));
-            pad = '0';
-        }
-        widths_size = width - (prefix_size + digits_size);
-        widths = xalloc(widths, widths_size);
-        memset(widths, pad, widths_size);
-
-        if (flags & (1u << BIGINT_FMT_FLAG_ZERO_)) {
-            assert(!(flags & (1u << BIGINT_FMT_FLAG_MINUS_)));
-            xalloc_prepend(&digits, &digits_size, widths, widths_size);
-        }
-        else if (flags & (1u << BIGINT_FMT_FLAG_MINUS_)) {
-            assert(!(flags & (1u << BIGINT_FMT_FLAG_ZERO_)));
-            xalloc_append(&digits, &digits_size, widths, widths_size);
-        }
-        else {
-            xalloc_prepend(&prefix, &prefix_size, widths, widths_size);
-        }
-    }
-
-    void* cstr = NULL;
-    size_t cstr_size = 0;
-    xalloc_append(&cstr, &cstr_size, prefix, prefix_size);
     xalloc_append(&cstr, &cstr_size, digits, digits_size);
     xalloc_append(&cstr, &cstr_size, "\0", 1);
-    xalloc(prefix, XALLOC_FREE);
     xalloc(digits, XALLOC_FREE);
-    xalloc(widths, XALLOC_FREE);
+
     return cstr;
 }
 
@@ -2209,7 +2066,7 @@ bigint_to_umax(uintmax_t* res, struct bigint const* bigint)
         return -1;
     }
 
-    char* const cstr = bigint_to_new_cstr(bigint, NULL);
+    char* const cstr = bigint_to_new_cstr(bigint);
     errno = 0;
     uintmax_t umax = strtoumax(cstr, NULL, 0);
     int const err = errno; // save errno

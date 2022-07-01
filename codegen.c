@@ -1382,7 +1382,7 @@ codegen_rvalue_integer(struct expr const* expr, size_t id)
     assert(expr->kind == EXPR_INTEGER);
     (void)id;
 
-    char* const cstr = bigint_to_new_cstr(expr->data.integer, NULL);
+    char* const cstr = bigint_to_new_cstr(expr->data.integer);
 
     assert(expr->type->size >= 1u);
     assert(expr->type->size <= 8u);
@@ -2000,7 +2000,7 @@ codegen_rvalue_unary(struct expr const* expr, size_t id)
         appendli("pop rax");
         if (type_is_signed_integer(rhs->type)) {
             char* const min_cstr =
-                bigint_to_new_cstr(rhs->type->data.integer.min, NULL);
+                bigint_to_new_cstr(rhs->type->data.integer.min);
             appendli("mov rbx, %s", min_cstr);
             xalloc(min_cstr, XALLOC_FREE);
             appendli(
