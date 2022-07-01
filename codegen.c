@@ -264,6 +264,7 @@ append_dx_static_initializer(struct value const* value)
 
         assert(member_variable_defs_count == member_variable_vals_count);
         size_t const member_variable_count = member_variable_vals_count;
+        (void)member_variable_defs_count;
 
         for (size_t i = 0; i < member_variable_count; ++i) {
             struct member_variable const* const def = member_variable_defs + i;
