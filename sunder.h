@@ -94,21 +94,17 @@ void* safe_memmove(void* dest, void const* src, size_t n);
 void* safe_memset(void* s, int c, size_t n);
 // clang-format on
 
-// General purpose allocator functions with out-of-memory error checking. The
-// behavior of xalloc and xallocn is similar to libc realloc and
-// *BSD reallocarray with the following exceptions:
+// General purpose allocator function with out-of-memory error checking. The
+// behavior of xalloc is similar to realloc and with the following exceptions:
 // (1) On allocation failure an error message will be printed followed by
-//     program termination with via abort.
+//     program termination via abort.
 // (2) The call xalloc(ptr, 0) is guaranteed to free the memory backing ptr. A
 //     pointer returned by xalloc may be freed with xalloc(ptr, 0) or the
-//     equivalent xalloc(ptr, XALLOC_FREE). The calls xallocn(ptr, x, 0) and
-//     xallocn(ptr, 0, y) are equivalent to xalloc(ptr, 0).
+//     equivalent xalloc(ptr, XALLOC_FREE).
 // The macro XALLOC_FREE may be used in place of the constant zero to indicate
 // that a call xalloc(ptr, XALLOC_FREE) is intended as a free operation.
 void*
 xalloc(void* ptr, size_t size);
-void*
-xallocn(void* ptr, size_t nmemb, size_t size);
 #define XALLOC_FREE ((size_t)0)
 
 char const* // interned

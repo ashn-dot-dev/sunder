@@ -151,17 +151,6 @@ xalloc(void* ptr, size_t size)
     return ptr;
 }
 
-void*
-xallocn(void* ptr, size_t nmemb, size_t size)
-{
-    size_t const sz = nmemb * size;
-    if (nmemb != 0 && sz / nmemb != size) {
-        error(NULL, "[%s] Integer overflow", __func__);
-        abort();
-    }
-    return xalloc(ptr, sz);
-}
-
 // Prepend othr_size bytes from othr onto the xalloc-allocated buffer of
 // size *psize pointed to by *pdata, updating the address of *pdata if
 // necessary.
