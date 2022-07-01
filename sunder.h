@@ -56,10 +56,10 @@ typedef union {
 #define ALIGNOF(type) offsetof(struct{char _; type ty;}, ty)
 // clang-format on
 
-// C99 compatible(ish) _Static_assert.
-// Macro parameter what should be a valid identifier describing the assertion.
-// Flips the order of arguments from C11's _Static_assert so that assertions
-// read as if they were a sentence.
+// C99 compatible(ish) _Static_assert. Macro parameter `what` should be a valid
+// identifier describing the assertion. Flips the order of arguments from C11's
+// _Static_assert so that assertions read as if they were a sentence.
+//
 // Example:
 //      // Assert that we are compiling on a 64-bit machine.
 //      STATIC_ASSERT(pointers_are_eight_bytes, sizeof(void*) == 8);
@@ -356,18 +356,18 @@ void
 bitarr_assign(struct bitarr* self, struct bitarr const* othr);
 
 // res = ~rhs
-// Fatally exits after printing an error message if the count of res and rhs are
-// not equal.
+// Fatally exits after printing an error message if the count of res and rhs
+// are not equal.
 void
 bitarr_compl(struct bitarr* res, struct bitarr const* rhs);
 // res = lhs << nbits (logical shift left)
-// Fatally exits after printing an error message if the count of res and lhs are
-// not equal.
+// Fatally exits after printing an error message if the count of res and lhs
+// are not equal.
 void
 bitarr_shiftl(struct bitarr* res, struct bitarr const* lhs, size_t nbits);
 // res = lhs >> nbits (logical shift right)
-// Fatally exits after printing an error message if the count of res and lhs are
-// not equal.
+// Fatally exits after printing an error message if the count of res and lhs
+// are not equal.
 void
 bitarr_shiftr(
     struct bitarr* res, struct bitarr const* lhs, size_t nbits, int high_bit);
@@ -458,8 +458,8 @@ bigint_mul(
 // If res is NULL then the result will not be written to res.
 // If rem is NULL then the remainder will not be written to rem.
 //
-// This function matches the behavior of the / and % operators as defined by the
-// C99 standard, satisfying the expression:
+// This function matches the behavior of the / and % operators as defined by
+// the C99 standard, satisfying the expression:
 //      (lhs/rhs)*rhs + lhs%rhs == lhs
 // where:
 //      lhs/rhs == res
@@ -1355,8 +1355,8 @@ cst_symbol_new(
 struct cst_symbol_element {
     struct source_location const* location;
     struct cst_identifier const* identifier;
-    // Template argument count of zero indicates that this symbol element has no
-    // template arguments.
+    // Template argument count of zero indicates that this symbol element has
+    // no template arguments.
     sbuf(struct cst_typespec const* const) template_arguments;
 };
 struct cst_symbol_element*
