@@ -67,14 +67,12 @@ typedef union {
 #define STATIC_ASSERT(what, expr) enum {STATIC_ASSERT__ ## what = 1/!!(expr)}
 // clang-format on
 
-// Alternatives to the C99 standard library functions in ctype.h.
-// These functions always use the "C" locale and will not result in undefined
+// Alternatives to the C99 standard library functions in ctype.h. These
+// functions always use the "C" locale and will not result in undefined
 // behavior if passed a value not representable by an unsigned char.
 // clang-format off
 int safe_isalnum(int c);
 int safe_isalpha(int c);
-int safe_isblank(int c);
-int safe_iscntrl(int c);
 int safe_isdigit(int c);
 int safe_isgraph(int c);
 int safe_islower(int c);
@@ -87,9 +85,9 @@ int safe_isodigit(int c); // Not in C99. Octal digit.
 int safe_isxdigit(int c);
 // clang-format on
 
-// Alternatives to the C99 standard library functions in string.h.
-// These functions do not result in undefined behavior when passed an invalid
-// pointer argument paired with a memory-size argument of zero.
+// Alternatives to the C99 standard library functions in string.h. These
+// functions do not result in undefined behavior when passed an invalid pointer
+// argument paired with a memory-size argument of zero.
 // clang-format off
 int safe_memcmp(void const* s1, void const* s2, size_t n);
 void* safe_memmove(void* dest, void const* src, size_t n);

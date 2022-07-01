@@ -42,18 +42,6 @@ safe_isalpha(int c)
 }
 
 int
-safe_isblank(int c)
-{
-    return c == ' ' || c == '\t';
-}
-
-int
-safe_iscntrl(int c)
-{
-    return (unsigned)c < 0x20 || c == 0x7f;
-}
-
-int
 safe_isdigit(int c)
 {
     return (unsigned)c - '0' < 10;
