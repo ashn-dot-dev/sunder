@@ -1,0 +1,46 @@
+import "std/core.sunder";
+import "std/ascii.sunder";
+
+func main() void {
+    dump std::ascii::is_digit('0');
+    dump std::ascii::is_digit('1');
+    dump std::ascii::is_digit('2');
+    dump std::ascii::is_digit('3');
+    dump std::ascii::is_digit('4');
+    dump std::ascii::is_digit('5');
+    dump std::ascii::is_digit('6');
+    dump std::ascii::is_digit('7');
+    dump std::ascii::is_digit('8');
+    dump std::ascii::is_digit('9');
+
+    dump void::init();
+
+    dump std::ascii::is_digit('A');
+    dump std::ascii::is_digit('a');
+    dump std::ascii::is_digit('~');
+    dump std::ascii::is_digit('\n');
+    dump std::ascii::is_digit('\t');
+    dump std::ascii::is_digit(' ');
+    dump std::ascii::is_digit('@');
+    dump std::ascii::is_digit('[');
+}
+################################################################################
+# 01
+# 01
+# 01
+# 01
+# 01
+# 01
+# 01
+# 01
+# 01
+# 01
+#
+# 00
+# 00
+# 00
+# 00
+# 00
+# 00
+# 00
+# 00

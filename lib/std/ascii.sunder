@@ -1,5 +1,9 @@
 namespace std::ascii;
 
+func is_digit(char: byte) bool {
+    return '0' <= char and char <= '9';
+}
+
 func is_lowercase(char: byte) bool {
     return 'a' <= char and char <= 'z';
 }
