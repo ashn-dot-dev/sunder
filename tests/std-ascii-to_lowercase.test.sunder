@@ -16,6 +16,7 @@ func main() void {
 
     dump void::init();
 
+    dump std::ascii::to_lowercase('1') == '1';
     dump std::ascii::to_lowercase('~') == '~';
     dump std::ascii::to_lowercase('\n') == '\n';
     dump std::ascii::to_lowercase('\t') == '\t';
@@ -34,6 +35,7 @@ func main() void {
 # 01
 # 01
 #
+# 01
 # 01
 # 01
 # 01

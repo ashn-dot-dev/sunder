@@ -1,0 +1,44 @@
+import "std/core.sunder";
+import "std/ascii.sunder";
+
+func main() void {
+    dump std::ascii::is_letter('a');
+    dump std::ascii::is_letter('b');
+    dump std::ascii::is_letter('c');
+    dump std::ascii::is_letter('z');
+
+    dump void::init();
+
+    dump std::ascii::is_letter('A');
+    dump std::ascii::is_letter('B');
+    dump std::ascii::is_letter('C');
+    dump std::ascii::is_letter('Z');
+
+    dump void::init();
+
+    dump std::ascii::is_letter('1');
+    dump std::ascii::is_letter('~');
+    dump std::ascii::is_letter('\n');
+    dump std::ascii::is_letter('\t');
+    dump std::ascii::is_letter(' ');
+    dump std::ascii::is_letter('@');
+    dump std::ascii::is_letter('[');
+}
+################################################################################
+# 01
+# 01
+# 01
+# 01
+#
+# 01
+# 01
+# 01
+# 01
+#
+# 00
+# 00
+# 00
+# 00
+# 00
+# 00
+# 00

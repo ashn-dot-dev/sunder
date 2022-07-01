@@ -16,6 +16,7 @@ func main() void {
 
     dump void::init();
 
+    dump std::ascii::is_uppercase('1');
     dump std::ascii::is_uppercase('~');
     dump std::ascii::is_uppercase('\n');
     dump std::ascii::is_uppercase('\t');
@@ -34,6 +35,7 @@ func main() void {
 # 00
 # 00
 #
+# 00
 # 00
 # 00
 # 00

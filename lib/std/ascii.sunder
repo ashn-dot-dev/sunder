@@ -22,6 +22,10 @@ func to_uppercase(char: byte) byte {
     return char;
 }
 
+func is_letter(char: byte) bool {
+    return std::ascii::is_uppercase(char) or std::ascii::is_lowercase(char);
+}
+
 func is_whitespace(char: byte) bool {
     return char == ' '
         or char == '\t'
