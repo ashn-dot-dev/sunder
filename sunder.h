@@ -524,11 +524,6 @@ string_start(struct string const* self);
 size_t
 string_count(struct string const* self);
 
-// Return an int less than, equal to, or greater than zero if lhs is
-// lexicographically less than, equal to, or greater than rhs, respectively.
-int
-string_cmp(struct string const* lhs, struct string const* rhs);
-
 // Update the count of the string.
 // If count is greater than the current count of the string then additional
 // elements are initialized with garbage data.

@@ -1690,21 +1690,6 @@ string_count(struct string const* self)
     return self->count;
 }
 
-int
-string_cmp(struct string const* lhs, struct string const* rhs)
-{
-    assert(lhs != NULL);
-    assert(rhs != NULL);
-
-    size_t const n = lhs->count < rhs->count ? lhs->count : rhs->count;
-    int const cmp = safe_memcmp(lhs->start, rhs->start, n);
-
-    if (cmp != 0 || lhs->count == rhs->count) {
-        return cmp;
-    }
-    return lhs->count < rhs->count ? -1 : +1;
-}
-
 void
 string_resize(struct string* self, size_t count)
 {
