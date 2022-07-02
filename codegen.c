@@ -882,6 +882,7 @@ codegen_fatals(void)
     appendln("section .rodata");
     appendln("__fatal_integer_divide_by_zero_msg_start: db \"divide by zero\", 0x0A");
     appendln("__fatal_integer_divide_by_zero_msg_count: equ $ - __fatal_integer_divide_by_zero_msg_start");
+    appendch('\n');
 
     // Builtin integer out-of-range handler.
     appendln("section .text");
@@ -893,6 +894,7 @@ codegen_fatals(void)
     appendln("section .rodata");
     appendln("__fatal_integer_out_of_range_msg_start: db \"arithmetic operation produces out-of-range result\", 0x0A");
     appendln("__fatal_integer_out_of_range_msg_count: equ $ - __fatal_integer_out_of_range_msg_start");
+    appendch('\n');
 
     // Builtin index out-of-bounds handler.
     appendln("section .text");
