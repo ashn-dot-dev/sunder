@@ -771,7 +771,7 @@ struct error_info {
 }
 
 # Common error type used within the Sunder standard library. The `std::error`
-# type is typically used as the error template argument in a `std::result`
+# type is typically used as the error template argument in `std::result`
 # template instantiations. The layout of the `std::error_info` type is
 # guaranteed to match the layout of the `[]byte` type, and type punning from
 # `*[]byte` to `std::error` is explicitly supported.
