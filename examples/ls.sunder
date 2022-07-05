@@ -47,7 +47,7 @@ func main() void {
                 "{}: {}",
                 (:[]std::formatter)[
                     std::formatter::init[[[]byte]](&progname),
-                    std::formatter::init[[[]byte]](&result.error().*.data)]);
+                    std::formatter::init[[[]byte]](&current.error().*.data)]);
         }
 
         var name = current.value();
