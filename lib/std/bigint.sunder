@@ -245,7 +245,7 @@ struct bigint {
     # "d", "b", "o", "x", and "X".
     func format(self: *bigint, writer: std::writer, fmt: []byte) std::result[[void, std::error]] {
         if countof(fmt) != 0 {
-            std::formatter::panic_invalid_format_specifier(fmt);
+            return std::result[[void, std::error]]::init_error(std::error::INVALID_ARGUMENT);
         }
 
         var magnitude = bigint::init_from_bigint(self.*._allocator, self);

@@ -156,7 +156,7 @@ extend integer func _compare[[T]](lhs: T, rhs: T) ssize {
 extend integer func _format_umax(int: std::umax, writer: std::writer, fmt: []byte) std::result[[void, std::error]] {
     # All non-default format specifiers have a length of one byte.
     if countof(fmt) > 1 {
-        std::formatter::panic_invalid_format_specifier(fmt);
+        return std::result[[void, std::error]]::init_error(std::error::INVALID_ARGUMENT);
     }
 
     const DIGITS_TABLE_COUNT: usize = 16;
@@ -196,7 +196,7 @@ extend integer func _format_umax(int: std::umax, writer: std::writer, fmt: []byt
             digits_table = DIGITS_TABLE_UPPER[0:DIGITS_TABLE_COUNT];
         }
         else {
-            std::formatter::panic_invalid_format_specifier(fmt);
+            return std::result[[void, std::error]]::init_error(std::error::INVALID_ARGUMENT);
         }
     }
 
@@ -530,8 +530,7 @@ extend []byte func format(self: *[]byte, writer: std::writer, fmt: []byte) std::
         return std::result[[void, std::error]]::init_value(void::init());
     }
 
-    std::formatter::panic_invalid_format_specifier(fmt);
-    return std::zeroed[[std::result[[void, std::error]]]](); # unreachable
+    return std::result[[void, std::error]]::init_error(std::error::INVALID_ARGUMENT);
 }
 
 struct ptr[[T]] { # namespace
@@ -953,23 +952,8 @@ struct formatter {
     # type will implement its own type-specific format specifier(s). However,
     # the empty format specifier, `""`, should always be handled as a default
     # formatting case.
-    #
-    # In the event of a write error, the erroneous write result should be
-    # returned. If the provided format specifier does not match a format
-    # specifier implemented by the type, then the backing `format` function
-    # should call
-    #
-    #   std::formatter::panic_invalid_format_specifier(fmt)
-    #
-    # which will terminate the program with failure status.
     func format(self: *formatter, writer: std::writer, fmt: []byte) std::result[[void, std::error]] {
         return self.*.itable.*.format(self.*.object, writer, fmt);
-    }
-
-    func panic_invalid_format_specifier(fmt: []byte) void {
-        std::panic_format(
-            "invalid format specifier \"{e}\"\n",
-            (:[]std::formatter)[std::formatter::init[[[]byte]](&fmt)]);
     }
 }
 
@@ -1315,9 +1299,9 @@ func write_format(writer: std::writer, format: []byte, args: []std::formatter) s
                 #      ^^
                 # "some}}text"
                 #      ^^ Escaped '{' or '}' character.
-                var res = std::write_all(writer, format[start:end+1]);
-                if res.is_error() {
-                    return res;
+                var result = std::write_all(writer, format[start:end+1]);
+                if result.is_error() {
+                    return result;
                 }
                 start = end + 2;
                 end = start;
@@ -1327,14 +1311,16 @@ func write_format(writer: std::writer, format: []byte, args: []std::formatter) s
             if format[end] == '}' {
                 # "some}text"
                 #      ^ End-of-fmt when not in the fmt-parsing state.
-                std::panic_format(INVALID_FORMAT_STRING_MESSAGE, (:[]std::formatter)[std::formatter::init[[[]byte]](&format)]);
+                std::panic_format(
+                    INVALID_FORMAT_STRING_MESSAGE,
+                    (:[]std::formatter)[std::formatter::init[[[]byte]](&format)]);
             }
 
             # "some{fmt}text"
             #      ^ Start of format specifier.
-            var res = std::write_all(writer, format[start:end]);
-            if res.is_error() {
-                return res;
+            var result = std::write_all(writer, format[start:end]);
+            if result.is_error() {
+                return result;
             }
             start = end + 1;
             end = start;
@@ -1359,14 +1345,22 @@ func write_format(writer: std::writer, format: []byte, args: []std::formatter) s
                 # "some{f}}t}text"
                 #        ^^ Escaped '{' or '}' character is not allowed inside
                 #           a fmt string.
-                std::panic_format(INVALID_FORMAT_STRING_MESSAGE, (:[]std::formatter)[std::formatter::init[[[]byte]](&format)]);
+                std::panic_format(
+                    INVALID_FORMAT_STRING_MESSAGE,
+                    (:[]std::formatter)[std::formatter::init[[[]byte]](&format)]);
             }
 
             # "some{fmt}text"
             #          ^ End of format specifier.
-            var res = args[arg].format(writer, format[start:end]);
-            if res.is_error() {
-                return res;
+            var fmt = format[start:end];
+            var result = args[arg].format(writer, fmt);
+            if result.is_error() {
+                if result.error() == std::error::INVALID_ARGUMENT {
+                    std::panic_format(
+                        "invalid format specifier \"{e}\"\n",
+                        (:[]std::formatter)[std::formatter::init[[[]byte]](&fmt)]);
+                }
+                return result;
             }
             start = end + 1;
             end = start;
@@ -1386,9 +1380,9 @@ func write_format(writer: std::writer, format: []byte, args: []std::formatter) s
 
     # "some{fmt}text"
     #           ^^^^ Write the remaining walked text.
-    var res = std::write_all(writer, format[start:end]);
-    if res.is_error() {
-        return res;
+    var result = std::write_all(writer, format[start:end]);
+    if result.is_error() {
+        return result;
     }
 
     # Call with a format string "some {fmt} text" (N format specifiers) and N+M
