@@ -1713,27 +1713,6 @@ func max[[T]](x: *T, y: *T) *T {
     return y;
 }
 
-# Stable sort elements of the provided slice in-place.
-func sort[[T]](slice: []T) void {
-    # Implementation of bubble sort. Bubble sort has an absolutely terrible
-    # time complexity of O(n^2), but it *is* a stable in-place sort, and
-    # it happens to be easy to implement.
-    #
-    # TODO: In the future bubble sort should be replaced with a faster
-    # stable in-place sort such as WikiSort[1].
-    #
-    # [1]: https://github.com/BonzaiThePenguin/WikiSort
-    for i in countof(slice) {
-        for j in countof(slice) - i - 1 {
-            if std::gt[[T]](&slice[j], &slice[j + 1]) {
-                var tmp = slice[j];
-                slice[j] = slice[j + 1];
-                slice[j + 1] = tmp;
-            }
-        }
-    }
-}
-
 # Key-value pair used in map operations.
 struct key_value_pair[[K, V]] {
     var key: K;
