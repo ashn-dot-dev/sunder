@@ -450,7 +450,7 @@ extend []byte func hash(self: *[]byte) usize {
 
 # Accepted format specifiers:
 #   ""  => verbatim (default)
-#   "e" => escaped
+#   "e" => escaped (e.g. "\0\t\n\'\"\xFFabc)
 extend []byte func format(self: *[]byte, writer: std::writer, fmt: []byte) std::result[[void, std::error]] {
     # Format specifier: ""
     if countof(fmt) == 0 {
