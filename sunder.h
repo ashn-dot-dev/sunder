@@ -906,17 +906,13 @@ struct token {
 
     enum token_kind kind;
     union {
-        // TOKEN_IDENTIFIER
         char const* identifier; // interned
-        // TOKEN_INTEGER
         struct {
             struct vstr number;
             struct vstr suffix;
         } integer;
-        // TOKEN_CHARACTER
         // Contains the value of the character literal.
         int character;
-        // TOKEN_BYTES
         // Contains the un-escaped contents of the bytes literal.
         struct string const* bytes;
     } data;
