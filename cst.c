@@ -390,6 +390,7 @@ struct cst_expr*
 cst_expr_new_boolean(struct token const* token)
 {
     assert(token != NULL);
+    assert(token->kind == TOKEN_TRUE || token->kind == TOKEN_FALSE);
 
     struct cst_expr* const self =
         cst_expr_new(&token->location, CST_EXPR_BOOLEAN);

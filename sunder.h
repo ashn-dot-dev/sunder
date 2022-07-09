@@ -1181,8 +1181,8 @@ struct cst_expr {
     } kind;
     union cst_expr_data {
         struct cst_symbol const* symbol;
-        struct token const* boolean;
-        struct token const* integer;
+        struct token const* boolean; // TOKEN_TRUE or TOKEN_FALSE
+        struct token const* integer; // TOKEN_INTEGER
         int character;
         struct string const* bytes;
         struct {
