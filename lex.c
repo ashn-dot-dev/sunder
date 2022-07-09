@@ -163,6 +163,7 @@ token_new_identifier(
 
     struct token* const token =
         token_new(start, count, location, TOKEN_IDENTIFIER);
+    token->data.identifier = intern(start, count);
     return token;
 }
 

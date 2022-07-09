@@ -906,6 +906,8 @@ struct token {
 
     enum token_kind kind;
     union {
+        // TOKEN_IDENTIFIER
+        char const* identifier; // interned
         // TOKEN_INTEGER
         struct {
             struct vstr number;

@@ -1750,8 +1750,9 @@ parse_identifier(struct parser* parser)
 
     struct token const* const token = expect_current(parser, TOKEN_IDENTIFIER);
     struct source_location const* const location = &token->location;
-    char const* const name = intern(token->start, token->count);
-    struct cst_identifier* const product = cst_identifier_new(location, name);
+    char const* const name = token->data.identifier;
+    struct cst_identifier* const product =
+        cst_identifier_new(location, token->data.identifier);
 
     freeze(product);
     return product;
