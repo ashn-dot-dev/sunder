@@ -1028,8 +1028,7 @@ parse_expr_character(struct parser* parser)
     assert(parser != NULL);
 
     struct token const* const token = expect_current(parser, TOKEN_CHARACTER);
-    struct cst_expr* const product =
-        cst_expr_new_character(&token->location, token->data.character);
+    struct cst_expr* const product = cst_expr_new_character(token);
 
     freeze(product);
     return product;
@@ -1750,7 +1749,6 @@ parse_identifier(struct parser* parser)
 
     struct token const* const token = expect_current(parser, TOKEN_IDENTIFIER);
     struct source_location const* const location = &token->location;
-    char const* const name = token->data.identifier;
     struct cst_identifier* const product =
         cst_identifier_new(location, token->data.identifier);
 

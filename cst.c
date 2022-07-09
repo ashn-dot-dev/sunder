@@ -411,12 +411,14 @@ cst_expr_new_integer(struct token const* token)
 }
 
 struct cst_expr*
-cst_expr_new_character(struct source_location const* location, int character)
+cst_expr_new_character(struct token const* token)
 {
-    assert(location != NULL);
+    assert(token != NULL);
+    assert(token->kind == TOKEN_CHARACTER);
 
-    struct cst_expr* const self = cst_expr_new(location, CST_EXPR_CHARACTER);
-    self->data.character = character;
+    struct cst_expr* const self =
+        cst_expr_new(&token->location, CST_EXPR_CHARACTER);
+    self->data.character = token;
     return self;
 }
 

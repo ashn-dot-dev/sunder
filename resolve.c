@@ -2759,7 +2759,8 @@ resolve_expr_character(struct resolver* resolver, struct cst_expr const* expr)
     // XXX: Hack to get around the bigint API not having a constructor
     // function that creates a bigint based of of an int input value.
     char buf[255] = {0};
-    int const written = snprintf(buf, sizeof(buf), "%d", expr->data.character);
+    int character = expr->data.character->data.character;
+    int const written = snprintf(buf, sizeof(buf), "%d", character);
     assert(written < (int)sizeof(buf));
     (void)written;
 
