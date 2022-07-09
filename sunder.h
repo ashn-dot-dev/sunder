@@ -1180,7 +1180,7 @@ struct cst_expr {
     union cst_expr_data {
         struct cst_symbol const* symbol;
         struct cst_boolean const* boolean;
-        struct cst_integer const* integer;
+        struct token const* integer;
         int character;
         struct string const* bytes;
         struct {
@@ -1246,7 +1246,7 @@ cst_expr_new_symbol(struct cst_symbol const* symbol);
 struct cst_expr*
 cst_expr_new_boolean(struct cst_boolean const* boolean);
 struct cst_expr*
-cst_expr_new_integer(struct cst_integer const* integer);
+cst_expr_new_integer(struct token const* token);
 struct cst_expr*
 cst_expr_new_character(struct source_location const* location, int character);
 struct cst_expr*
@@ -1485,17 +1485,6 @@ struct cst_boolean {
 };
 struct cst_boolean*
 cst_boolean_new(struct source_location const* location, bool value);
-
-struct cst_integer {
-    struct source_location const* location;
-    struct bigint const* value;
-    char const* suffix; // interned
-};
-struct cst_integer*
-cst_integer_new(
-    struct source_location const* location,
-    struct bigint const* value,
-    char const* suffix);
 
 ////////////////////////////////////////////////////////////////////////////////
 //////// parse.c ///////////////////////////////////////////////////////////////

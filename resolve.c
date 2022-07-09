@@ -2730,10 +2730,16 @@ resolve_expr_integer(struct resolver* resolver, struct cst_expr const* expr)
     assert(expr->kind == CST_EXPR_INTEGER);
     (void)resolver;
 
-    struct cst_integer const* const cst_integer = expr->data.integer;
-    struct bigint const* const value = cst_integer->value;
-    struct type const* const type = integer_literal_suffix_to_type(
-        cst_integer->location, cst_integer->suffix);
+    struct token const* const token = expr->data.integer;
+
+    struct bigint* const value = bigint_new_text(
+        token->data.integer.number.start, token->data.integer.number.count);
+    bigint_freeze(value);
+
+    char const* const suffix = intern(
+        token->data.integer.suffix.start, token->data.integer.suffix.count);
+    struct type const* const type =
+        integer_literal_suffix_to_type(expr->location, suffix);
 
     struct expr* const resolved = expr_new_integer(expr->location, type, value);
 
@@ -3585,16 +3591,19 @@ resolve_expr_unary(struct resolver* resolver, struct cst_expr const* expr)
     bool const is_sign = (op->kind == TOKEN_PLUS) || (op->kind == TOKEN_DASH);
     struct cst_expr const* const cst_rhs = expr->data.unary.rhs;
     if (is_sign && cst_rhs->kind == CST_EXPR_INTEGER) {
-        struct cst_integer const* const cst_integer = cst_rhs->data.integer;
-        struct bigint const* value = cst_integer->value;
+        struct token const* const token = cst_rhs->data.integer;
+
+        struct bigint* const value = bigint_new_text(
+            token->data.integer.number.start, token->data.integer.number.count);
         if (op->kind == TOKEN_DASH) {
-            struct bigint* const tmp = bigint_new(value);
-            bigint_neg(tmp, value);
-            bigint_freeze(tmp);
-            value = tmp;
+            bigint_neg(value, value);
         }
-        struct type const* const type = integer_literal_suffix_to_type(
-            cst_integer->location, cst_integer->suffix);
+        bigint_freeze(value);
+
+        char const* const suffix = intern(
+            token->data.integer.suffix.start, token->data.integer.suffix.count);
+        struct type const* const type =
+            integer_literal_suffix_to_type(&token->location, suffix);
 
         struct expr* const resolved =
             expr_new_integer(&op->location, type, value);

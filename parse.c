@@ -195,9 +195,6 @@ parse_identifier(struct parser* parser);
 static struct cst_boolean const*
 parse_boolean(struct parser* parser);
 
-static struct cst_integer const*
-parse_integer(struct parser* parser);
-
 static struct parser*
 parser_new(struct module* module, struct lexer* lexer)
 {
@@ -1020,8 +1017,8 @@ parse_expr_integer(struct parser* parser)
 {
     assert(parser != NULL);
 
-    struct cst_integer const* const integer = parse_integer(parser);
-    struct cst_expr* const product = cst_expr_new_integer(integer);
+    struct token const* const token = expect_current(parser, TOKEN_INTEGER);
+    struct cst_expr* const product = cst_expr_new_integer(token);
 
     freeze(product);
     return product;
@@ -1772,25 +1769,6 @@ parse_boolean(struct parser* parser)
     struct source_location const* const location = &token->location;
     bool const value = token->kind == TOKEN_TRUE;
     struct cst_boolean* const product = cst_boolean_new(location, value);
-
-    freeze(product);
-    return product;
-}
-
-static struct cst_integer const*
-parse_integer(struct parser* parser)
-{
-    assert(parser != NULL);
-
-    struct token const* const token = expect_current(parser, TOKEN_INTEGER);
-    struct source_location const* const location = &token->location;
-    struct bigint* const value = bigint_new_text(
-        token->data.integer.number.start, token->data.integer.number.count);
-    bigint_freeze(value);
-    char const* const suffix = intern(
-        token->data.integer.suffix.start, token->data.integer.suffix.count);
-    struct cst_integer* const product =
-        cst_integer_new(location, value, suffix);
 
     freeze(product);
     return product;

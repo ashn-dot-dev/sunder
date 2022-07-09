@@ -398,13 +398,14 @@ cst_expr_new_boolean(struct cst_boolean const* boolean)
 }
 
 struct cst_expr*
-cst_expr_new_integer(struct cst_integer const* integer)
+cst_expr_new_integer(struct token const* token)
 {
-    assert(integer != NULL);
+    assert(token != NULL);
+    assert(token->kind == TOKEN_INTEGER);
 
     struct cst_expr* const self =
-        cst_expr_new(integer->location, CST_EXPR_INTEGER);
-    self->data.integer = integer;
+        cst_expr_new(&token->location, CST_EXPR_INTEGER);
+    self->data.integer = token;
     return self;
 }
 
@@ -903,22 +904,5 @@ cst_boolean_new(struct source_location const* location, bool value)
     memset(self, 0x00, sizeof(*self));
     self->location = location;
     self->value = value;
-    return self;
-}
-
-struct cst_integer*
-cst_integer_new(
-    struct source_location const* location,
-    struct bigint const* value,
-    char const* suffix)
-{
-    assert(location != NULL);
-    assert(suffix != NULL);
-
-    struct cst_integer* const self = xalloc(NULL, sizeof(*self));
-    memset(self, 0x00, sizeof(*self));
-    self->location = location;
-    self->value = value;
-    self->suffix = suffix;
     return self;
 }
