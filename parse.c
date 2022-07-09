@@ -192,9 +192,6 @@ parse_typespec_typeof(struct parser* parser);
 static struct cst_identifier const*
 parse_identifier(struct parser* parser);
 
-static struct cst_boolean const*
-parse_boolean(struct parser* parser);
-
 static struct parser*
 parser_new(struct module* module, struct lexer* lexer)
 {
@@ -1005,8 +1002,9 @@ parse_expr_boolean(struct parser* parser)
 {
     assert(parser != NULL);
 
-    struct cst_boolean const* const boolean = parse_boolean(parser);
-    struct cst_expr* const product = cst_expr_new_boolean(boolean);
+    struct token const* const token = advance_token(parser);
+    assert(token->kind == TOKEN_TRUE || token->kind == TOKEN_FALSE);
+    struct cst_expr* const product = cst_expr_new_boolean(token);
 
     freeze(product);
     return product;
@@ -1754,21 +1752,6 @@ parse_identifier(struct parser* parser)
     struct source_location const* const location = &token->location;
     char const* const name = intern(token->start, token->count);
     struct cst_identifier* const product = cst_identifier_new(location, name);
-
-    freeze(product);
-    return product;
-}
-
-static struct cst_boolean const*
-parse_boolean(struct parser* parser)
-{
-    assert(parser != NULL);
-
-    struct token const* const token = advance_token(parser);
-    assert(token->kind == TOKEN_TRUE || token->kind == TOKEN_FALSE);
-    struct source_location const* const location = &token->location;
-    bool const value = token->kind == TOKEN_TRUE;
-    struct cst_boolean* const product = cst_boolean_new(location, value);
 
     freeze(product);
     return product;

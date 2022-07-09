@@ -2668,7 +2668,8 @@ resolve_expr_boolean(struct resolver* resolver, struct cst_expr const* expr)
     assert(expr->kind == CST_EXPR_BOOLEAN);
     (void)resolver;
 
-    bool const value = expr->data.boolean->value;
+    struct token const* const token = expr->data.boolean;
+    bool const value = token->kind == TOKEN_TRUE;
     struct expr* const resolved = expr_new_boolean(expr->location, value);
 
     freeze(resolved);

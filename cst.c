@@ -387,13 +387,13 @@ cst_expr_new_symbol(struct cst_symbol const* symbol)
 }
 
 struct cst_expr*
-cst_expr_new_boolean(struct cst_boolean const* boolean)
+cst_expr_new_boolean(struct token const* token)
 {
-    assert(boolean != NULL);
+    assert(token != NULL);
 
     struct cst_expr* const self =
-        cst_expr_new(boolean->location, CST_EXPR_BOOLEAN);
-    self->data.boolean = boolean;
+        cst_expr_new(&token->location, CST_EXPR_BOOLEAN);
+    self->data.boolean = token;
     return self;
 }
 
@@ -892,17 +892,5 @@ cst_identifier_new(struct source_location const* location, char const* name)
     memset(self, 0x00, sizeof(*self));
     self->location = location;
     self->name = name;
-    return self;
-}
-
-struct cst_boolean*
-cst_boolean_new(struct source_location const* location, bool value)
-{
-    assert(location != NULL);
-
-    struct cst_boolean* const self = xalloc(NULL, sizeof(*self));
-    memset(self, 0x00, sizeof(*self));
-    self->location = location;
-    self->value = value;
     return self;
 }
