@@ -1040,8 +1040,7 @@ parse_expr_bytes(struct parser* parser)
     assert(parser != NULL);
 
     struct token const* const token = expect_current(parser, TOKEN_BYTES);
-    struct cst_expr* const product =
-        cst_expr_new_bytes(&token->location, token->data.bytes);
+    struct cst_expr* const product = cst_expr_new_bytes(token);
 
     freeze(product);
     return product;

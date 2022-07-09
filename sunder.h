@@ -1184,7 +1184,7 @@ struct cst_expr {
         struct token const* boolean; // TOKEN_TRUE or TOKEN_FALSE
         struct token const* integer; // TOKEN_INTEGER
         struct token const* character; // TOKEN_CHARACTER
-        struct string const* bytes;
+        struct token const* bytes; // TOKEN_BYTES
         struct {
             struct cst_typespec const* typespec;
             sbuf(struct cst_expr const* const) elements;
@@ -1252,8 +1252,7 @@ cst_expr_new_integer(struct token const* token);
 struct cst_expr*
 cst_expr_new_character(struct token const* token);
 struct cst_expr*
-cst_expr_new_bytes(
-    struct source_location const* location, struct string const* bytes);
+cst_expr_new_bytes(struct token const* token);
 struct cst_expr*
 cst_expr_new_list(
     struct source_location const* location,

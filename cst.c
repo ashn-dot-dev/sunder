@@ -423,14 +423,14 @@ cst_expr_new_character(struct token const* token)
 }
 
 struct cst_expr*
-cst_expr_new_bytes(
-    struct source_location const* location, struct string const* bytes)
+cst_expr_new_bytes(struct token const* token)
 {
-    assert(location != NULL);
-    assert(bytes != NULL);
+    assert(token != NULL);
+    assert(token->kind == TOKEN_BYTES);
 
-    struct cst_expr* const self = cst_expr_new(location, CST_EXPR_BYTES);
-    self->data.bytes = bytes;
+    struct cst_expr* const self =
+        cst_expr_new(&token->location, CST_EXPR_BYTES);
+    self->data.bytes = token;
     return self;
 }
 

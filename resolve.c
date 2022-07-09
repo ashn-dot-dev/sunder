@@ -2784,7 +2784,8 @@ resolve_expr_bytes(struct resolver* resolver, struct cst_expr const* expr)
     struct address const* const address =
         resolver_reserve_storage_static(resolver, "__bytes");
 
-    size_t const count = string_count(expr->data.bytes);
+    struct string const* const bytes = expr->data.bytes->data.bytes;
+    size_t const count = string_count(bytes);
     struct type const* const type = type_unique_array(
         expr->location, count + 1 /*NUL*/, context()->builtin.byte);
     // TODO: Allocating a value for each and every byte in the bytes literal
@@ -2794,7 +2795,7 @@ resolve_expr_bytes(struct resolver* resolver, struct cst_expr const* expr)
     // phase.
     sbuf(struct value*) elements = NULL;
     for (size_t i = 0; i < count; ++i) {
-        uint8_t const byte = (uint8_t)string_start(expr->data.bytes)[i];
+        uint8_t const byte = (uint8_t)string_start(bytes)[i];
         sbuf_push(elements, value_new_byte(byte));
     }
     // Append a NUL byte to the end of every bytes literal. This NUL byte is
