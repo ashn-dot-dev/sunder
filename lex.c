@@ -186,7 +186,7 @@ token_new_integer(
     struct token* const token =
         token_new(start, count, location, TOKEN_INTEGER);
     token->data.integer.value = value;
-    token->data.integer.suffix = suffix;
+    token->data.integer.suffix = intern(suffix.start, suffix.count);
     return token;
 }
 

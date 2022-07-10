@@ -2678,7 +2678,7 @@ resolve_expr_boolean(struct resolver* resolver, struct cst_expr const* expr)
 
 static struct type const*
 integer_literal_suffix_to_type(
-    struct source_location const* location, char const* suffix)
+    struct source_location const* location, char const* /* interned */ suffix)
 {
     assert(suffix != NULL);
 
@@ -2735,10 +2735,8 @@ resolve_expr_integer(struct resolver* resolver, struct cst_expr const* expr)
 
     struct bigint const* const value = token->data.integer.value;
 
-    char const* const suffix = intern(
-        token->data.integer.suffix.start, token->data.integer.suffix.count);
-    struct type const* const type =
-        integer_literal_suffix_to_type(expr->location, suffix);
+    struct type const* const type = integer_literal_suffix_to_type(
+        expr->location, token->data.integer.suffix);
 
     struct expr* const resolved = expr_new_integer(expr->location, type, value);
 
@@ -3603,10 +3601,8 @@ resolve_expr_unary(struct resolver* resolver, struct cst_expr const* expr)
             value = tmp;
         }
 
-        char const* const suffix = intern(
-            token->data.integer.suffix.start, token->data.integer.suffix.count);
-        struct type const* const type =
-            integer_literal_suffix_to_type(&token->location, suffix);
+        struct type const* const type = integer_literal_suffix_to_type(
+            &token->location, token->data.integer.suffix);
 
         struct expr* const resolved =
             expr_new_integer(&op->location, type, value);

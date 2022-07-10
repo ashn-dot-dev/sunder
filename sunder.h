@@ -909,7 +909,7 @@ struct token {
         char const* identifier; // interned
         struct {
             struct bigint const* value;
-            struct vstr suffix;
+            char const* suffix; // interned
         } integer;
         // Contains the value of the character literal.
         int character;
