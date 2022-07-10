@@ -806,6 +806,7 @@ validate_main_is_defined_correctly(void);
 ////////////////////////////////////////////////////////////////////////////////
 //////// lex.c /////////////////////////////////////////////////////////////////
 
+// clang-format off
 enum token_kind {
     // Keywords
     TOKEN_TRUE,
@@ -837,37 +838,37 @@ enum token_kind {
     TOKEN_SIZEOF,
     TOKEN_TYPEOF,
     // Sigils
-    TOKEN_SHL, // <<
-    TOKEN_SHR, // >>
-    TOKEN_EQ, // ==
-    TOKEN_NE, // !=
-    TOKEN_LE, // <=
-    TOKEN_LT, // <
-    TOKEN_GE, // >=
-    TOKEN_GT, // >
-    TOKEN_ASSIGN, // =
-    TOKEN_PLUS, // +
-    TOKEN_DASH, // -
-    TOKEN_STAR, // *
-    TOKEN_FSLASH, // /
-    TOKEN_PERCENT, // %
-    TOKEN_TILDE, // ~
-    TOKEN_PIPE, // |
-    TOKEN_CARET, // ^
-    TOKEN_AMPERSAND, // &
-    TOKEN_LPAREN, // (
-    TOKEN_RPAREN, // )
-    TOKEN_LBRACE, // {
-    TOKEN_RBRACE, // }
-    TOKEN_LBRACKET, // [
-    TOKEN_RBRACKET, // ]
-    TOKEN_COMMA, // ,
-    TOKEN_ELLIPSIS, // ...
-    TOKEN_DOT_STAR, // .*
-    TOKEN_DOT, // .
+    TOKEN_SHL,         // <<
+    TOKEN_SHR,         // >>
+    TOKEN_EQ,          // ==
+    TOKEN_NE,          // !=
+    TOKEN_LE,          // <=
+    TOKEN_LT,          // <
+    TOKEN_GE,          // >=
+    TOKEN_GT,          // >
+    TOKEN_ASSIGN,      // =
+    TOKEN_PLUS,        // +
+    TOKEN_DASH,        // -
+    TOKEN_STAR,        // *
+    TOKEN_FSLASH,      // /
+    TOKEN_PERCENT,     // %
+    TOKEN_TILDE,       // ~
+    TOKEN_PIPE,        // |
+    TOKEN_CARET,       // ^
+    TOKEN_AMPERSAND,   // &
+    TOKEN_LPAREN,      // (
+    TOKEN_RPAREN,      // )
+    TOKEN_LBRACE,      // {
+    TOKEN_RBRACE,      // }
+    TOKEN_LBRACKET,    // [
+    TOKEN_RBRACKET,    // ]
+    TOKEN_COMMA,       // ,
+    TOKEN_ELLIPSIS,    // ...
+    TOKEN_DOT_STAR,    // .*
+    TOKEN_DOT,         // .
     TOKEN_COLON_COLON, // ::
-    TOKEN_COLON, // :
-    TOKEN_SEMICOLON, // ;
+    TOKEN_COLON,       // :
+    TOKEN_SEMICOLON,   // ;
     // Identifiers and Non-Keyword Literals
     TOKEN_IDENTIFIER,
     TOKEN_INTEGER,
@@ -876,6 +877,7 @@ enum token_kind {
     // Meta
     TOKEN_EOF,
 };
+// clang-format on
 char const*
 token_kind_to_cstr(enum token_kind kind);
 
