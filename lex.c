@@ -6,6 +6,25 @@
 
 #include "sunder.h"
 
+// Byte-string view.
+struct vstr {
+    char const* start;
+    size_t count;
+};
+
+// Initializer for a vstr literal from a str literal.
+// Example:
+//      static struct vstr const foo =
+//          VSTR_INIT_STR_LITERAL("foo");
+// Example:
+//      struct vstr bar = {0};
+//      // some time later...
+//      bar = (struct vstr)VSTR_INIT_STR_LITERAL("bar");
+// clang-format off
+#define VSTR_INIT_STR_LITERAL(str_literal)                                     \
+    {str_literal, STR_LITERAL_COUNT(str_literal)}
+// clang-format on
+
 static enum token_kind const KEYWORDS_FIRST = TOKEN_TRUE;
 static enum token_kind const KEYWORDS_LAST = TOKEN_TYPEOF;
 static enum token_kind const SIGILS_FIRST = TOKEN_SHL;

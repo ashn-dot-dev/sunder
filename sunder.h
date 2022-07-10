@@ -12,7 +12,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 //////// util.c ////////////////////////////////////////////////////////////////
 
-struct vstr;
 struct bitarr;
 struct bigint;
 struct string;
@@ -160,25 +159,6 @@ cstr_starts_with(char const* cstr, char const* target);
 // Returns true if cstr ends with target.
 bool
 cstr_ends_with(char const* cstr, char const* target);
-
-// Byte-string view.
-struct vstr {
-    char const* start;
-    size_t count;
-};
-
-// Initializer for a vstr literal from a str literal.
-// Example:
-//      static struct vstr const foo =
-//          VSTR_INIT_STR_LITERAL("foo");
-// Example:
-//      struct vstr bar = {0};
-//      // some time later...
-//      bar = (struct vstr)VSTR_INIT_STR_LITERAL("bar");
-// clang-format off
-#define VSTR_INIT_STR_LITERAL(str_literal)                                     \
-    {str_literal, STR_LITERAL_COUNT(str_literal)}
-// clang-format on
 
 // Intern the string specified by the first count bytes of start.
 // Returns the canonical NUL-terminated representation of the interned string.
