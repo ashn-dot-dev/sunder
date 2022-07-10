@@ -908,7 +908,7 @@ struct token {
     union {
         char const* identifier; // interned
         struct {
-            struct vstr number;
+            struct bigint const* value;
             struct vstr suffix;
         } integer;
         // Contains the value of the character literal.

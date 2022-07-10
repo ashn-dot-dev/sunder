@@ -2733,9 +2733,7 @@ resolve_expr_integer(struct resolver* resolver, struct cst_expr const* expr)
 
     struct token const* const token = expr->data.integer;
 
-    struct bigint* const value = bigint_new_text(
-        token->data.integer.number.start, token->data.integer.number.count);
-    bigint_freeze(value);
+    struct bigint const* const value = token->data.integer.value;
 
     char const* const suffix = intern(
         token->data.integer.suffix.start, token->data.integer.suffix.count);
@@ -3596,12 +3594,14 @@ resolve_expr_unary(struct resolver* resolver, struct cst_expr const* expr)
     if (is_sign && cst_rhs->kind == CST_EXPR_INTEGER) {
         struct token const* const token = cst_rhs->data.integer;
 
-        struct bigint* const value = bigint_new_text(
-            token->data.integer.number.start, token->data.integer.number.count);
+        struct bigint const* value = token->data.integer.value;
         if (op->kind == TOKEN_DASH) {
-            bigint_neg(value, value);
+            struct bigint* const tmp = bigint_new(value);
+            assert(tmp != NULL);
+            bigint_neg(tmp, tmp);
+            bigint_freeze(tmp);
+            value = tmp;
         }
-        bigint_freeze(value);
 
         char const* const suffix = intern(
             token->data.integer.suffix.start, token->data.integer.suffix.count);

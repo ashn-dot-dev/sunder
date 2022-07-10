@@ -179,9 +179,13 @@ token_new_integer(
     assert(number.start != NULL && number.count != 0);
     assert(suffix.start != NULL || suffix.count == 0);
 
+    struct bigint* const value = bigint_new_text(number.start, number.count);
+    assert(value != NULL);
+    bigint_freeze(value);
+
     struct token* const token =
         token_new(start, count, location, TOKEN_INTEGER);
-    token->data.integer.number = number;
+    token->data.integer.value = value;
     token->data.integer.suffix = suffix;
     return token;
 }
