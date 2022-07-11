@@ -44,7 +44,7 @@ orderer_tldecl_lookup(struct orderer* orderer, char const* name);
 // declared multiple times using the same identifier but different extended
 // types, are given a unique name based on their declaration order index.
 static char const*
-orderer_tldecl_name(struct cst_decl const* decl, size_t decl_order_index);
+tldecl_name(struct cst_decl const* decl, size_t decl_order_index);
 
 static void
 order_tldecl(struct orderer* orderer, struct tldecl* tldecl);
@@ -81,8 +81,7 @@ orderer_new(struct module* module)
         struct tldecl const tldecl = {TLDECL_UNORDERED, module->cst->decls[i]};
         struct tldecl const* const existing = orderer_tldecl_lookup(
             self,
-            orderer_tldecl_name(
-                module->cst->decls[i], sbuf_count(self->tldecls)));
+            tldecl_name(module->cst->decls[i], sbuf_count(self->tldecls)));
         if (existing != NULL) {
             fatal(
                 module->cst->decls[i]->location,
@@ -117,7 +116,7 @@ orderer_tldecl_lookup(struct orderer* orderer, char const* name)
     assert(name != NULL);
 
     for (size_t i = 0; i < sbuf_count(orderer->tldecls); ++i) {
-        if (orderer_tldecl_name(orderer->tldecls[i].decl, i) == name) {
+        if (tldecl_name(orderer->tldecls[i].decl, i) == name) {
             return &orderer->tldecls[i];
         }
     }
@@ -126,7 +125,7 @@ orderer_tldecl_lookup(struct orderer* orderer, char const* name)
 }
 
 static char const*
-orderer_tldecl_name(struct cst_decl const* decl, size_t decl_order_index)
+tldecl_name(struct cst_decl const* decl, size_t decl_order_index)
 {
     assert(decl != NULL);
 
@@ -586,8 +585,7 @@ order(struct module* module)
     for (size_t i = 0; i < decl_count; ++i) {
         struct cst_decl const* const decl = orderer->tldecls[i].decl;
         order_tldecl(
-            orderer,
-            orderer_tldecl_lookup(orderer, orderer_tldecl_name(decl, i)));
+            orderer, orderer_tldecl_lookup(orderer, tldecl_name(decl, i)));
     }
 
     assert(decl_count == sbuf_count(orderer->topological_order));
