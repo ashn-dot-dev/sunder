@@ -108,11 +108,11 @@ static void
 register_static_symbol(struct symbol const* symbol);
 
 // Finds the symbol or fatally exits. Returns the symbol associated with the
-// target concrete syntax tree.
+// target concrete syntax tree symbol.
 static struct symbol const*
 xget_symbol(struct resolver* resolver, struct cst_symbol const* target);
-// Finds and/or instantiates the template symbol with the provided template
-// arguments or fatally exits. Returns the symbol associated with the
+// Finds and (if needed) instantiates the template symbol with the provided
+// template arguments or fatally exits. Returns the symbol associated with the
 // instantiated type.
 static struct symbol const*
 xget_template_instance(
@@ -121,21 +121,23 @@ xget_template_instance(
     struct symbol const* symbol,
     struct cst_typespec const* const* const template_arguments);
 
+// Fatally exits if the actual type does not exactly match the expected type.
 static void
-check_type_compatibility(
+verify_type_compatibility(
     struct source_location const* location,
     struct type const* actual,
     struct type const* expected);
 
-// Returns a newly created and registered expression node of expr implicitly
-// casted to type if such an implicit cast is valid. If expr cannot be
-// implicitly casted to type then expr is returned unchanged.
+// Returns a newly created and registered expression node of `expr` implicitly
+// casted to `type` if such an implicit cast is valid. If `expr` cannot be
+// implicitly casted to `type` then expr is returned unchanged.
+//
 //
 // The attempted implicit cast is "shallow" in the sense that it will not
 // recursively traverse the expression tree when casting, so currently
 // immediate values (literals), casts from `*T` to `*any`, and casts of
 // function types with parameter and/or a return type casts  from `*T` to
-// `*any` are the only valid expr targets.
+// `*any` are the only valid expression targets.
 //
 // This function is intended for use when casting untyped literals to an
 // expression that would require a typed literal (e.g. integer->usize), or for
@@ -143,7 +145,7 @@ check_type_compatibility(
 // Sub-expressions with integer literal constants are constant folded during
 // the resolve phase, so the expression `123 + 456 * 2` *should* be folded to
 // the integer literal constant `615` long before this function would be called
-// on it, so for most cases the sequence:
+// on it. For most cases the sequence:
 // ```
 // struct expr const* expr = resolve_expr(some_cst_expr);
 // expr = shallow_implicit_cast(type, expr);
@@ -979,7 +981,7 @@ xget_template_instance(
 }
 
 static void
-check_type_compatibility(
+verify_type_compatibility(
     struct source_location const* location,
     struct type const* actual,
     struct type const* expected)
@@ -1361,7 +1363,7 @@ resolve_decl_variable(
     }
 
     expr = shallow_implicit_cast(type, expr);
-    check_type_compatibility(expr->location, expr->type, type);
+    verify_type_compatibility(expr->location, expr->type, type);
 
     // Global/static variables have their initial values computed at
     // compile-time, but local/non-static variables have their value
@@ -1424,7 +1426,7 @@ resolve_decl_constant(struct resolver* resolver, struct cst_decl const* decl)
     }
 
     expr = shallow_implicit_cast(type, expr);
-    check_type_compatibility(expr->location, expr->type, type);
+    verify_type_compatibility(expr->location, expr->type, type);
 
     // Constants (globals and locals) have their values computed at
     // compile-time and therefore must always be added to the symbol table with
@@ -2481,7 +2483,7 @@ resolve_stmt_return(struct resolver* resolver, struct cst_stmt const* stmt)
     if (stmt->data.return_.expr != NULL) {
         expr = resolve_expr(resolver, stmt->data.return_.expr);
         expr = shallow_implicit_cast(return_type, expr);
-        check_type_compatibility(expr->location, expr->type, return_type);
+        verify_type_compatibility(expr->location, expr->type, return_type);
     }
     else {
         if (context()->builtin.void_ != return_type) {
@@ -2523,7 +2525,7 @@ resolve_stmt_assign(struct resolver* resolver, struct cst_stmt const* stmt)
     }
 
     rhs = shallow_implicit_cast(lhs->type, rhs);
-    check_type_compatibility(stmt->location, rhs->type, lhs->type);
+    verify_type_compatibility(stmt->location, rhs->type, lhs->type);
 
     struct stmt* const resolved = stmt_new_assign(stmt->location, lhs, rhs);
 
@@ -2843,7 +2845,7 @@ resolve_expr_list(struct resolver* resolver, struct cst_expr const* expr)
             struct expr const* resolved_element =
                 resolve_expr(resolver, elements[i]);
             resolved_element = shallow_implicit_cast(base, resolved_element);
-            check_type_compatibility(
+            verify_type_compatibility(
                 resolved_element->location, resolved_element->type, base);
             sbuf_push(resolved_elements, resolved_element);
         }
@@ -2854,7 +2856,7 @@ resolve_expr_list(struct resolver* resolver, struct cst_expr const* expr)
             resolved_ellipsis =
                 resolve_expr(resolver, expr->data.list.ellipsis);
             resolved_ellipsis = shallow_implicit_cast(base, resolved_ellipsis);
-            check_type_compatibility(
+            verify_type_compatibility(
                 resolved_ellipsis->location, resolved_ellipsis->type, base);
         }
 
@@ -2910,7 +2912,7 @@ resolve_expr_list(struct resolver* resolver, struct cst_expr const* expr)
                 resolve_expr(resolver, elements[i]);
             resolved_element = shallow_implicit_cast(
                 array_type->data.array.base, resolved_element);
-            check_type_compatibility(
+            verify_type_compatibility(
                 resolved_element->location,
                 resolved_element->type,
                 array_type->data.array.base);
@@ -2943,7 +2945,7 @@ resolve_expr_list(struct resolver* resolver, struct cst_expr const* expr)
             resolve_expr(resolver, elements[i]);
         resolved_element =
             shallow_implicit_cast(type->data.slice.base, resolved_element);
-        check_type_compatibility(
+        verify_type_compatibility(
             resolved_element->location,
             resolved_element->type,
             type->data.slice.base);
@@ -2984,12 +2986,12 @@ resolve_expr_slice(struct resolver* resolver, struct cst_expr const* expr)
     }
     struct type const* const slice_pointer_type =
         type_unique_pointer(type->data.slice.base);
-    check_type_compatibility(
+    verify_type_compatibility(
         pointer->location, pointer->type, slice_pointer_type);
 
     struct expr const* count = resolve_expr(resolver, expr->data.slice.count);
     count = shallow_implicit_cast(context()->builtin.usize, count);
-    check_type_compatibility(
+    verify_type_compatibility(
         count->location, count->type, context()->builtin.usize);
 
     struct expr* const resolved =
@@ -3061,7 +3063,7 @@ resolve_expr_struct(struct resolver* resolver, struct cst_expr const* expr)
 
             struct expr const* const initializer_expr = shallow_implicit_cast(
                 member_variable_defs[j].type, initializer_exprs[i]);
-            check_type_compatibility(
+            verify_type_compatibility(
                 initializer_expr->location,
                 initializer_expr->type,
                 member_variable_defs[j].type);
