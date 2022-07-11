@@ -169,7 +169,7 @@ order_tldecl(struct orderer* orderer, struct tldecl* tldecl)
             size_t j = i + 1 != sbuf_count(orderer->dependencies) ? i + 1 : 0;
             info(
                 NULL,
-                "declaration `%s` (line %zu) depends on declaration `%s` (line %zu)",
+                "declaration of `%s` (line %zu) depends on `%s` (line %zu)",
                 orderer->dependencies[i]->name,
                 orderer->dependencies[i]->location->line,
                 orderer->dependencies[j]->name,

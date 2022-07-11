@@ -5,6 +5,6 @@ const foo: ssize = bar;
 # [error-circular-dependency.test.sunder:1] error: circular dependency created by declaration of `baz`
 # const baz: ssize = foo;
 # ^
-# info: declaration `baz` (line 1) depends on declaration `foo` (line 3)
-# info: declaration `foo` (line 3) depends on declaration `bar` (line 2)
-# info: declaration `bar` (line 2) depends on declaration `baz` (line 1)
+# info: declaration of `baz` (line 1) depends on `foo` (line 3)
+# info: declaration of `foo` (line 3) depends on `bar` (line 2)
+# info: declaration of `bar` (line 2) depends on `baz` (line 1)
