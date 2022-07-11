@@ -1706,29 +1706,17 @@ string_resize(struct string* self, size_t count)
 }
 
 void
-string_insert(struct string* self, size_t idx, char const* start, size_t count)
-{
-    assert(self != NULL);
-    assert(start != NULL || count == 0);
-    if (idx > self->count) {
-        fatal(NULL, "[%s] Invalid index %zu", __func__, idx);
-    }
-
-    if (count == 0) {
-        return;
-    }
-    size_t const mov_count = self->count - idx;
-    string_resize(self, self->count + count);
-    memmove(self->start + idx + count, self->start + idx, mov_count);
-    memmove(self->start + idx, start, count);
-}
-
-void
 string_append(struct string* self, char const* start, size_t count)
 {
     assert(self != NULL);
 
-    string_insert(self, string_count(self), start, count);
+    if (count == 0) {
+        return;
+    }
+
+    size_t const index = self->count;
+    string_resize(self, self->count + count);
+    memmove(self->start + index, start, count);
 }
 
 void
@@ -1736,7 +1724,7 @@ string_append_cstr(struct string* self, char const* cstr)
 {
     assert(self != NULL);
 
-    string_insert(self, string_count(self), cstr, strlen(cstr));
+    string_append(self, cstr, strlen(cstr));
 }
 
 void

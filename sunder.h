@@ -510,12 +510,6 @@ string_count(struct string const* self);
 void
 string_resize(struct string* self, size_t count);
 
-// Insert count bytes of start into the string at position idx.
-// Bytes with position greater than idx are moved back count bytes.
-// Fatally exits after printing an error message if idx is out of bounds.
-void
-string_insert(struct string* self, size_t idx, char const* start, size_t count);
-
 // Append count bytes of start onto the end of the string.
 void
 string_append(struct string* self, char const* start, size_t count);
