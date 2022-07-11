@@ -14,40 +14,49 @@ struct incomplete_function {
 
 struct resolver {
     struct module* module;
-    char const* current_static_addr_prefix; // Optional (NULL => no prefix).
-    struct function* current_function; // NULL if not in a function.
+
+    // Optional (NULL => no prefix).
+    char const* current_static_addr_prefix;
+
+    // Optional (NULL => not in a function).
+    struct function* current_function;
     struct symbol_table* current_symbol_table;
     struct symbol_table* current_export_table;
+
     // Current offset of rbp for stack allocated data. Initialized to zero at
     // the start of function completion.
     int current_rbp_offset;
-    // True if the statements being processed are inside of a constant
-    // declaration. Currently this is only used to tell whether array-slice
-    // backing arrays should be declared as variables or constants.
-    //
-    // TODO: See if there is a better way to determine how we declare the
-    // backing array. This feels like a hack, but it might actually be okay.
+
+    // True if the resolver is executing within a constant declaration.
+    // Currently, this is only used to tell whether slice-list backing arrays
+    // should be declared as variables or constants.
     bool is_within_const_decl;
-    // True if the statements being processed are inside a loop. Set to true
+
+    // True if the resolver is executing within a loop statement. Set to true
     // when a loop body is being resolved, and set to false once the loop body
     // is finished resolving.
     bool is_within_loop;
+
+    // Optional (NULL => no defer).
+    //
     // Current defer evaluated within the current loop. Used to manage defers
     // for break and continue statements.
-    struct stmt const* current_loop_defer; // optional (NULL => no defer)
+    struct stmt const* current_loop_defer;
 
+    // Optional (NULL => no defer).
+    //
     // Pointer to the head of the current defer statement list node to be
     // evaluated.
-    struct stmt const* current_defer; // optional (NULL => no defer)
+    struct stmt const* current_defer;
 
     // Functions to be completed at the end of the resolve phase after all
     // top-level declarations have been resolved. Incomplete functions defer
-    // having their body's resolved so that mutually recursive functions (e.g.
+    // having their bodies resolved so that mutually recursive functions (e.g.
     // f calls g and g calls f) have access to each others' symbols in the
     // global symbol table without requiring one function to be fully defined
     // before the other.
     //
-    // NOTE: This member must *NOT* be cached because template function
+    // NOTE: This member must *NOT* be saved/restored because template function
     // instantiations may resize the stretchy buffer.
     sbuf(struct incomplete_function const*) incomplete_functions;
 };
