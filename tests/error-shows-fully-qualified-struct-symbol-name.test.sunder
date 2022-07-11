@@ -1,0 +1,11 @@
+import "std";
+
+func foo(arg: std::optional[[u16]]) void { }
+
+func main() void {
+    foo(std::optional[[u32]]::init_empty());
+}
+################################################################################
+# [error-shows-fully-qualified-struct-symbol-name.test.sunder:6] error: incompatible argument type `std::optional[[u32]]` (expected `std::optional[[u16]]`)
+#     foo(std::optional[[u32]]::init_empty());
+#                                         ^

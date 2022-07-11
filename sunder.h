@@ -168,6 +168,10 @@ intern(char const* start, size_t count);
 // Returns the canonical NUL-terminated representation of the interned string.
 char const*
 intern_cstr(char const* cstr);
+// Intern the string built from the provided printf-style format string.
+// Returns the canonical NUL-terminated representation of the interned string.
+char const*
+intern_fmt(char const* fmt, ...);
 // Deinitialize the interned string list free interned strings.
 void
 intern_fini(void);
@@ -1703,6 +1707,8 @@ struct symbol {
             // Original CST of this template.
             struct cst_decl const* decl;
             // Prefix used when instantiating the template.
+            char const* symbol_name_prefix;
+            // Prefix used when instantiating the template.
             char const* symbol_addr_prefix;
             // Parent symbol table to be used when creating the instance symbol
             // table for an instantiation of this template.
@@ -1741,6 +1747,7 @@ symbol_new_template(
     struct source_location const* location,
     char const* name,
     struct cst_decl const* decl,
+    char const* symbol_name_prefix,
     char const* symbol_addr_prefix,
     struct symbol_table* parent_symbol_table,
     struct symbol_table* symbols);

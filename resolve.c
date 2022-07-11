@@ -16,10 +16,17 @@ struct resolver {
     struct module* module;
 
     // Optional (NULL => no prefix).
+    //
+    // Prefix used when creating full symbol names (e.g <prefix>::<name>).
+    char const* current_symbol_name_prefix;
+    // Optional (NULL => no prefix).
+    //
+    // Prefix used when creating static address names (e.g. <prefix>.<name>).
     char const* current_static_addr_prefix;
 
     // Optional (NULL => not in a function).
     struct function* current_function;
+
     struct symbol_table* current_symbol_table;
     struct symbol_table* current_export_table;
 
@@ -365,6 +372,7 @@ resolver_new(struct module* module)
     struct resolver* const self = xalloc(NULL, sizeof(*self));
     memset(self, 0x00, sizeof(*self));
     self->module = module;
+    self->current_symbol_name_prefix = NULL;
     self->current_static_addr_prefix = NULL;
     self->current_function = NULL;
     self->current_symbol_table = module->symbols;
@@ -430,19 +438,11 @@ qualified_name(char const* prefix, char const* name)
 {
     assert(name != NULL);
 
-    struct string* const s = string_new(NULL, 0);
-
-    // <prefix>::
-    if (prefix != NULL) {
-        string_append_fmt(s, "%s::", prefix);
+    if (prefix == NULL) {
+        return intern_cstr(name);
     }
-    // <prefix>::<name>
-    string_append_cstr(s, name);
 
-    char const* const interned = intern(string_start(s), string_count(s));
-
-    string_del(s);
-    return interned;
+    return intern_fmt("%s::%s", prefix, name);
 }
 
 static char const*
@@ -450,19 +450,11 @@ qualified_addr(char const* prefix, char const* name)
 {
     assert(name != NULL);
 
-    struct string* const s = string_new(NULL, 0);
-
-    // <prefix>.
-    if (prefix != NULL) {
-        string_append_fmt(s, "%s.", prefix);
+    if (prefix == NULL) {
+        return intern_cstr(name);
     }
-    // <prefix>.<name>
-    string_append_cstr(s, name);
 
-    char const* const interned = intern(string_start(s), string_count(s));
-
-    string_del(s);
-    return interned;
+    return intern_fmt("%s.%s", prefix, name);
 }
 
 static char const*
@@ -831,17 +823,22 @@ xget_template_instance(
         freeze(instance_decl);
 
         // Resolve the actual template instance.
+        char const* const save_symbol_name_prefix =
+            resolver->current_symbol_name_prefix;
         char const* const save_static_addr_prefix =
             resolver->current_static_addr_prefix;
         struct symbol_table* const save_symbol_table =
             resolver->current_symbol_table;
 
+        resolver->current_symbol_name_prefix =
+            symbol->data.template.symbol_name_prefix;
         resolver->current_static_addr_prefix =
             symbol->data.template.symbol_addr_prefix;
         resolver->current_symbol_table = instance_symbol_table;
         struct symbol const* resolved_symbol =
             resolve_decl_function(resolver, instance_decl);
 
+        resolver->current_symbol_name_prefix = save_symbol_name_prefix;
         resolver->current_static_addr_prefix = save_static_addr_prefix;
         resolver->current_symbol_table = save_symbol_table;
 
@@ -945,17 +942,22 @@ xget_template_instance(
         freeze(instance_decl);
 
         // Resolve the actual template instance.
+        char const* const save_symbol_name_prefix =
+            resolver->current_symbol_name_prefix;
         char const* const save_static_addr_prefix =
             resolver->current_static_addr_prefix;
         struct symbol_table* const save_symbol_table =
             resolver->current_symbol_table;
 
+        resolver->current_symbol_name_prefix =
+            symbol->data.template.symbol_name_prefix;
         resolver->current_static_addr_prefix =
             symbol->data.template.symbol_addr_prefix;
         resolver->current_symbol_table = instance_symbol_table;
         struct symbol const* resolved_symbol =
             resolve_decl_struct(resolver, instance_decl);
 
+        resolver->current_symbol_name_prefix = save_symbol_name_prefix;
         resolver->current_static_addr_prefix = save_static_addr_prefix;
         resolver->current_symbol_table = save_symbol_table;
 
@@ -1470,6 +1472,7 @@ resolve_decl_function(struct resolver* resolver, struct cst_decl const* decl)
             decl->location,
             decl->name,
             decl,
+            resolver->current_symbol_name_prefix,
             resolver->current_static_addr_prefix,
             resolver->current_symbol_table,
             symbols);
@@ -1633,6 +1636,7 @@ resolve_decl_struct(struct resolver* resolver, struct cst_decl const* decl)
             decl->location,
             decl->name,
             decl,
+            resolver->current_symbol_name_prefix,
             resolver->current_static_addr_prefix,
             resolver->current_symbol_table,
             symbols);
@@ -1650,7 +1654,9 @@ resolve_decl_struct(struct resolver* resolver, struct cst_decl const* decl)
     struct symbol_table* const struct_symbols =
         symbol_table_new(resolver->current_symbol_table);
     sbuf_push(context()->chilling_symbol_tables, struct_symbols);
-    struct type* const type = type_new_struct(decl->name, struct_symbols);
+    struct type* const type = type_new_struct(
+        qualified_name(resolver->current_symbol_name_prefix, decl->name),
+        struct_symbols);
     freeze(type);
 
     struct symbol* const symbol = symbol_new_type(decl->location, type);
@@ -1659,7 +1665,7 @@ resolve_decl_struct(struct resolver* resolver, struct cst_decl const* decl)
     // Add the symbol to the current symbol table so that structs with
     // self-referential pointer and slice members may reference the type.
     symbol_table_insert(
-        resolver->current_symbol_table, symbol->name, symbol, false);
+        resolver->current_symbol_table, decl->name, symbol, false);
 
     sbuf(struct cst_member const* const) const members =
         decl->data.struct_.members;
@@ -1714,23 +1720,21 @@ resolve_decl_extend(struct resolver* resolver, struct cst_decl const* decl)
     struct symbol_table* const symbol_table =
         symbol_table_new(resolver->current_symbol_table);
 
-    // TODO: This current symbol name prefix and addr prefix do not take into
-    // account the namespace prefix! Adjust this so that the prefixes use
-    // <namespace>.<typename> instead just <typename>.
-    //
-    // Look for a similar comment under complete_struct which also shares this
-    // problem.
+    char const* const save_symbol_name_prefix =
+        resolver->current_symbol_name_prefix;
     char const* const save_static_addr_prefix =
         resolver->current_static_addr_prefix;
     struct symbol_table* const save_symbol_table =
         resolver->current_symbol_table;
+
+    resolver->current_symbol_name_prefix = type->name;
     resolver->current_static_addr_prefix = normalize(NULL, type->name, 0);
     resolver->current_symbol_table = symbol_table;
-
     struct symbol const* const symbol =
         resolve_decl(resolver, decl->data.extend.decl);
     symbol_table_insert(type->symbols, decl->name, symbol, false);
 
+    resolver->current_symbol_name_prefix = save_symbol_name_prefix;
     resolver->current_static_addr_prefix = save_static_addr_prefix;
     resolver->current_symbol_table = save_symbol_table;
 
@@ -1864,7 +1868,7 @@ complete_struct(
     assert(symbol_xget_type(symbol)->kind == TYPE_STRUCT);
     assert(decl != NULL);
     assert(decl->kind == CST_DECL_STRUCT);
-    assert(symbol->name == decl->name);
+    assert(cstr_ends_with(symbol->name, decl->name));
 
     sbuf(struct cst_member const* const) const members =
         decl->data.struct_.members;
@@ -1880,16 +1884,21 @@ complete_struct(
 
     // Add all member definitions to the struct in the order that they were
     // defined in.
-    char const* const save_static_addr_prefix =
-        resolver->current_static_addr_prefix;
-    struct symbol_table* const save_symbol_table =
-        resolver->current_symbol_table;
+    //
     // TODO: This current symbol name prefix and addr prefix do not take into
     // account the namespace prefix! Adjust this so that the prefixes use
     // <namespace>.<typename> instead just <typename>.
     //
     // Look for a similar comment under resolve_decl_extend which also shares
     // this problem.
+    char const* const save_symbol_name_prefix =
+        resolver->current_symbol_name_prefix;
+    char const* const save_static_addr_prefix =
+        resolver->current_static_addr_prefix;
+    struct symbol_table* const save_symbol_table =
+        resolver->current_symbol_table;
+
+    resolver->current_symbol_name_prefix = symbol_xget_type(symbol)->name;
     resolver->current_static_addr_prefix =
         normalize(NULL, symbol_xget_type(symbol)->name, 0);
     resolver->current_symbol_table = struct_symbols;
@@ -2048,6 +2057,8 @@ complete_struct(
 
         UNREACHABLE();
     }
+
+    resolver->current_symbol_name_prefix = save_symbol_name_prefix;
     resolver->current_static_addr_prefix = save_static_addr_prefix;
     resolver->current_symbol_table = save_symbol_table;
 
@@ -2068,14 +2079,20 @@ complete_function(
     assert(resolver->current_function == NULL);
     assert(resolver->current_rbp_offset == 0x0);
     assert(!resolver->is_within_loop);
+    char const* const save_symbol_name_prefix =
+        resolver->current_symbol_name_prefix;
     char const* const save_static_addr_prefix =
         resolver->current_static_addr_prefix;
+
+    resolver->current_symbol_name_prefix = function->name;
     resolver->current_static_addr_prefix = function->address->data.static_.name;
     resolver->current_function = function;
     function->body = resolve_block(
         resolver,
         incomplete->symbol_table,
         incomplete->decl->data.function.body);
+
+    resolver->current_symbol_name_prefix = save_symbol_name_prefix;
     resolver->current_static_addr_prefix = save_static_addr_prefix;
     resolver->current_function = NULL;
     assert(resolver->current_rbp_offset == 0x0);
@@ -4426,6 +4443,7 @@ resolve(struct module* module)
             resolver->current_export_table = export_table;
         }
 
+        resolver->current_symbol_name_prefix = nsname;
         resolver->current_static_addr_prefix = nsaddr;
     }
 

@@ -448,6 +448,24 @@ intern_cstr(char const* cstr)
     return intern(cstr, strlen(cstr));
 }
 
+char const*
+intern_fmt(char const* fmt, ...)
+{
+    assert(fmt != NULL);
+
+    struct string* const s = string_new(NULL, 0);
+
+    va_list args;
+    va_start(args, fmt);
+    string_append_vfmt(s, fmt, args);
+    va_end(args);
+
+    char const* const interned = intern(string_start(s), string_count(s));
+
+    string_del(s);
+    return interned;
+}
+
 void
 intern_fini(void)
 {
