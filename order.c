@@ -29,6 +29,8 @@ struct orderer {
     // n. Initialized as an empty sbuf in orderer_new and populated during the
     // order phase.
     sbuf(struct cst_decl const*) topological_order;
+    // List of declaration dependencies.
+    sbuf(struct cst_decl const*) dependencies;
 };
 static struct orderer*
 orderer_new(struct module* module);
@@ -101,9 +103,11 @@ static void
 orderer_del(struct orderer* self)
 {
     assert(self != NULL);
+    assert(sbuf_count(self->dependencies) == 0);
 
     sbuf_fini(self->tldecls);
     sbuf_fini(self->topological_order);
+    sbuf_fini(self->dependencies);
 
     memset(self, 0x00, sizeof(*self));
     xalloc(self, XALLOC_FREE);
@@ -157,17 +161,30 @@ order_tldecl(struct orderer* orderer, struct tldecl* tldecl)
     }
     if (tldecl->state == TLDECL_ORDERING) {
         // Top-level declaration is currently in the process of being ordered.
-        fatal(
+        error(
             tldecl->decl->location,
             "circular dependency created by declaration of `%s`",
             tldecl->decl->name);
+        for (size_t i = 0; i < sbuf_count(orderer->dependencies); ++i) {
+            size_t j = i + 1 != sbuf_count(orderer->dependencies) ? i + 1 : 0;
+            info(
+                NULL,
+                "declaration `%s` (line %zu) depends on declaration `%s` (line %zu)",
+                orderer->dependencies[i]->name,
+                orderer->dependencies[i]->location->line,
+                orderer->dependencies[j]->name,
+                orderer->dependencies[j]->location->line);
+        }
+        exit(EXIT_FAILURE);
     }
 
     // Change the state from UNORDERED to ORDERING so that cyclic dependencies
     // will be detected if another attempt is made to order this declaration.
     tldecl->state = TLDECL_ORDERING;
     // Perform ordering on the top level declaration.
+    sbuf_push(orderer->dependencies, tldecl->decl);
     order_decl(orderer, tldecl->decl);
+    sbuf_pop(orderer->dependencies);
     // Change the state from ORDERING TO ORDERED after ordering the top level
     // declaration as well as all of top level declaration's dependencies.
     tldecl->state = TLDECL_ORDERED;

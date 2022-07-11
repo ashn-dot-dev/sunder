@@ -1811,8 +1811,10 @@ freeze_fini(void)
 #define ANSI_ESC_DEFAULT "\x1b[0m"
 #define ANSI_ESC_BOLD    "\x1b[1m"
 #define ANSI_ESC_RED     "\x1b[31m"
+#define ANSI_ESC_BLUE    "\x1b[34m"
 #define ANSI_ESC_CYAN    "\x1b[36m"
 
+#define ANSI_MSG_INFO  ANSI_ESC_BOLD ANSI_ESC_BLUE
 #define ANSI_MSG_ERROR ANSI_ESC_BOLD ANSI_ESC_RED
 // clang-format on
 
@@ -1922,6 +1924,15 @@ messagev_(
         fprintf(stderr, "%.*s\n", (int)(line_end - line_start), line_start);
         fprintf(stderr, "%*s^\n", (int)(psrc - line_start), "");
     }
+}
+
+void
+info(struct source_location const* location, char const* fmt, ...)
+{
+    va_list args;
+    va_start(args, fmt);
+    messagev_(location, "info", ANSI_MSG_INFO, fmt, args);
+    va_end(args);
 }
 
 void
