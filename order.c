@@ -36,11 +36,15 @@ static void
 orderer_del(struct orderer* self);
 static struct tldecl*
 orderer_tldecl_lookup(struct orderer* orderer, char const* name);
-// Convert a declaration name into a key for the tldecl map. Used to translate
-// extend declaration names into a unique "name" key.
+
+// Obtain a name used to identify the provided declaration within the currently
+// ordering module. For all declarations apart from extend declarations, the
+// returned value is the identifier associated with the declaration. Extend
+// declarations, which are not true top-level declarations, and which may be
+// declared multiple times using the same identifier but different extended
+// types, are given a unique name based on their declaration order index.
 static char const*
-orderer_tldecl_name(
-    struct cst_decl const* decl, size_t declaration_order_index);
+orderer_tldecl_name(struct cst_decl const* decl, size_t decl_order_index);
 
 static void
 order_tldecl(struct orderer* orderer, struct tldecl* tldecl);
@@ -122,26 +126,18 @@ orderer_tldecl_lookup(struct orderer* orderer, char const* name)
 }
 
 static char const*
-orderer_tldecl_name(struct cst_decl const* decl, size_t declaration_order_index)
+orderer_tldecl_name(struct cst_decl const* decl, size_t decl_order_index)
 {
     assert(decl != NULL);
 
     if (decl->kind == CST_DECL_EXTEND) {
-        // XXX: Extend declarations are not true top-level declarations as they
-        // are not turned into a module-level symbol during the resolve phase.
-        // It is possible to have multiple extend statements with the same
+        // Extend declarations are not true top-level declarations as they are
+        // not turned into a module-level symbol during the resolve phase. It
+        // is possible to have multiple extend statements with the same
         // declaration name, so here we say the "name" of the extend
         // declaration takes the form "declaration N" where N is the index of
         // the declaration in the declaration-order-list.
-        //
-        // TODO: This strategy "works" in the sense that it allows for multiple
-        // extend declarations to be created with the same name and not pollute
-        // the module symbol table, but it means that extend declarations are
-        // not truly order-independent since other top-level declarations that
-        // may depend on an extended declaration are unable to look up that
-        // declaration by name during ordering.
-        struct string* s =
-            string_new_fmt("declaration %zu", declaration_order_index);
+        struct string* s = string_new_fmt("declaration %zu", decl_order_index);
         char const* const name = intern(string_start(s), string_count(s));
         string_del(s);
         return name;
