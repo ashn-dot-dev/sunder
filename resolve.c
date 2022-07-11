@@ -50,11 +50,6 @@ struct resolver {
     // NOTE: This member must *NOT* be cached because template function
     // instantiations may resize the stretchy buffer.
     sbuf(struct incomplete_function const*) incomplete_functions;
-
-    // List of symbol tables that need to be frozen after the module has been
-    // fully resolved, used for namespaces that may have many symbols added to
-    // them over the course of the resolve phase.
-    sbuf(struct symbol_table*) chilling_symbol_tables;
 };
 static struct resolver*
 resolver_new(struct module* module);
