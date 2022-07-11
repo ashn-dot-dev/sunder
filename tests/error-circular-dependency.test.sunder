@@ -2,7 +2,7 @@ const baz: ssize = foo;
 const bar: ssize = baz;
 const foo: ssize = bar;
 ################################################################################
-# [tests/error-circular-dependency.test.sunder:1] error: circular dependency created by declaration of `baz`
+# [error-circular-dependency.test.sunder:1] error: circular dependency created by declaration of `baz`
 # const baz: ssize = foo;
 # ^
 # info: declaration `baz` (line 1) depends on declaration `foo` (line 3)
