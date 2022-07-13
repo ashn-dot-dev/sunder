@@ -631,7 +631,8 @@ xget_symbol(struct resolver* resolver, struct cst_symbol const* target)
                 // handling this case here.
                 fatal(
                     target->elements[i - 1]->location,
-                    "use of incomplete type `%s`", type->name);
+                    "use of incomplete type `%s`",
+                    type->name);
             }
             symbol = symbol_table_lookup_local(type->symbols, name);
             if (symbol == NULL) {
