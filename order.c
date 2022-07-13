@@ -545,9 +545,9 @@ order_symbol(struct orderer* orderer, struct cst_symbol const* symbol)
     }
 
     for (size_t i = 0; i < namespace_count; ++i) {
-        bool const match = symbol->elements[i]->identifier->name
-            == namespace->identifiers[i]->name;
-        if (match) {
+        char const* const element_name = symbol->elements[i]->identifier->name;
+        char const* const namespace_name = namespace->identifiers[i]->name;
+        if (element_name == namespace_name) {
             // Continue matching against the current module namespace.
             continue;
         }
