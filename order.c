@@ -445,11 +445,11 @@ order_typespec(struct orderer* orderer, struct cst_typespec const* typespec)
     assert(typespec != NULL);
 
     switch (typespec->kind) {
-    case TYPESPEC_SYMBOL: {
+    case CST_TYPESPEC_SYMBOL: {
         order_symbol(orderer, typespec->data.symbol);
         return;
     }
-    case TYPESPEC_FUNCTION: {
+    case CST_TYPESPEC_FUNCTION: {
         sbuf(struct cst_typespec const* const) const parameter_typespecs =
             typespec->data.function.parameter_typespecs;
         for (size_t i = 0; i < sbuf_count(parameter_typespecs); ++i) {
@@ -459,17 +459,17 @@ order_typespec(struct orderer* orderer, struct cst_typespec const* typespec)
         order_typespec(orderer, typespec->data.function.return_typespec);
         return;
     }
-    case TYPESPEC_ARRAY: {
+    case CST_TYPESPEC_ARRAY: {
         order_expr(orderer, typespec->data.array.count);
         order_typespec(orderer, typespec->data.array.base);
         return;
     }
-    case TYPESPEC_TYPEOF: {
+    case CST_TYPESPEC_TYPEOF: {
         order_expr(orderer, typespec->data.typeof_.expr);
         return;
     }
-    case TYPESPEC_POINTER: /* fallthrough */
-    case TYPESPEC_SLICE: {
+    case CST_TYPESPEC_POINTER: /* fallthrough */
+    case CST_TYPESPEC_SLICE: {
         // Pointer and slice type specifiers are unique because the size of
         // those types will always be the same regardless of the type of their
         // base element. A pointer will always use one machine word of space (8

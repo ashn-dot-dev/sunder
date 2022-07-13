@@ -791,7 +791,7 @@ cst_member_initializer_new(
 
 static struct cst_typespec*
 cst_typespec_new(
-    struct source_location const* location, enum typespec_kind kind)
+    struct source_location const* location, enum cst_typespec_kind kind)
 {
     assert(location != NULL);
 
@@ -808,7 +808,7 @@ cst_typespec_new_symbol(struct cst_symbol const* symbol)
     assert(symbol != NULL);
 
     struct cst_typespec* const self =
-        cst_typespec_new(symbol->location, TYPESPEC_SYMBOL);
+        cst_typespec_new(symbol->location, CST_TYPESPEC_SYMBOL);
     self->data.symbol = symbol;
     return self;
 }
@@ -823,7 +823,7 @@ cst_typespec_new_function(
     assert(return_typespec != NULL);
 
     struct cst_typespec* const self =
-        cst_typespec_new(location, TYPESPEC_FUNCTION);
+        cst_typespec_new(location, CST_TYPESPEC_FUNCTION);
     self->data.function.parameter_typespecs = parameter_typespecs;
     self->data.function.return_typespec = return_typespec;
     return self;
@@ -837,7 +837,7 @@ cst_typespec_new_pointer(
     assert(base != NULL);
 
     struct cst_typespec* const self =
-        cst_typespec_new(location, TYPESPEC_POINTER);
+        cst_typespec_new(location, CST_TYPESPEC_POINTER);
     self->data.pointer.base = base;
     return self;
 }
@@ -853,7 +853,7 @@ cst_typespec_new_array(
     assert(base != NULL);
 
     struct cst_typespec* const self =
-        cst_typespec_new(location, TYPESPEC_ARRAY);
+        cst_typespec_new(location, CST_TYPESPEC_ARRAY);
     self->data.array.count = count;
     self->data.array.base = base;
     return self;
@@ -867,7 +867,7 @@ cst_typespec_new_slice(
     assert(base != NULL);
 
     struct cst_typespec* const self =
-        cst_typespec_new(location, TYPESPEC_SLICE);
+        cst_typespec_new(location, CST_TYPESPEC_SLICE);
     self->data.slice.base = base;
     return self;
 }
@@ -880,7 +880,7 @@ cst_typespec_new_typeof(
     assert(expr != NULL);
 
     struct cst_typespec* const self =
-        cst_typespec_new(location, TYPESPEC_TYPEOF);
+        cst_typespec_new(location, CST_TYPESPEC_TYPEOF);
     self->data.typeof_.expr = expr;
     return self;
 }

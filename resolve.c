@@ -618,6 +618,21 @@ xget_symbol(struct resolver* resolver, struct cst_symbol const* target)
 
         if (lhs->kind == SYMBOL_TYPE) {
             struct type const* const type = symbol_xget_type(lhs);
+            if (type->kind == TYPE_STRUCT && !type->data.struct_.is_complete) {
+                // XXX: When ordering mutually recursive structs A and B, A is
+                // marked as ordered to allow for self-referential members,
+                // then A creates a dependency on B, and when B orders a member
+                // depending on A it sees that A is "already ordered" even
+                // though that is not entirely true. This is a special case
+                // error check that accounts for this scenario.
+                //
+                // TODO: See if we can move this error into the ordering phase
+                // by introducing a TLDECL_INCOMPLETE ordering state instead of
+                // handling this case here.
+                fatal(
+                    target->elements[i - 1]->location,
+                    "use of incomplete type `%s`", type->name);
+            }
             symbol = symbol_table_lookup_local(type->symbols, name);
             if (symbol == NULL) {
                 fatal(
@@ -4256,22 +4271,22 @@ resolve_typespec(struct resolver* resolver, struct cst_typespec const* typespec)
     assert(typespec != NULL);
 
     switch (typespec->kind) {
-    case TYPESPEC_SYMBOL: {
+    case CST_TYPESPEC_SYMBOL: {
         return resolve_typespec_symbol(resolver, typespec);
     }
-    case TYPESPEC_FUNCTION: {
+    case CST_TYPESPEC_FUNCTION: {
         return resolve_typespec_function(resolver, typespec);
     }
-    case TYPESPEC_POINTER: {
+    case CST_TYPESPEC_POINTER: {
         return resolve_typespec_pointer(resolver, typespec);
     }
-    case TYPESPEC_ARRAY: {
+    case CST_TYPESPEC_ARRAY: {
         return resolve_typespec_array(resolver, typespec);
     }
-    case TYPESPEC_SLICE: {
+    case CST_TYPESPEC_SLICE: {
         return resolve_typespec_slice(resolver, typespec);
     }
-    case TYPESPEC_TYPEOF: {
+    case CST_TYPESPEC_TYPEOF: {
         return resolve_typespec_typeof(resolver, typespec);
     }
     }
@@ -4286,7 +4301,7 @@ resolve_typespec_symbol(
 {
     assert(resolver != NULL);
     assert(typespec != NULL);
-    assert(typespec->kind == TYPESPEC_SYMBOL);
+    assert(typespec->kind == CST_TYPESPEC_SYMBOL);
 
     struct symbol const* const symbol =
         xget_symbol(resolver, typespec->data.symbol);
@@ -4310,7 +4325,7 @@ resolve_typespec_function(
 {
     assert(resolver != NULL);
     assert(typespec != NULL);
-    assert(typespec->kind == TYPESPEC_FUNCTION);
+    assert(typespec->kind == CST_TYPESPEC_FUNCTION);
 
     sbuf(struct cst_typespec const* const) const parameter_typespecs =
         typespec->data.function.parameter_typespecs;
@@ -4334,7 +4349,7 @@ resolve_typespec_pointer(
 {
     assert(resolver != NULL);
     assert(typespec != NULL);
-    assert(typespec->kind == TYPESPEC_POINTER);
+    assert(typespec->kind == CST_TYPESPEC_POINTER);
 
     struct type const* const base =
         resolve_typespec(resolver, typespec->data.pointer.base);
@@ -4379,7 +4394,7 @@ resolve_typespec_slice(
 {
     assert(resolver != NULL);
     assert(typespec != NULL);
-    assert(typespec->kind == TYPESPEC_SLICE);
+    assert(typespec->kind == CST_TYPESPEC_SLICE);
 
     struct type const* const base =
         resolve_typespec(resolver, typespec->data.slice.base);
@@ -4392,7 +4407,7 @@ resolve_typespec_typeof(
 {
     assert(resolver != NULL);
     assert(typespec != NULL);
-    assert(typespec->kind == TYPESPEC_TYPEOF);
+    assert(typespec->kind == CST_TYPESPEC_TYPEOF);
 
     struct expr const* const expr =
         resolve_expr(resolver, typespec->data.typeof_.expr);

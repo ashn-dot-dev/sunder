@@ -1401,13 +1401,13 @@ cst_member_initializer_new(
 // ISO/IEC 9899:1999 Section 6.7.2 - Type Specifiers
 struct cst_typespec {
     struct source_location const* location;
-    enum typespec_kind {
-        TYPESPEC_SYMBOL,
-        TYPESPEC_FUNCTION,
-        TYPESPEC_POINTER,
-        TYPESPEC_ARRAY,
-        TYPESPEC_SLICE,
-        TYPESPEC_TYPEOF
+    enum cst_typespec_kind {
+        CST_TYPESPEC_SYMBOL,
+        CST_TYPESPEC_FUNCTION,
+        CST_TYPESPEC_POINTER,
+        CST_TYPESPEC_ARRAY,
+        CST_TYPESPEC_SLICE,
+        CST_TYPESPEC_TYPEOF
     } kind;
     union {
         struct cst_symbol const* symbol;
