@@ -537,10 +537,10 @@ order_symbol(struct orderer* orderer, struct cst_symbol const* symbol)
 
     size_t const namespace_count = sbuf_count(namespace->identifiers);
     assert(namespace_count >= 1);
-    if (sbuf_count(symbol->elements) < namespace_count) {
-        // Current symbol refers to some declaration under a parent namespace
-        // or the parent namespace itself. Let the resolution of the symbol
-        // occur during the resolve phase.
+    if (sbuf_count(symbol->elements) != (namespace_count + 1)) {
+        // Current symbol refers to the current namespace, a parent namespace,
+        // or a symbol under a parent namespace. Let the resolution of the
+        // symbol occur during the resolve phase.
         return;
     }
 
