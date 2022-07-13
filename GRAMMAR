@@ -1,17 +1,8 @@
-<module> ::= <namespace>? <import>* <decl>*
+<module> ::= <namespace>? <import>* <module-level-decl>* <decl-extend>*
 
 <namespace> := "namespace" <identifier> ("::" <identifier>)* ";"
 
 <import> ::= "import" <literal-bytes> ";"
-
-<decl> ::= <decl-variable>
-         | <decl-constant>
-         | <decl-function>
-         | <decl-struct>
-         | <decl-extend>
-         | <decl-alias>
-         | <decl-extern-variable>
-         | <decl-extern-function>
 
 <decl-variable> ::= "var" <identifier> (":" <typespec>)? "=" <expr> ";"
 
@@ -29,6 +20,14 @@
 
 <decl-extern-function> ::= "extern" "func" <identifier> "(" <parameter-list> ")" <typespec> ";"
 
+<module-level-decl> := <decl-variable>
+                     | <decl-constant>
+                     | <decl-function>
+                     | <decl-struct>
+                     | <decl-alias>
+                     | <decl-extern-variable>
+                     | <decl-extern-function>
+
 <stmt> ::= <stmt-decl>
          | <stmt-defer>
          | <stmt-if>
@@ -41,7 +40,9 @@
          | <stmt-assign>
          | <stmt-expr>
 
-<stmt-decl> ::= <decl>
+<stmt-decl> ::= <decl-variable>
+              | <decl-constant>
+              | <decl-alias>
 
 <stmt-defer> ::= "defer" <block>
 

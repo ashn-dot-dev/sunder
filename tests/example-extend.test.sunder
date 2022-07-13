@@ -1,13 +1,5 @@
 import "std";
 
-extend s32 func square(value: s32) s32 {
-    return value * value;
-}
-
-extend s32 func is_even(self: *s32) bool {
-    return *self & 1 == 0;
-}
-
 struct point {
     var x: u16;
     var y: u16;
@@ -16,12 +8,6 @@ struct point {
         return (:point){.x = x, .y = y};
     }
 }
-
-extend point func zero(self: *point) void {
-    *self = point::ZEROED;
-}
-
-extend point const ZEROED: point = (:point){.x = 0, .y = 0};
 
 func main() void {
     var num = s32::square(12);
@@ -37,6 +23,20 @@ func main() void {
     dump s32::MIN;
     dump s32::MAX;
 }
+
+extend s32 func square(value: s32) s32 {
+    return value * value;
+}
+
+extend s32 func is_even(self: *s32) bool {
+    return *self & 1 == 0;
+}
+
+extend point func zero(self: *point) void {
+    *self = point::ZEROED;
+}
+
+extend point const ZEROED: point = (:point){.x = 0, .y = 0};
 ################################################################################
 # 01
 # AA AA BB BB

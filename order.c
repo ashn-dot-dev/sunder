@@ -605,6 +605,17 @@ order(struct module* module)
             orderer, orderer_tldecl_lookup(orderer, tldecl_name(decl, i)));
     }
 
+    // Make sure that extend declarations come *after* all other declarations.
+    for (size_t i = 1; i < decl_count; ++i) {
+        struct cst_decl const* const prev = orderer->tldecls[i - 1].decl;
+        struct cst_decl const* const decl = orderer->tldecls[i].decl;
+        if (decl->kind != CST_DECL_EXTEND && prev->kind == CST_DECL_EXTEND) {
+            fatal(
+                prev->location,
+                "extend declaration must appear after all other module-level declarations");
+        }
+    }
+
     assert(decl_count == sbuf_count(orderer->topological_order));
     for (size_t i = 0; i < decl_count; ++i) {
         struct cst_decl const* const decl = orderer->topological_order[i];
