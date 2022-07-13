@@ -1,0 +1,6 @@
+extend u16 const MAX: u16 = 0xFFFFu16;
+const foo: u16 = 123;
+################################################################################
+# [error-extend-declaration-before-non-extend-declaration.test.sunder:1] error: extend declaration must appear after all module-level declarations
+# extend u16 const MAX: u16 = 0xFFFFu16;
+# ^

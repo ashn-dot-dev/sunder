@@ -612,7 +612,7 @@ order(struct module* module)
         if (decl->kind != CST_DECL_EXTEND && prev->kind == CST_DECL_EXTEND) {
             fatal(
                 prev->location,
-                "extend declaration must appear after all other module-level declarations");
+                "extend declaration must appear after all module-level declarations");
         }
     }
 

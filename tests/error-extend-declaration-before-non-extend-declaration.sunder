@@ -1,6 +1,0 @@
-extend u16 const MAX: u16 = 0xFFFFu16;
-const foo: u16 = 123;
-################################################################################
-# [expr-call-member-function-builtin-type.test.sunder:1] error: extend declaration must appear after module-level declarations
-# extend u16 func dumpme(self: *u16) void {
-# ^
