@@ -50,7 +50,7 @@ usage(void)
    "Usage: sunder-compile [OPTION]... FILE",
    "",
    "Options:",
-   "  -c        Compile to an object file, but do not link.",
+   "  -c        Compile and assemble, but do not link.",
    "  -k        Keep intermediate files (.o and .asm).",
    "  -l OPT    Pass OPT directly to the linker.",
    "  -o OUT    Write output executable to OUT (default a.out).",
