@@ -386,6 +386,7 @@ cstr_new_fmt(char const* fmt, ...)
     va_end(copy);
 
     if (len < 0) {
+        va_end(args);
         fatal(NULL, "[%s] Formatting failure", __func__);
     }
 
