@@ -234,7 +234,7 @@ const ENOTRECOVERABLE: ssize = 131;
 const ERFKILL:         ssize = 132;
 const EHWPOISON:       ssize = 133;
 
-const ERRNO_STRS = (:[][]byte)[
+const ERRORS = (:[][]byte)[
     "[system error 0] Undefined errno value",
     "[system error EPERM] Operation not permitted",
     "[system error ENOENT] No such file or directory",

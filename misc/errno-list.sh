@@ -57,7 +57,7 @@ done
 
 printf '\n'
 
-echo "const ERRNO_STRS = (:[][]byte)["
+echo "const ERRORS = (:[][]byte)["
 for i in $(seq 0 "${MAX}"); do
     COMMA=','
     if [ "${i}" = "${MAX}" ]; then
