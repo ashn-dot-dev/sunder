@@ -47,6 +47,15 @@ $ make <targets> CC=clang CFLAGS='$(GNU_DBG) $(SANITIZE)'  # clang/gcc (debug wi
 $ make <targets> CC=clang CFLAGS='$(GNU_REL)'              # clang/gcc (release)
 ```
 
+The compiler is built with `SUNDER_DEFAULT_BACKEND=yasm` by default, indicating
+that `yasm` should be used if `SUNDER_BACKEND` (explained below) is not set
+when the compiler is invoked. To use `nasm` as the default compiler backend,
+override `SUNDER_DEFAULT_BACKEND` with `nasm` when executing targets:
+
+```sh
+$ make <targets> SUNDER_DEFAULT_BACKEND=nasm
+```
+
 ## Installing
 The `install` target will install the Sunder toolchain into the directory
 specified by `$SUNDER_HOME` (default `$HOME/.sunder`). Run `make install` with
@@ -114,7 +123,7 @@ The following environment variables affect compiler behavior:
 + `SUNDER_SYSASM_PATH` => Location of the platform specific `sys.asm` file that
   defines the program entry point as well as low-level operating system and
   hardware abstractions. If this environment variable is not set, then the
-  default path is used.
+  default path, `${SUNDER_HOME}/lib/sys/sys.asm`, is used.
 
 ## Using Sunder as a Scripting Language
 Sunder can be used for scripting by adding `#!/usr/bin/env sunder-run` (or
