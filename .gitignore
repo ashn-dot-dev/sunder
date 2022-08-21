@@ -7,6 +7,5 @@ greet
 *.asm
 *.tmp
 
-!nasm-test.asm
 !lib/sys/sys.asm
 !examples/custom-sys-asm/sys.asm
