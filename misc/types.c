@@ -1,4 +1,8 @@
 // musl-gcc -std=c99 -static -g misc/types.c
+//
+// Used for inspecting the layout of POSIX types in GDB to produce the
+// definitions in lib/sys/sys.sunder.
+
 #include <sys/resource.h>
 #include <sys/time.h>
 #include <sys/types.h>
