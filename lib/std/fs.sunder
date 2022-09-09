@@ -103,15 +103,10 @@ struct file {
     # Seek from the end of the file.
     const SEEK_END: usize = (:usize)sys::SEEK_END;
 
+    # NOTE: Seeking past the end of a file on Linux and then writing to that
+    # position will create a "hole" that is read as NUL bytes by subsequent
+    # read operations until the hole is filled in.
     func seek(self: *file, offset: ssize, from: usize) std::result[[void, std::error]] {
-        # TODO: Seeking past the end of a file with `lseek` on Linux and then
-        # writing to that position will create a "hole" that is read as NUL
-        # bytes by subsequent read operations until the hole is filled in.
-        #
-        # The Sunder standard library can continue handle this case by matching
-        # whatever the underlying system implementation does, but this drifts
-        # into the realm of non-portable/undefined behavior. Consider
-        # explicitly defining the behavior when seeking past the end of a file.
         var sysret = sys::lseek(self.*._fd, offset, (:sys::uint)from);
         if sysret < 0 {
             return std::result[[void, std::error]]::init_error((:std::error)&sys::ERRORS[(:usize)-sysret]);
