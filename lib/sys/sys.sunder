@@ -350,9 +350,9 @@ const ERRORS = (:[][]byte)[
     "[system error EHWPOISON] Memory page has hardware error"
 ];
 
-const STDIN_FILENO:  uint = 0;
-const STDOUT_FILENO: uint = 1;
-const STDERR_FILENO: uint = 2;
+const STDIN_FILENO:  sint = 0;
+const STDOUT_FILENO: sint = 1;
+const STDERR_FILENO: sint = 2;
 
 const O_RDONLY:    sint = 0x00000000;
 const O_WRONLY:    sint = 0x00000001;
@@ -579,12 +579,12 @@ struct linux_dirent {
     var d_name: byte;
 }
 
-extern func read(fd: uint, buf: *char, count: usize) ssize;
-extern func write(fd: uint, buf: *char, count: usize) ssize;
+extern func read(fd: sint, buf: *char, count: usize) ssize;
+extern func write(fd: sint, buf: *char, count: usize) ssize;
 extern func open(filename: *char, flags: sint, mode: umode_t) ssize;
-extern func close(fd: uint) ssize;
+extern func close(fd: sint) ssize;
 extern func stat(filename: *byte, statbuf: *stat_type) ssize;
-extern func lseek(fd: uint, offset: off_t, whence: uint) ssize;
+extern func lseek(fd: sint, offset: off_t, whence: uint) ssize;
 extern func mmap(addr: ulong, len: ulong, prot: ulong, flags: ulong, fd: ulong, off: ulong) ssize;
 extern func munmap(addr: ulong, len: usize) ssize;
 extern func access(filename: *byte, mode: sint) ssize;
@@ -592,7 +592,7 @@ extern func fork() ssize;
 extern func execve(filename: *byte, argv: **byte, envp: **byte) ssize;
 extern func exit(error_code: sint) void;
 extern func wait4(upid: pid_t, stat_addr: *sint, options: sint, ru: *rusage) ssize;
-extern func getdents(fd: uint, dirent: *linux_dirent, count: uint) ssize;
+extern func getdents(fd: sint, dirent: *linux_dirent, count: uint) ssize;
 extern func mkdir(pathname: *byte, mode: umode_t) ssize;
 extern func rmdir(pathname: *byte) ssize;
 extern func unlink(pathname: *byte) ssize;
