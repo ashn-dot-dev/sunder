@@ -7,10 +7,13 @@
 #include <sys/time.h>
 #include <sys/types.h>
 
+#include <stdlib.h>
 #include <time.h>
 
 int main()
 {
+    malloc(0); /* GDB needs malloc for printf */
+
     /* POSIX-2017 sys/resource.h */
     struct rusage rusage_value;
 

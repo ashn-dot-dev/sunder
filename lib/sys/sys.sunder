@@ -17,48 +17,27 @@ namespace sys;
 # unsigned long long | 8    | 8         | u64
 #
 # POSIX types obtainted through GDB `whatis` on x64 Linux:
-# (gdb) whatis blkcnt_t
-# type = long
-# (gdb) whatis blksize_t
-# type = long
-# (gdb) whatis clock_t
-# type = long
-# (gdb) whatis clockid_t
-# type = int
-# (gdb) whatis dev_t
-# type = unsigned long
-# (gdb) whatis fsblkcnt_t
-# type = unsigned long
-# (gdb) whatis fsfilcnt_t
-# type = unsigned long
-# (gdb) whatis gid_t
-# type = unsigned int
-# (gdb) whatis id_t
-# type = unsigned int
-# (gdb) whatis ino_t
-# type = unsigned long
-# (gdb) whatis key_t
-# type = int
-# (gdb) whatis mode_t
-# type = unsigned int
-# (gdb) whatis nlink_t
-# type = unsigned long
-# (gdb) whatis off_t
-# type = long
-# (gdb) whatis pid_t
-# type = int
-# (gdb) whatis size_t
-# type = unsigned long
-# (gdb) whatis ssize_t
-# type = long
-# (gdb) whatis suseconds_t
-# type = long
-# (gdb) whatis time_t
-# type = long
-# (gdb) whatis timer_t
-# type = void *
-# (gdb) whatis uid_t
-# type = unsigned int
+# blkcnt_t    : type = long
+# blksize_t   : type = long
+# clock_t     : type = long
+# clockid_t   : type = int
+# dev_t       : type = unsigned long
+# fsblkcnt_t  : type = unsigned long
+# fsfilcnt_t  : type = unsigned long
+# gid_t       : type = unsigned int
+# id_t        : type = unsigned int
+# ino_t       : type = unsigned long
+# key_t       : type = int
+# mode_t      : type = unsigned int
+# nlink_t     : type = unsigned long
+# off_t       : type = long
+# pid_t       : type = int
+# size_t      : type = unsigned long
+# ssize_t     : type = long
+# suseconds_t : type = long
+# time_t      : type = long
+# timer_t     : type = void *
+# uid_t       : type = unsigned int
 #
 # linux/include/linux/types.h:
 # typedef unsigned short        umode_t;
