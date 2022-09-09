@@ -227,7 +227,7 @@ struct bigint {
     }
 
     func hash(self: *bigint) usize {
-        # TODO: This hash function was chosen because it was easy to implement.
+        # NOTE: This hash function was chosen because it was easy to implement.
         # The uniformity of the hash has *not* been properly evaluated.
         var hash: usize = 0;
         for i in countof(self.*._limbs) {
