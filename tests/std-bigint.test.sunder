@@ -101,6 +101,20 @@ func test_compare(allocator: std::allocator, lhs_str: []byte, rhs_str: []byte) v
             std::formatter::init[[ssize]](&cmp)]);
 }
 
+func test_format(allocator: std::allocator, str: []byte) void {
+    var result = std::bigint::init_from_str(allocator, str, 0);
+    var bigint = result.value();
+    defer { bigint.fini(); }
+
+    var fmts = (:[][]byte)["{}", "{d}", "{b}", "{o}", "{x}", "{X}"];
+    for i in countof(fmts) {
+        std::print_format_line(
+            std::out(),
+            fmts[i],
+            (:[]std::formatter)[std::formatter::init[[std::bigint]](&bigint)]);
+    }
+}
+
 func main() void {
     var general_allocator = std::general_allocator::init();
     defer { general_allocator.fini(); }
@@ -256,6 +270,24 @@ func main() void {
     test_compare(allocator, "+0xBEEFBEEFBEEFBEEFBEEFBEEFBEEFBEEF", "-0xBEEFBEEFBEEFBEEFBEEFBEEFBEEFBEEF");
     std::print(std::out(), "\n");
     test_compare(allocator, "-0xBEEFBEEFBEEFBEEFBEEFBEEFBEEFBEEF", "+0xBEEFBEEFBEEFBEEFBEEFBEEFBEEFBEEF");
+
+    std::print(std::out(), "\n");
+
+    test_format(allocator, "0");
+    std::print(std::out(), "\n");
+    test_format(allocator, "1");
+    std::print(std::out(), "\n");
+    test_format(allocator, "-1");
+    std::print(std::out(), "\n");
+    test_format(allocator, "0o357");
+    std::print(std::out(), "\n");
+    test_format(allocator, "0xDEADBEEF");
+    std::print(std::out(), "\n");
+    test_format(allocator, "-0xDEADBEEF");
+    std::print(std::out(), "\n");
+    test_format(allocator, "+0xBEEFBEEFBEEFBEEFBEEFBEEFBEEFBEEF");
+    std::print(std::out(), "\n");
+    test_format(allocator, "-0xBEEFBEEFBEEFBEEFBEEFBEEFBEEFBEEF");
 
     std::print(std::out(), "\n");
 
@@ -533,6 +565,62 @@ func main() void {
 # 253798150800771361190604828513884159727 compare -253798150800771361190604828513884159727 => 1
 #
 # -253798150800771361190604828513884159727 compare 253798150800771361190604828513884159727 => -1
+#
+# 0
+# 0
+# 0b0
+# 0o0
+# 0x0
+# 0x0
+#
+# 1
+# 1
+# 0b1
+# 0o1
+# 0x1
+# 0x1
+#
+# -1
+# -1
+# -0b1
+# -0o1
+# -0x1
+# -0x1
+#
+# 239
+# 239
+# 0b11101111
+# 0o357
+# 0xef
+# 0xEF
+#
+# 3735928559
+# 3735928559
+# 0b11011110101011011011111011101111
+# 0o33653337357
+# 0xdeadbeef
+# 0xDEADBEEF
+#
+# -3735928559
+# -3735928559
+# -0b11011110101011011011111011101111
+# -0o33653337357
+# -0xdeadbeef
+# -0xDEADBEEF
+#
+# 253798150800771361190604828513884159727
+# 253798150800771361190604828513884159727
+# 0b10111110111011111011111011101111101111101110111110111110111011111011111011101111101111101110111110111110111011111011111011101111
+# 0o2767373735757567676737373575756767673737357
+# 0xbeefbeefbeefbeefbeefbeefbeefbeef
+# 0xBEEFBEEFBEEFBEEFBEEFBEEFBEEFBEEF
+#
+# -253798150800771361190604828513884159727
+# -253798150800771361190604828513884159727
+# -0b10111110111011111011111011101111101111101110111110111110111011111011111011101111101111101110111110111110111011111011111011101111
+# -0o2767373735757567676737373575756767673737357
+# -0xbeefbeefbeefbeefbeefbeefbeefbeef
+# -0xBEEFBEEFBEEFBEEFBEEFBEEFBEEFBEEF
 #
 # SIGN: 0, LIMB COUNT: 0, LIMBS: []
 #

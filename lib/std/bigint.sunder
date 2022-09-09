@@ -238,24 +238,63 @@ struct bigint {
 
     # Accepted format specifiers:
     #   ""  => decimal (default)
-    #
-    # TODO: Currently, only the default format specifier is supported in order
-    # to keep this function simple. In the future is would be nice to add the
-    # rest of the format specifiers that the builtin integer types support:
-    # "d", "b", "o", "x", and "X".
+    #   "d" => decimal
+    #   "b" => binary
+    #   "o" => octal
+    #   "x" => hexadecimal (lower)
+    #   "X" => hexadecimal (upper)
     func format(self: *bigint, writer: std::writer, fmt: []byte) std::result[[void, std::error]] {
-        if countof(fmt) != 0 {
+        # All non-default format specifiers have a length of one byte.
+        if countof(fmt) > 1 {
             return std::result[[void, std::error]]::init_error(std::error::INVALID_ARGUMENT);
+        }
+
+        const DIGITS_TABLE_COUNT: usize = 16;
+        const DIGITS_TABLE_LOWER = (:[DIGITS_TABLE_COUNT]byte)[
+            '0', '1', '2', '3', '4', '5', '6', '7',
+            '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'
+        ];
+        const DIGITS_TABLE_UPPER = (:[DIGITS_TABLE_COUNT]byte)[
+            '0', '1', '2', '3', '4', '5', '6', '7',
+            '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'
+        ];
+
+        var radix = std::bigint::init_from_int[[usize]](self.*._allocator, 10);
+        defer { radix.fini(); }
+        var digits_prefix: []byte = "";
+        var digits_table: []byte = DIGITS_TABLE_LOWER[0:DIGITS_TABLE_COUNT];
+
+        if countof(fmt) != 0 {
+            var c: byte = fmt[0];
+            if c == 'd' {
+                # Decimal defaults already set.
+            }
+            elif c == 'b' {
+                radix = std::bigint::init_from_int[[usize]](self.*._allocator, 2);
+                digits_prefix = "0b";
+            }
+            elif c == 'o' {
+                radix = std::bigint::init_from_int[[usize]](self.*._allocator, 8);
+                digits_prefix = "0o";
+            }
+            elif c == 'x' {
+                radix = std::bigint::init_from_int[[usize]](self.*._allocator, 16);
+                digits_prefix = "0x";
+            }
+            elif c == 'X' {
+                radix = std::bigint::init_from_int[[usize]](self.*._allocator, 16);
+                digits_prefix = "0x";
+                digits_table = DIGITS_TABLE_UPPER[0:DIGITS_TABLE_COUNT];
+            }
+            else {
+                return std::result[[void, std::error]]::init_error(std::error::INVALID_ARGUMENT);
+            }
         }
 
         var magnitude = bigint::init_from_bigint(self.*._allocator, self);
         bigint::assign(&magnitude, self);
         bigint::abs(&magnitude, &magnitude);
         defer { magnitude.fini(); }
-
-        var radix = bigint::init_from_str(self.*._allocator, "10", 10);
-        var radix = radix.value();
-        defer { radix.fini(); }
 
         var output = std::vector[[byte]]::init(self.*._allocator);
         defer { output.fini(); }
@@ -279,11 +318,7 @@ struct bigint {
             }
             elif rem._sign == +1 {
                 std::assert(countof(rem._limbs) == 1);
-                const DIGITS_TABLE = (:[]byte)[
-                    '0', '1', '2', '3', '4',
-                    '5', '6', '7', '8', '9'
-                ];
-                var digit = DIGITS_TABLE[(:usize)rem._limbs[0]];
+                var digit = digits_table[(:usize)rem._limbs[0]];
                 output.insert(0u, digit);
             }
             else {
@@ -293,6 +328,11 @@ struct bigint {
             bigint::assign(&magnitude, &div);
         }
 
+        if countof(digits_prefix) != 0 {
+            std::assert(countof(digits_prefix) == 2);
+            output.insert(0u, digits_prefix[0]);
+            output.insert(1u, digits_prefix[1]);
+        }
         if self.*._sign == -1 {
             output.insert(0u, '-');
         }
