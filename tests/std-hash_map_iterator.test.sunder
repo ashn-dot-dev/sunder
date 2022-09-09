@@ -17,7 +17,7 @@ func main() void {
     for iter.advance() {
         std::print_format_line(
             std::out(),
-            "{}, {X}",
+            "{}, {#X}",
             (:[]std::formatter)[
                 std::formatter::init[[[]byte]](iter.current().key),
                 std::formatter::init[[ssize]](iter.current().value)]);

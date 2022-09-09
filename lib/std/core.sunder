@@ -819,7 +819,7 @@ func write_format(writer: std::writer, format: []byte, args: []std::formatter) s
             if result.is_error() {
                 if result.error() == std::error::INVALID_ARGUMENT {
                     std::panic_format(
-                        "invalid format specifier \"{e}\"\n",
+                        "invalid format specifier \"{e}\"",
                         (:[]std::formatter)[std::formatter::init[[[]byte]](&fmt)]);
                 }
                 return result;
@@ -1331,7 +1331,15 @@ extend integer func _compare[[T]](lhs: T, rhs: T) ssize {
     return 0;
 }
 
-# Accepted format specifiers:
+# Accepted format language:
+#   [#][radix]
+#
+# Use of "#" indicates that the alternate form of the integer should be
+# formatted. Integers formatted in decimal are unchanged. Integers formatted in
+# binary are prefixed with "0b". Integers formatted in octal are prefixed with
+# "0o". And integers formatted in hexadecimal are prefixed with "0x".
+#
+# Accepted strings for radix:
 #   ""  => decimal (default)
 #   "d" => decimal
 #   "b" => binary
@@ -1339,11 +1347,6 @@ extend integer func _compare[[T]](lhs: T, rhs: T) ssize {
 #   "x" => hexadecimal (lower)
 #   "X" => hexadecimal (upper)
 extend integer func _format_umax(int: std::umax, writer: std::writer, fmt: []byte) std::result[[void, std::error]] {
-    # All non-default format specifiers have a length of one byte.
-    if countof(fmt) > 1 {
-        return std::result[[void, std::error]]::init_error(std::error::INVALID_ARGUMENT);
-    }
-
     const DIGITS_TABLE_COUNT: usize = 16;
     const DIGITS_TABLE_LOWER = (:[DIGITS_TABLE_COUNT]byte)[
         '0', '1', '2', '3', '4', '5', '6', '7',
@@ -1354,12 +1357,22 @@ extend integer func _format_umax(int: std::umax, writer: std::writer, fmt: []byt
         '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'
     ];
 
+    var fmt_idx = 0u;
+
+    var is_digits_prefix = false;
+    if fmt_idx < countof(fmt) and fmt[fmt_idx] == '#' {
+        is_digits_prefix = true;
+        fmt_idx = fmt_idx + 1;
+    }
+
     var radix: usize = 10;
     var digits_prefix: []byte = "";
     var digits_table: []byte = DIGITS_TABLE_LOWER[0:DIGITS_TABLE_COUNT];
 
-    if countof(fmt) != 0 {
-        var c: byte = fmt[0];
+    if fmt_idx < countof(fmt) {
+        var c: byte = fmt[fmt_idx];
+        fmt_idx = fmt_idx + 1;
+
         if c == 'd' {
             # Decimal defaults already set.
         }
@@ -1385,6 +1398,10 @@ extend integer func _format_umax(int: std::umax, writer: std::writer, fmt: []byt
         }
     }
 
+    if fmt_idx != countof(fmt) {
+        return std::result[[void, std::error]]::init_error(std::error::INVALID_ARGUMENT);
+    }
+
     const OUTPUT_COUNT: usize = countof("0b") + sizeof(usize) * 8;
     var output = (:[OUTPUT_COUNT]byte)[0...];
     var output_index: usize = countof(output) - 1;
@@ -1405,15 +1422,25 @@ extend integer func _format_umax(int: std::umax, writer: std::writer, fmt: []byt
         int = div;
     }
 
-    for i in countof(digits_prefix) {
-        output[output_index] = digits_prefix[countof(digits_prefix) - i - 1];
-        output_index = output_index - 1;
+    if is_digits_prefix and countof(digits_prefix) != 0 {
+        for i in countof(digits_prefix) {
+            output[output_index] = digits_prefix[countof(digits_prefix) - i - 1];
+            output_index = output_index - 1;
+        }
     }
 
     return std::write_all(writer, output[output_index+1:countof(output)]);
 }
 
-# Accepted format specifiers:
+# Accepted format language:
+#   [#][radix]
+#
+# Use of "#" indicates that the alternate form of the integer should be
+# formatted. Integers formatted in decimal are unchanged. Integers formatted in
+# binary are prefixed with "0b". Integers formatted in octal are prefixed with
+# "0o". And integers formatted in hexadecimal are prefixed with "0x".
+#
+# Accepted strings for radix:
 #   ""  => decimal (default)
 #   "d" => decimal
 #   "b" => binary

@@ -2,7 +2,7 @@ import "std/core.sunder";
 
 func test[[T]](lhs: T, rhs: T) void {
     var result: T = std::wrapping_mul[[T]](lhs, rhs);
-    std::print_format_line(std::out(), "{X}", (:[]std::formatter)[std::formatter::init[[T]](&result)]);
+    std::print_format_line(std::out(), "{#X}", (:[]std::formatter)[std::formatter::init[[T]](&result)]);
 }
 
 func test_compare_s64[[T]](lhs: T, rhs: T) void {

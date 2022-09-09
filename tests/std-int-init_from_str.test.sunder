@@ -116,7 +116,7 @@ func nominal_bin() void {
     var int = result.value();
     std::print_format_line(
         std::out(),
-        "{b}",
+        "{#b}",
         (:[]std::formatter)[
             std::formatter::init[[ssize]](&int)]);
 
@@ -124,7 +124,7 @@ func nominal_bin() void {
     var int = result.value();
     std::print_format_line(
         std::out(),
-        "{b}",
+        "{#b}",
         (:[]std::formatter)[
             std::formatter::init[[ssize]](&int)]);
 }
@@ -134,7 +134,7 @@ func nominal_oct() void {
     var int = result.value();
     std::print_format_line(
         std::out(),
-        "{o}",
+        "{#o}",
         (:[]std::formatter)[
             std::formatter::init[[ssize]](&int)]);
 
@@ -142,7 +142,7 @@ func nominal_oct() void {
     var int = result.value();
     std::print_format_line(
         std::out(),
-        "{o}",
+        "{#o}",
         (:[]std::formatter)[
             std::formatter::init[[ssize]](&int)]);
 }
@@ -152,7 +152,7 @@ func nominal_hex() void {
     var int = result.value();
     std::print_format_line(
         std::out(),
-        "{x}",
+        "{#x}",
         (:[]std::formatter)[
             std::formatter::init[[ssize]](&int)]);
 
@@ -160,7 +160,7 @@ func nominal_hex() void {
     var int = result.value();
     std::print_format_line(
         std::out(),
-        "{X}",
+        "{#X}",
         (:[]std::formatter)[
             std::formatter::init[[ssize]](&int)]);
 
@@ -168,7 +168,7 @@ func nominal_hex() void {
     var int = result.value();
     std::print_format_line(
         std::out(),
-        "{X}",
+        "{#X}",
         (:[]std::formatter)[
             std::formatter::init[[ssize]](&int)]);
 }
@@ -178,7 +178,7 @@ func nominal_min_and_max() void {
     var int = result.value();
     std::print_format_line(
         std::out(),
-        "{X}",
+        "{#X}",
         (:[]std::formatter)[
             std::formatter::init[[u64]](&int)]);
 
@@ -186,7 +186,7 @@ func nominal_min_and_max() void {
     var int = result.value();
     std::print_format_line(
         std::out(),
-        "{X}",
+        "{#X}",
         (:[]std::formatter)[
             std::formatter::init[[u64]](&int)]);
 
