@@ -70,7 +70,7 @@ $ make install SUNDER_HOME=/opt/sunder  # Install to /opt/sunder
 
 ```sh
 # Add this to your .profile, replacing `${HOME}/.sunder` with your chosen
-# SUNDER_HOME directory installing to a non-default SUNDER_HOME location.
+# SUNDER_HOME directory if installing to a non-default SUNDER_HOME location.
 if [ -d "${HOME}/.sunder" ]; then
     export SUNDER_HOME="${HOME}/.sunder"
     export SUNDER_IMPORT_PATH="${SUNDER_HOME}/lib"
