@@ -1757,6 +1757,10 @@ symbol_new_namespace(
     char const* name,
     struct symbol_table* symbols);
 
+// Returns NULL if this symbol does not have an address.
+struct address const*
+symbol_get_address(struct symbol const* self);
+
 struct type const*
 symbol_xget_type(struct symbol const* self);
 struct address const*

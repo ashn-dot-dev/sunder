@@ -1,5 +1,3 @@
 const main = 1s;
 ################################################################################
-# [error-main-is-not-defined-as-a-function.test.sunder:1] error: main is not defined as a function
-# const main = 1s;
-# ^
+# error: main function is not defined

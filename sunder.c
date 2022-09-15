@@ -298,18 +298,32 @@ validate_main_is_defined_correctly(void)
     struct symbol const* main_symbol = NULL;
     for (size_t i = 0; i < sbuf_count(context()->static_symbols); ++i) {
         struct symbol const* const symbol = context()->static_symbols[i];
-        if (symbol->name == context()->interned.main) {
-            main_symbol = symbol;
-            break;
+        if (symbol->name != context()->interned.main) {
+            continue;
         }
+
+        struct address const* const address = symbol_get_address(symbol);
+        if (address == NULL) {
+            continue;
+        }
+
+        // XXX: Checking if the symbol name matches the static address name
+        // here is really a check to see if this main symbol is not part of a
+        // namespace. Namespaced main functions such as `foo::main` should be
+        // skipped, and checking the static address name is one way to work
+        // around the lack of namespace information on symbols.
+        assert(address->kind == ADDRESS_STATIC);
+        assert(address->data.static_.offset == 0);
+        if (symbol->name != address->data.static_.name) {
+            continue;
+        }
+
+        main_symbol = symbol;
+        break;
     }
 
-    if (main_symbol == NULL) {
-        fatal(NULL, "main is not defined");
-    }
-
-    if (main_symbol->kind != SYMBOL_FUNCTION) {
-        fatal(main_symbol->location, "main is not defined as a function");
+    if (main_symbol == NULL || main_symbol->kind != SYMBOL_FUNCTION) {
+        fatal(NULL, "main function is not defined");
     }
 
     struct type const* const expected_type =

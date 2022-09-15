@@ -699,6 +699,31 @@ symbol_new_namespace(
     return self;
 }
 
+struct address const*
+symbol_get_address(struct symbol const* self)
+{
+    assert(self != NULL);
+
+    switch (self->kind) {
+    case SYMBOL_VARIABLE: {
+        return self->data.variable.address;
+    }
+    case SYMBOL_CONSTANT: {
+        return self->data.constant.address;
+    }
+    case SYMBOL_FUNCTION: {
+        return self->data.function->address;
+    }
+    case SYMBOL_TYPE: /* fallthrough */
+    case SYMBOL_TEMPLATE: /* fallthrough */
+    case SYMBOL_NAMESPACE: {
+        return NULL;
+    }
+    }
+
+    return NULL;
+}
+
 struct type const*
 symbol_xget_type(struct symbol const* self)
 {
@@ -731,24 +756,12 @@ symbol_xget_address(struct symbol const* self)
 {
     assert(self != NULL);
 
-    switch (self->kind) {
-    case SYMBOL_VARIABLE: {
-        return self->data.variable.address;
-    }
-    case SYMBOL_CONSTANT: {
-        return self->data.constant.address;
-    }
-    case SYMBOL_FUNCTION: {
-        return self->data.function->address;
-    }
-    case SYMBOL_TYPE: /* fallthrough */
-    case SYMBOL_TEMPLATE: /* fallthrough */
-    case SYMBOL_NAMESPACE: {
+    struct address const* const address = symbol_get_address(self);
+    if (address == NULL) {
         UNREACHABLE();
     }
-    }
 
-    return NULL;
+    return address;
 }
 
 struct value const*
