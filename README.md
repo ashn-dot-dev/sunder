@@ -58,17 +58,19 @@ $ make <targets> SUNDER_DEFAULT_BACKEND=nasm
 
 ## Installing
 The `install` target will install the Sunder toolchain into the directory
-specified by `$SUNDER_HOME` (default `$HOME/.sunder`). Run `make install` with
-`$SUNDER_HOME` specified as the directory of your choice, add `$SUNDER_HOME` to
+specified by `SUNDER_HOME` (default `$HOME/.sunder`). Run `make install` with
+`SUNDER_HOME` specified as the directory of your choice, add `$SUNDER_HOME` to
 your `.profile` (or equivalent), and then finally add `$SUNDER_HOME/bin` to
 your `$PATH`.
 
 ```sh
-$ make install
+$ make install                          # Install to the default $HOME/.sunder
+$ make install SUNDER_HOME=/opt/sunder  # Install to /opt/sunder
 ```
 
 ```sh
-# Add this to your .profile
+# Add this to your .profile, replacing `${HOME}/.sunder` with your chosen
+# SUNDER_HOME directory installing to a non-default SUNDER_HOME location.
 if [ -d "${HOME}/.sunder" ]; then
     export SUNDER_HOME="${HOME}/.sunder"
     export SUNDER_IMPORT_PATH="${SUNDER_HOME}/lib"
