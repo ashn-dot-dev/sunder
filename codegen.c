@@ -1098,7 +1098,7 @@ codegen_stmt_for_range(struct stmt const* stmt, size_t id)
     appendli("pop rbx"); // end
     appendli("pop rax"); // loop variable
     appendli("cmp rax, rbx");
-    appendli("je %s%zu_end", LABEL_STMT, id);
+    appendli("jge %s%zu_end", LABEL_STMT, id);
     appendln("%s%zu_body_bgn:", LABEL_STMT, id);
     codegen_block(stmt->data.for_range.body);
     appendln("%s%zu_body_end:", LABEL_STMT, id);

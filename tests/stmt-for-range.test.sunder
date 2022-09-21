@@ -21,6 +21,11 @@ func main() void {
         dump i;
     }
 
+    # Check that iteration stops if begin is greater than end.
+    for i in 10:9 {
+        dump i;
+    }
+
     # Check for default-to-zero begin.
     for i in 3 {
         dump i;
