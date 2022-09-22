@@ -1,0 +1,26 @@
+import "std/sort.sunder";
+import "std/general_allocator.sunder";
+
+func test[[T]](a: []T) void {
+    var allocator = std::general_allocator::init();
+    defer {
+        allocator.fini();
+    }
+    var allocator = std::allocator::init[[std::general_allocator]](&allocator);
+
+    std::merge_sort[[T]](a, allocator);
+    for i in 1:countof(a) {
+        std::assert(std::gt[[T]](&a[i], &a[i-1]));
+    }
+}
+
+func main() void {
+    test[[ssize]]((:[]ssize)[]);
+    test[[ssize]]((:[]ssize)[1, 2, 3]);
+    test[[ssize]]((:[]ssize)[3, 2, 1]);
+    test[[ssize]]((:[]ssize)[4, 5, 3, 1, 6, 2]);
+
+    test[[[]byte]]((:[][]byte)["apple", "banana", "carrot"]);
+    test[[[]byte]]((:[][]byte)["carrot", "banana", "apple"]);
+}
+
