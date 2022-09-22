@@ -1,26 +1,39 @@
 import "std/sort.sunder";
 import "std/general_allocator.sunder";
 
-func test[[T]](a: []T) void {
+func test[[T]](slice: []T) void {
     var allocator = std::general_allocator::init();
     defer {
         allocator.fini();
     }
     var allocator = std::allocator::init[[std::general_allocator]](&allocator);
 
-    std::merge_sort[[T]](a, allocator);
-    for i in 1:countof(a) {
-        std::assert(std::gt[[T]](&a[i], &a[i-1]));
+    std::merge_sort[[T]](slice, allocator);
+    for i in 1:countof(slice) {
+        std::assert(std::ge[[T]](&slice[i], &slice[i-1]));
     }
 }
 
 func main() void {
     test[[ssize]]((:[]ssize)[]);
-    test[[ssize]]((:[]ssize)[1, 2, 3]);
-    test[[ssize]]((:[]ssize)[3, 2, 1]);
-    test[[ssize]]((:[]ssize)[4, 5, 3, 1, 6, 2]);
+
+    test[[ssize]]((:[]ssize)[1, 2, 3, 4, 5]); # ascending
+    test[[ssize]]((:[]ssize)[5, 4, 3, 2, 1]); # descending
+    test[[ssize]]((:[]ssize)[4, 1, 3, 5, 2]); # random
+    test[[ssize]]((:[]ssize)[2, 3, 1, 4, 5]); # nearly sorted
+    test[[ssize]]((:[]ssize)[1, 1, 1, 2, 2]); # repeats
+    test[[ssize]]((:[]ssize)[2, 2, 1, 1, 1]); # repeats
+    test[[ssize]]((:[]ssize)[1, 2, 1, 2, 1]); # repeats
+
+    test[[ssize]]((:[]ssize)[1, 6, 2, 5, 3, 4]); # ascending
+    test[[ssize]]((:[]ssize)[6, 5, 4, 3, 2, 1]); # descending
+    test[[ssize]]((:[]ssize)[4, 1, 5, 2, 3, 6]); # random
+    test[[ssize]]((:[]ssize)[2, 3, 1, 4, 5, 6]); # nearly sorted
+    test[[ssize]]((:[]ssize)[2, 3, 4, 1, 5, 6]); # nearly sorted
+    test[[ssize]]((:[]ssize)[1, 1, 1, 2, 2, 2]); # repeats
+    test[[ssize]]((:[]ssize)[2, 2, 2, 1, 1, 1]); # repeats
+    test[[ssize]]((:[]ssize)[1, 2, 1, 2, 1, 2]); # repeats
 
     test[[[]byte]]((:[][]byte)["apple", "banana", "carrot"]);
     test[[[]byte]]((:[][]byte)["carrot", "banana", "apple"]);
 }
-
