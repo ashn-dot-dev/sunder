@@ -167,6 +167,26 @@ What is your name?
 Nice to meet you Alice!
 ```
 
+## Using Sunder Without Installing
+Sourcing the top-level `env` script will create a local development environment
+utilizing tools from the Sunder project directory. Executing the commands:
+
+```sh
+$ make
+$ . ./env
+```
+
+should produce an environment sufficient for Sunder experimentation without
+requiring the Sunder toolchain to be installed.
+
+```sh
+$ cd /your/path/to/sunder
+$ make >/dev/null
+$ . ./env
+$ sunder-run examples/hello.sunder
+Hello, world!
+```
+
 ## License
 Sunder is distributed under the terms of the Apache License (Version 2.0).
 
