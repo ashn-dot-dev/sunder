@@ -2,13 +2,7 @@ import "std/sort.sunder";
 import "std/general_allocator.sunder";
 
 func test[[T]](slice: []T) void {
-    var allocator = std::general_allocator::init();
-    defer {
-        allocator.fini();
-    }
-    var allocator = std::allocator::init[[std::general_allocator]](&allocator);
-
-    std::merge_sort[[T]](slice, allocator);
+    std::quick_sort[[T]](slice);
     for i in 1:countof(slice) {
         var prev = i - 1;
         if std::lt[[T]](&slice[i], &slice[prev]) {
