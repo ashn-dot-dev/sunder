@@ -26,6 +26,13 @@ func main() void {
         dump i;
     }
 
+    # Explicit issue using caused by jge instead of jnb during codegen.
+    const USIZE_MAX = 0xFFFFFFFFFFFFFFFFu;
+    for a in 0:USIZE_MAX {
+        dump 0xDEADBEEFu32;
+        break;
+    }
+
     # Check for default-to-zero begin.
     for i in 3 {
         dump i;
@@ -44,6 +51,7 @@ func main() void {
 # 04 00 00 00 00 00 00 00
 # 05 00 00 00 00 00 00 00
 # 06 00 00 00 00 00 00 00
+# EF BE AD DE
 # 00 00 00 00 00 00 00 00
 # 01 00 00 00 00 00 00 00
 # 02 00 00 00 00 00 00 00
