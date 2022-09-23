@@ -1,9 +1,5 @@
 #!/bin/sh
-SUNDER_CURRENT_DIRECTORY=$(dirname "$0")
-SUNDER_CURRENT_DIRECTORY=$(realpath "${SUNDER_CURRENT_DIRECTORY}")
-
-if [ "${SUNDER_HOME}" != "${SUNDER_CURRENT_DIRECTORY}" ]; then
-    export SUNDER_HOME="${SUNDER_CURRENT_DIRECTORY}"
+if [ -n "${SUNDER_HOME}" ]; then
     export SUNDER_IMPORT_PATH="${SUNDER_HOME}/lib"
     export PATH="${SUNDER_HOME}/bin:${PATH}"
 fi

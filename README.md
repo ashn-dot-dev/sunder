@@ -59,22 +59,21 @@ $ make <targets> SUNDER_DEFAULT_BACKEND=nasm
 ## Installing
 The `install` target will install the Sunder toolchain into the directory
 specified by `SUNDER_HOME` (default `$HOME/.sunder`). Run `make install` with
-`SUNDER_HOME` specified as the directory of your choice, add `$SUNDER_HOME` and
-`$SUNDER_IMPORT_PATH` to your `.profile` (or equivalent), and then finally add
-`$SUNDER_HOME/bin` to your `$PATH`.
+`SUNDER_HOME` specified as the directory of your choice:
 
 ```sh
 $ make install                          # Install to the default $HOME/.sunder
 $ make install SUNDER_HOME=/opt/sunder  # Install to /opt/sunder
 ```
 
+Then, add the following snippet to your `.profile`, replacing `$HOME/.sunder`
+with your chosen `SUNDER_HOME` directory if installing to a non-default
+`SUNDER_HOME` location:
+
 ```sh
-# Add this to your .profile, replacing `${HOME}/.sunder` with your chosen
-# SUNDER_HOME directory if installing to a non-default SUNDER_HOME location.
-if [ -d "${HOME}/.sunder" ]; then
-    export SUNDER_HOME="${HOME}/.sunder"
-    export SUNDER_IMPORT_PATH="${SUNDER_HOME}/lib"
-    PATH="${SUNDER_HOME}/bin:${PATH}"
+export SUNDER_HOME="$HOME/.sunder"
+if [ -e "$SUNDER_HOME/env" ]; then
+    . "$SUNDER_HOME/env"
 fi
 ```
 
@@ -168,20 +167,15 @@ Nice to meet you Alice!
 ```
 
 ## Using Sunder Without Installing
-Sourcing the top-level `env` script will create a local development environment
-utilizing tools from the Sunder project directory. Executing the commands:
-
-```sh
-$ make
-$ . ./env
-```
-
-should produce an environment sufficient for Sunder experimentation without
+Executing the following commands will create a development environment
+utilizing tools from within the Sunder project directory. This environment
+should be sufficient for Sunder devlopment and experimentation without
 requiring the Sunder toolchain to be installed.
 
 ```sh
 $ cd /your/path/to/sunder
-$ make >/dev/null
+$ make
+$ SUNDER_HOME="$PWD"
 $ . ./env
 $ sunder-run examples/hello.sunder
 Hello, world!
