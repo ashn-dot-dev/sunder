@@ -315,13 +315,15 @@ push_address(struct address const* address)
     case ADDRESS_STATIC: {
         if (address->data.static_.offset == 0) {
             // More aesthetically pleasing without the `+ offset` component.
-            appendli("push $%s", address->data.static_.name);
+            appendli("lea rax, [$%s]", address->data.static_.name);
+            appendli("push rax");
             break;
         }
         appendli(
-            "push $%s + %zu",
+            "lea [$%s + %zu]",
             address->data.static_.name,
             address->data.static_.offset);
+        appendli("push rax");
         break;
     }
     case ADDRESS_LOCAL: {
@@ -871,11 +873,19 @@ codegen_static_functions(void)
 static void
 codegen_fatals(void)
 {
+    // The instructions:
+    //      lea rax, [addr]
+    //      push rax
+    // are used instead of:
+    //      push addr
+    // to allow for addresses in the full 64-bit address space.
+
     // clang-format off
     // Builtin integer divide by zero handler.
     appendln("section .text");
     appendln("__fatal_integer_divide_by_zero:");
-    appendln("    push __fatal_integer_divide_by_zero_msg_start");
+    appendln("    lea rax, [__fatal_integer_divide_by_zero_msg_start]");
+    appendln("    push rax");
     appendln("    push __fatal_integer_divide_by_zero_msg_count");
     appendln("    call __fatal");
     appendch('\n');
@@ -887,7 +897,8 @@ codegen_fatals(void)
     // Builtin integer out-of-range handler.
     appendln("section .text");
     appendln("__fatal_integer_out_of_range:");
-    appendln("    push __fatal_integer_out_of_range_msg_start");
+    appendln("    lea rax, [__fatal_integer_out_of_range_msg_start]");
+    appendln("    push rax");
     appendln("    push __fatal_integer_out_of_range_msg_count");
     appendln("    call __fatal");
     appendch('\n');
@@ -899,7 +910,8 @@ codegen_fatals(void)
     // Builtin index out-of-bounds handler.
     appendln("section .text");
     appendln("__fatal_index_out_of_bounds:");
-    appendln("    push __fatal_index_out_of_bounds_msg_start");
+    appendln("    lea rax, [__fatal_index_out_of_bounds_msg_start]");
+    appendln("    push rax");
     appendln("    push __fatal_index_out_of_bounds_msg_count");
     appendln("    call __fatal");
     appendch('\n');
@@ -2788,6 +2800,8 @@ codegen(
     size_t sysasm_buf_size = 0;
     load_sysasm(&sysasm_buf, &sysasm_buf_size);
 
+    appendln("default rel");
+    appendch('\n');
     codegen_extern_labels(sysasm_buf, sysasm_buf_size);
     appendch('\n');
     codegen_global_labels();
