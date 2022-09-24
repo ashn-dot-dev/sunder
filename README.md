@@ -167,10 +167,9 @@ Nice to meet you Alice!
 ```
 
 ## Using Sunder Without Installing
-Executing the following commands will create a development environment
-utilizing tools from within the Sunder project directory. This environment
-should be sufficient for Sunder devlopment and experimentation without
-requiring the Sunder toolchain to be installed.
+Executing the following commands will create an environment sufficient for
+Sunder devlopment and experimentation without requiring the Sunder toolchain to
+be installed.
 
 ```sh
 $ cd /your/path/to/sunder
