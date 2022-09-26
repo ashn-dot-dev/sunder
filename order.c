@@ -184,7 +184,7 @@ order_tldecl(struct orderer* orderer, struct tldecl* tldecl)
     // Perform ordering on the top level declaration.
     sbuf_push(orderer->dependencies, tldecl->decl);
     order_decl(orderer, tldecl->decl);
-    sbuf_pop(orderer->dependencies);
+    sbuf_resize(orderer->dependencies, sbuf_count(orderer->dependencies) - 1);
     // Change the state from ORDERING TO ORDERED after ordering the top level
     // declaration as well as all of top level declaration's dependencies.
     tldecl->state = TLDECL_ORDERED;
