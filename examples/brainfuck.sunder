@@ -71,7 +71,48 @@ func main() void {
     var source = result.value();
     var source_size: usize = countof(source);
 
+    var success = true;
+    var lines = std::slice[[usize]]::new(allocator, source_size);
+    var jumps = std::slice[[usize]]::new(allocator, source_size);
     var stack = std::vector[[usize]]::init(allocator);
+    var line = 1u;
+    for i in source_size {
+        lines[i] = line;
+        if source[i] == '\n' {
+            line = line + 1;
+            continue;
+        }
+        if source[i] == '[' {
+            stack.push(i);
+        }
+        if source[i] == ']' {
+            if stack.count() == 0 {
+                std::print_format_line(
+                    std::err(),
+                    "{}: [line {}] Unbalanced ']'",
+                    (:[]std::formatter)[
+                        std::formatter::init[[[]byte]](&path),
+                        std::formatter::init[[usize]](&line)]);
+                success = false;
+                continue;
+            }
+            jumps[stack.data()[stack.count() - 1]] = i; # Jump from [ to ]
+            jumps[i] = stack.pop();                     # Jump from ] to [
+        }
+    }
+    for i in stack.count() {
+        std::print_format_line(
+            std::err(),
+            "{}: [line {}] Unbalanced '['",
+            (:[]std::formatter)[
+                std::formatter::init[[[]byte]](&path),
+                std::formatter::init[[usize]](&lines[stack.data()[i]])]);
+        success = false;
+    }
+    if not success {
+        std::exit(std::EXIT_FAILURE);
+    }
+
     var source_index: usize = 0;
     for source_index < source_size {
         var cur: byte = source[source_index];
@@ -112,24 +153,13 @@ func main() void {
         }
         if cur == '[' {
             if cells[cells_index] == 0 {
-                var depth: usize = 1;
-                for depth > 0 {
-                    source_index = source_index + 1;
-                    if source[source_index] == '[' {
-                        depth = depth + 1;
-                    }
-                    if source[source_index] == ']' {
-                        depth = depth - 1;
-                    }
-                }
-            } else {
-                stack.push(source_index);
+                source_index = jumps[source_index];
             }
             source_index = source_index + 1;
             continue;
         }
         if cur == ']' {
-            source_index = stack.pop();
+            source_index = jumps[source_index];
             continue;
         }
         source_index = source_index + 1;
