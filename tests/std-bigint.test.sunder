@@ -1,4 +1,6 @@
-import "std";
+import "std/bigint.sunder";
+import "std/core.sunder";
+import "std/general_allocator.sunder";
 
 func display_bigint_internals(bigint: *std::bigint) void {
     var sign = "0";
@@ -129,9 +131,9 @@ func test_format(allocator: std::allocator, str: []byte) void {
 }
 
 func main() void {
-    var general_allocator = std::general_allocator::init();
-    defer { general_allocator.fini(); }
-    var allocator = std::allocator::init[[typeof(general_allocator)]](&general_allocator);
+    var allocator = std::general_allocator::init();
+    defer { allocator.fini(); }
+    var allocator = std::allocator::init[[typeof(allocator)]](&allocator);
 
     var bigint = std::bigint::init(allocator);
     defer { bigint.fini(); }
@@ -669,7 +671,7 @@ func main() void {
 # 0xbeefbeefbeefbeefbeefbeefbeefbeef
 # BEEFBEEFBEEFBEEFBEEFBEEFBEEFBEEF
 # 0xBEEFBEEFBEEFBEEFBEEFBEEFBEEFBEEF
-# 
+#
 # -253798150800771361190604828513884159727
 # -253798150800771361190604828513884159727
 # -253798150800771361190604828513884159727

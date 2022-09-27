@@ -1,0 +1,29 @@
+import "std/bigint.sunder";
+import "std/core.sunder";
+import "std/general_allocator.sunder";
+
+func main() void {
+    var allocator = std::general_allocator::init();
+    defer { allocator.fini(); }
+    var allocator = std::allocator::init[[typeof(allocator)]](&allocator);
+
+    std::print_format_line(
+        std::out(),
+        "{}",
+        (:[]std::formatter)[
+            std::formatter::init[[std::bigint]](&std::bigint::ZERO)]);
+    std::print_format_line(
+        std::out(),
+        "{}",
+        (:[]std::formatter)[
+            std::formatter::init[[std::bigint]](&std::bigint::POSITIVE_ONE)]);
+    std::print_format_line(
+        std::out(),
+        "{}",
+        (:[]std::formatter)[
+            std::formatter::init[[std::bigint]](&std::bigint::NEGATIVE_ONE)]);
+}
+################################################################################
+# 0
+# 1
+# -1

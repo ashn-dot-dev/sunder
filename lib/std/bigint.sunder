@@ -1,6 +1,7 @@
 namespace std;
 import "std/core.sunder";
 import "std/linear_allocator.sunder";
+import "std/null_allocator.sunder";
 import "std/string.sunder";
 import "std/vector.sunder";
 
@@ -253,6 +254,16 @@ struct bigint {
     #   "x" => hexadecimal (lower)
     #   "X" => hexadecimal (upper)
     func format(self: *bigint, writer: std::writer, fmt: []byte) std::result[[void, std::error]] {
+        # Special cases for bigint constants.
+        if self == &bigint::ZERO {
+            var int: smax = 0;
+            return smax::format(&int, writer, fmt);
+        }
+        if self == &bigint::POSITIVE_ONE or self == &bigint::NEGATIVE_ONE {
+            var int: smax = (:smax)self.*._sign * (:smax)self.*._limbs[0];
+            return smax::format(&int, writer, fmt);
+        }
+
         const DIGITS_TABLE_COUNT: usize = 16;
         const DIGITS_TABLE_LOWER = (:[DIGITS_TABLE_COUNT]byte)[
             '0', '1', '2', '3', '4', '5', '6', '7',
@@ -781,3 +792,21 @@ struct bigint {
         D.fini();
     }
 }
+
+extend bigint const ZERO: std::bigint = (:std::bigint){
+    ._allocator = std::null_allocator::ALLOCATOR,
+    ._sign = 0,
+    ._limbs = (:[]u32)[]
+};
+
+extend bigint const POSITIVE_ONE: std::bigint = (:std::bigint){
+    ._allocator = std::null_allocator::ALLOCATOR,
+    ._sign = +1,
+    ._limbs = (:[]u32)[1]
+};
+
+extend bigint const NEGATIVE_ONE: std::bigint = (:std::bigint){
+    ._allocator = std::null_allocator::ALLOCATOR,
+    ._sign = -1,
+    ._limbs = (:[]u32)[1]
+};
