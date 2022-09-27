@@ -2043,6 +2043,10 @@ complete_struct(
                     break;
                 }
             }
+            if (struct_type->data.struct_.is_complete) {
+                sbuf_freeze(member_variables);
+                struct_type->data.struct_.member_variables = member_variables;
+            }
             continue;
         }
         case CST_MEMBER_CONSTANT: {
@@ -2077,9 +2081,6 @@ complete_struct(
     resolver->current_symbol_name_prefix = save_symbol_name_prefix;
     resolver->current_static_addr_prefix = save_static_addr_prefix;
     resolver->current_symbol_table = save_symbol_table;
-
-    sbuf_freeze(member_variables);
-    struct_type->data.struct_.member_variables = member_variables;
 }
 
 static void
