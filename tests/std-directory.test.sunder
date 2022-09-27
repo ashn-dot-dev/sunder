@@ -44,5 +44,4 @@ func main() void {
 ################################################################################
 # .
 # ..
-# allocation_failure_allocator.sunder
 # argv.sunder

@@ -1,8 +1,8 @@
 import "std/core.sunder";
+import "std/null_allocator.sunder";
 import "std/vector.sunder";
-import "util/allocation_failure_allocator.sunder";
 
 func main() void {
-    var vec: std::vector[[u32]] = std::vector[[u32]]::init(std::allocator::init[[util::allocation_failure_allocator]](util::allocation_failure_allocator::the()));
+    var vec: std::vector[[u32]] = std::vector[[u32]]::init(std::allocator::init[[std::null_allocator]](std::null_allocator::the()));
     vec.fini();
 }
