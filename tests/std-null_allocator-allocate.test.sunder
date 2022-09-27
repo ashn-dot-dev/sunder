@@ -1,0 +1,9 @@
+import "std/core.sunder";
+import "std/null_allocator.sunder";
+
+func main() void {
+    var result = std::null_allocator::the().*.allocate(0, 0);
+    std::print_line(std::err(), result.error().*.data);
+}
+################################################################################
+# allocation failure

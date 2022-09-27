@@ -1,0 +1,7 @@
+import "std/null_allocator.sunder";
+
+func main() void {
+    std::null_allocator::the().*.reallocate((:*byte)0u, 0, 0, 0);
+}
+################################################################################
+# panic: attempted null_allocator reallocation

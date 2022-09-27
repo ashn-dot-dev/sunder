@@ -1,0 +1,40 @@
+namespace std;
+import "std/core.sunder";
+
+# Allocator that will never successfully allocate, reallocate, or free memory.
+# The purpose of this allocator is to provide a type that may be used for the
+# allocator member for constants of a managed type such as `std::bigint`. The
+# members constants `ITABLE`, `OBJECT`, and `ALLOCATOR` are provided to
+# explicitly support using the null allocator for constant definitions.
+struct null_allocator {
+    func allocate(self: *null_allocator, align: usize, size: usize) std::result[[*byte, std::error]] {
+        return std::result[[*byte, std::error]]::init_error(std::error::ALLOCATION_FAILURE);
+    }
+
+    func reallocate(self: *null_allocator, ptr: *byte, align: usize, old_size: usize, new_size: usize) std::result[[*byte, std::error]] {
+        std::panic("attempted null_allocator reallocation");
+        return std::zeroed[[std::result[[*byte, std::error]]]](); # unreachable
+    }
+
+    func deallocate(self: *null_allocator, ptr: *byte, align: usize, size: usize) void {
+        std::panic("attempted null_allocator deallocation");
+    }
+
+    func the() *null_allocator {
+        const the = (:null_allocator){};
+        return &the;
+    }
+
+    const ITABLE: std::allocator_itable = (:std::allocator_itable){
+        .allocate = null_allocator::allocate,
+        .reallocate = null_allocator::reallocate,
+        .deallocate = null_allocator::deallocate
+    };
+
+    const OBJECT: std::null_allocator = (:std::null_allocator){};
+
+    const ALLOCATOR: std::allocator = (:std::allocator){
+        .itable = &null_allocator::ITABLE,
+        .object = &null_allocator::OBJECT
+    };
+}

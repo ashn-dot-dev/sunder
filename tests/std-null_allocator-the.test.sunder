@@ -1,0 +1,7 @@
+import "std/core.sunder";
+import "std/null_allocator.sunder";
+import "std/string.sunder";
+
+func main() void {
+    var _ = std::string::init(std::allocator::init[[std::null_allocator]](std::null_allocator::the()));
+}
