@@ -124,7 +124,7 @@ The following environment variables affect compiler behavior:
 + `SUNDER_SYSASM_PATH` => Location of the platform specific `sys.asm` file that
   defines the program entry point as well as low-level operating system and
   hardware abstractions. If this environment variable is not set, then the
-  default path, `${SUNDER_HOME}/lib/sys/sys.asm`, is used.
+  default path, `$SUNDER_HOME/lib/sys/sys.asm`, is used.
 
 ## Using Sunder as a Scripting Language
 Sunder can be used for scripting by adding `#!/usr/bin/env sunder-run` (or
