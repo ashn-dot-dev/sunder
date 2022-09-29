@@ -1,6 +1,15 @@
 sunder-compile
-hello
-greet
+
+examples/brainfuck
+examples/cat
+examples/custom-sys-asm/custom-sys-asm
+examples/echo
+examples/env
+examples/fizzbuzz
+examples/greet
+examples/hello
+examples/ls
+examples/sum-integers
 
 *.out
 *.o

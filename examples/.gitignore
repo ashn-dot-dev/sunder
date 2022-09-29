@@ -1,7 +1,0 @@
-*
-*.asm
-*.o
-
-!*.*
-!custom-sys-asm/main.sunder
-!custom-sys-asm/sys.asm
