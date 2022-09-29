@@ -3,8 +3,6 @@ sunder-compile
 examples/brainfuck
 examples/cat
 examples/custom-sys-asm/custom-sys-asm
-examples/echo
-examples/env
 examples/fizzbuzz
 examples/greet
 examples/hello
