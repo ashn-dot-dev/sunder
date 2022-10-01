@@ -17,7 +17,7 @@ $ apt-get install build-essential clang clang-format nasm yasm
 
 ## Building
 ### Quick Version
-Run `make build` to build the compiler.
+Run `make` to build the compiler.
 
 Run `make check examples` to run the test suite and compile the example
 programs under the `examples` directory.
@@ -25,7 +25,7 @@ programs under the `examples` directory.
 ### Long Version
 The top-level `Makefile` contains the following important targets:
 
-+ `build` => Build the compiler.
++ `build` => Build the compiler (default `make` target).
 + `check` => Run the test suite for the language and standard library.
 + `examples` => Compile the example programs under the `examples` directory.
 + `format` => Run `clang-format` over the compiler sources.
