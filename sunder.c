@@ -133,7 +133,7 @@ module_del(struct module* self)
     xalloc(self, XALLOC_FREE);
 }
 
-static struct context s_context = {0};
+static struct context s_context;
 
 void
 context_init(void)

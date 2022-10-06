@@ -692,7 +692,6 @@ module_del(struct module* self);
 
 struct context {
     // Interned strings.
-    struct sipool* sipool;
     struct {
         // clang-format off
         char const* empty;   // ""
