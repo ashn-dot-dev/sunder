@@ -2815,7 +2815,6 @@ resolve_expr_bytes(struct resolver* resolver, struct cst_expr const* expr)
     assert(resolver != NULL);
     assert(expr != NULL);
     assert(expr->kind == CST_EXPR_BYTES);
-    (void)resolver;
 
     struct address const* const address =
         resolver_reserve_storage_static(resolver, "__bytes");
