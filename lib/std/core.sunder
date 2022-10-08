@@ -258,6 +258,7 @@ struct result[[T, E]] {
     var _error: E;
     var _is_value: bool;
 
+    # Initialize a result in the value state (success).
     func init_value(value: T) result[[T, E]] {
         return (:result[[T, E]]){
             ._value = value,
@@ -266,6 +267,7 @@ struct result[[T, E]] {
         };
     }
 
+    # Initialize a result in the error state (failure).
     func init_error(error: E) result[[T, E]] {
         return (:result[[T, E]]){
             ._value = std::zeroed[[T]](),
@@ -274,24 +276,30 @@ struct result[[T, E]] {
         };
     }
 
+    # Returns true if the result is in the value state.
     func is_value(self: *result[[T, E]]) bool {
         return self.*._is_value;
     }
 
+    # Returns true if the result is in the error state.
     func is_error(self: *result[[T, E]]) bool {
         return not self.*._is_value;
     }
 
+    # Returns the value associated with a result in the value state.
+    # Panics if the result is in the error state.
     func value(self: *result[[T, E]]) T {
         if not self.*._is_value {
-            std::panic("attempted to retrieve value from std::result in the `error` state");
+            std::panic("attempted to retrieve value from std::result in the error state");
         }
         return self.*._value;
     }
 
+    # Returns the error associated with a result in the error state.
+    # Panics if the result is in the value state.
     func error(self: *result[[T, E]]) E {
         if self.*._is_value {
-            std::panic("attempted to retrieve error from std::result in the `value` state");
+            std::panic("attempted to retrieve error from std::result in the value state");
         }
         return self.*._error;
     }

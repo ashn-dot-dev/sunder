@@ -11,4 +11,4 @@ func main() void {
 # 00
 # 01
 # EF BE
-# panic: attempted to retrieve value from std::result in the `error` state
+# panic: attempted to retrieve value from std::result in the error state
