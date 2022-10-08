@@ -219,8 +219,6 @@ struct directory {
     #
     # A value result may be invalidated by the next call to
     # `std::directory::advance` or `std::directory::close`.
-    #
-    # An error result is a static string.
     func current(self: *directory) std::result[[[]byte, std::error]] {
         if self.*._current.is_empty() {
             std::panic("invalid iterator");
