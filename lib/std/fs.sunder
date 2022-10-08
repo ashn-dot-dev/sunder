@@ -16,6 +16,7 @@ struct file {
     # Data is appended to the end of the file when written.
     const OPEN_APPEND: usize = 0b100;
 
+    # Open a regular file.
     func open(path: []byte, mode: usize) std::result[[std::file, std::error]] {
         var flags: sys::sint = 0;
         if mode == 0 {
@@ -61,6 +62,7 @@ struct file {
         return std::result[[std::file, std::error]]::init_value(file);
     }
 
+    # Close an open regular file.
     func close(self: *file) std::result[[void, std::error]] {
         var sysret = sys::close(self.*._fd);
         if sysret < 0 {
@@ -103,6 +105,8 @@ struct file {
     # Seek from the end of the file.
     const SEEK_END: usize = (:usize)sys::SEEK_END;
 
+    # Set the file position indicatior of an open file to `offset` bytes
+    # relative to the position indicated by `from`.
     func seek(self: *file, offset: ssize, from: usize) std::result[[void, std::error]] {
         var sysret = sys::lseek(self.*._fd, offset, (:sys::uint)from);
         if sysret < 0 {
@@ -112,6 +116,7 @@ struct file {
         return std::result[[void, std::error]]::init_value(std::zeroed[[void]]());
     }
 
+    # Returns the current value of the file position indicator of an open file.
     func tell(self: *file) std::result[[usize, std::error]] {
         var sysret = sys::lseek(self.*._fd, 0, sys::SEEK_CUR);
         if sysret < 0 {
