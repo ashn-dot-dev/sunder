@@ -643,9 +643,9 @@ struct bigint {
         var limb_idx = n / bigint::_BITS_PER_LIMB;
         if limb_idx >= countof(self.*._limbs) {
             if not value {
-                # The abstact unallocated bit is already zero so re-setting it
+                # The abstract unallocated bit is already zero so re-setting it
                 # to zero does not change the representation of self. Return
-                # early rather than going through the trouble of resizeing and
+                # early rather than going through the trouble of resizing and
                 # then normalizing for what is essentially a NOP.
                 return;
             }
