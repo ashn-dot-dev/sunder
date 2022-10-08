@@ -1080,7 +1080,7 @@ func forward_align(addr: usize, align: usize) usize {
     return addr;
 }
 
-# Return an object of type `T` with all bytes (including padding) zeroed.
+# Returns an object of type `T` with all bytes (including padding) zeroed.
 func zeroed[[T]]() T {
     # TODO: Ensure that `object` is aligned to `alignof(T)` once alignment
     # specification is added to variable & constant declarations. The x64
