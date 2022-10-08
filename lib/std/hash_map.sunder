@@ -42,6 +42,7 @@ struct hash_map[[K, V]] {
         }
     }
 
+    # Returns the number of key-value pairs in the map.
     func count(self: *hash_map[[K, V]]) usize {
         return self.*._n;
     }
