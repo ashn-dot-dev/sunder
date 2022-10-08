@@ -309,6 +309,7 @@ struct optional[[T]] {
     var _value: T;
     var _is_value: bool;
 
+    # Initialize an optional in the value state (value is present).
     func init_value(value: T) optional[[T]] {
         return (:optional[[T]]){
             ._value = value,
@@ -316,6 +317,7 @@ struct optional[[T]] {
         };
     }
 
+    # Initialize an optional in the empty state (value is absent).
     func init_empty() optional[[T]] {
         return (:optional[[T]]){
             ._value = std::zeroed[[T]](),
@@ -323,14 +325,18 @@ struct optional[[T]] {
         };
     }
 
+    # Returns true if the optional is in the value state.
     func is_value(self: *optional[[T]]) bool {
         return self.*._is_value;
     }
 
+    # Returns true if the optional is in the empty state.
     func is_empty(self: *optional[[T]]) bool {
         return not self.*._is_value;
     }
 
+    # Returns the value associated with a non-empty optional.
+    # Panics if the optional is in the empty state.
     func value(self: *optional[[T]]) T {
         if not self.*._is_value {
             std::panic("attempted to retrieve value from empty std::optional");
