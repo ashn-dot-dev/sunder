@@ -1,13 +1,16 @@
 namespace std::ascii;
 
+# Returns true if `char` is in the range of bytes from '0' to '9'.
 func is_digit(char: byte) bool {
     return '0' <= char and char <= '9';
 }
 
+# Returns true if `char` is in the range of bytes from 'a' to 'z'.
 func is_lowercase(char: byte) bool {
     return 'a' <= char and char <= 'z';
 }
 
+# Returns `char` converted to lowercase.
 func to_lowercase(char: byte) byte {
     if std::ascii::is_uppercase(char) {
         return char | 0x20;
@@ -15,10 +18,12 @@ func to_lowercase(char: byte) byte {
     return char;
 }
 
+# Returns true if `char` is in the range of bytes from 'A' to 'Z'.
 func is_uppercase(char: byte) bool {
     return 'A' <= char and char <= 'Z';
 }
 
+# Returns `char` converted to uppercase.
 func to_uppercase(char: byte) byte {
     if std::ascii::is_lowercase(char) {
         return char & 0x5F;
@@ -26,10 +31,13 @@ func to_uppercase(char: byte) byte {
     return char;
 }
 
+# Returns true if `char` is an uppercase or lowercase letter.
 func is_letter(char: byte) bool {
     return std::ascii::is_uppercase(char) or std::ascii::is_lowercase(char);
 }
 
+# Returns true if `char` is a whitespace character: space, horizontal tab,
+# vertical tab, form feed, carriage return, or newline.
 func is_whitespace(char: byte) bool {
     return char == ' '
         or char == '\t'
@@ -39,6 +47,7 @@ func is_whitespace(char: byte) bool {
         or char == 0x0D; # carriage return
 }
 
+# Returns a view of `str` with leading and trailing whitespace removed.
 func view_trimmed(str: []byte) []byte {
     var start = 0u;
     var end = countof(str);
