@@ -1,6 +1,8 @@
 namespace std;
 import "std/core.sunder";
 
+# Stable sorting algorithm with O(n*log(n)) average time complexity,
+# O(n*log(n)) worst case time complexity, and O(n) worst case space complexity.
 func merge_sort[[T]](slice: []T, allocator: std::allocator) void {
     if countof(slice) <= 1 {
         return;
