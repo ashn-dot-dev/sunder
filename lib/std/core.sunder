@@ -221,8 +221,8 @@ struct cstr { # namespace
     # Returns the number of bytes in `cstr` before the NUL terminator.
     func count(cstr: *byte) usize {
         var cur: *byte = cstr;
-        for *cur != 0x00 {
-            cur = (:*byte)((:usize)cur + 1u);
+        for *cur != '\0' {
+            cur = std::ptr[[byte]]::add(cur, 1);
         }
         return (:usize)cur - (:usize)cstr;
     }
