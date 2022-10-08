@@ -161,6 +161,7 @@ struct directory {
     var _buf_end: usize;
     var _current: std::optional[[std::result[[[]byte, std::error]]]];
 
+    # Open a directory.
     func open(path: []byte) std::result[[std::directory, std::error]] {
         var flags: sys::sint = sys::O_RDONLY | sys::O_DIRECTORY | sys::O_CLOEXEC;
 
@@ -185,6 +186,7 @@ struct directory {
         return std::result[[std::directory, std::error]]::init_value(directory);
     }
 
+    # Close an open directory.
     func close(self: *directory) std::result[[void, std::error]] {
         var sysret = sys::close(self.*._fd);
         if sysret < 0 {
