@@ -4517,7 +4517,12 @@ resolve(struct module* module)
         // have been added under the (exported) module namespace and should
         // *not* be added to the module export table or global symbol table
         // using their unqualified names.
-        if (module->cst->namespace == NULL) {
+        //
+        // Similarly, extend declarations will have been added under the
+        // extended type and should *not* be added to the module export table
+        // or global symbol table *ever*.
+        if (module->cst->namespace == NULL
+            && module->ordered[i]->kind != CST_DECL_EXTEND) {
             symbol_table_insert(
                 resolver->current_export_table, decl->name, symbol, false);
             symbol_table_insert(

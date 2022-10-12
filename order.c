@@ -39,15 +39,6 @@ orderer_del(struct orderer* self);
 static struct tldecl*
 orderer_tldecl_lookup(struct orderer* orderer, char const* name);
 
-// Obtain a name used to identify the provided declaration within the currently
-// ordering module. For all declarations apart from extend declarations, the
-// returned value is the identifier associated with the declaration. Extend
-// declarations, which are not true top-level declarations, and which may be
-// declared multiple times using the same identifier but different extended
-// types, are given a unique name based on their declaration order index.
-static char const*
-tldecl_name(struct cst_decl const* decl, size_t decl_order_index);
-
 static void
 order_tldecl(struct orderer* orderer, struct tldecl* tldecl);
 static void
@@ -81,10 +72,9 @@ orderer_new(struct module* module)
     self->module = module;
     for (size_t i = 0; i < sbuf_count(module->cst->decls); ++i) {
         struct tldecl const tldecl = {TLDECL_UNORDERED, module->cst->decls[i]};
-        struct tldecl const* const existing = orderer_tldecl_lookup(
-            self,
-            tldecl_name(module->cst->decls[i], sbuf_count(self->tldecls)));
-        if (existing != NULL) {
+        struct tldecl const* const existing =
+            orderer_tldecl_lookup(self, module->cst->decls[i]->name);
+        if (existing != NULL && tldecl.decl->kind != CST_DECL_EXTEND) {
             fatal(
                 module->cst->decls[i]->location,
                 "redeclaration of `%s` previously declared at [%s:%zu]",
@@ -120,33 +110,13 @@ orderer_tldecl_lookup(struct orderer* orderer, char const* name)
     assert(name != NULL);
 
     for (size_t i = 0; i < sbuf_count(orderer->tldecls); ++i) {
-        if (tldecl_name(orderer->tldecls[i].decl, i) == name) {
+        struct cst_decl const* const decl = orderer->tldecls[i].decl;
+        if (decl->name == name && decl->kind != CST_DECL_EXTEND) {
             return &orderer->tldecls[i];
         }
     }
 
     return NULL;
-}
-
-static char const*
-tldecl_name(struct cst_decl const* decl, size_t decl_order_index)
-{
-    assert(decl != NULL);
-
-    if (decl->kind == CST_DECL_EXTEND) {
-        // Extend declarations are not true top-level declarations as they are
-        // not turned into a module-level symbol during the resolve phase. It
-        // is possible to have multiple extend statements with the same
-        // declaration name, so here we say the "name" of the extend
-        // declaration takes the form "declaration N" where N is the index of
-        // the declaration in the declaration-order-list.
-        struct string* s = string_new_fmt("declaration %zu", decl_order_index);
-        char const* const name = intern(string_start(s), string_count(s));
-        string_del(s);
-        return name;
-    }
-
-    return decl->name;
 }
 
 static void
@@ -257,9 +227,9 @@ order_decl(struct orderer* orderer, struct cst_decl const* decl)
         struct tldecl* const tldecl =
             orderer_tldecl_lookup(orderer, decl->name);
         if (tldecl == NULL) {
-            // XXX: The returned tldecl may be NULL if this struct declaration
-            // is part of an extend declaration. We return early here as the
-            // will report this error when the extend declaration is resolved.
+            // The returned tldecl may be NULL if this struct declaration is
+            // part of an extend declaration. We return early here as the will
+            // report this error when the extend declaration is resolved.
             return;
         }
         tldecl->state = TLDECL_ORDERED;
@@ -290,8 +260,9 @@ order_decl(struct orderer* orderer, struct cst_decl const* decl)
         return;
     }
     case CST_DECL_EXTEND: {
-        order_typespec(orderer, decl->data.extend.typespec);
-        order_decl(orderer, decl->data.extend.decl);
+        // Extend declarations are resolved in declaration order after all
+        // module-level declarations, so no ordering of the extended type
+        // specifier or the extending declaration is required.
         return;
     }
     case CST_DECL_ALIAS: {
@@ -599,12 +570,6 @@ order(struct module* module)
     struct orderer* const orderer = orderer_new(module);
     size_t const decl_count = sbuf_count(orderer->tldecls);
 
-    for (size_t i = 0; i < decl_count; ++i) {
-        struct cst_decl const* const decl = orderer->tldecls[i].decl;
-        order_tldecl(
-            orderer, orderer_tldecl_lookup(orderer, tldecl_name(decl, i)));
-    }
-
     // Make sure that extend declarations come *after* all other declarations.
     for (size_t i = 1; i < decl_count; ++i) {
         struct cst_decl const* const prev = orderer->tldecls[i - 1].decl;
@@ -614,6 +579,10 @@ order(struct module* module)
                 prev->location,
                 "extend declaration must appear after all module-level declarations");
         }
+    }
+
+    for (size_t i = 0; i < decl_count; ++i) {
+        order_tldecl(orderer, &orderer->tldecls[i]);
     }
 
     assert(decl_count == sbuf_count(orderer->topological_order));
