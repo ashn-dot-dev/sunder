@@ -3143,18 +3143,16 @@ resolve_expr_cast(struct resolver* resolver, struct cst_expr const* expr)
         resolve_typespec(resolver, expr->data.cast.typespec);
     struct expr const* const rhs = resolve_expr(resolver, expr->data.cast.expr);
 
-    // TODO: Casts to and from unsized integers are not permitted because it is
-    // unclear how we should handle modulo operations when a casted-from value
-    // is narrowed by the cast. Investigate what the reasonable behavior should
-    // be in this situation before the operation is solidified in the language
-    // for this and other (future?) unsized types.
-    if (rhs->type->size == SIZEOF_UNSIZED) {
+    // Casts from non-integer unsized types are always disallowed.
+    if (rhs->type->kind != TYPE_INTEGER && rhs->type->size == SIZEOF_UNSIZED) {
         fatal(
             rhs->location,
             "invalid cast from unsized type `%s` to `%s`",
             rhs->type->name,
             type->name);
     }
+
+    // Casts to unsized types are always disallowed.
     if (type->size == SIZEOF_UNSIZED) {
         fatal(
             rhs->location,
@@ -3186,6 +3184,95 @@ resolve_expr_cast(struct resolver* resolver, struct cst_expr const* expr)
             "invalid cast from `%s` to `%s`",
             rhs->type->name,
             type->name);
+    }
+
+    // Special case when casting from unsized integers. Check to make sure that
+    // the value of the integer expression can fit into the range of the
+    // casted-to type for byte and sized integer types. Unsized integers may
+    // only appear in integer constant expressions, so evaluating the rhs
+    // expression should always produce a constant value.
+    if (type->kind == TYPE_BOOL && rhs->type->kind == TYPE_INTEGER) {
+        struct value* const value = eval_rvalue(rhs);
+        assert(value->type->kind == TYPE_INTEGER);
+        value_freeze(value);
+
+        // Constant fold.
+        struct expr* const resolved = expr_new_boolean(
+            expr->location,
+            bigint_cmp(value->data.integer, context()->zero) != 0);
+
+        freeze(resolved);
+        return resolved;
+    }
+    if (type->kind == TYPE_BYTE && rhs->type->kind == TYPE_INTEGER) {
+        struct bigint const* const min = context()->u8_min;
+        struct bigint const* const max = context()->u8_max;
+
+        struct value* const value = eval_rvalue(rhs);
+        assert(value->type->kind == TYPE_INTEGER);
+        value_freeze(value);
+
+        if (bigint_cmp(value->data.integer, min) < 0) {
+            fatal(
+                rhs->location,
+                "out-of-range conversion from `%s` to `%s` (%s < %s)",
+                rhs->type->name,
+                type->name,
+                bigint_to_new_cstr(value->data.integer),
+                bigint_to_new_cstr(min));
+        }
+        if (bigint_cmp(value->data.integer, max) > 0) {
+            fatal(
+                rhs->location,
+                "out-of-range conversion from `%s` to `%s` (%s > %s)",
+                rhs->type->name,
+                type->name,
+                bigint_to_new_cstr(value->data.integer),
+                bigint_to_new_cstr(max));
+        }
+
+        // Constant fold.
+        struct expr* const resolved =
+            expr_new_integer(expr->location, type, value->data.integer);
+
+        freeze(resolved);
+        return resolved;
+    }
+    if (type_is_any_integer(type) && rhs->type->kind == TYPE_INTEGER) {
+        assert(type->data.integer.min != NULL);
+        assert(type->data.integer.max != NULL);
+        struct bigint const* const min = type->data.integer.min;
+        struct bigint const* const max = type->data.integer.max;
+
+        struct value* const value = eval_rvalue(rhs);
+        assert(value->type->kind == TYPE_INTEGER);
+        value_freeze(value);
+
+        if (bigint_cmp(value->data.integer, min) < 0) {
+            fatal(
+                rhs->location,
+                "out-of-range conversion from `%s` to `%s` (%s < %s)",
+                rhs->type->name,
+                type->name,
+                bigint_to_new_cstr(value->data.integer),
+                bigint_to_new_cstr(min));
+        }
+        if (bigint_cmp(value->data.integer, max) > 0) {
+            fatal(
+                rhs->location,
+                "out-of-range conversion from `%s` to `%s` (%s > %s)",
+                rhs->type->name,
+                type->name,
+                bigint_to_new_cstr(value->data.integer),
+                bigint_to_new_cstr(max));
+        }
+
+        // Constant fold.
+        struct expr* const resolved =
+            expr_new_integer(expr->location, type, value->data.integer);
+
+        freeze(resolved);
+        return resolved;
     }
 
     struct expr* const resolved = expr_new_cast(expr->location, type, rhs);
