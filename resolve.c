@@ -1065,7 +1065,11 @@ explicit_cast(
         || (type->kind == TYPE_POINTER && expr->type->kind == TYPE_POINTER)
         || (type->kind == TYPE_FUNCTION && expr->type->kind == TYPE_FUNCTION);
     if (!valid) {
-        goto error;
+        fatal(
+            location,
+            "invalid cast from `%s` to `%s`",
+            expr->type->name,
+            type->name);
     }
 
     // Casts from function type to function type must have all parameter types
@@ -1075,8 +1079,11 @@ explicit_cast(
         struct type const* const from = expr->type;
         if (sbuf_count(type->data.function.parameter_types)
             != sbuf_count(from->data.function.parameter_types)) {
-            // Mismatched parameter count. Cannot make an implicit conversion.
-            goto error;
+            fatal(
+                location,
+                "cannot convert from `%s` to `%s` (mismatched parameter count)",
+                expr->type->name,
+                type->name);
         }
 
         size_t const param_count =
@@ -1093,8 +1100,13 @@ explicit_cast(
                 && from_param->kind == TYPE_POINTER
                 && from_param->data.pointer.base->kind != TYPE_ANY;
             if (!same && !non_any_ptr_to_any_ptr) {
-                // Invalid implicit parameter cast.
-                goto error;
+                fatal(
+                    location,
+                    "cannot convert from `%s` to `%s` (mismatched parameter types `%s` and `%s`)",
+                    expr->type->name,
+                    type->name,
+                    from_param->name,
+                    type_param->name);
             }
         }
 
@@ -1106,8 +1118,13 @@ explicit_cast(
             && from_return->kind == TYPE_POINTER
             && from_return->data.pointer.base->kind != TYPE_ANY;
         if (!same && !non_any_ptr_to_any_ptr) {
-            // Invalid implicit return type cast.
-            goto error;
+            fatal(
+                location,
+                "cannot convert from `%s` to `%s` (mismatched return types `%s` and `%s`)",
+                expr->type->name,
+                type->name,
+                from_return->name,
+                type_return->name);
         }
 
         struct expr* const resolved = expr_new_cast(expr->location, type, expr);
@@ -1218,13 +1235,6 @@ explicit_cast(
     }
 
     return resolved;
-
-error:
-        fatal(
-            location,
-            "invalid cast from `%s` to `%s`",
-            expr->type->name,
-            type->name);
 }
 
 static struct expr const*
