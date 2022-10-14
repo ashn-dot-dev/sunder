@@ -1050,6 +1050,9 @@ explicit_cast(
             type->name);
     }
 
+    struct expr* resolved = expr_new_cast(location, type, expr);
+    freeze(resolved);
+
     // Casts from function type to function type must have all parameter types
     // and the return type match, or have parameter types and the return type
     // be a T pointer to any pointer conversion.
@@ -1104,44 +1107,49 @@ explicit_cast(
                 from_return->name,
                 type_return->name);
         }
+
+        resolved = expr_new_cast(location, type, expr);
+
+        freeze(resolved);
+        return resolved;
     }
 
-    struct expr* resolved = expr_new_cast(location, type, expr);
-    freeze(resolved);
-
-    if (type->kind == TYPE_BOOL && expr->type->kind == TYPE_INTEGER) {
+    // OPTIMIZATION(constant folding)
+    if (type->kind == TYPE_BOOL && expr->kind == EXPR_INTEGER) {
         struct value* const value = eval_rvalue(resolved);
         assert(value->type->kind == TYPE_BOOL);
 
         // OPTIMIZATION(constant folding)
-        resolved = expr_new_boolean(resolved->location, value->data.boolean);
+        resolved =
+            expr_new_boolean(resolved->location, value->data.boolean);
 
         value_del(value);
         freeze(resolved);
         return resolved;
     }
 
-    if (type->kind == TYPE_BYTE && expr->type->kind == TYPE_INTEGER) {
+    // OPTIMIZATION(constant folding)
+    if (type->kind == TYPE_BYTE && expr->kind == EXPR_INTEGER) {
         struct value* const value = eval_rvalue(resolved);
         assert(value->type->kind == TYPE_BYTE);
         value_freeze(value);
 
-        // OPTIMIZATION(constant folding)
         struct bigint* const integer = bigint_new(BIGINT_ZERO);
         u8_to_bigint(integer, value->data.byte);
         bigint_freeze(integer);
+
         resolved = expr_new_integer(expr->location, type, integer);
 
         freeze(resolved);
         return resolved;
     }
 
-    if (type_is_any_integer(type) && expr->type->kind == TYPE_INTEGER) {
+    // OPTIMIZATION(constant folding)
+    if (type_is_any_integer(type) && expr->kind == EXPR_INTEGER) {
         struct value* const value = eval_rvalue(resolved);
         assert(type_is_any_integer(value->type));
         value_freeze(value);
 
-        // OPTIMIZATION(constant folding)
         resolved = expr_new_integer(expr->location, type, value->data.integer);
 
         freeze(resolved);
