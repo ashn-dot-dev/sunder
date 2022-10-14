@@ -294,9 +294,9 @@ eval_rvalue_cast(struct expr const* expr)
     //
     // TODO: There is a case to be made for casting a pointer of type T1 to a
     // pointer of type T2 in a compile time expression as long as the language
-    // continues to disallow pointer dereference in compile-time expressions. In
-    // the future check if this a valid/common enough use case to include at the
-    // language level.
+    // continues to disallow pointer dereference in compile-time expressions.
+    // In the future check if this a valid/common enough use case to include at
+    // the language level.
     if (from->type->kind == TYPE_POINTER) {
         fatal(
             expr->location,
@@ -308,6 +308,77 @@ eval_rvalue_cast(struct expr const* expr)
             "constant expression contains cast to pointer type");
     }
 
+    // Special cases when casting from unsized integers. Check to make sure
+    // that the value of the integer expression can fit into the range of the
+    // casted-to type for byte and sized integer types. Unsized integers may
+    // only appear in integer constant expressions, so evaluating the rhs
+    // expression should always produce a constant value.
+    if (expr->type->kind == TYPE_BOOL && from->type->kind == TYPE_INTEGER) {
+        struct value* const result = value_new_boolean(
+            bigint_cmp(from->data.integer, context()->zero) != 0);
+        value_del(from);
+        return result;
+    }
+    if (expr->type->kind == TYPE_BYTE && from->type->kind == TYPE_INTEGER) {
+        struct bigint const* const min = context()->u8_min;
+        struct bigint const* const max = context()->u8_max;
+
+        if (bigint_cmp(from->data.integer, min) < 0) {
+            fatal(
+                expr->location,
+                "out-of-range conversion from `%s` to `%s` (%s < %s)",
+                from->type->name,
+                expr->type->name,
+                bigint_to_new_cstr(from->data.integer),
+                bigint_to_new_cstr(min));
+        }
+        if (bigint_cmp(from->data.integer, max) > 0) {
+            fatal(
+                expr->location,
+                "out-of-range conversion from `%s` to `%s` (%s > %s)",
+                from->type->name,
+                expr->type->name,
+                bigint_to_new_cstr(from->data.integer),
+                bigint_to_new_cstr(max));
+        }
+
+        struct value* const result =
+            value_new_integer(expr->type, from->data.integer);
+        value_del(from);
+        return result;
+    }
+    if (type_is_any_integer(expr->type) && from->type->kind == TYPE_INTEGER) {
+        assert(expr->type->data.integer.min != NULL);
+        assert(expr->type->data.integer.max != NULL);
+        struct bigint const* const min = expr->type->data.integer.min;
+        struct bigint const* const max = expr->type->data.integer.max;
+
+        if (bigint_cmp(from->data.integer, min) < 0) {
+            fatal(
+                expr->location,
+                "out-of-range conversion from `%s` to `%s` (%s < %s)",
+                from->type->name,
+                expr->type->name,
+                bigint_to_new_cstr(from->data.integer),
+                bigint_to_new_cstr(min));
+        }
+        if (bigint_cmp(from->data.integer, max) > 0) {
+            fatal(
+                expr->location,
+                "out-of-range conversion from `%s` to `%s` (%s > %s)",
+                from->type->name,
+                expr->type->name,
+                bigint_to_new_cstr(from->data.integer),
+                bigint_to_new_cstr(max));
+        }
+
+        struct value* const result =
+            value_new_integer(expr->type, from->data.integer);
+        value_del(from);
+        return result;
+    }
+
+    // Cases casting from sized types with a defined byte representation.
     sbuf(uint8_t) bytes = value_to_new_bytes(from);
     struct value* res = NULL;
     switch (expr->type->kind) {

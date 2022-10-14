@@ -3181,24 +3181,6 @@ resolve_expr_cast(struct resolver* resolver, struct cst_expr const* expr)
             type->name);
     }
 
-    // Special case when casting from unsized integers. Check to make sure that
-    // the value of the integer expression can fit into the range of the
-    // casted-to type for byte and sized integer types. Unsized integers may
-    // only appear in integer constant expressions, so evaluating the rhs
-    // expression should always produce a constant value.
-    if (type->kind == TYPE_BOOL && rhs->type->kind == TYPE_INTEGER) {
-        struct value* const value = eval_rvalue(rhs);
-        assert(value->type->kind == TYPE_INTEGER);
-        value_freeze(value);
-
-        // Constant fold.
-        struct expr* const resolved = expr_new_boolean(
-            expr->location,
-            bigint_cmp(value->data.integer, context()->zero) != 0);
-
-        freeze(resolved);
-        return resolved;
-    }
     if (type->kind == TYPE_BYTE && rhs->type->kind == TYPE_INTEGER) {
         struct bigint const* const min = context()->u8_min;
         struct bigint const* const max = context()->u8_max;
@@ -3270,9 +3252,36 @@ resolve_expr_cast(struct resolver* resolver, struct cst_expr const* expr)
         return resolved;
     }
 
-    struct expr* const resolved = expr_new_cast(expr->location, type, rhs);
-
+    struct expr* resolved = expr_new_cast(expr->location, type, rhs);
     freeze(resolved);
+
+    // Constant fold constant expressions.
+    //
+    // TODO: There are more cases than these which can be folded. Currently,
+    // the cases with rhs of type `integer` since the rest of the resolve phase
+    // expects these integers to be constant folded.
+    if (type->kind == TYPE_BOOL && rhs->kind == EXPR_INTEGER) {
+        struct value* const value = eval_rvalue(resolved);
+        assert(value->type->kind == TYPE_BOOL);
+
+        resolved = expr_new_boolean(resolved->location, value->data.boolean);
+
+        value_del(value);
+        freeze(resolved);
+    }
+    if ((type->kind == TYPE_BYTE || type_is_any_integer(type))
+        && rhs->kind == TYPE_INTEGER) {
+        struct value* const value = eval_rvalue(resolved);
+        assert(type_is_any_integer(value->type));
+        assert(value->type->size != SIZEOF_UNSIZED);
+
+        resolved = expr_new_integer(
+            resolved->location, value->type, value->data.integer);
+
+        value_del(value);
+        freeze(resolved);
+    }
+
     return resolved;
 }
 
@@ -4180,7 +4189,7 @@ resolve_expr_binary_compare_order(
         expr_new_binary(&op->location, context()->builtin.bool_, bop, lhs, rhs);
     freeze(resolved);
 
-    // Constant fold integer literal constant expression.
+    // Constant fold integer constant expression.
     if (lhs->kind == EXPR_INTEGER && rhs->kind == EXPR_INTEGER) {
         lhs = shallow_implicit_cast(rhs->type, lhs);
         rhs = shallow_implicit_cast(lhs->type, rhs);
@@ -4228,7 +4237,7 @@ resolve_expr_binary_arithmetic(
     struct expr* resolved = expr_new_binary(&op->location, type, bop, lhs, rhs);
     freeze(resolved);
 
-    // Constant fold integer literal constant expression.
+    // Constant fold integer constant expression.
     if (lhs->kind == EXPR_INTEGER && rhs->kind == EXPR_INTEGER) {
         lhs = shallow_implicit_cast(rhs->type, lhs);
         rhs = shallow_implicit_cast(lhs->type, rhs);
@@ -4283,7 +4292,7 @@ resolve_expr_binary_bitwise(
     struct expr* resolved = expr_new_binary(&op->location, type, bop, lhs, rhs);
     freeze(resolved);
 
-    // Constant fold integer literal constant expression.
+    // Constant fold integer constant expression.
     if (lhs->kind == EXPR_INTEGER && rhs->kind == EXPR_INTEGER) {
         lhs = shallow_implicit_cast(rhs->type, lhs);
         rhs = shallow_implicit_cast(lhs->type, rhs);
