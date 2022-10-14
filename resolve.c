@@ -1236,30 +1236,34 @@ implicit_cast(struct type const* type, struct expr const* expr)
     assert(type != NULL);
     assert(expr != NULL);
 
+    struct type const* const from = expr->type;
+
     // FROM type TO type (same type).
-    if (type == expr->type) {
+    if (type == from) {
         return expr;
     }
 
     // FROM untyped integer TO byte.
-    if (type->kind == TYPE_BYTE && expr->type->kind == TYPE_INTEGER) {
+    if (type->kind == TYPE_BYTE && from->kind == TYPE_INTEGER) {
         return explicit_cast(expr->location, type, expr);
     }
 
     // FROM untyped integer TO typed integer.
-    if (type_is_any_integer(type) && expr->type->kind == TYPE_INTEGER) {
+    if (type_is_any_integer(type) && from->kind == TYPE_INTEGER) {
         return explicit_cast(expr->location, type, expr);
     }
 
     // FROM non-any pointer TO any pointer.
-    if (type->kind == TYPE_POINTER && type->data.pointer.base->kind == TYPE_ANY
-        && expr->type->kind == TYPE_POINTER
-        && expr->type->data.pointer.base->kind != TYPE_ANY) {
+    bool const type_is_any_pointer =
+        type->kind == TYPE_POINTER && type->data.pointer.base->kind == TYPE_ANY;
+    bool const from_is_oth_pointer =
+        from->kind == TYPE_POINTER && from->data.pointer.base->kind != TYPE_ANY;
+    if (type_is_any_pointer && from_is_oth_pointer) {
         return explicit_cast(expr->location, type, expr);
     }
 
     // FROM function with typed pointers TO function with any pointers.
-    if (type->kind == TYPE_FUNCTION && expr->type->kind == TYPE_FUNCTION) {
+    if (type->kind == TYPE_FUNCTION && from->kind == TYPE_FUNCTION) {
         return explicit_cast(expr->location, type, expr);
     }
 
