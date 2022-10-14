@@ -1189,80 +1189,19 @@ shallow_implicit_cast(struct type const* type, struct expr const* expr)
 
     // FROM untyped integer TO byte.
     if (type->kind == TYPE_BYTE && expr->type->kind == TYPE_INTEGER) {
-        assert(expr->kind == EXPR_INTEGER);
-        struct bigint const* const min = context()->u8_min;
-        struct bigint const* const max = context()->u8_max;
-
-        if (bigint_cmp(expr->data.integer, min) < 0) {
-            fatal(
-                expr->location,
-                "out-of-range conversion from `%s` to `%s` (%s < %s)",
-                expr->type->name,
-                type->name,
-                bigint_to_new_cstr(expr->data.integer),
-                bigint_to_new_cstr(min));
-        }
-        if (bigint_cmp(expr->data.integer, max) > 0) {
-            fatal(
-                expr->location,
-                "out-of-range conversion from `%s` to `%s` (%s > %s)",
-                expr->type->name,
-                type->name,
-                bigint_to_new_cstr(expr->data.integer),
-                bigint_to_new_cstr(max));
-        }
-
-        struct expr* const result =
-            expr_new_integer(expr->location, type, expr->data.integer);
-
-        freeze(result);
-        return result;
+        return explicit_cast(expr->location, type, expr);
     }
 
     // FROM untyped integer TO typed integer.
-    if (type_is_any_integer(type) && type->kind != TYPE_INTEGER
-        && expr->type->kind == TYPE_INTEGER) {
-        assert(expr->kind == EXPR_INTEGER);
-        assert(type->data.integer.min != NULL);
-        assert(type->data.integer.max != NULL);
-        struct bigint const* const min = type->data.integer.min;
-        struct bigint const* const max = type->data.integer.max;
-
-        if (bigint_cmp(expr->data.integer, min) < 0) {
-            fatal(
-                expr->location,
-                "out-of-range conversion from `%s` to `%s` (%s < %s)",
-                expr->type->name,
-                type->name,
-                bigint_to_new_cstr(expr->data.integer),
-                bigint_to_new_cstr(min));
-        }
-        if (bigint_cmp(expr->data.integer, max) > 0) {
-            fatal(
-                expr->location,
-                "out-of-range conversion from `%s` to `%s` (%s > %s)",
-                expr->type->name,
-                type->name,
-                bigint_to_new_cstr(expr->data.integer),
-                bigint_to_new_cstr(max));
-        }
-
-        struct expr* const result =
-            expr_new_integer(expr->location, type, expr->data.integer);
-
-        freeze(result);
-        return result;
+    if (type_is_any_integer(type) && expr->type->kind == TYPE_INTEGER) {
+        return explicit_cast(expr->location, type, expr);
     }
 
     // FROM non-any pointer TO any pointer.
     if (type->kind == TYPE_POINTER && type->data.pointer.base->kind == TYPE_ANY
         && expr->type->kind == TYPE_POINTER
         && expr->type->data.pointer.base->kind != TYPE_ANY) {
-        struct expr* const result = expr_new_cast(
-            expr->location, type_unique_pointer(context()->builtin.any), expr);
-
-        freeze(result);
-        return result;
+        return explicit_cast(expr->location, type, expr);
     }
 
     // FROM function with typed pointers TO function with any pointers.
@@ -1271,6 +1210,7 @@ shallow_implicit_cast(struct type const* type, struct expr const* expr)
         if (sbuf_count(type->data.function.parameter_types)
             != sbuf_count(from->data.function.parameter_types)) {
             // Mismatched parameter count. Cannot make an implicit conversion.
+            return expr;
         }
 
         size_t const param_count =
