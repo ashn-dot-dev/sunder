@@ -4,4 +4,4 @@ func main() void {
 ################################################################################
 # [error-expr-cast-to-type-unsized.test.sunder:2] error: invalid cast to unsized type `integer` from `usize`
 #     dump (:typeof(123456))123456u;
-#                           ^
+#          ^

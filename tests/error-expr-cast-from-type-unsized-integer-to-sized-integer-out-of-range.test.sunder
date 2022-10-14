@@ -4,4 +4,4 @@ func main() void {
 ################################################################################
 # [error-expr-cast-from-type-unsized-integer-to-sized-integer-out-of-range.test.sunder:2] error: out-of-range conversion from `integer` to `u8` (123456 > 255)
 #     dump (:u8)123456;
-#               ^
+#          ^

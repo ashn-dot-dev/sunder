@@ -135,6 +135,17 @@ verify_type_compatibility(
     struct type const* actual,
     struct type const* expected);
 
+// Returns a newly created and registered expression node of `expr` explicitly
+// casted to `type` if such an explicit cast is valid.
+//
+// The `location` argument is the location of the casting expression, which may
+// or may not be the same as the location of casted expression.
+static struct expr const*
+explicit_cast(
+    struct source_location const* location,
+    struct type const* type,
+    struct expr const* expr);
+
 // Returns a newly created and registered expression node of `expr` implicitly
 // casted to `type` if such an implicit cast is valid. If `expr` cannot be
 // implicitly casted to `type` then expr is returned unchanged.
@@ -1011,6 +1022,158 @@ verify_type_compatibility(
             actual->name,
             expected->name);
     }
+}
+
+static struct expr const*
+explicit_cast(
+    struct source_location const* location,
+    struct type const* type,
+    struct expr const* expr)
+{
+    assert(type != NULL);
+    assert(expr != NULL);
+
+    // Casts from non-integer unsized types are always disallowed.
+    if (expr->type->kind != TYPE_INTEGER
+        && expr->type->size == SIZEOF_UNSIZED) {
+        fatal(
+            location,
+            "invalid cast from unsized type `%s` to `%s`",
+            expr->type->name,
+            type->name);
+    }
+
+    // Casts to unsized types are always disallowed.
+    if (type->size == SIZEOF_UNSIZED) {
+        fatal(
+            location,
+            "invalid cast to unsized type `%s` from `%s`",
+            type->name,
+            expr->type->name);
+    }
+
+    bool const valid =
+        (type_is_any_integer(type) && type_is_any_integer(expr->type))
+        || (type->kind == TYPE_BOOL && expr->type->kind == TYPE_BYTE)
+        || (type->kind == TYPE_BYTE && expr->type->kind == TYPE_BOOL)
+        || (type->kind == TYPE_BOOL && type_is_any_integer(expr->type))
+        || (type_is_any_integer(type) && expr->type->kind == TYPE_BOOL)
+        || (type->kind == TYPE_BYTE && type_is_any_integer(expr->type))
+        || (type_is_any_integer(type) && expr->type->kind == TYPE_BYTE)
+        || (type->kind == TYPE_POINTER && expr->type->kind == TYPE_USIZE)
+        || (type->kind == TYPE_USIZE && expr->type->kind == TYPE_POINTER)
+        || (type->kind == TYPE_POINTER && expr->type->kind == TYPE_POINTER)
+        || (type->kind == TYPE_FUNCTION && expr->type->kind == TYPE_FUNCTION);
+    if (!valid) {
+        fatal(
+            location,
+            "invalid cast from `%s` to `%s`",
+            expr->type->name,
+            type->name);
+    }
+
+    if (type->kind == TYPE_BYTE && expr->type->kind == TYPE_INTEGER) {
+        struct bigint const* const min = context()->u8_min;
+        struct bigint const* const max = context()->u8_max;
+
+        struct value* const value = eval_rvalue(expr);
+        assert(value->type->kind == TYPE_INTEGER);
+        value_freeze(value);
+
+        if (bigint_cmp(value->data.integer, min) < 0) {
+            fatal(
+                location,
+                "out-of-range conversion from `%s` to `%s` (%s < %s)",
+                expr->type->name,
+                type->name,
+                bigint_to_new_cstr(value->data.integer),
+                bigint_to_new_cstr(min));
+        }
+        if (bigint_cmp(value->data.integer, max) > 0) {
+            fatal(
+                location,
+                "out-of-range conversion from `%s` to `%s` (%s > %s)",
+                expr->type->name,
+                type->name,
+                bigint_to_new_cstr(value->data.integer),
+                bigint_to_new_cstr(max));
+        }
+
+        // Constant fold.
+        struct expr* const resolved =
+            expr_new_integer(expr->location, type, value->data.integer);
+
+        freeze(resolved);
+        return resolved;
+    }
+    if (type_is_any_integer(type) && expr->type->kind == TYPE_INTEGER) {
+        assert(type->data.integer.min != NULL);
+        assert(type->data.integer.max != NULL);
+        struct bigint const* const min = type->data.integer.min;
+        struct bigint const* const max = type->data.integer.max;
+
+        struct value* const value = eval_rvalue(expr);
+        assert(value->type->kind == TYPE_INTEGER);
+        value_freeze(value);
+
+        if (bigint_cmp(value->data.integer, min) < 0) {
+            fatal(
+                location,
+                "out-of-range conversion from `%s` to `%s` (%s < %s)",
+                expr->type->name,
+                type->name,
+                bigint_to_new_cstr(value->data.integer),
+                bigint_to_new_cstr(min));
+        }
+        if (bigint_cmp(value->data.integer, max) > 0) {
+            fatal(
+                location,
+                "out-of-range conversion from `%s` to `%s` (%s > %s)",
+                expr->type->name,
+                type->name,
+                bigint_to_new_cstr(value->data.integer),
+                bigint_to_new_cstr(max));
+        }
+
+        // Constant fold.
+        struct expr* const resolved =
+            expr_new_integer(expr->location, type, value->data.integer);
+
+        freeze(resolved);
+        return resolved;
+    }
+
+    struct expr* resolved = expr_new_cast(location, type, expr);
+    freeze(resolved);
+
+    // Constant fold constant expressions.
+    //
+    // TODO: There are more cases than these which can be folded. Currently,
+    // the cases with expr of type `integer` since the rest of the resolve phase
+    // expects these integers to be constant folded.
+    if (type->kind == TYPE_BOOL && expr->kind == EXPR_INTEGER) {
+        struct value* const value = eval_rvalue(resolved);
+        assert(value->type->kind == TYPE_BOOL);
+
+        resolved = expr_new_boolean(resolved->location, value->data.boolean);
+
+        value_del(value);
+        freeze(resolved);
+    }
+    if ((type->kind == TYPE_BYTE || type_is_any_integer(type))
+        && expr->kind == TYPE_INTEGER) {
+        struct value* const value = eval_rvalue(resolved);
+        assert(type_is_any_integer(value->type));
+        assert(value->type->size != SIZEOF_UNSIZED);
+
+        resolved = expr_new_integer(
+            resolved->location, value->type, value->data.integer);
+
+        value_del(value);
+        freeze(resolved);
+    }
+
+    return resolved;
 }
 
 static struct expr const*
@@ -3143,146 +3306,7 @@ resolve_expr_cast(struct resolver* resolver, struct cst_expr const* expr)
         resolve_typespec(resolver, expr->data.cast.typespec);
     struct expr const* const rhs = resolve_expr(resolver, expr->data.cast.expr);
 
-    // Casts from non-integer unsized types are always disallowed.
-    if (rhs->type->kind != TYPE_INTEGER && rhs->type->size == SIZEOF_UNSIZED) {
-        fatal(
-            rhs->location,
-            "invalid cast from unsized type `%s` to `%s`",
-            rhs->type->name,
-            type->name);
-    }
-
-    // Casts to unsized types are always disallowed.
-    if (type->size == SIZEOF_UNSIZED) {
-        fatal(
-            rhs->location,
-            "invalid cast to unsized type `%s` from `%s`",
-            type->name,
-            rhs->type->name);
-    }
-
-    bool const valid =
-        (type_is_any_integer(type) && type_is_any_integer(rhs->type))
-        || (type->kind == TYPE_BOOL && rhs->type->kind == TYPE_BYTE)
-        || (type->kind == TYPE_BYTE && rhs->type->kind == TYPE_BOOL)
-        || (type->kind == TYPE_BOOL && type_is_any_integer(rhs->type))
-        || (type_is_any_integer(type) && rhs->type->kind == TYPE_BOOL)
-        || (type->kind == TYPE_BYTE && type_is_any_integer(rhs->type))
-        || (type_is_any_integer(type) && rhs->type->kind == TYPE_BYTE)
-        || (type->kind == TYPE_POINTER && rhs->type->kind == TYPE_USIZE)
-        || (type->kind == TYPE_USIZE && rhs->type->kind == TYPE_POINTER)
-        || (type->kind == TYPE_POINTER && rhs->type->kind == TYPE_POINTER)
-        || (type->kind == TYPE_FUNCTION && rhs->type->kind == TYPE_FUNCTION);
-    if (!valid) {
-        fatal(
-            rhs->location,
-            "invalid cast from `%s` to `%s`",
-            rhs->type->name,
-            type->name);
-    }
-
-    if (type->kind == TYPE_BYTE && rhs->type->kind == TYPE_INTEGER) {
-        struct bigint const* const min = context()->u8_min;
-        struct bigint const* const max = context()->u8_max;
-
-        struct value* const value = eval_rvalue(rhs);
-        assert(value->type->kind == TYPE_INTEGER);
-        value_freeze(value);
-
-        if (bigint_cmp(value->data.integer, min) < 0) {
-            fatal(
-                rhs->location,
-                "out-of-range conversion from `%s` to `%s` (%s < %s)",
-                rhs->type->name,
-                type->name,
-                bigint_to_new_cstr(value->data.integer),
-                bigint_to_new_cstr(min));
-        }
-        if (bigint_cmp(value->data.integer, max) > 0) {
-            fatal(
-                rhs->location,
-                "out-of-range conversion from `%s` to `%s` (%s > %s)",
-                rhs->type->name,
-                type->name,
-                bigint_to_new_cstr(value->data.integer),
-                bigint_to_new_cstr(max));
-        }
-
-        // Constant fold.
-        struct expr* const resolved =
-            expr_new_integer(expr->location, type, value->data.integer);
-
-        freeze(resolved);
-        return resolved;
-    }
-    if (type_is_any_integer(type) && rhs->type->kind == TYPE_INTEGER) {
-        assert(type->data.integer.min != NULL);
-        assert(type->data.integer.max != NULL);
-        struct bigint const* const min = type->data.integer.min;
-        struct bigint const* const max = type->data.integer.max;
-
-        struct value* const value = eval_rvalue(rhs);
-        assert(value->type->kind == TYPE_INTEGER);
-        value_freeze(value);
-
-        if (bigint_cmp(value->data.integer, min) < 0) {
-            fatal(
-                rhs->location,
-                "out-of-range conversion from `%s` to `%s` (%s < %s)",
-                rhs->type->name,
-                type->name,
-                bigint_to_new_cstr(value->data.integer),
-                bigint_to_new_cstr(min));
-        }
-        if (bigint_cmp(value->data.integer, max) > 0) {
-            fatal(
-                rhs->location,
-                "out-of-range conversion from `%s` to `%s` (%s > %s)",
-                rhs->type->name,
-                type->name,
-                bigint_to_new_cstr(value->data.integer),
-                bigint_to_new_cstr(max));
-        }
-
-        // Constant fold.
-        struct expr* const resolved =
-            expr_new_integer(expr->location, type, value->data.integer);
-
-        freeze(resolved);
-        return resolved;
-    }
-
-    struct expr* resolved = expr_new_cast(expr->location, type, rhs);
-    freeze(resolved);
-
-    // Constant fold constant expressions.
-    //
-    // TODO: There are more cases than these which can be folded. Currently,
-    // the cases with rhs of type `integer` since the rest of the resolve phase
-    // expects these integers to be constant folded.
-    if (type->kind == TYPE_BOOL && rhs->kind == EXPR_INTEGER) {
-        struct value* const value = eval_rvalue(resolved);
-        assert(value->type->kind == TYPE_BOOL);
-
-        resolved = expr_new_boolean(resolved->location, value->data.boolean);
-
-        value_del(value);
-        freeze(resolved);
-    }
-    if ((type->kind == TYPE_BYTE || type_is_any_integer(type))
-        && rhs->kind == TYPE_INTEGER) {
-        struct value* const value = eval_rvalue(resolved);
-        assert(type_is_any_integer(value->type));
-        assert(value->type->size != SIZEOF_UNSIZED);
-
-        resolved = expr_new_integer(
-            resolved->location, value->type, value->data.integer);
-
-        value_del(value);
-        freeze(resolved);
-    }
-
-    return resolved;
+    return explicit_cast(expr->location, type, rhs);
 }
 
 // TODO: Remove redundant logic in this function that is the same for member
