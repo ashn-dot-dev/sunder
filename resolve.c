@@ -3172,11 +3172,6 @@ resolve_expr_cast(struct resolver* resolver, struct cst_expr const* expr)
         || (type->kind == TYPE_POINTER && rhs->type->kind == TYPE_USIZE)
         || (type->kind == TYPE_USIZE && rhs->type->kind == TYPE_POINTER)
         || (type->kind == TYPE_POINTER && rhs->type->kind == TYPE_POINTER)
-        // TODO, XXX: We allow casts between function pointers so that structs
-        // can implement interfaces. In the future we should perform type
-        // checking on the parameters and return type of the two functions and
-        // only allow the cast if the difference between the two functions is
-        // the first pointer-to-self paramter.
         || (type->kind == TYPE_FUNCTION && rhs->type->kind == TYPE_FUNCTION);
     if (!valid) {
         fatal(
