@@ -150,13 +150,6 @@ explicit_cast(
 // casted to `type` if such an implicit cast is valid. If `expr` cannot be
 // implicitly casted to `type` then expr is returned unchanged.
 //
-//
-// The attempted implicit cast is "shallow" in the sense that it will not
-// recursively traverse the expression tree when casting, so currently
-// immediate values (literals), casts from `*T` to `*any`, and casts of
-// function types with parameter and/or a return type casts  from `*T` to
-// `*any` are the only valid expression targets.
-//
 // This function is intended for use when casting untyped literals to an
 // expression that would require a typed literal (e.g. integer->usize), or for
 // casting from a typed pointer to a generic pointer (e.g. *foo->*any).
@@ -166,12 +159,12 @@ explicit_cast(
 // on it. For most cases the sequence:
 // ```
 // struct expr const* expr = resolve_expr(some_cst_expr);
-// expr = shallow_implicit_cast(type, expr);
+// expr = implicit_cast(type, expr);
 // ```
 // will correctly perform a tree-rewrite of the integer constant sub-expression
 // `some_cst_expr` casted to `type`.
 static struct expr const*
-shallow_implicit_cast(struct type const* type, struct expr const* expr);
+implicit_cast(struct type const* type, struct expr const* expr);
 
 static void
 resolve_import(struct resolver* resolver, struct cst_import const* import);
@@ -1238,7 +1231,7 @@ explicit_cast(
 }
 
 static struct expr const*
-shallow_implicit_cast(struct type const* type, struct expr const* expr)
+implicit_cast(struct type const* type, struct expr const* expr)
 {
     assert(type != NULL);
     assert(expr != NULL);
@@ -1503,7 +1496,7 @@ resolve_decl_variable(
             type->name);
     }
 
-    expr = shallow_implicit_cast(type, expr);
+    expr = implicit_cast(type, expr);
     verify_type_compatibility(expr->location, expr->type, type);
 
     // Global/static variables have their initial values computed at
@@ -1566,7 +1559,7 @@ resolve_decl_constant(struct resolver* resolver, struct cst_decl const* decl)
             type->name);
     }
 
-    expr = shallow_implicit_cast(type, expr);
+    expr = implicit_cast(type, expr);
     verify_type_compatibility(expr->location, expr->type, type);
 
     // Constants (globals and locals) have their values computed at
@@ -2461,7 +2454,7 @@ resolve_stmt_for_range(struct resolver* resolver, struct cst_stmt const* stmt)
     struct expr const* begin = NULL;
     if (stmt->data.for_range.begin != NULL) {
         begin = resolve_expr(resolver, stmt->data.for_range.begin);
-        begin = shallow_implicit_cast(context()->builtin.usize, begin);
+        begin = implicit_cast(context()->builtin.usize, begin);
         if (begin->type != context()->builtin.usize) {
             fatal(
                 begin->location,
@@ -2477,7 +2470,7 @@ resolve_stmt_for_range(struct resolver* resolver, struct cst_stmt const* stmt)
     }
 
     struct expr const* end = resolve_expr(resolver, stmt->data.for_range.end);
-    end = shallow_implicit_cast(context()->builtin.usize, end);
+    end = implicit_cast(context()->builtin.usize, end);
     if (end->type != context()->builtin.usize) {
         fatal(
             end->location,
@@ -2639,7 +2632,7 @@ resolve_stmt_return(struct resolver* resolver, struct cst_stmt const* stmt)
     struct expr const* expr = NULL;
     if (stmt->data.return_.expr != NULL) {
         expr = resolve_expr(resolver, stmt->data.return_.expr);
-        expr = shallow_implicit_cast(return_type, expr);
+        expr = implicit_cast(return_type, expr);
         verify_type_compatibility(expr->location, expr->type, return_type);
     }
     else {
@@ -2681,7 +2674,7 @@ resolve_stmt_assign(struct resolver* resolver, struct cst_stmt const* stmt)
             "left hand side of assignment statement is not an lvalue");
     }
 
-    rhs = shallow_implicit_cast(lhs->type, rhs);
+    rhs = implicit_cast(lhs->type, rhs);
     verify_type_compatibility(stmt->location, rhs->type, lhs->type);
 
     struct stmt* const resolved = stmt_new_assign(stmt->location, lhs, rhs);
@@ -3000,7 +2993,7 @@ resolve_expr_list(struct resolver* resolver, struct cst_expr const* expr)
         for (size_t i = 0; i < sbuf_count(elements); ++i) {
             struct expr const* resolved_element =
                 resolve_expr(resolver, elements[i]);
-            resolved_element = shallow_implicit_cast(base, resolved_element);
+            resolved_element = implicit_cast(base, resolved_element);
             verify_type_compatibility(
                 resolved_element->location, resolved_element->type, base);
             sbuf_push(resolved_elements, resolved_element);
@@ -3011,7 +3004,7 @@ resolve_expr_list(struct resolver* resolver, struct cst_expr const* expr)
         if (expr->data.list.ellipsis != NULL) {
             resolved_ellipsis =
                 resolve_expr(resolver, expr->data.list.ellipsis);
-            resolved_ellipsis = shallow_implicit_cast(base, resolved_ellipsis);
+            resolved_ellipsis = implicit_cast(base, resolved_ellipsis);
             verify_type_compatibility(
                 resolved_ellipsis->location, resolved_ellipsis->type, base);
         }
@@ -3066,8 +3059,8 @@ resolve_expr_list(struct resolver* resolver, struct cst_expr const* expr)
         for (size_t i = 0; i < sbuf_count(elements); ++i) {
             struct expr const* resolved_element =
                 resolve_expr(resolver, elements[i]);
-            resolved_element = shallow_implicit_cast(
-                array_type->data.array.base, resolved_element);
+            resolved_element =
+                implicit_cast(array_type->data.array.base, resolved_element);
             verify_type_compatibility(
                 resolved_element->location,
                 resolved_element->type,
@@ -3100,7 +3093,7 @@ resolve_expr_list(struct resolver* resolver, struct cst_expr const* expr)
         struct expr const* resolved_element =
             resolve_expr(resolver, elements[i]);
         resolved_element =
-            shallow_implicit_cast(type->data.slice.base, resolved_element);
+            implicit_cast(type->data.slice.base, resolved_element);
         verify_type_compatibility(
             resolved_element->location,
             resolved_element->type,
@@ -3146,7 +3139,7 @@ resolve_expr_slice(struct resolver* resolver, struct cst_expr const* expr)
         pointer->location, pointer->type, slice_pointer_type);
 
     struct expr const* count = resolve_expr(resolver, expr->data.slice.count);
-    count = shallow_implicit_cast(context()->builtin.usize, count);
+    count = implicit_cast(context()->builtin.usize, count);
     verify_type_compatibility(
         count->location, count->type, context()->builtin.usize);
 
@@ -3217,7 +3210,7 @@ resolve_expr_struct(struct resolver* resolver, struct cst_expr const* expr)
                     member_variable_defs[j].name);
             }
 
-            struct expr const* const initializer_expr = shallow_implicit_cast(
+            struct expr const* const initializer_expr = implicit_cast(
                 member_variable_defs[j].type, initializer_exprs[i]);
             verify_type_compatibility(
                 initializer_expr->location,
@@ -3383,8 +3376,7 @@ resolve_expr_call(struct resolver* resolver, struct cst_expr const* expr)
 
         // Type-check function arguments.
         for (size_t i = 0; i < sbuf_count(arguments); ++i) {
-            arguments[i] =
-                shallow_implicit_cast(parameter_types[i], arguments[i]);
+            arguments[i] = implicit_cast(parameter_types[i], arguments[i]);
         }
         for (size_t i = 0; i < sbuf_count(parameter_types); ++i) {
             struct type const* const expected = parameter_types[i];
@@ -3444,7 +3436,7 @@ regular_function_call:;
     sbuf(struct type const* const) const parameter_types =
         function->type->data.function.parameter_types;
     for (size_t i = 0; i < sbuf_count(arguments); ++i) {
-        arguments[i] = shallow_implicit_cast(parameter_types[i], arguments[i]);
+        arguments[i] = implicit_cast(parameter_types[i], arguments[i]);
     }
     for (size_t i = 0; i < sbuf_count(parameter_types); ++i) {
         struct type const* const expected = parameter_types[i];
@@ -3484,7 +3476,7 @@ resolve_expr_access_index(
 
     struct expr const* idx =
         resolve_expr(resolver, expr->data.access_index.idx);
-    idx = shallow_implicit_cast(context()->builtin.usize, idx);
+    idx = implicit_cast(context()->builtin.usize, idx);
     if (idx->type->kind != TYPE_USIZE) {
         fatal(
             idx->location,
@@ -3523,7 +3515,7 @@ resolve_expr_access_slice(
 
     struct expr const* begin =
         resolve_expr(resolver, expr->data.access_slice.begin);
-    begin = shallow_implicit_cast(context()->builtin.usize, begin);
+    begin = implicit_cast(context()->builtin.usize, begin);
     if (begin->type->kind != TYPE_USIZE) {
         fatal(
             begin->location,
@@ -3533,7 +3525,7 @@ resolve_expr_access_slice(
 
     struct expr const* end =
         resolve_expr(resolver, expr->data.access_slice.end);
-    end = shallow_implicit_cast(context()->builtin.usize, end);
+    end = implicit_cast(context()->builtin.usize, end);
     if (end->type->kind != TYPE_USIZE) {
         fatal(
             end->location,
@@ -4062,7 +4054,7 @@ resolve_expr_binary_shift(
             token_kind_to_cstr(op->kind));
     }
 
-    rhs = shallow_implicit_cast(context()->builtin.usize, rhs);
+    rhs = implicit_cast(context()->builtin.usize, rhs);
     if (rhs->type != context()->builtin.usize) {
         fatal(
             &op->location,
@@ -4094,8 +4086,8 @@ resolve_expr_binary_compare_equality(
     assert(rhs != NULL);
     (void)resolver;
 
-    lhs = shallow_implicit_cast(rhs->type, lhs);
-    rhs = shallow_implicit_cast(lhs->type, rhs);
+    lhs = implicit_cast(rhs->type, lhs);
+    rhs = implicit_cast(lhs->type, rhs);
 
     if (lhs->type != rhs->type) {
         fatal(
@@ -4120,8 +4112,8 @@ resolve_expr_binary_compare_equality(
 
     // Constant fold integer literal constant expression.
     if (lhs->kind == EXPR_INTEGER && rhs->kind == EXPR_INTEGER) {
-        lhs = shallow_implicit_cast(rhs->type, lhs);
-        rhs = shallow_implicit_cast(lhs->type, rhs);
+        lhs = implicit_cast(rhs->type, lhs);
+        rhs = implicit_cast(lhs->type, rhs);
 
         struct value* const value = eval_rvalue(resolved);
         value_freeze(value);
@@ -4148,8 +4140,8 @@ resolve_expr_binary_compare_order(
     assert(rhs != NULL);
     (void)resolver;
 
-    lhs = shallow_implicit_cast(rhs->type, lhs);
-    rhs = shallow_implicit_cast(lhs->type, rhs);
+    lhs = implicit_cast(rhs->type, lhs);
+    rhs = implicit_cast(lhs->type, rhs);
 
     if (lhs->type != rhs->type) {
         fatal(
@@ -4175,8 +4167,8 @@ resolve_expr_binary_compare_order(
 
     // Constant fold integer constant expression.
     if (lhs->kind == EXPR_INTEGER && rhs->kind == EXPR_INTEGER) {
-        lhs = shallow_implicit_cast(rhs->type, lhs);
-        rhs = shallow_implicit_cast(lhs->type, rhs);
+        lhs = implicit_cast(rhs->type, lhs);
+        rhs = implicit_cast(lhs->type, rhs);
 
         struct value* const value = eval_rvalue(resolved);
         value_freeze(value);
@@ -4203,8 +4195,8 @@ resolve_expr_binary_arithmetic(
     assert(rhs != NULL);
     (void)resolver;
 
-    lhs = shallow_implicit_cast(rhs->type, lhs);
-    rhs = shallow_implicit_cast(lhs->type, rhs);
+    lhs = implicit_cast(rhs->type, lhs);
+    rhs = implicit_cast(lhs->type, rhs);
 
     bool const valid = lhs->type == rhs->type && type_is_any_integer(lhs->type)
         && type_is_any_integer(rhs->type);
@@ -4223,8 +4215,8 @@ resolve_expr_binary_arithmetic(
 
     // Constant fold integer constant expression.
     if (lhs->kind == EXPR_INTEGER && rhs->kind == EXPR_INTEGER) {
-        lhs = shallow_implicit_cast(rhs->type, lhs);
-        rhs = shallow_implicit_cast(lhs->type, rhs);
+        lhs = implicit_cast(rhs->type, lhs);
+        rhs = implicit_cast(lhs->type, rhs);
 
         struct value* const value = eval_rvalue(resolved);
         value_freeze(value);
@@ -4252,8 +4244,8 @@ resolve_expr_binary_bitwise(
     assert(rhs != NULL);
     (void)resolver;
 
-    lhs = shallow_implicit_cast(rhs->type, lhs);
-    rhs = shallow_implicit_cast(lhs->type, rhs);
+    lhs = implicit_cast(rhs->type, lhs);
+    rhs = implicit_cast(lhs->type, rhs);
 
     if (lhs->type != rhs->type) {
         goto invalid_operand_types;
@@ -4278,8 +4270,8 @@ resolve_expr_binary_bitwise(
 
     // Constant fold integer constant expression.
     if (lhs->kind == EXPR_INTEGER && rhs->kind == EXPR_INTEGER) {
-        lhs = shallow_implicit_cast(rhs->type, lhs);
-        rhs = shallow_implicit_cast(lhs->type, rhs);
+        lhs = implicit_cast(rhs->type, lhs);
+        rhs = implicit_cast(lhs->type, rhs);
 
         struct value* const value = eval_rvalue(resolved);
         value_freeze(value);
@@ -4438,7 +4430,7 @@ resolve_typespec_array(
 {
     struct expr const* count_expr =
         resolve_expr(resolver, typespec->data.array.count);
-    count_expr = shallow_implicit_cast(context()->builtin.usize, count_expr);
+    count_expr = implicit_cast(context()->builtin.usize, count_expr);
 
     if (count_expr->type != context()->builtin.usize) {
         fatal(
