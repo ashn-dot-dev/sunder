@@ -145,24 +145,9 @@ explicit_cast(
     struct source_location const* location,
     struct type const* type,
     struct expr const* expr);
-
 // Returns a newly created and registered expression node of `expr` implicitly
 // casted to `type` if such an implicit cast is valid. If `expr` cannot be
 // implicitly casted to `type` then expr is returned unchanged.
-//
-// This function is intended for use when casting untyped literals to an
-// expression that would require a typed literal (e.g. integer->usize), or for
-// casting from a typed pointer to a generic pointer (e.g. *foo->*any).
-// Sub-expressions with integer literal constants are constant folded during
-// the resolve phase, so the expression `123 + 456 * 2` *should* be folded to
-// the integer literal constant `615` long before this function would be called
-// on it. For most cases the sequence:
-// ```
-// struct expr const* expr = resolve_expr(some_cst_expr);
-// expr = implicit_cast(type, expr);
-// ```
-// will correctly perform a tree-rewrite of the integer constant sub-expression
-// `some_cst_expr` casted to `type`.
 static struct expr const*
 implicit_cast(struct type const* type, struct expr const* expr);
 
@@ -1119,112 +1104,48 @@ explicit_cast(
                 from_return->name,
                 type_return->name);
         }
-
-        struct expr* const resolved = expr_new_cast(expr->location, type, expr);
-
-        freeze(resolved);
-        return resolved;
-    }
-
-    if (type->kind == TYPE_BYTE && expr->type->kind == TYPE_INTEGER) {
-        struct bigint const* const min = context()->u8_min;
-        struct bigint const* const max = context()->u8_max;
-
-        struct value* const value = eval_rvalue(expr);
-        assert(value->type->kind == TYPE_INTEGER);
-        value_freeze(value);
-
-        if (bigint_cmp(value->data.integer, min) < 0) {
-            fatal(
-                location,
-                "out-of-range conversion from `%s` to `%s` (%s < %s)",
-                expr->type->name,
-                type->name,
-                bigint_to_new_cstr(value->data.integer),
-                bigint_to_new_cstr(min));
-        }
-        if (bigint_cmp(value->data.integer, max) > 0) {
-            fatal(
-                location,
-                "out-of-range conversion from `%s` to `%s` (%s > %s)",
-                expr->type->name,
-                type->name,
-                bigint_to_new_cstr(value->data.integer),
-                bigint_to_new_cstr(max));
-        }
-
-        // Constant fold.
-        struct expr* const resolved =
-            expr_new_integer(expr->location, type, value->data.integer);
-
-        freeze(resolved);
-        return resolved;
-    }
-    if (type_is_any_integer(type) && expr->type->kind == TYPE_INTEGER) {
-        assert(type->data.integer.min != NULL);
-        assert(type->data.integer.max != NULL);
-        struct bigint const* const min = type->data.integer.min;
-        struct bigint const* const max = type->data.integer.max;
-
-        struct value* const value = eval_rvalue(expr);
-        assert(value->type->kind == TYPE_INTEGER);
-        value_freeze(value);
-
-        if (bigint_cmp(value->data.integer, min) < 0) {
-            fatal(
-                location,
-                "out-of-range conversion from `%s` to `%s` (%s < %s)",
-                expr->type->name,
-                type->name,
-                bigint_to_new_cstr(value->data.integer),
-                bigint_to_new_cstr(min));
-        }
-        if (bigint_cmp(value->data.integer, max) > 0) {
-            fatal(
-                location,
-                "out-of-range conversion from `%s` to `%s` (%s > %s)",
-                expr->type->name,
-                type->name,
-                bigint_to_new_cstr(value->data.integer),
-                bigint_to_new_cstr(max));
-        }
-
-        // Constant fold.
-        struct expr* const resolved =
-            expr_new_integer(expr->location, type, value->data.integer);
-
-        freeze(resolved);
-        return resolved;
     }
 
     struct expr* resolved = expr_new_cast(location, type, expr);
     freeze(resolved);
 
-    // Constant fold constant expressions.
-    //
-    // TODO: There are more cases than these which can be folded. Currently,
-    // the cases with expr of type `integer` since the rest of the resolve phase
-    // expects these integers to be constant folded.
-    if (type->kind == TYPE_BOOL && expr->kind == EXPR_INTEGER) {
+    if (type->kind == TYPE_BOOL && expr->type->kind == TYPE_INTEGER) {
         struct value* const value = eval_rvalue(resolved);
         assert(value->type->kind == TYPE_BOOL);
 
+        // OPTIMIZATION(constant folding)
         resolved = expr_new_boolean(resolved->location, value->data.boolean);
 
         value_del(value);
         freeze(resolved);
+        return resolved;
     }
-    if ((type->kind == TYPE_BYTE || type_is_any_integer(type))
-        && expr->kind == TYPE_INTEGER) {
+
+    if (type->kind == TYPE_BYTE && expr->type->kind == TYPE_INTEGER) {
+        struct value* const value = eval_rvalue(resolved);
+        assert(value->type->kind == TYPE_BYTE);
+        value_freeze(value);
+
+        // OPTIMIZATION(constant folding)
+        struct bigint* const integer = bigint_new(BIGINT_ZERO);
+        u8_to_bigint(integer, value->data.byte);
+        bigint_freeze(integer);
+        resolved = expr_new_integer(expr->location, type, integer);
+
+        freeze(resolved);
+        return resolved;
+    }
+
+    if (type_is_any_integer(type) && expr->type->kind == TYPE_INTEGER) {
         struct value* const value = eval_rvalue(resolved);
         assert(type_is_any_integer(value->type));
-        assert(value->type->size != SIZEOF_UNSIZED);
+        value_freeze(value);
 
-        resolved = expr_new_integer(
-            resolved->location, value->type, value->data.integer);
+        // OPTIMIZATION(constant folding)
+        resolved = expr_new_integer(expr->location, type, value->data.integer);
 
-        value_del(value);
         freeze(resolved);
+        return resolved;
     }
 
     return resolved;
@@ -4114,7 +4035,7 @@ resolve_expr_binary_compare_equality(
         expr_new_binary(&op->location, context()->builtin.bool_, bop, lhs, rhs);
     freeze(resolved);
 
-    // Constant fold integer literal constant expression.
+    // OPTIMIZATION(constant folding)
     if (lhs->kind == EXPR_INTEGER && rhs->kind == EXPR_INTEGER) {
         lhs = implicit_cast(rhs->type, lhs);
         rhs = implicit_cast(lhs->type, rhs);
@@ -4169,7 +4090,7 @@ resolve_expr_binary_compare_order(
         expr_new_binary(&op->location, context()->builtin.bool_, bop, lhs, rhs);
     freeze(resolved);
 
-    // Constant fold integer constant expression.
+    // OPTIMIZATION(constant folding)
     if (lhs->kind == EXPR_INTEGER && rhs->kind == EXPR_INTEGER) {
         lhs = implicit_cast(rhs->type, lhs);
         rhs = implicit_cast(lhs->type, rhs);
@@ -4217,7 +4138,7 @@ resolve_expr_binary_arithmetic(
     struct expr* resolved = expr_new_binary(&op->location, type, bop, lhs, rhs);
     freeze(resolved);
 
-    // Constant fold integer constant expression.
+    // OPTIMIZATION(constant folding)
     if (lhs->kind == EXPR_INTEGER && rhs->kind == EXPR_INTEGER) {
         lhs = implicit_cast(rhs->type, lhs);
         rhs = implicit_cast(lhs->type, rhs);
@@ -4272,7 +4193,7 @@ resolve_expr_binary_bitwise(
     struct expr* resolved = expr_new_binary(&op->location, type, bop, lhs, rhs);
     freeze(resolved);
 
-    // Constant fold integer constant expression.
+    // OPTIMIZATION(constant folding)
     if (lhs->kind == EXPR_INTEGER && rhs->kind == EXPR_INTEGER) {
         lhs = implicit_cast(rhs->type, lhs);
         rhs = implicit_cast(lhs->type, rhs);

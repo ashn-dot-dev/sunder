@@ -630,6 +630,10 @@ bigint_to_umax(uintmax_t* res, struct bigint const* bigint);
 int
 bigint_to_bitarr(struct bitarr* res, struct bigint const* bigint);
 
+// Convert a uint8_t to a bigint.
+// The result bigint must be pre-initialized.
+void
+u8_to_bigint(struct bigint* res, uint8_t u8);
 // Convert a size_t to a bigint.
 // The result bigint must be pre-initialized.
 void

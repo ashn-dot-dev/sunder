@@ -1531,7 +1531,7 @@ struct value*
 value_new_integer(struct type const* type, struct bigint* integer)
 {
     assert(type != NULL);
-    assert(type->kind == TYPE_BYTE || type_is_any_integer(type));
+    assert(type_is_any_integer(type));
     assert(integer != NULL);
     assert(
         type->kind == TYPE_INTEGER

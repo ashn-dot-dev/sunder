@@ -342,8 +342,13 @@ eval_rvalue_cast(struct expr const* expr)
                 bigint_to_new_cstr(max));
         }
 
-        struct value* const result =
-            value_new_integer(expr->type, from->data.integer);
+        uint8_t byte = 0;
+        int const out_of_range = bigint_to_u8(&byte, from->data.integer);
+        if (out_of_range) {
+            UNREACHABLE();
+        }
+
+        struct value* const result = value_new_byte(byte);
         value_del(from);
         return result;
     }
@@ -374,7 +379,6 @@ eval_rvalue_cast(struct expr const* expr)
 
         struct value* const result =
             value_new_integer(expr->type, from->data.integer);
-        value_del(from);
         return result;
     }
 

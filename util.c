@@ -2118,9 +2118,17 @@ bigint_to_bitarr(struct bitarr* res, struct bigint const* bigint)
 }
 
 void
+u8_to_bigint(struct bigint* res, uint8_t u8)
+{
+    assert(res != NULL);
+
+    uz_to_bigint(res, u8);
+}
+
+void
 uz_to_bigint(struct bigint* res, size_t uz)
 {
-    assert(res != 0);
+    assert(res != NULL);
 
     char buf[256] = {0};
     snprintf(buf, ARRAY_COUNT(buf), "%zu", uz);
