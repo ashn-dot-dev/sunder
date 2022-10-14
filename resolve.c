@@ -1065,11 +1065,55 @@ explicit_cast(
         || (type->kind == TYPE_POINTER && expr->type->kind == TYPE_POINTER)
         || (type->kind == TYPE_FUNCTION && expr->type->kind == TYPE_FUNCTION);
     if (!valid) {
-        fatal(
-            location,
-            "invalid cast from `%s` to `%s`",
-            expr->type->name,
-            type->name);
+        goto error;
+    }
+
+    // Casts from function type to function type must have all parameter types
+    // and the return type match, or have parameter types and the return type
+    // be a T pointer to any pointer conversion.
+    if (type->kind == TYPE_FUNCTION && expr->type->kind == TYPE_FUNCTION) {
+        struct type const* const from = expr->type;
+        if (sbuf_count(type->data.function.parameter_types)
+            != sbuf_count(from->data.function.parameter_types)) {
+            // Mismatched parameter count. Cannot make an implicit conversion.
+            goto error;
+        }
+
+        size_t const param_count =
+            sbuf_count(type->data.function.parameter_types);
+        for (size_t i = 0; i < param_count; ++i) {
+            struct type const* const type_param =
+                type->data.function.parameter_types[i];
+            struct type const* const from_param =
+                from->data.function.parameter_types[i];
+
+            bool const same = type_param == from_param;
+            bool const non_any_ptr_to_any_ptr = type_param->kind == TYPE_POINTER
+                && type_param->data.pointer.base->kind == TYPE_ANY
+                && from_param->kind == TYPE_POINTER
+                && from_param->data.pointer.base->kind != TYPE_ANY;
+            if (!same && !non_any_ptr_to_any_ptr) {
+                // Invalid implicit parameter cast.
+                goto error;
+            }
+        }
+
+        struct type const* const type_return = type->data.function.return_type;
+        struct type const* const from_return = from->data.function.return_type;
+        bool const same = type_return == from_return;
+        bool const non_any_ptr_to_any_ptr = type_return->kind == TYPE_POINTER
+            && type_return->data.pointer.base->kind == TYPE_ANY
+            && from_return->kind == TYPE_POINTER
+            && from_return->data.pointer.base->kind != TYPE_ANY;
+        if (!same && !non_any_ptr_to_any_ptr) {
+            // Invalid implicit return type cast.
+            goto error;
+        }
+
+        struct expr* const resolved = expr_new_cast(expr->location, type, expr);
+
+        freeze(resolved);
+        return resolved;
     }
 
     if (type->kind == TYPE_BYTE && expr->type->kind == TYPE_INTEGER) {
@@ -1174,6 +1218,13 @@ explicit_cast(
     }
 
     return resolved;
+
+error:
+        fatal(
+            location,
+            "invalid cast from `%s` to `%s`",
+            expr->type->name,
+            type->name);
 }
 
 static struct expr const*
@@ -1206,48 +1257,7 @@ shallow_implicit_cast(struct type const* type, struct expr const* expr)
 
     // FROM function with typed pointers TO function with any pointers.
     if (type->kind == TYPE_FUNCTION && expr->type->kind == TYPE_FUNCTION) {
-        struct type const* const from = expr->type;
-        if (sbuf_count(type->data.function.parameter_types)
-            != sbuf_count(from->data.function.parameter_types)) {
-            // Mismatched parameter count. Cannot make an implicit conversion.
-            return expr;
-        }
-
-        size_t const param_count =
-            sbuf_count(type->data.function.parameter_types);
-        for (size_t i = 0; i < param_count; ++i) {
-            struct type const* const type_param =
-                type->data.function.parameter_types[i];
-            struct type const* const from_param =
-                from->data.function.parameter_types[i];
-
-            bool const same = type_param == from_param;
-            bool const non_any_ptr_to_any_ptr = type_param->kind == TYPE_POINTER
-                && type_param->data.pointer.base->kind == TYPE_ANY
-                && from_param->kind == TYPE_POINTER
-                && from_param->data.pointer.base->kind != TYPE_ANY;
-            if (!same && !non_any_ptr_to_any_ptr) {
-                // Invalid implicit parameter cast.
-                return expr;
-            }
-        }
-
-        struct type const* const type_return = type->data.function.return_type;
-        struct type const* const from_return = from->data.function.return_type;
-        bool const same = type_return == from_return;
-        bool const non_any_ptr_to_any_ptr = type_return->kind == TYPE_POINTER
-            && type_return->data.pointer.base->kind == TYPE_ANY
-            && from_return->kind == TYPE_POINTER
-            && from_return->data.pointer.base->kind != TYPE_ANY;
-        if (!same && !non_any_ptr_to_any_ptr) {
-            // Invalid implicit return type cast.
-            return expr;
-        }
-
-        struct expr* const result = expr_new_cast(expr->location, type, expr);
-
-        freeze(result);
-        return result;
+        return explicit_cast(expr->location, type, expr);
     }
 
     // No implicit cast could be performed.
