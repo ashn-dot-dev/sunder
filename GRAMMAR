@@ -66,7 +66,6 @@
 <stmt-expr> ::= <expr> ";"
 
 <expr> ::= <symbol>
-         | <identifier>
          | <boolean>
          | <integer>
          | <expr-character>
