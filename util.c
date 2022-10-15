@@ -1571,6 +1571,60 @@ bigint_magnitude_bit_set(struct bigint* self, size_t n, int value)
     bigint__normalize_(self);
 }
 
+int
+bigint_to_u8(uint8_t* res, struct bigint const* bigint)
+{
+    assert(res != NULL);
+    assert(bigint != NULL);
+
+    uintmax_t umax = 0;
+    if (bigint_to_umax(&umax, bigint) || (umax > UINT8_MAX)) {
+        return -1;
+    }
+
+    *res = (uint8_t)umax;
+    return 0;
+}
+
+int
+bigint_to_uz(size_t* res, struct bigint const* bigint)
+{
+    assert(res != NULL);
+    assert(bigint != NULL);
+
+    uintmax_t umax = 0;
+    if (bigint_to_umax(&umax, bigint) || (umax > SIZE_MAX)) {
+        return -1;
+    }
+
+    *res = (size_t)umax;
+    return 0;
+}
+
+int
+bigint_to_umax(uintmax_t* res, struct bigint const* bigint)
+{
+    assert(res != NULL);
+    assert(bigint != NULL);
+
+    if (bigint_cmp(bigint, BIGINT_ZERO) < 0) {
+        return -1;
+    }
+
+    char* const cstr = bigint_to_new_cstr(bigint);
+    errno = 0;
+    uintmax_t umax = strtoumax(cstr, NULL, 0);
+    int const err = errno; // save errno
+    xalloc(cstr, XALLOC_FREE);
+    assert(err == 0 || err == ERANGE);
+    if (err == ERANGE) {
+        return -1;
+    }
+
+    *res = umax;
+    return 0;
+}
+
 char*
 bigint_to_new_cstr(struct bigint const* self)
 {
@@ -2012,60 +2066,6 @@ ceil8zu(size_t x)
         x += 1u;
     }
     return x;
-}
-
-int
-bigint_to_u8(uint8_t* res, struct bigint const* bigint)
-{
-    assert(res != NULL);
-    assert(bigint != NULL);
-
-    uintmax_t umax = 0;
-    if (bigint_to_umax(&umax, bigint) || (umax > UINT8_MAX)) {
-        return -1;
-    }
-
-    *res = (uint8_t)umax;
-    return 0;
-}
-
-int
-bigint_to_uz(size_t* res, struct bigint const* bigint)
-{
-    assert(res != NULL);
-    assert(bigint != NULL);
-
-    uintmax_t umax = 0;
-    if (bigint_to_umax(&umax, bigint) || (umax > SIZE_MAX)) {
-        return -1;
-    }
-
-    *res = (size_t)umax;
-    return 0;
-}
-
-int
-bigint_to_umax(uintmax_t* res, struct bigint const* bigint)
-{
-    assert(res != NULL);
-    assert(bigint != NULL);
-
-    if (bigint_cmp(bigint, BIGINT_ZERO) < 0) {
-        return -1;
-    }
-
-    char* const cstr = bigint_to_new_cstr(bigint);
-    errno = 0;
-    uintmax_t umax = strtoumax(cstr, NULL, 0);
-    int const err = errno; // save errno
-    xalloc(cstr, XALLOC_FREE);
-    assert(err == 0 || err == ERANGE);
-    if (err == ERANGE) {
-        return -1;
-    }
-
-    *res = umax;
-    return 0;
 }
 
 static void

@@ -477,6 +477,24 @@ bigint_magnitude_bit_get(struct bigint const* self, size_t n);
 void
 bigint_magnitude_bit_set(struct bigint* self, size_t n, int value);
 
+// Convert a bigint to a uint8_t.
+// Returns zero on success.
+// Returns non-zero if the provided bigint is out-of-range, in which case *res
+// is left unmodified.
+int
+bigint_to_u8(uint8_t* res, struct bigint const* bigint);
+// Convert a bigint to a size_t.
+// Returns zero on success.
+// Returns non-zero if the provided bigint is out-of-range, in which case *res
+// is left unmodified.
+int
+bigint_to_uz(size_t* res, struct bigint const* bigint);
+// Convert a bigint to a uintmax_t.
+// Returns zero on success.
+// Returns non-zero if the provided bigint is out-of-range, in which case *res
+// is left unmodified.
+int
+bigint_to_umax(uintmax_t* res, struct bigint const* bigint);
 // Returns an xalloc-allocated cstring representation of the provided bigint
 // formatted as a decimal number.
 char*
@@ -604,24 +622,6 @@ ceil8i(int x);
 size_t
 ceil8zu(size_t x);
 
-// Convert a bigint to a uint8_t.
-// Returns zero on success.
-// Returns non-zero if the provided bigint is out-of-range, in which case *res
-// is left unmodified.
-int
-bigint_to_u8(uint8_t* res, struct bigint const* bigint);
-// Convert a bigint to a size_t.
-// Returns zero on success.
-// Returns non-zero if the provided bigint is out-of-range, in which case *res
-// is left unmodified.
-int
-bigint_to_uz(size_t* res, struct bigint const* bigint);
-// Convert a bigint to a uintmax_t.
-// Returns zero on success.
-// Returns non-zero if the provided bigint is out-of-range, in which case *res
-// is left unmodified.
-int
-bigint_to_umax(uintmax_t* res, struct bigint const* bigint);
 // Convert a bigint into a two's complement bit array.
 // Returns zero on success.
 // Returns non-zero if the provided bigint is out-of-range would require more
