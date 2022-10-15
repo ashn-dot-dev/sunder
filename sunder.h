@@ -344,6 +344,11 @@ bitarr_assign(struct bitarr* self, struct bitarr const* othr);
 // are not equal.
 void
 bitarr_compl(struct bitarr* res, struct bitarr const* rhs);
+// res = -rhs
+// Fatally exits after printing an error message if the count of res and rhs
+// are not equal.
+void
+bitarr_twos_complement_neg(struct bitarr* res, struct bitarr* rhs);
 // res = lhs << nbits (logical shift left)
 // Fatally exits after printing an error message if the count of res and lhs
 // are not equal.

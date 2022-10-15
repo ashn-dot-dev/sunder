@@ -664,6 +664,35 @@ bitarr_compl(struct bitarr* res, struct bitarr const* rhs)
 }
 
 void
+bitarr_twos_complement_neg(struct bitarr* res, struct bitarr* rhs)
+{
+    assert(res != NULL);
+    assert(rhs != NULL);
+
+    if (res->count != rhs->count) {
+        fatal(
+            NULL,
+            "[%s] Mismatched array counts (%zu, %zu)",
+            __func__,
+            res->count,
+            rhs->count);
+    }
+
+    // Invert the bits...
+    bitarr_compl(res, rhs);
+
+    // ...and add one.
+    int carry = 1;
+    size_t const bit_count = bitarr_count(res);
+    for (size_t i = 0; i < bit_count; ++i) {
+        int const new_digit = (carry + bitarr_get(res, i)) % 2;
+        int const new_carry = (carry + bitarr_get(res, i)) >= 2;
+        bitarr_set(res, i, new_digit);
+        carry = new_carry;
+    }
+}
+
+void
 bitarr_shiftl(struct bitarr* res, struct bitarr const* lhs, size_t nbits)
 {
     assert(res != NULL);
@@ -2068,25 +2097,6 @@ ceil8zu(size_t x)
     return x;
 }
 
-static void
-bitarr_twos_complement_neg(struct bitarr* bitarr)
-{
-    assert(bitarr != NULL);
-
-    // Invert the bits...
-    bitarr_compl(bitarr, bitarr);
-
-    // ...and add one.
-    int carry = 1;
-    size_t const bit_count = bitarr_count(bitarr);
-    for (size_t i = 0; i < bit_count; ++i) {
-        int const new_digit = (carry + bitarr_get(bitarr, i)) % 2;
-        int const new_carry = (carry + bitarr_get(bitarr, i)) >= 2;
-        bitarr_set(bitarr, i, new_digit);
-        carry = new_carry;
-    }
-}
-
 int
 bigint_to_bitarr(struct bitarr* res, struct bigint const* bigint)
 {
@@ -2111,7 +2121,7 @@ bigint_to_bitarr(struct bitarr* res, struct bigint const* bigint)
     // negative signed representation if necessary.
     if (bigint_cmp(bigint, BIGINT_ZERO) < 0) {
         // Two's complement positive<->negative conversion.
-        bitarr_twos_complement_neg(res);
+        bitarr_twos_complement_neg(res, res);
     }
 
     return 0;
@@ -2155,7 +2165,7 @@ bitarr_to_bigint(
     bool const is_neg = is_signed && bitarr_get(bitarr, bit_count - 1u);
     if (is_neg) {
         // Two's complement negative<->positive conversion.
-        bitarr_twos_complement_neg(mag_bits);
+        bitarr_twos_complement_neg(mag_bits, mag_bits);
     }
 
     bigint_assign(res, BIGINT_ZERO);
