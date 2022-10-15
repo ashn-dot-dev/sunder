@@ -1654,6 +1654,36 @@ bigint_to_umax(uintmax_t* res, struct bigint const* bigint)
     return 0;
 }
 
+int
+bigint_to_bitarr(struct bitarr* res, struct bigint const* bigint)
+{
+    assert(res != NULL);
+    assert(bigint != NULL);
+
+    size_t const mag_bit_count = bigint_magnitude_bit_count(bigint);
+    size_t const res_bit_count = bitarr_count(res);
+    if (mag_bit_count > res_bit_count) {
+        return -1;
+    }
+
+    // Write the magnitude to the bigint into the bit array. If the bigint is
+    // negative then we adjust the bit array below using two's complement
+    // arithmetic.
+    for (size_t i = 0; i < res_bit_count; ++i) {
+        int const bit = bigint_magnitude_bit_get(bigint, i);
+        bitarr_set(res, i, bit);
+    }
+
+    // Convert two's complement unsigned (magnitude) representation into
+    // negative signed representation if necessary.
+    if (bigint_cmp(bigint, BIGINT_ZERO) < 0) {
+        // Two's complement positive<->negative conversion.
+        bitarr_twos_complement_neg(res, res);
+    }
+
+    return 0;
+}
+
 char*
 bigint_to_new_cstr(struct bigint const* self)
 {
@@ -2095,36 +2125,6 @@ ceil8zu(size_t x)
         x += 1u;
     }
     return x;
-}
-
-int
-bigint_to_bitarr(struct bitarr* res, struct bigint const* bigint)
-{
-    assert(res != NULL);
-    assert(bigint != NULL);
-
-    size_t const mag_bit_count = bigint_magnitude_bit_count(bigint);
-    size_t const res_bit_count = bitarr_count(res);
-    if (mag_bit_count > res_bit_count) {
-        return -1;
-    }
-
-    // Write the magnitude to the bigint into the bit array. If the bigint is
-    // negative then we adjust the bit array below using two's complement
-    // arithmetic.
-    for (size_t i = 0; i < res_bit_count; ++i) {
-        int const bit = bigint_magnitude_bit_get(bigint, i);
-        bitarr_set(res, i, bit);
-    }
-
-    // Convert two's complement unsigned (magnitude) representation into
-    // negative signed representation if necessary.
-    if (bigint_cmp(bigint, BIGINT_ZERO) < 0) {
-        // Two's complement positive<->negative conversion.
-        bitarr_twos_complement_neg(res, res);
-    }
-
-    return 0;
 }
 
 void

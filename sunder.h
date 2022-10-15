@@ -500,6 +500,13 @@ bigint_to_uz(size_t* res, struct bigint const* bigint);
 // is left unmodified.
 int
 bigint_to_umax(uintmax_t* res, struct bigint const* bigint);
+// Convert a bigint into a two's complement bit array.
+// Returns zero on success.
+// Returns non-zero if the provided bigint is out-of-range would require more
+// than bitarr_count(res) bits to express, in which case *res is left
+// unmodified.
+int
+bigint_to_bitarr(struct bitarr* res, struct bigint const* bigint);
 // Returns an xalloc-allocated cstring representation of the provided bigint
 // formatted as a decimal number.
 char*
@@ -626,14 +633,6 @@ int
 ceil8i(int x);
 size_t
 ceil8zu(size_t x);
-
-// Convert a bigint into a two's complement bit array.
-// Returns zero on success.
-// Returns non-zero if the provided bigint is out-of-range would require more
-// than bitarr_count(res) bits to express, in which case *res is left
-// unmodified.
-int
-bigint_to_bitarr(struct bitarr* res, struct bigint const* bigint);
 
 // Convert a uint8_t to a bigint.
 // The result bigint must be pre-initialized.
