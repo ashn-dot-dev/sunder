@@ -19,7 +19,7 @@ static size_t unique_id = 0; // Used for generating unique names and labels.
 // The <AST-node-type> is STMT for stmt nodes and EXPR for expr nodes.
 //
 // The <unique-id> is generated for each node in the call to codegen_stmt,
-// codegen_rvalue, and codegen_lvalue.
+// push_rvalue, and push_lvalue.
 //
 // The <description> is used to denote what section of AST node generation is
 // taking place as well as provide the necessary labels for jumps.
@@ -638,64 +638,64 @@ static void
 codegen_defers(struct stmt const* begin, struct stmt const* end);
 
 static void
-codegen_rvalue(struct expr const* expr);
+push_rvalue(struct expr const* expr);
 static void
-codegen_rvalue_symbol(struct expr const* expr, size_t id);
+push_rvalue_symbol(struct expr const* expr, size_t id);
 static void
-codegen_rvalue_boolean(struct expr const* expr, size_t id);
+push_rvalue_boolean(struct expr const* expr, size_t id);
 static void
-codegen_rvalue_integer(struct expr const* expr, size_t id);
+push_rvalue_integer(struct expr const* expr, size_t id);
 static void
-codegen_rvalue_bytes(struct expr const* expr, size_t id);
+push_rvalue_bytes(struct expr const* expr, size_t id);
 static void
-codegen_rvalue_array_list(struct expr const* expr, size_t id);
+push_rvalue_array_list(struct expr const* expr, size_t id);
 static void
-codegen_rvalue_slice_list(struct expr const* expr, size_t id);
+push_rvalue_slice_list(struct expr const* expr, size_t id);
 static void
-codegen_rvalue_slice(struct expr const* expr, size_t id);
+push_rvalue_slice(struct expr const* expr, size_t id);
 static void
-codegen_rvalue_struct(struct expr const* expr, size_t id);
+push_rvalue_struct(struct expr const* expr, size_t id);
 static void
-codegen_rvalue_cast(struct expr const* expr, size_t id);
+push_rvalue_cast(struct expr const* expr, size_t id);
 static void
-codegen_rvalue_call(struct expr const* expr, size_t id);
+push_rvalue_call(struct expr const* expr, size_t id);
 static void
-codegen_rvalue_access_index(struct expr const* expr, size_t id);
+push_rvalue_access_index(struct expr const* expr, size_t id);
 static void
-codegen_rvalue_access_index_lhs_array(struct expr const* expr, size_t id);
+push_rvalue_access_index_lhs_array(struct expr const* expr, size_t id);
 static void
-codegen_rvalue_access_index_lhs_slice(struct expr const* expr, size_t id);
+push_rvalue_access_index_lhs_slice(struct expr const* expr, size_t id);
 static void
-codegen_rvalue_access_slice(struct expr const* expr, size_t id);
+push_rvalue_access_slice(struct expr const* expr, size_t id);
 static void
-codegen_rvalue_access_slice_lhs_array(struct expr const* expr, size_t id);
+push_rvalue_access_slice_lhs_array(struct expr const* expr, size_t id);
 static void
-codegen_rvalue_access_slice_lhs_slice(struct expr const* expr, size_t id);
+push_rvalue_access_slice_lhs_slice(struct expr const* expr, size_t id);
 static void
-codegen_rvalue_access_member_variable(struct expr const* expr, size_t id);
+push_rvalue_access_member_variable(struct expr const* expr, size_t id);
 static void
-codegen_rvalue_sizeof(struct expr const* expr, size_t id);
+push_rvalue_sizeof(struct expr const* expr, size_t id);
 static void
-codegen_rvalue_alignof(struct expr const* expr, size_t id);
+push_rvalue_alignof(struct expr const* expr, size_t id);
 static void
-codegen_rvalue_unary(struct expr const* expr, size_t id);
+push_rvalue_unary(struct expr const* expr, size_t id);
 static void
-codegen_rvalue_binary(struct expr const* expr, size_t id);
+push_rvalue_binary(struct expr const* expr, size_t id);
 
 static void
-codegen_lvalue(struct expr const* expr);
+push_lvalue(struct expr const* expr);
 static void
-codegen_lvalue_symbol(struct expr const* expr, size_t id);
+push_lvalue_symbol(struct expr const* expr, size_t id);
 static void
-codegen_lvalue_access_index(struct expr const* expr, size_t id);
+push_lvalue_access_index(struct expr const* expr, size_t id);
 static void
-codegen_lvalue_access_index_lhs_array(struct expr const* expr, size_t id);
+push_lvalue_access_index_lhs_array(struct expr const* expr, size_t id);
 static void
-codegen_lvalue_access_index_lhs_slice(struct expr const* expr, size_t id);
+push_lvalue_access_index_lhs_slice(struct expr const* expr, size_t id);
 static void
-codegen_lvalue_access_member_variable(struct expr const* expr, size_t id);
+push_lvalue_access_member_variable(struct expr const* expr, size_t id);
 static void
-codegen_lvalue_unary(struct expr const* expr, size_t id);
+push_lvalue_unary(struct expr const* expr, size_t id);
 
 static void
 load_sysasm(void** buf, size_t* buf_size)
@@ -1055,7 +1055,7 @@ codegen_stmt_if(struct stmt const* stmt, size_t id)
         if (conditionals[i]->condition != NULL) {
             appendln("%s%zu_condition_%zu:", LABEL_STMT, id, i);
             assert(conditionals[i]->condition->type->kind == TYPE_BOOL);
-            codegen_rvalue(conditionals[i]->condition);
+            push_rvalue(conditionals[i]->condition);
             appendli("pop rax");
             appendli("mov rbx, 0x00");
             appendli("cmp al, bl");
@@ -1098,7 +1098,7 @@ codegen_stmt_for_range(struct stmt const* stmt, size_t id)
     current_loop_id = id;
 
     push_address(symbol_xget_address(stmt->data.for_range.loop_variable));
-    codegen_rvalue(stmt->data.for_range.begin);
+    push_rvalue(stmt->data.for_range.begin);
     appendli("pop rbx"); // begin
     appendli("pop rax"); // addr of loop variable
     appendli("mov [rax], rbx");
@@ -1106,7 +1106,7 @@ codegen_stmt_for_range(struct stmt const* stmt, size_t id)
     push_at_address(
         symbol_xget_type(stmt->data.for_range.loop_variable)->size,
         symbol_xget_address(stmt->data.for_range.loop_variable));
-    codegen_rvalue(stmt->data.for_range.end);
+    push_rvalue(stmt->data.for_range.end);
     appendli("pop rbx"); // end
     appendli("pop rax"); // loop variable
     appendli("cmp rax, rbx");
@@ -1135,7 +1135,7 @@ codegen_stmt_for_expr(struct stmt const* stmt, size_t id)
 
     appendln("%s%zu_condition:", LABEL_STMT, id);
     assert(stmt->data.for_expr.expr->type->kind == TYPE_BOOL);
-    codegen_rvalue(stmt->data.for_expr.expr);
+    push_rvalue(stmt->data.for_expr.expr);
     appendli("pop rax");
     appendli("mov rbx, 0x00");
     appendli("cmp al, bl");
@@ -1184,7 +1184,7 @@ codegen_stmt_dump(struct stmt const* stmt, size_t id)
         "; dump `%s` (%zu bytes)",
         stmt->data.expr->type->name,
         stmt->data.expr->type->size);
-    codegen_rvalue(stmt->data.expr);
+    push_rvalue(stmt->data.expr);
     appendli(
         "push %#zx ; push type `%s` size",
         stmt->data.expr->type->size,
@@ -1203,7 +1203,7 @@ codegen_stmt_return(struct stmt const* stmt, size_t id)
 
     if (stmt->data.return_.expr != NULL) {
         // Compute result.
-        codegen_rvalue(stmt->data.return_.expr);
+        push_rvalue(stmt->data.return_.expr);
 
         // Store in return address.
         struct symbol const* const return_symbol = symbol_table_lookup(
@@ -1240,8 +1240,8 @@ codegen_stmt_assign(struct stmt const* stmt, size_t id)
         return;
     }
 
-    codegen_rvalue(stmt->data.assign.rhs);
-    codegen_lvalue(stmt->data.assign.lhs);
+    push_rvalue(stmt->data.assign.rhs);
+    push_lvalue(stmt->data.assign.lhs);
 
     appendli("pop rbx");
     size_t const size = stmt->data.assign.rhs->type->size;
@@ -1277,7 +1277,7 @@ codegen_stmt_expr(struct stmt const* stmt, size_t id)
     assert(stmt->kind == STMT_EXPR);
     (void)id;
 
-    codegen_rvalue(stmt->data.expr);
+    push_rvalue(stmt->data.expr);
     // Remove the (unused) result from the stack.
     pop(stmt->data.expr->type->size);
 }
@@ -1309,7 +1309,7 @@ codegen_defers(struct stmt const* begin, struct stmt const* end)
 }
 
 static void
-codegen_rvalue(struct expr const* expr)
+push_rvalue(struct expr const* expr)
 {
     assert(expr != NULL);
 
@@ -1319,23 +1319,23 @@ codegen_rvalue(struct expr const* expr)
     } const table[] = {
 #define TABLE_ENTRY(kind, fn) [kind] = {#kind, fn}
         // clang-format off
-        TABLE_ENTRY(EXPR_SYMBOL, codegen_rvalue_symbol),
-        TABLE_ENTRY(EXPR_BOOLEAN, codegen_rvalue_boolean),
-        TABLE_ENTRY(EXPR_INTEGER, codegen_rvalue_integer),
-        TABLE_ENTRY(EXPR_BYTES, codegen_rvalue_bytes),
-        TABLE_ENTRY(EXPR_ARRAY_LIST, codegen_rvalue_array_list),
-        TABLE_ENTRY(EXPR_SLICE_LIST, codegen_rvalue_slice_list),
-        TABLE_ENTRY(EXPR_SLICE, codegen_rvalue_slice),
-        TABLE_ENTRY(EXPR_STRUCT, codegen_rvalue_struct),
-        TABLE_ENTRY(EXPR_CAST, codegen_rvalue_cast),
-        TABLE_ENTRY(EXPR_CALL, codegen_rvalue_call),
-        TABLE_ENTRY(EXPR_ACCESS_INDEX, codegen_rvalue_access_index),
-        TABLE_ENTRY(EXPR_ACCESS_SLICE, codegen_rvalue_access_slice),
-        TABLE_ENTRY(EXPR_ACCESS_MEMBER_VARIABLE, codegen_rvalue_access_member_variable),
-        TABLE_ENTRY(EXPR_SIZEOF, codegen_rvalue_sizeof),
-        TABLE_ENTRY(EXPR_ALIGNOF, codegen_rvalue_alignof),
-        TABLE_ENTRY(EXPR_UNARY, codegen_rvalue_unary),
-        TABLE_ENTRY(EXPR_BINARY, codegen_rvalue_binary),
+        TABLE_ENTRY(EXPR_SYMBOL, push_rvalue_symbol),
+        TABLE_ENTRY(EXPR_BOOLEAN, push_rvalue_boolean),
+        TABLE_ENTRY(EXPR_INTEGER, push_rvalue_integer),
+        TABLE_ENTRY(EXPR_BYTES, push_rvalue_bytes),
+        TABLE_ENTRY(EXPR_ARRAY_LIST, push_rvalue_array_list),
+        TABLE_ENTRY(EXPR_SLICE_LIST, push_rvalue_slice_list),
+        TABLE_ENTRY(EXPR_SLICE, push_rvalue_slice),
+        TABLE_ENTRY(EXPR_STRUCT, push_rvalue_struct),
+        TABLE_ENTRY(EXPR_CAST, push_rvalue_cast),
+        TABLE_ENTRY(EXPR_CALL, push_rvalue_call),
+        TABLE_ENTRY(EXPR_ACCESS_INDEX, push_rvalue_access_index),
+        TABLE_ENTRY(EXPR_ACCESS_SLICE, push_rvalue_access_slice),
+        TABLE_ENTRY(EXPR_ACCESS_MEMBER_VARIABLE, push_rvalue_access_member_variable),
+        TABLE_ENTRY(EXPR_SIZEOF, push_rvalue_sizeof),
+        TABLE_ENTRY(EXPR_ALIGNOF, push_rvalue_alignof),
+        TABLE_ENTRY(EXPR_UNARY, push_rvalue_unary),
+        TABLE_ENTRY(EXPR_BINARY, push_rvalue_binary),
     // clang-format on
 #undef TABLE_ENTRY
     };
@@ -1350,7 +1350,7 @@ codegen_rvalue(struct expr const* expr)
 }
 
 static void
-codegen_rvalue_symbol(struct expr const* expr, size_t id)
+push_rvalue_symbol(struct expr const* expr, size_t id)
 {
     assert(expr != NULL);
     assert(expr->kind == EXPR_SYMBOL);
@@ -1379,7 +1379,7 @@ codegen_rvalue_symbol(struct expr const* expr, size_t id)
 }
 
 static void
-codegen_rvalue_boolean(struct expr const* expr, size_t id)
+push_rvalue_boolean(struct expr const* expr, size_t id)
 {
     assert(expr != NULL);
     assert(expr->kind == EXPR_BOOLEAN);
@@ -1390,7 +1390,7 @@ codegen_rvalue_boolean(struct expr const* expr, size_t id)
 }
 
 static void
-codegen_rvalue_integer(struct expr const* expr, size_t id)
+push_rvalue_integer(struct expr const* expr, size_t id)
 {
     assert(expr != NULL);
     assert(expr->kind == EXPR_INTEGER);
@@ -1407,7 +1407,7 @@ codegen_rvalue_integer(struct expr const* expr, size_t id)
 }
 
 static void
-codegen_rvalue_bytes(struct expr const* expr, size_t id)
+push_rvalue_bytes(struct expr const* expr, size_t id)
 {
     assert(expr != NULL);
     assert(expr->kind == EXPR_BYTES);
@@ -1419,7 +1419,7 @@ codegen_rvalue_bytes(struct expr const* expr, size_t id)
 }
 
 static void
-codegen_rvalue_array_list(struct expr const* expr, size_t id)
+push_rvalue_array_list(struct expr const* expr, size_t id)
 {
     assert(expr != NULL);
     assert(expr->kind == EXPR_ARRAY_LIST);
@@ -1448,7 +1448,7 @@ codegen_rvalue_array_list(struct expr const* expr, size_t id)
     // of times.
     for (size_t i = 0; i < sbuf_count(elements); ++i) {
         assert(elements[i]->type == element_type);
-        codegen_rvalue(elements[i]);
+        push_rvalue(elements[i]);
 
         appendli("mov rbx, rsp");
         appendli("add rbx, %zu", ceil8zu(element_size)); // array start
@@ -1469,7 +1469,7 @@ codegen_rvalue_array_list(struct expr const* expr, size_t id)
         size_t const remaining = count - sbuf_count(elements);
 
         appendln("%s%zu_ellipsis_bgn:", LABEL_EXPR, id);
-        codegen_rvalue(expr->data.array_list.ellipsis);
+        push_rvalue(expr->data.array_list.ellipsis);
         appendli("mov rbx, rsp");
         appendli("add rbx, %zu", ceil8zu(element_size)); // array start
         appendli("add rbx, %zu", element_size * completed); // array offset
@@ -1489,7 +1489,7 @@ codegen_rvalue_array_list(struct expr const* expr, size_t id)
 }
 
 static void
-codegen_rvalue_slice_list(struct expr const* expr, size_t id)
+push_rvalue_slice_list(struct expr const* expr, size_t id)
 {
     assert(expr != NULL);
     assert(expr->kind == EXPR_SLICE_LIST);
@@ -1505,7 +1505,7 @@ codegen_rvalue_slice_list(struct expr const* expr, size_t id)
         symbol_xget_type(expr->data.slice_list.array_symbol),
         expr->data.slice_list.elements,
         NULL);
-    codegen_rvalue_array_list(array_expr, id);
+    push_rvalue_array_list(array_expr, id);
     xalloc(array_expr, XALLOC_FREE);
 
     push_address(symbol_xget_address(expr->data.slice_list.array_symbol));
@@ -1520,7 +1520,7 @@ codegen_rvalue_slice_list(struct expr const* expr, size_t id)
 }
 
 static void
-codegen_rvalue_slice(struct expr const* expr, size_t id)
+push_rvalue_slice(struct expr const* expr, size_t id)
 {
     assert(expr != NULL);
     assert(expr->kind == EXPR_SLICE);
@@ -1532,12 +1532,12 @@ codegen_rvalue_slice(struct expr const* expr, size_t id)
     // +---------+ <-- rsp + 0x8
     // | pointer |
     // +---------+ <-- rsp
-    codegen_rvalue(expr->data.slice.count);
-    codegen_rvalue(expr->data.slice.pointer);
+    push_rvalue(expr->data.slice.count);
+    push_rvalue(expr->data.slice.pointer);
 }
 
 static void
-codegen_rvalue_struct(struct expr const* expr, size_t id)
+push_rvalue_struct(struct expr const* expr, size_t id)
 {
     assert(expr != NULL);
     assert(expr->kind == EXPR_STRUCT);
@@ -1572,7 +1572,7 @@ codegen_rvalue_struct(struct expr const* expr, size_t id)
         sbuf_count(member_variable_defs) == sbuf_count(member_variable_exprs));
     for (size_t i = 0; i < sbuf_count(member_variable_defs); ++i) {
         assert(member_variable_exprs[i]->type == member_variable_defs[i].type);
-        codegen_rvalue(member_variable_exprs[i]);
+        push_rvalue(member_variable_exprs[i]);
 
         struct type const* const type = member_variable_exprs[i]->type;
         size_t const size = type->size;
@@ -1588,7 +1588,7 @@ codegen_rvalue_struct(struct expr const* expr, size_t id)
 }
 
 static void
-codegen_rvalue_cast(struct expr const* expr, size_t id)
+push_rvalue_cast(struct expr const* expr, size_t id)
 {
     assert(expr != NULL);
     assert(expr->kind == EXPR_CAST);
@@ -1599,7 +1599,7 @@ codegen_rvalue_cast(struct expr const* expr, size_t id)
     struct expr const* const from = expr->data.cast.expr;
     assert(from->type->size >= 1u);
     assert(from->type->size <= 8u);
-    codegen_rvalue(from);
+    push_rvalue(from);
 
     // Load casted-from data into an A register (al, ax, eax, or rax).
     char const* const reg = reg_a(from->type->size);
@@ -1618,7 +1618,7 @@ codegen_rvalue_cast(struct expr const* expr, size_t id)
 }
 
 static void
-codegen_rvalue_call(struct expr const* expr, size_t id)
+push_rvalue_call(struct expr const* expr, size_t id)
 {
     assert(expr != NULL);
     assert(expr->kind == EXPR_CALL);
@@ -1638,11 +1638,11 @@ codegen_rvalue_call(struct expr const* expr, size_t id)
             "; push argument %zu of type `%s`",
             i + 1,
             arguments[i]->type->name);
-        codegen_rvalue(arguments[i]);
+        push_rvalue(arguments[i]);
     }
 
     // Load the function pointer and call the function.
-    codegen_rvalue(expr->data.call.function);
+    push_rvalue(expr->data.call.function);
     appendli("pop rax");
     appendli("call rax");
 
@@ -1658,18 +1658,18 @@ codegen_rvalue_call(struct expr const* expr, size_t id)
 }
 
 static void
-codegen_rvalue_access_index(struct expr const* expr, size_t id)
+push_rvalue_access_index(struct expr const* expr, size_t id)
 {
     assert(expr != NULL);
     assert(expr->kind == EXPR_ACCESS_INDEX);
 
     if (expr->data.access_index.lhs->type->kind == TYPE_ARRAY) {
-        codegen_rvalue_access_index_lhs_array(expr, id);
+        push_rvalue_access_index_lhs_array(expr, id);
         return;
     }
 
     if (expr->data.access_index.lhs->type->kind == TYPE_SLICE) {
-        codegen_rvalue_access_index_lhs_slice(expr, id);
+        push_rvalue_access_index_lhs_slice(expr, id);
         return;
     }
 
@@ -1677,7 +1677,7 @@ codegen_rvalue_access_index(struct expr const* expr, size_t id)
 }
 
 static void
-codegen_rvalue_access_index_lhs_array(struct expr const* expr, size_t id)
+push_rvalue_access_index_lhs_array(struct expr const* expr, size_t id)
 {
     assert(expr != NULL);
     assert(expr->kind == EXPR_ACCESS_INDEX);
@@ -1697,8 +1697,8 @@ codegen_rvalue_access_index_lhs_array(struct expr const* expr, size_t id)
     if (expr_is_lvalue(expr->data.access_index.lhs)) {
         // Array expression is an lvalue. Compute the address of the of the
         // indexed element and copy from that address into the result.
-        codegen_lvalue(expr->data.access_index.lhs);
-        codegen_rvalue(expr->data.access_index.idx);
+        push_lvalue(expr->data.access_index.lhs);
+        push_rvalue(expr->data.access_index.idx);
         // rax := source
         // rsp := destination
         // After calculating the source address the stack pointer will point to
@@ -1722,8 +1722,8 @@ codegen_rvalue_access_index_lhs_array(struct expr const* expr, size_t id)
 
     // Array expression is an rvalue. Generate the rvalue array and rvalue
     // index. Then copy indexed element into the result.
-    codegen_rvalue(expr->data.access_index.lhs);
-    codegen_rvalue(expr->data.access_index.idx);
+    push_rvalue(expr->data.access_index.lhs);
+    push_rvalue(expr->data.access_index.idx);
     // rax := source
     appendli("pop rax"); // index
     appendli("mov rbx, %zu", lhs_type->data.array.count); // count
@@ -1751,7 +1751,7 @@ codegen_rvalue_access_index_lhs_array(struct expr const* expr, size_t id)
 }
 
 static void
-codegen_rvalue_access_index_lhs_slice(struct expr const* expr, size_t id)
+push_rvalue_access_index_lhs_slice(struct expr const* expr, size_t id)
 {
     assert(expr != NULL);
     assert(expr->kind == EXPR_ACCESS_INDEX);
@@ -1768,8 +1768,8 @@ codegen_rvalue_access_index_lhs_slice(struct expr const* expr, size_t id)
     assert(expr->type == element_type);
     push(expr->type->size);
 
-    codegen_rvalue(expr->data.access_index.lhs);
-    codegen_rvalue(expr->data.access_index.idx);
+    push_rvalue(expr->data.access_index.lhs);
+    push_rvalue(expr->data.access_index.idx);
     // rax := source
     // rsp := destination
     appendli("pop rax"); // index
@@ -1788,18 +1788,18 @@ codegen_rvalue_access_index_lhs_slice(struct expr const* expr, size_t id)
 }
 
 static void
-codegen_rvalue_access_slice(struct expr const* expr, size_t id)
+push_rvalue_access_slice(struct expr const* expr, size_t id)
 {
     assert(expr != NULL);
     assert(expr->kind == EXPR_ACCESS_SLICE);
 
     if (expr->data.access_slice.lhs->type->kind == TYPE_ARRAY) {
-        codegen_rvalue_access_slice_lhs_array(expr, id);
+        push_rvalue_access_slice_lhs_array(expr, id);
         return;
     }
 
     if (expr->data.access_slice.lhs->type->kind == TYPE_SLICE) {
-        codegen_rvalue_access_slice_lhs_slice(expr, id);
+        push_rvalue_access_slice_lhs_slice(expr, id);
         return;
     }
 
@@ -1807,7 +1807,7 @@ codegen_rvalue_access_slice(struct expr const* expr, size_t id)
 }
 
 static void
-codegen_rvalue_access_slice_lhs_array(struct expr const* expr, size_t id)
+push_rvalue_access_slice_lhs_array(struct expr const* expr, size_t id)
 {
     assert(expr != NULL);
     assert(expr->kind == EXPR_ACCESS_SLICE);
@@ -1819,8 +1819,8 @@ codegen_rvalue_access_slice_lhs_array(struct expr const* expr, size_t id)
     struct type const* const lhs_type = expr->data.access_slice.lhs->type;
     struct type const* const element_type = lhs_type->data.array.base;
 
-    codegen_rvalue(expr->data.access_slice.end);
-    codegen_rvalue(expr->data.access_slice.begin);
+    push_rvalue(expr->data.access_slice.end);
+    push_rvalue(expr->data.access_slice.begin);
     appendli("pop rax"); // begin
     appendli("pop rbx"); // end
     appendli("mov rcx, %zu", lhs_type->data.array.count); // count
@@ -1848,9 +1848,9 @@ codegen_rvalue_access_slice_lhs_array(struct expr const* expr, size_t id)
     appendli("mul rbx"); // offset = begin * sizeof(element_type)
     appendli("push rax"); // push offset
 
-    // NOTE: The call to codegen_lvalue will push nil for slices with elements
+    // NOTE: The call to push_lvalue will push nil for slices with elements
     // of size zero, so we don't need a special case for that here.
-    codegen_lvalue(expr->data.access_slice.lhs);
+    push_lvalue(expr->data.access_slice.lhs);
     appendli("pop rax"); // start
     appendli("pop rbx"); // offset
     appendli("add rax, rbx"); // pointer = start + offset
@@ -1858,7 +1858,7 @@ codegen_rvalue_access_slice_lhs_array(struct expr const* expr, size_t id)
 }
 
 static void
-codegen_rvalue_access_slice_lhs_slice(struct expr const* expr, size_t id)
+push_rvalue_access_slice_lhs_slice(struct expr const* expr, size_t id)
 {
     assert(expr != NULL);
     assert(expr->kind == EXPR_ACCESS_SLICE);
@@ -1869,9 +1869,9 @@ codegen_rvalue_access_slice_lhs_slice(struct expr const* expr, size_t id)
     struct type const* const lhs_type = expr->data.access_slice.lhs->type;
     struct type const* const element_type = lhs_type->data.slice.base;
 
-    codegen_rvalue(expr->data.access_slice.lhs);
-    codegen_rvalue(expr->data.access_slice.end);
-    codegen_rvalue(expr->data.access_slice.begin);
+    push_rvalue(expr->data.access_slice.lhs);
+    push_rvalue(expr->data.access_slice.end);
+    push_rvalue(expr->data.access_slice.begin);
     appendli("pop rax"); // begin
     appendli("pop rbx"); // end
     appendli("pop rsi"); // start (lhs slice's pointer)
@@ -1903,7 +1903,7 @@ codegen_rvalue_access_slice_lhs_slice(struct expr const* expr, size_t id)
 }
 
 static void
-codegen_rvalue_access_member_variable(struct expr const* expr, size_t id)
+push_rvalue_access_member_variable(struct expr const* expr, size_t id)
 {
     assert(expr != NULL);
     assert(expr->kind == EXPR_ACCESS_MEMBER_VARIABLE);
@@ -1944,7 +1944,7 @@ codegen_rvalue_access_member_variable(struct expr const* expr, size_t id)
     //  |
     //  v
     push(expr->type->size);
-    codegen_rvalue(expr->data.access_member_variable.lhs);
+    push_rvalue(expr->data.access_member_variable.lhs);
     appendli("mov rax, rsp ; rax := start of the object");
     appendli(
         "add rax, %zu ; rax := start of the member variable",
@@ -1956,7 +1956,7 @@ codegen_rvalue_access_member_variable(struct expr const* expr, size_t id)
 }
 
 static void
-codegen_rvalue_sizeof(struct expr const* expr, size_t id)
+push_rvalue_sizeof(struct expr const* expr, size_t id)
 {
     assert(expr != NULL);
     assert(expr->kind == EXPR_SIZEOF);
@@ -1968,7 +1968,7 @@ codegen_rvalue_sizeof(struct expr const* expr, size_t id)
 }
 
 static void
-codegen_rvalue_alignof(struct expr const* expr, size_t id)
+push_rvalue_alignof(struct expr const* expr, size_t id)
 {
     assert(expr != NULL);
     assert(expr->kind == EXPR_ALIGNOF);
@@ -1980,7 +1980,7 @@ codegen_rvalue_alignof(struct expr const* expr, size_t id)
 }
 
 static void
-codegen_rvalue_unary(struct expr const* expr, size_t id)
+push_rvalue_unary(struct expr const* expr, size_t id)
 {
     assert(expr != NULL);
     assert(expr->kind == EXPR_UNARY);
@@ -1989,7 +1989,7 @@ codegen_rvalue_unary(struct expr const* expr, size_t id)
     case UOP_NOT: {
         assert(expr->data.unary.rhs->type->size <= 8u);
 
-        codegen_rvalue(expr->data.unary.rhs);
+        push_rvalue(expr->data.unary.rhs);
 
         char const* rhs_reg = reg_a(expr->data.unary.rhs->type->size);
         appendli("pop rax");
@@ -2001,14 +2001,14 @@ codegen_rvalue_unary(struct expr const* expr, size_t id)
         return;
     }
     case UOP_POS: {
-        codegen_rvalue(expr->data.unary.rhs);
+        push_rvalue(expr->data.unary.rhs);
         return;
     }
     case UOP_NEG: {
         struct expr const* const rhs = expr->data.unary.rhs;
 
         assert(rhs->type->size <= 8u);
-        codegen_rvalue(expr->data.unary.rhs);
+        push_rvalue(expr->data.unary.rhs);
 
         char const* rhs_reg = reg_a(expr->data.unary.rhs->type->size);
         appendli("pop rax");
@@ -2028,7 +2028,7 @@ codegen_rvalue_unary(struct expr const* expr, size_t id)
         return;
     }
     case UOP_BITNOT: {
-        codegen_rvalue(expr->data.unary.rhs);
+        push_rvalue(expr->data.unary.rhs);
         assert(expr->data.unary.rhs->type->size <= 8u);
         appendli("pop rax");
         appendli("not rax");
@@ -2042,7 +2042,7 @@ codegen_rvalue_unary(struct expr const* expr, size_t id)
             // no size (equivalent to no result).
             return;
         }
-        codegen_rvalue(expr->data.unary.rhs);
+        push_rvalue(expr->data.unary.rhs);
         appendli("pop rax ; pointer object being dereferenced");
         size_t const size = expr->type->size;
         push(size);
@@ -2050,7 +2050,7 @@ codegen_rvalue_unary(struct expr const* expr, size_t id)
         return;
     }
     case UOP_ADDRESSOF: {
-        codegen_lvalue(expr->data.unary.rhs);
+        push_lvalue(expr->data.unary.rhs);
         return;
     }
     case UOP_COUNTOF: {
@@ -2066,11 +2066,11 @@ codegen_rvalue_unary(struct expr const* expr, size_t id)
             // lvalue so that we do not push the entire contents of the array
             // onto the stack.
             if (expr_is_lvalue(expr->data.unary.rhs)) {
-                codegen_lvalue(expr->data.unary.rhs);
+                push_lvalue(expr->data.unary.rhs);
                 appendli("pop rax ; discard array lvalue");
             }
             else {
-                codegen_rvalue(expr->data.unary.rhs);
+                push_rvalue(expr->data.unary.rhs);
                 pop(expr->data.unary.rhs->type->size);
             }
             appendli(
@@ -2081,7 +2081,7 @@ codegen_rvalue_unary(struct expr const* expr, size_t id)
         }
 
         if (expr->data.unary.rhs->type->kind == TYPE_SLICE) {
-            codegen_rvalue(expr->data.unary.rhs);
+            push_rvalue(expr->data.unary.rhs);
             appendli("pop rax ; pop slice pointer word");
             return;
         }
@@ -2094,7 +2094,7 @@ codegen_rvalue_unary(struct expr const* expr, size_t id)
 }
 
 static void
-codegen_rvalue_binary(struct expr const* expr, size_t id)
+push_rvalue_binary(struct expr const* expr, size_t id)
 {
     assert(expr != NULL);
     assert(expr->kind == EXPR_BINARY);
@@ -2109,7 +2109,7 @@ codegen_rvalue_binary(struct expr const* expr, size_t id)
         char const* lhs_reg = reg_a(expr->data.binary.lhs->type->size);
         char const* rhs_reg = reg_b(expr->data.binary.rhs->type->size);
         appendln("%s%zu_lhs:", LABEL_EXPR, id);
-        codegen_rvalue(expr->data.binary.lhs);
+        push_rvalue(expr->data.binary.lhs);
         appendli("pop rax");
         appendli("mov rbx, 0x00");
         appendli("cmp %s, %s", lhs_reg, rhs_reg);
@@ -2117,7 +2117,7 @@ codegen_rvalue_binary(struct expr const* expr, size_t id)
         appendli("jmp %s%zu_rhs", LABEL_EXPR, id);
 
         appendln("%s%zu_rhs:", LABEL_EXPR, id);
-        codegen_rvalue(expr->data.binary.rhs);
+        push_rvalue(expr->data.binary.rhs);
         appendli("pop rax");
         appendli("mov rbx, 0x00");
         appendli("cmp %s, %s", lhs_reg, rhs_reg);
@@ -2143,7 +2143,7 @@ codegen_rvalue_binary(struct expr const* expr, size_t id)
         char const* lhs_reg = reg_a(expr->data.binary.lhs->type->size);
         char const* rhs_reg = reg_b(expr->data.binary.rhs->type->size);
         appendln("%s%zu_lhs:", LABEL_EXPR, id);
-        codegen_rvalue(expr->data.binary.lhs);
+        push_rvalue(expr->data.binary.lhs);
         appendli("pop rax");
         appendli("mov rbx, 0x00");
         appendli("cmp %s, %s", lhs_reg, rhs_reg);
@@ -2151,7 +2151,7 @@ codegen_rvalue_binary(struct expr const* expr, size_t id)
         appendli("jmp %s%zu_false", LABEL_EXPR, id);
 
         appendln("%s%zu_rhs:", LABEL_EXPR, id);
-        codegen_rvalue(expr->data.binary.rhs);
+        push_rvalue(expr->data.binary.rhs);
         appendli("pop rax");
         appendli("mov rbx, 0x00");
         appendli("cmp %s, %s", lhs_reg, rhs_reg);
@@ -2172,8 +2172,8 @@ codegen_rvalue_binary(struct expr const* expr, size_t id)
         assert(type_is_any_integer(expr->data.binary.lhs->type));
         assert(expr->data.binary.rhs->type->kind == TYPE_USIZE);
 
-        codegen_rvalue(expr->data.binary.lhs);
-        codegen_rvalue(expr->data.binary.rhs);
+        push_rvalue(expr->data.binary.lhs);
+        push_rvalue(expr->data.binary.rhs);
 
         appendli("pop rcx ; shift rhs");
         appendli("mov rbx, 64");
@@ -2195,8 +2195,8 @@ codegen_rvalue_binary(struct expr const* expr, size_t id)
         assert(type_is_any_integer(expr->data.binary.lhs->type));
         assert(expr->data.binary.rhs->type->kind == TYPE_USIZE);
 
-        codegen_rvalue(expr->data.binary.lhs);
-        codegen_rvalue(expr->data.binary.rhs);
+        push_rvalue(expr->data.binary.lhs);
+        push_rvalue(expr->data.binary.rhs);
 
         appendli("pop rcx ; shift rhs");
         appendli("mov rbx, 64");
@@ -2235,8 +2235,8 @@ codegen_rvalue_binary(struct expr const* expr, size_t id)
         assert(expr->data.binary.rhs->type->size <= 8u);
         assert(expr->data.binary.lhs->type == expr->data.binary.rhs->type);
 
-        codegen_rvalue(expr->data.binary.lhs);
-        codegen_rvalue(expr->data.binary.rhs);
+        push_rvalue(expr->data.binary.lhs);
+        push_rvalue(expr->data.binary.rhs);
 
         char const* lhs_reg = reg_a(expr->data.binary.lhs->type->size);
         char const* rhs_reg = reg_b(expr->data.binary.rhs->type->size);
@@ -2256,8 +2256,8 @@ codegen_rvalue_binary(struct expr const* expr, size_t id)
         assert(expr->data.binary.rhs->type->size <= 8u);
         assert(expr->data.binary.lhs->type == expr->data.binary.rhs->type);
 
-        codegen_rvalue(expr->data.binary.lhs);
-        codegen_rvalue(expr->data.binary.rhs);
+        push_rvalue(expr->data.binary.lhs);
+        push_rvalue(expr->data.binary.rhs);
 
         char const* lhs_reg = reg_a(expr->data.binary.lhs->type->size);
         char const* rhs_reg = reg_b(expr->data.binary.rhs->type->size);
@@ -2278,8 +2278,8 @@ codegen_rvalue_binary(struct expr const* expr, size_t id)
         assert(expr->data.binary.lhs->type == expr->data.binary.rhs->type);
         struct type const* const xhs_type = expr->data.binary.lhs->type;
 
-        codegen_rvalue(expr->data.binary.lhs);
-        codegen_rvalue(expr->data.binary.rhs);
+        push_rvalue(expr->data.binary.lhs);
+        push_rvalue(expr->data.binary.rhs);
 
         char const* lhs_reg = reg_a(expr->data.binary.lhs->type->size);
         char const* rhs_reg = reg_b(expr->data.binary.rhs->type->size);
@@ -2302,8 +2302,8 @@ codegen_rvalue_binary(struct expr const* expr, size_t id)
         assert(expr->data.binary.lhs->type == expr->data.binary.rhs->type);
         struct type const* const xhs_type = expr->data.binary.lhs->type;
 
-        codegen_rvalue(expr->data.binary.lhs);
-        codegen_rvalue(expr->data.binary.rhs);
+        push_rvalue(expr->data.binary.lhs);
+        push_rvalue(expr->data.binary.rhs);
 
         char const* lhs_reg = reg_a(expr->data.binary.lhs->type->size);
         char const* rhs_reg = reg_b(expr->data.binary.rhs->type->size);
@@ -2326,8 +2326,8 @@ codegen_rvalue_binary(struct expr const* expr, size_t id)
         assert(expr->data.binary.lhs->type == expr->data.binary.rhs->type);
         struct type const* const xhs_type = expr->data.binary.lhs->type;
 
-        codegen_rvalue(expr->data.binary.lhs);
-        codegen_rvalue(expr->data.binary.rhs);
+        push_rvalue(expr->data.binary.lhs);
+        push_rvalue(expr->data.binary.rhs);
 
         char const* lhs_reg = reg_a(expr->data.binary.lhs->type->size);
         char const* rhs_reg = reg_b(expr->data.binary.rhs->type->size);
@@ -2350,8 +2350,8 @@ codegen_rvalue_binary(struct expr const* expr, size_t id)
         assert(expr->data.binary.lhs->type == expr->data.binary.rhs->type);
         struct type const* const xhs_type = expr->data.binary.lhs->type;
 
-        codegen_rvalue(expr->data.binary.lhs);
-        codegen_rvalue(expr->data.binary.rhs);
+        push_rvalue(expr->data.binary.lhs);
+        push_rvalue(expr->data.binary.rhs);
 
         char const* lhs_reg = reg_a(expr->data.binary.lhs->type->size);
         char const* rhs_reg = reg_b(expr->data.binary.rhs->type->size);
@@ -2379,8 +2379,8 @@ codegen_rvalue_binary(struct expr const* expr, size_t id)
         char const* const jmp_not_overflow =
             type_is_signed_integer(xhs_type) ? "jno" : "jnc";
 
-        codegen_rvalue(expr->data.binary.lhs);
-        codegen_rvalue(expr->data.binary.rhs);
+        push_rvalue(expr->data.binary.lhs);
+        push_rvalue(expr->data.binary.rhs);
         appendli("pop rbx ; add rhs");
         appendli("pop rax ; add lhs");
         appendli("add %s, %s", lhs_reg, rhs_reg);
@@ -2404,8 +2404,8 @@ codegen_rvalue_binary(struct expr const* expr, size_t id)
         char const* const jmp_not_overflow =
             type_is_signed_integer(xhs_type) ? "jno" : "jnc";
 
-        codegen_rvalue(expr->data.binary.lhs);
-        codegen_rvalue(expr->data.binary.rhs);
+        push_rvalue(expr->data.binary.lhs);
+        push_rvalue(expr->data.binary.rhs);
         appendli("pop rbx ; sub rhs");
         appendli("pop rax ; sub lhs");
         appendli("sub %s, %s", lhs_reg, rhs_reg);
@@ -2428,8 +2428,8 @@ codegen_rvalue_binary(struct expr const* expr, size_t id)
         char const* const mul =
             type_is_signed_integer(xhs_type) ? "imul" : "mul";
 
-        codegen_rvalue(expr->data.binary.lhs);
-        codegen_rvalue(expr->data.binary.rhs);
+        push_rvalue(expr->data.binary.lhs);
+        push_rvalue(expr->data.binary.rhs);
         appendli("pop rbx ; mul rhs");
         appendli("pop rax ; mul lhs");
         appendli("%s %s", mul, rhs_reg);
@@ -2453,8 +2453,8 @@ codegen_rvalue_binary(struct expr const* expr, size_t id)
         char const* const div =
             type_is_signed_integer(xhs_type) ? "idiv" : "div";
 
-        codegen_rvalue(expr->data.binary.lhs);
-        codegen_rvalue(expr->data.binary.rhs);
+        push_rvalue(expr->data.binary.lhs);
+        push_rvalue(expr->data.binary.rhs);
         appendli("pop rbx ; div rhs");
         appendli("pop rax ; div lhs");
         if (type_is_signed_integer(xhs_type)) {
@@ -2525,8 +2525,8 @@ codegen_rvalue_binary(struct expr const* expr, size_t id)
         assert(expr->data.binary.rhs->type->size <= 8u);
         assert(expr->data.binary.lhs->type == expr->data.binary.rhs->type);
 
-        codegen_rvalue(expr->data.binary.lhs);
-        codegen_rvalue(expr->data.binary.rhs);
+        push_rvalue(expr->data.binary.lhs);
+        push_rvalue(expr->data.binary.rhs);
 
         appendli("pop rbx");
         appendli("pop rax");
@@ -2541,8 +2541,8 @@ codegen_rvalue_binary(struct expr const* expr, size_t id)
         assert(expr->data.binary.rhs->type->size <= 8u);
         assert(expr->data.binary.lhs->type == expr->data.binary.rhs->type);
 
-        codegen_rvalue(expr->data.binary.lhs);
-        codegen_rvalue(expr->data.binary.rhs);
+        push_rvalue(expr->data.binary.lhs);
+        push_rvalue(expr->data.binary.rhs);
 
         appendli("pop rbx");
         appendli("pop rax");
@@ -2557,8 +2557,8 @@ codegen_rvalue_binary(struct expr const* expr, size_t id)
         assert(expr->data.binary.rhs->type->size <= 8u);
         assert(expr->data.binary.lhs->type == expr->data.binary.rhs->type);
 
-        codegen_rvalue(expr->data.binary.lhs);
-        codegen_rvalue(expr->data.binary.rhs);
+        push_rvalue(expr->data.binary.lhs);
+        push_rvalue(expr->data.binary.rhs);
 
         appendli("pop rbx");
         appendli("pop rax");
@@ -2572,7 +2572,7 @@ codegen_rvalue_binary(struct expr const* expr, size_t id)
 }
 
 static void
-codegen_lvalue(struct expr const* expr)
+push_lvalue(struct expr const* expr)
 {
     assert(expr != NULL);
     assert(expr_is_lvalue(expr));
@@ -2583,11 +2583,11 @@ codegen_lvalue(struct expr const* expr)
     } const table[] = {
 #define TABLE_ENTRY(kind, fn) [kind] = {#kind, fn}
         // clang format off
-        TABLE_ENTRY(EXPR_SYMBOL, codegen_lvalue_symbol),
-        TABLE_ENTRY(EXPR_ACCESS_INDEX, codegen_lvalue_access_index),
+        TABLE_ENTRY(EXPR_SYMBOL, push_lvalue_symbol),
+        TABLE_ENTRY(EXPR_ACCESS_INDEX, push_lvalue_access_index),
         TABLE_ENTRY(
-            EXPR_ACCESS_MEMBER_VARIABLE, codegen_lvalue_access_member_variable),
-        TABLE_ENTRY(EXPR_UNARY, codegen_lvalue_unary),
+            EXPR_ACCESS_MEMBER_VARIABLE, push_lvalue_access_member_variable),
+        TABLE_ENTRY(EXPR_UNARY, push_lvalue_unary),
     // clang format on
 #undef TABLE_ENTRY
     };
@@ -2602,7 +2602,7 @@ codegen_lvalue(struct expr const* expr)
 }
 
 static void
-codegen_lvalue_symbol(struct expr const* expr, size_t id)
+push_lvalue_symbol(struct expr const* expr, size_t id)
 {
     assert(expr != NULL);
     assert(expr->kind == EXPR_SYMBOL);
@@ -2621,18 +2621,18 @@ codegen_lvalue_symbol(struct expr const* expr, size_t id)
 }
 
 static void
-codegen_lvalue_access_index(struct expr const* expr, size_t id)
+push_lvalue_access_index(struct expr const* expr, size_t id)
 {
     assert(expr != NULL);
     assert(expr->kind == EXPR_ACCESS_INDEX);
 
     if (expr->data.access_index.lhs->type->kind == TYPE_ARRAY) {
-        codegen_lvalue_access_index_lhs_array(expr, id);
+        push_lvalue_access_index_lhs_array(expr, id);
         return;
     }
 
     if (expr->data.access_index.lhs->type->kind == TYPE_SLICE) {
-        codegen_lvalue_access_index_lhs_slice(expr, id);
+        push_lvalue_access_index_lhs_slice(expr, id);
         return;
     }
 
@@ -2640,7 +2640,7 @@ codegen_lvalue_access_index(struct expr const* expr, size_t id)
 }
 
 static void
-codegen_lvalue_access_index_lhs_array(struct expr const* expr, size_t id)
+push_lvalue_access_index_lhs_array(struct expr const* expr, size_t id)
 {
     assert(expr != NULL);
     assert(expr->kind == EXPR_ACCESS_INDEX);
@@ -2654,8 +2654,8 @@ codegen_lvalue_access_index_lhs_array(struct expr const* expr, size_t id)
         return;
     }
 
-    codegen_lvalue(expr->data.access_index.lhs);
-    codegen_rvalue(expr->data.access_index.idx);
+    push_lvalue(expr->data.access_index.lhs);
+    push_rvalue(expr->data.access_index.idx);
     appendli("pop rax"); // index
     appendli("mov rbx, %zu", lhs_type->data.array.count); // count
     appendli("cmp rax, rbx");
@@ -2670,7 +2670,7 @@ codegen_lvalue_access_index_lhs_array(struct expr const* expr, size_t id)
 }
 
 static void
-codegen_lvalue_access_index_lhs_slice(struct expr const* expr, size_t id)
+push_lvalue_access_index_lhs_slice(struct expr const* expr, size_t id)
 {
     assert(expr != NULL);
     assert(expr->kind == EXPR_ACCESS_INDEX);
@@ -2684,8 +2684,8 @@ codegen_lvalue_access_index_lhs_slice(struct expr const* expr, size_t id)
         return;
     }
 
-    codegen_rvalue(expr->data.access_index.lhs);
-    codegen_rvalue(expr->data.access_index.idx);
+    push_rvalue(expr->data.access_index.lhs);
+    push_rvalue(expr->data.access_index.idx);
     appendli("pop rax"); // index
     appendli("mov rbx, [rsp + 8]"); // slice count
     appendli("cmp rax, rbx");
@@ -2701,14 +2701,14 @@ codegen_lvalue_access_index_lhs_slice(struct expr const* expr, size_t id)
 }
 
 static void
-codegen_lvalue_access_member_variable(struct expr const* expr, size_t id)
+push_lvalue_access_member_variable(struct expr const* expr, size_t id)
 {
     assert(expr != NULL);
     assert(expr->kind == EXPR_ACCESS_MEMBER_VARIABLE);
     assert(expr->data.access_member_variable.lhs->type->kind == TYPE_STRUCT);
     (void)id;
 
-    codegen_lvalue(expr->data.access_member_variable.lhs);
+    push_lvalue(expr->data.access_member_variable.lhs);
     appendli("pop rax");
     appendli(
         "add rax, %zu",
@@ -2717,7 +2717,7 @@ codegen_lvalue_access_member_variable(struct expr const* expr, size_t id)
 }
 
 static void
-codegen_lvalue_unary(struct expr const* expr, size_t id)
+push_lvalue_unary(struct expr const* expr, size_t id)
 {
     assert(expr != NULL);
     assert(expr_is_lvalue(expr));
@@ -2726,7 +2726,7 @@ codegen_lvalue_unary(struct expr const* expr, size_t id)
     switch (expr->data.unary.op) {
     case UOP_DEREFERENCE: {
         assert(expr->data.unary.rhs->type->kind == TYPE_POINTER);
-        codegen_rvalue(expr->data.unary.rhs);
+        push_rvalue(expr->data.unary.rhs);
         return;
     }
     case UOP_NOT: /* fallthrough */
