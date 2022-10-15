@@ -1120,8 +1120,7 @@ explicit_cast(
         assert(value->type->kind == TYPE_BOOL);
 
         // OPTIMIZATION(constant folding)
-        resolved =
-            expr_new_boolean(resolved->location, value->data.boolean);
+        resolved = expr_new_boolean(resolved->location, value->data.boolean);
 
         value_del(value);
         freeze(resolved);

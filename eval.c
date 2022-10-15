@@ -378,7 +378,8 @@ eval_rvalue_cast(struct expr const* expr)
         }
 
         struct value* const result =
-            value_new_integer(expr->type, from->data.integer);
+            value_new_integer(expr->type, bigint_new(from->data.integer));
+        value_del(from);
         return result;
     }
 
