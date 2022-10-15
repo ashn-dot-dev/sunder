@@ -10,7 +10,7 @@
 char const* backend = STRINGIFY(SUNDER_DEFAULT_BACKEND);
 static struct string* out = NULL;
 static struct function const* current_function = NULL;
-static size_t current_loop_id; // Used for generating break & continue lables.
+static size_t current_loop_id; // Used for generating break & continue labels.
 static size_t unique_id = 0; // Used for generating unique names and labels.
 
 // Local labels take the form:
