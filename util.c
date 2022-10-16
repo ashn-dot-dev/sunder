@@ -988,6 +988,17 @@ bigint_new(struct bigint const* othr)
 }
 
 struct bigint*
+bigint_new_umax(uintmax_t umax)
+{
+    char buf[255] = {0};
+    int const written = snprintf(buf, sizeof(buf), "%ju", umax);
+    assert(written < (int)sizeof(buf));
+    (void)written;
+
+    return bigint_new_text(buf, strlen(buf));
+}
+
+struct bigint*
 bigint_new_cstr(char const* cstr)
 {
     assert(cstr != NULL);

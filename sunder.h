@@ -383,10 +383,14 @@ extern struct bigint const* const BIGINT_ZERO; // 0
 extern struct bigint const* const BIGINT_POS_ONE; // +1
 extern struct bigint const* const BIGINT_NEG_ONE; // -1
 
-// Allocate and initialize a bigint to the specified value.
+// Allocate and initialize a bigint to the specified bigint value.
 // The call bigint_new(BIGINT_ZERO) will zero-initialize a bigint.
 struct bigint*
 bigint_new(struct bigint const* othr);
+// Allocate and initialize a bigint to the specified uintmax_t value.
+// The call bigint_new(BIGINT_ZERO) will zero-initialize a bigint.
+struct bigint*
+bigint_new_umax(uintmax_t umax);
 // Allocate and initialize a bigint from the provided NUL-terminated cstring.
 // Returns NULL if the cstring could not be parsed.
 //
