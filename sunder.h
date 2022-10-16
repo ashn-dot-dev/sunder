@@ -638,10 +638,6 @@ ceil8i(int x);
 size_t
 ceil8zu(size_t x);
 
-// Convert a size_t to a bigint.
-// The result bigint must be pre-initialized.
-void
-uz_to_bigint(struct bigint* res, size_t uz);
 // Convert a two's complement bit array into a bigint.
 // The result bigint must be pre-initialized.
 void

@@ -187,10 +187,8 @@ eval_rvalue_bytes(struct expr const* expr)
         type_unique_pointer(context()->builtin.byte),
         *expr->data.bytes.address);
 
-    struct bigint* const count_bigint = bigint_new(BIGINT_ZERO);
-    uz_to_bigint(count_bigint, expr->data.bytes.count);
-    struct value* const count =
-        value_new_integer(context()->builtin.usize, count_bigint);
+    struct value* const count = value_new_integer(
+        context()->builtin.usize, bigint_new_umax(expr->data.bytes.count));
 
     return value_new_slice(expr->type, pointer, count);
 }
@@ -230,9 +228,8 @@ eval_rvalue_slice_list(struct expr const* expr)
 
     sbuf(struct expr const* const) const elements =
         expr->data.slice_list.elements;
-    struct value* const count =
-        value_new_integer(context()->builtin.usize, bigint_new(BIGINT_ZERO));
-    uz_to_bigint(count->data.integer, sbuf_count(elements));
+    struct value* const count = value_new_integer(
+        context()->builtin.usize, bigint_new_umax(sbuf_count(elements)));
 
     return value_new_slice(expr->type, pointer, count);
 }
@@ -613,11 +610,10 @@ eval_rvalue_sizeof(struct expr const* expr)
     assert(expr != NULL);
     assert(expr->kind == EXPR_SIZEOF);
 
-    struct bigint* const size_bigint = bigint_new(BIGINT_ZERO);
-    uz_to_bigint(size_bigint, expr->data.sizeof_.rhs->size);
-
     assert(expr->type->kind == TYPE_USIZE);
-    return value_new_integer(context()->builtin.usize, size_bigint);
+    return value_new_integer(
+        context()->builtin.usize,
+        bigint_new_umax(expr->data.sizeof_.rhs->size));
 }
 
 static struct value*
@@ -626,11 +622,10 @@ eval_rvalue_alignof(struct expr const* expr)
     assert(expr != NULL);
     assert(expr->kind == EXPR_ALIGNOF);
 
-    struct bigint* const size_bigint = bigint_new(BIGINT_ZERO);
-    uz_to_bigint(size_bigint, expr->data.alignof_.rhs->align);
-
     assert(expr->type->kind == TYPE_USIZE);
-    return value_new_integer(context()->builtin.usize, size_bigint);
+    return value_new_integer(
+        context()->builtin.usize,
+        bigint_new_umax(expr->data.alignof_.rhs->align));
 }
 
 static struct value*
@@ -707,21 +702,21 @@ eval_rvalue_unary(struct expr const* expr)
     }
     case UOP_COUNTOF: {
         assert(expr->type->kind == TYPE_USIZE);
-        struct value* const res = value_new_integer(
-            context()->builtin.usize, bigint_new(BIGINT_ZERO));
+        struct value* res = NULL;
 
         struct value* const rhs = eval_rvalue(expr->data.unary.rhs);
         switch (rhs->type->kind) {
         case TYPE_ARRAY: {
-            size_t const count_uz = rhs->type->data.array.count;
-            uz_to_bigint(res->data.integer, count_uz);
+            res = value_new_integer(
+                context()->builtin.usize,
+                bigint_new_umax(rhs->type->data.array.count));
             break;
         }
         case TYPE_SLICE: {
             assert(rhs->data.slice.count->type->kind == TYPE_USIZE);
-            struct bigint const* const count_bigint =
-                rhs->data.slice.count->data.integer;
-            bigint_assign(res->data.integer, count_bigint);
+            res = value_new_integer(
+                context()->builtin.usize,
+                bigint_new(rhs->data.slice.count->data.integer));
             break;
         }
         default:

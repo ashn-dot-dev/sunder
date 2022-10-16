@@ -2139,19 +2139,6 @@ ceil8zu(size_t x)
 }
 
 void
-uz_to_bigint(struct bigint* res, size_t uz)
-{
-    assert(res != NULL);
-
-    char buf[256] = {0};
-    snprintf(buf, ARRAY_COUNT(buf), "%zu", uz);
-
-    struct bigint* const tmp = bigint_new_cstr(buf);
-    bigint_assign(res, tmp);
-    bigint_del(tmp);
-}
-
-void
 bitarr_to_bigint(
     struct bigint* res, struct bitarr const* bitarr, bool is_signed)
 {
