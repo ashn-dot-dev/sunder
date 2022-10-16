@@ -391,6 +391,9 @@ bigint_new(struct bigint const* othr);
 // The call bigint_new(BIGINT_ZERO) will zero-initialize a bigint.
 struct bigint*
 bigint_new_umax(uintmax_t umax);
+// Allocate and initialize a bigint from a two's complement bit array.
+struct bigint*
+bigint_new_bitarr(struct bitarr const* bitarr, bool is_signed);
 // Allocate and initialize a bigint from the provided NUL-terminated cstring.
 // Returns NULL if the cstring could not be parsed.
 //
@@ -638,11 +641,10 @@ ceil8i(int x);
 size_t
 ceil8zu(size_t x);
 
-// Convert a two's complement bit array into a bigint.
+// Convert a size_t to a bigint.
 // The result bigint must be pre-initialized.
 void
-bitarr_to_bigint(
-    struct bigint* res, struct bitarr const* bitarr, bool is_signed);
+uz_to_bigint(struct bigint* res, size_t uz);
 
 // Spawn a subprocess and wait for it to complete.
 // Returns the exit status of the spawned process.

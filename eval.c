@@ -425,8 +425,8 @@ eval_rvalue_cast(struct expr const* expr)
             bitarr_set(bits, i, bit);
         }
 
-        struct bigint* const integer = bigint_new(BIGINT_ZERO);
-        bitarr_to_bigint(integer, bits, type_is_signed_integer(expr->type));
+        struct bigint* const integer =
+            bigint_new_bitarr(bits, type_is_signed_integer(expr->type));
         bitarr_del(bits);
 
         res = value_new_integer(expr->type, integer);
@@ -684,8 +684,8 @@ eval_rvalue_unary(struct expr const* expr)
         }
         bitarr_del(rhs_bits);
 
-        struct bigint* const res_bigint = bigint_new(BIGINT_ZERO);
-        bitarr_to_bigint(res_bigint, res_bits, is_signed);
+        struct bigint* const res_bigint =
+            bigint_new_bitarr(res_bits, is_signed);
         bitarr_del(res_bits);
 
         struct value* const res = value_new_integer(rhs->type, res_bigint);
@@ -776,8 +776,8 @@ eval_rvalue_binary(struct expr const* expr)
         }
 
         bitarr_shiftl(res_bits, res_bits, shift_count);
-        struct bigint* const res_bigint = bigint_new(BIGINT_ZERO);
-        bitarr_to_bigint(res_bigint, res_bits, is_signed);
+        struct bigint* const res_bigint =
+            bigint_new_bitarr(res_bits, is_signed);
 
         res = value_new_integer(expr->type, res_bigint);
         bitarr_del(res_bits);
@@ -805,8 +805,8 @@ eval_rvalue_binary(struct expr const* expr)
         }
 
         bitarr_shiftr(res_bits, res_bits, shift_count, is_negative);
-        struct bigint* const res_bigint = bigint_new(BIGINT_ZERO);
-        bitarr_to_bigint(res_bigint, res_bits, is_signed);
+        struct bigint* const res_bigint =
+            bigint_new_bitarr(res_bits, is_signed);
 
         res = value_new_integer(expr->type, res_bigint);
         bitarr_del(res_bits);
@@ -954,8 +954,8 @@ eval_rvalue_binary(struct expr const* expr)
         bitarr_del(lhs_bits);
         bitarr_del(rhs_bits);
 
-        struct bigint* const res_bigint = bigint_new(BIGINT_ZERO);
-        bitarr_to_bigint(res_bigint, res_bits, is_signed);
+        struct bigint* const res_bigint =
+            bigint_new_bitarr(res_bits, is_signed);
         bitarr_del(res_bits);
 
         res = value_new_integer(type, res_bigint);
@@ -1001,8 +1001,8 @@ eval_rvalue_binary(struct expr const* expr)
         bitarr_del(lhs_bits);
         bitarr_del(rhs_bits);
 
-        struct bigint* const res_bigint = bigint_new(BIGINT_ZERO);
-        bitarr_to_bigint(res_bigint, res_bits, is_signed);
+        struct bigint* const res_bigint =
+            bigint_new_bitarr(res_bits, is_signed);
         bitarr_del(res_bits);
 
         res = value_new_integer(type, res_bigint);
@@ -1048,8 +1048,8 @@ eval_rvalue_binary(struct expr const* expr)
         bitarr_del(lhs_bits);
         bitarr_del(rhs_bits);
 
-        struct bigint* const res_bigint = bigint_new(BIGINT_ZERO);
-        bitarr_to_bigint(res_bigint, res_bits, is_signed);
+        struct bigint* const res_bigint =
+            bigint_new_bitarr(res_bits, is_signed);
         bitarr_del(res_bits);
 
         res = value_new_integer(type, res_bigint);

@@ -999,6 +999,38 @@ bigint_new_umax(uintmax_t umax)
 }
 
 struct bigint*
+bigint_new_bitarr(struct bitarr const* bitarr, bool is_signed)
+{
+    assert(bitarr != NULL);
+
+    size_t const bit_count = bitarr_count(bitarr);
+    struct bitarr* const mag_bits = bitarr_new(bit_count);
+    for (size_t i = 0; i < bit_count; ++i) {
+        int const bit = bitarr_get(bitarr, i);
+        bitarr_set(mag_bits, i, bit);
+    }
+
+    bool const is_neg = is_signed && bitarr_get(bitarr, bit_count - 1u);
+    if (is_neg) {
+        // Two's complement negative<->positive conversion.
+        bitarr_twos_complement_neg(mag_bits, mag_bits);
+    }
+
+    struct bigint* const self = bigint_new(BIGINT_ZERO);
+    for (size_t i = 0; i < bit_count; ++i) {
+        int const bit = bitarr_get(mag_bits, i);
+        bigint_magnitude_bit_set(self, i, bit);
+    }
+
+    if (is_neg) {
+        bigint_neg(self, self);
+    }
+
+    bitarr_del(mag_bits);
+    return self;
+}
+
+struct bigint*
 bigint_new_cstr(char const* cstr)
 {
     assert(cstr != NULL);
@@ -2136,39 +2168,6 @@ ceil8zu(size_t x)
         x += 1u;
     }
     return x;
-}
-
-void
-bitarr_to_bigint(
-    struct bigint* res, struct bitarr const* bitarr, bool is_signed)
-{
-    assert(res != NULL);
-    assert(bitarr != NULL);
-
-    size_t const bit_count = bitarr_count(bitarr);
-    struct bitarr* const mag_bits = bitarr_new(bit_count);
-    for (size_t i = 0; i < bit_count; ++i) {
-        int const bit = bitarr_get(bitarr, i);
-        bitarr_set(mag_bits, i, bit);
-    }
-
-    bool const is_neg = is_signed && bitarr_get(bitarr, bit_count - 1u);
-    if (is_neg) {
-        // Two's complement negative<->positive conversion.
-        bitarr_twos_complement_neg(mag_bits, mag_bits);
-    }
-
-    bigint_assign(res, BIGINT_ZERO);
-    for (size_t i = 0; i < bit_count; ++i) {
-        int const bit = bitarr_get(mag_bits, i);
-        bigint_magnitude_bit_set(res, i, bit);
-    }
-
-    if (is_neg) {
-        bigint_neg(res, res);
-    }
-
-    bitarr_del(mag_bits);
 }
 
 int
