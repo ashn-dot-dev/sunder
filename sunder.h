@@ -638,10 +638,6 @@ ceil8i(int x);
 size_t
 ceil8zu(size_t x);
 
-// Convert a uint8_t to a bigint.
-// The result bigint must be pre-initialized.
-void
-u8_to_bigint(struct bigint* res, uint8_t u8);
 // Convert a size_t to a bigint.
 // The result bigint must be pre-initialized.
 void

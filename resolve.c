@@ -1132,8 +1132,7 @@ explicit_cast(
         assert(value->type->kind == TYPE_BYTE);
         value_freeze(value);
 
-        struct bigint* const integer = bigint_new(BIGINT_ZERO);
-        u8_to_bigint(integer, value->data.byte);
+        struct bigint* const integer = bigint_new_umax(value->data.byte);
         bigint_freeze(integer);
 
         resolved = expr_new_integer(expr->location, type, integer);
