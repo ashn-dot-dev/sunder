@@ -1643,11 +1643,11 @@ struct function const*
 type_member_function(struct type const* self, char const* name);
 
 bool
-type_is_any_integer(struct type const* self);
+type_is_int(struct type const* self);
 bool
-type_is_unsigned_integer(struct type const* self);
+type_is_uint(struct type const* self);
 bool
-type_is_signed_integer(struct type const* self);
+type_is_sint(struct type const* self);
 // Returns true if the type may be compared with the == or != operators.
 bool
 type_can_compare_equality(struct type const* self);

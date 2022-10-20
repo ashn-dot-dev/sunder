@@ -490,7 +490,7 @@ type_member_function(struct type const* self, char const* name)
 }
 
 bool
-type_is_any_integer(struct type const* self)
+type_is_int(struct type const* self)
 {
     assert(self != NULL);
 
@@ -502,7 +502,7 @@ type_is_any_integer(struct type const* self)
 }
 
 bool
-type_is_unsigned_integer(struct type const* self)
+type_is_uint(struct type const* self)
 {
     assert(self != NULL);
 
@@ -512,7 +512,7 @@ type_is_unsigned_integer(struct type const* self)
 }
 
 bool
-type_is_signed_integer(struct type const* self)
+type_is_sint(struct type const* self)
 {
     assert(self != NULL);
 
@@ -527,7 +527,7 @@ type_can_compare_equality(struct type const* self)
     assert(self != NULL);
 
     enum type_kind const kind = self->kind;
-    return kind == TYPE_BOOL || kind == TYPE_BYTE || type_is_any_integer(self)
+    return kind == TYPE_BOOL || kind == TYPE_BYTE || type_is_int(self)
         || kind == TYPE_FUNCTION || kind == TYPE_POINTER;
 }
 
@@ -537,7 +537,7 @@ type_can_compare_order(struct type const* self)
     assert(self != NULL);
 
     enum type_kind const kind = self->kind;
-    return kind == TYPE_BOOL || kind == TYPE_BYTE || type_is_any_integer(self)
+    return kind == TYPE_BOOL || kind == TYPE_BYTE || type_is_int(self)
         || kind == TYPE_POINTER;
 }
 
@@ -1082,12 +1082,12 @@ expr_new_integer(
 {
     assert(location != NULL);
     assert(type != NULL);
-    assert(type->kind == TYPE_BYTE || type_is_any_integer(type));
+    assert(type->kind == TYPE_BYTE || type_is_int(type));
     assert(value != NULL);
 
     bool const is_byte = type->kind == TYPE_BYTE;
     bool const is_sized_integer =
-        type_is_any_integer(type) && type->kind != TYPE_INTEGER;
+        type_is_int(type) && type->kind != TYPE_INTEGER;
 
     if (is_byte && bigint_cmp(value, context()->u8_min) < 0) {
         char* const lit_cstr = bigint_to_new_cstr(value);
@@ -1531,7 +1531,7 @@ struct value*
 value_new_integer(struct type const* type, struct bigint* integer)
 {
     assert(type != NULL);
-    assert(type_is_any_integer(type));
+    assert(type_is_int(type));
     assert(integer != NULL);
     assert(
         type->kind == TYPE_INTEGER

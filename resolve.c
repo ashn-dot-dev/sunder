@@ -1030,14 +1030,13 @@ explicit_cast(
             expr->type->name);
     }
 
-    bool const valid =
-        (type_is_any_integer(type) && type_is_any_integer(expr->type))
+    bool const valid = (type_is_int(type) && type_is_int(expr->type))
         || (type->kind == TYPE_BOOL && expr->type->kind == TYPE_BYTE)
         || (type->kind == TYPE_BYTE && expr->type->kind == TYPE_BOOL)
-        || (type->kind == TYPE_BOOL && type_is_any_integer(expr->type))
-        || (type_is_any_integer(type) && expr->type->kind == TYPE_BOOL)
-        || (type->kind == TYPE_BYTE && type_is_any_integer(expr->type))
-        || (type_is_any_integer(type) && expr->type->kind == TYPE_BYTE)
+        || (type->kind == TYPE_BOOL && type_is_int(expr->type))
+        || (type_is_int(type) && expr->type->kind == TYPE_BOOL)
+        || (type->kind == TYPE_BYTE && type_is_int(expr->type))
+        || (type_is_int(type) && expr->type->kind == TYPE_BYTE)
         || (type->kind == TYPE_POINTER && expr->type->kind == TYPE_USIZE)
         || (type->kind == TYPE_USIZE && expr->type->kind == TYPE_POINTER)
         || (type->kind == TYPE_POINTER && expr->type->kind == TYPE_POINTER)
@@ -1142,9 +1141,9 @@ explicit_cast(
     }
 
     // OPTIMIZATION(constant folding)
-    if (type_is_any_integer(type) && expr->kind == EXPR_INTEGER) {
+    if (type_is_int(type) && expr->kind == EXPR_INTEGER) {
         struct value* const value = eval_rvalue(resolved);
-        assert(type_is_any_integer(value->type));
+        assert(type_is_int(value->type));
         value_freeze(value);
 
         resolved = expr_new_integer(expr->location, type, value->data.integer);
@@ -1175,7 +1174,7 @@ implicit_cast(struct type const* type, struct expr const* expr)
     }
 
     // FROM untyped integer TO typed integer.
-    if (type_is_any_integer(type) && from->kind == TYPE_INTEGER) {
+    if (type_is_int(type) && from->kind == TYPE_INTEGER) {
         return explicit_cast(expr->location, type, expr);
     }
 
@@ -3655,7 +3654,7 @@ resolve_expr_unary(struct resolver* resolver, struct cst_expr const* expr)
         return resolve_expr_unary_arithmetic(resolver, op, UOP_POS, rhs);
     }
     case TOKEN_DASH: {
-        if (type_is_unsigned_integer(rhs->type)) {
+        if (type_is_uint(rhs->type)) {
             fatal(
                 &op->location,
                 "invalid argument of type `%s` in unary `%s` expression",
@@ -3721,7 +3720,7 @@ resolve_expr_unary_arithmetic(
     assert(rhs != NULL);
     (void)resolver;
 
-    if (!type_is_any_integer(rhs->type)) {
+    if (!type_is_int(rhs->type)) {
         fatal(
             &op->location,
             "invalid argument of type `%s` in unary `%s` expression",
@@ -3755,7 +3754,7 @@ resolve_expr_unary_bitwise(
             rhs->type->name,
             token_kind_to_cstr(op->kind));
     }
-    if (!(rhs->type->kind == TYPE_BYTE || type_is_any_integer(rhs->type))) {
+    if (!(rhs->type->kind == TYPE_BYTE || type_is_int(rhs->type))) {
         fatal(
             rhs->location,
             "cannot apply bitwise NOT to type `%s`",
@@ -3965,7 +3964,7 @@ resolve_expr_binary_shift(
     assert(rhs != NULL);
     (void)resolver;
 
-    if (!type_is_any_integer(lhs->type)) {
+    if (!type_is_int(lhs->type)) {
         fatal(
             &op->location,
             "invalid left-hand argument of type `%s` in binary `%s` expression",
@@ -4124,8 +4123,8 @@ resolve_expr_binary_arithmetic(
     lhs = implicit_cast(rhs->type, lhs);
     rhs = implicit_cast(lhs->type, rhs);
 
-    bool const valid = lhs->type == rhs->type && type_is_any_integer(lhs->type)
-        && type_is_any_integer(rhs->type);
+    bool const valid = lhs->type == rhs->type && type_is_int(lhs->type)
+        && type_is_int(rhs->type);
     if (!valid) {
         fatal(
             &op->location,
@@ -4147,7 +4146,7 @@ resolve_expr_binary_arithmetic(
         struct value* const value = eval_rvalue(resolved);
         value_freeze(value);
 
-        assert(type_is_any_integer(value->type));
+        assert(type_is_int(value->type));
         resolved = expr_new_integer(
             resolved->location, resolved->type, value->data.integer);
         freeze(resolved);
@@ -4185,8 +4184,8 @@ resolve_expr_binary_bitwise(
             token_kind_to_cstr(op->kind));
     }
 
-    bool const valid = type->kind == TYPE_BOOL || type->kind == TYPE_BYTE
-        || type_is_any_integer(type);
+    bool const valid =
+        type->kind == TYPE_BOOL || type->kind == TYPE_BYTE || type_is_int(type);
     if (!valid) {
         goto invalid_operand_types;
     }
@@ -4202,7 +4201,7 @@ resolve_expr_binary_bitwise(
         struct value* const value = eval_rvalue(resolved);
         value_freeze(value);
 
-        assert(type_is_any_integer(value->type));
+        assert(type_is_int(value->type));
         resolved = expr_new_integer(
             resolved->location, resolved->type, value->data.integer);
         freeze(resolved);
