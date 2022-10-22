@@ -1336,7 +1336,7 @@ push_rvalue(struct expr const* expr)
         TABLE_ENTRY(EXPR_ALIGNOF, push_rvalue_alignof),
         TABLE_ENTRY(EXPR_UNARY, push_rvalue_unary),
         TABLE_ENTRY(EXPR_BINARY, push_rvalue_binary),
-    // clang-format on
+        // clang-format on
 #undef TABLE_ENTRY
     };
 
@@ -2577,7 +2577,7 @@ push_lvalue(struct expr const* expr)
         TABLE_ENTRY(
             EXPR_ACCESS_MEMBER_VARIABLE, push_lvalue_access_member_variable),
         TABLE_ENTRY(EXPR_UNARY, push_lvalue_unary),
-    // clang format on
+        // clang format on
 #undef TABLE_ENTRY
     };
 
