@@ -1,0 +1,19 @@
+func main() void {
+    dump (:bool)true;
+    dump (:bool)false;
+
+    var x = true;
+    dump (:bool)x;
+    dump (:bool)(:bool)x;
+
+    const y = true;
+    dump (:bool)y;
+    dump (:bool)(:bool)y;
+}
+################################################################################
+# 01
+# 00
+# 01
+# 01
+# 01
+# 01

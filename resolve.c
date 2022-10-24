@@ -1085,7 +1085,9 @@ explicit_cast(
             expr->type->name);
     }
 
-    bool const valid = (type_is_int(type) && type_is_int(expr->type))
+    bool const valid =
+        (type->kind == TYPE_BOOL && expr->type->kind == TYPE_BOOL)
+        || (type_is_int(type) && type_is_int(expr->type))
         || (type->kind == TYPE_BOOL && expr->type->kind == TYPE_BYTE)
         || (type->kind == TYPE_BYTE && expr->type->kind == TYPE_BOOL)
         || (type->kind == TYPE_BOOL && type_is_int(expr->type))
