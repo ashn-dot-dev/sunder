@@ -1,0 +1,42 @@
+# Exercise known constant propagation and constant folding optimizations.
+
+func main() void {
+    # Cast to bool from constant value.
+    (:bool)true;
+    (:bool)1y;
+    (:bool)1u8;
+    (:bool)1;
+
+    # Cast to byte from constant value.
+    (:byte)true;
+    (:byte)1y;
+    (:byte)1u8;
+    (:byte)1;
+
+    # Cast to integer types from constant value.
+    (:usize)true;
+    (:usize)1y;
+    (:usize)1u8;
+    (:usize)1;
+
+    # Binary equality comparison.
+    123s == 123s;
+    123s != 123s;
+
+    # Binary order comparison.
+    123s < 123s;
+    123s <= 123s;
+    123s > 123s;
+    123s >= 123s;
+
+    # Binary arithmetic.
+    123s + 123s;
+    123s - 123s;
+    123s * 123s;
+    123s / 123s;
+
+    # Binary bitwise.
+    123s & 123s;
+    123s | 123s;
+    123s ^ 123s;
+}
