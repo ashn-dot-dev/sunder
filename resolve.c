@@ -4028,8 +4028,19 @@ resolve_expr_binary_logical(
     }
 
     struct type const* const type = context()->builtin.bool_;
-    struct expr* const resolved =
-        expr_new_binary(&op->location, type, bop, lhs, rhs);
+    struct expr* resolved = expr_new_binary(&op->location, type, bop, lhs, rhs);
+
+    // OPTIMIZATION(constant folding)
+    if (lhs->kind == EXPR_VALUE && rhs->kind == EXPR_VALUE) {
+        struct value* const value = eval_rvalue(resolved);
+        value_freeze(value);
+
+        assert(value->type->kind == TYPE_BOOL);
+        resolved = expr_new_value(resolved->location, value);
+
+        freeze(resolved);
+        return resolved;
+    }
 
     freeze(resolved);
     return resolved;

@@ -29,6 +29,10 @@ func main() void {
     123s > 123s;
     123s >= 123s;
 
+    # Binary logic.
+    true or false;
+    true and false;
+
     # Binary arithmetic.
     123s + 123s;
     123s - 123s;
