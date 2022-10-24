@@ -1085,18 +1085,18 @@ explicit_cast(
             expr->type->name);
     }
 
-    bool const valid =
-        (type->kind == TYPE_BOOL && expr->type->kind == TYPE_BOOL)
-        || (type_is_int(type) && type_is_int(expr->type))
-        || (type->kind == TYPE_BOOL && expr->type->kind == TYPE_BYTE)
-        || (type->kind == TYPE_BYTE && expr->type->kind == TYPE_BOOL)
-        || (type->kind == TYPE_BOOL && type_is_int(expr->type))
+    bool const valid = (type_is_int(type) && type_is_int(expr->type))
         || (type_is_int(type) && expr->type->kind == TYPE_BOOL)
-        || (type->kind == TYPE_BYTE && type_is_int(expr->type))
         || (type_is_int(type) && expr->type->kind == TYPE_BYTE)
+        || (type->kind == TYPE_BOOL && expr->type->kind == TYPE_BOOL)
+        || (type->kind == TYPE_BOOL && expr->type->kind == TYPE_BYTE)
+        || (type->kind == TYPE_BOOL && type_is_int(expr->type))
+        || (type->kind == TYPE_BYTE && expr->type->kind == TYPE_BOOL)
+        || (type->kind == TYPE_BYTE && expr->type->kind == TYPE_BYTE)
+        || (type->kind == TYPE_BYTE && type_is_int(expr->type))
+        || (type->kind == TYPE_POINTER && expr->type->kind == TYPE_POINTER)
         || (type->kind == TYPE_POINTER && expr->type->kind == TYPE_USIZE)
         || (type->kind == TYPE_USIZE && expr->type->kind == TYPE_POINTER)
-        || (type->kind == TYPE_POINTER && expr->type->kind == TYPE_POINTER)
         || (type->kind == TYPE_FUNCTION && expr->type->kind == TYPE_FUNCTION);
     if (!valid) {
         fatal(
