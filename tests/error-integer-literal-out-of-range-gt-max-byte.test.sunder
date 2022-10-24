@@ -2,6 +2,6 @@ func main() void {
     +256y;
 }
 ################################################################################
-# [error-integer-literal-out-of-range-gt-max-byte.test.sunder:2] error: out-of-range byte literal (256 > 255)
+# [error-integer-literal-out-of-range-gt-max-byte.test.sunder:2] error: out-of-range byte (256 > 255)
 #     +256y;
 #     ^

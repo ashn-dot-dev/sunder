@@ -1906,8 +1906,7 @@ struct expr {
     struct type const* type;
     enum expr_kind {
         EXPR_SYMBOL,
-        EXPR_BOOLEAN,
-        EXPR_INTEGER,
+        EXPR_VALUE,
         EXPR_BYTES,
         EXPR_ARRAY_LIST,
         EXPR_SLICE_LIST,
@@ -1925,8 +1924,7 @@ struct expr {
     } kind;
     union {
         struct symbol const* symbol;
-        bool boolean;
-        struct bigint const* integer;
+        struct value const* value;
         struct {
             struct address const* address;
             size_t count;
@@ -2020,12 +2018,8 @@ struct expr*
 expr_new_symbol(
     struct source_location const* location, struct symbol const* symbol);
 struct expr*
-expr_new_boolean(struct source_location const* location, bool value);
-struct expr*
-expr_new_integer(
-    struct source_location const* location,
-    struct type const* type,
-    struct bigint const* value);
+expr_new_value(
+    struct source_location const* location, struct value const* value);
 struct expr*
 expr_new_bytes(
     struct source_location const* location,

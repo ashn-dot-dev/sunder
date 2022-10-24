@@ -12,9 +12,7 @@ integer_is_out_of_range(struct type const* type, struct bigint const* res);
 static struct value*
 eval_rvalue_symbol(struct expr const* expr);
 static struct value*
-eval_rvalue_boolean(struct expr const* expr);
-static struct value*
-eval_rvalue_integer(struct expr const* expr);
+eval_rvalue_value(struct expr const* expr);
 static struct value*
 eval_rvalue_bytes(struct expr const* expr);
 static struct value*
@@ -77,11 +75,8 @@ eval_rvalue(struct expr const* expr)
     case EXPR_SYMBOL: {
         return eval_rvalue_symbol(expr);
     }
-    case EXPR_BOOLEAN: {
-        return eval_rvalue_boolean(expr);
-    }
-    case EXPR_INTEGER: {
-        return eval_rvalue_integer(expr);
+    case EXPR_VALUE: {
+        return eval_rvalue_value(expr);
     }
     case EXPR_BYTES: {
         return eval_rvalue_bytes(expr);
@@ -148,33 +143,12 @@ eval_rvalue_symbol(struct expr const* expr)
 }
 
 static struct value*
-eval_rvalue_boolean(struct expr const* expr)
+eval_rvalue_value(struct expr const* expr)
 {
     assert(expr != NULL);
-    assert(expr->kind == EXPR_BOOLEAN);
+    assert(expr->kind == EXPR_VALUE);
 
-    return value_new_boolean(expr->data.boolean);
-}
-
-static struct value*
-eval_rvalue_integer(struct expr const* expr)
-{
-    assert(expr != NULL);
-    assert(expr->kind == EXPR_INTEGER);
-
-    struct bigint const* const integer = expr->data.integer;
-
-    if (expr->type->kind == TYPE_BYTE) {
-        uint8_t byte = 0;
-        int const out_of_range = bigint_to_u8(&byte, integer);
-        if (out_of_range) {
-            UNREACHABLE();
-        }
-        return value_new_byte(byte);
-    }
-
-    assert(type_is_int(expr->type));
-    return value_new_integer(expr->type, bigint_new(integer));
+    return value_clone(expr->data.value);
 }
 
 static struct value*
@@ -1083,8 +1057,7 @@ eval_lvalue(struct expr const* expr)
     case EXPR_UNARY: {
         return eval_lvalue_unary(expr);
     }
-    case EXPR_BOOLEAN: /* fallthrough */
-    case EXPR_INTEGER: /* fallthrough */
+    case EXPR_VALUE: /* fallthrough */
     case EXPR_BYTES: /* fallthrough */
     case EXPR_ARRAY_LIST: /* fallthrough */
     case EXPR_SLICE_LIST: /* fallthrough */

@@ -642,9 +642,7 @@ push_rvalue(struct expr const* expr);
 static void
 push_rvalue_symbol(struct expr const* expr, size_t id);
 static void
-push_rvalue_boolean(struct expr const* expr, size_t id);
-static void
-push_rvalue_integer(struct expr const* expr, size_t id);
+push_rvalue_value(struct expr const* expr, size_t id);
 static void
 push_rvalue_bytes(struct expr const* expr, size_t id);
 static void
@@ -1313,15 +1311,14 @@ push_rvalue(struct expr const* expr)
 {
     assert(expr != NULL);
 
+    // clang-format off
     static struct {
         char const* kind_cstr;
         void (*codegen_fn)(struct expr const*, size_t);
     } const table[] = {
 #define TABLE_ENTRY(kind, fn) [kind] = {#kind, fn}
-        // clang-format off
         TABLE_ENTRY(EXPR_SYMBOL, push_rvalue_symbol),
-        TABLE_ENTRY(EXPR_BOOLEAN, push_rvalue_boolean),
-        TABLE_ENTRY(EXPR_INTEGER, push_rvalue_integer),
+        TABLE_ENTRY(EXPR_VALUE, push_rvalue_value),
         TABLE_ENTRY(EXPR_BYTES, push_rvalue_bytes),
         TABLE_ENTRY(EXPR_ARRAY_LIST, push_rvalue_array_list),
         TABLE_ENTRY(EXPR_SLICE_LIST, push_rvalue_slice_list),
@@ -1336,9 +1333,9 @@ push_rvalue(struct expr const* expr)
         TABLE_ENTRY(EXPR_ALIGNOF, push_rvalue_alignof),
         TABLE_ENTRY(EXPR_UNARY, push_rvalue_unary),
         TABLE_ENTRY(EXPR_BINARY, push_rvalue_binary),
-        // clang-format on
 #undef TABLE_ENTRY
     };
+    // clang-format on
 
     size_t const id = unique_id++;
     char const* const cstr = table[expr->kind].kind_cstr;
@@ -1379,31 +1376,61 @@ push_rvalue_symbol(struct expr const* expr, size_t id)
 }
 
 static void
-push_rvalue_boolean(struct expr const* expr, size_t id)
+push_rvalue_value(struct expr const* expr, size_t id)
 {
     assert(expr != NULL);
-    assert(expr->kind == EXPR_BOOLEAN);
+    assert(expr->kind == EXPR_VALUE);
+    assert(expr->type == expr->data.value->type);
     (void)id;
 
-    appendli("mov rax, %s", expr->data.boolean ? "0x01" : "0x00");
-    appendli("push rax");
-}
+    struct value const* const value = expr->data.value;
 
-static void
-push_rvalue_integer(struct expr const* expr, size_t id)
-{
-    assert(expr != NULL);
-    assert(expr->kind == EXPR_INTEGER);
-    (void)id;
+    switch (value->type->kind) {
+    case TYPE_BOOL: {
+        appendli("mov rax, %s", value->data.boolean ? "0x01" : "0x00");
+        appendli("push rax");
+        return;
+    }
+    case TYPE_BYTE: {
+        appendli("mov rax, %#x", value->data.byte);
+        appendli("push rax");
+        return;
+    }
+    case TYPE_U8: /* fallthrough */
+    case TYPE_S8: /* fallthrough */
+    case TYPE_U16: /* fallthrough */
+    case TYPE_S16: /* fallthrough */
+    case TYPE_U32: /* fallthrough */
+    case TYPE_S32: /* fallthrough */
+    case TYPE_U64: /* fallthrough */
+    case TYPE_S64: /* fallthrough */
+    case TYPE_USIZE: /* fallthrough */
+    case TYPE_SSIZE: {
+        assert(value->type->size >= 1u);
+        assert(value->type->size <= 8u);
+        char* const cstr = bigint_to_new_cstr(value->data.integer);
+        appendli("mov rax, %s", cstr);
+        appendli("push rax");
+        xalloc(cstr, XALLOC_FREE);
+        return;
+    }
+    case TYPE_VOID: /* fallthrough */
+    case TYPE_FUNCTION: /* fallthrough */
+    case TYPE_POINTER: /* fallthrough */
+    case TYPE_ARRAY: /* fallthrough */
+    case TYPE_SLICE: /* fallthrough */
+    case TYPE_STRUCT: {
+        // AST nodes of kind EXPR_VALUE are not produced for these types.
+        UNREACHABLE();
+    }
+    case TYPE_ANY: /* fallthrough */
+    case TYPE_INTEGER: {
+        // Unsized types should never reach the code generation phase.
+        UNREACHABLE();
+    }
+    }
 
-    char* const cstr = bigint_to_new_cstr(expr->data.integer);
-
-    assert(expr->type->size >= 1u);
-    assert(expr->type->size <= 8u);
-    appendli("mov rax, %s", cstr);
-    appendli("push rax");
-
-    xalloc(cstr, XALLOC_FREE);
+    UNREACHABLE();
 }
 
 static void
@@ -2566,6 +2593,7 @@ push_lvalue(struct expr const* expr)
     assert(expr != NULL);
     assert(expr_is_lvalue(expr));
 
+    // clang-format off
     static struct {
         char const* kind_cstr;
         void (*codegen_fn)(struct expr const*, size_t);
@@ -2574,12 +2602,11 @@ push_lvalue(struct expr const* expr)
         // clang format off
         TABLE_ENTRY(EXPR_SYMBOL, push_lvalue_symbol),
         TABLE_ENTRY(EXPR_ACCESS_INDEX, push_lvalue_access_index),
-        TABLE_ENTRY(
-            EXPR_ACCESS_MEMBER_VARIABLE, push_lvalue_access_member_variable),
+        TABLE_ENTRY(EXPR_ACCESS_MEMBER_VARIABLE, push_lvalue_access_member_variable),
         TABLE_ENTRY(EXPR_UNARY, push_lvalue_unary),
-        // clang format on
 #undef TABLE_ENTRY
     };
+    // clang-format on
 
     size_t const id = unique_id++;
     char const* const cstr = table[expr->kind].kind_cstr;

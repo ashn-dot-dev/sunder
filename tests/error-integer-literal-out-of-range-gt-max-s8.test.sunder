@@ -2,6 +2,6 @@ func main() void {
     +128s8;
 }
 ################################################################################
-# [error-integer-literal-out-of-range-gt-max-s8.test.sunder:2] error: out-of-range integer literal (128 > 127)
+# [error-integer-literal-out-of-range-gt-max-s8.test.sunder:2] error: out-of-range integer (128 > 127)
 #     +128s8;
 #     ^

@@ -1064,69 +1064,14 @@ expr_new_symbol(
 }
 
 struct expr*
-expr_new_boolean(struct source_location const* location, bool value)
+expr_new_value(
+    struct source_location const* location, struct value const* value)
 {
     assert(location != NULL);
-
-    struct type const* const type = context()->builtin.bool_;
-    struct expr* const self = expr_new(location, type, EXPR_BOOLEAN);
-    self->data.boolean = value;
-    return self;
-}
-
-struct expr*
-expr_new_integer(
-    struct source_location const* location,
-    struct type const* type,
-    struct bigint const* value)
-{
-    assert(location != NULL);
-    assert(type != NULL);
-    assert(type->kind == TYPE_BYTE || type_is_int(type));
     assert(value != NULL);
 
-    bool const is_byte = type->kind == TYPE_BYTE;
-    bool const is_sized_integer =
-        type_is_int(type) && type->kind != TYPE_INTEGER;
-
-    if (is_byte && bigint_cmp(value, context()->u8_min) < 0) {
-        char* const lit_cstr = bigint_to_new_cstr(value);
-        char* const min_cstr = bigint_to_new_cstr(context()->u8_min);
-        fatal(
-            location,
-            "out-of-range byte literal (%s < %s)",
-            lit_cstr,
-            min_cstr);
-    }
-    if (is_byte && bigint_cmp(value, context()->u8_max) > 0) {
-        char* const lit_cstr = bigint_to_new_cstr(value);
-        char* const max_cstr = bigint_to_new_cstr(context()->u8_max);
-        fatal(
-            location,
-            "out-of-range byte literal (%s > %s)",
-            lit_cstr,
-            max_cstr);
-    }
-    if (is_sized_integer && bigint_cmp(value, type->data.integer.min) < 0) {
-        char* const lit_cstr = bigint_to_new_cstr(value);
-        char* const min_cstr = bigint_to_new_cstr(type->data.integer.min);
-        fatal(
-            location,
-            "out-of-range integer literal (%s < %s)",
-            lit_cstr,
-            min_cstr);
-    }
-    if (is_sized_integer && bigint_cmp(value, type->data.integer.max) > 0) {
-        char* const lit_cstr = bigint_to_new_cstr(value);
-        char* const max_cstr = bigint_to_new_cstr(type->data.integer.max);
-        fatal(
-            location,
-            "out-of-range integer literal (%s > %s)",
-            lit_cstr,
-            max_cstr);
-    }
-    struct expr* const self = expr_new(location, type, EXPR_INTEGER);
-    self->data.integer = value;
+    struct expr* const self = expr_new(location, value->type, EXPR_VALUE);
+    self->data.value = value;
     return self;
 }
 
@@ -1422,8 +1367,7 @@ expr_is_lvalue(struct expr const* self)
     case EXPR_UNARY: {
         return self->data.unary.op == UOP_DEREFERENCE;
     }
-    case EXPR_BOOLEAN: /* fallthrough */
-    case EXPR_INTEGER: /* fallthrough */
+    case EXPR_VALUE: /* fallthrough */
     case EXPR_BYTES: /* fallthrough */
     case EXPR_ARRAY_LIST: /* fallthrough */
     case EXPR_SLICE_LIST: /* fallthrough */
@@ -1533,12 +1477,11 @@ value_new_integer(struct type const* type, struct bigint* integer)
     assert(type != NULL);
     assert(type_is_int(type));
     assert(integer != NULL);
-    assert(
-        type->kind == TYPE_INTEGER
-        || bigint_cmp(integer, type->data.integer.min) >= 0);
-    assert(
-        type->kind == TYPE_INTEGER
-        || bigint_cmp(integer, type->data.integer.max) <= 0);
+
+    bool const is_sized = type_is_uint(type) || type_is_sint(type);
+    assert(!is_sized || bigint_cmp(integer, type->data.integer.min) >= 0);
+    assert(!is_sized || bigint_cmp(integer, type->data.integer.max) <= 0);
+    (void)is_sized;
 
     struct value* self = value_new(type);
     self->data.integer = integer;

@@ -134,6 +134,13 @@ verify_type_compatibility(
     struct source_location const* location,
     struct type const* actual,
     struct type const* expected);
+// Fatally exits if provided integer-like value is out-of-range for the
+// provided byte or integer type.
+static void
+verify_byte_or_int_in_range(
+    struct source_location const* location,
+    struct type const* type,
+    struct bigint const* integer);
 
 // Returns a newly created and registered expression node of `expr` explicitly
 // casted to `type` if such an explicit cast is valid.
@@ -993,12 +1000,60 @@ verify_type_compatibility(
     struct type const* actual,
     struct type const* expected)
 {
+    assert(location != NULL);
+    assert(actual != NULL);
+    assert(expected != NULL);
+
     if (actual != expected) {
         fatal(
             location,
             "incompatible type `%s` (expected `%s`)",
             actual->name,
             expected->name);
+    }
+}
+
+static void
+verify_byte_or_int_in_range(
+    struct source_location const* location,
+    struct type const* type,
+    struct bigint const* integer)
+{
+    assert(location != NULL);
+    assert(type != NULL && (type->kind == TYPE_BYTE || type_is_int(type)));
+    assert(integer != NULL);
+
+    if (type->kind == TYPE_BYTE) {
+        if (bigint_cmp(integer, context()->u8_min) < 0) {
+            char* const int_cstr = bigint_to_new_cstr(integer);
+            char* const min_cstr = bigint_to_new_cstr(context()->u8_min);
+            fatal(location, "out-of-range byte (%s < %s)", int_cstr, min_cstr);
+        }
+
+        if (bigint_cmp(integer, context()->u8_max) > 0) {
+            char* const int_cstr = bigint_to_new_cstr(integer);
+            char* const max_cstr = bigint_to_new_cstr(context()->u8_max);
+            fatal(location, "out-of-range byte (%s > %s)", int_cstr, max_cstr);
+        }
+
+        return;
+    }
+
+    if (type->kind == TYPE_INTEGER) {
+        // Unsized integers have no min or max value.
+        return;
+    }
+
+    if (bigint_cmp(integer, type->data.integer.min) < 0) {
+        char* const int_cstr = bigint_to_new_cstr(integer);
+        char* const min_cstr = bigint_to_new_cstr(type->data.integer.min);
+        fatal(location, "out-of-range integer (%s < %s)", int_cstr, min_cstr);
+    }
+
+    if (bigint_cmp(integer, type->data.integer.max) > 0) {
+        char* const int_cstr = bigint_to_new_cstr(integer);
+        char* const max_cstr = bigint_to_new_cstr(type->data.integer.max);
+        fatal(location, "out-of-range integer (%s > %s)", int_cstr, max_cstr);
     }
 }
 
@@ -1114,39 +1169,36 @@ explicit_cast(
     }
 
     // OPTIMIZATION(constant folding)
-    if (type->kind == TYPE_BOOL && expr->kind == EXPR_INTEGER) {
+    if (type->kind == TYPE_BOOL && expr->kind == EXPR_VALUE) {
         struct value* const value = eval_rvalue(resolved);
+        value_freeze(value);
+
         assert(value->type->kind == TYPE_BOOL);
+        resolved = expr_new_value(resolved->location, value);
 
-        resolved = expr_new_boolean(resolved->location, value->data.boolean);
-
-        value_del(value);
         freeze(resolved);
         return resolved;
     }
 
     // OPTIMIZATION(constant folding)
-    if (type->kind == TYPE_BYTE && expr->kind == EXPR_INTEGER) {
+    if (type->kind == TYPE_BYTE && expr->kind == EXPR_VALUE) {
         struct value* const value = eval_rvalue(resolved);
+        value_freeze(value);
+
         assert(value->type->kind == TYPE_BYTE);
-        value_freeze(value);
-
-        struct bigint* const integer = bigint_new_umax(value->data.byte);
-        bigint_freeze(integer);
-
-        resolved = expr_new_integer(expr->location, type, integer);
+        resolved = expr_new_value(resolved->location, value);
 
         freeze(resolved);
         return resolved;
     }
 
     // OPTIMIZATION(constant folding)
-    if (type_is_int(type) && expr->kind == EXPR_INTEGER) {
+    if (type_is_int(type) && expr->kind == EXPR_VALUE) {
         struct value* const value = eval_rvalue(resolved);
-        assert(type_is_int(value->type));
         value_freeze(value);
 
-        resolved = expr_new_integer(expr->location, type, value->data.integer);
+        assert(type_is_int(value->type));
+        resolved = expr_new_value(resolved->location, value);
 
         freeze(resolved);
         return resolved;
@@ -2392,9 +2444,13 @@ resolve_stmt_for_range(struct resolver* resolver, struct cst_stmt const* stmt)
         }
     }
     else {
-        struct expr* zero = expr_new_integer(
-            stmt->location, context()->builtin.usize, context()->zero);
+        struct value* const value = value_new_integer(
+            context()->builtin.usize, bigint_new(BIGINT_ZERO));
+        value_freeze(value);
+
+        struct expr* const zero = expr_new_value(stmt->location, value);
         freeze(zero);
+
         begin = zero;
     }
 
@@ -2754,8 +2810,10 @@ resolve_expr_boolean(struct resolver* resolver, struct cst_expr const* expr)
     (void)resolver;
 
     struct token const* const token = expr->data.boolean;
-    bool const value = token->kind == TOKEN_TRUE;
-    struct expr* const resolved = expr_new_boolean(expr->location, value);
+    struct value* const value = value_new_boolean(token->kind == TOKEN_TRUE);
+    value_freeze(value);
+
+    struct expr* const resolved = expr_new_value(expr->location, value);
 
     freeze(resolved);
     return resolved;
@@ -2818,12 +2876,31 @@ resolve_expr_integer(struct resolver* resolver, struct cst_expr const* expr)
 
     struct token const* const token = expr->data.integer;
 
-    struct bigint const* const value = token->data.integer.value;
+    struct bigint const* const integer = token->data.integer.value;
 
     struct type const* const type = integer_literal_suffix_to_type(
         expr->location, token->data.integer.suffix);
 
-    struct expr* const resolved = expr_new_integer(expr->location, type, value);
+    verify_byte_or_int_in_range(expr->location, type, integer);
+
+    if (type->kind == TYPE_BYTE) {
+        uint8_t byte = 0;
+        if (bigint_to_u8(&byte, integer)) {
+            UNREACHABLE();
+        }
+        struct value* const value = value_new_byte(byte);
+        value_freeze(value);
+
+        struct expr* const resolved = expr_new_value(expr->location, value);
+
+        freeze(resolved);
+        return resolved;
+    }
+
+    struct value* const value = value_new_integer(type, bigint_new(integer));
+    value_freeze(value);
+
+    struct expr* const resolved = expr_new_value(expr->location, value);
 
     freeze(resolved);
     return resolved;
@@ -2841,10 +2918,12 @@ resolve_expr_character(struct resolver* resolver, struct cst_expr const* expr)
 
     int character = expr->data.character->data.character;
     assert(character >= 0);
-    struct bigint* const value = bigint_new_umax((uintmax_t)character);
-    bigint_freeze(value);
 
-    struct expr* const resolved = expr_new_integer(expr->location, type, value);
+    struct value* const value =
+        value_new_integer(type, bigint_new_umax((uintmax_t)character));
+    value_freeze(value);
+
+    struct expr* const resolved = expr_new_value(expr->location, value);
 
     freeze(resolved);
     return resolved;
@@ -3623,20 +3702,24 @@ resolve_expr_unary(struct resolver* resolver, struct cst_expr const* expr)
     if (is_sign && cst_rhs->kind == CST_EXPR_INTEGER) {
         struct token const* const token = cst_rhs->data.integer;
 
-        struct bigint const* value = token->data.integer.value;
+        struct bigint const* integer = token->data.integer.value;
         if (op->kind == TOKEN_DASH) {
-            struct bigint* const tmp = bigint_new(value);
+            struct bigint* const tmp = bigint_new(integer);
             assert(tmp != NULL);
             bigint_neg(tmp, tmp);
             bigint_freeze(tmp);
-            value = tmp;
+            integer = tmp;
         }
 
         struct type const* const type = integer_literal_suffix_to_type(
             &token->location, token->data.integer.suffix);
 
-        struct expr* const resolved =
-            expr_new_integer(&op->location, type, value);
+        verify_byte_or_int_in_range(&op->location, type, integer);
+        struct value* const value =
+            value_new_integer(type, bigint_new(integer));
+        value_freeze(value);
+
+        struct expr* const resolved = expr_new_value(&op->location, value);
 
         freeze(resolved);
         return resolved;
@@ -4036,16 +4119,15 @@ resolve_expr_binary_compare_equality(
     freeze(resolved);
 
     // OPTIMIZATION(constant folding)
-    if (lhs->kind == EXPR_INTEGER && rhs->kind == EXPR_INTEGER) {
-        lhs = implicit_cast(rhs->type, lhs);
-        rhs = implicit_cast(lhs->type, rhs);
-
+    if (lhs->kind == EXPR_VALUE && rhs->kind == EXPR_VALUE) {
         struct value* const value = eval_rvalue(resolved);
         value_freeze(value);
 
         assert(value->type->kind == TYPE_BOOL);
-        resolved = expr_new_boolean(resolved->location, value->data.boolean);
+        resolved = expr_new_value(resolved->location, value);
+
         freeze(resolved);
+        return resolved;
     }
 
     return resolved;
@@ -4091,16 +4173,15 @@ resolve_expr_binary_compare_order(
     freeze(resolved);
 
     // OPTIMIZATION(constant folding)
-    if (lhs->kind == EXPR_INTEGER && rhs->kind == EXPR_INTEGER) {
-        lhs = implicit_cast(rhs->type, lhs);
-        rhs = implicit_cast(lhs->type, rhs);
-
+    if (lhs->kind == EXPR_VALUE && rhs->kind == EXPR_VALUE) {
         struct value* const value = eval_rvalue(resolved);
         value_freeze(value);
 
         assert(value->type->kind == TYPE_BOOL);
-        resolved = expr_new_boolean(resolved->location, value->data.boolean);
+        resolved = expr_new_value(resolved->location, value);
+
         freeze(resolved);
+        return resolved;
     }
 
     return resolved;
@@ -4139,17 +4220,15 @@ resolve_expr_binary_arithmetic(
     freeze(resolved);
 
     // OPTIMIZATION(constant folding)
-    if (lhs->kind == EXPR_INTEGER && rhs->kind == EXPR_INTEGER) {
-        lhs = implicit_cast(rhs->type, lhs);
-        rhs = implicit_cast(lhs->type, rhs);
-
+    if (lhs->kind == EXPR_VALUE && rhs->kind == EXPR_VALUE) {
         struct value* const value = eval_rvalue(resolved);
         value_freeze(value);
 
-        assert(type_is_int(value->type));
-        resolved = expr_new_integer(
-            resolved->location, resolved->type, value->data.integer);
+        assert(type == value->type);
+        resolved = expr_new_value(resolved->location, value);
+
         freeze(resolved);
+        return resolved;
     }
 
     return resolved;
@@ -4194,17 +4273,15 @@ resolve_expr_binary_bitwise(
     freeze(resolved);
 
     // OPTIMIZATION(constant folding)
-    if (lhs->kind == EXPR_INTEGER && rhs->kind == EXPR_INTEGER) {
-        lhs = implicit_cast(rhs->type, lhs);
-        rhs = implicit_cast(lhs->type, rhs);
-
+    if (lhs->kind == EXPR_VALUE && rhs->kind == EXPR_VALUE) {
         struct value* const value = eval_rvalue(resolved);
         value_freeze(value);
 
-        assert(type_is_int(value->type));
-        resolved = expr_new_integer(
-            resolved->location, resolved->type, value->data.integer);
+        assert(type == value->type);
+        resolved = expr_new_value(resolved->location, value);
+
         freeze(resolved);
+        return resolved;
     }
 
     return resolved;
