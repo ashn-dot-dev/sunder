@@ -4029,6 +4029,7 @@ resolve_expr_binary_logical(
 
     struct type const* const type = context()->builtin.bool_;
     struct expr* resolved = expr_new_binary(&op->location, type, bop, lhs, rhs);
+    freeze(resolved);
 
     // OPTIMIZATION(constant folding)
     if (lhs->kind == EXPR_VALUE && rhs->kind == EXPR_VALUE) {
@@ -4042,7 +4043,6 @@ resolve_expr_binary_logical(
         return resolved;
     }
 
-    freeze(resolved);
     return resolved;
 }
 
