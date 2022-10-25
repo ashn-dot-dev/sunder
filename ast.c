@@ -1516,9 +1516,12 @@ value_new_array(
     assert(type != NULL);
     assert(type->kind == TYPE_ARRAY);
     assert(type->data.array.count == sbuf_count(elements) || ellipsis != NULL);
-    // TODO: Should we validate that each element of the array and the ellipsis
-    // are of the array element type? That might be expensive so maybe hide it
-    // behind `#ifndef NDEBUG`?
+    for (size_t i = 0; i < sbuf_count(elements); ++i) {
+        assert(elements[i]->type == type->data.array.base);
+    }
+    if (ellipsis != NULL) {
+        assert(ellipsis->type == type->data.array.base);
+    }
 
     struct value* self = value_new(type);
     self->data.array.elements = elements;
