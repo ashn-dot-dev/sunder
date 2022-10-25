@@ -1574,9 +1574,10 @@ push_rvalue_struct(struct expr const* expr, size_t id)
     push(expr->type->size);
 
     // Fill in stack bytes of the struct with zeros. Although this should not
-    // really affect the user-visible portions of the language it will allow for
-    // dump statements to be deterministic in the bytes they print if we define
-    // padding bytes to always be zeroed for struct values created at runtime.
+    // really affect the user-visible portions of the language it will allow
+    // for dump statements to be deterministic in the bytes they print if we
+    // define padding bytes to always be zeroed for struct values created at
+    // runtime.
     appendln("%s%zu_zero_memory_bgn:", LABEL_EXPR, id);
     appendli("mov rax, 0"); // zero value
     appendli("mov rbx, rsp"); // current address
