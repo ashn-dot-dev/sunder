@@ -11,7 +11,7 @@ Options:
 EOF
 }
 
-for arg in "$@"; do
+for _ in "$@"; do
 case "$1" in
     -h)
         usage
