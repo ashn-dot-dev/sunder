@@ -1390,11 +1390,16 @@ resolve_import_file(
     }
 
     if (!cstr_ends_with(file_name, ".sunder") && from_directory) {
-        // Ignore files imported via a directory import if they do not end in a
-        // `.sunder` extension. This will allow directories containing
+        // Ignore source files imported via a directory import if they do not
+        // end in a `.sunder` extension. This will allow directories containing
         // non-sunder files to be imported without the compiler producing an
         // error from trying to load something like `.txt` file as a sunder
         // module.
+        return;
+    }
+
+    if (cstr_ends_with(file_name, ".test.sunder") && from_directory) {
+        // Ignore test files imported via a directory import.
         return;
     }
 
