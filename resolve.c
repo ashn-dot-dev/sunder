@@ -1790,12 +1790,8 @@ resolve_decl_struct(struct resolver* resolver, struct cst_decl const* decl)
     for (size_t i = 0; i < members_count; ++i) {
         for (size_t j = i + 1; j < members_count; ++j) {
             if (members[i]->name == members[j]->name) {
-                // XXX: Call to sbuf_fini here because GCC 8.3 w/ ASAN
-                // complains about a memory leak even though we hold a valid
-                // path to the buffer.
-                //
-                // TODO: See if maybe we can trick ASAN by holding a pointer to
-                // the head of the stretchy buffer here???
+                // XXX: Calling sbuf_fini here because GCC 8.3 ASan will think
+                // we leak even though we hold a valid path to the buffer.
                 sbuf_fini(type->data.struct_.member_variables);
 
                 fatal(
@@ -3200,6 +3196,12 @@ resolve_expr_struct(struct resolver* resolver, struct cst_expr const* expr)
         sbuf_push(member_variable_exprs, NULL);
     }
 
+    // XXX: Freezing initializer_exprs and member_variable_exprs here before
+    // any calls to fatal because GCC 8.3 ASan will think we leak even though
+    // we hold a valid path to these buffers.
+    sbuf_freeze(initializer_exprs);
+    sbuf_freeze(member_variable_exprs);
+
     for (size_t i = 0; i < sbuf_count(initializers); ++i) {
         char const* const initializer_name = initializers[i]->identifier->name;
         bool found = false; // Did we find the member for this initializer?
@@ -3245,8 +3247,6 @@ resolve_expr_struct(struct resolver* resolver, struct cst_expr const* expr)
         }
     }
 
-    sbuf_fini(initializer_exprs);
-    sbuf_freeze(member_variable_exprs);
     struct expr* const resolved =
         expr_new_struct(expr->location, type, member_variable_exprs);
 
