@@ -1,9 +1,10 @@
 #!/bin/sh
 set -u
 
+PROGNAME=$(basename "$0")
 usage() {
     cat <<EOF
-Usage: $(basename $0) FILE [ARGS...]
+Usage: ${PROGNAME} FILE [ARGS...]
 
 Options:
   -h        Display usage information and exit.
@@ -15,7 +16,7 @@ if [ "$#" -eq 0 ]; then
     exit 0
 fi
 
-for arg in "$@"; do
+for _ in "$@"; do
 case "$1" in
     -h)
         usage
@@ -37,7 +38,7 @@ if ! "${SUNDER_HOME}/bin/sunder-compile" "${FILE}"; then
 fi
 
 shift
-./a.out $@
+./a.out "$@"
 STATUS=$?
 rm a.out
 exit $STATUS
