@@ -1,9 +1,10 @@
 #!/bin/sh
 set -eu
 
+PROGNAME=$(basename "$0")
 usage() {
     cat <<EOF
-Usage: $(basename $0) [FILE...]
+Usage: ${PROGNAME} [FILE...]
 
 Options:
   -h        Display usage information and exit.
@@ -54,8 +55,16 @@ test() {
     TESTSRUN=$((TESTSRUN + 1))
 }
 
+TESTS= # empty
 if [ "$#" -ne 0 ]; then
-    TESTS="$@"
+    for arg in "$@"; do
+        if [ -d "${arg}" ]; then
+            FILES=$(echo ${arg}/*.test.sunder | sort)
+            TESTS=$(echo "${TESTS}" "${FILES}")
+        else
+            TESTS=$(echo "${TESTS}" "${arg}")
+        fi
+    done
 else
     TESTS=$(find . -name '*.test.sunder' | sort)
 fi
