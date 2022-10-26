@@ -59,7 +59,7 @@ struct page_allocator {
 
         var sysret: ssize = sys::mmap(addr, size, prot, flags, fd, off);
         if sysret < 0 {
-            return std::result[[*byte, std::error]]::init_error((:std::error)&sys::ERRORS[(:usize)-sysret]);
+            return std::result[[*byte, std::error]]::init_error((:std::error)sys::error(-sysret));
         }
 
         return std::result[[*byte, std::error]]::init_value((:*byte)(:usize)sysret);

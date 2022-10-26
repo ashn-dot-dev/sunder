@@ -350,6 +350,15 @@ const ERRORS = (:[][]byte)[
     "[system error EHWPOISON] Memory page has hardware error"
 ];
 
+# Transform an errno value into an `std::error`-compatible pointer.
+func error(errno: ssize) *[]byte {
+    if errno < 0 or (:usize)errno >= countof(ERRORS) {
+        const UNKNOWN = "Unknown system error";
+        return &UNKNOWN;
+    }
+    return &sys::ERRORS[(:usize)errno];
+}
+
 const STDIN_FILENO:  sint = 0;
 const STDOUT_FILENO: sint = 1;
 const STDERR_FILENO: sint = 2;

@@ -48,14 +48,14 @@ struct file {
         }
 
         if countof(path) >= sys::PATH_MAX {
-            return std::result[[std::file, std::error]]::init_error((:std::error)&sys::ERRORS[(:usize)sys::EINVAL]);
+            return std::result[[std::file, std::error]]::init_error((:std::error)sys::error(sys::EINVAL));
         }
         var path_cstr = (:[sys::PATH_MAX]byte)[0...];
         std::slice[[byte]]::copy(path_cstr[0:countof(path)], path);
 
         var sysret = sys::open(&path_cstr[0], flags, 0o666);
         if sysret < 0 {
-            return std::result[[std::file, std::error]]::init_error((:std::error)&sys::ERRORS[(:usize)-sysret]);
+            return std::result[[std::file, std::error]]::init_error((:std::error)sys::error(-sysret));
         }
 
         var file = (:std::file){._fd = (:sys::sint)sysret};
@@ -66,7 +66,7 @@ struct file {
     func close(self: *file) std::result[[void, std::error]] {
         var sysret = sys::close(self.*._fd);
         if sysret < 0 {
-            return std::result[[void, std::error]]::init_error((:std::error)&sys::ERRORS[(:usize)-sysret]);
+            return std::result[[void, std::error]]::init_error((:std::error)sys::error(-sysret));
         }
 
         return std::result[[void, std::error]]::init_value(void::init());
@@ -79,7 +79,7 @@ struct file {
 
         var sysret = sys::read(self.*._fd, &buf[0u], countof(buf));
         if sysret < 0 {
-            return std::result[[usize, std::error]]::init_error((:std::error)&sys::ERRORS[(:usize)-sysret]);
+            return std::result[[usize, std::error]]::init_error((:std::error)sys::error(-sysret));
         }
 
         return std::result[[usize, std::error]]::init_value((:usize)sysret);
@@ -92,7 +92,7 @@ struct file {
 
         var sysret = sys::write(self.*._fd, &buf[0u], countof(buf));
         if sysret < 0 {
-            return std::result[[usize, std::error]]::init_error((:std::error)&sys::ERRORS[(:usize)-sysret]);
+            return std::result[[usize, std::error]]::init_error((:std::error)sys::error(-sysret));
         }
 
         return std::result[[usize, std::error]]::init_value((:usize)sysret);
@@ -110,7 +110,7 @@ struct file {
     func seek(self: *file, offset: ssize, from: usize) std::result[[void, std::error]] {
         var sysret = sys::lseek(self.*._fd, offset, (:sys::uint)from);
         if sysret < 0 {
-            return std::result[[void, std::error]]::init_error((:std::error)&sys::ERRORS[(:usize)-sysret]);
+            return std::result[[void, std::error]]::init_error((:std::error)sys::error(-sysret));
         }
 
         return std::result[[void, std::error]]::init_value(std::zeroed[[void]]());
@@ -120,7 +120,7 @@ struct file {
     func tell(self: *file) std::result[[usize, std::error]] {
         var sysret = sys::lseek(self.*._fd, 0, sys::SEEK_CUR);
         if sysret < 0 {
-            return std::result[[usize, std::error]]::init_error((:std::error)&sys::ERRORS[(:usize)-sysret]);
+            return std::result[[usize, std::error]]::init_error((:std::error)sys::error(-sysret));
         }
 
         return std::result[[usize, std::error]]::init_value((:usize)sysret);
@@ -140,14 +140,14 @@ struct file {
     # Remove a file.
     func remove(path: []byte) std::result[[void, std::error]] {
         if countof(path) >= sys::PATH_MAX {
-            return std::result[[void, std::error]]::init_error((:std::error)&sys::ERRORS[(:usize)sys::EINVAL]);
+            return std::result[[void, std::error]]::init_error((:std::error)sys::error(sys::EINVAL));
         }
         var path_cstr = (:[sys::PATH_MAX]byte)[0...];
         std::slice[[byte]]::copy(path_cstr[0:countof(path)], path);
 
         var sysret = sys::unlink(&path_cstr[0]);
         if sysret < 0 {
-            return std::result[[void, std::error]]::init_error((:std::error)&sys::ERRORS[(:usize)-sysret]);
+            return std::result[[void, std::error]]::init_error((:std::error)sys::error(-sysret));
         }
 
         return std::result[[void, std::error]]::init_value(void::init());
@@ -166,14 +166,14 @@ struct directory {
         var flags: sys::sint = sys::O_RDONLY | sys::O_DIRECTORY | sys::O_CLOEXEC;
 
         if countof(path) >= sys::PATH_MAX {
-            return std::result[[std::directory, std::error]]::init_error((:std::error)&sys::ERRORS[(:usize)sys::EINVAL]);
+            return std::result[[std::directory, std::error]]::init_error((:std::error)sys::error(sys::EINVAL));
         }
         var path_cstr = (:[sys::PATH_MAX]byte)[0...];
         std::slice[[byte]]::copy(path_cstr[0:countof(path)], path);
 
         var sysret = sys::open(&path_cstr[0], flags, 0);
         if sysret < 0 {
-            return std::result[[std::directory, std::error]]::init_error((:std::error)&sys::ERRORS[(:usize)-sysret]);
+            return std::result[[std::directory, std::error]]::init_error((:std::error)sys::error(-sysret));
         }
 
         var directory = (:std::directory){
@@ -190,7 +190,7 @@ struct directory {
     func close(self: *directory) std::result[[void, std::error]] {
         var sysret = sys::close(self.*._fd);
         if sysret < 0 {
-            return std::result[[void, std::error]]::init_error((:std::error)&sys::ERRORS[(:usize)-sysret]);
+            return std::result[[void, std::error]]::init_error((:std::error)sys::error(-sysret));
         }
 
         return std::result[[void, std::error]]::init_value(void::init());
@@ -205,7 +205,7 @@ struct directory {
                 return false; # end-of-iteration
             }
             if sysret < 0 {
-                var result = std::result[[[]byte, std::error]]::init_error((:std::error)&sys::ERRORS[(:usize)-sysret]);
+                var result = std::result[[[]byte, std::error]]::init_error((:std::error)sys::error(-sysret));
                 self.*._current = std::optional[[std::result[[[]byte, std::error]]]]::init_value(result);
                 return true;
             }
@@ -236,14 +236,14 @@ struct directory {
     # Create an empty directory if it does not exist.
     func create(path: []byte)  std::result[[void, std::error]] {
         if countof(path) >= sys::PATH_MAX {
-            return std::result[[void, std::error]]::init_error((:std::error)&sys::ERRORS[(:usize)sys::EINVAL]);
+            return std::result[[void, std::error]]::init_error((:std::error)sys::error(sys::EINVAL));
         }
         var path_cstr = (:[sys::PATH_MAX]byte)[0...];
         std::slice[[byte]]::copy(path_cstr[0:countof(path)], path);
 
         var sysret = sys::mkdir(&path_cstr[0], 0o666);
         if sysret < 0 {
-            return std::result[[void, std::error]]::init_error((:std::error)&sys::ERRORS[(:usize)-sysret]);
+            return std::result[[void, std::error]]::init_error((:std::error)sys::error(-sysret));
         }
 
         return std::result[[void, std::error]]::init_value(void::init());
@@ -252,14 +252,14 @@ struct directory {
     # Remove an empty directory.
     func remove(path: []byte) std::result[[void, std::error]] {
         if countof(path) >= sys::PATH_MAX {
-            return std::result[[void, std::error]]::init_error((:std::error)&sys::ERRORS[(:usize)sys::EINVAL]);
+            return std::result[[void, std::error]]::init_error((:std::error)sys::error(sys::EINVAL));
         }
         var path_cstr = (:[sys::PATH_MAX]byte)[0...];
         std::slice[[byte]]::copy(path_cstr[0:countof(path)], path);
 
         var sysret = sys::rmdir(&path_cstr[0]);
         if sysret < 0 {
-            return std::result[[void, std::error]]::init_error((:std::error)&sys::ERRORS[(:usize)-sysret]);
+            return std::result[[void, std::error]]::init_error((:std::error)sys::error(-sysret));
         }
 
         return std::result[[void, std::error]]::init_value(void::init());
