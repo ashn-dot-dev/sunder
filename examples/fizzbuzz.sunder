@@ -1,7 +1,7 @@
 import "std";
 
 func main() void {
-    const N: usize = 100;
+    const N = 100u;
     for i in 1:N+1 {
         if i % 3 == 0 and i % 5 == 0 {
             std::print_line(std::out(), "FizzBuzz");

@@ -7,7 +7,7 @@ import "std";
 import "sys";
 
 var cells = (:[30000]u8)[0...];
-var cells_index: usize = 0;
+var cells_index = 0u;
 
 func main() void {
     var progname = std::cstr::data(*sys::argv);
@@ -69,7 +69,7 @@ func main() void {
         std::exit(std::EXIT_FAILURE);
     }
     var source = result.value();
-    var source_size: usize = countof(source);
+    var source_size = countof(source);
 
     var success = true;
     var lines = std::slice[[usize]]::new(allocator, source_size);
