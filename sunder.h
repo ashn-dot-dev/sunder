@@ -1478,19 +1478,36 @@ order(struct module* module);
 ////////////////////////////////////////////////////////////////////////////////
 //////// ast.c /////////////////////////////////////////////////////////////////
 
+// The size_t type is defined as unsigned long (64 bits) on x64 Linux, so
+// `sizeof(size_t) == sizeof(uint64_t)` should evaluate as true with any well
+// behaved x64 Linux C compiler.
+//
+// NOTE: This static assert will trigger an error when compiling Sunder on x86
+// Linux (or x64 Linux with CFLAGS+=-m32) where size_t is 32 bits. However, the
+// Sunder compiler will compile the overwhelming majority of Sunder programs
+// correctly if this static assert is removed, and the only behavioral
+// differences in the compiler will be seen during semantic analysis and error
+// reporting relating to the maximum object size and maximum array length of
+// Sunder types (hardly ever encountered in real-world Sunder code).
+STATIC_ASSERT(size_t_eq_sunder_usize, sizeof(size_t) == sizeof(uint64_t));
+
 // SIZEOF_UNSIZED and ALIGNOF_UNSIZED are given the largest possible value of a
-// size_t so that checks such as assert(type->size <= 8u) in the resolve and
+// size_t so that checks such as `assert(type->size <= 8u)` in the resolve and
 // code generation phases will fail for unsized types.
 #define SIZEOF_UNSIZED ((size_t)SIZE_MAX)
 #define ALIGNOF_UNSIZED ((size_t)SIZE_MAX)
-STATIC_ASSERT(size_t_is_64_bit, sizeof(size_t) == 8);
 
 // Maximum allowable object size. The `sizeof` a type must not exceed the
-// maximum value of a `ptrdiff_t` (`ssize::MAX` or `s64::max` on x64), so that
-// pointer difference calculations between two pointers into an object of that
-// type may always be safely calculated.
+// maximum value of an x64 `ptrdiff_t` (`ssize::MAX` or `s64::max`), so that
+// difference between two pointers into an object of that type may always be
+// safely calculated.
 #define SIZEOF_MAX ((size_t)PTRDIFF_MAX)
-STATIC_ASSERT(ptrdiff_t_eq_size_t, sizeof(ptrdiff_t) == sizeof(size_t));
+// The less-than operator is used instead of the less-than-or-equal-to operator
+// since SIZE_MAX is reserved for SIZEOF_UNSIZED. The ptrdiff_t type is defined
+// as signed long (64 bits) on x64 Linux, and the size_t type is defined as
+// unsigned long (64 bits) on x64 Linux, so `SIZEOF_MAX < SIZE_MAX` should
+// evaluate as true with any well behaved x64 Linux C compiler.
+STATIC_ASSERT(sunder_max_sizeof_fits_in_size_t, SIZEOF_MAX < SIZE_MAX);
 
 struct type {
     char const* name; // Canonical human-readable type-name (interned)
