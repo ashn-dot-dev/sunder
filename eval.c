@@ -253,7 +253,7 @@ eval_rvalue_cast(struct expr const* expr)
     struct value* const from = eval_rvalue(expr->data.cast.expr);
 
     // Check if the value casted from is already the correct type. Also allows
-    // us to assume from->type != expr->type from this point forward.
+    // us to assume `from->type != expr->type` from this point forward.
     if (from->type->kind == expr->type->kind) {
         return from;
     }
@@ -285,8 +285,8 @@ eval_rvalue_cast(struct expr const* expr)
     // only appear in integer constant expressions, so evaluating the rhs
     // expression should always produce a constant value.
     if (expr->type->kind == TYPE_BOOL && from->type->kind == TYPE_INTEGER) {
-        struct value* const result = value_new_boolean(
-            bigint_cmp(from->data.integer, context()->zero) != 0);
+        struct value* const result =
+            value_new_boolean(bigint_cmp(from->data.integer, BIGINT_ZERO) != 0);
         value_del(from);
         return result;
     }

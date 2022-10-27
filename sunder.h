@@ -726,7 +726,6 @@ struct context {
     } interned;
 
     // Integer (bigint) constants.
-    struct bigint const* zero;
     struct bigint const* u8_min;
     struct bigint const* u8_max;
     struct bigint const* s8_min;
