@@ -220,9 +220,9 @@ intern_fini(void);
 //      sbuf_fini(vals);
 
 // Convenience macro used to explicitly annotate a pointer as a stretchy
-// buffer. Type annotations for types such as stack-allocated arrays and
-// function pointers are not supported by this macro due to the complicated
-// nature of C variable/type declarations.
+// buffer. Type annotations for types such as fixed-size arrays and function
+// pointers are not supported by this macro due to the complicated nature of C
+// variable/type declarations.
 //
 // Example:
 //      sbuf(int) sbuf = NULL;
@@ -563,10 +563,9 @@ string_append_fmt(struct string* self, char const* fmt, ...);
 void
 string_append_vfmt(struct string* self, char const* fmt, va_list args);
 
-// Split the string on all occurrences of the provided separator.
-// Empty strings are *NOT* removed from the result.
-// This function returns a stretchy buffer of newly allocated string
-// pointers containing the results of the split.
+// Split the string on all occurrences of the provided separator. Empty strings
+// are *NOT* removed from the result. This function returns a stretchy buffer
+// of newly allocated string pointers containing the results of the split.
 //
 // Example:
 //      "ABCBB" ===split on "B"===> "A" "C" "" ""
@@ -670,10 +669,10 @@ struct module {
     //      import "foo/bar.sunder";
     // this member will hold the string "/full/path/to/foo/bar.sunder".
     char const* path; // interned
-    // NUL-prefixed, NUL-terminated text contents of the module.
-    // When the module source is loaded a NUL-prefix is added to the beginning
-    // of the source string at position source[-1] and source[source_count + 1]
-    // so that either a forwards or backward search through the source text may
+    // NUL-prefixed, NUL-terminated text contents of the module. When the
+    // module source is loaded a NUL-prefix is added to the beginning of the
+    // source string at position source[-1] and source[source_count + 1] so
+    // that either a forwards or backward search through the source text may
     // stop if a NUL byte is encountered.
     char const* source;
     size_t source_count;
@@ -1543,10 +1542,9 @@ struct type {
     union {
         struct {
             // NOTE: The min and max fields are "optional" in the sense that
-            // they are not defined for all types satisfying the
-            // type_is_any_integer function. The type kind TYPE_INTEGER will
-            // have these as NULL as integers of this type have no defined
-            // size.
+            // they are not defined for all types satisfying the type_is_int
+            // function. The type kind TYPE_INTEGER will have these as NULL as
+            // integers of type kind TYPE_INTEGER have no defined size.
             struct bigint const* min; // optional
             struct bigint const* max; // optional
         } integer;
@@ -1833,7 +1831,7 @@ struct stmt {
     } kind;
     union {
         struct {
-            // The previous defer statment that should be evaluated after this
+            // The previous defer statement that should be evaluated after this
             // defer statement is evaluated. Singly-linked list of STMT_DEFER.
             struct stmt const* prev; // optional (NULL => no defer)
             struct block const* body;
@@ -1864,7 +1862,7 @@ struct stmt {
         } dump;
         struct {
             struct expr const* expr; // optional
-            struct stmt const* defer; // optonal
+            struct stmt const* defer; // optional
         } return_;
         struct {
             struct expr const* lhs;
@@ -1958,8 +1956,8 @@ struct expr {
             struct expr const* count;
         } slice;
         struct {
-            // List of elements corresponding the member variables defined by
-            // the struct type.
+            // List of elements corresponding to the member variables defined
+            // by the struct type.
             sbuf(struct expr const* const) member_variables;
         } struct_;
         struct {
@@ -2188,10 +2186,10 @@ struct value {
         struct address pointer;
         struct {
             // Concrete values specified for elements of the array value before
-            // the optional ellipsis element. The sbuf_count of the
-            // elements member may be less than countof(array), in which case
-            // the ellipsis value represents the rest of the elements upto
-            // the countof(array)th element.
+            // the optional ellipsis element. The sbuf_count of the elements
+            // member may be less than countof(array), in which case the
+            // ellipsis value represents the rest of the elements upto the
+            // countof(array)th element.
             sbuf(struct value*) elements;
             // Value representing elements from indices within the half-open
             // range [sbuf_count(elements), countof(array)) that are
