@@ -633,10 +633,6 @@ MESSAGEF NORETURN void
 fatal(struct source_location const* location, char const* fmt, ...);
 
 NORETURN void
-todo(char const* file, int line, char const* fmt, ...);
-#define TODO(...) todo(__FILE__, __LINE__, __VA_ARGS__)
-
-NORETURN void
 unreachable(char const* file, int line);
 #define UNREACHABLE() unreachable(__FILE__, __LINE__)
 

@@ -2131,19 +2131,6 @@ fatal(struct source_location const* location, char const* fmt, ...)
 }
 
 void
-todo(char const* file, int line, char const* fmt, ...)
-{
-    va_list args;
-    va_start(args, fmt);
-    fprintf(stderr, "[%s:%d] TODO: ", file, line);
-    vfprintf(stderr, fmt, args);
-    va_end(args);
-
-    fputs("\n", stderr);
-    exit(EXIT_FAILURE);
-}
-
-void
 unreachable(char const* file, int line)
 {
     fprintf(stderr, "[%s:%d] Unreachable!\n", file, line);
