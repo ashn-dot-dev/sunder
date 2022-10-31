@@ -3037,8 +3037,7 @@ resolve_expr_list(struct resolver* resolver, struct cst_expr const* expr)
     if (expr->data.list.ellipsis != NULL) {
         fatal(
             expr->data.list.ellipsis->location,
-            "ellipsis element is not allowed in slice lists",
-            type->name);
+            "ellipsis element is not allowed in slice lists");
     }
 
     sbuf(struct cst_expr const* const) elements = expr->data.list.elements;

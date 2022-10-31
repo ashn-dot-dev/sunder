@@ -617,13 +617,19 @@ struct source_location {
     char const* psrc;
 };
 
-void
+#if defined(__GNUC__) /* GCC and Clang */
+#    define MESSAGEF __attribute__((format(printf, 2, 3)))
+#else
+#    define MESSAGEF /* nothing */
+#endif
+
+MESSAGEF void
 info(struct source_location const* location, char const* fmt, ...);
 
-void
+MESSAGEF void
 error(struct source_location const* location, char const* fmt, ...);
 
-NORETURN void
+MESSAGEF NORETURN void
 fatal(struct source_location const* location, char const* fmt, ...);
 
 NORETURN void
