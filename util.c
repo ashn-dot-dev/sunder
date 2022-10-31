@@ -2137,8 +2137,6 @@ unreachable(char const* file, int line)
     exit(EXIT_FAILURE);
 }
 
-// TODO: Check if ((x + 7) & (-8)) is portable. Since it relies on two's
-// complement it might not be strictly conforming for signed integers.
 int
 ceil8i(int x)
 {
