@@ -1219,6 +1219,7 @@ expr_new_access_index(
     }
 
     UNREACHABLE();
+    return NULL;
 }
 
 struct expr*
@@ -1255,6 +1256,7 @@ expr_new_access_slice(
     }
 
     UNREACHABLE();
+    return NULL;
 }
 
 struct expr*

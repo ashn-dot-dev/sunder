@@ -4310,6 +4310,7 @@ invalid_operand_types:
         lhs->type->name,
         rhs->type->name,
         token_kind_to_cstr(op->kind));
+    return NULL;
 }
 
 static struct block const*

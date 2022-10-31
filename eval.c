@@ -140,6 +140,7 @@ eval_rvalue_symbol(struct expr const* expr)
     }
 
     fatal(expr->location, "identifier `%s` is not a constant", symbol->name);
+    return NULL;
 }
 
 static struct value*
