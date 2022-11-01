@@ -1,6 +1,7 @@
 // Copyright 2021-2022 The Sunder Project Authors
 // SPDX-License-Identifier: Apache-2.0
 #include <assert.h>
+#include <inttypes.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -9,8 +10,8 @@
 static struct type*
 type_new(
     char const* name,
-    size_t size,
-    size_t align,
+    uint64_t size,
+    uint64_t align,
     struct symbol_table* symbols,
     enum type_kind kind)
 {
@@ -277,23 +278,23 @@ type_new_pointer(struct type const* base)
 }
 
 struct type*
-type_new_array(size_t count, struct type const* base)
+type_new_array(uint64_t count, struct type const* base)
 {
     assert(base != NULL);
 
     struct string* const name_string =
-        string_new_fmt("[%zu]%s", count, base->name);
+        string_new_fmt("[%" PRIu64 "]%s", count, base->name);
     char const* const name =
         intern(string_start(name_string), string_count(name_string));
     string_del(name_string);
 
-    size_t const size = count * base->size;
+    uint64_t const size = count * base->size;
     assert((count == 0 || size / count == base->size) && "array size overflow");
     // https://en.cppreference.com/w/c/language/_Alignof
     // > Returns the alignment requirement of the type named by type-name. If
     // > type-name is an array type, the result is the alignment requirement of
     // > the array element type.
-    size_t const align = base->align;
+    uint64_t const align = base->align;
 
     struct symbol_table* const symbols =
         symbol_table_new(context()->global_symbol_table);
@@ -413,12 +414,12 @@ type_unique_pointer(struct type const* base)
 struct type const*
 type_unique_array(
     struct source_location const* location,
-    size_t count,
+    uint64_t count,
     struct type const* base)
 {
     assert(base != NULL);
 
-    size_t const size = count * base->size;
+    uint64_t const size = count * base->size;
     bool const size_overflow = count != 0 && size / count != base->size;
     if (size_overflow || size > SIZEOF_MAX) {
         fatal(location, "array size exceeds the maximum allowable object size");
@@ -542,7 +543,7 @@ type_can_compare_order(struct type const* self)
 }
 
 struct address
-address_init_static(char const* name, size_t offset)
+address_init_static(char const* name, uint64_t offset)
 {
     assert(name != NULL);
 
@@ -1976,8 +1977,9 @@ value_to_new_bytes(struct value const* value)
     assert(value != NULL);
 
     sbuf(uint8_t) bytes = NULL;
-    sbuf_resize(bytes, value->type->size);
-    safe_memset(bytes, 0x00, value->type->size);
+    assert(value->type->size <= SIZE_MAX);
+    sbuf_resize(bytes, (size_t)value->type->size);
+    safe_memset(bytes, 0x00, (size_t)value->type->size);
 
     switch (value->type->kind) {
     case TYPE_ANY: {
@@ -2008,7 +2010,7 @@ value_to_new_bytes(struct value const* value)
     case TYPE_USIZE: /* fallthrough */
     case TYPE_SSIZE: {
         // Convert the bigint into a bit array.
-        size_t const bit_count = value->type->size * 8u;
+        size_t const bit_count = (size_t)value->type->size * 8u;
         struct bitarr* const bits = bitarr_new(bit_count);
         if (bigint_to_bitarr(bits, value->data.integer)) {
             // Internal compiler error. Integer is out of range.
@@ -2042,11 +2044,12 @@ value_to_new_bytes(struct value const* value)
     }
     case TYPE_ARRAY: {
         sbuf(struct value*) const elements = value->data.array.elements;
-        size_t const element_size = value->type->data.array.base->size;
-        size_t offset = 0;
+        uint64_t const element_size = value->type->data.array.base->size;
+        uint64_t offset = 0;
         for (size_t i = 0; i < sbuf_count(elements); ++i) {
             sbuf(uint8_t) const element_bytes = value_to_new_bytes(elements[i]);
-            safe_memmove(bytes + offset, element_bytes, element_size);
+            assert(element_size <= SIZE_MAX);
+            safe_memmove(bytes + offset, element_bytes, (size_t)element_size);
             sbuf_fini(element_bytes);
             offset += element_size;
         }

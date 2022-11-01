@@ -1,6 +1,8 @@
 image: debian/stable
+arch: amd64
 packages:
   - build-essential
+  - gcc-multilib
   - clang
   - nasm
   - yasm
@@ -19,12 +21,18 @@ tasks:
   - clang-debug: |
       cd sunder
       make clean check examples CC=clang CFLAGS='$(GNU_DBG)'
+  - clang-debug-x86-sunder-compile: |
+      cd sunder
+      make clean check examples CC=clang CFLAGS='$(GNU_DBG) -m32'
   - clang-release: |
       cd sunder
       make clean check examples CC=clang CFLAGS='$(GNU_REL)'
   - gcc-debug: |
       cd sunder
       make clean check examples CC=gcc CFLAGS='$(GNU_DBG)'
+  - gcc-debug-x86-sunder-compile: |
+      cd sunder
+      make clean check examples CC=gcc CFLAGS='$(GNU_DBG) -m32'
   - gcc-release: |
       cd sunder
       make clean check examples CC=gcc CFLAGS='$(GNU_REL)'

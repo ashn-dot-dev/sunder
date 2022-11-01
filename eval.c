@@ -1,6 +1,7 @@
 // Copyright 2021-2022 The Sunder Project Authors
 // SPDX-License-Identifier: Apache-2.0
 #include <assert.h>
+#include <inttypes.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -387,7 +388,7 @@ eval_rvalue_cast(struct expr const* expr)
         int const extend =
             type_is_sint(from->type) && (bytes[bytes_count - 1] & 0x80);
 
-        size_t const bit_count = expr->type->size * 8u;
+        size_t const bit_count = (size_t)expr->type->size * 8u;
         struct bitarr* const bits = bitarr_new(bit_count);
         for (size_t i = 0; i < bit_count; ++i) {
             if (i >= (bytes_count * 8u)) {
@@ -447,7 +448,8 @@ eval_rvalue_access_index(struct expr const* expr)
         if (idx_uz >= lhs->type->data.array.count) {
             fatal(
                 expr->data.access_index.idx->location,
-                "index out-of-bounds (array count is %zu, received %zu)",
+                "index out-of-bounds (array count is %" PRIu64
+                ", received %zu)",
                 lhs->type->data.array.count,
                 idx_uz);
         }
@@ -512,14 +514,16 @@ eval_rvalue_access_slice(struct expr const* expr)
         if (begin_uz >= lhs->type->data.array.count) {
             fatal(
                 expr->data.access_slice.begin->location,
-                "index out-of-bounds (array count is %zu, received %zu)",
+                "index out-of-bounds (array count is %" PRIu64
+                ", received %zu)",
                 lhs->type->data.array.count,
                 begin_uz);
         }
         if (end_uz > lhs->type->data.array.count) {
             fatal(
                 expr->data.access_slice.begin->location,
-                "index out-of-bounds (array count is %zu, received %zu)",
+                "index out-of-bounds (array count is %" PRIu64
+                ", received %zu)",
                 lhs->type->data.array.count,
                 end_uz);
         }
@@ -646,7 +650,7 @@ eval_rvalue_unary(struct expr const* expr)
         }
 
         bool const is_signed = type_is_sint(rhs->type);
-        size_t const bit_count = rhs->type->size * 8u;
+        size_t const bit_count = (size_t)rhs->type->size * 8u;
         struct bitarr* const rhs_bits = bitarr_new(bit_count);
         struct bitarr* const res_bits = bitarr_new(bit_count);
         if (bigint_to_bitarr(rhs_bits, rhs->data.integer)) {
@@ -736,7 +740,7 @@ eval_rvalue_binary(struct expr const* expr)
         bool const is_signed = type_is_sint(expr->type);
         //bool const is_negative = bigint_cmp(lhs->data.integer, BIGINT_ZERO) < 0;
 
-        size_t const bit_count = rhs->type->size * 8u;
+        size_t const bit_count = (size_t)rhs->type->size * 8u;
         struct bitarr* const res_bits = bitarr_new(bit_count);
         if (bigint_to_bitarr(res_bits, lhs->data.integer)) {
             UNREACHABLE();
@@ -765,7 +769,7 @@ eval_rvalue_binary(struct expr const* expr)
         bool const is_signed = type_is_sint(expr->type);
         bool const is_negative = bigint_cmp(lhs->data.integer, BIGINT_ZERO) < 0;
 
-        size_t const bit_count = rhs->type->size * 8u;
+        size_t const bit_count = (size_t)rhs->type->size * 8u;
         struct bitarr* const res_bits = bitarr_new(bit_count);
         if (bigint_to_bitarr(res_bits, lhs->data.integer)) {
             UNREACHABLE();
@@ -911,7 +915,7 @@ eval_rvalue_binary(struct expr const* expr)
 
         assert(type_is_int(type));
         bool const is_signed = type_is_sint(type);
-        size_t const bit_count = type->size * 8u;
+        size_t const bit_count = (size_t)type->size * 8u;
         struct bitarr* const lhs_bits = bitarr_new(bit_count);
         struct bitarr* const rhs_bits = bitarr_new(bit_count);
         struct bitarr* const res_bits = bitarr_new(bit_count);
@@ -958,7 +962,7 @@ eval_rvalue_binary(struct expr const* expr)
 
         assert(type_is_int(type));
         bool const is_signed = type_is_sint(type);
-        size_t const bit_count = type->size * 8u;
+        size_t const bit_count = (size_t)type->size * 8u;
         struct bitarr* const lhs_bits = bitarr_new(bit_count);
         struct bitarr* const rhs_bits = bitarr_new(bit_count);
         struct bitarr* const res_bits = bitarr_new(bit_count);
@@ -1005,7 +1009,7 @@ eval_rvalue_binary(struct expr const* expr)
 
         assert(type_is_int(type));
         bool const is_signed = type_is_sint(type);
-        size_t const bit_count = type->size * 8u;
+        size_t const bit_count = (size_t)type->size * 8u;
         struct bitarr* const lhs_bits = bitarr_new(bit_count);
         struct bitarr* const rhs_bits = bitarr_new(bit_count);
         struct bitarr* const res_bits = bitarr_new(bit_count);
@@ -1130,15 +1134,18 @@ eval_lvalue_access_index(struct expr const* expr)
     if (idx_uz >= expr->data.access_index.lhs->type->data.array.count) {
         fatal(
             expr->data.access_index.idx->location,
-            "index out-of-bounds (array count is %zu, received %s)",
+            "index out-of-bounds (array count is %" PRIu64 ", received %s)",
             lhs->type->data.array.count,
             bigint_to_new_cstr(idx->data.integer));
     }
 
     assert(lhs->data.pointer.kind == ADDRESS_STATIC);
-    struct address const address = address_init_static(
-        lhs->data.pointer.data.static_.name,
-        lhs->data.pointer.data.static_.offset + element_type->size * idx_uz);
+    char const* const address_name = lhs->data.pointer.data.static_.name;
+    assert(element_type->size <= SIZE_MAX);
+    uint64_t const address_offset = lhs->data.pointer.data.static_.offset
+        + (size_t)element_type->size * idx_uz;
+    struct address const address =
+        address_init_static(address_name, address_offset);
     value_del(lhs);
     value_del(idx);
     return value_new_pointer(type, address);

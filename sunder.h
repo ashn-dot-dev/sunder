@@ -495,6 +495,12 @@ bigint_magnitude_bit_set(struct bigint* self, size_t n, int value);
 // is left unmodified.
 int
 bigint_to_u8(uint8_t* res, struct bigint const* bigint);
+// Convert a bigint to a uint64_t.
+// Returns zero on success.
+// Returns non-zero if the provided bigint is out-of-range, in which case *res
+// is left unmodified.
+int
+bigint_to_u64(uint64_t* res, struct bigint const* bigint);
 // Convert a bigint to a size_t.
 // Returns zero on success.
 // Returns non-zero if the provided bigint is out-of-range, in which case *res
@@ -639,8 +645,8 @@ unreachable(char const* file, int line);
 // Round up to the nearest multiple of 8.
 int
 ceil8i(int x);
-size_t
-ceil8zu(size_t x);
+uint64_t
+ceil8u64(uint64_t x);
 
 // Spawn a subprocess and wait for it to complete.
 // Returns the exit status of the spawned process.
@@ -1474,41 +1480,24 @@ order(struct module* module);
 ////////////////////////////////////////////////////////////////////////////////
 //////// ast.c /////////////////////////////////////////////////////////////////
 
-// The size_t type is defined as unsigned long (64 bits) on x64 Linux, so
-// `sizeof(size_t) == sizeof(uint64_t)` should evaluate as true with any well
-// behaved x64 Linux C compiler.
-//
-// NOTE: This static assert will trigger an error when compiling Sunder on x86
-// Linux (or x64 Linux with CFLAGS+=-m32) where size_t is 32 bits. However, the
-// Sunder compiler will compile the overwhelming majority of Sunder programs
-// correctly if this static assert is removed, and the only behavioral
-// differences in the compiler will be seen during semantic analysis and error
-// reporting relating to the maximum object size and maximum array length of
-// Sunder types (hardly ever encountered in real-world Sunder code).
-STATIC_ASSERT(size_t_eq_sunder_usize, sizeof(size_t) == sizeof(uint64_t));
-
 // SIZEOF_UNSIZED and ALIGNOF_UNSIZED are given the largest possible value of a
-// size_t so that checks such as `assert(type->size <= 8u)` in the resolve and
-// code generation phases will fail for unsized types.
-#define SIZEOF_UNSIZED ((size_t)SIZE_MAX)
-#define ALIGNOF_UNSIZED ((size_t)SIZE_MAX)
+// uint64_t so that checks such as `assert(type->size <= 8u)` in the resolve
+// and code generation phases will fail for unsized types.
+#define SIZEOF_UNSIZED ((uint64_t)UINT64_MAX)
+#define ALIGNOF_UNSIZED ((uint64_t)UINT64_MAX)
 
-// Maximum allowable object size. The `sizeof` a type must not exceed the
-// maximum value of an x64 `ptrdiff_t` (`ssize::MAX` or `s64::max`), so that
-// difference between two pointers into an object of that type may always be
-// safely calculated.
-#define SIZEOF_MAX ((size_t)PTRDIFF_MAX)
+// Maximum allowable object size. The size of a type must not exceed the
+// maximum value of an ssize integer, so that the difference between two
+// pointers into an object of that type may always be safely calculated.
+#define SIZEOF_MAX ((int64_t)INT64_MAX)
 // The less-than operator is used instead of the less-than-or-equal-to operator
-// since SIZE_MAX is reserved for SIZEOF_UNSIZED. The ptrdiff_t type is defined
-// as signed long (64 bits) on x64 Linux, and the size_t type is defined as
-// unsigned long (64 bits) on x64 Linux, so `SIZEOF_MAX < SIZE_MAX` should
-// evaluate as true with any well behaved x64 Linux C compiler.
-STATIC_ASSERT(sunder_max_sizeof_fits_in_size_t, SIZEOF_MAX < SIZE_MAX);
+// since UINT64_MAX is reserved for SIZEOF_UNSIZED.
+STATIC_ASSERT(sunder_max_sizeof_fits_in_sunder_usize, SIZEOF_MAX < UINT64_MAX);
 
 struct type {
     char const* name; // Canonical human-readable type-name (interned)
-    size_t size; // sizeof
-    size_t align; // alignof
+    uint64_t size; // sizeof
+    uint64_t align; // alignof
     // Symbol table corresponding to static symbols belonging to the type. This
     // symbol table does *NOT* contain symbols for struct member variables as
     // member variables are defined only on instances of a struct.
@@ -1553,7 +1542,7 @@ struct type {
             struct type const* base;
         } pointer;
         struct {
-            size_t count;
+            uint64_t count;
             struct type const* base;
         } array;
         struct {
@@ -1569,7 +1558,7 @@ struct type {
             struct member_variable {
                 char const* name; // interned
                 struct type const* type;
-                size_t offset;
+                uint64_t offset;
             } /*sbuf*/ * member_variables;
         } struct_;
     } data;
@@ -1610,7 +1599,7 @@ type_new_function(
 struct type*
 type_new_pointer(struct type const* base);
 struct type*
-type_new_array(size_t count, struct type const* base);
+type_new_array(uint64_t count, struct type const* base);
 struct type*
 type_new_slice(struct type const* base);
 // Create a new struct with no members (size zero and alignment zero).
@@ -1637,7 +1626,7 @@ type_unique_pointer(struct type const* base);
 struct type const*
 type_unique_array(
     struct source_location const* location,
-    size_t count,
+    uint64_t count,
     struct type const* base);
 struct type const*
 type_unique_slice(struct type const* base);
@@ -1679,7 +1668,7 @@ struct address {
             // location in which this address resides.
             char const* name; // interned
             // Offset (in bytes) from the base region.
-            size_t offset;
+            uint64_t offset;
         } static_;
         struct {
             int rbp_offset;
@@ -1687,7 +1676,7 @@ struct address {
     } data;
 };
 struct address
-address_init_static(char const* name, size_t offset);
+address_init_static(char const* name, uint64_t offset);
 struct address
 address_init_local(int rbp_offset);
 struct address*

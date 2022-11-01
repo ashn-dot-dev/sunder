@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 #include <assert.h>
 #include <errno.h>
+#include <inttypes.h>
 #include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
@@ -33,13 +34,21 @@ static size_t unique_id = 0; // Used for generating unique names and labels.
 #define LABEL_STMT ".__STMT_"
 #define LABEL_EXPR ".__EXPR_"
 
-static void
+#if defined(__GNUC__) /* GCC and Clang */
+#    define APPENDF __attribute__((format(printf, 1, 2)))
+#    define APPENDF_LOCATION __attribute__((format(printf, 2, 3)))
+#else
+#    define APPENDF /* nothing */
+#    define APPENDF_LOCATION /* nothing */
+#endif
+
+static APPENDF void
 append(char const* fmt, ...);
-static void
+static APPENDF void
 appendln(char const* fmt, ...);
-static void
+static APPENDF void
 appendli(char const* fmt, ...);
-static void
+static APPENDF_LOCATION void
 appendli_location(struct source_location const* location, char const* fmt, ...);
 static void
 appendch(char ch);
@@ -50,39 +59,39 @@ append_dx_static_initializer(struct value const* value);
 
 // All push_* functions align rsp to an 8-byte boundary.
 static void
-push(size_t size);
+push(uint64_t size);
 static void
 push_address(struct address const* address);
 static void
-push_at_address(size_t size, struct address const* address);
+push_at_address(uint64_t size, struct address const* address);
 // The pop function will round size up to an 8-byte boundary to match the
 // push_* functions so that one push/pop pair will restore the stack to it's
 // previous state.
 static void
-pop(size_t size);
+pop(uint64_t size);
 
 // Register al, ax, eax, or rax based on size.
 static char const*
-reg_a(size_t size);
+reg_a(uint64_t size);
 // Register bl, bx, ebx, or rbx based on size.
 static char const*
-reg_b(size_t size);
+reg_b(uint64_t size);
 // Register cl, cx, ecx, or rcx based on size.
 static char const*
-reg_c(size_t size);
+reg_c(uint64_t size);
 
 // Copy size bytes from the address in rax to to the address in rbx using rcx
 // for intermediate storage. Roughly equivalent to memcpy(rbx, rax, size).
 static void
-copy_rax_rbx_via_rcx(size_t size);
+copy_rax_rbx_via_rcx(uint64_t size);
 // Copy size bytes from the address in rsp to to the address in rbx using rcx
 // for intermediate storage. Roughly equivalent to memcpy(rbx, rsp, size).
 static void
-copy_rsp_rbx_via_rcx(size_t size);
+copy_rsp_rbx_via_rcx(uint64_t size);
 // Copy size bytes from the address in rax to to the address in rsp using rcx
 // for intermediate storage. Roughly equivalent to memcpy(rsp, rax, size).
 static void
-copy_rax_rsp_via_rcx(size_t size);
+copy_rax_rsp_via_rcx(uint64_t size);
 
 // Move the value currently in register a into the full width of rax with zero
 // extend (unsigned values) or sign extend (signed values).
@@ -225,7 +234,7 @@ append_dx_static_initializer(struct value const* value)
         }
         else {
             appendli(
-                "dq ($%s + %zu)",
+                "dq ($%s + %" PRIu64 ")",
                 address->data.static_.name,
                 address->data.static_.offset);
         }
@@ -234,7 +243,7 @@ append_dx_static_initializer(struct value const* value)
     case TYPE_ARRAY: {
         sbuf(struct value*) const elements = value->data.array.elements;
         struct value const* const ellipsis = value->data.array.ellipsis;
-        size_t const count = value->type->data.array.count;
+        uint64_t const count = value->type->data.array.count;
         for (size_t i = 0; i < count; ++i) {
             if (i < sbuf_count(elements)) {
                 append_dx_static_initializer(elements[i]);
@@ -272,7 +281,7 @@ append_dx_static_initializer(struct value const* value)
             if (i != 0) {
                 struct member_variable const* const prev_def =
                     member_variable_defs + (i - 1);
-                size_t const padding =
+                uint64_t const padding =
                     def->offset - (prev_def->offset + prev_def->type->size);
                 if (padding != 0) {
                     appendli("; padding");
@@ -296,14 +305,14 @@ append_dx_static_initializer(struct value const* value)
 }
 
 static void
-push(size_t size)
+push(uint64_t size)
 {
     if (size == 0) {
         appendli("; (push of size zero)");
         return;
     }
 
-    appendli("sub rsp, %#zx", ceil8zu(size));
+    appendli("sub rsp, %#" PRIx64, ceil8u64(size));
 }
 
 static void
@@ -320,7 +329,7 @@ push_address(struct address const* address)
             break;
         }
         appendli(
-            "lea [$%s + %zu]",
+            "lea [$%s + %" PRIu64 "]",
             address->data.static_.name,
             address->data.static_.offset);
         appendli("push rax");
@@ -336,7 +345,7 @@ push_address(struct address const* address)
 }
 
 static void
-push_at_address(size_t size, struct address const* address)
+push_at_address(uint64_t size, struct address const* address)
 {
     assert(address != NULL);
 
@@ -360,45 +369,45 @@ push_at_address(size_t size, struct address const* address)
         UNREACHABLE();
     }
 
-    size_t cur = 0u;
+    uint64_t cur = 0u;
     while ((size - cur) >= 8u) {
-        appendli("mov rax, [%s + %#zu]", addr, cur);
-        appendli("mov [rsp + %#zx], rax", cur);
+        appendli("mov rax, [%s + %#" PRIx64 "]", addr, cur);
+        appendli("mov [rsp + %#" PRIx64 "], rax", cur);
         cur += 8u;
     }
     if ((size - cur) >= 4u) {
-        appendli("mov eax, [%s + %#zu]", addr, cur);
-        appendli("mov [rsp + %#zx], eax", cur);
+        appendli("mov eax, [%s + %#" PRIx64 "]", addr, cur);
+        appendli("mov [rsp + %#" PRIx64 "], eax", cur);
         cur += 4u;
         assert((size - cur) < 4u);
     }
     if ((size - cur) >= 2u) {
-        appendli("mov ax, [%s + %#zu]", addr, cur);
-        appendli("mov [rsp + %#zx], ax", cur);
+        appendli("mov ax, [%s + %#" PRIx64 "]", addr, cur);
+        appendli("mov [rsp + %#" PRIx64 "], ax", cur);
         cur += 2u;
         assert((size - cur) < 2u);
     }
     if ((size - cur) == 1u) {
-        appendli("mov al, [%s + %#zu]", addr, cur);
-        appendli("mov [rsp + %#zx], al", cur);
+        appendli("mov al, [%s + %#" PRIx64 "]", addr, cur);
+        appendli("mov [rsp + %#" PRIx64 "], al", cur);
     }
 
     xalloc(addr, XALLOC_FREE);
 }
 
 static void
-pop(size_t size)
+pop(uint64_t size)
 {
     if (size == 0) {
         appendli("; (pop of size zero)");
         return;
     }
 
-    appendli("add rsp, %#zx", ceil8zu(size));
+    appendli("add rsp, %#" PRIx64, ceil8u64(size));
 }
 
 static char const*
-reg_a(size_t size)
+reg_a(uint64_t size)
 {
     switch (size) {
     case 1:
@@ -415,7 +424,7 @@ reg_a(size_t size)
 }
 
 static char const*
-reg_b(size_t size)
+reg_b(uint64_t size)
 {
     switch (size) {
     case 1:
@@ -432,7 +441,7 @@ reg_b(size_t size)
 }
 
 static char const*
-reg_c(size_t size)
+reg_c(uint64_t size)
 {
     switch (size) {
     case 1:
@@ -449,83 +458,83 @@ reg_c(size_t size)
 }
 
 static void
-copy_rax_rbx_via_rcx(size_t size)
+copy_rax_rbx_via_rcx(uint64_t size)
 {
-    size_t cur = 0u;
+    uint64_t cur = 0u;
     while ((size - cur) >= 8u) {
-        appendli("mov rcx, [rax + %#zu]", cur);
-        appendli("mov [rbx + %#zx], rcx", cur);
+        appendli("mov rcx, [rax + %#" PRIx64 "]", cur);
+        appendli("mov [rbx + %#" PRIx64 "], rcx", cur);
         cur += 8u;
     }
     if ((size - cur) >= 4u) {
-        appendli("mov ecx, [rax + %#zu]", cur);
-        appendli("mov [rbx + %#zx], ecx", cur);
+        appendli("mov ecx, [rax + %#" PRIx64 "]", cur);
+        appendli("mov [rbx + %#" PRIx64 "], ecx", cur);
         cur += 4u;
         assert((size - cur) < 4u);
     }
     if ((size - cur) >= 2u) {
-        appendli("mov cx, [rax + %#zu]", cur);
-        appendli("mov [rbx + %#zx], cx", cur);
+        appendli("mov cx, [rax + %#" PRIx64 "]", cur);
+        appendli("mov [rbx + %#" PRIx64 "], cx", cur);
         cur += 2u;
         assert((size - cur) < 2u);
     }
     if ((size - cur) == 1u) {
-        appendli("mov cl, [rax + %#zu]", cur);
-        appendli("mov [rbx + %#zx], cl", cur);
+        appendli("mov cl, [rax + %#" PRIx64 "]", cur);
+        appendli("mov [rbx + %#" PRIx64 "], cl", cur);
     }
 }
 
 static void
-copy_rsp_rbx_via_rcx(size_t size)
+copy_rsp_rbx_via_rcx(uint64_t size)
 {
-    size_t cur = 0u;
+    uint64_t cur = 0u;
     while ((size - cur) >= 8u) {
-        appendli("mov rcx, [rsp + %#zu]", cur);
-        appendli("mov [rbx + %#zx], rcx", cur);
+        appendli("mov rcx, [rsp + %#" PRIx64 "]", cur);
+        appendli("mov [rbx + %#" PRIx64 "], rcx", cur);
         cur += 8u;
     }
     if ((size - cur) >= 4u) {
-        appendli("mov ecx, [rsp + %#zu]", cur);
-        appendli("mov [rbx + %#zx], ecx", cur);
+        appendli("mov ecx, [rsp + %#" PRIx64 "]", cur);
+        appendli("mov [rbx + %#" PRIx64 "], ecx", cur);
         cur += 4u;
         assert((size - cur) < 4u);
     }
     if ((size - cur) >= 2u) {
-        appendli("mov cx, [rsp + %#zu]", cur);
-        appendli("mov [rbx + %#zx], cx", cur);
+        appendli("mov cx, [rsp + %#" PRIx64 "]", cur);
+        appendli("mov [rbx + %#" PRIx64 "], cx", cur);
         cur += 2u;
         assert((size - cur) < 2u);
     }
     if ((size - cur) == 1u) {
-        appendli("mov cl, [rsp + %#zu]", cur);
-        appendli("mov [rbx + %#zx], cl", cur);
+        appendli("mov cl, [rsp + %#" PRIx64 "]", cur);
+        appendli("mov [rbx + %#" PRIx64 "], cl", cur);
     }
 }
 
 static void
-copy_rax_rsp_via_rcx(size_t size)
+copy_rax_rsp_via_rcx(uint64_t size)
 {
-    size_t cur = 0u;
+    uint64_t cur = 0u;
     while ((size - cur) >= 8u) {
-        appendli("mov rcx, [rax + %#zu]", cur);
-        appendli("mov [rsp + %#zx], rcx", cur);
+        appendli("mov rcx, [rax + %#" PRIx64 "]", cur);
+        appendli("mov [rsp + %#" PRIx64 "], rcx", cur);
         cur += 8u;
     }
     if ((size - cur) >= 4u) {
-        appendli("mov ecx, [rax + %#zu]", cur);
-        appendli("mov [rsp + %#zx], ecx", cur);
+        appendli("mov ecx, [rax + %#" PRIx64 "]", cur);
+        appendli("mov [rsp + %#" PRIx64 "], ecx", cur);
         cur += 4u;
         assert((size - cur) < 4u);
     }
     if ((size - cur) >= 2u) {
-        appendli("mov cx, [rax + %#zu]", cur);
-        appendli("mov [rsp + %#zx], cx", cur);
+        appendli("mov cx, [rax + %#" PRIx64 "]", cur);
+        appendli("mov [rsp + %#" PRIx64 "], cx", cur);
         cur += 2u;
         assert((size - cur) < 2u);
     }
     if ((size - cur) == 1u) {
-        appendli("mov cl, [rax + %#zu]", cur);
-        appendli("mov [rsp + %#zx], cl", cur);
+        appendli("mov cl, [rax + %#" PRIx64 "]", cur);
+        appendli("mov [rsp + %#" PRIx64 "], cl", cur);
     }
 }
 
@@ -1179,12 +1188,12 @@ codegen_stmt_dump(struct stmt const* stmt, size_t id)
     (void)id;
 
     appendli(
-        "; dump `%s` (%zu bytes)",
+        "; dump `%s` (%" PRIu64 " bytes)",
         stmt->data.expr->type->name,
         stmt->data.expr->type->size);
     push_rvalue(stmt->data.expr);
     appendli(
-        "push %#zx ; push type `%s` size",
+        "push %#" PRIx64 " ; push type `%s` size",
         stmt->data.expr->type->size,
         stmt->data.expr->type->name);
     appendli("call __dump");
@@ -1242,28 +1251,28 @@ codegen_stmt_assign(struct stmt const* stmt, size_t id)
     push_lvalue(stmt->data.assign.lhs);
 
     appendli("pop rbx");
-    size_t const size = stmt->data.assign.rhs->type->size;
-    size_t cur = 0u;
+    uint64_t const size = stmt->data.assign.rhs->type->size;
+    uint64_t cur = 0u;
     while ((size - cur) >= 8u) {
-        appendli("mov rax, [rsp + %#zu]", cur);
-        appendli("mov [rbx + %#zx], rax", cur);
+        appendli("mov rax, [rsp + %#" PRIx64 "]", cur);
+        appendli("mov [rbx + %#" PRIx64 "], rax", cur);
         cur += 8u;
     }
     if ((size - cur) >= 4u) {
-        appendli("mov eax, [rsp + %#zu]", cur);
-        appendli("mov [rbx + %#zx], eax", cur);
+        appendli("mov eax, [rsp + %#" PRIx64 "]", cur);
+        appendli("mov [rbx + %#" PRIx64 "], eax", cur);
         cur += 4u;
         assert((size - cur) < 4u);
     }
     if ((size - cur) >= 2u) {
-        appendli("mov ax, [rsp + %#zu]", cur);
-        appendli("mov [rbx + %#zx], ax", cur);
+        appendli("mov ax, [rsp + %#" PRIx64 "]", cur);
+        appendli("mov [rbx + %#" PRIx64 "], ax", cur);
         cur += 2u;
         assert((size - cur) < 2u);
     }
     if ((size - cur) == 1u) {
-        appendli("mov al, [rsp + %#zu]", cur);
-        appendli("mov [rbx + %#zx], al", cur);
+        appendli("mov al, [rsp + %#" PRIx64 "]", cur);
+        appendli("mov [rbx + %#" PRIx64 "], al", cur);
     }
     pop(size);
 }
@@ -1466,7 +1475,7 @@ push_rvalue_array_list(struct expr const* expr, size_t id)
     sbuf(struct expr const* const) const elements =
         expr->data.array_list.elements;
     struct type const* const element_type = expr->type->data.array.base;
-    size_t const element_size = element_type->size;
+    uint64_t const element_size = element_type->size;
     // TODO: This loop is manually unrolled here, but should probably be turned
     // into an actual asm loop for elements with trivial initialization.
     // Basically we should account for the scenario where a brainfuck
@@ -1478,35 +1487,35 @@ push_rvalue_array_list(struct expr const* expr, size_t id)
         push_rvalue(elements[i]);
 
         appendli("mov rbx, rsp");
-        appendli("add rbx, %zu", ceil8zu(element_size)); // array start
-        appendli("add rbx, %zu", element_size * i); // array offset
+        appendli("add rbx, %" PRIu64, ceil8u64(element_size)); // array start
+        appendli("add rbx, %" PRIu64, element_size * i); // array offset
         copy_rsp_rbx_via_rcx(element_size);
 
         pop(element_size);
     }
 
-    size_t const count = expr->type->data.array.count;
+    uint64_t const count = expr->type->data.array.count;
     if (sbuf_count(elements) < count) { // ellipsis
         assert(expr->data.array_list.ellipsis != NULL);
         assert(expr->data.array_list.ellipsis->type == element_type);
 
         // Number of elements already filled in.
-        size_t const completed = sbuf_count(elements);
+        uint64_t const completed = sbuf_count(elements);
         // Number of elements remaining to be filled in with the ellipsis.
-        size_t const remaining = count - sbuf_count(elements);
+        uint64_t const remaining = count - sbuf_count(elements);
 
         appendln("%s%zu_ellipsis_bgn:", LABEL_EXPR, id);
         push_rvalue(expr->data.array_list.ellipsis);
         appendli("mov rbx, rsp");
-        appendli("add rbx, %zu", ceil8zu(element_size)); // array start
-        appendli("add rbx, %zu", element_size * completed); // array offset
+        appendli("add rbx, %" PRIu64, ceil8u64(element_size)); // array start
+        appendli("add rbx, %" PRIu64, element_size * completed); // array offset
         // rbx is now the destination register.
-        appendli("mov rax, %zu", remaining); // rax := counter down to zero
+        appendli("mov rax, %" PRIu64, remaining); // rax := counter down to zero
         appendln("%s%zu_ellipsis_condition:", LABEL_EXPR, id);
         appendli("cmp rax, 0");
         appendli("je %s%zu_ellipsis_pop", LABEL_EXPR, id);
         copy_rsp_rbx_via_rcx(element_size);
-        appendli("add rbx, %zu", element_size); // ptr = ptr + 1
+        appendli("add rbx, %" PRIu64, element_size); // ptr = ptr + 1
         appendli("dec rax");
         appendli("jmp %s%zu_ellipsis_condition", LABEL_EXPR, id);
         appendln("%s%zu_ellipsis_pop:", LABEL_EXPR, id);
@@ -1581,8 +1590,8 @@ push_rvalue_struct(struct expr const* expr, size_t id)
     appendln("%s%zu_zero_memory_bgn:", LABEL_EXPR, id);
     appendli("mov rax, 0"); // zero value
     appendli("mov rbx, rsp"); // current address
-    size_t const words_count = ceil8zu(expr->type->size) / 8;
-    for (size_t i = 0; i < words_count; ++i) {
+    uint64_t const words_count = ceil8u64(expr->type->size) / 8;
+    for (uint64_t i = 0; i < words_count; ++i) {
         appendli("mov [rbx], rax");
         appendli("add rbx, 8");
     }
@@ -1603,12 +1612,12 @@ push_rvalue_struct(struct expr const* expr, size_t id)
         push_rvalue(member_variable_exprs[i]);
 
         struct type const* const type = member_variable_exprs[i]->type;
-        size_t const size = type->size;
-        size_t const offset = member_variable_defs[i].offset;
+        uint64_t const size = type->size;
+        uint64_t const offset = member_variable_defs[i].offset;
 
         appendli("mov rbx, rsp");
-        appendli("add rbx, %zu", ceil8zu(size)); // struct start
-        appendli("add rbx, %zu", offset); // member offset
+        appendli("add rbx, %" PRIu64, ceil8u64(size)); // struct start
+        appendli("add rbx, %" PRIu64, offset); // member offset
         copy_rsp_rbx_via_rcx(size);
 
         pop(size);
@@ -1733,12 +1742,13 @@ push_rvalue_access_index_lhs_array(struct expr const* expr, size_t id)
         // the result since space for the result space was pushed onto the
         // stack.
         appendli("pop rax"); // index
-        appendli("mov rbx, %zu", lhs_type->data.array.count); // count
+        appendli("mov rbx, %" PRIu64, lhs_type->data.array.count); // count
         appendli("cmp rax, rbx");
         appendli("jb %s%zu_op", LABEL_EXPR, id);
         appendli("call __fatal_index_out_of_bounds");
         appendln("%s%zu_op:", LABEL_EXPR, id);
-        appendli("mov rbx, %zu", element_type->size); // sizeof(element_type)
+        appendli(
+            "mov rbx, %" PRIu64, element_type->size); // sizeof(element_type)
         appendli("mul rbx"); // index * sizeof(element_type)
         appendli("pop rbx"); // start
         appendli("add rax, rbx"); // start + index * sizeof(element_type)
@@ -1754,12 +1764,12 @@ push_rvalue_access_index_lhs_array(struct expr const* expr, size_t id)
     push_rvalue(expr->data.access_index.idx);
     // rax := source
     appendli("pop rax"); // index
-    appendli("mov rbx, %zu", lhs_type->data.array.count); // count
+    appendli("mov rbx, %" PRIu64, lhs_type->data.array.count); // count
     appendli("cmp rax, rbx");
     appendli("jb %s%zu_op", LABEL_EXPR, id);
     appendli("call __fatal_index_out_of_bounds");
     appendln("%s%zu_op:", LABEL_EXPR, id);
-    appendli("mov rbx, %zu", element_type->size); // sizeof(element_type)
+    appendli("mov rbx, %" PRIu64, element_type->size); // sizeof(element_type)
     appendli("mul rbx"); // index * sizeof(element_type)
     appendli("add rax, rsp"); // start + index * sizeof(element_type)
     // rbx := destination
@@ -1769,7 +1779,8 @@ push_rvalue_access_index_lhs_array(struct expr const* expr, size_t id)
     // ceil8 of the sizeof the left hand side array is used to account for any
     // extra padding at the end of the array required to bring the total push
     // size to a modulo 8 value.
-    appendli("mov rbx, %zu", ceil8zu(lhs_type->size)); // aligned sizeof(array)
+    appendli(
+        "mov rbx, %" PRIu64, ceil8u64(lhs_type->size)); // aligned sizeof(array)
     appendli("add rbx, rsp"); // start + aligned sizeof(array)
     // copy
     copy_rax_rbx_via_rcx(element_type->size);
@@ -1806,7 +1817,7 @@ push_rvalue_access_index_lhs_slice(struct expr const* expr, size_t id)
     appendli("jb %s%zu_op", LABEL_EXPR, id);
     appendli("call __fatal_index_out_of_bounds");
     appendln("%s%zu_op:", LABEL_EXPR, id);
-    appendli("mov rbx, %zu", element_type->size); // sizeof(element_type)
+    appendli("mov rbx, %" PRIu64, element_type->size); // sizeof(element_type)
     appendli("mul rbx"); // index * sizeof(element_type)
     appendli("pop rbx"); // start
     appendli("add rax, rbx"); // start + index * sizeof(element_type)
@@ -1851,7 +1862,7 @@ push_rvalue_access_slice_lhs_array(struct expr const* expr, size_t id)
     push_rvalue(expr->data.access_slice.begin);
     appendli("pop rax"); // begin
     appendli("pop rbx"); // end
-    appendli("mov rcx, %zu", lhs_type->data.array.count); // count
+    appendli("mov rcx, %" PRIu64, lhs_type->data.array.count); // count
 
     appendli("cmp rax, rbx"); // cmp begin end
     appendli("jbe %s%zu_oob_check_bgnidx", LABEL_EXPR, id); // jmp begin <= end
@@ -1872,7 +1883,7 @@ push_rvalue_access_slice_lhs_array(struct expr const* expr, size_t id)
     appendli("sub rbx, rax"); // count = end - begin
     appendli("push rbx"); // push count
 
-    appendli("mov rbx, %zu", element_type->size); // sizeof(element_type)
+    appendli("mov rbx, %" PRIu64, element_type->size); // sizeof(element_type)
     appendli("mul rbx"); // offset = begin * sizeof(element_type)
     appendli("push rax"); // push offset
 
@@ -1924,7 +1935,7 @@ push_rvalue_access_slice_lhs_slice(struct expr const* expr, size_t id)
     appendli("sub rbx, rax"); // count = end - begin
     appendli("push rbx"); // push count
 
-    appendli("mov rbx, %zu", element_type->size); // sizeof(element_type)
+    appendli("mov rbx, %" PRIu64, element_type->size); // sizeof(element_type)
     appendli("mul rbx"); // offset = begin * sizeof(element_type)
     appendli("add rax, rsi"); // pointer = offset + start
     appendli("push rax"); // push pointer
@@ -1975,11 +1986,11 @@ push_rvalue_access_member_variable(struct expr const* expr, size_t id)
     push_rvalue(expr->data.access_member_variable.lhs);
     appendli("mov rax, rsp ; rax := start of the object");
     appendli(
-        "add rax, %zu ; rax := start of the member variable",
+        "add rax, %" PRIu64 " ; rax := start of the member variable",
         expr->data.access_member_variable.member_variable->offset);
     appendli(
-        "add rsp, %zu ; rsp := location of the member variable result",
-        ceil8zu(expr->data.access_member_variable.lhs->type->size));
+        "add rsp, %" PRIu64 " ; rsp := location of the member variable result",
+        ceil8u64(expr->data.access_member_variable.lhs->type->size));
     copy_rax_rsp_via_rcx(expr->type->size);
 }
 
@@ -1991,7 +2002,7 @@ push_rvalue_sizeof(struct expr const* expr, size_t id)
     (void)id;
 
     assert(expr->type->kind == TYPE_USIZE);
-    appendli("mov rax, %zu", expr->data.sizeof_.rhs->size);
+    appendli("mov rax, %" PRIu64, expr->data.sizeof_.rhs->size);
     appendli("push rax");
 }
 
@@ -2003,7 +2014,7 @@ push_rvalue_alignof(struct expr const* expr, size_t id)
     (void)id;
 
     assert(expr->type->kind == TYPE_USIZE);
-    appendli("mov rax, %zu", expr->data.alignof_.rhs->align);
+    appendli("mov rax, %" PRIu64, expr->data.alignof_.rhs->align);
     appendli("push rax");
 }
 
@@ -2072,7 +2083,7 @@ push_rvalue_unary(struct expr const* expr, size_t id)
         }
         push_rvalue(expr->data.unary.rhs);
         appendli("pop rax ; pointer object being dereferenced");
-        size_t const size = expr->type->size;
+        uint64_t const size = expr->type->size;
         push(size);
         copy_rax_rsp_via_rcx(size);
         return;
@@ -2102,7 +2113,7 @@ push_rvalue_unary(struct expr const* expr, size_t id)
                 pop(expr->data.unary.rhs->type->size);
             }
             appendli(
-                "mov rax, %zu; array count",
+                "mov rax, %" PRIu64 "; array count",
                 expr->data.unary.rhs->type->data.array.count);
             appendli("push rax");
             return;
@@ -2674,12 +2685,12 @@ push_lvalue_access_index_lhs_array(struct expr const* expr, size_t id)
     push_lvalue(expr->data.access_index.lhs);
     push_rvalue(expr->data.access_index.idx);
     appendli("pop rax"); // index
-    appendli("mov rbx, %zu", lhs_type->data.array.count); // count
+    appendli("mov rbx, %" PRIu64, lhs_type->data.array.count); // count
     appendli("cmp rax, rbx");
     appendli("jb %s%zu_op", LABEL_EXPR, id);
     appendli("call __fatal_index_out_of_bounds");
     appendln("%s%zu_op:", LABEL_EXPR, id);
-    appendli("mov rbx, %zu", element_type->size); // sizeof(element_type)
+    appendli("mov rbx, %" PRIu64, element_type->size); // sizeof(element_type)
     appendli("mul rbx"); // index * sizeof(element_type)
     appendli("pop rbx"); // start
     appendli("add rax, rbx"); // start + index * sizeof(element_type)
@@ -2709,7 +2720,7 @@ push_lvalue_access_index_lhs_slice(struct expr const* expr, size_t id)
     appendli("jb %s%zu_op", LABEL_EXPR, id);
     appendli("call __fatal_index_out_of_bounds");
     appendln("%s%zu_op:", LABEL_EXPR, id);
-    appendli("mov rbx, %zu", element_type->size); // sizeof(element_type)
+    appendli("mov rbx, %" PRIu64, element_type->size); // sizeof(element_type)
     appendli("mul rbx"); // index * sizeof(element_type)
     appendli("pop rbx"); // start
     appendli("add rax, rbx"); // start + index * sizeof(element_type)
@@ -2728,7 +2739,7 @@ push_lvalue_access_member_variable(struct expr const* expr, size_t id)
     push_lvalue(expr->data.access_member_variable.lhs);
     appendli("pop rax");
     appendli(
-        "add rax, %zu",
+        "add rax, %" PRIu64,
         expr->data.access_member_variable.member_variable->offset);
     appendli("push rax");
 }

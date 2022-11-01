@@ -1,6 +1,7 @@
 // Copyright 2021-2022 The Sunder Project Authors
 // SPDX-License-Identifier: Apache-2.0
 #include <assert.h>
+#include <inttypes.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -418,7 +419,7 @@ resolver_reserve_storage_local(struct resolver* self, struct type const* type)
     assert(self->current_function != NULL);
     assert(type != NULL);
 
-    self->current_rbp_offset -= (int)ceil8zu(type->size);
+    self->current_rbp_offset -= (int)ceil8u64(type->size);
     if (self->current_rbp_offset < self->current_function->local_stack_offset) {
         self->current_function->local_stack_offset = self->current_rbp_offset;
     }
@@ -1684,7 +1685,7 @@ resolve_decl_function(struct resolver* resolver, struct cst_decl const* decl)
             address_new(address_init_local(rbp_offset));
         freeze(address);
 
-        rbp_offset += (int)ceil8zu(type->size);
+        rbp_offset += (int)ceil8u64(type->size);
         struct symbol* const symbol =
             symbol_new_variable(location, name, type, address, NULL);
         freeze(symbol);
@@ -2062,7 +2063,7 @@ complete_struct(
     //                     # bytes 3->7 (padding)
     //          var z: u64 # bytes 8->15
     //      }
-    size_t next_offset = 0;
+    uint64_t next_offset = 0;
     for (size_t i = 0; i < members_count; ++i) {
         struct cst_member const* const member = members[i];
         switch (member->kind) {
@@ -3020,7 +3021,8 @@ resolve_expr_list(struct resolver* resolver, struct cst_expr const* expr)
             && resolved_ellipsis == NULL) {
             fatal(
                 expr->location,
-                "array of type `%s` created with %zu elements (expected %zu)",
+                "array of type `%s` created with %zu elements (expected %" PRIu64
+                ")",
                 type->name,
                 sbuf_count(resolved_elements),
                 type->data.array.count);
@@ -4462,8 +4464,8 @@ resolve_typespec_array(
     struct value* const count_value = eval_rvalue(count_expr);
 
     assert(count_value->type == context()->builtin.usize);
-    size_t count = 0u;
-    if (bigint_to_uz(&count, count_value->data.integer)) {
+    uint64_t count = 0u;
+    if (bigint_to_u64(&count, count_value->data.integer)) {
         fatal(
             count_expr->location,
             "array count too large (received %s)",
@@ -4473,6 +4475,7 @@ resolve_typespec_array(
 
     struct type const* const base =
         resolve_typespec(resolver, typespec->data.array.base);
+
     return type_unique_array(typespec->location, count, base);
 }
 
