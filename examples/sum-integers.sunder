@@ -8,7 +8,7 @@ func main() void {
     }
     var allocator = std::allocator::init[[typeof(allocator)]](&allocator);
 
-    var sum = std::bigint::init(allocator);
+    var sum = std::big_integer::init(allocator);
     defer {
         sum.fini();
     }
@@ -34,7 +34,7 @@ func main() void {
             continue;
         }
 
-        var result = std::bigint::init_from_str(allocator, optional.value(), 0);
+        var result = std::big_integer::init_from_str(allocator, optional.value(), 0);
         if result.is_error() {
             std::print_line(std::err(), result.error().*.data);
             std::exit(std::EXIT_FAILURE);
@@ -44,8 +44,8 @@ func main() void {
             int.fini();
         }
 
-        std::bigint::add(&sum, &sum, &int);
+        std::big_integer::add(&sum, &sum, &int);
     }
 
-    std::print_format_line(std::out(), "{}", (:[]std::formatter)[std::formatter::init[[std::bigint]](&sum)]);
+    std::print_format_line(std::out(), "{}", (:[]std::formatter)[std::formatter::init[[std::big_integer]](&sum)]);
 }

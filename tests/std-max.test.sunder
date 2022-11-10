@@ -1,5 +1,5 @@
 import "std/core.sunder";
-import "std/bigint.sunder";
+import "std/big_integer.sunder";
 import "std/general_allocator.sunder";
 
 func test_value[[T]](lhs: T, rhs: T) void {
@@ -19,14 +19,14 @@ func main() void {
     defer { general_allocator.fini(); }
     var allocator = std::allocator::init[[typeof(general_allocator)]](&general_allocator);
 
-    var x = std::bigint::init_from_str(allocator, "+12345678901234567890", 0);
+    var x = std::big_integer::init_from_str(allocator, "+12345678901234567890", 0);
     var x = x.value();
     defer { x.fini(); }
-    var y = std::bigint::init_from_str(allocator, "-12345678901234567890", 0);
+    var y = std::big_integer::init_from_str(allocator, "-12345678901234567890", 0);
     var y = y.value();
     defer { y.fini(); }
-    var max = std::max[[std::bigint]](&x, &y);
-    std::print_format_line(std::out(), "{}", (:[]std::formatter)[std::formatter::init[[std::bigint]](max)]);
+    var max = std::max[[std::big_integer]](&x, &y);
+    std::print_format_line(std::out(), "{}", (:[]std::formatter)[std::formatter::init[[std::big_integer]](max)]);
 }
 ################################################################################
 # FE CA

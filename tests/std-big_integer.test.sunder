@@ -1,16 +1,16 @@
-import "std/bigint.sunder";
+import "std/big_integer.sunder";
 import "std/core.sunder";
 import "std/general_allocator.sunder";
 
-func display_bigint_internals(bigint: *std::bigint) void {
+func display_big_integer_internals(big_integer: *std::big_integer) void {
     var sign = "0";
-    if bigint.*._sign == +1 {
+    if big_integer.*._sign == +1 {
         sign = "+";
     }
-    if bigint.*._sign == -1 {
+    if big_integer.*._sign == -1 {
         sign = "-";
     }
-    var limb_count = countof(bigint.*._limbs);
+    var limb_count = countof(big_integer.*._limbs);
     std::print_format(
         std::out(),
         "SIGN: {}, LIMB COUNT: {}, LIMBS: [",
@@ -22,7 +22,7 @@ func display_bigint_internals(bigint: *std::bigint) void {
             std::out(),
             "{#X}",
             (:[]std::formatter)[
-                std::formatter::init[[u32]](&bigint.*._limbs[i])]);
+                std::formatter::init[[u32]](&big_integer.*._limbs[i])]);
         if i != limb_count - 1 {
             std::print(std::out(), ", ");
         }
@@ -35,13 +35,13 @@ func test_init_from_int[[T]](allocator: std::allocator, int: T) void {
         std::out(),
         "input int: {}",
         (:[]std::formatter)[std::formatter::init[[T]](&int)]);
-    var bigint = std::bigint::init_from_int[[T]](allocator, int);
-    defer { bigint.fini(); }
-    display_bigint_internals(&bigint);
+    var big_integer = std::big_integer::init_from_int[[T]](allocator, int);
+    defer { big_integer.fini(); }
+    display_big_integer_internals(&big_integer);
     std::print_format_line(
         std::out(),
         "{}",
-        (:[]std::formatter)[std::formatter::init[[std::bigint]](&bigint)]);
+        (:[]std::formatter)[std::formatter::init[[std::big_integer]](&big_integer)]);
 }
 
 func test_to_int_roundtrip[[T]](allocator: std::allocator, int: T) void {
@@ -49,9 +49,9 @@ func test_to_int_roundtrip[[T]](allocator: std::allocator, int: T) void {
         std::out(),
         "input int: {}",
         (:[]std::formatter)[std::formatter::init[[T]](&int)]);
-    var bigint = std::bigint::init_from_int[[T]](allocator, int);
-    defer { bigint.fini(); }
-    var result = bigint.to_int[[T]]();
+    var big_integer = std::big_integer::init_from_int[[T]](allocator, int);
+    defer { big_integer.fini(); }
+    var result = big_integer.to_int[[T]]();
     var int = result.value();
     std::print_format_line(
         std::out(),
@@ -64,14 +64,14 @@ func test_init_from_str_success(allocator: std::allocator, str: []byte, radix: u
         std::out(),
         "input str: \"{e}\"",
         (:[]std::formatter)[std::formatter::init[[[]byte]](&str)]);
-    var result = std::bigint::init_from_str(allocator, str, radix);
-    var bigint = result.value();
-    defer { bigint.fini(); }
-    display_bigint_internals(&bigint);
+    var result = std::big_integer::init_from_str(allocator, str, radix);
+    var big_integer = result.value();
+    defer { big_integer.fini(); }
+    display_big_integer_internals(&big_integer);
     std::print_format_line(
         std::out(),
         "{}",
-        (:[]std::formatter)[std::formatter::init[[std::bigint]](&bigint)]);
+        (:[]std::formatter)[std::formatter::init[[std::big_integer]](&big_integer)]);
 }
 
 func test_init_from_str_failure(allocator: std::allocator, str: []byte, radix: usize) void {
@@ -79,34 +79,34 @@ func test_init_from_str_failure(allocator: std::allocator, str: []byte, radix: u
         std::out(),
         "input str: \"{e}\"",
         (:[]std::formatter)[std::formatter::init[[[]byte]](&str)]);
-    var result = std::bigint::init_from_str(allocator, str, radix);
+    var result = std::big_integer::init_from_str(allocator, str, radix);
     std::print_line(std::out(), result.error().*.data);
 }
 
 func test_compare(allocator: std::allocator, lhs_str: []byte, rhs_str: []byte) void {
-    var lhs_result = std::bigint::init_from_str(allocator, lhs_str, 0);
+    var lhs_result = std::big_integer::init_from_str(allocator, lhs_str, 0);
     var lhs = lhs_result.value();
     defer { lhs.fini(); }
 
-    var rhs_result = std::bigint::init_from_str(allocator, rhs_str, 0);
+    var rhs_result = std::big_integer::init_from_str(allocator, rhs_str, 0);
     var rhs = rhs_result.value();
     defer { rhs.fini(); }
 
-    var cmp = std::bigint::compare(&lhs, &rhs);
+    var cmp = std::big_integer::compare(&lhs, &rhs);
 
     std::print_format_line(
         std::out(),
         "{} compare {} => {}",
         (:[]std::formatter)[
-            std::formatter::init[[std::bigint]](&lhs),
-            std::formatter::init[[std::bigint]](&rhs),
+            std::formatter::init[[std::big_integer]](&lhs),
+            std::formatter::init[[std::big_integer]](&rhs),
             std::formatter::init[[ssize]](&cmp)]);
 }
 
 func test_format(allocator: std::allocator, str: []byte) void {
-    var result = std::bigint::init_from_str(allocator, str, 0);
-    var bigint = result.value();
-    defer { bigint.fini(); }
+    var result = std::big_integer::init_from_str(allocator, str, 0);
+    var big_integer = result.value();
+    defer { big_integer.fini(); }
 
     var fmts = (:[][]byte)[
         "{}",
@@ -126,7 +126,7 @@ func test_format(allocator: std::allocator, str: []byte) void {
         std::print_format_line(
             std::out(),
             fmts[i],
-            (:[]std::formatter)[std::formatter::init[[std::bigint]](&bigint)]);
+            (:[]std::formatter)[std::formatter::init[[std::big_integer]](&big_integer)]);
     }
 }
 
@@ -135,9 +135,9 @@ func main() void {
     defer { allocator.fini(); }
     var allocator = std::allocator::init[[typeof(allocator)]](&allocator);
 
-    var bigint = std::bigint::init(allocator);
-    defer { bigint.fini(); }
-    display_bigint_internals(&bigint);
+    var big_integer = std::big_integer::init(allocator);
+    defer { big_integer.fini(); }
+    display_big_integer_internals(&big_integer);
 
     std::print(std::out(), "\n");
 
@@ -307,33 +307,33 @@ func main() void {
     std::print(std::out(), "\n");
 
     # Test zero divided non-zero equals zero.
-    var lhs = std::bigint::init_from_str(allocator, "0", 0);
+    var lhs = std::big_integer::init_from_str(allocator, "0", 0);
     var lhs = lhs.value();
-    var rhs = std::bigint::init_from_str(allocator, "1", 0);
+    var rhs = std::big_integer::init_from_str(allocator, "1", 0);
     var rhs = rhs.value();
-    var div = std::bigint::init(allocator);
+    var div = std::big_integer::init(allocator);
     defer {
         lhs.fini();
         rhs.fini();
         div.fini();
     }
-    std::bigint::div(&div, &lhs, &rhs);
-    display_bigint_internals(&div);
+    std::big_integer::div(&div, &lhs, &rhs);
+    display_big_integer_internals(&div);
 
     std::print(std::out(), "\n");
 
     # Test a panic from divide by zero.
-    var lhs = std::bigint::init_from_str(allocator, "1", 0);
+    var lhs = std::big_integer::init_from_str(allocator, "1", 0);
     var lhs = lhs.value();
-    var rhs = std::bigint::init_from_str(allocator, "0", 0);
+    var rhs = std::big_integer::init_from_str(allocator, "0", 0);
     var rhs = rhs.value();
-    var div = std::bigint::init(allocator);
+    var div = std::big_integer::init(allocator);
     defer {
         lhs.fini();
         rhs.fini();
         div.fini();
     }
-    std::bigint::div(&div, &lhs, &rhs);
+    std::big_integer::div(&div, &lhs, &rhs);
     std::panic("unreachable");
 }
 ################################################################################

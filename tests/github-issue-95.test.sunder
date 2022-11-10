@@ -1,6 +1,6 @@
 import "std/core.sunder";
 import "std/general_allocator.sunder";
-import "std/bigint.sunder";
+import "std/big_integer.sunder";
 
 func main() void {
     var allocator = std::general_allocator::init();
@@ -9,16 +9,16 @@ func main() void {
     }
     var allocator = std::allocator::init[[typeof(allocator)]](&allocator);
 
-    var res = std::bigint::init(allocator);
-    var lhs = std::bigint::init_from_str(allocator, "23683804034828013499051778376295261514260767120149", 0);
+    var res = std::big_integer::init(allocator);
+    var lhs = std::big_integer::init_from_str(allocator, "23683804034828013499051778376295261514260767120149", 0);
     var lhs = lhs.value();
-    var rhs = std::bigint::init_from_str(allocator, "-22381747887658630369484257092659804022968970706773", 0);
+    var rhs = std::big_integer::init_from_str(allocator, "-22381747887658630369484257092659804022968970706773", 0);
     var rhs = rhs.value();
 
-    std::bigint::add(&res, &lhs, &rhs);
-    std::print_format_line(std::out(), "{}", (:[]std::formatter)[std::formatter::init[[std::bigint]](&res)]);
-    std::bigint::sub(&res, &lhs, &rhs);
-    std::print_format_line(std::out(), "{}", (:[]std::formatter)[std::formatter::init[[std::bigint]](&res)]);
+    std::big_integer::add(&res, &lhs, &rhs);
+    std::print_format_line(std::out(), "{}", (:[]std::formatter)[std::formatter::init[[std::big_integer]](&res)]);
+    std::big_integer::sub(&res, &lhs, &rhs);
+    std::print_format_line(std::out(), "{}", (:[]std::formatter)[std::formatter::init[[std::big_integer]](&res)]);
 }
 ################################################################################
 # 1302056147169383129567521283635457491291796413376

@@ -1,4 +1,4 @@
-import "std/bigint.sunder";
+import "std/big_integer.sunder";
 import "std/core.sunder";
 import "std/general_allocator.sunder";
 
@@ -11,17 +11,17 @@ func main() void {
         std::out(),
         "{}",
         (:[]std::formatter)[
-            std::formatter::init[[std::bigint]](&std::bigint::ZERO)]);
+            std::formatter::init[[std::big_integer]](&std::big_integer::ZERO)]);
     std::print_format_line(
         std::out(),
         "{}",
         (:[]std::formatter)[
-            std::formatter::init[[std::bigint]](&std::bigint::POSITIVE_ONE)]);
+            std::formatter::init[[std::big_integer]](&std::big_integer::POSITIVE_ONE)]);
     std::print_format_line(
         std::out(),
         "{}",
         (:[]std::formatter)[
-            std::formatter::init[[std::bigint]](&std::bigint::NEGATIVE_ONE)]);
+            std::formatter::init[[std::big_integer]](&std::big_integer::NEGATIVE_ONE)]);
 }
 ################################################################################
 # 0

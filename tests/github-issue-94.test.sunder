@@ -1,61 +1,61 @@
 import "std/core.sunder";
 import "std/general_allocator.sunder";
-import "std/bigint.sunder";
+import "std/big_integer.sunder";
 
 func test_add(allocator: std::allocator) void {
-    var res = std::bigint::init(allocator);
+    var res = std::big_integer::init(allocator);
     defer {
         res.fini();
     }
 
-    var rhs = std::bigint::init_from_str(allocator, "123", 0);
+    var rhs = std::big_integer::init_from_str(allocator, "123", 0);
     var rhs = rhs.value();
     defer {
         rhs.fini();
     }
-    std::bigint::add(&res, &res, &rhs);
+    std::big_integer::add(&res, &res, &rhs);
 
-    var rhs = std::bigint::init_from_str(allocator, "456", 0);
+    var rhs = std::big_integer::init_from_str(allocator, "456", 0);
     var rhs = rhs.value();
     defer {
         rhs.fini();
     }
-    std::bigint::add(&res, &res, &rhs);
+    std::big_integer::add(&res, &res, &rhs);
 
-    var rhs = std::bigint::init_from_str(allocator, "1234567890123456789012345678901234567890", 0);
+    var rhs = std::big_integer::init_from_str(allocator, "1234567890123456789012345678901234567890", 0);
     var rhs = rhs.value();
     defer { rhs.fini(); }
-    std::bigint::add(&res, &res, &rhs);
+    std::big_integer::add(&res, &res, &rhs);
 
-    std::print_format_line(std::out(), "{}", (:[]std::formatter)[std::formatter::init[[std::bigint]](&res)]);
+    std::print_format_line(std::out(), "{}", (:[]std::formatter)[std::formatter::init[[std::big_integer]](&res)]);
 }
 
 func test_sub(allocator: std::allocator) void {
-    var res = std::bigint::init(allocator);
+    var res = std::big_integer::init(allocator);
     defer {
         res.fini();
     }
 
-    var rhs = std::bigint::init_from_str(allocator, "123", 0);
+    var rhs = std::big_integer::init_from_str(allocator, "123", 0);
     var rhs = rhs.value();
     defer {
         rhs.fini();
     }
-    std::bigint::sub(&res, &res, &rhs);
+    std::big_integer::sub(&res, &res, &rhs);
 
-    var rhs = std::bigint::init_from_str(allocator, "456", 0);
+    var rhs = std::big_integer::init_from_str(allocator, "456", 0);
     var rhs = rhs.value();
     defer {
         rhs.fini();
     }
-    std::bigint::sub(&res, &res, &rhs);
+    std::big_integer::sub(&res, &res, &rhs);
 
-    var rhs = std::bigint::init_from_str(allocator, "1234567890123456789012345678901234567890", 0);
+    var rhs = std::big_integer::init_from_str(allocator, "1234567890123456789012345678901234567890", 0);
     var rhs = rhs.value();
     defer { rhs.fini(); }
-    std::bigint::sub(&res, &res, &rhs);
+    std::big_integer::sub(&res, &res, &rhs);
 
-    std::print_format_line(std::out(), "{}", (:[]std::formatter)[std::formatter::init[[std::bigint]](&res)]);
+    std::print_format_line(std::out(), "{}", (:[]std::formatter)[std::formatter::init[[std::big_integer]](&res)]);
 }
 
 func main() void {

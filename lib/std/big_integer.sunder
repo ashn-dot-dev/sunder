@@ -5,9 +5,9 @@ import "std/null_allocator.sunder";
 import "std/string.sunder";
 import "std/vector.sunder";
 
-struct bigint {
-    # Allocator used to allocate limbs for this bigint. The allocator is also
-    # used as the backing allocator for intermediate objects created while
+struct big_integer {
+    # Allocator used to allocate limbs for this big integer. The allocator is
+    # also used as the backing allocator for intermediate objects created while
     # performing arithmetic operations.
     var _allocator: std::allocator;
     # -1 if the integer <  0
@@ -24,24 +24,24 @@ struct bigint {
     # Number of bits in each limb of the integer.
     const _BITS_PER_LIMB: usize = sizeof(u32) * 8;
 
-    func init(allocator: std::allocator) bigint {
-        return (:bigint){
+    func init(allocator: std::allocator) big_integer {
+        return (:big_integer){
             ._allocator = allocator,
             ._sign = 0,
             ._limbs = std::slice[[u32]]::new(allocator, 0)
         };
     }
 
-    func init_from_bigint(allocator: std::allocator, from: *bigint) bigint {
-        var self = bigint::init(allocator);
-        bigint::assign(&self, from);
+    func init_from_big_integer(allocator: std::allocator, from: *big_integer) big_integer {
+        var self = big_integer::init(allocator);
+        big_integer::assign(&self, from);
         return self;
     }
 
-    func init_from_int[[T]](allocator: std::allocator, int: T) bigint {
+    func init_from_int[[T]](allocator: std::allocator, int: T) big_integer {
         std::assert(sizeof(T) <= sizeof(u64));
         if int >= 0 {
-            var self = (:bigint){
+            var self = (:big_integer){
                 ._allocator = allocator,
                 ._sign = +1s,
                 ._limbs = std::slice[[u32]]::new(allocator, 2)
@@ -65,7 +65,7 @@ struct bigint {
             magnitude = (:u64)((:T)-1s * int);
         }
 
-        var self = (:bigint){
+        var self = (:big_integer){
             ._allocator = allocator,
             ._sign = -1s,
             ._limbs = std::slice[[u32]]::new(allocator, 2)
@@ -76,9 +76,9 @@ struct bigint {
         return self;
     }
 
-    func init_from_str(allocator: std::allocator, str: []byte, radix: usize) std::result[[bigint, std::error]] {
+    func init_from_str(allocator: std::allocator, str: []byte, radix: usize) std::result[[big_integer, std::error]] {
         if radix != 0 and radix != 2 and radix != 8 and radix != 10 and radix != 16 {
-            return std::result[[bigint, std::error]]::init_error(std::error::INVALID_ARGUMENT);
+            return std::result[[big_integer, std::error]]::init_error(std::error::INVALID_ARGUMENT);
         }
 
         var cur: usize = 0;
@@ -116,7 +116,7 @@ struct bigint {
                 radix = 10;
             }
         }
-        var radix_bigint = (:bigint){
+        var radix_big_integer = (:big_integer){
             ._allocator = std::zeroed[[std::allocator]](),
             ._sign = +1,
             ._limbs = (:[]u32)[(:u32)radix]
@@ -124,9 +124,9 @@ struct bigint {
 
         # Parse digits.
         if cur == end {
-            return std::result[[bigint, std::error]]::init_error(std::error::PARSE_FAILURE);
+            return std::result[[big_integer, std::error]]::init_error(std::error::PARSE_FAILURE);
         }
-        var self = bigint::init(allocator);
+        var self = big_integer::init(allocator);
         for cur != end {
             var c = str[cur];
             cur = cur + 1;
@@ -143,42 +143,42 @@ struct bigint {
             }
             else {
                 self.fini();
-                return std::result[[bigint, std::error]]::init_error(std::error::PARSE_FAILURE);
+                return std::result[[big_integer, std::error]]::init_error(std::error::PARSE_FAILURE);
             }
 
             if digit >= radix {
                 self.fini();
-                return std::result[[bigint, std::error]]::init_error(std::error::PARSE_FAILURE);
+                return std::result[[big_integer, std::error]]::init_error(std::error::PARSE_FAILURE);
             }
 
-            var digit_bigint = (:bigint){
+            var digit_big_integer = (:big_integer){
                 ._allocator = std::zeroed[[std::allocator]](),
                 ._sign = +1,
                 ._limbs = (:[]u32)[(:u32)digit]
             };
-            bigint::mul(&self, &self, &radix_bigint);
-            bigint::add(&self, &self, &digit_bigint);
+            big_integer::mul(&self, &self, &radix_big_integer);
+            big_integer::add(&self, &self, &digit_big_integer);
         }
 
         self._sign = sign;
         self._normalize();
-        return std::result[[bigint, std::error]]::init_value(self);
+        return std::result[[big_integer, std::error]]::init_value(self);
     }
 
-    func fini(self: *bigint) void {
+    func fini(self: *big_integer) void {
         std::slice[[u32]]::delete(self.*._allocator, self.*._limbs);
     }
 
-    func to_int[[T]](self: *bigint) std::result[[T, std::error]] {
+    func to_int[[T]](self: *big_integer) std::result[[T, std::error]] {
         std::assert(sizeof(T) <= sizeof(u64));
         var buf = (:[64]byte)[0...]; # More than enough space.
         var allocator = std::linear_allocator::init(buf[0:countof(buf)]);
         var allocator = std::allocator::init[[typeof(allocator)]](&allocator);
-        var string = std::string::init_from_format(allocator, "{}", (:[]std::formatter)[std::formatter::init[[bigint]](self)]);
+        var string = std::string::init_from_format(allocator, "{}", (:[]std::formatter)[std::formatter::init[[big_integer]](self)]);
         return T::init_from_str(string.data(), 0);
     }
 
-    func assign(self: *bigint, from: *bigint) void {
+    func assign(self: *big_integer, from: *big_integer) void {
         if self == from {
             return;
         }
@@ -192,7 +192,7 @@ struct bigint {
         }
     }
 
-    func compare(lhs: *bigint, rhs: *bigint) ssize {
+    func compare(lhs: *big_integer, rhs: *big_integer) ssize {
         if lhs.*._sign > rhs.*._sign {
             return +1;
         }
@@ -227,7 +227,7 @@ struct bigint {
         return 0;
     }
 
-    func hash(self: *bigint) usize {
+    func hash(self: *big_integer) usize {
         # NOTE: This hash function was chosen because it was easy to implement.
         # The uniformity of the hash has *not* been properly evaluated.
         var hash: usize = 0;
@@ -253,13 +253,13 @@ struct bigint {
     #   "o" => octal
     #   "x" => hexadecimal (lower)
     #   "X" => hexadecimal (upper)
-    func format(self: *bigint, writer: std::writer, fmt: []byte) std::result[[void, std::error]] {
-        # Special cases for bigint constants.
-        if self == &bigint::ZERO {
+    func format(self: *big_integer, writer: std::writer, fmt: []byte) std::result[[void, std::error]] {
+        # Special cases for big_integer constants.
+        if self == &big_integer::ZERO {
             var int: smax = 0;
             return smax::format(&int, writer, fmt);
         }
-        if self == &bigint::POSITIVE_ONE or self == &bigint::NEGATIVE_ONE {
+        if self == &big_integer::POSITIVE_ONE or self == &big_integer::NEGATIVE_ONE {
             var int: smax = (:smax)self.*._sign * (:smax)self.*._limbs[0];
             return smax::format(&int, writer, fmt);
         }
@@ -282,7 +282,7 @@ struct bigint {
             fmt_idx = fmt_idx + 1;
         }
 
-        var radix = std::bigint::init_from_int[[usize]](self.*._allocator, 10);
+        var radix = std::big_integer::init_from_int[[usize]](self.*._allocator, 10);
         defer { radix.fini(); }
         var digits_prefix: []byte = "";
         var digits_table: []byte = DIGITS_TABLE_LOWER[0:DIGITS_TABLE_COUNT];
@@ -295,19 +295,19 @@ struct bigint {
                 # Decimal defaults already set.
             }
             elif c == 'b' {
-                radix = std::bigint::init_from_int[[usize]](self.*._allocator, 2);
+                radix = std::big_integer::init_from_int[[usize]](self.*._allocator, 2);
                 digits_prefix = "0b";
             }
             elif c == 'o' {
-                radix = std::bigint::init_from_int[[usize]](self.*._allocator, 8);
+                radix = std::big_integer::init_from_int[[usize]](self.*._allocator, 8);
                 digits_prefix = "0o";
             }
             elif c == 'x' {
-                radix = std::bigint::init_from_int[[usize]](self.*._allocator, 16);
+                radix = std::big_integer::init_from_int[[usize]](self.*._allocator, 16);
                 digits_prefix = "0x";
             }
             elif c == 'X' {
-                radix = std::bigint::init_from_int[[usize]](self.*._allocator, 16);
+                radix = std::big_integer::init_from_int[[usize]](self.*._allocator, 16);
                 digits_prefix = "0x";
                 digits_table = DIGITS_TABLE_UPPER[0:DIGITS_TABLE_COUNT];
             }
@@ -320,9 +320,9 @@ struct bigint {
             return std::result[[void, std::error]]::init_error(std::error::INVALID_ARGUMENT);
         }
 
-        var magnitude = bigint::init_from_bigint(self.*._allocator, self);
-        bigint::assign(&magnitude, self);
-        bigint::abs(&magnitude, &magnitude);
+        var magnitude = big_integer::init_from_big_integer(self.*._allocator, self);
+        big_integer::assign(&magnitude, self);
+        big_integer::abs(&magnitude, &magnitude);
         defer { magnitude.fini(); }
 
         var output = std::vector[[byte]]::init(self.*._allocator);
@@ -336,11 +336,11 @@ struct bigint {
         for magnitude._sign != 0 {
             std::assert(countof(self.*._limbs) != 0);
 
-            var div = bigint::init(self.*._allocator);
+            var div = big_integer::init(self.*._allocator);
             defer { div.fini(); }
-            var rem = bigint::init(self.*._allocator);
+            var rem = big_integer::init(self.*._allocator);
             defer { rem.fini(); }
-            bigint::_divrem(&div, &rem, &magnitude, &radix);
+            big_integer::_divrem(&div, &rem, &magnitude, &radix);
 
             if rem._sign == 0 {
                 output.insert(0u, '0');
@@ -354,7 +354,7 @@ struct bigint {
                 std::panic("unreachable");
             }
 
-            bigint::assign(&magnitude, &div);
+            big_integer::assign(&magnitude, &div);
         }
 
         if is_digits_prefix and countof(digits_prefix) != 0 {
@@ -369,8 +369,8 @@ struct bigint {
     }
 
     # res = -rhs
-    func neg(res: *bigint, rhs: *bigint) void {
-        bigint::assign(res, rhs);
+    func neg(res: *big_integer, rhs: *big_integer) void {
+        big_integer::assign(res, rhs);
         # +1 * -1 == -1
         # -1 * -1 == +1
         #  0 * -1 ==  0
@@ -378,8 +378,8 @@ struct bigint {
     }
 
     # res = abs(rhs)
-    func abs(res: *bigint, rhs: *bigint) void {
-        bigint::assign(res, rhs);
+    func abs(res: *big_integer, rhs: *big_integer) void {
+        big_integer::assign(res, rhs);
         # +1 * +1 == +1
         # -1 * -1 == +1
         #  0 *  0 ==  0
@@ -387,30 +387,30 @@ struct bigint {
     }
 
     # res = lhs + rhs
-    func add(res: *bigint, lhs: *bigint, rhs: *bigint) void {
+    func add(res: *big_integer, lhs: *big_integer, rhs: *big_integer) void {
         # 0 + rhs == rhs
         if lhs.*._sign == 0 {
-            bigint::assign(res, rhs);
+            big_integer::assign(res, rhs);
             return;
         }
         # lhs + 0 == lhs
         if rhs.*._sign == 0 {
-            bigint::assign(res, lhs);
+            big_integer::assign(res, lhs);
             return;
         }
         # (+lhs) + (-rhs) == (+lhs) - (+rhs)
         if (lhs.*._sign == +1) and (rhs.*._sign == -1) {
-            var tmp_rhs = bigint::init(res.*._allocator);
-            bigint::neg(&tmp_rhs, rhs);
-            bigint::sub(res, lhs, &tmp_rhs);
+            var tmp_rhs = big_integer::init(res.*._allocator);
+            big_integer::neg(&tmp_rhs, rhs);
+            big_integer::sub(res, lhs, &tmp_rhs);
             tmp_rhs.fini();
             return;
         }
         # (-lhs) + (+rhs) == (+rhs) - (+lhs)
         if (lhs.*._sign == -1) and (rhs.*._sign == +1) {
-            var tmp_lhs = bigint::init(res.*._allocator);
-            bigint::neg(&tmp_lhs, lhs);
-            bigint::sub(res, rhs, &tmp_lhs);
+            var tmp_lhs = big_integer::init(res.*._allocator);
+            big_integer::neg(&tmp_lhs, lhs);
+            big_integer::sub(res, rhs, &tmp_lhs);
             tmp_lhs.fini();
             return;
         }
@@ -422,7 +422,7 @@ struct bigint {
         var lhs_limb_count = countof(lhs.*._limbs);
         var rhs_limb_count = countof(rhs.*._limbs);
         var limb_count = 1 + *std::max[[usize]](&lhs_limb_count, &rhs_limb_count);
-        var tmp_res = (:bigint){
+        var tmp_res = (:big_integer){
             ._allocator = res.*._allocator,
             ._sign = sign,
             ._limbs = std::slice[[u32]]::new(res.*._allocator, limb_count)
@@ -446,35 +446,35 @@ struct bigint {
         std::assert(carry == 0);
 
         tmp_res._normalize();
-        bigint::assign(res, &tmp_res);
+        big_integer::assign(res, &tmp_res);
         tmp_res.fini();
     }
 
     # res = lhs - rhs
-    func sub(res: *bigint, lhs: *bigint, rhs: *bigint) void {
+    func sub(res: *big_integer, lhs: *big_integer, rhs: *big_integer) void {
         # 0 - rhs == -(rhs)
         if lhs.*._sign == 0 {
-            bigint::neg(res, rhs);
+            big_integer::neg(res, rhs);
             return;
         }
         # lhs - 0 == lhs
         if rhs.*._sign == 0 {
-            bigint::assign(res, lhs);
+            big_integer::assign(res, lhs);
             return;
         }
         # (+lhs) - (-rhs) == (+lhs) + (+rhs)
         if (lhs.*._sign == +1) and (rhs.*._sign == -1) {
-            var tmp_rhs = bigint::init(res.*._allocator);
-            bigint::neg(&tmp_rhs, rhs);
-            bigint::add(res, lhs, &tmp_rhs);
+            var tmp_rhs = big_integer::init(res.*._allocator);
+            big_integer::neg(&tmp_rhs, rhs);
+            big_integer::add(res, lhs, &tmp_rhs);
             tmp_rhs.fini();
             return;
         }
         # (-lhs) - (+rhs) == (-lhs) + (-rhs)
         if (lhs.*._sign == -1) and (rhs.*._sign == +1) {
-            var tmp_rhs = bigint::init(res.*._allocator);
-            bigint::neg(&tmp_rhs, rhs);
-            bigint::add(res, lhs, &tmp_rhs);
+            var tmp_rhs = big_integer::init(res.*._allocator);
+            big_integer::neg(&tmp_rhs, rhs);
+            big_integer::add(res, lhs, &tmp_rhs);
             tmp_rhs.fini();
             return;
         }
@@ -490,7 +490,7 @@ struct bigint {
         # (+3) - (+5) == -2
         # (-5) - (-3) == -2
         # (-3) - (-5) == +2
-        var cmp = bigint::compare(lhs, rhs);
+        var cmp = big_integer::compare(lhs, rhs);
         var neg = ((sign == +1) and (cmp < 0)) or ((sign == -1) and (cmp > 0));
         if neg {
             var tmp = lhs;
@@ -501,7 +501,7 @@ struct bigint {
         var lhs_limb_count = countof(lhs.*._limbs);
         var rhs_limb_count = countof(rhs.*._limbs);
         var limb_count = *std::max[[usize]](&lhs_limb_count, &rhs_limb_count);
-        var tmp_res = (:bigint){
+        var tmp_res = (:big_integer){
             ._allocator = res.*._allocator,
             ._sign = sign,
             ._limbs = std::slice[[u32]]::new(res.*._allocator, limb_count)
@@ -525,21 +525,21 @@ struct bigint {
         std::assert(borrow == 0);
 
         if (neg) {
-            bigint::neg(&tmp_res, &tmp_res);
+            big_integer::neg(&tmp_res, &tmp_res);
         }
         tmp_res._normalize();
-        bigint::assign(res, &tmp_res);
+        big_integer::assign(res, &tmp_res);
         tmp_res.fini();
     }
 
     # res = lhs * rhs
-    func mul(res: *bigint, lhs: *bigint, rhs: *bigint) void {
+    func mul(res: *big_integer, lhs: *big_integer, rhs: *big_integer) void {
         # 0 * rhs == 0
         # lhs * 0 == 0
         if lhs.*._sign == 0 or rhs.*._sign == 0 {
-            var zero = bigint::init(res.*._allocator);
+            var zero = big_integer::init(res.*._allocator);
             defer { zero.fini(); }
-            bigint::assign(res, &zero);
+            big_integer::assign(res, &zero);
             return;
         }
 
@@ -547,7 +547,7 @@ struct bigint {
         # Source: Art of Computer Programming, Volume 2: Seminumerical
         #         Algorithms (Third Edition) page. 268.
         var count = countof(lhs.*._limbs) + countof(rhs.*._limbs);
-        var tmp_w = bigint::init(res.*._allocator); # abs(res)
+        var tmp_w = big_integer::init(res.*._allocator); # abs(res)
         tmp_w._resize(count);
 
         var w = tmp_w._limbs;
@@ -583,25 +583,25 @@ struct bigint {
 
         tmp_w._sign = lhs.*._sign * rhs.*._sign;
         tmp_w._normalize();
-        bigint::assign(res, &tmp_w);
+        big_integer::assign(res, &tmp_w);
         tmp_w.fini();
     }
 
     # res = lhs / rhs
-    func div(res: *bigint, lhs: *bigint, rhs: *bigint) void {
-        var rem = bigint::init(res.*._allocator);
+    func div(res: *big_integer, lhs: *big_integer, rhs: *big_integer) void {
+        var rem = big_integer::init(res.*._allocator);
         defer { rem.fini(); }
-        bigint::_divrem(res, &rem, lhs, rhs);
+        big_integer::_divrem(res, &rem, lhs, rhs);
     }
 
     # res = lhs % rhs
-    func rem(res: *bigint, lhs: *bigint, rhs: *bigint) void {
-        var div = bigint::init(res.*._allocator);
+    func rem(res: *big_integer, lhs: *big_integer, rhs: *big_integer) void {
+        var div = big_integer::init(res.*._allocator);
         defer { div.fini(); }
-        bigint::_divrem(&div, res, lhs, rhs);
+        big_integer::_divrem(&div, res, lhs, rhs);
     }
 
-    func _resize(self: *bigint, new_count: usize) void {
+    func _resize(self: *big_integer, new_count: usize) void {
         var cur_count = countof(self.*._limbs);
         if new_count <= cur_count {
             self.*._limbs = std::slice[[u32]]::resize(self.*._allocator, self.*._limbs, new_count);
@@ -612,7 +612,7 @@ struct bigint {
         std::slice[[u32]]::fill(self.*._limbs[cur_count:new_count], 0);
     }
 
-    func _normalize(self: *bigint) void {
+    func _normalize(self: *big_integer) void {
         var count = countof(self.*._limbs);
         for count != 0 and self.*._limbs[count - 1] == 0 {
             count = count - 1;
@@ -624,7 +624,7 @@ struct bigint {
         }
     }
 
-    func _magnitude_bit_count(self: *bigint) usize {
+    func _magnitude_bit_count(self: *big_integer) usize {
         if countof(self.*._limbs) == 0 {
             return 0;
         }
@@ -636,11 +636,11 @@ struct bigint {
             top = top >> 1;
         }
 
-        return (countof(self.*._limbs) - 1) * bigint::_BITS_PER_LIMB + top_bit_count;
+        return (countof(self.*._limbs) - 1) * big_integer::_BITS_PER_LIMB + top_bit_count;
     }
 
-    func _magnitude_set_bit(self: *bigint, n: usize, value: bool) void {
-        var limb_idx = n / bigint::_BITS_PER_LIMB;
+    func _magnitude_set_bit(self: *big_integer, n: usize, value: bool) void {
+        var limb_idx = n / big_integer::_BITS_PER_LIMB;
         if limb_idx >= countof(self.*._limbs) {
             if not value {
                 # The abstract unallocated bit is already zero so re-setting it
@@ -653,7 +653,7 @@ struct bigint {
         }
 
         var plimb: *u32 = &self.*._limbs[limb_idx];
-        var mask = 1u32 << (n % bigint::_BITS_PER_LIMB);
+        var mask = 1u32 << (n % big_integer::_BITS_PER_LIMB);
         if (value) {
             *plimb = *plimb | mask;
         }
@@ -670,17 +670,17 @@ struct bigint {
         self.*._normalize();
     }
 
-    func _magnitude_get_bit(self: *bigint, n: usize) bool {
-        if n >= (countof(self.*._limbs) * bigint::_BITS_PER_LIMB) {
+    func _magnitude_get_bit(self: *big_integer, n: usize) bool {
+        if n >= (countof(self.*._limbs) * big_integer::_BITS_PER_LIMB) {
             return false;
         }
 
-        var limb = self.*._limbs[n / bigint::_BITS_PER_LIMB];
-        var mask = 1u32 << (n % bigint::_BITS_PER_LIMB);
+        var limb = self.*._limbs[n / big_integer::_BITS_PER_LIMB];
+        var mask = 1u32 << (n % big_integer::_BITS_PER_LIMB);
         return (limb & mask) != 0;
     }
 
-    func _magnitude_shiftl(self: *bigint, nbits: usize) void {
+    func _magnitude_shiftl(self: *big_integer, nbits: usize) void {
         if nbits == 0 {
             return;
         }
@@ -688,8 +688,8 @@ struct bigint {
             return;
         }
 
-        bigint::_magnitude_shiftl_limbs(self, nbits / bigint::_BITS_PER_LIMB);
-        for n in (nbits % bigint::_BITS_PER_LIMB) {
+        big_integer::_magnitude_shiftl_limbs(self, nbits / big_integer::_BITS_PER_LIMB);
+        for n in (nbits % big_integer::_BITS_PER_LIMB) {
             if (self.*._limbs[countof(self.*._limbs) - 1] & 0x80000000u32) != 0 {
                 self.*._resize(countof(self.*._limbs) + 1);
                 self.*._limbs[countof(self.*._limbs) - 1] = 0x00000000u32;
@@ -712,7 +712,7 @@ struct bigint {
     # Shift left by nlimbs number of limbs.
     # Example:
     #      -0xFFEE shifted by nlimbs=2 becomes -0xFFEE0000 with 8-bit limbs.
-    func _magnitude_shiftl_limbs(self: *bigint, nlimbs: usize) void {
+    func _magnitude_shiftl_limbs(self: *big_integer, nlimbs: usize) void {
         if nlimbs == 0 {
             return;
         }
@@ -727,7 +727,7 @@ struct bigint {
     # div = lhs / rhs
     # rem = lhs % rhs
     # The allocator of `div` is used to allocate intermediate objects.
-    func _divrem(div: *bigint, rem: *bigint, lhs: *bigint, rhs: *bigint) void {
+    func _divrem(div: *big_integer, rem: *big_integer, lhs: *big_integer, rhs: *big_integer) void {
         # lhs / 0 == undefined
         if (rhs.*._sign == 0) {
             std::panic("divide by zero");
@@ -753,20 +753,20 @@ struct bigint {
         #     Q(i) := 1
         #   end
         # end
-        var Q = bigint::init(div.*._allocator); # abs(div)
-        var R = bigint::init(div.*._allocator); # abs(rem)
-        var N = bigint::init(div.*._allocator); # abs(lhs)
-        bigint::abs(&N, lhs);
-        var D = bigint::init(div.*._allocator); # abs(rhs)
-        bigint::abs(&D, rhs);
-        var i = bigint::_magnitude_bit_count(lhs);
+        var Q = big_integer::init(div.*._allocator); # abs(div)
+        var R = big_integer::init(div.*._allocator); # abs(rem)
+        var N = big_integer::init(div.*._allocator); # abs(lhs)
+        big_integer::abs(&N, lhs);
+        var D = big_integer::init(div.*._allocator); # abs(rhs)
+        big_integer::abs(&D, rhs);
+        var i = big_integer::_magnitude_bit_count(lhs);
         for i != 0 {
             i = i - 1;
-            bigint::_magnitude_shiftl(&R, 1);
-            bigint::_magnitude_set_bit(&R, 0, bigint::_magnitude_get_bit(&N, i));
-            if bigint::compare(&R, &D) >= 0 {
-                bigint::sub(&R, &R, &D);
-                bigint::_magnitude_set_bit(&Q, i, true);
+            big_integer::_magnitude_shiftl(&R, 1);
+            big_integer::_magnitude_set_bit(&R, 0, big_integer::_magnitude_get_bit(&N, i));
+            if big_integer::compare(&R, &D) >= 0 {
+                big_integer::sub(&R, &R, &D);
+                big_integer::_magnitude_set_bit(&Q, i, true);
             }
         }
 
@@ -783,9 +783,9 @@ struct bigint {
         R._sign = lhs.*._sign;
 
         Q._normalize();
-        bigint::assign(div, &Q);
+        big_integer::assign(div, &Q);
         R._normalize();
-        bigint::assign(rem, &R);
+        big_integer::assign(rem, &R);
         Q.fini();
         R.fini();
         N.fini();
@@ -793,19 +793,19 @@ struct bigint {
     }
 }
 
-extend bigint const ZERO: std::bigint = (:std::bigint){
+extend big_integer const ZERO: std::big_integer = (:std::big_integer){
     ._allocator = std::null_allocator::ALLOCATOR,
     ._sign = 0,
     ._limbs = (:[]u32)[]
 };
 
-extend bigint const POSITIVE_ONE: std::bigint = (:std::bigint){
+extend big_integer const POSITIVE_ONE: std::big_integer = (:std::big_integer){
     ._allocator = std::null_allocator::ALLOCATOR,
     ._sign = +1,
     ._limbs = (:[]u32)[1]
 };
 
-extend bigint const NEGATIVE_ONE: std::bigint = (:std::bigint){
+extend big_integer const NEGATIVE_ONE: std::big_integer = (:std::big_integer){
     ._allocator = std::null_allocator::ALLOCATOR,
     ._sign = -1,
     ._limbs = (:[]u32)[1]
