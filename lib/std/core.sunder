@@ -644,13 +644,12 @@ func read_all(reader: std::reader, allocator: std::allocator) std::result[[[]byt
 #       #
 #       # Handle the empty optional...
 #   }
-#   defer {
-#       # Queue up the allocated buffer for deletion. This defer should be
-#       # omitted if the line is to be used/stored for further computation
-#       # outside of the current function/block.
-#       std::slice[[byte]]::delete(allocator, optional.value());
-#   }
-#   if countof(optional.value()) == 0 {
+#   var line = optional.value();
+#   # Queue up the allocated buffer for deletion. This defer should be omitted
+#   # if the line is to be used/stored for further computation outside of the
+#   # current function/block.
+#   defer std::slice[[byte]]::delete(allocator, line);
+#   if countof(line) == 0 {
 #       # The read line consists of a single newline character, "\n", which was
 #       # trimmed away within `std::read_line`. Possibly an empty line in a
 #       # text file, or a user hitting Enter/Return without typing when reading
