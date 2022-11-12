@@ -144,6 +144,16 @@ func defer_expr() void {
     defer dump_u8(0xAA);
 }
 
+func defer_expr_return() void {
+    defer dump_u8(0xFF);
+    defer dump_u8(0xEE);
+    defer {
+        defer dump_u8(0xDD);
+    }
+    return;
+    defer dump_u8(0xCC);
+}
+
 func main() void {
     simple_defer();
     for_range_loop();
@@ -151,6 +161,7 @@ func main() void {
     dump return_override();
     deeply_nested();
     defer_expr();
+    defer_expr_return();
 }
 ################################################################################
 # AA
@@ -178,6 +189,9 @@ func main() void {
 # AA
 # BB
 # CC
+# DD
+# EE
+# FF
 # DD
 # EE
 # FF
