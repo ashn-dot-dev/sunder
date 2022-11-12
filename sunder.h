@@ -1060,7 +1060,8 @@ struct cst_stmt {
     struct source_location const* location;
     enum cst_stmt_kind {
         CST_STMT_DECL,
-        CST_STMT_DEFER,
+        CST_STMT_DEFER_BLOCK,
+        CST_STMT_DEFER_EXPR,
         CST_STMT_IF,
         CST_STMT_FOR_RANGE,
         CST_STMT_FOR_EXPR,
@@ -1073,7 +1074,8 @@ struct cst_stmt {
     } kind;
     union {
         struct cst_decl const* decl;
-        struct cst_block const* defer;
+        struct cst_block const* defer_block;
+        struct cst_expr const* defer_expr;
         struct {
             sbuf(struct cst_conditional const* const) conditionals;
         } if_;
@@ -1103,8 +1105,11 @@ struct cst_stmt {
 struct cst_stmt*
 cst_stmt_new_decl(struct cst_decl const* decl);
 struct cst_stmt*
-cst_stmt_new_defer(
+cst_stmt_new_defer_block(
     struct source_location const* location, struct cst_block const* block);
+struct cst_stmt*
+cst_stmt_new_defer_expr(
+    struct source_location const* location, struct cst_expr const* expr);
 struct cst_stmt*
 cst_stmt_new_if(struct cst_conditional const* const* conditionals);
 struct cst_stmt*

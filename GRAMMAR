@@ -45,6 +45,7 @@
               | <decl-alias>
 
 <stmt-defer> ::= "defer" <block>
+               | "defer" <expr>
 
 <stmt-if> ::= "if" <expr> <block> ("elif" <expr> <block>)* ("else" <block>)?
 

@@ -14,9 +14,7 @@ func cat(filename: []byte) void {
     }
 
     var file = result.value();
-    defer {
-        file.close();
-    }
+    defer file.close();
 
     var buf = (:[512]byte)[0...];
     for true {

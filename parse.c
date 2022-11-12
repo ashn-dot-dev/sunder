@@ -631,8 +631,19 @@ parse_stmt_defer(struct parser* parser)
 
     struct source_location const* const location =
         &expect_current(parser, TOKEN_DEFER)->location;
-    struct cst_block const* block = parse_block(parser);
-    struct cst_stmt* const product = cst_stmt_new_defer(location, block);
+
+    if (check_current(parser, TOKEN_LBRACE)) {
+        struct cst_block const* block = parse_block(parser);
+        struct cst_stmt* const product = cst_stmt_new_defer_block(location, block);
+
+        freeze(product);
+        return product;
+    }
+
+    struct cst_expr const* const expr = parse_expr(parser);
+    expect_current(parser, TOKEN_SEMICOLON);
+
+    struct cst_stmt* const product = cst_stmt_new_defer_expr(location, expr);
 
     freeze(product);
     return product;

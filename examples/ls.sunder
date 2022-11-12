@@ -35,9 +35,7 @@ func main() void {
     }
 
     var dir = result.value();
-    defer {
-        dir.close();
-    }
+    defer dir.close();
 
     for dir.advance() {
         var current = dir.current();

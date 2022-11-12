@@ -201,7 +201,9 @@ resolve_stmt(struct resolver* resolver, struct cst_stmt const* stmt);
 static struct stmt const* // optional
 resolve_stmt_decl(struct resolver* resolver, struct cst_stmt const* stmt);
 static struct stmt const*
-resolve_stmt_defer(struct resolver* resolver, struct cst_stmt const* stmt);
+resolve_stmt_defer_block(struct resolver* resolver, struct cst_stmt const* stmt);
+static struct stmt const*
+resolve_stmt_defer_expr(struct resolver* resolver, struct cst_stmt const* stmt);
 static struct stmt const*
 resolve_stmt_if(struct resolver* resolver, struct cst_stmt const* stmt);
 static struct stmt const*
@@ -2259,8 +2261,11 @@ resolve_stmt(struct resolver* resolver, struct cst_stmt const* stmt)
     case CST_STMT_DECL: {
         return resolve_stmt_decl(resolver, stmt);
     }
-    case CST_STMT_DEFER: {
-        return resolve_stmt_defer(resolver, stmt);
+    case CST_STMT_DEFER_BLOCK: {
+        return resolve_stmt_defer_block(resolver, stmt);
+    }
+    case CST_STMT_DEFER_EXPR: {
+        return resolve_stmt_defer_expr(resolver, stmt);
     }
     case CST_STMT_IF: {
         return resolve_stmt_if(resolver, stmt);
@@ -2358,21 +2363,53 @@ resolve_stmt_decl(struct resolver* resolver, struct cst_stmt const* stmt)
 }
 
 static struct stmt const*
-resolve_stmt_defer(struct resolver* resolver, struct cst_stmt const* stmt)
+resolve_stmt_defer_block(struct resolver* resolver, struct cst_stmt const* stmt)
 {
     assert(resolver != NULL);
     assert(!resolver_is_global(resolver));
     assert(stmt != NULL);
-    assert(stmt->kind == CST_STMT_DEFER);
+    assert(stmt->kind == CST_STMT_DEFER_BLOCK);
 
     struct symbol_table* const symbol_table =
         symbol_table_new(resolver->current_symbol_table);
     struct block const* const body =
-        resolve_block(resolver, symbol_table, stmt->data.defer);
+        resolve_block(resolver, symbol_table, stmt->data.defer_block);
     symbol_table_freeze(symbol_table);
 
     struct stmt* const resolved =
         stmt_new_defer(stmt->location, resolver->current_defer, body);
+    resolver->current_defer = resolved;
+
+    freeze(resolved);
+    return resolved;
+}
+
+static struct stmt const*
+resolve_stmt_defer_expr(struct resolver* resolver, struct cst_stmt const* stmt)
+{
+    assert(resolver != NULL);
+    assert(!resolver_is_global(resolver));
+    assert(stmt != NULL);
+    assert(stmt->kind == CST_STMT_DEFER_EXPR);
+
+    // Implicitly create a block for the deferred expression.
+    struct expr const* const expr = resolve_expr(resolver, stmt->data.defer_expr);
+    struct stmt* const expr_stmt = stmt_new_expr(expr->location, expr);
+    freeze(expr_stmt);
+    sbuf(struct stmt const*) stmts = NULL;
+    sbuf_push(stmts, expr_stmt);
+    sbuf_freeze(stmts);
+    struct block* const block = block_new(
+        stmt->location,
+        resolver->current_symbol_table,
+        stmts,
+        resolver->current_defer,
+        resolver->current_defer);
+    freeze(block);
+
+    // Use the implicitly created block as the defer block.
+    struct stmt* const resolved =
+        stmt_new_defer(stmt->location, resolver->current_defer, block);
     resolver->current_defer = resolved;
 
     freeze(resolved);

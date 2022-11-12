@@ -48,14 +48,10 @@ func main() void {
     }
 
     var file = result.value();
-    defer {
-        file.close();
-    }
+    defer file.close();
 
     var allocator = std::general_allocator::init();
-    defer {
-        allocator.fini();
-    }
+    defer allocator.fini();
     var allocator = std::allocator::init[[typeof(allocator)]](&allocator);
 
     var result = std::read_all(std::reader::init[[std::file]](&file), allocator);

@@ -282,7 +282,7 @@ struct big_integer {
         }
 
         var radix = std::big_integer::init_from_int[[usize]](self.*._allocator, 10);
-        defer { radix.fini(); }
+        defer radix.fini();
         var digits_prefix: []byte = "";
         var digits_table: []byte = DIGITS_TABLE_LOWER[0:DIGITS_TABLE_COUNT];
 
@@ -322,10 +322,10 @@ struct big_integer {
         var magnitude = big_integer::init_from_big_integer(self.*._allocator, self);
         big_integer::assign(&magnitude, self);
         big_integer::abs(&magnitude, &magnitude);
-        defer { magnitude.fini(); }
+        defer magnitude.fini();
 
         var output = std::vector[[byte]]::init(self.*._allocator);
-        defer { output.fini(); }
+        defer output.fini();
 
         if magnitude._sign == 0 {
             std::assert(countof(self.*._limbs) == 0);
@@ -336,9 +336,9 @@ struct big_integer {
             std::assert(countof(self.*._limbs) != 0);
 
             var div = big_integer::init(self.*._allocator);
-            defer { div.fini(); }
+            defer div.fini();
             var rem = big_integer::init(self.*._allocator);
-            defer { rem.fini(); }
+            defer rem.fini();
             big_integer::_divrem(&div, &rem, &magnitude, &radix);
 
             if rem._sign == 0 {
@@ -537,7 +537,7 @@ struct big_integer {
         # lhs * 0 == 0
         if lhs.*._sign == 0 or rhs.*._sign == 0 {
             var zero = big_integer::init(res.*._allocator);
-            defer { zero.fini(); }
+            defer zero.fini();
             big_integer::assign(res, &zero);
             return;
         }
@@ -589,14 +589,14 @@ struct big_integer {
     # res = lhs / rhs
     func div(res: *big_integer, lhs: *big_integer, rhs: *big_integer) void {
         var rem = big_integer::init(res.*._allocator);
-        defer { rem.fini(); }
+        defer rem.fini();
         big_integer::_divrem(res, &rem, lhs, rhs);
     }
 
     # res = lhs % rhs
     func rem(res: *big_integer, lhs: *big_integer, rhs: *big_integer) void {
         var div = big_integer::init(res.*._allocator);
-        defer { div.fini(); }
+        defer div.fini();
         big_integer::_divrem(&div, res, lhs, rhs);
     }
 

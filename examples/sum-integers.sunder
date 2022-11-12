@@ -3,15 +3,11 @@ import "std";
 
 func main() void {
     var allocator = std::general_allocator::init();
-    defer {
-        allocator.fini();
-    }
+    defer allocator.fini();
     var allocator = std::allocator::init[[typeof(allocator)]](&allocator);
 
     var sum = std::big_integer::init(allocator);
-    defer {
-        sum.fini();
-    }
+    defer sum.fini();
 
     for true {
         var result = std::read_line(std::input(), allocator);
@@ -25,9 +21,7 @@ func main() void {
             # End-of-input.
             break;
         }
-        defer {
-            std::slice[[byte]]::delete(allocator, optional.value());
-        }
+        defer std::slice[[byte]]::delete(allocator, optional.value());
 
         if countof(optional.value()) == 0 {
             # Skip line consisting of a single '\n'.
@@ -40,9 +34,7 @@ func main() void {
             std::exit(std::EXIT_FAILURE);
         }
         var int = result.value();
-        defer {
-            int.fini();
-        }
+        defer int.fini();
 
         std::big_integer::add(&sum, &sum, &int);
     }

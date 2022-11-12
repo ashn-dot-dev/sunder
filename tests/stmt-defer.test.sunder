@@ -127,12 +127,30 @@ func deeply_nested() void {
     }
 }
 
+func dump_u8(value: u8) void {
+    dump value;
+}
+
+func defer_expr() void {
+    defer dump_u8(0xFF);
+    defer dump_u8(0xEE);
+    defer {
+        defer {
+            defer dump_u8(0xDD);
+        }
+        defer dump_u8(0xCC);
+        defer dump_u8(0xBB);
+    }
+    defer dump_u8(0xAA);
+}
+
 func main() void {
     simple_defer();
     for_range_loop();
     for_expr_loop();
     dump return_override();
     deeply_nested();
+    defer_expr();
 }
 ################################################################################
 # AA
@@ -157,3 +175,9 @@ func main() void {
 # 44 44 44 44
 # 01
 # 0D F0 FE CA
+# AA
+# BB
+# CC
+# DD
+# EE
+# FF
