@@ -140,7 +140,7 @@ struct str { # namespace
             return false;
         }
 
-        for i in 0:countof(target) {
+        for i in countof(target) {
             if str[i] != target[i] {
                 return false;
             }
@@ -156,7 +156,7 @@ struct str { # namespace
         }
 
         var start = countof(str) - countof(target);
-        for i in 0:countof(target) {
+        for i in countof(target) {
             if str[start+i] != target[i] {
                 return false;
             }
@@ -188,6 +188,40 @@ struct str { # namespace
         }
 
         return false;
+    }
+
+    # Return a newly allocated slice containing the fields of `str` split on
+    # all occurrences of `delimiter`. Consecutive delimiters are not grouped
+    # together and are deemed to delimit empty strings. Elements of the
+    # returned slice are created from, and thus share a lifetime with, the
+    # input string, with the exception of an optional final empty string in the
+    # case of `std::str::split("bytes<delimiter>", "<delimiter>", allocator);`,
+    # which has a static lifetime.
+    func split(str: []byte, delimiter: []byte, allocator: std::allocator) [][]byte {
+        var slice = std::slice[[[]byte]]::new(allocator, 0);
+
+        var start = 0u;
+        var cur = 0u;
+        for cur < countof(str) {
+            if not std::str::starts_with(str[cur:countof(str)], delimiter) {
+                cur = cur + 1;
+                continue;
+            }
+
+            slice = std::slice[[[]byte]]::resize(allocator, slice, countof(slice) + 1);
+            slice[countof(slice) - 1] = (:[]byte){&str[start], cur - start};
+            cur = cur + countof(delimiter);
+            start = cur;
+        }
+
+        slice = std::slice[[[]byte]]::resize(allocator, slice, countof(slice) + 1);
+        if start < countof(str) {
+            slice[countof(slice) - 1] = (:[]byte){&str[start], cur - start};
+        }
+        else {
+            slice[countof(slice) - 1] = (:[]byte){(:*byte)0u, 0};
+        }
+        return slice;
     }
 
     func eq(lhs: []byte, rhs: []byte) bool {
