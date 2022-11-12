@@ -22,8 +22,20 @@ func main() void {
         "{}",
         (:[]std::formatter)[
             std::formatter::init[[std::big_integer]](&std::big_integer::NEGATIVE_ONE)]);
+    std::print_format_line(
+        std::out(),
+        "{}",
+        (:[]std::formatter)[
+            std::formatter::init[[std::big_integer]](&std::big_integer::POSITIVE_TWO)]);
+    std::print_format_line(
+        std::out(),
+        "{}",
+        (:[]std::formatter)[
+            std::formatter::init[[std::big_integer]](&std::big_integer::NEGATIVE_TWO)]);
 }
 ################################################################################
 # 0
 # 1
 # -1
+# 2
+# -2

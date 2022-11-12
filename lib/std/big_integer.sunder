@@ -254,12 +254,11 @@ struct big_integer {
     #   "x" => hexadecimal (lower)
     #   "X" => hexadecimal (upper)
     func format(self: *big_integer, writer: std::writer, fmt: []byte) std::result[[void, std::error]] {
-        # Special cases for big_integer constants.
-        if self == &big_integer::ZERO {
+        if countof(self.*._limbs) == 0 {
             var int: smax = 0;
             return smax::format(&int, writer, fmt);
         }
-        if self == &big_integer::POSITIVE_ONE or self == &big_integer::NEGATIVE_ONE {
+        if countof(self.*._limbs) == 1 {
             var int: smax = (:smax)self.*._sign * (:smax)self.*._limbs[0];
             return smax::format(&int, writer, fmt);
         }
@@ -793,20 +792,44 @@ struct big_integer {
     }
 }
 
-extend big_integer const ZERO: std::big_integer = (:std::big_integer){
+extend big_integer const ZERO = (:std::big_integer){
     ._allocator = std::null_allocator::ALLOCATOR,
     ._sign = 0,
     ._limbs = (:[]u32)[]
 };
 
-extend big_integer const POSITIVE_ONE: std::big_integer = (:std::big_integer){
+extend big_integer const POSITIVE_ONE = (:std::big_integer){
     ._allocator = std::null_allocator::ALLOCATOR,
     ._sign = +1,
     ._limbs = (:[]u32)[1]
 };
 
-extend big_integer const NEGATIVE_ONE: std::big_integer = (:std::big_integer){
+extend big_integer const NEGATIVE_ONE = (:std::big_integer){
     ._allocator = std::null_allocator::ALLOCATOR,
     ._sign = -1,
     ._limbs = (:[]u32)[1]
+};
+
+extend big_integer const POSITIVE_TWO = (:std::big_integer){
+    ._allocator = std::null_allocator::ALLOCATOR,
+    ._sign = +1,
+    ._limbs = (:[]u32)[2]
+};
+
+extend big_integer const NEGATIVE_TWO = (:std::big_integer){
+    ._allocator = std::null_allocator::ALLOCATOR,
+    ._sign = -1,
+    ._limbs = (:[]u32)[2]
+};
+
+extend big_integer const POSITIVE_TEN = (:std::big_integer){
+    ._allocator = std::null_allocator::ALLOCATOR,
+    ._sign = +1,
+    ._limbs = (:[]u32)[10]
+};
+
+extend big_integer const NEGATIVE_TEN = (:std::big_integer){
+    ._allocator = std::null_allocator::ALLOCATOR,
+    ._sign = -1,
+    ._limbs = (:[]u32)[10]
 };
