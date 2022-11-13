@@ -1,0 +1,11 @@
+import "std/core.sunder";
+
+func main() void {
+    var v = void::init();
+    std::print_format_line(
+        std::out(),
+        "{}",
+        (:[]std::formatter)[std::formatter::init[[void]](&v)]);
+}
+################################################################################
+# void
