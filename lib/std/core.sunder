@@ -184,7 +184,7 @@ struct str { # namespace
             if i == countof(target) {
                 return true;
             }
-            start = start + i + 1;
+            start = start + 1;
         }
 
         return false;
