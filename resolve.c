@@ -2091,7 +2091,7 @@ complete_struct(
                     .offset = next_offset,
                 };
                 sbuf_push(member_variables, m);
-                continue;
+                goto done_adding_member_variable;
             }
 
             assert(member_type->size != 0);
@@ -2132,6 +2132,7 @@ complete_struct(
             // at one byte past the added member variable.
             next_offset += member_type->size;
 
+done_adding_member_variable:;
             // If this is the last member variable declaration within the
             // struct, then the struct's final size and alignment are known,
             // so the struct can be marked as complete. Default assume that the
@@ -3207,6 +3208,9 @@ resolve_expr_struct(struct resolver* resolver, struct cst_expr const* expr)
     if (type->kind != TYPE_STRUCT) {
         fatal(
             expr->location, "expected struct type (received `%s`)", type->name);
+    }
+    if (!type->data.struct_.is_complete) {
+        fatal(expr->location, "struct type `%s` is incomplete", type->name);
     }
 
     sbuf(struct member_variable) const member_variable_defs =

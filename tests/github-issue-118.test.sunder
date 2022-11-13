@@ -1,0 +1,6 @@
+import "std";
+
+func main() void {
+    # Previously this did not compile.
+    var map = std::hash_map[[s32, void]]::init(std::null_allocator::ALLOCATOR);
+}
