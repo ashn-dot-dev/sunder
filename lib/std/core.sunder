@@ -1238,6 +1238,18 @@ struct key_value_view[[K, V]] {
 
 extend void func init() void { }
 
+extend bool func format(self: *bool, writer: std::writer, fmt: []byte) std::result[[void, std::error]] {
+    if countof(fmt) != 0 {
+        return std::result[[void, std::error]]::init_error(std::error::INVALID_ARGUMENT);
+    }
+
+    if *self {
+        return std::write_all(writer, "true");
+    }
+
+    return std::write_all(writer, "false");
+}
+
 extend integer func _init_umax_from_str(str: []byte, radix: usize) std::result[[std::umax, std::error]] {
     if radix != 0 and radix != 2 and radix != 8 and radix != 10 and radix != 16 {
         return std::result[[umax, std::error]]::init_error(std::error::INVALID_ARGUMENT);

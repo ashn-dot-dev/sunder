@@ -1,0 +1,14 @@
+import "std/core.sunder";
+
+func main() void {
+    var t = true;
+    var f = false;
+    std::print_format_line(
+        std::out(),
+        "{} {}",
+        (:[]std::formatter)[
+            std::formatter::init[[bool]](&t),
+            std::formatter::init[[bool]](&f)]);
+}
+################################################################################
+# true false
