@@ -1,0 +1,32 @@
+import "std/core.sunder";
+
+func test(b: byte, format: []byte) void {
+    std::print_format_line(
+        std::out(),
+        format,
+        (:[]std::formatter)[std::formatter::init[[byte]](&b)]);
+}
+
+func main() void {
+    test(0xAB, "{}");
+    test(0xAB, "{#}");
+    test(0xAB, "{b}");
+    test(0xAB, "{#b}");
+    test(0xAB, "{o}");
+    test(0xAB, "{#o}");
+    test(0xAB, "{x}");
+    test(0xAB, "{#x}");
+    test(0xAB, "{X}");
+    test(0xAB, "{#X}");
+}
+################################################################################
+# 171
+# 171
+# 10101011
+# 0b10101011
+# 253
+# 0o253
+# ab
+# 0xab
+# AB
+# 0xAB

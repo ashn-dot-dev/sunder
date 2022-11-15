@@ -1413,12 +1413,11 @@ extend integer func _compare[[T]](lhs: T, rhs: T) ssize {
 #   "x" => hexadecimal (lower)
 #   "X" => hexadecimal (upper)
 extend integer func _format_umax(int: std::umax, writer: std::writer, fmt: []byte) std::result[[void, std::error]] {
-    const DIGITS_TABLE_COUNT: usize = 16;
-    const DIGITS_TABLE_LOWER = (:[DIGITS_TABLE_COUNT]byte)[
+    const DIGITS_TABLE_LOWER = (:[]byte)[
         '0', '1', '2', '3', '4', '5', '6', '7',
         '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'
     ];
-    const DIGITS_TABLE_UPPER = (:[DIGITS_TABLE_COUNT]byte)[
+    const DIGITS_TABLE_UPPER = (:[]byte)[
         '0', '1', '2', '3', '4', '5', '6', '7',
         '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'
     ];
@@ -1433,7 +1432,7 @@ extend integer func _format_umax(int: std::umax, writer: std::writer, fmt: []byt
 
     var radix: usize = 10;
     var digits_prefix: []byte = "";
-    var digits_table: []byte = DIGITS_TABLE_LOWER[0:DIGITS_TABLE_COUNT];
+    var digits_table: []byte = DIGITS_TABLE_LOWER;
 
     if fmt_idx < countof(fmt) {
         var c: byte = fmt[fmt_idx];
@@ -1457,7 +1456,7 @@ extend integer func _format_umax(int: std::umax, writer: std::writer, fmt: []byt
         elif c == 'X' {
             radix = 16;
             digits_prefix = "0x";
-            digits_table = DIGITS_TABLE_UPPER[0:DIGITS_TABLE_COUNT];
+            digits_table = DIGITS_TABLE_UPPER;
         }
         else {
             return std::result[[void, std::error]]::init_error(std::error::INVALID_ARGUMENT);
@@ -1548,6 +1547,10 @@ extend byte func compare(lhs: *byte, rhs: *byte) ssize {
 }
 extend byte func hash(self: *byte) usize {
     return (:usize)*self;
+}
+extend byte func format(self: *byte, writer: std::writer, fmt: []byte) std::result[[void, std::error]] {
+    var int = (:u8)*self;
+    return u8::format(&int, writer, fmt);
 }
 
 extend u8 const MIN: u8 = 0x00;
