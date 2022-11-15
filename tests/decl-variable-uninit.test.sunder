@@ -1,0 +1,38 @@
+struct s {
+    var foo: u32;
+    var bar: u16;
+}
+
+var a: u8 = uninit;
+var b: u16 = uninit;
+var c: u32 = uninit;
+var d: u64 = uninit;
+var e: *byte = uninit;
+var f: []byte = uninit;
+var g: s = uninit;
+
+func main() void {
+    # Uninitialized local variables do not have a defined bit pattern, so we
+    # cannot have a pre-determined value for this variable. These declarations
+    # are here just to make sure the syntax & semantic analysis works for local
+    # variables.
+    var y: u32 = uninit;
+    var z: s = uninit;
+
+    dump a;
+    dump b;
+    dump c;
+    dump d;
+    dump e;
+    dump f;
+    dump y;
+    dump z;
+}
+################################################################################
+# 00
+# 00 00
+# 00 00 00 00
+# 00 00 00 00 00 00 00 00
+# 00 00 00 00 00 00 00 00
+# 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+# 00 00 00 00 00 00

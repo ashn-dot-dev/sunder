@@ -844,6 +844,7 @@ enum token_kind {
     TOKEN_COUNTOF,
     TOKEN_SIZEOF,
     TOKEN_TYPEOF,
+    TOKEN_UNINIT,
     // Sigils
     TOKEN_SHL,         // <<
     TOKEN_SHR,         // >>
@@ -964,7 +965,7 @@ struct cst_decl {
         struct {
             struct cst_identifier const* identifier;
             struct cst_typespec const* typespec; // optional
-            struct cst_expr const* expr;
+            struct cst_expr const* expr; // optional (NULL => uninit)
         } variable;
         struct {
             struct cst_identifier const* identifier;
@@ -1703,9 +1704,11 @@ struct symbol {
         struct {
             struct type const* type;
             struct address const* address;
-            // Compile-time value of the variable. Non-NULL for non-extern
-            // global variables. NULL for extern global and local variables.
-            struct value const* value; // Optional.
+            // Compile-time value of the variable. Non-NULL for initialized
+            // non-extern global variables. NULL for extern global, local,
+            // and uninitialized variables.
+            struct value const* value; // optional
+            bool is_extern;
         } variable;
         struct {
             struct type const* type;

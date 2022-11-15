@@ -26,7 +26,7 @@ struct vstr {
 // clang-format on
 
 static enum token_kind const KEYWORDS_FIRST = TOKEN_TRUE;
-static enum token_kind const KEYWORDS_LAST = TOKEN_TYPEOF;
+static enum token_kind const KEYWORDS_LAST = TOKEN_UNINIT;
 static enum token_kind const SIGILS_FIRST = TOKEN_SHL;
 static enum token_kind const SIGILS_LAST = TOKEN_SEMICOLON;
 static struct vstr token_kind_vstrs[TOKEN_EOF + 1u] = {
@@ -59,6 +59,7 @@ static struct vstr token_kind_vstrs[TOKEN_EOF + 1u] = {
     [TOKEN_COUNTOF] = VSTR_INIT_STR_LITERAL("countof"),
     [TOKEN_SIZEOF] = VSTR_INIT_STR_LITERAL("sizeof"),
     [TOKEN_TYPEOF] = VSTR_INIT_STR_LITERAL("typeof"),
+    [TOKEN_UNINIT] = VSTR_INIT_STR_LITERAL("uninit"),
     // Sigils
     [TOKEN_SHL] = VSTR_INIT_STR_LITERAL("<<"),
     [TOKEN_SHR] = VSTR_INIT_STR_LITERAL(">>"),

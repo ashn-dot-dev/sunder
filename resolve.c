@@ -201,7 +201,8 @@ resolve_stmt(struct resolver* resolver, struct cst_stmt const* stmt);
 static struct stmt const* // optional
 resolve_stmt_decl(struct resolver* resolver, struct cst_stmt const* stmt);
 static struct stmt const*
-resolve_stmt_defer_block(struct resolver* resolver, struct cst_stmt const* stmt);
+resolve_stmt_defer_block(
+    struct resolver* resolver, struct cst_stmt const* stmt);
 static struct stmt const*
 resolve_stmt_defer_expr(struct resolver* resolver, struct cst_stmt const* stmt);
 static struct stmt const*
@@ -1475,8 +1476,12 @@ resolve_decl_variable(
     assert(decl != NULL);
     assert(decl->kind == CST_DECL_VARIABLE);
 
-    struct expr const* expr = resolve_expr(resolver, decl->data.variable.expr);
+    struct expr const* expr = NULL;
+    if (decl->data.variable.expr != NULL) {
+        resolve_expr(resolver, decl->data.variable.expr);
+    }
 
+    assert(decl->data.variable.typespec != NULL || expr != NULL);
     struct type const* const type = decl->data.variable.typespec != NULL
         ? resolve_typespec(resolver, decl->data.variable.typespec)
         : expr->type;
@@ -1487,15 +1492,17 @@ resolve_decl_variable(
             type->name);
     }
 
-    expr = implicit_cast(type, expr);
-    verify_type_compatibility(expr->location, expr->type, type);
+    if (expr != NULL) {
+        expr = implicit_cast(type, expr);
+        verify_type_compatibility(expr->location, expr->type, type);
+    }
 
-    // Global/static variables have their initial values computed at
-    // compile-time, but local/non-static variables have their value
-    // calculated/assigned at runtime when the value is placed on the stack.
+    // Initialized static variables have their initial values computed at
+    // compile-time, but local/non-static/uninitialized variables have their
+    // value calculated/assigned at runtime.
     bool const is_static = resolver_is_global(resolver);
     struct value* value = NULL;
-    if (is_static) {
+    if (is_static && expr != NULL) {
         value = eval_rvalue(expr);
         value_freeze(value);
     }
@@ -1904,6 +1911,7 @@ resolve_decl_extern_variable(
 
     struct symbol* const symbol =
         symbol_new_variable(decl->location, decl->name, type, address, NULL);
+    symbol->data.variable.is_extern = true;
     freeze(symbol);
 
     symbol_table_insert(
@@ -2132,7 +2140,7 @@ complete_struct(
             // at one byte past the added member variable.
             next_offset += member_type->size;
 
-done_adding_member_variable:;
+        done_adding_member_variable:;
             // If this is the last member variable declaration within the
             // struct, then the struct's final size and alignment are known,
             // so the struct can be marked as complete. Default assume that the
@@ -2299,10 +2307,16 @@ resolve_stmt_decl(struct resolver* resolver, struct cst_stmt const* stmt)
         struct expr const* lhs = NULL;
         struct expr const* rhs = NULL;
         resolve_decl_variable(resolver, decl, &lhs, &rhs);
-        struct stmt* const resolved = stmt_new_assign(stmt->location, lhs, rhs);
 
-        freeze(resolved);
-        return resolved;
+        if (decl->data.variable.expr != NULL) {
+            struct stmt* const resolved =
+                stmt_new_assign(stmt->location, lhs, rhs);
+
+            freeze(resolved);
+            return resolved;
+        }
+
+        return NULL;
     }
     case CST_DECL_CONSTANT: {
         resolve_decl_constant(resolver, decl);
@@ -2378,7 +2392,8 @@ resolve_stmt_defer_expr(struct resolver* resolver, struct cst_stmt const* stmt)
     assert(stmt->kind == CST_STMT_DEFER_EXPR);
 
     // Implicitly create a block for the deferred expression.
-    struct expr const* const expr = resolve_expr(resolver, stmt->data.defer_expr);
+    struct expr const* const expr =
+        resolve_expr(resolver, stmt->data.defer_expr);
     struct stmt* const expr_stmt = stmt_new_expr(expr->location, expr);
     freeze(expr_stmt);
     sbuf(struct stmt const*) stmts = NULL;

@@ -389,7 +389,19 @@ parse_decl_variable(struct parser* parser)
         typespec = parse_typespec(parser);
     }
     expect_current(parser, TOKEN_ASSIGN);
-    struct cst_expr const* const expr = parse_expr(parser);
+    struct cst_expr const* expr = NULL;
+    if (check_current(parser, TOKEN_UNINIT)) {
+        expect_current(parser, TOKEN_UNINIT);
+        if (typespec == NULL) {
+            fatal(
+                identifier->location,
+                "uninitialized variable `%s` requires a type specifier",
+                identifier->name);
+        }
+    }
+    else {
+        expr = parse_expr(parser);
+    }
     expect_current(parser, TOKEN_SEMICOLON);
 
     struct cst_decl* const product =
@@ -634,7 +646,8 @@ parse_stmt_defer(struct parser* parser)
 
     if (check_current(parser, TOKEN_LBRACE)) {
         struct cst_block const* block = parse_block(parser);
-        struct cst_stmt* const product = cst_stmt_new_defer_block(location, block);
+        struct cst_stmt* const product =
+            cst_stmt_new_defer_block(location, block);
 
         freeze(product);
         return product;

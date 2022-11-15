@@ -1,0 +1,5 @@
+var x = uninit;
+################################################################################
+# [error-decl-variable-uninit-without-type.test.sunder:1] error: uninitialized variable `x` requires a type specifier
+# var x = uninit;
+#     ^

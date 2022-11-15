@@ -54,7 +54,6 @@ cst_decl_new_variable(
 {
     assert(location != NULL);
     assert(identifier != NULL);
-    assert(expr != NULL);
 
     struct cst_decl* const self = xalloc(NULL, sizeof(*self));
     memset(self, 0x00, sizeof(*self));

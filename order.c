@@ -173,7 +173,9 @@ order_decl(struct orderer* orderer, struct cst_decl const* decl)
         if (decl->data.variable.typespec != NULL) {
             order_typespec(orderer, decl->data.variable.typespec);
         }
-        order_expr(orderer, decl->data.variable.expr);
+        if (decl->data.variable.expr != NULL) {
+            order_expr(orderer, decl->data.variable.expr);
+        }
         return;
     }
     case CST_DECL_CONSTANT: {

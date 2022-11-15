@@ -5,6 +5,7 @@
 <import> ::= "import" <literal-bytes> ";"
 
 <decl-variable> ::= "var" <identifier> (":" <typespec>)? "=" <expr> ";"
+                  | "var" <identifier> ":" <typespec> "=" "uninit" ";"
 
 <decl-constant> ::= "const" <identifier> (":" <typespec>)? "=" <expr> ";"
 
