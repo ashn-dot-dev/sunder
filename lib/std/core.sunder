@@ -294,17 +294,19 @@ struct result[[T, E]] {
 
     # Initialize a result in the value state (success).
     func init_value(value: T) result[[T, E]] {
+        var error: E = uninit;
         return (:result[[T, E]]){
             ._value = value,
-            ._error = std::zeroed[[E]](),
+            ._error = error,
             ._is_value = true
         };
     }
 
     # Initialize a result in the error state (failure).
     func init_error(error: E) result[[T, E]] {
+        var value: T = uninit;
         return (:result[[T, E]]){
-            ._value = std::zeroed[[T]](),
+            ._value = value,
             ._error = error,
             ._is_value = false
         };
@@ -353,8 +355,9 @@ struct optional[[T]] {
 
     # Initialize an optional in the empty state (value is absent).
     func init_empty() optional[[T]] {
+        var value: T = uninit;
         return (:optional[[T]]){
-            ._value = std::zeroed[[T]](),
+            ._value = value,
             ._is_value = false
         };
     }
@@ -693,7 +696,7 @@ func read_all(reader: std::reader, allocator: std::allocator) std::result[[[]byt
 func read_line(reader: std::reader, allocator: std::allocator) std::result[[std::optional[[[]byte]], std::error]] {
     var bytes = std::slice[[byte]]::new(allocator, 0);
 
-    var c = std::zeroed[[byte]]();
+    var c: byte = uninit;
     for true {
         var result = reader.read((:[]byte){&c, 1});
         if result.is_error() {

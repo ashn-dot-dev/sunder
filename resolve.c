@@ -1478,7 +1478,7 @@ resolve_decl_variable(
 
     struct expr const* expr = NULL;
     if (decl->data.variable.expr != NULL) {
-        resolve_expr(resolver, decl->data.variable.expr);
+        expr = resolve_expr(resolver, decl->data.variable.expr);
     }
 
     assert(decl->data.variable.typespec != NULL || expr != NULL);

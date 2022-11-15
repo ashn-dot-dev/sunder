@@ -52,7 +52,7 @@ struct big_integer {
             return self;
         }
 
-        var magnitude: u64 = std::zeroed[[u64]]();
+        var magnitude: u64 = uninit;
         # Special case for the minimum value of a two's complement signed
         # integer, which will produce an integer out-of-range error when
         # multiplied by negative one, as the negated (positive) value is
@@ -117,7 +117,7 @@ struct big_integer {
             }
         }
         var radix_big_integer = (:big_integer){
-            ._allocator = std::zeroed[[std::allocator]](),
+            ._allocator = std::null_allocator::ALLOCATOR,
             ._sign = +1,
             ._limbs = (:[]u32)[(:u32)radix]
         };
@@ -152,7 +152,7 @@ struct big_integer {
             }
 
             var digit_big_integer = (:big_integer){
-                ._allocator = std::zeroed[[std::allocator]](),
+                ._allocator = std::null_allocator::ALLOCATOR,
                 ._sign = +1,
                 ._limbs = (:[]u32)[(:u32)digit]
             };

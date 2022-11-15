@@ -2842,8 +2842,6 @@ codegen(
     size_t sysasm_buf_size = 0;
     load_sysasm(&sysasm_buf, &sysasm_buf_size);
 
-    appendln("default rel");
-    appendch('\n');
     codegen_extern_labels(sysasm_buf, sysasm_buf_size);
     appendch('\n');
     codegen_global_labels();
