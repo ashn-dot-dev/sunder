@@ -167,7 +167,7 @@
 
 <member-variable> ::= "var" <identifier> ":" <typespec> ";"
 
-<member-constant> ::= "const" <identifier> ":" <typespec> = <expr> ";"
+<member-constant> ::= <decl-const>
 
 <member-function> ::=  <decl-function>
 

@@ -2154,22 +2154,6 @@ done_adding_member_variable:;
             continue;
         }
         case CST_MEMBER_CONSTANT: {
-            // Although <member-constant> borrows the <decl-constant> CST node,
-            // the <member-constant> grammmar production *requires* that the
-            // type specifier is present.
-            assert(member->data.constant.decl->data.constant.typespec != NULL);
-
-            struct type const* const member_type = resolve_typespec(
-                resolver, member->data.constant.decl->data.constant.typespec);
-            if (member_type->kind == TYPE_STRUCT
-                && !member_type->data.struct_.is_complete) {
-                fatal(
-                    member->location,
-                    "struct `%s` contains a member constant of incomplete struct type `%s`",
-                    struct_type->name,
-                    member_type->name);
-            }
-
             resolve_decl_constant(resolver, member->data.constant.decl);
             continue;
         }

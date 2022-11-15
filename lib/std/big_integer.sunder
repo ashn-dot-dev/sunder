@@ -22,7 +22,7 @@ struct big_integer {
     var _limbs: []u32;
 
     # Number of bits in each limb of the integer.
-    const _BITS_PER_LIMB: usize = sizeof(u32) * 8;
+    const _BITS_PER_LIMB = sizeof(u32) * 8;
 
     func init(allocator: std::allocator) big_integer {
         return (:big_integer){

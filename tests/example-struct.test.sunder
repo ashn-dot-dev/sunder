@@ -64,6 +64,10 @@ struct baz {
     const CONSTANT_B: u8 = CONSTANT_A + 1;
     const CONSTANT_C: u8 = baz::CONSTANT_B + 1;
 
+    const CONSTANT_D = 0xE1u8;
+    const CONSTANT_E = CONSTANT_D + 1;
+    const CONSTANT_F = baz::CONSTANT_E + 1;
+
     func init(value_a: u8, value_b: u8) baz {
         return (:baz){
             .value_a = value_a,

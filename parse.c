@@ -1536,18 +1536,7 @@ parse_member_constant(struct parser* parser)
 {
     assert(parser != NULL);
 
-    struct source_location const* const location =
-        &expect_current(parser, TOKEN_CONST)->location;
-    struct cst_identifier const* const identifier = parse_identifier(parser);
-    expect_current(parser, TOKEN_COLON);
-    struct cst_typespec const* const typespec = parse_typespec(parser);
-    expect_current(parser, TOKEN_ASSIGN);
-    struct cst_expr const* const expr = parse_expr(parser);
-    expect_current(parser, TOKEN_SEMICOLON);
-
-    struct cst_decl* const decl =
-        cst_decl_new_constant(location, identifier, typespec, expr);
-    freeze(decl);
+    struct cst_decl const* const decl = parse_decl_constant(parser);
 
     struct cst_member* const product = cst_member_new_constant(decl);
 

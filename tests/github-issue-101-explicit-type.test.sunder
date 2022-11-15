@@ -11,6 +11,6 @@ func main() void {
     dump sizeof(foo);
 }
 ################################################################################
-# [github-issue-101.test.sunder:6] error: struct `foo` contains a member constant of incomplete struct type `foo`
+# [github-issue-101-explicit-type.test.sunder:6] error: struct type `foo` is incomplete
 #     const C: foo = (:foo){};
-#     ^
+#                    ^
