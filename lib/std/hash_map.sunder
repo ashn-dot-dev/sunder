@@ -57,7 +57,7 @@ struct hash_map[[K, V]] {
     # provided key if such a key-value pair exists in the map.
     func lookup(self: *hash_map[[K, V]], key: K) std::optional[[V]] {
         if countof(self.*._elements) == 0 {
-            return std::optional[[V]]::init_empty();
+            return std::optional[[V]]::EMPTY;
         }
 
         var index = key.hash() % countof(self.*._elements);
@@ -67,7 +67,7 @@ struct hash_map[[K, V]] {
             }
             index = (index + 1) % countof(self.*._elements);
         }
-        return std::optional[[V]]::init_empty();
+        return std::optional[[V]]::EMPTY;
     }
 
     # Insert the provided key and value into the map. If a key-value pair
@@ -111,7 +111,7 @@ struct hash_map[[K, V]] {
                 };
                 self.*._n = self.*._n + 1;
                 self.*._q = self.*._q + 1;
-                return std::optional[[std::key_value_pair[[K, V]]]]::init_empty();
+                return std::optional[[std::key_value_pair[[K, V]]]]::EMPTY;
             }
 
             if self.*._elements[index]._state == hash_map_element[[K, V]]::_STATE_DEL {
@@ -121,7 +121,7 @@ struct hash_map[[K, V]] {
                     ._value = value
                 };
                 self.*._n = self.*._n + 1;
-                return std::optional[[std::key_value_pair[[K, V]]]]::init_empty();
+                return std::optional[[std::key_value_pair[[K, V]]]]::EMPTY;
             }
 
             # _STATE_USE
@@ -143,7 +143,7 @@ struct hash_map[[K, V]] {
         }
 
         std::assert(false); # unreachable
-        return std::optional[[std::key_value_pair[[K, V]]]]::init_empty();
+        return std::optional[[std::key_value_pair[[K, V]]]]::EMPTY;
     }
 
     # Remove the key-value pair associated with the provided key if such a
@@ -151,7 +151,7 @@ struct hash_map[[K, V]] {
     # the key-value pair if the pair was removed.
     func remove(self: *hash_map[[K, V]], key: K) std::optional[[std::key_value_pair[[K, V]]]] {
         if countof(self.*._elements) == 0 {
-            return std::optional[[std::key_value_pair[[K, V]]]]::init_empty();
+            return std::optional[[std::key_value_pair[[K, V]]]]::EMPTY;
         }
 
         var index = key.hash() % countof(self.*._elements);
@@ -167,7 +167,7 @@ struct hash_map[[K, V]] {
             }
             index = (index + 1) % countof(self.*._elements);
         }
-        return std::optional[[std::key_value_pair[[K, V]]]]::init_empty();
+        return std::optional[[std::key_value_pair[[K, V]]]]::EMPTY;
     }
 }
 

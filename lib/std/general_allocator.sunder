@@ -131,7 +131,7 @@ struct general_allocator_iterator {
     func init(general_allocator: *std::general_allocator) general_allocator_iterator {
         return (:general_allocator_iterator){
             ._general_allocator = general_allocator,
-            ._current = std::optional[[*general_allocator_element]]::init_empty()
+            ._current = std::optional[[*general_allocator_element]]::EMPTY
         };
     }
 

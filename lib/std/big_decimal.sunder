@@ -33,7 +33,7 @@ struct big_decimal {
     }
 
     func init_from_str(allocator: std::allocator, str: []byte) std::result[[big_decimal, std::error]] {
-        var decimal = std::optional[[usize]]::init_empty();
+        var decimal = std::optional[[usize]]::EMPTY;
         for i in countof(str) {
             if str[i] == '.' {
                 decimal = std::optional[[usize]]::init_value(i);

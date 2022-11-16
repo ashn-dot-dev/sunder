@@ -708,7 +708,7 @@ func read_line(reader: std::reader, allocator: std::allocator) std::result[[std:
             if countof(bytes) == 0 {
                 # End-of-input encountered while reading an empty line.
                 std::slice[[byte]]::delete(allocator, bytes);
-                return std::result[[std::optional[[[]byte]], std::error]]::init_value(std::optional[[[]byte]]::init_empty());
+                return std::result[[std::optional[[[]byte]], std::error]]::init_value(std::optional[[[]byte]]::EMPTY);
             }
             # End-of-input encountered while reading a non-empty line.
             break;
@@ -989,7 +989,7 @@ struct slice_iterator[[T]] {
     func init(slice: []T) slice_iterator[[T]] {
         return (:slice_iterator[[T]]){
             ._slice = slice,
-            ._index = std::optional[[usize]]::init_empty()
+            ._index = std::optional[[usize]]::EMPTY
         };
     }
 

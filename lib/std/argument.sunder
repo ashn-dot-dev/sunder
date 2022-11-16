@@ -23,7 +23,7 @@ struct argument_iterator {
     func init_from_argv(argv: **byte) argument_iterator {
         return (:argument_iterator){
             ._argv = argv,
-            ._index = std::optional[[usize]]::init_empty()
+            ._index = std::optional[[usize]]::EMPTY
         };
     }
 
@@ -84,8 +84,8 @@ struct argument_parser {
             ._options = options,
             ._iterator = std::argument_iterator::init_from_argv(argv),
             ._verbatim = false,
-            ._opt = std::optional[[[]byte]]::init_empty(),
-            ._arg = std::optional[[[]byte]]::init_empty()
+            ._opt = std::optional[[[]byte]]::EMPTY,
+            ._arg = std::optional[[[]byte]]::EMPTY
         };
 
         # Skip past the first argument (program name).
@@ -95,8 +95,8 @@ struct argument_parser {
     }
 
     func advance(self: *argument_parser) bool {
-        self.*._opt = std::optional[[[]byte]]::init_empty();
-        self.*._arg = std::optional[[[]byte]]::init_empty();
+        self.*._opt = std::optional[[[]byte]]::EMPTY;
+        self.*._arg = std::optional[[[]byte]]::EMPTY;
 
         if not self.*._iterator.advance() {
             return false;
@@ -135,7 +135,7 @@ struct argument_parser {
         }
 
         var should_parse_arg = false;
-        var idx = std::optional[[usize]]::init_empty();
+        var idx = std::optional[[usize]]::EMPTY;
         for i in countof(self.*._options) {
             should_parse_arg = false;
             var opt = self.*._options[i];

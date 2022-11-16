@@ -181,7 +181,7 @@ struct directory {
             ._buf = (:[1024]byte)[0...],
             ._buf_idx = 0,
             ._buf_end = 0,
-            ._current = std::optional[[std::result[[[]byte, std::error]]]]::init_empty()
+            ._current = std::optional[[std::result[[[]byte, std::error]]]]::EMPTY
         };
         return std::result[[std::directory, std::error]]::init_value(directory);
     }
@@ -201,7 +201,7 @@ struct directory {
         if self.*._buf_idx >= self.*._buf_end {
             var sysret = sys::getdents(self.*._fd, (:*sys::linux_dirent)&self.*._buf[0], (:sys::uint)countof(self.*._buf));
             if sysret == 0 {
-                self.*._current = std::optional[[std::result[[[]byte, std::error]]]]::init_empty();
+                self.*._current = std::optional[[std::result[[[]byte, std::error]]]]::EMPTY;
                 return false; # end-of-iteration
             }
             if sysret < 0 {
