@@ -1,7 +1,7 @@
 import "std/core.sunder";
 
 func main() void {
-    var a: std::optional[[u16]] = std::optional[[u16]]::init_empty();
+    var a: std::optional[[u16]] = std::optional[[u16]]::EMPTY;
     dump a.is_value();
     dump a.is_empty();
     dump a.value(); # boom

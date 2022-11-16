@@ -343,6 +343,11 @@ struct optional[[T]] {
     var _value: T;
     var _is_value: bool;
 
+    const EMPTY = (:optional[[T]]){
+        ._value = uninit,
+        ._is_value = false
+    };
+
     # Initialize an optional in the value state (value is present).
     func init_value(value: T) optional[[T]] {
         return (:optional[[T]]){
@@ -353,10 +358,7 @@ struct optional[[T]] {
 
     # Initialize an optional in the empty state (value is absent).
     func init_empty() optional[[T]] {
-        return (:optional[[T]]){
-            ._value = uninit,
-            ._is_value = false
-        };
+        return optional[[T]]::EMPTY;
     }
 
     # Returns true if the optional is in the value state.
