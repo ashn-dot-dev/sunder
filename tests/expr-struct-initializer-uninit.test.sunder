@@ -1,0 +1,78 @@
+struct s1 {
+    var x: u32;
+}
+
+struct s2 {
+    var x: u32;
+    var y: u32;
+}
+
+struct s3 {
+    var u: s1;
+    var v: s2;
+}
+
+var a = (:s1){.x = uninit};
+var b = (:s2){.x = uninit, .y = 123};
+var c = (:s2){.x = (:s1){.x = 123}.x, .y = uninit};
+var d = (:s3){
+    .u = A,
+    .v = (:s2){.x = uninit, .y = uninit}
+};
+var e = (:[2]s3)[D, D];
+var f = (:[]s3)[D, D];
+
+const A = (:s1){.x = uninit};
+const B = (:s2){.x = uninit, .y = 123};
+const C = (:s2){.x = (:s1){.x = 123}.x, .y = uninit};
+const D = (:s3){
+    .u = A,
+    .v = (:s2){.x = uninit, .y = uninit}
+};
+const E = (:[2]s3)[D, D];
+const F = (:[]s3)[D, D];
+
+func main() void {
+    # Uninitialized local variables do not have a defined bit pattern. These
+    # declarations are mostly here to make sure the syntax & semantic analysis
+    # works for local variables.
+    var g = (:s1){.x = uninit};
+    var h = (:s2){.x = uninit, .y = 123};
+    var i = (:s2){.x = 123, .y = uninit};
+    var j = (:s3){
+        .u = A,
+        .v = (:s2){.x = uninit, .y = uninit}
+    };
+
+    dump a;
+    dump b;
+    dump c;
+    dump d;
+    dump e;
+    dump f[0];
+
+    dump A;
+    dump B;
+    dump C;
+    dump D;
+    dump E;
+    dump F[0];
+
+    dump h.y;
+    dump i.x;
+}
+################################################################################
+# 00 00 00 00
+# 00 00 00 00 7B 00 00 00
+# 7B 00 00 00 00 00 00 00
+# 00 00 00 00 00 00 00 00 00 00 00 00
+# 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+# 00 00 00 00 00 00 00 00 00 00 00 00
+# 00 00 00 00
+# 00 00 00 00 7B 00 00 00
+# 7B 00 00 00 00 00 00 00
+# 00 00 00 00 00 00 00 00 00 00 00 00
+# 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+# 00 00 00 00 00 00 00 00 00 00 00 00
+# 7B 00 00 00
+# 7B 00 00 00

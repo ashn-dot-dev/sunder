@@ -1700,9 +1700,10 @@ value_freeze(struct value* self)
         size_t const member_variables_count =
             sbuf_count(self->type->data.struct_.member_variables);
         for (size_t i = 0; i < member_variables_count; ++i) {
-            struct value** pvalue = self->data.struct_.member_variables + i;
-            assert(*pvalue != NULL); // Self not fully initialized.
-            value_freeze(*pvalue);
+            struct value* value = self->data.struct_.member_variables[i];
+            if (value != NULL) {
+                value_freeze(value);
+            }
         }
         sbuf_freeze(self->data.struct_.member_variables);
         return;
@@ -1767,8 +1768,11 @@ value_clone(struct value const* self)
         size_t const member_variables_count =
             sbuf_count(self->type->data.struct_.member_variables);
         for (size_t i = 0; i < member_variables_count; ++i) {
-            new->data.struct_.member_variables[i] =
-                value_clone(self->data.struct_.member_variables[i]);
+            new->data.struct_.member_variables[i] = NULL;
+            if (self->data.struct_.member_variables[i] != NULL) {
+                new->data.struct_.member_variables[i] =
+                    value_clone(self->data.struct_.member_variables[i]);
+            }
         }
         return new;
     }
@@ -1779,7 +1783,10 @@ value_clone(struct value const* self)
 }
 
 struct value const*
-value_get_member(struct value const* self, char const* name)
+value_get_member_variable(
+    struct source_location const* location,
+    struct value const* self,
+    char const* name)
 {
     assert(self != NULL);
     assert(name != NULL);
@@ -1787,9 +1794,30 @@ value_get_member(struct value const* self, char const* name)
     long const index = type_struct_member_variable_index(self->type, name);
     if (index < 0) {
         // Should never happen.
-        fatal(NULL, "type `%s` has no member `%s`", self->type->name, name);
+        fatal(location, "type `%s` has no member `%s`", self->type->name, name);
     }
     return self->data.struct_.member_variables[index];
+}
+
+struct value const*
+value_xget_member_variable(
+    struct source_location const* location,
+    struct value const* self,
+    char const* name)
+{
+    assert(self != NULL);
+    assert(name != NULL);
+
+    struct value const* const value =
+        value_get_member_variable(location, self, name);
+    if (value == NULL) {
+        fatal(
+            location,
+            "member `%s` of type `%s` is uninitialized",
+            name,
+            self->type->name);
+    }
+    return value;
 }
 
 void

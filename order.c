@@ -327,7 +327,9 @@ order_expr(struct orderer* orderer, struct cst_expr const* expr)
         sbuf(struct cst_member_initializer const* const) const initializers =
             expr->data.struct_.initializers;
         for (size_t i = 0; i < sbuf_count(initializers); ++i) {
-            order_expr(orderer, initializers[i]->expr);
+            if (initializers[i]->expr != NULL) {
+                order_expr(orderer, initializers[i]->expr);
+            }
         }
         return;
     }

@@ -174,7 +174,7 @@
 
 <member-initializer-list> ::= ( <member-initializer> ("," <member-initializer>)* )?
 
-<member-initializer> ::= "." <identifier> "=" <expr>
+<member-initializer> ::= "." <identifier> "=" (<expr> | "uninit")
 
 <typespec> ::= <symbol>
              | <typespec-function>

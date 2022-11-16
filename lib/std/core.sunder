@@ -294,19 +294,17 @@ struct result[[T, E]] {
 
     # Initialize a result in the value state (success).
     func init_value(value: T) result[[T, E]] {
-        var error: E = uninit;
         return (:result[[T, E]]){
             ._value = value,
-            ._error = error,
+            ._error = uninit,
             ._is_value = true
         };
     }
 
     # Initialize a result in the error state (failure).
     func init_error(error: E) result[[T, E]] {
-        var value: T = uninit;
         return (:result[[T, E]]){
-            ._value = value,
+            ._value = uninit,
             ._error = error,
             ._is_value = false
         };
@@ -355,9 +353,8 @@ struct optional[[T]] {
 
     # Initialize an optional in the empty state (value is absent).
     func init_empty() optional[[T]] {
-        var value: T = uninit;
         return (:optional[[T]]){
-            ._value = value,
+            ._value = uninit,
             ._is_value = false
         };
     }

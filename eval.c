@@ -229,18 +229,17 @@ eval_rvalue_struct(struct expr const* expr)
 
     struct value* const value = value_new_struct(expr->type);
 
-    sbuf(struct member_variable) const member_variable_defs =
+    sbuf(struct member_variable) const defs =
         expr->type->data.struct_.member_variables;
-    sbuf(struct expr const* const) const member_variable_exprs =
+    sbuf(struct expr const* const) const exprs =
         expr->data.struct_.member_variables;
-    assert(
-        sbuf_count(member_variable_defs) == sbuf_count(member_variable_exprs));
 
-    for (size_t i = 0; i < sbuf_count(member_variable_exprs); ++i) {
-        value_set_member(
-            value,
-            member_variable_defs[i].name,
-            eval_rvalue(member_variable_exprs[i]));
+    assert(sbuf_count(defs) == sbuf_count(exprs));
+    for (size_t i = 0; i < sbuf_count(exprs); ++i) {
+        if (exprs[i] == NULL) {
+            continue;
+        }
+        value_set_member(value, defs[i].name, eval_rvalue(exprs[i]));
     }
 
     return value;
@@ -572,12 +571,12 @@ eval_rvalue_access_member_variable(struct expr const* expr)
     struct value* const lhs =
         eval_rvalue(expr->data.access_member_variable.lhs);
 
-    long const index = type_struct_member_variable_index(
-        lhs->type, expr->data.access_member_variable.member_variable->name);
-    assert(index >= 0);
+    struct value const* const member = value_xget_member_variable(
+        expr->location,
+        lhs,
+        expr->data.access_member_variable.member_variable->name);
 
-    struct value* const res =
-        value_clone(lhs->data.struct_.member_variables[index]);
+    struct value* const res = value_clone(member);
 
     value_del(lhs);
     return res;

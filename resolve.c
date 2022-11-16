@@ -3226,8 +3226,12 @@ resolve_expr_struct(struct resolver* resolver, struct cst_expr const* expr)
     // the struct definition.
     sbuf(struct expr const*) initializer_exprs = NULL;
     for (size_t i = 0; i < sbuf_count(initializers); ++i) {
-        sbuf_push(
-            initializer_exprs, resolve_expr(resolver, initializers[i]->expr));
+        struct expr const* expr = NULL;
+        if (initializers[i]->expr != NULL) {
+            expr = resolve_expr(resolver, initializers[i]->expr);
+        }
+
+        sbuf_push(initializer_exprs, expr);
     }
 
     // Ordered list of member variables corresponding to the member variables
@@ -3242,11 +3246,19 @@ resolve_expr_struct(struct resolver* resolver, struct cst_expr const* expr)
         sbuf_push(member_variable_exprs, NULL);
     }
 
-    // XXX: Freezing initializer_exprs and member_variable_exprs here before
-    // any calls to fatal because GCC 8.3 ASan will think we leak even though
-    // we hold a valid path to these buffers.
+    // True if the nth member variable has an initializer.
+    // Used for detecting duplicate initializers or lack of initializers.
+    sbuf(bool) member_variable_inits = NULL;
+    for (size_t i = 0; i < sbuf_count(member_variable_defs); ++i) {
+        sbuf_push(member_variable_inits, false);
+    }
+
+    // XXX: Freezing these stretchy buffers here before any calls to fatal
+    // because GCC 8.3 ASan will think we leak even though we hold a valid path
+    // to the head of each stretchy buffer.
     sbuf_freeze(initializer_exprs);
     sbuf_freeze(member_variable_exprs);
+    sbuf_freeze(member_variable_inits);
 
     for (size_t i = 0; i < sbuf_count(initializers); ++i) {
         char const* const initializer_name = initializers[i]->identifier->name;
@@ -3257,11 +3269,18 @@ resolve_expr_struct(struct resolver* resolver, struct cst_expr const* expr)
                 continue;
             }
 
-            if (member_variable_exprs[j] != NULL) {
+            if (member_variable_inits[j]) {
                 fatal(
                     initializers[i]->location,
                     "duplicate initializer for member variable `%s`",
                     member_variable_defs[j].name);
+            }
+
+            if (initializer_exprs[i] == NULL) {
+                // Intializer is uninit.
+                member_variable_inits[j] = true;
+                found = true;
+                break;
             }
 
             struct expr const* const initializer_expr = implicit_cast(
@@ -3271,6 +3290,7 @@ resolve_expr_struct(struct resolver* resolver, struct cst_expr const* expr)
                 initializer_expr->type,
                 member_variable_defs[j].type);
             member_variable_exprs[j] = initializer_expr;
+            member_variable_inits[j] = true;
             found = true;
             break;
         }
@@ -3285,7 +3305,7 @@ resolve_expr_struct(struct resolver* resolver, struct cst_expr const* expr)
     }
 
     for (size_t i = 0; i < sbuf_count(member_variable_defs); ++i) {
-        if (member_variable_exprs[i] == NULL) {
+        if (!member_variable_inits[i]) {
             fatal(
                 expr->location,
                 "missing initializer for member variable `%s`",

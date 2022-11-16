@@ -1,0 +1,14 @@
+struct s1 {
+    var x: u32;
+}
+
+struct s2 {
+    var x: u32;
+    var y: u32;
+}
+
+const a = (:s2){.x = 123, .y = (:s1){.x = uninit}.x};
+################################################################################
+# [error-struct-access-uninit-member.test.sunder:10] error: member `x` of type `s1` is uninitialized
+# const a = (:s2){.x = 123, .y = (:s1){.x = uninit}.x};
+#                                                  ^

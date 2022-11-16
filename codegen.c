@@ -306,10 +306,21 @@ append_dx_static_initializer(struct value const* value)
 
             appendli(
                 "; `%s` member variable `%s` of type `%s`",
-                value->type->name,
+                def->type->name,
                 def->name,
                 def->type->name);
-            append_dx_static_initializer(member_variable_vals[i]);
+            if (member_variable_vals[i] != NULL) {
+                append_dx_static_initializer(member_variable_vals[i]);
+            }
+            else {
+                for (size_t i = 0; i < def->type->size; ++i) {
+                    appendli(
+                        "db %#x ; (uninitialized) `%s` byte %zu",
+                        0,
+                        def->type->name,
+                        i);
+                }
+            }
         }
         return;
     }
@@ -1634,6 +1645,11 @@ push_rvalue_struct(struct expr const* expr, size_t id)
     assert(
         sbuf_count(member_variable_defs) == sbuf_count(member_variable_exprs));
     for (size_t i = 0; i < sbuf_count(member_variable_defs); ++i) {
+        if (member_variable_exprs[i] == NULL) {
+            // Uninitialized member variable.
+            continue;
+        }
+
         assert(member_variable_exprs[i]->type == member_variable_defs[i].type);
         push_rvalue(member_variable_exprs[i]);
 

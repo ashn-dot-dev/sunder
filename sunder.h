@@ -1402,7 +1402,7 @@ cst_member_new_function(struct cst_decl const* decl);
 struct cst_member_initializer {
     struct source_location const* location;
     struct cst_identifier const* identifier;
-    struct cst_expr const* expr;
+    struct cst_expr const* expr; // optional (NULL => uninit)
 };
 struct cst_member_initializer*
 cst_member_initializer_new(
@@ -1951,7 +1951,8 @@ struct expr {
         } slice;
         struct {
             // List of elements corresponding to the member variables defined
-            // by the struct type.
+            // by the struct type. Each element is optional, with NULL implying
+            // the value of the nth member is uninitialized.
             sbuf(struct expr const* const) member_variables;
         } struct_;
         struct {
@@ -2197,12 +2198,12 @@ struct value {
         } slice;
         struct {
             // The members struct is an array with length equal to the struct
-            // type's member_variables stretchy buffer. The Xth element of this
-            // array corresponds to the Xth member variable within the struct
+            // type's member_variables stretchy buffer. The nth element of this
+            // array corresponds to the nth member variable within the struct
             // type definition. Upon the creation of a value object, each value
             // pointer in the member_variables array will be initialized to
-            // NULL, and the values of each member variable must be explicitly
-            // set before the value object may be used.
+            // NULL, and the values of each non-uninit member variable must be
+            // explicitly set before that member may be used.
             sbuf(struct value*) member_variables;
         } struct_;
     } data;
@@ -2233,8 +2234,20 @@ struct value*
 value_clone(struct value const* self);
 
 // Get the value associated with the struct member `self.name`.
+// Returns NULL if the struct member `self.name` is uninitialized.
 struct value const*
-value_get_member(struct value const* self, char const* name);
+value_get_member_variable(
+    struct source_location const* location,
+    struct value const* self,
+    char const* name);
+// Get the value associated with the struct member `self.name`.
+// Fatally exits after printing an error message if the struct member
+// `self.name` is uninitialized.
+struct value const*
+value_xget_member_variable(
+    struct source_location const* location,
+    struct value const* self,
+    char const* name);
 // Set the value associated with the struct member `self.name`.
 void
 value_set_member(struct value* self, char const* name, struct value* value);

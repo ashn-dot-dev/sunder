@@ -1599,7 +1599,13 @@ parse_member_initializer(struct parser* parser)
         &expect_current(parser, TOKEN_DOT)->location;
     struct cst_identifier const* identifier = parse_identifier(parser);
     expect_current(parser, TOKEN_ASSIGN);
-    struct cst_expr const* expr = parse_expr(parser);
+    struct cst_expr const* expr = NULL;
+    if (check_current(parser, TOKEN_UNINIT)) {
+        expect_current(parser, TOKEN_UNINIT);
+    }
+    else {
+        expr = parse_expr(parser);
+    }
 
     struct cst_member_initializer* const product =
         cst_member_initializer_new(location, identifier, expr);
