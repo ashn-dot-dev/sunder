@@ -4,7 +4,7 @@ import "sys";
 
 func main() void {
     var progname = std::cstr::data(*sys::argv);
-    var path = std::optional[[[]byte]]::init_empty();
+    var path = std::optional[[[]byte]]::EMPTY;
 
     var parser = std::argument_parser::init((:[][]byte)[]);
     for parser.advance() {
