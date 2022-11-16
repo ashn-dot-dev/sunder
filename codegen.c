@@ -202,8 +202,16 @@ append_dx_static_initializer(struct value const* value)
     case TYPE_SSIZE: {
         sbuf(uint8_t) const bytes = value_to_new_bytes(value);
         for (size_t i = 0; i < sbuf_count(bytes); ++i) {
+            assert(value->type->size != 0);
+            if (value->type->size == 1) {
+                appendli(
+                    "db %#x ; `%s`", (unsigned)bytes[i], value->type->name);
+                continue;
+            }
+
+            // Explicitly note which byte of the value is being written.
             appendli(
-                "db %#x ; %s byte %zu",
+                "db %#x ; `%s` byte %zu",
                 (unsigned)bytes[i],
                 value->type->name,
                 i);
@@ -296,7 +304,11 @@ append_dx_static_initializer(struct value const* value)
                 }
             }
 
-            appendli("; member variable %s: %s", def->name, def->type->name);
+            appendli(
+                "; `%s` member variable `%s` of type `%s`",
+                value->type->name,
+                def->name,
+                def->type->name);
             append_dx_static_initializer(member_variable_vals[i]);
         }
         return;
@@ -963,7 +975,7 @@ codegen_static_object(struct symbol const* symbol)
         // zerod, similar to uninitialized globals in C.
         for (size_t i = 0; i < symbol->data.variable.type->size; ++i) {
             appendli(
-                "db %#x ; (uninitialized) %s byte %zu",
+                "db %#x ; (uninitialized) `%s` byte %zu",
                 0,
                 symbol->data.variable.type->name,
                 i);
