@@ -425,7 +425,19 @@ parse_decl_constant(struct parser* parser)
         typespec = parse_typespec(parser);
     }
     expect_current(parser, TOKEN_ASSIGN);
-    struct cst_expr const* const expr = parse_expr(parser);
+    struct cst_expr const* expr = NULL;
+    if (check_current(parser, TOKEN_UNINIT)) {
+        expect_current(parser, TOKEN_UNINIT);
+        if (typespec == NULL) {
+            fatal(
+                identifier->location,
+                "uninitialized constant `%s` requires a type specifier",
+                identifier->name);
+        }
+    }
+    else {
+        expr = parse_expr(parser);
+    }
     expect_current(parser, TOKEN_SEMICOLON);
 
     struct cst_decl* const product =

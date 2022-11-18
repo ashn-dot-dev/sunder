@@ -970,7 +970,7 @@ struct cst_decl {
         struct {
             struct cst_identifier const* identifier;
             struct cst_typespec const* typespec; // optional
-            struct cst_expr const* expr;
+            struct cst_expr const* expr; // optional (NULL => uninit)
         } constant;
         struct {
             struct cst_identifier const* identifier;
@@ -1713,7 +1713,7 @@ struct symbol {
         struct {
             struct type const* type;
             struct address const* address; // Always ADDRESS_STATIC.
-            struct value const* value;
+            struct value const* value; // optional
         } constant;
         struct function const* function;
         struct {
@@ -1778,8 +1778,12 @@ struct type const*
 symbol_xget_type(struct symbol const* self);
 struct address const*
 symbol_xget_address(struct symbol const* self);
+// Get the value associated with the symbol `self`.
+// Fatally exits after printing an error message if the symbol is
+// uninitialized.
 struct value const*
-symbol_xget_value(struct symbol const* self);
+symbol_xget_value(
+    struct source_location const* location, struct symbol const* self);
 
 struct symbol_table_element {
     // Name associated with this name-to-symbol mapping within the symbol

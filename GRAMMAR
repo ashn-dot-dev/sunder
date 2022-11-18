@@ -8,6 +8,7 @@
                   | "var" <identifier> ":" <typespec> "=" "uninit" ";"
 
 <decl-constant> ::= "const" <identifier> (":" <typespec>)? "=" <expr> ";"
+                  | "const" <identifier> ":" <typespec> "=" "uninit" ";"
 
 <decl-function> ::= "func" <identifier> <template-parameter-list>? "(" <parameter-list> ")" <typespec> <block>
 

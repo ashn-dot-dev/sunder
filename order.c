@@ -182,7 +182,9 @@ order_decl(struct orderer* orderer, struct cst_decl const* decl)
         if (decl->data.constant.typespec != NULL) {
             order_typespec(orderer, decl->data.constant.typespec);
         }
-        order_expr(orderer, decl->data.constant.expr);
+        if (decl->data.constant.expr != NULL) {
+            order_expr(orderer, decl->data.constant.expr);
+        }
         return;
     }
     case CST_DECL_FUNCTION: {

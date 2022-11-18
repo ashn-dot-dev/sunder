@@ -623,7 +623,6 @@ symbol_new_constant(
     assert(type != NULL);
     assert(address != NULL);
     assert(address->kind == ADDRESS_STATIC);
-    assert(value != NULL);
 
     struct symbol* const self = xalloc(NULL, sizeof(*self));
     memset(self, 0x00, sizeof(*self));
@@ -766,7 +765,8 @@ symbol_xget_address(struct symbol const* self)
 }
 
 struct value const*
-symbol_xget_value(struct symbol const* self)
+symbol_xget_value(
+    struct source_location const* location, struct symbol const* self)
 {
     switch (self->kind) {
     case SYMBOL_VARIABLE: {
@@ -776,6 +776,13 @@ symbol_xget_value(struct symbol const* self)
         return self->data.variable.value;
     }
     case SYMBOL_CONSTANT: {
+        if (self->data.constant.value == NULL) {
+            fatal(
+                location,
+                "constant `%s` of type `%s` is uninitialized",
+                self->name,
+                self->data.constant.type->name);
+        }
         return self->data.constant.value;
     }
     case SYMBOL_FUNCTION: {

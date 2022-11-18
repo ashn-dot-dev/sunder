@@ -1545,7 +1545,10 @@ resolve_decl_constant(struct resolver* resolver, struct cst_decl const* decl)
 
     resolver->is_within_const_decl = true;
 
-    struct expr const* expr = resolve_expr(resolver, decl->data.constant.expr);
+    struct expr const* expr = NULL;
+    if (decl->data.constant.expr != NULL) {
+        expr = resolve_expr(resolver, decl->data.constant.expr);
+    }
 
     struct type const* const type = decl->data.constant.typespec != NULL
         ? resolve_typespec(resolver, decl->data.constant.typespec)
@@ -1557,14 +1560,19 @@ resolve_decl_constant(struct resolver* resolver, struct cst_decl const* decl)
             type->name);
     }
 
-    expr = implicit_cast(type, expr);
-    verify_type_compatibility(expr->location, expr->type, type);
+    if (expr != NULL) {
+        expr = implicit_cast(type, expr);
+        verify_type_compatibility(expr->location, expr->type, type);
+    }
 
     // Constants (globals and locals) have their values computed at
     // compile-time and therefore must always be added to the symbol table with
-    // an evaluated value.
-    struct value* const value = eval_rvalue(expr);
-    value_freeze(value);
+    // an evaluated value when initialized.
+    struct value* value = NULL;
+    if (expr != NULL) {
+        value = eval_rvalue(expr);
+        value_freeze(value);
+    }
 
     struct address const* const address =
         resolver_reserve_storage_static(resolver, decl->name);

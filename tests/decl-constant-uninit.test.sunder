@@ -1,0 +1,38 @@
+struct s {
+    var foo: u32;
+    var bar: u32;
+}
+
+const a: u8 = uninit;
+const b: u16 = uninit;
+const c: u32 = uninit;
+const d: u64 = uninit;
+const e: *byte = uninit;
+const f: []byte = uninit;
+const g: s = uninit;
+
+func main() void {
+    const y: u32 = uninit;
+    const z: s = uninit;
+
+    dump a;
+    dump b;
+    dump c;
+    dump d;
+    dump e;
+    dump f;
+    dump g;
+
+    dump y;
+    dump z;
+}
+################################################################################
+# 00
+# 00 00
+# 00 00 00 00
+# 00 00 00 00 00 00 00 00
+# 00 00 00 00 00 00 00 00
+# 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+# 00 00 00 00 00 00 00 00
+# 00 00 00 00
+# 00 00 00 00 00 00 00 00

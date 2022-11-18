@@ -137,7 +137,7 @@ eval_rvalue_symbol(struct expr const* expr)
     enum symbol_kind const kind = symbol->kind;
 
     if (kind == SYMBOL_CONSTANT || kind == SYMBOL_FUNCTION) {
-        return value_clone(symbol_xget_value(symbol));
+        return value_clone(symbol_xget_value(expr->location, symbol));
     }
 
     fatal(expr->location, "identifier `%s` is not a constant", symbol->name);
