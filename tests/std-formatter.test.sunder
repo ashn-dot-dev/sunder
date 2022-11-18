@@ -17,7 +17,7 @@ struct name {
         std::write_all(writer, self.*.first);
         std::write_all(writer, " ");
         std::write_all(writer, self.*.last);
-        return std::result[[void, std::error]]::init_value(void::init());
+        return std::result[[void, std::error]]::init_value(void::VALUE);
     }
 }
 

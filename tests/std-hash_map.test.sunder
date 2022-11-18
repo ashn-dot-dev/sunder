@@ -14,7 +14,7 @@ func main() void {
     dump lookup_foo.is_value();
     dump lookup_bar.is_value();
 
-    dump void::init();
+    std::print(std::out(), "\n");
 
     map.insert("foo", 123);
     var count = map.count();
@@ -29,7 +29,7 @@ func main() void {
         "{}",
         (:[]std::formatter)[std::formatter::init[[ssize]](&value)]);
 
-    dump void::init();
+    std::print(std::out(), "\n");
 
     map.insert("foo", 456);
     var count = map.count();
@@ -44,7 +44,7 @@ func main() void {
         "{}",
         (:[]std::formatter)[std::formatter::init[[ssize]](&value_foo)]);
 
-    dump void::init();
+    std::print(std::out(), "\n");
 
     map.insert("bar", 789);
     var count = map.count();
@@ -62,7 +62,7 @@ func main() void {
             std::formatter::init[[ssize]](&value_foo),
             std::formatter::init[[ssize]](&value_bar)]);
 
-    dump void::init();
+    std::print(std::out(), "\n");
 
     var removed = map.remove("foo");
     var count = map.count();
@@ -86,7 +86,7 @@ func main() void {
 
     map.fini();
 
-    dump void::init();
+    std::print(std::out(), "\n");
 
     var map = std::hash_map[[ssize, usize]]::init(allocator);
     for x in 0x123456:0x123456+100000 {

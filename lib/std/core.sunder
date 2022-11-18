@@ -740,7 +740,7 @@ func write_all(writer: std::writer, buf: []byte) std::result[[void, std::error]]
         }
         written = written + result.value();
     }
-    return std::result[[void, std::error]]::init_value(void::init());
+    return std::result[[void, std::error]]::init_value(void::VALUE);
 }
 
 # Write `countof(buf)` bytes, followed by a newline, to the provided writer,
@@ -757,7 +757,7 @@ func write_line(writer: std::writer, buf: []byte) std::result[[void, std::error]
         return std::result[[void, std::error]]::init_error(result.error());
     }
 
-    return std::result[[void, std::error]]::init_value(void::init());
+    return std::result[[void, std::error]]::init_value(void::VALUE);
 }
 
 # Write formatted bytes to the provided writer, invoking the writer's `write`
@@ -905,7 +905,7 @@ func write_format(writer: std::writer, format: []byte, args: []std::formatter) s
         std::panic("invalid format argument count");
     }
 
-    return std::result[[void, std::error]]::init_value(void::init());
+    return std::result[[void, std::error]]::init_value(void::VALUE);
 }
 
 # Write `countof(buf)` bytes to the provided writer, invoking the writer's
@@ -1238,7 +1238,7 @@ struct key_value_view[[K, V]] {
     var value: *V;
 }
 
-extend void func init() void { }
+extend void const VALUE: void = uninit;
 extend void func format(self: *bool, writer: std::writer, fmt: []byte) std::result[[void, std::error]] {
     if countof(fmt) != 0 {
         return std::result[[void, std::error]]::init_error(std::error::INVALID_ARGUMENT);
@@ -1810,7 +1810,7 @@ extend []byte func format(self: *[]byte, writer: std::writer, fmt: []byte) std::
                 return result;
             }
         }
-        return std::result[[void, std::error]]::init_value(void::init());
+        return std::result[[void, std::error]]::init_value(void::VALUE);
     }
 
     return std::result[[void, std::error]]::init_error(std::error::INVALID_ARGUMENT);

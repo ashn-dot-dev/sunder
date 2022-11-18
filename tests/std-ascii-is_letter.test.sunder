@@ -7,14 +7,14 @@ func main() void {
     dump std::ascii::is_letter('c');
     dump std::ascii::is_letter('z');
 
-    dump void::init();
+    std::print(std::out(), "\n");
 
     dump std::ascii::is_letter('A');
     dump std::ascii::is_letter('B');
     dump std::ascii::is_letter('C');
     dump std::ascii::is_letter('Z');
 
-    dump void::init();
+    std::print(std::out(), "\n");
 
     dump std::ascii::is_letter('1');
     dump std::ascii::is_letter('~');

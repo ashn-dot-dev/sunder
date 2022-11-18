@@ -7,14 +7,14 @@ func main() void {
     dump std::ascii::to_lowercase('C') == 'c';
     dump std::ascii::to_lowercase('Z') == 'z';
 
-    dump void::init();
+    std::print(std::out(), "\n");
 
     dump std::ascii::to_lowercase('a') == 'a';
     dump std::ascii::to_lowercase('b') == 'b';
     dump std::ascii::to_lowercase('c') == 'c';
     dump std::ascii::to_lowercase('z') == 'z';
 
-    dump void::init();
+    std::print(std::out(), "\n");
 
     dump std::ascii::to_lowercase('1') == '1';
     dump std::ascii::to_lowercase('~') == '~';

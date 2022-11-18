@@ -7,14 +7,14 @@ func main() void {
     dump std::ascii::is_uppercase('C');
     dump std::ascii::is_uppercase('Z');
 
-    dump void::init();
+    std::print(std::out(), "\n");
 
     dump std::ascii::is_uppercase('a');
     dump std::ascii::is_uppercase('b');
     dump std::ascii::is_uppercase('c');
     dump std::ascii::is_uppercase('z');
 
-    dump void::init();
+    std::print(std::out(), "\n");
 
     dump std::ascii::is_uppercase('1');
     dump std::ascii::is_uppercase('~');

@@ -69,7 +69,7 @@ struct file {
             return std::result[[void, std::error]]::init_error((:std::error)sys::error(-sysret));
         }
 
-        return std::result[[void, std::error]]::init_value(void::init());
+        return std::result[[void, std::error]]::init_value(void::VALUE);
     }
 
     func read(self: *file, buf: []byte) std::result[[usize, std::error]] {
@@ -150,7 +150,7 @@ struct file {
             return std::result[[void, std::error]]::init_error((:std::error)sys::error(-sysret));
         }
 
-        return std::result[[void, std::error]]::init_value(void::init());
+        return std::result[[void, std::error]]::init_value(void::VALUE);
     }
 }
 
@@ -193,7 +193,7 @@ struct directory {
             return std::result[[void, std::error]]::init_error((:std::error)sys::error(-sysret));
         }
 
-        return std::result[[void, std::error]]::init_value(void::init());
+        return std::result[[void, std::error]]::init_value(void::VALUE);
     }
 
     # Advance the current directory entry.
@@ -246,7 +246,7 @@ struct directory {
             return std::result[[void, std::error]]::init_error((:std::error)sys::error(-sysret));
         }
 
-        return std::result[[void, std::error]]::init_value(void::init());
+        return std::result[[void, std::error]]::init_value(void::VALUE);
     }
 
     # Remove an empty directory.
@@ -262,6 +262,6 @@ struct directory {
             return std::result[[void, std::error]]::init_error((:std::error)sys::error(-sysret));
         }
 
-        return std::result[[void, std::error]]::init_value(void::init());
+        return std::result[[void, std::error]]::init_value(void::VALUE);
     }
 }

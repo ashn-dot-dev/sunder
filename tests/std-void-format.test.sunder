@@ -1,7 +1,7 @@
 import "std/core.sunder";
 
 func main() void {
-    var v = void::init();
+    var v = void::VALUE;
     std::print_format_line(
         std::out(),
         "{}",
