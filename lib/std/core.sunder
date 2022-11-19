@@ -1117,13 +1117,8 @@ func forward_align(addr: usize, align: usize) usize {
 
 # Returns an object of type `T` with all bytes (including padding) zeroed.
 func zeroed[[T]]() T {
-    # TODO: Ensure that `object` is aligned to `alignof(T)` once alignment
-    # specification is added to variable & constant declarations. The x64
-    # architecture allows unaligned memory access, so this current
-    # implementation is a non-issue for the Linux x64 OS/ARCH target. However,
-    # this function is not necessarily portable across other architectures.
-    const object: [sizeof(T)]byte = (:[sizeof(T)]byte)[0...];
-    return *(:*T)&object;
+    const object: T = uninit;
+    return object;
 }
 
 const EXIT_SUCCESS: ssize = 0;

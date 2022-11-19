@@ -113,7 +113,7 @@ struct file {
             return std::result[[void, std::error]]::init_error((:std::error)sys::error(-sysret));
         }
 
-        return std::result[[void, std::error]]::init_value(std::zeroed[[void]]());
+        return std::result[[void, std::error]]::init_value(void::VALUE);
     }
 
     # Returns the current value of the file position indicator of an open file.

@@ -13,7 +13,7 @@ struct null_allocator {
 
     func reallocate(self: *null_allocator, ptr: *byte, align: usize, old_size: usize, new_size: usize) std::result[[*byte, std::error]] {
         std::panic("attempted null_allocator reallocation");
-        return std::zeroed[[std::result[[*byte, std::error]]]](); # unreachable
+        return std::result[[*byte, std::error]]::init_error(std::error::ALLOCATION_FAILURE);
     }
 
     func deallocate(self: *null_allocator, ptr: *byte, align: usize, size: usize) void {
