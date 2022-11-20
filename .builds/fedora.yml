@@ -1,0 +1,34 @@
+image: fedora/rawhide
+arch: x86_64
+packages:
+  - clang
+  - nasm
+  - yasm
+sources:
+  - https://git.sr.ht/~ashn/sunder
+tasks:
+  - c99-debug-yasm: |
+      cd sunder
+      make clean check examples CFLAGS='$(C99_DBG)' SUNDER_DEFAULT_BACKEND=yasm
+  - c99-debug-nasm: |
+      cd sunder
+      make clean check examples CFLAGS='$(C99_DBG)' SUNDER_DEFAULT_BACKEND=nasm
+  - c99-release: |
+      cd sunder
+      make clean check examples CFLAGS='$(C99_REL)'
+  - clang-debug: |
+      cd sunder
+      make clean check examples CC=clang CFLAGS='$(GNU_DBG)'
+  - clang-release: |
+      cd sunder
+      make clean check examples CC=clang CFLAGS='$(GNU_REL)'
+  - gcc-debug: |
+      cd sunder
+      make clean check examples CC=gcc CFLAGS='$(GNU_DBG)'
+  - gcc-release: |
+      cd sunder
+      make clean check examples CC=gcc CFLAGS='$(GNU_REL)'
+triggers:
+  - action: email
+    condition: failure
+    to: "<me@ashn.dev>"
