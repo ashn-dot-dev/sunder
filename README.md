@@ -2,6 +2,9 @@
 Sunder is a C-like systems programming language and compiler for x86-64 Linux.
 
 ## Dependencies
+Sunder tooling should build and run on any x86-64 Linux machine satifying the
+following dependencies:
+
 + POSIX-compatible `make`
 + Supported toolchain containing:
   + C99 compiler (POSIX `c99`, `clang`, `gcc`, etc.)
