@@ -2143,8 +2143,6 @@ struct function {
 struct function*
 function_new(
     char const* name, struct type const* type, struct address const* address);
-void
-function_del(struct function* self);
 
 struct conditional {
     struct source_location const* location;
