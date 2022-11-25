@@ -189,6 +189,13 @@ struct str { # namespace
     # input string, with the exception of an optional final empty string in the
     # case of `std::str::split("bytes<delimiter>", "<delimiter>", allocator);`,
     # which has a static lifetime.
+    #
+    # Example:
+    #   var fields = std::str::split(input, " ", allocator);
+    #   defer std::slice[[[]byte]]::delete(allocator, fields);
+    #   for i in countof(fields) {
+    #       # Do something with each split field...
+    #   }
     func split(str: []byte, delimiter: []byte, allocator: std::allocator) [][]byte {
         var slice = std::slice[[[]byte]]::new(allocator, 0);
 
@@ -660,7 +667,6 @@ func read_all(reader: std::reader, allocator: std::allocator) std::result[[[]byt
 # an empty line, then an empty optional is returned.
 #
 # Example:
-#   ```
 #   var result = std::read_line(reader, allocator);
 #   if result.is_error() {
 #       # Handle the error...
@@ -683,7 +689,6 @@ func read_all(reader: std::reader, allocator: std::allocator) std::result[[[]byt
 #       # text file, or a user hitting Enter/Return without typing when reading
 #       # standard input.
 #   }
-#   ```
 func read_line(reader: std::reader, allocator: std::allocator) std::result[[std::optional[[[]byte]], std::error]] {
     var bytes = std::slice[[byte]]::new(allocator, 0);
 
