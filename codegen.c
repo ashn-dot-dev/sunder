@@ -765,7 +765,7 @@ codegen_extern_labels(void const* sysasm_buf, size_t sysasm_buf_size)
         struct symbol const* const symbol = context()->static_symbols[i];
 
         bool const is_extern_variable =
-            symbol->kind == SYMBOL_VARIABLE && symbol->data.variable.is_extern;
+            symbol->kind == SYMBOL_VARIABLE && symbol->data.variable->is_extern;
         bool const is_extern_function = symbol->kind == SYMBOL_FUNCTION
             && symbol_xget_value(NULL, symbol)->data.function->body == NULL;
         if (!(is_extern_variable || is_extern_function)) {
@@ -959,7 +959,7 @@ codegen_static_object(struct symbol const* symbol)
     assert(symbol_xget_address(symbol)->kind == ADDRESS_STATIC);
 
     bool const is_extern_variable =
-        symbol->kind == SYMBOL_VARIABLE && symbol->data.variable.is_extern;
+        symbol->kind == SYMBOL_VARIABLE && symbol->data.variable->is_extern;
     if (is_extern_variable) {
         // Forward label was already emitted.
         return;
@@ -977,18 +977,18 @@ codegen_static_object(struct symbol const* symbol)
 
     assert(symbol_xget_address(symbol)->data.static_.offset == 0);
     append("$%s:\n", symbol_xget_address(symbol)->data.static_.name);
-    if (symbol->data.variable.value != NULL) {
+    if (symbol->data.variable->value != NULL) {
         // Variable is initialized.
         append_dx_static_initializer(symbol_xget_value(NULL, symbol));
     }
     else {
         // Variable is uninitialized. The initial state of the object should be
         // zerod, similar to uninitialized globals in C.
-        for (size_t i = 0; i < symbol->data.variable.type->size; ++i) {
+        for (size_t i = 0; i < symbol->data.variable->type->size; ++i) {
             appendli(
                 "db %#x ; (uninitialized) `%s` byte %zu",
                 0,
-                symbol->data.variable.type->name,
+                symbol->data.variable->type->name,
                 i);
         }
     }

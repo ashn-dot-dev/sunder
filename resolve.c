@@ -1511,8 +1511,11 @@ resolve_decl_variable(
         ? resolver_reserve_storage_static(resolver, decl->name)
         : resolver_reserve_storage_local(resolver, type);
 
+    struct object* const object = object_new(type, address, value);
+    freeze(object);
+
     struct symbol* const symbol =
-        symbol_new_variable(decl->location, decl->name, type, address, value);
+        symbol_new_variable(decl->location, decl->name, object);
     freeze(symbol);
 
     symbol_table_insert(
@@ -1577,8 +1580,11 @@ resolve_decl_constant(struct resolver* resolver, struct cst_decl const* decl)
     struct address const* const address =
         resolver_reserve_storage_static(resolver, decl->name);
 
+    struct object* const object = object_new(type, address, value);
+    freeze(object);
+
     struct symbol* const symbol =
-        symbol_new_constant(decl->location, decl->name, type, address, value);
+        symbol_new_constant(decl->location, decl->name, object);
     freeze(symbol);
 
     symbol_table_insert(
@@ -1703,8 +1709,12 @@ resolve_decl_function(struct resolver* resolver, struct cst_decl const* decl)
         freeze(address);
 
         rbp_offset += (int)ceil8u64(type->size);
+
+        struct object* const object = object_new(type, address, NULL);
+        freeze(object);
+
         struct symbol* const symbol =
-            symbol_new_variable(location, name, type, address, NULL);
+            symbol_new_variable(location, name, object);
         freeze(symbol);
 
         symbol_parameters[i] = symbol;
@@ -1733,12 +1743,13 @@ resolve_decl_function(struct resolver* resolver, struct cst_decl const* decl)
     struct address* const return_value_address =
         address_new(address_init_local(rbp_offset));
     freeze(return_value_address);
+    struct object* const return_value_object =
+        object_new(return_type, return_value_address, NULL);
+    freeze(return_value_object);
     struct symbol* const return_value_symbol = symbol_new_variable(
         decl->data.function.return_typespec->location,
         context()->interned.return_,
-        return_type,
-        return_value_address,
-        NULL);
+        return_value_object);
     freeze(return_value_symbol);
     symbol_table_insert(
         symbol_table, return_value_symbol->name, return_value_symbol, false);
@@ -1917,9 +1928,12 @@ resolve_decl_extern_variable(
     struct address const* const address =
         resolver_reserve_storage_static(resolver, decl->name);
 
+    struct object* const object = object_new(type, address, NULL);
+    object->is_extern = true;
+    freeze(object);
+
     struct symbol* const symbol =
-        symbol_new_variable(decl->location, decl->name, type, address, NULL);
-    symbol->data.variable.is_extern = true;
+        symbol_new_variable(decl->location, decl->name, object);
     freeze(symbol);
 
     symbol_table_insert(
@@ -2519,12 +2533,11 @@ resolve_stmt_for_range(struct resolver* resolver, struct cst_stmt const* stmt)
     struct type const* const loop_var_type = context()->builtin.usize;
     struct address const* const loop_var_address =
         resolver_reserve_storage_local(resolver, loop_var_type);
-    struct symbol* const loop_var_symbol = symbol_new_variable(
-        loop_var_location,
-        loop_var_name,
-        loop_var_type,
-        loop_var_address,
-        NULL);
+    struct object* loop_var_object =
+        object_new(loop_var_type, loop_var_address, NULL);
+    freeze(loop_var_object);
+    struct symbol* const loop_var_symbol =
+        symbol_new_variable(loop_var_location, loop_var_name, loop_var_object);
     freeze(loop_var_symbol);
 
     struct symbol_table* const symbol_table =
@@ -3009,8 +3022,11 @@ resolve_expr_bytes(struct resolver* resolver, struct cst_expr const* expr)
     struct value* const value = value_new_array(type, elements, NULL);
     value_freeze(value);
 
-    struct symbol* const symbol = symbol_new_constant(
-        expr->location, address->data.static_.name, type, address, value);
+    struct object* const object = object_new(type, address, value);
+    freeze(object);
+
+    struct symbol* const symbol =
+        symbol_new_constant(expr->location, address->data.static_.name, object);
     freeze(symbol);
     register_static_symbol(symbol);
 
@@ -3126,10 +3142,14 @@ resolve_expr_list(struct resolver* resolver, struct cst_expr const* expr)
         value_freeze(array_value);
     }
 
+    struct object* const array_object =
+        object_new(array_type, array_address, array_value);
+    freeze(array_object);
+
     struct symbol* const array_symbol =
-        (resolver->is_within_const_decl ? symbol_new_constant
-                                        : symbol_new_variable)(
-            expr->location, array_name, array_type, array_address, array_value);
+        (resolver->is_within_const_decl
+             ? symbol_new_constant
+             : symbol_new_variable)(expr->location, array_name, array_object);
     if (is_static) {
         register_static_symbol(array_symbol);
     }

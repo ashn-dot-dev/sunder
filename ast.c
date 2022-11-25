@@ -590,23 +590,19 @@ struct symbol*
 symbol_new_variable(
     struct source_location const* location,
     char const* name,
-    struct type const* type,
-    struct address const* address,
-    struct value const* value)
+    struct object const* object)
 {
     assert(location != NULL);
     assert(name != NULL);
-    assert(type != NULL);
-    assert(address != NULL);
+    assert(object != NULL);
+    assert(!(object->is_extern && object->value != NULL));
 
     struct symbol* const self = xalloc(NULL, sizeof(*self));
     memset(self, 0x00, sizeof(*self));
     self->kind = SYMBOL_VARIABLE;
     self->location = location;
     self->name = name;
-    self->data.variable.type = type;
-    self->data.variable.address = address;
-    self->data.variable.value = value;
+    self->data.variable = object;
     return self;
 }
 
@@ -614,24 +610,19 @@ struct symbol*
 symbol_new_constant(
     struct source_location const* location,
     char const* name,
-    struct type const* type,
-    struct address const* address,
-    struct value const* value)
+    struct object const* object)
 {
     assert(location != NULL);
     assert(name != NULL);
-    assert(type != NULL);
-    assert(address != NULL);
-    assert(address->kind == ADDRESS_STATIC);
+    assert(object != NULL);
+    assert(!object->is_extern);
 
     struct symbol* const self = xalloc(NULL, sizeof(*self));
     memset(self, 0x00, sizeof(*self));
     self->kind = SYMBOL_CONSTANT;
     self->location = location;
     self->name = name;
-    self->data.constant.type = type;
-    self->data.constant.address = address;
-    self->data.constant.value = value;
+    self->data.constant = object;
     return self;
 }
 
@@ -706,10 +697,10 @@ symbol_get_address(struct symbol const* self)
 
     switch (self->kind) {
     case SYMBOL_VARIABLE: {
-        return self->data.variable.address;
+        return self->data.variable->address;
     }
     case SYMBOL_CONSTANT: {
-        return self->data.constant.address;
+        return self->data.constant->address;
     }
     case SYMBOL_FUNCTION: {
         return self->data.function->address;
@@ -734,10 +725,10 @@ symbol_xget_type(struct symbol const* self)
         return self->data.type;
     }
     case SYMBOL_VARIABLE: {
-        return self->data.variable.type;
+        return self->data.variable->type;
     }
     case SYMBOL_CONSTANT: {
-        return self->data.constant.type;
+        return self->data.constant->type;
     }
     case SYMBOL_FUNCTION: {
         return self->data.function->type;
@@ -770,20 +761,20 @@ symbol_xget_value(
 {
     switch (self->kind) {
     case SYMBOL_VARIABLE: {
-        if (self->data.variable.value == NULL) {
+        if (self->data.variable->value == NULL) {
             UNREACHABLE();
         }
-        return self->data.variable.value;
+        return self->data.variable->value;
     }
     case SYMBOL_CONSTANT: {
-        if (self->data.constant.value == NULL) {
+        if (self->data.constant->value == NULL) {
             fatal(
                 location,
                 "constant `%s` of type `%s` is uninitialized",
                 self->name,
-                self->data.constant.type->name);
+                self->data.constant->type->name);
         }
-        return self->data.constant.value;
+        return self->data.constant->value;
     }
     case SYMBOL_FUNCTION: {
         return self->data.function->value;
@@ -1395,6 +1386,24 @@ expr_is_lvalue(struct expr const* self)
 
     UNREACHABLE();
     return false;
+}
+
+struct object*
+object_new(
+    struct type const* type,
+    struct address const* address,
+    struct value const* value)
+{
+    assert(type != NULL);
+    assert(address != NULL);
+
+    struct object* const self = xalloc(NULL, sizeof(*self));
+    memset(self, 0x00, sizeof(*self));
+    self->type = type;
+    self->address = address;
+    self->value = value;
+    self->is_extern = false;
+    return self;
 }
 
 struct function*

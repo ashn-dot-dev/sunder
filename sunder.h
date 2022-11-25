@@ -1704,20 +1704,8 @@ struct symbol {
     } kind;
     union {
         struct type const* type;
-        struct {
-            struct type const* type;
-            struct address const* address;
-            // Compile-time value of the variable. Non-NULL for initialized
-            // non-extern global variables. NULL for extern global, local,
-            // and uninitialized variables.
-            struct value const* value; // optional
-            bool is_extern;
-        } variable;
-        struct {
-            struct type const* type;
-            struct address const* address; // Always ADDRESS_STATIC.
-            struct value const* value; // optional
-        } constant;
+        struct object const* variable;
+        struct object const* constant;
         struct function const* function;
         struct {
             // Original CST of this template.
@@ -1745,16 +1733,12 @@ struct symbol*
 symbol_new_variable(
     struct source_location const* location,
     char const* name,
-    struct type const* type,
-    struct address const* address,
-    struct value const* value);
+    struct object const* object);
 struct symbol*
 symbol_new_constant(
     struct source_location const* location,
     char const* name,
-    struct type const* type,
-    struct address const* address,
-    struct value const* value);
+    struct object const* object);
 struct symbol*
 symbol_new_function(
     struct source_location const* location, struct function const* function);
@@ -2116,6 +2100,22 @@ expr_new_binary(
 // Returns true if `self` may be used in an lvalue context.
 bool
 expr_is_lvalue(struct expr const* self);
+
+struct object {
+    struct type const* type;
+    struct address const* address;
+    // Compile-time value of the object.
+    struct value const* value; // optional (NULL => uninit or unknown)
+    // True if this object is defined outside of the Sunder sources.
+    // Always false for constant objects.
+    bool is_extern;
+};
+// Creates a new object that defaults to non-extern storage.
+struct object*
+object_new(
+    struct type const* type,
+    struct address const* address,
+    struct value const* value);
 
 struct function {
     char const* name; // interned
