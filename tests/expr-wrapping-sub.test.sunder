@@ -1,7 +1,7 @@
 import "std/core.sunder";
 
 func test[[T]](lhs: T, rhs: T) void {
-    var result: T = std::wrapping_sub[[T]](lhs, rhs);
+    var result: T = lhs -% rhs;
     std::print_format_line(std::out(), "{#X}", (:[]std::formatter)[std::formatter::init[[T]](&result)]);
 }
 

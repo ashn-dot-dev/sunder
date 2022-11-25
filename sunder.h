@@ -845,37 +845,40 @@ enum token_kind {
     TOKEN_TYPEOF,
     TOKEN_UNINIT,
     // Sigils
-    TOKEN_SHL,         // <<
-    TOKEN_SHR,         // >>
-    TOKEN_EQ,          // ==
-    TOKEN_NE,          // !=
-    TOKEN_LE,          // <=
-    TOKEN_LT,          // <
-    TOKEN_GE,          // >=
-    TOKEN_GT,          // >
-    TOKEN_ASSIGN,      // =
-    TOKEN_PLUS,        // +
-    TOKEN_DASH,        // -
-    TOKEN_STAR,        // *
-    TOKEN_FSLASH,      // /
-    TOKEN_PERCENT,     // %
-    TOKEN_TILDE,       // ~
-    TOKEN_PIPE,        // |
-    TOKEN_CARET,       // ^
-    TOKEN_AMPERSAND,   // &
-    TOKEN_LPAREN,      // (
-    TOKEN_RPAREN,      // )
-    TOKEN_LBRACE,      // {
-    TOKEN_RBRACE,      // }
-    TOKEN_LBRACKET,    // [
-    TOKEN_RBRACKET,    // ]
-    TOKEN_COMMA,       // ,
-    TOKEN_ELLIPSIS,    // ...
-    TOKEN_DOT_STAR,    // .*
-    TOKEN_DOT,         // .
-    TOKEN_COLON_COLON, // ::
-    TOKEN_COLON,       // :
-    TOKEN_SEMICOLON,   // ;
+    TOKEN_SHL,          // <<
+    TOKEN_SHR,          // >>
+    TOKEN_EQ,           // ==
+    TOKEN_NE,           // !=
+    TOKEN_LE,           // <=
+    TOKEN_LT,           // <
+    TOKEN_GE,           // >=
+    TOKEN_GT,           // >
+    TOKEN_ASSIGN,       // =
+    TOKEN_PLUS_PERCENT, // +%
+    TOKEN_DASH_PERCENT, // -%
+    TOKEN_STAR_PERCENT, // *%
+    TOKEN_PLUS,         // +
+    TOKEN_DASH,         // -
+    TOKEN_STAR,         // *
+    TOKEN_FSLASH,       // /
+    TOKEN_PERCENT,      // %
+    TOKEN_TILDE,        // ~
+    TOKEN_PIPE,         // |
+    TOKEN_CARET,        // ^
+    TOKEN_AMPERSAND,    // &
+    TOKEN_LPAREN,       // (
+    TOKEN_RPAREN,       // )
+    TOKEN_LBRACE,       // {
+    TOKEN_RBRACE,       // }
+    TOKEN_LBRACKET,     // [
+    TOKEN_RBRACKET,     // ]
+    TOKEN_COMMA,        // ,
+    TOKEN_ELLIPSIS,     // ...
+    TOKEN_DOT_STAR,     // .*
+    TOKEN_DOT,          // .
+    TOKEN_COLON_COLON,  // ::
+    TOKEN_COLON,        // :
+    TOKEN_SEMICOLON,    // ;
     // Identifiers and Non-Keyword Literals
     TOKEN_IDENTIFIER,
     TOKEN_INTEGER,
@@ -2007,8 +2010,11 @@ struct expr {
                 BOP_GE,
                 BOP_GT,
                 BOP_ADD,
+                BOP_ADD_WRAPPING,
                 BOP_SUB,
+                BOP_SUB_WRAPPING,
                 BOP_MUL,
+                BOP_MUL_WRAPPING,
                 BOP_DIV,
                 BOP_REM,
                 BOP_BITOR,

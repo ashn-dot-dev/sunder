@@ -855,12 +855,15 @@ token_kind_precedence(enum token_kind kind)
     case TOKEN_GT: {
         return PRECEDENCE_COMPARE;
     }
+    case TOKEN_PLUS_PERCENT: /* fallthrough */
+    case TOKEN_DASH_PERCENT: /* fallthrough */
     case TOKEN_PLUS: /* fallthrough */
     case TOKEN_DASH: /* fallthrough */
     case TOKEN_PIPE: /* fallthrough */
     case TOKEN_CARET: {
         return PRECEDENCE_SUM;
     }
+    case TOKEN_STAR_PERCENT: /* fallthrough */
     case TOKEN_STAR: /* fallthrough */
     case TOKEN_FSLASH: /* fallthrough */
     case TOKEN_PERCENT: /* fallthrough */
@@ -965,8 +968,11 @@ token_kind_led(enum token_kind kind)
     case TOKEN_GE: /* fallthrough */
     case TOKEN_GT: /* fallthrough */
     case TOKEN_PLUS: /* fallthrough */
+    case TOKEN_PLUS_PERCENT: /* fallthrough */
     case TOKEN_DASH: /* fallthrough */
+    case TOKEN_DASH_PERCENT: /* fallthrough */
     case TOKEN_STAR: /* fallthrough */
+    case TOKEN_STAR_PERCENT: /* fallthrough */
     case TOKEN_FSLASH: /* fallthrough */
     case TOKEN_PERCENT: /* fallthrough */
     case TOKEN_PIPE: /* fallthrough */

@@ -4069,11 +4069,23 @@ resolve_expr_binary(struct resolver* resolver, struct cst_expr const* expr)
     case TOKEN_PLUS: {
         return resolve_expr_binary_arithmetic(resolver, op, BOP_ADD, lhs, rhs);
     }
+    case TOKEN_PLUS_PERCENT: {
+        return resolve_expr_binary_arithmetic(
+            resolver, op, BOP_ADD_WRAPPING, lhs, rhs);
+    }
     case TOKEN_DASH: {
         return resolve_expr_binary_arithmetic(resolver, op, BOP_SUB, lhs, rhs);
     }
+    case TOKEN_DASH_PERCENT: {
+        return resolve_expr_binary_arithmetic(
+            resolver, op, BOP_SUB_WRAPPING, lhs, rhs);
+    }
     case TOKEN_STAR: {
         return resolve_expr_binary_arithmetic(resolver, op, BOP_MUL, lhs, rhs);
+    }
+    case TOKEN_STAR_PERCENT: {
+        return resolve_expr_binary_arithmetic(
+            resolver, op, BOP_MUL_WRAPPING, lhs, rhs);
     }
     case TOKEN_FSLASH: {
         return resolve_expr_binary_arithmetic(resolver, op, BOP_DIV, lhs, rhs);

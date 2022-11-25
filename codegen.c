@@ -2463,6 +2463,27 @@ push_rvalue_binary(struct expr const* expr, size_t id)
         appendln("%s%zu_end:", LABEL_EXPR, id);
         return;
     }
+    case BOP_ADD_WRAPPING: {
+        assert(expr->data.binary.lhs->type->size >= 1u);
+        assert(expr->data.binary.lhs->type->size <= 8u);
+        assert(expr->data.binary.rhs->type->size >= 1u);
+        assert(expr->data.binary.rhs->type->size <= 8u);
+        assert(expr->data.binary.lhs->type == expr->data.binary.rhs->type);
+        struct type const* const xhs_type = expr->data.binary.lhs->type;
+
+        char const* const lhs_reg = reg_a(xhs_type->size);
+        char const* const rhs_reg = reg_b(xhs_type->size);
+
+        push_rvalue(expr->data.binary.lhs);
+        push_rvalue(expr->data.binary.rhs);
+        appendli("pop rbx ; add wrapping rhs");
+        appendli("pop rax ; add wrapping lhs");
+        appendli("add %s, %s", lhs_reg, rhs_reg);
+        appendli("push rax");
+
+        appendln("%s%zu_end:", LABEL_EXPR, id);
+        return;
+    }
     case BOP_SUB: {
         assert(expr->data.binary.lhs->type->size >= 1u);
         assert(expr->data.binary.lhs->type->size <= 8u);
@@ -2488,6 +2509,27 @@ push_rvalue_binary(struct expr const* expr, size_t id)
         appendln("%s%zu_end:", LABEL_EXPR, id);
         return;
     }
+    case BOP_SUB_WRAPPING: {
+        assert(expr->data.binary.lhs->type->size >= 1u);
+        assert(expr->data.binary.lhs->type->size <= 8u);
+        assert(expr->data.binary.rhs->type->size >= 1u);
+        assert(expr->data.binary.rhs->type->size <= 8u);
+        assert(expr->data.binary.lhs->type == expr->data.binary.rhs->type);
+        struct type const* const xhs_type = expr->data.binary.lhs->type;
+
+        char const* const lhs_reg = reg_a(xhs_type->size);
+        char const* const rhs_reg = reg_b(xhs_type->size);
+
+        push_rvalue(expr->data.binary.lhs);
+        push_rvalue(expr->data.binary.rhs);
+        appendli("pop rbx ; sub wrapping rhs");
+        appendli("pop rax ; sub wrapping lhs");
+        appendli("sub %s, %s", lhs_reg, rhs_reg);
+        appendli("push rax");
+
+        appendln("%s%zu_end:", LABEL_EXPR, id);
+        return;
+    }
     case BOP_MUL: {
         assert(expr->data.binary.lhs->type->size >= 1u);
         assert(expr->data.binary.lhs->type->size <= 8u);
@@ -2507,6 +2549,27 @@ push_rvalue_binary(struct expr const* expr, size_t id)
         appendli("push rax");
         appendli("jno %s%zu_end", LABEL_EXPR, id);
         appendli("call __fatal_integer_out_of_range");
+
+        appendln("%s%zu_end:", LABEL_EXPR, id);
+        return;
+    }
+    case BOP_MUL_WRAPPING: {
+        assert(expr->data.binary.lhs->type->size >= 1u);
+        assert(expr->data.binary.lhs->type->size <= 8u);
+        assert(expr->data.binary.rhs->type->size >= 1u);
+        assert(expr->data.binary.rhs->type->size <= 8u);
+        assert(expr->data.binary.lhs->type == expr->data.binary.rhs->type);
+        struct type const* const xhs_type = expr->data.binary.lhs->type;
+
+        char const* const rhs_reg = reg_b(xhs_type->size);
+        char const* const mul = type_is_sint(xhs_type) ? "imul" : "mul";
+
+        push_rvalue(expr->data.binary.lhs);
+        push_rvalue(expr->data.binary.rhs);
+        appendli("pop rbx ; mul rhs");
+        appendli("pop rax ; mul lhs");
+        appendli("%s %s", mul, rhs_reg);
+        appendli("push rax");
 
         appendln("%s%zu_end:", LABEL_EXPR, id);
         return;

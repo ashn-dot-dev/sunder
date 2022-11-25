@@ -232,7 +232,7 @@ struct big_integer {
         # The uniformity of the hash has *not* been properly evaluated.
         var hash: usize = 0;
         for i in countof(self.*._limbs) {
-            hash = std::wrapping_add[[usize]](hash, (:usize)self.*._limbs[i]);
+            hash = hash +% (:usize)self.*._limbs[i];
         }
         return hash;
     }
@@ -516,7 +516,7 @@ struct big_integer {
             if i < countof(rhs.*._limbs) {
                 rhs_limb = (:u64)rhs.*._limbs[i]; # upcast
             }
-            var tot: u64 = std::wrapping_sub[[u64]](std::wrapping_sub[[u64]](lhs_limb, rhs_limb), borrow);
+            var tot: u64 = (lhs_limb -% rhs_limb) -% borrow;
 
             tmp_res._limbs[i] = (:u32)tot;
             borrow = (:u64)(tot > (:u64)u32::MAX);

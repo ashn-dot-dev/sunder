@@ -1,12 +1,12 @@
 import "std/core.sunder";
 
 func test[[T]](lhs: T, rhs: T) void {
-    var result: T = std::wrapping_mul[[T]](lhs, rhs);
+    var result: T = lhs *% rhs;
     std::print_format_line(std::out(), "{#X}", (:[]std::formatter)[std::formatter::init[[T]](&result)]);
 }
 
 func test_compare_s64[[T]](lhs: T, rhs: T) void {
-    var a: T = std::wrapping_mul[[T]](lhs, rhs);
+    var a: T = lhs *% rhs;
     var b: T = (:T)((:s64)lhs * (:s64)rhs);
     std::assert(a == b);
 }
