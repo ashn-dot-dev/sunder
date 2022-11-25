@@ -737,7 +737,6 @@ eval_rvalue_binary(struct expr const* expr)
         assert(rhs->type->kind == TYPE_USIZE);
 
         bool const is_signed = type_is_sint(expr->type);
-        //bool const is_negative = bigint_cmp(lhs->data.integer, BIGINT_ZERO) < 0;
 
         size_t const bit_count = (size_t)rhs->type->size * 8u;
         struct bitarr* const res_bits = bitarr_new(bit_count);
