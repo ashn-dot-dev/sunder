@@ -12,10 +12,12 @@ following dependencies:
 + [`nasm`](https://www.nasm.us/) or [`yasm`](https://yasm.tortall.net/)
 + `clang-format` (development only)
 
-Dependencies can be installed on Debian-based distros (amd64) with:
+The top-level Dockerfile defines a Debian image with all development
+dependencies pre-installed. The Docker image can be built and run with:
 
 ```sh
-$ apt-get install build-essential clang clang-format nasm yasm
+$ docker buildx build --platform=linux/amd64 --tag sunder .             # Build the image (do this once)
+$ docker run --rm --interactive --tty --volume "$(pwd)":/sunder sunder  # Run the image (do this every time)
 ```
 
 ## Building
