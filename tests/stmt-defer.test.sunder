@@ -111,7 +111,7 @@ func deeply_nested() void {
         defer {
             defer {
                 for true {
-                    for i in 0:999 {
+                    for _ in 0:999 {
                         defer {
                             defer {
                                 defer {

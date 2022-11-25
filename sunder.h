@@ -634,6 +634,9 @@ info(struct source_location const* location, char const* fmt, ...);
 MESSAGEF void
 error(struct source_location const* location, char const* fmt, ...);
 
+MESSAGEF void
+warning(struct source_location const* location, char const* fmt, ...);
+
 MESSAGEF NORETURN void
 fatal(struct source_location const* location, char const* fmt, ...);
 
@@ -1694,17 +1697,22 @@ address_init_local(int rbp_offset);
 struct address*
 address_new(struct address from);
 
+enum symbol_kind {
+    SYMBOL_TYPE,
+    SYMBOL_VARIABLE,
+    SYMBOL_CONSTANT,
+    SYMBOL_FUNCTION,
+    SYMBOL_TEMPLATE,
+    SYMBOL_NAMESPACE,
+};
+char const*
+symbol_kind_to_cstr(enum symbol_kind kind);
+
 struct symbol {
     struct source_location const* location;
     char const* name; // interned
-    enum symbol_kind {
-        SYMBOL_TYPE,
-        SYMBOL_VARIABLE,
-        SYMBOL_CONSTANT,
-        SYMBOL_FUNCTION,
-        SYMBOL_TEMPLATE,
-        SYMBOL_NAMESPACE,
-    } kind;
+    unsigned uses;
+    enum symbol_kind kind;
     union {
         struct type const* type;
         struct object const* variable;

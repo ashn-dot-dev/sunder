@@ -688,7 +688,7 @@ struct big_integer {
         }
 
         big_integer::_magnitude_shiftl_limbs(self, nbits / big_integer::_BITS_PER_LIMB);
-        for n in (nbits % big_integer::_BITS_PER_LIMB) {
+        for _ in (nbits % big_integer::_BITS_PER_LIMB) {
             if (self.*._limbs[countof(self.*._limbs) - 1] & 0x80000000u32) != 0 {
                 self.*._resize(countof(self.*._limbs) + 1);
                 self.*._limbs[countof(self.*._limbs) - 1] = 0x00000000u32;

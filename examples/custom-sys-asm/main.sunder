@@ -7,5 +7,5 @@ func main() void {
     # to exit with failure status.
     var a = 123u;
     var b = 0u;
-    var c = a / b;
+    var _ = a / b;
 }

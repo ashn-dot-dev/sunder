@@ -28,7 +28,7 @@ func main() void {
 
     # Explicit issue using caused by jge instead of jnb during codegen.
     const USIZE_MAX = 0xFFFFFFFFFFFFFFFFu;
-    for a in 0:USIZE_MAX {
+    for _ in 0:USIZE_MAX {
         dump 0xDEADBEEFu32;
         break;
     }

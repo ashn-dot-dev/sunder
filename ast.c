@@ -571,6 +571,28 @@ address_new(struct address from)
     return self;
 }
 
+char const*
+symbol_kind_to_cstr(enum symbol_kind kind)
+{
+    switch (kind) {
+    case SYMBOL_TYPE:
+        return "type";
+    case SYMBOL_VARIABLE:
+        return "variable";
+    case SYMBOL_CONSTANT:
+        return "constant";
+    case SYMBOL_FUNCTION:
+        return "function";
+    case SYMBOL_TEMPLATE:
+        return "template";
+    case SYMBOL_NAMESPACE:
+        return "namespace";
+    }
+
+    UNREACHABLE();
+    return NULL;
+}
+
 struct symbol*
 symbol_new_type(struct source_location const* location, struct type const* type)
 {
@@ -865,6 +887,8 @@ symbol_table_lookup_local(struct symbol_table const* self, char const* name)
 
     for (size_t i = sbuf_count(self->elements); i--;) {
         if (self->elements[i].name == name) {
+            // XXX: Evil const cast.
+            ((struct symbol*)self->elements[i].symbol)->uses += 1;
             return self->elements[i].symbol;
         }
     }

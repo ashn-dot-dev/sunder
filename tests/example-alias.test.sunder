@@ -40,11 +40,12 @@ func main() void {
     dump i32::hash(&i);
 
     alias str = *byte;
+    var _: str = &"foo"[0];
     alias str = []byte; # Shadowing previous declaration.
-    var slice_literal = (:str){&"foobar"[0], countof("foobar")};
+    var _ = (:str){&"foobar"[0], countof("foobar")};
 
-    var struct_literal = (:some_empty_struct){};
-    var struct_literal = (:some_non_empty_struct){.a = 123, .b = 456};
+    var _ = (:some_empty_struct){};
+    var _ = (:some_non_empty_struct){.a = 123, .b = 456};
 }
 ################################################################################
 # 7B 00 00 00

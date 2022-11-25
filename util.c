@@ -2002,10 +2002,12 @@ freeze_fini(void)
 #define ANSI_ESC_BOLD    "\x1b[1m"
 #define ANSI_ESC_RED     "\x1b[31m"
 #define ANSI_ESC_BLUE    "\x1b[34m"
+#define ANSI_ESC_MAGENTA "\x1b[35m"
 #define ANSI_ESC_CYAN    "\x1b[36m"
 
-#define ANSI_MSG_INFO  ANSI_ESC_BOLD ANSI_ESC_BLUE
-#define ANSI_MSG_ERROR ANSI_ESC_BOLD ANSI_ESC_RED
+#define ANSI_MSG_INFO    ANSI_ESC_BOLD ANSI_ESC_BLUE
+#define ANSI_MSG_WARNING ANSI_ESC_BOLD ANSI_ESC_MAGENTA
+#define ANSI_MSG_ERROR   ANSI_ESC_BOLD ANSI_ESC_RED
 // clang-format on
 
 char*
@@ -2122,6 +2124,15 @@ info(struct source_location const* location, char const* fmt, ...)
     va_list args;
     va_start(args, fmt);
     messagev_(location, "info", ANSI_MSG_INFO, fmt, args);
+    va_end(args);
+}
+
+MESSAGEF void
+warning(struct source_location const* location, char const* fmt, ...)
+{
+    va_list args;
+    va_start(args, fmt);
+    messagev_(location, "warning", ANSI_MSG_WARNING, fmt, args);
     va_end(args);
 }
 

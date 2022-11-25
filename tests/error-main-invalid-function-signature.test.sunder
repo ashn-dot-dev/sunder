@@ -1,5 +1,5 @@
-func main(argc: usize, argv: **byte) ssize { return 1s; }
+func main(argc_: usize, argv_: **byte) ssize { return 1s; }
 ################################################################################
 # [error-main-invalid-function-signature.test.sunder:1] error: main has invalid type `func(usize, **byte) ssize` (expected `func() void`)
-# func main(argc: usize, argv: **byte) ssize { return 1s; }
+# func main(argc_: usize, argv_: **byte) ssize { return 1s; }
 # ^

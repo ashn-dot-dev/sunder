@@ -22,8 +22,8 @@ func main() void {
     dump (:primitive[[u16]]){.value = 0xBEEF}.value;  # Should reuse the first instantiation.
     dump (:primitive[[u32]]){.value = 0xDEADBEEF}.value;
 
-    var primitive_a: primitive[[u16]] = (:primitive[[u16]]){.value = 123};
-    const primitive_b: primitive[[u16]] = (:primitive[[u16]]){.value = 123};
+    var primitive_a_: primitive[[u16]] = (:primitive[[u16]]){.value = 123};
+    const primitive_b_: primitive[[u16]] = (:primitive[[u16]]){.value = 123};
 
     var pair_a: pair[[u16, u32]] = (:pair[[u16, u32]]){
         .first = 0xBEEF,

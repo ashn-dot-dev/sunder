@@ -4450,6 +4450,38 @@ resolve_block(
         resolver->current_defer,
         save_current_defer);
 
+    // Produce a warning if any local symbol is unused.
+    for (size_t i = 0; i < sbuf_count(symbol_table->elements); ++i) {
+        if (symbol_table->elements[i].name == context()->interned.return_) {
+            // Ignore the `return` symbol since it is inaccessible.
+            continue;
+        }
+        if (cstr_starts_with(symbol_table->elements[i].name, "__")) {
+            // Ignore any symbol starting with two underscores. This covers the
+            // case of compiler-generated symbols such as `__bytes`.
+            continue;
+        }
+        if (cstr_ends_with(symbol_table->elements[i].name, "_")) {
+            // Ignore any symbol ending with an underscore. This covers the
+            // case of purposefully unused symbols such as `_` or `somevar_`.
+            continue;
+        }
+        if (symbol_table->elements[i].symbol->uses == 0) {
+            warning(
+                symbol_table->elements[i].symbol->location,
+                "unused %s `%s`",
+                symbol_kind_to_cstr(symbol_table->elements[i].symbol->kind),
+                symbol_table->elements[i].name);
+            info(
+                NULL,
+                "use %s `%s` in an expression or rename the %s to `%s_`",
+                symbol_kind_to_cstr(symbol_table->elements[i].symbol->kind),
+                symbol_table->elements[i].name,
+                symbol_kind_to_cstr(symbol_table->elements[i].symbol->kind),
+                symbol_table->elements[i].name);
+        }
+    }
+
     freeze(resolved);
     resolver->current_symbol_table = save_symbol_table;
     resolver->current_rbp_offset = save_rbp_offset;

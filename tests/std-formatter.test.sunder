@@ -27,7 +27,7 @@ struct int {
     # printed in octal, or "x" to be printed in hexadecimal. For now we'll
     # avoid the actual int->bytes conversion part and just print the specifier
     # choice.
-    func format(self: *int, writer: std::writer, fmt: []byte) std::result[[void, std::error]] {
+    func format(self_: *int, writer: std::writer, fmt: []byte) std::result[[void, std::error]] {
         if countof(fmt) == 0 {
             return std::write_all(writer, "decimal\n");
         }

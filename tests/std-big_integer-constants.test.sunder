@@ -1,12 +1,7 @@
 import "std/big_integer.sunder";
 import "std/core.sunder";
-import "std/general_allocator.sunder";
 
 func main() void {
-    var allocator = std::general_allocator::init();
-    defer { allocator.fini(); }
-    var allocator = std::allocator::init[[typeof(allocator)]](&allocator);
-
     std::print_format_line(
         std::out(),
         "{}",

@@ -2,7 +2,7 @@ struct foo {
     var x: u16;
     var y: u16;
 
-    func fn(p: usize, q: ssize) void {
+    func fn(p_: usize, q_: ssize) void {
     }
 }
 

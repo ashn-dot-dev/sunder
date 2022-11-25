@@ -1,6 +1,6 @@
 import "std";
 
-func foo(arg: std::optional[[u16]]) void { }
+func foo(arg_: std::optional[[u16]]) void { }
 
 func main() void {
     foo(std::optional[[u32]]::init_empty());

@@ -1,4 +1,4 @@
-func foo(a: usize, b: ssize, c: bool) ssize {
+func foo(a_: usize, b_: ssize, c_: bool) ssize {
     return 123s;
 }
 

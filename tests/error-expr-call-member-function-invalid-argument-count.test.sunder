@@ -1,7 +1,7 @@
 struct foo {
     var x: u16;
 
-    func fn(self: *foo, p: usize, q: ssize) void {
+    func fn(self_: *foo, p_: usize, q_: ssize) void {
     }
 }
 

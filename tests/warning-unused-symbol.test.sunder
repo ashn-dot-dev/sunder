@@ -1,0 +1,63 @@
+func a(x: ssize, y: ssize) ssize {
+    # x is unused
+    # y is unused
+    return 123;
+}
+
+func b(x: ssize, y: ssize) ssize {
+    # x is unused
+    return y; # y is used
+}
+
+func main() void {
+    var x = 123s;
+    var y = x; # x is used
+    # y is unused
+
+    var z = 123s; # The first declaration of z is unused.
+    var z = 456s;
+    z; # The second declaration of z is used.
+
+    var w = 123s;
+    w; # The first declaration of w is used.
+    var w = 456s; # The second declaration of w is unused.
+
+    const X = 123s; # X is unused
+    const Y = X; # X is used
+    # Y is unsued
+
+    alias str = *byte; # str is unused
+}
+################################################################################
+# [warning-unused-symbol.test.sunder:1] warning: unused variable `x`
+# func a(x: ssize, y: ssize) ssize {
+#        ^
+# info: use variable `x` in an expression or rename the variable to `x_`
+# [warning-unused-symbol.test.sunder:1] warning: unused variable `y`
+# func a(x: ssize, y: ssize) ssize {
+#                  ^
+# info: use variable `y` in an expression or rename the variable to `y_`
+# [warning-unused-symbol.test.sunder:7] warning: unused variable `x`
+# func b(x: ssize, y: ssize) ssize {
+#        ^
+# info: use variable `x` in an expression or rename the variable to `x_`
+# [warning-unused-symbol.test.sunder:14] warning: unused variable `y`
+#     var y = x; # x is used
+#     ^
+# info: use variable `y` in an expression or rename the variable to `y_`
+# [warning-unused-symbol.test.sunder:17] warning: unused variable `z`
+#     var z = 123s; # The first declaration of z is unused.
+#     ^
+# info: use variable `z` in an expression or rename the variable to `z_`
+# [warning-unused-symbol.test.sunder:23] warning: unused variable `w`
+#     var w = 456s; # The second declaration of w is unused.
+#     ^
+# info: use variable `w` in an expression or rename the variable to `w_`
+# [warning-unused-symbol.test.sunder:26] warning: unused constant `Y`
+#     const Y = X; # X is used
+#     ^
+# info: use constant `Y` in an expression or rename the constant to `Y_`
+# [warning-unused-symbol.test.sunder:29] warning: unused type `str`
+#     alias str = *byte; # str is unused
+#     ^
+# info: use type `str` in an expression or rename the type to `str_`

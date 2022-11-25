@@ -36,10 +36,10 @@ func main() void {
     # Uninitialized local variables do not have a defined bit pattern. These
     # declarations are mostly here to make sure the syntax & semantic analysis
     # works for local variables.
-    var g = (:s1){.x = uninit};
+    var g_ = (:s1){.x = uninit};
     var h = (:s2){.x = uninit, .y = 123};
     var i = (:s2){.x = 123, .y = uninit};
-    var j = (:s3){
+    var j_ = (:s3){
         .u = A,
         .v = (:s2){.x = uninit, .y = uninit}
     };

@@ -525,7 +525,7 @@ struct str_writer {
 }
 
 struct input_reader {
-    func read(self: *input_reader, buf: []byte) std::result[[usize, std::error]] {
+    func read(self_: *input_reader, buf: []byte) std::result[[usize, std::error]] {
         if countof(buf) == 0 {
             return std::result[[usize, std::error]]::init_value(0);
         }
@@ -545,7 +545,7 @@ struct input_reader {
 }
 
 struct out_writer {
-    func write(self: *out_writer, buf: []byte) std::result[[usize, std::error]] {
+    func write(self_: *out_writer, buf: []byte) std::result[[usize, std::error]] {
         if countof(buf) == 0 {
             return std::result[[usize, std::error]]::init_value(0);
         }
@@ -565,7 +565,7 @@ struct out_writer {
 }
 
 struct err_writer {
-    func write(self: *err_writer, buf: []byte) std::result[[usize, std::error]] {
+    func write(self_: *err_writer, buf: []byte) std::result[[usize, std::error]] {
         if countof(buf) == 0 {
             return std::result[[usize, std::error]]::init_value(0);
         }
@@ -1216,7 +1216,7 @@ struct key_value_view[[K, V]] {
 }
 
 extend void const VALUE: void = uninit;
-extend void func format(self: *bool, writer: std::writer, fmt: []byte) std::result[[void, std::error]] {
+extend void func format(self_: *bool, writer: std::writer, fmt: []byte) std::result[[void, std::error]] {
     if countof(fmt) != 0 {
         return std::result[[void, std::error]]::init_error(std::error::INVALID_ARGUMENT);
     }

@@ -12,6 +12,8 @@ func main() void {
     var yikes = 0xABCDu16;
     var bar = foo[[u16]]::init();
     dump bar;
+
+    yikes; # silence unused variable warning
 }
 ################################################################################
 # [github-issue-76.test.sunder:5] error: use of undeclared identifier `yikes`

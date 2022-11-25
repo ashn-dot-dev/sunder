@@ -15,8 +15,8 @@ func main() void {
     # Uninitialized local variables do not have a defined bit pattern. These
     # declarations are here just to make sure the syntax & semantic analysis
     # works for local variables.
-    var y: u32 = uninit;
-    var z: s = uninit;
+    var y_: u32 = uninit;
+    var z_: s = uninit;
 
     dump a;
     dump b;

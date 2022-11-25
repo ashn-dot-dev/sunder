@@ -23,7 +23,7 @@ struct bar {
     var x: u32;
     var y: u32;
 
-    func aa(self: *bar) void {
+    func aa(self_: *bar) void {
         dump 0xAAu8;
     }
 
@@ -39,7 +39,7 @@ struct baz {
     var x: u16;
     var y: u16;
 
-    func aa(self: *baz) void {
+    func aa(self_: *baz) void {
         dump 0xAAu8;
     }
 

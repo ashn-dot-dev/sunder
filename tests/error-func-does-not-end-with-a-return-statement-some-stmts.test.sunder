@@ -1,5 +1,5 @@
 func foo() bool {
-    var result = true;
+    var _ = true;
 }
 
 func main() void {

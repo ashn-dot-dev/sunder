@@ -79,7 +79,7 @@ func main() void {
     std::assert(linear_allocator._cur_offset == 0);
 
     # Allocating with a non-zero non-power-of-two alignment should not fail.
-    var res = allocator.allocate(0, 3); # Get the allocator up to an offset of 3.
+    allocator.allocate(0, 3); # Get the allocator up to an offset of 3.
     std::assert(linear_allocator._old_offset == 0);
     std::assert(linear_allocator._cur_offset == 3);
     var res = allocator.allocate(5, 2); # Allocate with an alignment of 5.
@@ -98,7 +98,7 @@ func main() void {
     std::assert(((:usize)ptr - (:usize)&arr[0]) == linear_allocator._old_offset);
 
     # Resize, expanding the non-tail allocation.
-    var res = allocator.allocate(alignof(byte), 100);
+    allocator.allocate(alignof(byte), 100);
     std::assert(linear_allocator._old_offset == 200);
     std::assert(linear_allocator._cur_offset == 300);
     var res = allocator.reallocate(ptr, alignof(byte), 200, 250);

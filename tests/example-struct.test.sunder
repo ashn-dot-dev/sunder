@@ -115,7 +115,7 @@ func main() void {
         .z = (:[]foo){(:*foo)0u, 0u}
     };
 
-    var foo_b: foo = (:foo){
+    var foo_b_: foo = (:foo){
         .z = (:[]foo){&foo_a, 1u},
         .y = &foo_a,
         .x = true,
