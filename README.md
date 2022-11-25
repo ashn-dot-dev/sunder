@@ -177,7 +177,7 @@ be installed.
 ```sh
 $ cd /your/path/to/sunder
 $ make
-$ SUNDER_HOME="$PWD"
+$ SUNDER_HOME="$(pwd)"
 $ . ./env
 $ sunder-run examples/hello.sunder
 Hello, world!
