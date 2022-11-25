@@ -1741,7 +1741,9 @@ symbol_new_constant(
     struct object const* object);
 struct symbol*
 symbol_new_function(
-    struct source_location const* location, struct function const* function);
+    struct source_location const* location,
+    char const* name,
+    struct function const* function);
 struct symbol*
 symbol_new_template(
     struct source_location const* location,
@@ -2118,7 +2120,6 @@ object_new(
     struct value const* value);
 
 struct function {
-    char const* name; // interned
     struct type const* type; // TYPE_FUNCTION
     struct address const* address; // ADDRESS_STATIC
     // The value associated with this function. Self-referential, this member
@@ -2149,8 +2150,7 @@ struct function {
 // The type of the function must be of kind TYPE_FUNCTION.
 // The address of the function must be of kind ADDRESS_STATIC.
 struct function*
-function_new(
-    char const* name, struct type const* type, struct address const* address);
+function_new(struct type const* type, struct address const* address);
 
 struct conditional {
     struct source_location const* location;

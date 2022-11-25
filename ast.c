@@ -628,7 +628,9 @@ symbol_new_constant(
 
 struct symbol*
 symbol_new_function(
-    struct source_location const* location, struct function const* function)
+    struct source_location const* location,
+    char const* name,
+    struct function const* function)
 {
     assert(location != NULL);
     assert(function != NULL);
@@ -638,7 +640,7 @@ symbol_new_function(
     memset(self, 0x00, sizeof(*self));
     self->kind = SYMBOL_FUNCTION;
     self->location = location;
-    self->name = function->name;
+    self->name = name;
     self->data.function = function;
     return self;
 }
@@ -1407,10 +1409,8 @@ object_new(
 }
 
 struct function*
-function_new(
-    char const* name, struct type const* type, struct address const* address)
+function_new(struct type const* type, struct address const* address)
 {
-    assert(name != NULL);
     assert(type != NULL);
     assert(type->kind == TYPE_FUNCTION);
     assert(address != NULL);
@@ -1418,7 +1418,6 @@ function_new(
 
     struct function* const self = xalloc(NULL, sizeof(*self));
     memset(self, 0x00, sizeof(*self));
-    self->name = name;
     self->type = type;
     self->address = address;
     return self;

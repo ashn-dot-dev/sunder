@@ -9,6 +9,7 @@
 
 struct incomplete_function {
     struct cst_decl const* decl;
+    char const* name; // interned
     struct function* function;
     struct symbol_table* symbol_table;
 };
@@ -1661,13 +1662,13 @@ resolve_decl_function(struct resolver* resolver, struct cst_decl const* decl)
     struct type const* function_type =
         type_unique_function(parameter_types, return_type);
 
-    struct address const* const address =
+    struct address const* const function_address =
         resolver_reserve_storage_static(resolver, decl->name);
 
     // Create a new incomplete function, a value that evaluates to that
     // function, and the address of that function/value.
-    struct function* const function = function_new(
-        decl->data.function.identifier->name, function_type, address);
+    struct function* const function =
+        function_new(function_type, function_address);
     freeze(function);
 
     struct value* const value = value_new_function(function);
@@ -1676,8 +1677,8 @@ resolve_decl_function(struct resolver* resolver, struct cst_decl const* decl)
 
     // Add the function/value to the symbol table now so that recursive
     // functions may reference themselves.
-    struct symbol* const function_symbol =
-        symbol_new_function(decl->location, function);
+    struct symbol* const function_symbol = symbol_new_function(
+        decl->location, decl->data.function.identifier->name, function);
     freeze(function_symbol);
     symbol_table_insert(
         resolver->current_symbol_table,
@@ -1759,6 +1760,7 @@ resolve_decl_function(struct resolver* resolver, struct cst_decl const* decl)
         xalloc(NULL, sizeof(*incomplete));
     *incomplete = (struct incomplete_function){
         decl,
+        function_symbol->name,
         function,
         symbol_table,
     };
@@ -1982,20 +1984,21 @@ resolve_decl_extern_function(
     struct type const* function_type =
         type_unique_function(parameter_types, return_type);
 
-    struct address const* const address =
+    struct address const* const function_address =
         resolver_reserve_storage_static(resolver, decl->name);
 
     // Create a new incomplete function, a value that evaluates to that
     // function, and the address of that function/value.
-    struct function* const function = function_new(
-        decl->data.extern_function.identifier->name, function_type, address);
+    struct function* const function =
+        function_new(function_type, function_address);
     freeze(function);
 
     struct value* const value = value_new_function(function);
     value_freeze(value);
     function->value = value;
 
-    struct symbol* const symbol = symbol_new_function(decl->location, function);
+    struct symbol* const symbol = symbol_new_function(
+        decl->location, decl->data.extern_function.identifier->name, function);
     freeze(symbol);
 
     symbol_table_insert(
@@ -2219,7 +2222,7 @@ complete_function(
     char const* const save_static_addr_prefix =
         resolver->current_static_addr_prefix;
 
-    resolver->current_symbol_name_prefix = function->name;
+    resolver->current_symbol_name_prefix = incomplete->name;
     resolver->current_static_addr_prefix = function->address->data.static_.name;
     resolver->current_function = function;
     function->body = resolve_block(
