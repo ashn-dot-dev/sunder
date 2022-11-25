@@ -1,0 +1,4 @@
+func main() void { }
+#######
+# Eight or more hashes are required for the expected output delimiter, so this
+# sentence is not considered expected output.
