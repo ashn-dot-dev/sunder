@@ -6,12 +6,20 @@ struct foo {
 }
 
 func main() void {
-    dump std::ptr[[u8]]::null();
-    dump std::ptr[[u16]]::null();
-    dump std::ptr[[u32]]::null();
-    dump std::ptr[[u64]]::null();
-    dump std::ptr[[foo]]::null();
-    dump std::ptr[[ssize]]::is_null(std::ptr[[ssize]]::null());
+    dump std::ptr[[u8]]::NULL;
+    dump std::ptr[[u16]]::NULL;
+    dump std::ptr[[u32]]::NULL;
+    dump std::ptr[[u64]]::NULL;
+    dump std::ptr[[foo]]::NULL;
+
+    var x: u16 = 0xBEEF;
+    var y: u32 = 0xCAFEF00D;
+
+    dump std::ptr[[u16]]::NULL == &x;
+    dump std::ptr[[u16]]::NULL == (:*u16)0u;
+
+    dump std::ptr[[u32]]::NULL == &y;
+    dump std::ptr[[u32]]::NULL == (:*u32)0u;
 }
 ################################################################################
 # 00 00 00 00 00 00 00 00
@@ -19,4 +27,7 @@ func main() void {
 # 00 00 00 00 00 00 00 00
 # 00 00 00 00 00 00 00 00
 # 00 00 00 00 00 00 00 00
+# 00
+# 01
+# 00
 # 01

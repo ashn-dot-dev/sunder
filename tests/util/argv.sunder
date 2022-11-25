@@ -10,6 +10,6 @@ func new(allocator: std::allocator, arguments: [][]byte) **byte {
         str[countof(arguments[i])] = '\0';
         args[i] = &str[0];
     }
-    args[countof(arguments)] = std::ptr[[byte]]::null();
+    args[countof(arguments)] = std::ptr[[byte]]::NULL;
     return &args[0];
 }

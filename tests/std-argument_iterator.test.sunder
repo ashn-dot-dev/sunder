@@ -17,7 +17,7 @@ func test(arguments: [][]byte) void {
         str[countof(arguments[i])] = '\0';
         args[i] = &str[0];
     }
-    args[countof(arguments)] = std::ptr[[byte]]::null();
+    args[countof(arguments)] = std::ptr[[byte]]::NULL;
 
     var iter = std::argument_iterator::init_from_argv(&args[0]);
     var iter = std::iterator[[[]byte]]::init[[typeof(iter)]](&iter);
@@ -51,7 +51,7 @@ func main() void {
     var args = (:[]*byte)[
         &"a.out\0"[0],
         &"foo\0"[0],
-        std::ptr[[byte]]::null(),
+        std::ptr[[byte]]::NULL,
         &"bar\0"[0],
         &"baz\0"[0]
     ];

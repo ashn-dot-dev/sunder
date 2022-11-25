@@ -36,7 +36,7 @@ struct argument_iterator {
         }
 
         var arg = std::ptr[[*byte]]::add(self.*._argv, self.*._index.value());
-        if std::ptr[[byte]]::is_null(*arg) {
+        if *arg == std::ptr[[byte]]::NULL {
             return false; # end of iteration
         }
 
@@ -49,7 +49,7 @@ struct argument_iterator {
         }
 
         var arg = std::ptr[[*byte]]::add(self.*._argv, self.*._index.value());
-        if std::ptr[[byte]]::is_null(*arg) {
+        if *arg == std::ptr[[byte]]::NULL {
             std::panic("invalid iterator");
         }
 

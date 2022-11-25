@@ -29,12 +29,12 @@ struct general_allocator {
 
     func init() general_allocator {
         return (:general_allocator){
-            ._elements = std::ptr[[general_allocator_element]]::null()
+            ._elements = std::ptr[[general_allocator_element]]::NULL
         };
     }
 
     func fini(self: *general_allocator) void {
-        for not std::ptr[[std::general_allocator_element]]::is_null(self.*._elements) {
+        for self.*._elements != std::ptr[[std::general_allocator_element]]::NULL {
             self.*.deallocate(self.*._elements.*._start, self.*._elements.*._align, self.*._elements.*._size);
         }
     }
@@ -49,8 +49,8 @@ struct general_allocator {
         var bytes = result.value();
         var element = (:*general_allocator_element)bytes;
         *element = (:general_allocator_element){
-            ._prev = std::ptr[[std::general_allocator_element]]::null(),
-            ._next = std::ptr[[std::general_allocator_element]]::null(),
+            ._prev = std::ptr[[std::general_allocator_element]]::NULL,
+            ._next = std::ptr[[std::general_allocator_element]]::NULL,
             ._start = std::ptr[[byte]]::add(bytes, offset),
             ._align = align,
             ._size = size
@@ -73,8 +73,8 @@ struct general_allocator {
         var bytes = result.value();
         var element = (:*general_allocator_element)bytes;
         *element = (:general_allocator_element){
-            ._prev = std::ptr[[general_allocator_element]]::null(),
-            ._next = std::ptr[[general_allocator_element]]::null(),
+            ._prev = std::ptr[[general_allocator_element]]::NULL,
+            ._next = std::ptr[[general_allocator_element]]::NULL,
             ._start = std::ptr[[byte]]::add(bytes, offset),
             ._align = align,
             ._size = new_size
@@ -93,7 +93,7 @@ struct general_allocator {
     }
 
     func _insert_element(self: *general_allocator, element: *general_allocator_element) void {
-        if std::ptr[[std::general_allocator_element]]::is_null(self.*._elements) {
+        if self.*._elements == std::ptr[[std::general_allocator_element]]::NULL {
             element.*._prev = element;
             element.*._next = element;
             self.*._elements = element;
@@ -114,7 +114,7 @@ struct general_allocator {
         var is_only_element = prev == element and next == element;
         if is_only_element {
             std::assert(self.*._elements == element);
-            self.*._elements = std::ptr[[general_allocator_element]]::null();
+            self.*._elements = std::ptr[[general_allocator_element]]::NULL;
             return;
         }
 
@@ -136,7 +136,7 @@ struct general_allocator_iterator {
     }
 
     func advance(self: *general_allocator_iterator) bool {
-        if std::ptr[[std::general_allocator_element]]::is_null(self.*._general_allocator.*._elements) {
+        if self.*._general_allocator.*._elements == std::ptr[[std::general_allocator_element]]::NULL {
             return false; # end-of-iteration
         }
 
