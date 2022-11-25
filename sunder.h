@@ -604,9 +604,9 @@ source_line_end(char const* ptr);
 #define NO_PSRC ((char const*)NULL)
 #define NO_LOCATION ((struct source_location const*)NULL)
 struct source_location {
-    // Optional (NULL indicates no value). NOTE: Source locations produced by
-    // the lexing phase will use a module's `name` (i.e. non-canonical path)
-    // member for the source location path.
+    // Optional (NULL indicates no value).
+    // NOTE: Source locations produced by the lexing phase will use a module's
+    // `name` (i.e. non-canonical path) member for the source location path.
     char const* path;
     // Optional (zero indicates no value).
     size_t line;
@@ -896,6 +896,7 @@ struct token {
     enum token_kind kind;
     union {
         char const* identifier; // interned
+        // Contains the integer value and type-suffix of the integer literal.
         struct {
             struct bigint const* value;
             char const* suffix; // interned
@@ -1306,8 +1307,8 @@ cst_expr_new_binary(
     struct cst_expr const* lhs,
     struct cst_expr const* rhs);
 
-// Helper CST node that denotes a conditional expression (if, elif, etc.)
-// consisting of a conditional expression and body.
+// Helper CST node representing a conditional statement (if, elif, etc.)
+// consisting of a conditional expression and block of statements.
 struct cst_conditional {
     struct source_location const* location;
     struct cst_expr const* condition; // optional (NULL => else)
@@ -1319,6 +1320,7 @@ cst_conditional_new(
     struct cst_expr const* condition,
     struct cst_block const* body);
 
+// Helper CST node representing a sequence of statements enclosed in braces.
 struct cst_block {
     struct source_location const* location;
     sbuf(struct cst_stmt const* const) stmts;
@@ -1409,7 +1411,6 @@ cst_member_initializer_new(
     struct cst_identifier const* identifier,
     struct cst_expr const* expr);
 
-// ISO/IEC 9899:1999 Section 6.7.2 - Type Specifiers
 struct cst_typespec {
     struct source_location const* location;
     enum cst_typespec_kind {
@@ -1647,10 +1648,13 @@ type_member_symbol(struct type const* self, char const* name);
 struct function const*
 type_member_function(struct type const* self, char const* name);
 
+// Returns true if self is any integer type (unsigned, signed, or unsized).
 bool
 type_is_int(struct type const* self);
+// Returns true if self is an unsigned integer type.
 bool
 type_is_uint(struct type const* self);
+// Returns true if self is a signed integer type.
 bool
 type_is_sint(struct type const* self);
 // Returns true if the type may be compared with the == or != operators.
@@ -1773,13 +1777,17 @@ symbol_new_namespace(
 struct address const*
 symbol_get_address(struct symbol const* self);
 
+// Get the type of the symbol `self`.
+// Fatally exits if the symbol does not have an associated type.
 struct type const*
 symbol_xget_type(struct symbol const* self);
+// Get the address of the symbol `self`.
+// Fatally exits if the symbol does not have an associated address.
 struct address const*
 symbol_xget_address(struct symbol const* self);
-// Get the value associated with the symbol `self`.
-// Fatally exits after printing an error message if the symbol is
-// uninitialized.
+// Get the value of the symbol `self`.
+// Fatally exits if the symbol does not have an associated value.
+// Fatally exits if the value associated with the symbol is uninitialized.
 struct value const*
 symbol_xget_value(
     struct source_location const* location, struct symbol const* self);
@@ -2104,8 +2112,8 @@ expr_new_binary(
     enum bop_kind op,
     struct expr const* lhs,
     struct expr const* rhs);
-// ISO/IEC 9899:1999 Section 6.3.2.1
-// https://en.cppreference.com/w/c/language/value_category
+
+// Returns true if `self` may be used in an lvalue context.
 bool
 expr_is_lvalue(struct expr const* self);
 
