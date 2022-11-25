@@ -575,7 +575,7 @@ string_append_vfmt(struct string* self, char const* fmt, va_list args);
 // Example:
 //      "ABCBB" ===split on "B"===> "A" "C" "" ""
 struct string** /* sbuf */
-string_split_on(
+string_split(
     struct string const* self, char const* separator, size_t separator_size);
 
 // Register a pointer to xalloc-allocated memory to be frozen.

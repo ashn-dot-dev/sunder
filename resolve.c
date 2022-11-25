@@ -1341,7 +1341,7 @@ canonical_import_path(char const* module_path, char const* import_path)
     string_append_cstr(tmp, SUNDER_IMPORT_PATH);
 
     sbuf(struct string*) const imp =
-        string_split_on(tmp, ":", STR_LITERAL_COUNT(":"));
+        string_split(tmp, ":", STR_LITERAL_COUNT(":"));
     for (size_t i = 0; i < sbuf_count(imp); ++i) {
         struct string* const s = imp[i];
 

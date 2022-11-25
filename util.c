@@ -1952,7 +1952,7 @@ string_append_vfmt(struct string* self, char const* fmt, va_list args)
 }
 
 struct string**
-string_split_on(
+string_split(
     struct string const* self, char const* separator, size_t separator_size)
 {
     assert(self != NULL);
