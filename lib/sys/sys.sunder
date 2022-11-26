@@ -17,30 +17,16 @@ namespace sys;
 # unsigned long long | 8    | 8         | u64
 #
 # POSIX types obtainted through GDB `whatis` on x64 Linux:
-# blkcnt_t    : type = long
-# blksize_t   : type = long
-# clock_t     : type = long
-# clockid_t   : type = int
-# dev_t       : type = unsigned long
-# fsblkcnt_t  : type = unsigned long
-# fsfilcnt_t  : type = unsigned long
-# gid_t       : type = unsigned int
-# id_t        : type = unsigned int
-# ino_t       : type = unsigned long
-# key_t       : type = int
-# mode_t      : type = unsigned int
-# nlink_t     : type = unsigned long
-# off_t       : type = long
-# pid_t       : type = int
-# size_t      : type = unsigned long
-# ssize_t     : type = long
-# suseconds_t : type = long
-# time_t      : type = long
-# timer_t     : type = void *
-# uid_t       : type = unsigned int
+# mode_t  : type = unsigned int
+# off_t   : type = long
+# size_t  : type = unsigned long
+# ssize_t : type = long
 #
 # linux/include/linux/types.h:
-# typedef unsigned short        umode_t;
+# typedef unsigned short umode_t;
+
+alias smax = s64;
+alias umax = u64;
 
 alias char      = byte;
 alias schar     = s8;
@@ -54,30 +40,10 @@ alias ulong     = usize;
 alias slonglong = s64;
 alias ulonglong = u64;
 
-alias smax = s64;
-alias umax = u64;
-
-alias blkcnt_t    = slong;
-alias blksize_t   = slong;
-alias clock_t     = slong;
-alias clockid_t   = sint;
-alias dev_t       = ulong;
-alias fsblkcnt_t  = ulong;
-alias fsfilcnt_t  = ulong;
-alias gid_t       = uint;
-alias id_t        = uint;
-alias ino_t       = ulong;
-alias key_t       = sint;
 alias mode_t      = uint;
-alias nlink_t     = ulong;
 alias off_t       = slong;
-alias pid_t       = sint;
 alias size_t      = ulong;
 alias ssize_t     = slong;
-alias suseconds_t = slong;
-alias time_t      = slong;
-alias timer_t     = *any;
-alias uid_t       = uint;
 
 alias umode_t = ushort;
 
@@ -367,41 +333,14 @@ const O_RDONLY:    sint = 0x00000000;
 const O_WRONLY:    sint = 0x00000001;
 const O_RDWR:      sint = 0x00000002;
 const O_CREAT:     sint = 0x00000040;
-const O_EXCL:      sint = 0x00000080;
-const O_NOCTTY:    sint = 0x00000100;
 const O_TRUNC:     sint = 0x00000200;
 const O_APPEND:    sint = 0x00000400;
 const O_CLOEXEC:   sint = 0x00080000;
 const O_DIRECTORY: sint = 0x00010000;
-const O_NOFOLLOW:  sint = 0x00020000;
-const O_NONBLOCK:  sint = 0x00000800;
-const O_DSYNC:     sint = 0x00001000;
-const O_RSYNC:     sint = 0x00101000;
-const O_SYNC:      sint = 0x00101000;
-
-const S_IRWXU: umode_t = 0o700;
-const S_IRUSR: umode_t = 0o400;
-const S_IWUSR: umode_t = 0o200;
-const S_IXUSR: umode_t = 0o100;
-
-const S_IRWXG: umode_t = 0o070;
-const S_IRGRP: umode_t = 0o040;
-const S_IWGRP: umode_t = 0o020;
-const S_IXGRP: umode_t = 0o010;
-
-const S_IRWXO: umode_t = 0o007;
-const S_IROTH: umode_t = 0o004;
-const S_IWOTH: umode_t = 0o002;
-const S_IXOTH: umode_t = 0o001;
 
 const SEEK_SET: uint = 0x0;
 const SEEK_CUR: uint = 0x1;
 const SEEK_END: uint = 0x2;
-
-const F_OK: sint = 0b000;
-const R_OK: sint = 0b100;
-const W_OK: sint = 0b010;
-const X_OK: sint = 0b001;
 
 const PROT_NONE:  ulong = 0x0;
 const PROT_READ:  ulong = 0x1;
@@ -414,165 +353,12 @@ const MAP_FIXED:     ulong = 0x10;
 const MAP_ANONYMOUS: ulong = 0x20;
 
 # linux/include/uapi/linux/limits.h:
-const NGROUPS_MAX:    usize =  65536; # supplemental group IDs are available
-const ARG_MAX:        usize = 131072; # # bytes of args + environ for exec()
-const LINK_MAX:       usize =    127; # # links a file may have
-const MAX_CANON:      usize =    255; # size of the canonical input queue
-const MAX_INPUT:      usize =    255; # size of the type-ahead buffer
-const NAME_MAX:       usize =    255; # # chars in a file name
-const PATH_MAX:       usize =   4096; # # chars in a path name including nul
-const PIPE_BUF:       usize =   4096; # # bytes in atomic write to a pipe
-const XATTR_NAME_MAX: usize =    255; # # chars in an extended attribute name
-const XATTR_SIZE_MAX: usize =  65536; # size of an extended attribute value (64k)
-const XATTR_LIST_MAX: usize =  65536; # size of extended attribute namelist (64k)
+const NAME_MAX: usize =    255; # chars in a file name
+const PATH_MAX: usize =   4096; # chars in a path name including nul
 
 # linux/arch/x86/include/asm/page_types.h:
 # PAGE_SIZE is defined in terms of PAGE_SHIFT (12 on x86 and x64).
 const PAGE_SIZE: usize = 4096;
-
-struct timespec {
-    var tv_sec:     time_t;
-    var tv_nsec:    slong;
-}
-
-struct timeval {
-    var tv_sec:     time_t;
-    var tv_usec:    suseconds_t;
-}
-
-# The definition of the `struct stat` type appears to have different
-# (incompatible) definitions depending on where you look:
-#
-# + struct stat              => linux/include/uapi/asm-generic/stat.h
-# + struct __old_kernel_stat => linux/fs/stat.c
-# + struct stat              => glibc/sysdeps/unix/sysv/linux/bits/struct_stat.h
-# + struct stat              => musl/arch/x86_64/bits/stat.h
-#
-# Of these, glibc and musl seem to contain the only definitions that do not
-# corrupt the stack, and both have `sizeof(struct stat) == 144` on x64 Linux.
-# This definition is modeled after the musl definition.
-#
-# (dbg) ptype/o struct stat
-# /* offset    |  size */  type = struct stat {
-# /*    0      |     8 */    dev_t st_dev;
-# /*    8      |     8 */    ino_t st_ino;
-# /*   16      |     8 */    nlink_t st_nlink;
-# /*   24      |     4 */    mode_t st_mode;
-# /*   28      |     4 */    uid_t st_uid;
-# /*   32      |     4 */    gid_t st_gid;
-# /*   36      |     4 */    unsigned int __pad0;
-# /*   40      |     8 */    dev_t st_rdev;
-# /*   48      |     8 */    off_t st_size;
-# /*   56      |     8 */    blksize_t st_blksize;
-# /*   64      |     8 */    blkcnt_t st_blocks;
-# /*   72      |    16 */    struct timespec {
-# /*   72      |     8 */        time_t tv_sec;
-# /*   80      |     8 */        long tv_nsec;
-#
-#                                /* total size (bytes):   16 */
-#                            } st_atim;
-# /*   88      |    16 */    struct timespec {
-# /*   88      |     8 */        time_t tv_sec;
-# /*   96      |     8 */        long tv_nsec;
-#
-#                                /* total size (bytes):   16 */
-#                            } st_mtim;
-# /*  104      |    16 */    struct timespec {
-# /*  104      |     8 */        time_t tv_sec;
-# /*  112      |     8 */        long tv_nsec;
-#
-#                                /* total size (bytes):   16 */
-#                            } st_ctim;
-# /*  120      |    24 */    long __unused[3];
-#
-#                            /* total size (bytes):  144 */
-#                          }
-struct stat_type {
-    var st_dev:         dev_t;      # Device.
-    var st_ino:         ino_t;      # File serial number.
-    var st_nlink:       nlink_t;    # Link count.
-    var st_mode:        mode_t;     # File mode.
-    var st_uid:         uid_t;      # User ID of the file's owner.
-    var st_gid:         gid_t;      # Group ID of the file's group.
-    var __pad0:         uint;
-    var st_rdev:        dev_t;      # Device number, if device.
-    var st_size:        off_t;      # Size of file, in bytes.
-    var st_blksize:     blksize_t;  # Optimal block size for I/O.
-    var st_blocks:      blkcnt_t;   # Number 512-byte blocks allocated.
-    var st_atim:        timespec;   # Time of last access.
-    var st_mtime:       timespec;   # Time of last modification.
-    var st_ctime:       timespec;   # Time of last status change.
-    var __unused:       [3]slong;
-}
-
-const S_IFMT:   mode_t = 0o170000; # Mask for S_I* file modes.
-const S_IFBLK:  mode_t = 0o060000; # Block special.
-const S_IFCHR:  mode_t = 0o020000; # Character special.
-const S_IFIFO:  mode_t = 0o010000; # FIFO special.
-const S_IFREG:  mode_t = 0o100000; # Regular.
-const S_IFDIR:  mode_t = 0o040000; # Directory.
-const S_IFLNK:  mode_t = 0o120000; # Symbolic link.
-const S_IFSOCK: mode_t = 0o140000; # Socket.
-
-func S_ISBLK (mode: mode_t) bool { return (mode & S_IFMT) == S_IFBLK;  }
-func S_ISCHR (mode: mode_t) bool { return (mode & S_IFMT) == S_IFCHR;  }
-func S_ISDIR (mode: mode_t) bool { return (mode & S_IFMT) == S_IFDIR;  }
-func S_ISFIFO(mode: mode_t) bool { return (mode & S_IFMT) == S_IFIFO;  }
-func S_ISLNK (mode: mode_t) bool { return (mode & S_IFMT) == S_IFLNK;  }
-func S_ISREG (mode: mode_t) bool { return (mode & S_IFMT) == S_IFREG;  }
-func S_ISSOCK(mode: mode_t) bool { return (mode & S_IFMT) == S_IFSOCK; }
-
-# (gdb) ptype/o struct rusage
-# /* offset    |  size */  type = struct rusage {
-# /*    0      |    16 */    struct timeval {
-# /*    0      |     8 */        time_t tv_sec;
-# /*    8      |     8 */        suseconds_t tv_usec;
-#
-#                                /* total size (bytes):   16 */
-#                            } ru_utime;
-# /*   16      |    16 */    struct timeval {
-# /*   16      |     8 */        time_t tv_sec;
-# /*   24      |     8 */        suseconds_t tv_usec;
-#
-#                                /* total size (bytes):   16 */
-#                            } ru_stime;
-# /*   32      |     8 */    long ru_maxrss;
-# /*   40      |     8 */    long ru_ixrss;
-# /*   48      |     8 */    long ru_idrss;
-# /*   56      |     8 */    long ru_isrss;
-# /*   64      |     8 */    long ru_minflt;
-# /*   72      |     8 */    long ru_majflt;
-# /*   80      |     8 */    long ru_nswap;
-# /*   88      |     8 */    long ru_inblock;
-# /*   96      |     8 */    long ru_oublock;
-# /*  104      |     8 */    long ru_msgsnd;
-# /*  112      |     8 */    long ru_msgrcv;
-# /*  120      |     8 */    long ru_nsignals;
-# /*  128      |     8 */    long ru_nvcsw;
-# /*  136      |     8 */    long ru_nivcsw;
-# /*  144      |   128 */    long __reserved[16];
-#
-#                            /* total size (bytes):  272 */
-#                          }
-struct rusage {
-    var ru_utime:       timeval;
-    var ru_stime:       timeval;
-    var ru_maxrss:      slong;
-    var ru_ixrss:       slong;
-    var ru_idrss:       slong;
-    var ru_isrss:       slong;
-    var ru_minflt:      slong;
-    var ru_majflt:      slong;
-    var ru_nswap:       slong;
-    var ru_inblock:     slong;
-    var ru_oublock:     slong;
-    var ru_msgsnd:      slong;
-    var ru_msgrcv:      slong;
-    var ru_nsignals:    slong;
-    var ru_nvcsw:       slong;
-    var ru_nivcsw:      slong;
-    var __reserved:     [16]slong;
-}
 
 # linux/fs/readdir.c:
 ### struct linux_dirent {
@@ -592,25 +378,14 @@ extern func read(fd: sint, buf: *char, count: usize) ssize;
 extern func write(fd: sint, buf: *char, count: usize) ssize;
 extern func open(filename: *char, flags: sint, mode: umode_t) ssize;
 extern func close(fd: sint) ssize;
-extern func stat(filename: *byte, statbuf: *stat_type) ssize;
 extern func lseek(fd: sint, offset: off_t, whence: uint) ssize;
 extern func mmap(addr: ulong, len: ulong, prot: ulong, flags: ulong, fd: ulong, off: ulong) ssize;
 extern func munmap(addr: ulong, len: usize) ssize;
-extern func access(filename: *byte, mode: sint) ssize;
-extern func fork() ssize;
-extern func execve(filename: *byte, argv: **byte, envp: **byte) ssize;
 extern func exit(error_code: sint) void;
-extern func wait4(upid: pid_t, stat_addr: *sint, options: sint, ru: *rusage) ssize;
 extern func getdents(fd: sint, dirent: *linux_dirent, count: uint) ssize;
 extern func mkdir(pathname: *byte, mode: umode_t) ssize;
 extern func rmdir(pathname: *byte) ssize;
 extern func unlink(pathname: *byte) ssize;
-
-# linux/tools/include/nolibc/nolibc.h:
-# #define WEXITSTATUS(status)   (((status) & 0xff00) >> 8)
-func WEXITSTATUS(status: sint) sint {
-    return (status & 0xff00) / 256;
-}
 
 extern var argc: usize;
 extern var argv: **byte;

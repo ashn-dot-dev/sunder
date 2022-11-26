@@ -11,15 +11,10 @@ __SYS_READ:    equ 0
 __SYS_WRITE:   equ 1
 __SYS_OPEN:    equ 2
 __SYS_CLOSE:   equ 3
-__SYS_STAT:    equ 4
 __SYS_LSEEK:   equ 8
 __SYS_MMAP:    equ 9
 __SYS_MUNMAP:  equ 11
-__SYS_ACCESS:  equ 21
-__SYS_FORK:    equ 57
-__SYS_EXECVE:  equ 59
 __SYS_EXIT:    equ 60
-__SYS_WAIT4:   equ 61
 __SYS_GETDENTS equ 78
 __SYS_MKDIR    equ 83
 __SYS_RMDIR    equ 84
@@ -299,23 +294,6 @@ sys.close:
     pop rbp
     ret
 
-; linux/fs/stat.c:
-; SYSCALL_DEFINE2(stat, const char __user *, filename, struct __old_kernel_stat __user *, statbuf)
-section .text
-sys.stat:
-    push rbp
-    mov rbp, rsp
-
-    mov rax, __SYS_STAT
-    mov rdi, [rbp + 0x18] ; filename
-    mov rsi, [rbp + 0x10] ; statbuf
-    syscall
-    mov [rbp + 0x20], rax
-
-    mov rsp, rbp
-    pop rbp
-    ret
-
 ; linux/fs/read_write.c:
 ; SYSCALL_DEFINE3(lseek, unsigned int, fd, off_t, offset, unsigned int, whence)
 section .text
@@ -372,56 +350,6 @@ sys.munmap:
     pop rbp
     ret
 
-; linux/fs/open.c:
-; SYSCALL_DEFINE2(access, const char __user *, filename, int, mode)
-section .text
-sys.access:
-    push rbp
-    mov rbp, rsp
-
-    mov rax, __SYS_ACCESS
-    mov rdi, [rbp + 0x18] ; filename
-    mov rsi, [rbp + 0x10] ; mode
-    syscall
-    mov [rbp + 0x20], rax
-
-    mov rsp, rbp
-    pop rbp
-    ret
-
-; linux/kernel/fork.c:
-; SYSCALL_DEFINE0(fork)
-section .text
-sys.fork:
-    push rbp
-    mov rbp, rsp
-
-    mov rax, __SYS_FORK
-    syscall
-    mov [rbp + 0x10], rax
-
-    mov rsp, rbp
-    pop rbp
-    ret
-
-; linux/fs/exec.c
-; SYSCALL_DEFINE3(execve, const char __user *, filename, const char __user *const __user *, argv, const char __user *const __user *, envp)
-section .text
-sys.execve:
-    push rbp
-    mov rbp, rsp
-
-    mov rax, __SYS_EXECVE
-    mov rdi, [rbp + 0x20] ; filename
-    mov rsi, [rbp + 0x18] ; argv
-    mov rdx, [rbp + 0x10] ; envp
-    syscall
-    mov [rbp + 0x28], rax
-
-    mov rsp, rbp
-    pop rbp
-    ret
-
 ; linux/kernel/exit.c:
 ; SYSCALL_DEFINE1(exit, int, error_code)
 section .text
@@ -432,25 +360,6 @@ sys.exit:
     mov rax, __SYS_EXIT
     mov rdi, [rbp + 0x10] ; error_code
     syscall
-
-; linux/kernel/exit.c:
-; SYSCALL_DEFINE4(wait4, pid_t, upid, int __user *, stat_addr, int, options, struct rusage __user *, ru)
-section .text
-sys.wait4:
-    push rbp
-    mov rbp, rsp
-
-    mov rax, __SYS_WAIT4
-    mov rdi, [rbp + 0x28] ; upid
-    mov rsi, [rbp + 0x20] ; stat_addr
-    mov rdx, [rbp + 0x18] ; options
-    mov r10, [rbp + 0x10] ; ru
-    syscall
-    mov [rbp + 0x30], rax
-
-    mov rsp, rbp
-    pop rbp
-    ret
 
 ; linux/fs/readdir.c:
 ; SYSCALL_DEFINE3(getdents, unsigned int, fd, struct linux_dirent __user *, dirent, unsigned int, count)
