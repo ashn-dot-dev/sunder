@@ -19,3 +19,6 @@ func main() void {
 # [github-issue-76.test.sunder:5] error: use of undeclared identifier `yikes`
 #         return (:foo[[T]]){.x = yikes};
 #                                 ^
+# [github-issue-76.test.sunder:13] info: ...encountered during template instantiation of `foo[[u16]]`
+#     var bar = foo[[u16]]::init();
+#               ^

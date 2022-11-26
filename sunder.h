@@ -796,6 +796,23 @@ struct context {
     // are used, and avoids making separate chilling symbol table lists for
     // each module.
     sbuf(struct symbol_table*) chilling_symbol_tables;
+
+    // Chain of templates currently being instantiated. When a new template
+    // instantiation occurs, information about the instantiation is pushed to
+    // this list. After the template instantiation has completed, that same
+    // information is popped from this list. If a warning, error, or fatal
+    // error message is emitted, then the elements of this linked list are used
+    // to report the chain of template instantiations that lead to that message
+    // being emitted.
+    struct template_instantiation_link {
+        // The parent instantiation that is responsible for this instantiation.
+        // NULL if this is the outer-most link in the instantiation chain.
+        struct template_instantiation_link const* next;
+        // Full name of template being instantiated.
+        char const* name; // interned
+        // Location where the instantiation occurred.
+        struct source_location const* location;
+    } const* template_instantiation_chain;
 };
 void
 context_init(void);

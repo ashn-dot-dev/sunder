@@ -1,0 +1,25 @@
+namespace whatever;
+
+struct foo[[T]] {
+    func value() T {
+        return bar[[T]]::VALUE;
+    }
+}
+
+struct bar[[T]] {
+    const VALUE: T = 123;
+}
+
+func main() void {
+    dump foo[[*byte]]::value();
+}
+################################################################################
+# [error-template-stack-report-invalid-template-struct.test.sunder:10] error: incompatible type `integer` (expected `*byte`)
+#     const VALUE: T = 123;
+#                      ^
+# [error-template-stack-report-invalid-template-struct.test.sunder:5] info: ...encountered during template instantiation of `whatever::bar[[*byte]]`
+#         return bar[[T]]::VALUE;
+#                ^
+# [error-template-stack-report-invalid-template-struct.test.sunder:14] info: ...encountered during template instantiation of `whatever::foo[[*byte]]`
+#     dump foo[[*byte]]::value();
+#          ^

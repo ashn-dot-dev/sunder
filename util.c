@@ -2063,6 +2063,7 @@ source_line_end(char const* ptr)
 
 static void
 messagev_(
+    bool show_template_instantiation_stack,
     struct source_location const* location,
     char const* level_text,
     char const* level_ansi,
@@ -2116,6 +2117,17 @@ messagev_(
         fprintf(stderr, "%.*s\n", (int)(line_end - line_start), line_start);
         fprintf(stderr, "%*s^\n", (int)(psrc - line_start), "");
     }
+
+    if (!show_template_instantiation_stack) {
+        return;
+    }
+
+    // Display the chain of templates currently being instantiated.
+    struct template_instantiation_link const* link = context()->template_instantiation_chain;
+    while (link != NULL) {
+        info(link->location, "...encountered during template instantiation of `%s`", link->name);
+        link = link->next;
+    }
 }
 
 void
@@ -2123,7 +2135,7 @@ info(struct source_location const* location, char const* fmt, ...)
 {
     va_list args;
     va_start(args, fmt);
-    messagev_(location, "info", ANSI_MSG_INFO, fmt, args);
+    messagev_(false, location, "info", ANSI_MSG_INFO, fmt, args);
     va_end(args);
 }
 
@@ -2132,7 +2144,7 @@ warning(struct source_location const* location, char const* fmt, ...)
 {
     va_list args;
     va_start(args, fmt);
-    messagev_(location, "warning", ANSI_MSG_WARNING, fmt, args);
+    messagev_(true, location, "warning", ANSI_MSG_WARNING, fmt, args);
     va_end(args);
 }
 
@@ -2141,7 +2153,7 @@ error(struct source_location const* location, char const* fmt, ...)
 {
     va_list args;
     va_start(args, fmt);
-    messagev_(location, "error", ANSI_MSG_ERROR, fmt, args);
+    messagev_(true, location, "error", ANSI_MSG_ERROR, fmt, args);
     va_end(args);
 }
 
@@ -2150,7 +2162,7 @@ fatal(struct source_location const* location, char const* fmt, ...)
 {
     va_list args;
     va_start(args, fmt);
-    messagev_(location, "error", ANSI_MSG_ERROR, fmt, args);
+    messagev_(true, location, "error", ANSI_MSG_ERROR, fmt, args);
     va_end(args);
 
     exit(EXIT_FAILURE);

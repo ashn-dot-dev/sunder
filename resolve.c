@@ -12,6 +12,7 @@ struct incomplete_function {
     char const* name; // interned
     struct function* function;
     struct symbol_table* symbol_table;
+    struct template_instantiation_link const* chain; // optional
 };
 
 struct resolver {
@@ -839,6 +840,16 @@ xget_template_instance(
             instance_body);
         freeze(instance_decl);
 
+        struct template_instantiation_link* link = xalloc(NULL, sizeof(*link));
+        link->next = context()->template_instantiation_chain;
+        link->name = decl->name;
+        if (symbol->data.template.symbol_name_prefix != NULL) {
+            link->name = intern_fmt("%s::%s", symbol->data.template.symbol_name_prefix, instance_decl->name);
+        }
+        link->location = location;
+        context()->template_instantiation_chain = link;
+        freeze(link);
+
         // Resolve the actual template instance.
         char const* const save_symbol_name_prefix =
             resolver->current_symbol_name_prefix;
@@ -866,6 +877,8 @@ xget_template_instance(
             name_interned,
             resolved_symbol,
             false);
+
+        context()->template_instantiation_chain = link->next;
 
         return resolved_symbol;
     }
@@ -958,6 +971,16 @@ xget_template_instance(
             instance_members);
         freeze(instance_decl);
 
+        struct template_instantiation_link* link = xalloc(NULL, sizeof(*link));
+        link->next = context()->template_instantiation_chain;
+        link->name = instance_decl->name;
+        if (symbol->data.template.symbol_name_prefix != NULL) {
+            link->name = intern_fmt("%s::%s", symbol->data.template.symbol_name_prefix, instance_decl->name);
+        }
+        link->location = location;
+        context()->template_instantiation_chain = link;
+        freeze(link);
+
         // Resolve the actual template instance.
         char const* const save_symbol_name_prefix =
             resolver->current_symbol_name_prefix;
@@ -991,6 +1014,8 @@ xget_template_instance(
         // referential template instances would cause instance resolution to
         // enter an infinite loop.
         complete_struct(resolver, resolved_symbol, instance_decl);
+
+        context()->template_instantiation_chain = link->next;
 
         return resolved_symbol;
     }
@@ -1763,6 +1788,7 @@ resolve_decl_function(struct resolver* resolver, struct cst_decl const* decl)
         function_symbol->name,
         function,
         symbol_table,
+        context()->template_instantiation_chain
     };
     freeze(incomplete);
     sbuf_push(resolver->incomplete_functions, incomplete);
@@ -2211,6 +2237,9 @@ complete_function(
     assert(resolver != NULL);
     assert(incomplete != NULL);
 
+    struct template_instantiation_link const* const save_chain = context()->template_instantiation_chain;
+    context()->template_instantiation_chain = incomplete->chain;
+
     struct function* const function = incomplete->function;
 
     // Complete the function.
@@ -2266,6 +2295,8 @@ complete_function(
             incomplete->decl->location,
             "Non-void-returning function does not end with a return statement");
     }
+
+    context()->template_instantiation_chain = save_chain;
 }
 
 static struct stmt const*
@@ -4721,8 +4752,8 @@ resolve(struct module* module)
     for (size_t i = 0; i < sbuf_count(ordered); ++i) {
         struct cst_decl const* const decl = module->ordered[i];
 
-        // If the declaration was a non-template struct then it has already been
-        // resolved and must now be completed.
+        // If the declaration was a non-template struct then it has already
+        // been resolved and must now be completed.
         if (decl->kind == CST_DECL_STRUCT) {
             struct symbol const* const symbol = symbol_table_lookup_local(
                 resolver->current_symbol_table, decl->name);
