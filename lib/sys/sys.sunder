@@ -21,9 +21,6 @@ namespace sys;
 # off_t   : type = long
 # size_t  : type = unsigned long
 # ssize_t : type = long
-#
-# linux/include/linux/types.h:
-# typedef unsigned short umode_t;
 
 alias smax = s64;
 alias umax = u64;
@@ -44,8 +41,6 @@ alias mode_t      = uint;
 alias off_t       = slong;
 alias size_t      = ulong;
 alias ssize_t     = slong;
-
-alias umode_t = ushort;
 
 const EPERM:           ssize = 1;
 const ENOENT:          ssize = 2;
@@ -376,14 +371,14 @@ struct linux_dirent {
 
 extern func read(fd: sint, buf: *char, count: usize) ssize;
 extern func write(fd: sint, buf: *char, count: usize) ssize;
-extern func open(filename: *char, flags: sint, mode: umode_t) ssize;
+extern func open(filename: *char, flags: sint, mode: mode_t) ssize;
 extern func close(fd: sint) ssize;
 extern func lseek(fd: sint, offset: off_t, whence: uint) ssize;
 extern func mmap(addr: ulong, len: ulong, prot: ulong, flags: ulong, fd: ulong, off: ulong) ssize;
 extern func munmap(addr: ulong, len: usize) ssize;
 extern func exit(error_code: sint) void;
 extern func getdents(fd: sint, dirent: *linux_dirent, count: uint) ssize;
-extern func mkdir(pathname: *byte, mode: umode_t) ssize;
+extern func mkdir(pathname: *byte, mode: mode_t) ssize;
 extern func rmdir(pathname: *byte) ssize;
 extern func unlink(pathname: *byte) ssize;
 
