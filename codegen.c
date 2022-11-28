@@ -2106,6 +2106,17 @@ push_rvalue_unary(struct expr const* expr, size_t id)
         appendli("push rax");
         return;
     }
+    case UOP_NEG_WRAPPING: {
+        struct expr const* const rhs = expr->data.unary.rhs;
+
+        assert(rhs->type->size <= 8u);
+        push_rvalue(expr->data.unary.rhs);
+
+        appendli("pop rax");
+        appendli("neg rax");
+        appendli("push rax");
+        return;
+    }
     case UOP_BITNOT: {
         push_rvalue(expr->data.unary.rhs);
         assert(expr->data.unary.rhs->type->size <= 8u);
@@ -2857,6 +2868,7 @@ push_lvalue_unary(struct expr const* expr, size_t id)
     case UOP_NOT: /* fallthrough */
     case UOP_POS: /* fallthrough */
     case UOP_NEG: /* fallthrough */
+    case UOP_NEG_WRAPPING: /* fallthrough */
     case UOP_BITNOT: /* fallthrough */
     case UOP_ADDRESSOF: /* fallthrough */
     case UOP_COUNTOF: {

@@ -3876,6 +3876,16 @@ resolve_expr_unary(struct resolver* resolver, struct cst_expr const* expr)
         }
         return resolve_expr_unary_arithmetic(resolver, op, UOP_NEG, rhs);
     }
+    case TOKEN_DASH_PERCENT: {
+        if (type_is_uint(rhs->type)) {
+            fatal(
+                &op->location,
+                "invalid argument of type `%s` in unary `%s` expression",
+                rhs->type->name,
+                token_kind_to_cstr(op->kind));
+        }
+        return resolve_expr_unary_arithmetic(resolver, op, UOP_NEG_WRAPPING, rhs);
+    }
     case TOKEN_TILDE: {
         return resolve_expr_unary_bitwise(resolver, op, UOP_BITNOT, rhs);
     }

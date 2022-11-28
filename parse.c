@@ -928,6 +928,7 @@ token_kind_nud(enum token_kind kind)
     case TOKEN_COUNTOF: /* fallthrough */
     case TOKEN_PLUS: /* fallthrough */
     case TOKEN_DASH: /* fallthrough */
+    case TOKEN_DASH_PERCENT: /* fallthrough */
     case TOKEN_TILDE: /* fallthrough */
     case TOKEN_STAR: /* fallthrough */
     case TOKEN_AMPERSAND: {

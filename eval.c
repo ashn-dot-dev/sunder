@@ -626,18 +626,31 @@ eval_rvalue_unary(struct expr const* expr)
     }
     case UOP_NEG: {
         struct value* const rhs = eval_rvalue(expr->data.unary.rhs);
-        assert(type_is_int(rhs->type));
-        struct bigint* const r = bigint_new(BIGINT_ZERO);
-        bigint_neg(r, rhs->data.integer);
-        if (integer_is_out_of_range(expr->type, r)) {
+        assert(type_is_sint(rhs->type));
+        struct bigint* const integer = bigint_new(BIGINT_ZERO);
+        bigint_neg(integer, rhs->data.integer);
+        if (integer_is_out_of_range(expr->type, integer)) {
             fatal(
                 expr->location,
                 "arithmetic operation produces out-of-range result (-(%s) == %s)",
                 bigint_to_new_cstr(rhs->data.integer),
-                bigint_to_new_cstr(r));
+                bigint_to_new_cstr(integer));
         }
         value_del(rhs);
-        return value_new_integer(expr->type, r);
+        return value_new_integer(expr->type, integer);
+    }
+    case UOP_NEG_WRAPPING: {
+        struct value* const rhs = eval_rvalue(expr->data.unary.rhs);
+        assert(type_is_sint(rhs->type));
+        struct bitarr* const bitarr = bitarr_new(rhs->type->size * 8);
+        if (bigint_to_bitarr(bitarr, rhs->data.integer)) {
+            UNREACHABLE();
+        }
+        bitarr_twos_complement_neg(bitarr, bitarr);
+        struct bigint* const integer = bigint_new_bitarr(bitarr, true);
+        bitarr_del(bitarr);
+        value_del(rhs);
+        return value_new_integer(expr->type, integer);
     }
     case UOP_BITNOT: {
         struct value* const rhs = eval_rvalue(expr->data.unary.rhs);
@@ -1179,6 +1192,7 @@ eval_lvalue_unary(struct expr const* expr)
     case UOP_NOT: /* fallthrough */
     case UOP_POS: /* fallthrough */
     case UOP_NEG: /* fallthrough */
+    case UOP_NEG_WRAPPING: /* fallthrough */
     case UOP_BITNOT: /* fallthrough */
     case UOP_ADDRESSOF: /* fallthrough */
     case UOP_COUNTOF:

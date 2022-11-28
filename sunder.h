@@ -2013,6 +2013,7 @@ struct expr {
                 UOP_NOT,
                 UOP_POS,
                 UOP_NEG,
+                UOP_NEG_WRAPPING,
                 UOP_BITNOT,
                 UOP_DEREFERENCE,
                 UOP_ADDRESSOF,
