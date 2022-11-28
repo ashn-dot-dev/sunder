@@ -378,6 +378,11 @@ void
 bitarr_or(
     struct bitarr* res, struct bitarr const* lhs, struct bitarr const* rhs);
 
+// Convert a two's complement bit array into a a bigint.
+void
+bitarr_to_bigint(
+    struct bigint* res, struct bitarr const* bitarr, bool is_signed);
+
 extern struct bigint const* const BIGINT_ZERO; // 0
 extern struct bigint const* const BIGINT_POS_ONE; // +1
 extern struct bigint const* const BIGINT_NEG_ONE; // -1
@@ -512,7 +517,7 @@ bigint_to_uz(size_t* res, struct bigint const* bigint);
 // is left unmodified.
 int
 bigint_to_umax(uintmax_t* res, struct bigint const* bigint);
-// Convert a bigint into a two's complement bit array.
+// Convert a bigint to a two's complement bit array.
 // Returns zero on success.
 // Returns non-zero if the provided bigint is out-of-range would require more
 // than bitarr_count(res) bits to express, in which case *res is left

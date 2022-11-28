@@ -6,6 +6,34 @@ func test[[T]](lhs: T, rhs: T) void {
 }
 
 func main() void {
+    const x = u8::MAX +% 0x01;
+    std::print_format_line(std::out(), "{}", (:[]std::formatter)[std::formatter::init[[typeof(x)]](&x)]);
+    const y = s8::MAX +% 0x01;
+    std::print_format_line(std::out(), "{}", (:[]std::formatter)[std::formatter::init[[typeof(y)]](&y)]);
+
+    std::print(std::out(), "\n");
+
+    const x = u16::MAX +% 0x01;
+    std::print_format_line(std::out(), "{}", (:[]std::formatter)[std::formatter::init[[typeof(x)]](&x)]);
+    const y = s16::MAX +% 0x01;
+    std::print_format_line(std::out(), "{}", (:[]std::formatter)[std::formatter::init[[typeof(y)]](&y)]);
+
+    std::print(std::out(), "\n");
+
+    const x = u32::MAX +% 0x01;
+    std::print_format_line(std::out(), "{}", (:[]std::formatter)[std::formatter::init[[typeof(x)]](&x)]);
+    const y = s32::MAX +% 0x01;
+    std::print_format_line(std::out(), "{}", (:[]std::formatter)[std::formatter::init[[typeof(y)]](&y)]);
+
+    std::print(std::out(), "\n");
+
+    const x = u64::MAX +% 0x01;
+    std::print_format_line(std::out(), "{}", (:[]std::formatter)[std::formatter::init[[typeof(x)]](&x)]);
+    const y = s64::MAX +% 0x01;
+    std::print_format_line(std::out(), "{}", (:[]std::formatter)[std::formatter::init[[typeof(y)]](&y)]);
+
+    std::print(std::out(), "\n");
+
     test[[u8]](u8::MAX, 0x01);
     test[[u8]](0x01, u8::MAX);
     test[[u8]](u8::MAX, 0x11);
@@ -33,6 +61,18 @@ func main() void {
     test[[s64]](0x11, s64::MAX);
 }
 ################################################################################
+# 0
+# -128
+#
+# 0
+# -32768
+#
+# 0
+# -2147483648
+#
+# 0
+# -9223372036854775808
+#
 # 0x0
 # 0x0
 # 0x10

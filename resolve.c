@@ -844,7 +844,10 @@ xget_template_instance(
         link->next = context()->template_instantiation_chain;
         link->name = decl->name;
         if (symbol->data.template.symbol_name_prefix != NULL) {
-            link->name = intern_fmt("%s::%s", symbol->data.template.symbol_name_prefix, instance_decl->name);
+            link->name = intern_fmt(
+                "%s::%s",
+                symbol->data.template.symbol_name_prefix,
+                instance_decl->name);
         }
         link->location = location;
         context()->template_instantiation_chain = link;
@@ -975,7 +978,10 @@ xget_template_instance(
         link->next = context()->template_instantiation_chain;
         link->name = instance_decl->name;
         if (symbol->data.template.symbol_name_prefix != NULL) {
-            link->name = intern_fmt("%s::%s", symbol->data.template.symbol_name_prefix, instance_decl->name);
+            link->name = intern_fmt(
+                "%s::%s",
+                symbol->data.template.symbol_name_prefix,
+                instance_decl->name);
         }
         link->location = location;
         context()->template_instantiation_chain = link;
@@ -1783,13 +1789,12 @@ resolve_decl_function(struct resolver* resolver, struct cst_decl const* decl)
 
     struct incomplete_function* const incomplete =
         xalloc(NULL, sizeof(*incomplete));
-    *incomplete = (struct incomplete_function){
-        decl,
-        function_symbol->name,
-        function,
-        symbol_table,
-        context()->template_instantiation_chain
-    };
+    *incomplete =
+        (struct incomplete_function){decl,
+                                     function_symbol->name,
+                                     function,
+                                     symbol_table,
+                                     context()->template_instantiation_chain};
     freeze(incomplete);
     sbuf_push(resolver->incomplete_functions, incomplete);
 
@@ -2237,7 +2242,8 @@ complete_function(
     assert(resolver != NULL);
     assert(incomplete != NULL);
 
-    struct template_instantiation_link const* const save_chain = context()->template_instantiation_chain;
+    struct template_instantiation_link const* const save_chain =
+        context()->template_instantiation_chain;
     context()->template_instantiation_chain = incomplete->chain;
 
     struct function* const function = incomplete->function;
@@ -3884,7 +3890,8 @@ resolve_expr_unary(struct resolver* resolver, struct cst_expr const* expr)
                 rhs->type->name,
                 token_kind_to_cstr(op->kind));
         }
-        return resolve_expr_unary_arithmetic(resolver, op, UOP_NEG_WRAPPING, rhs);
+        return resolve_expr_unary_arithmetic(
+            resolver, op, UOP_NEG_WRAPPING, rhs);
     }
     case TOKEN_TILDE: {
         return resolve_expr_unary_bitwise(resolver, op, UOP_BITNOT, rhs);

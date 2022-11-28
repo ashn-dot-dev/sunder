@@ -829,49 +829,106 @@ eval_rvalue_binary(struct expr const* expr)
     case BOP_ADD: {
         assert(type_is_int(lhs->type));
         assert(type_is_int(rhs->type));
-        struct bigint* const r = bigint_new(BIGINT_ZERO);
-        bigint_add(r, lhs->data.integer, rhs->data.integer);
-        if (integer_is_out_of_range(expr->type, r)) {
+        struct bigint* const integer = bigint_new(BIGINT_ZERO);
+        bigint_add(integer, lhs->data.integer, rhs->data.integer);
+        if (integer_is_out_of_range(expr->type, integer)) {
             fatal(
                 expr->location,
                 "arithmetic operation produces out-of-range result (%s + %s == %s)",
                 bigint_to_new_cstr(lhs->data.integer),
                 bigint_to_new_cstr(rhs->data.integer),
-                bigint_to_new_cstr(r));
+                bigint_to_new_cstr(integer));
         }
-        res = value_new_integer(expr->type, r);
+        res = value_new_integer(expr->type, integer);
+        break;
+    }
+    case BOP_ADD_WRAPPING: {
+        assert(type_is_int(lhs->type));
+        assert(type_is_int(rhs->type));
+        struct bigint* const integer = bigint_new(BIGINT_ZERO);
+        bigint_add(integer, lhs->data.integer, rhs->data.integer);
+        struct bitarr* const wrapped = bitarr_new(expr->type->size * 8u * 2u);
+        if (bigint_to_bitarr(wrapped, integer)) {
+            UNREACHABLE();
+        }
+        struct bitarr* const trimmed = bitarr_new(expr->type->size * 8u);
+        for (size_t i = 0; i < bitarr_count(trimmed); ++i) {
+            bitarr_set(trimmed, i, bitarr_get(wrapped, i));
+        }
+        bitarr_to_bigint(integer, trimmed, type_is_sint(expr->type));
+        bitarr_del(wrapped);
+        bitarr_del(trimmed);
+        res = value_new_integer(expr->type, integer);
         break;
     }
     case BOP_SUB: {
         assert(type_is_int(lhs->type));
         assert(type_is_int(rhs->type));
-        struct bigint* const r = bigint_new(BIGINT_ZERO);
-        bigint_sub(r, lhs->data.integer, rhs->data.integer);
-        if (integer_is_out_of_range(expr->type, r)) {
+        struct bigint* const integer = bigint_new(BIGINT_ZERO);
+        bigint_sub(integer, lhs->data.integer, rhs->data.integer);
+        if (integer_is_out_of_range(expr->type, integer)) {
             fatal(
                 expr->location,
                 "arithmetic operation produces out-of-range result (%s - %s == %s)",
                 bigint_to_new_cstr(lhs->data.integer),
                 bigint_to_new_cstr(rhs->data.integer),
-                bigint_to_new_cstr(r));
+                bigint_to_new_cstr(integer));
         }
-        res = value_new_integer(expr->type, r);
+        res = value_new_integer(expr->type, integer);
+        break;
+    }
+    case BOP_SUB_WRAPPING: {
+        assert(type_is_int(lhs->type));
+        assert(type_is_int(rhs->type));
+        struct bigint* const integer = bigint_new(BIGINT_ZERO);
+        bigint_sub(integer, lhs->data.integer, rhs->data.integer);
+        struct bitarr* const wrapped = bitarr_new(expr->type->size * 8u * 2u);
+        if (bigint_to_bitarr(wrapped, integer)) {
+            UNREACHABLE();
+        }
+        struct bitarr* const trimmed = bitarr_new(expr->type->size * 8u);
+        for (size_t i = 0; i < bitarr_count(trimmed); ++i) {
+            bitarr_set(trimmed, i, bitarr_get(wrapped, i));
+        }
+        bitarr_to_bigint(integer, trimmed, type_is_sint(expr->type));
+        bitarr_del(wrapped);
+        bitarr_del(trimmed);
+        res = value_new_integer(expr->type, integer);
         break;
     }
     case BOP_MUL: {
         assert(type_is_int(lhs->type));
         assert(type_is_int(rhs->type));
-        struct bigint* const r = bigint_new(BIGINT_ZERO);
-        bigint_mul(r, lhs->data.integer, rhs->data.integer);
-        if (integer_is_out_of_range(expr->type, r)) {
+        struct bigint* const integer = bigint_new(BIGINT_ZERO);
+        bigint_mul(integer, lhs->data.integer, rhs->data.integer);
+        if (integer_is_out_of_range(expr->type, integer)) {
             fatal(
                 expr->location,
                 "arithmetic operation produces out-of-range result (%s * %s == %s)",
                 bigint_to_new_cstr(lhs->data.integer),
                 bigint_to_new_cstr(rhs->data.integer),
-                bigint_to_new_cstr(r));
+                bigint_to_new_cstr(integer));
         }
-        res = value_new_integer(expr->type, r);
+        res = value_new_integer(expr->type, integer);
+        break;
+    }
+    case BOP_MUL_WRAPPING: {
+        assert(type_is_int(lhs->type));
+        assert(type_is_int(rhs->type));
+        struct bigint* const integer = bigint_new(BIGINT_ZERO);
+        bigint_mul(integer, lhs->data.integer, rhs->data.integer);
+        struct bitarr* const wrapped = bitarr_new(expr->type->size * 8u * 2u);
+        if (bigint_to_bitarr(wrapped, integer)) {
+            UNREACHABLE();
+        }
+        struct bitarr* const trimmed = bitarr_new(expr->type->size * 8u);
+        for (size_t i = 0; i < bitarr_count(trimmed); ++i) {
+            bitarr_set(trimmed, i, bitarr_get(wrapped, i));
+        }
+        bitarr_to_bigint(integer, trimmed, type_is_sint(expr->type));
+        bitarr_del(wrapped);
+        bitarr_del(trimmed);
+        res = value_new_integer(expr->type, integer);
         break;
     }
     case BOP_DIV: {
@@ -1045,8 +1102,6 @@ eval_rvalue_binary(struct expr const* expr)
         res = value_new_integer(type, res_bigint);
         break;
     }
-    default:
-        UNREACHABLE();
     }
     value_del(lhs);
     value_del(rhs);
