@@ -642,7 +642,7 @@ eval_rvalue_unary(struct expr const* expr)
     case UOP_NEG_WRAPPING: {
         struct value* const rhs = eval_rvalue(expr->data.unary.rhs);
         assert(type_is_sint(rhs->type));
-        struct bitarr* const bitarr = bitarr_new(rhs->type->size * 8);
+        struct bitarr* const bitarr = bitarr_new((size_t)(rhs->type->size * 8));
         if (bigint_to_bitarr(bitarr, rhs->data.integer)) {
             UNREACHABLE();
         }
@@ -847,11 +847,13 @@ eval_rvalue_binary(struct expr const* expr)
         assert(type_is_int(rhs->type));
         struct bigint* const integer = bigint_new(BIGINT_ZERO);
         bigint_add(integer, lhs->data.integer, rhs->data.integer);
-        struct bitarr* const wrapped = bitarr_new(expr->type->size * 8u * 2u);
+        struct bitarr* const wrapped =
+            bitarr_new((size_t)(expr->type->size * 8u * 2u));
         if (bigint_to_bitarr(wrapped, integer)) {
             UNREACHABLE();
         }
-        struct bitarr* const trimmed = bitarr_new(expr->type->size * 8u);
+        struct bitarr* const trimmed =
+            bitarr_new((size_t)(expr->type->size * 8u));
         for (size_t i = 0; i < bitarr_count(trimmed); ++i) {
             bitarr_set(trimmed, i, bitarr_get(wrapped, i));
         }
@@ -882,11 +884,13 @@ eval_rvalue_binary(struct expr const* expr)
         assert(type_is_int(rhs->type));
         struct bigint* const integer = bigint_new(BIGINT_ZERO);
         bigint_sub(integer, lhs->data.integer, rhs->data.integer);
-        struct bitarr* const wrapped = bitarr_new(expr->type->size * 8u * 2u);
+        struct bitarr* const wrapped =
+            bitarr_new((size_t)(expr->type->size * 8u * 2u));
         if (bigint_to_bitarr(wrapped, integer)) {
             UNREACHABLE();
         }
-        struct bitarr* const trimmed = bitarr_new(expr->type->size * 8u);
+        struct bitarr* const trimmed =
+            bitarr_new((size_t)(expr->type->size * 8u));
         for (size_t i = 0; i < bitarr_count(trimmed); ++i) {
             bitarr_set(trimmed, i, bitarr_get(wrapped, i));
         }
@@ -917,11 +921,13 @@ eval_rvalue_binary(struct expr const* expr)
         assert(type_is_int(rhs->type));
         struct bigint* const integer = bigint_new(BIGINT_ZERO);
         bigint_mul(integer, lhs->data.integer, rhs->data.integer);
-        struct bitarr* const wrapped = bitarr_new(expr->type->size * 8u * 2u);
+        struct bitarr* const wrapped =
+            bitarr_new((size_t)(expr->type->size * 8u * 2u));
         if (bigint_to_bitarr(wrapped, integer)) {
             UNREACHABLE();
         }
-        struct bitarr* const trimmed = bitarr_new(expr->type->size * 8u);
+        struct bitarr* const trimmed =
+            bitarr_new((size_t)(expr->type->size * 8u));
         for (size_t i = 0; i < bitarr_count(trimmed); ++i) {
             bitarr_set(trimmed, i, bitarr_get(wrapped, i));
         }
