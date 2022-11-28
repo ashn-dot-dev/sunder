@@ -1557,7 +1557,6 @@ push_rvalue_array_list(struct expr const* expr, size_t id)
         appendli("jmp %s%zu_ellipsis_condition", LABEL_EXPR, id);
         appendln("%s%zu_ellipsis_pop:", LABEL_EXPR, id);
         pop(element_size);
-        appendln("%s%zu_ellipsis_end:", LABEL_EXPR, id);
     }
 }
 
@@ -1615,6 +1614,7 @@ push_rvalue_struct(struct expr const* expr, size_t id)
     assert(expr != NULL);
     assert(expr->kind == EXPR_STRUCT);
     assert(expr->type->kind == TYPE_STRUCT);
+    (void)id;
 
     // Make space for the struct.
     push(expr->type->size);
@@ -1624,7 +1624,6 @@ push_rvalue_struct(struct expr const* expr, size_t id)
     // for dump statements to be deterministic in the bytes they print if we
     // define padding bytes to always be zeroed for struct values created at
     // runtime.
-    appendln("%s%zu_zero_memory_bgn:", LABEL_EXPR, id);
     appendli("mov rax, 0"); // zero value
     appendli("mov rbx, rsp"); // current address
     uint64_t const words_count = ceil8u64(expr->type->size) / 8;
@@ -1632,7 +1631,6 @@ push_rvalue_struct(struct expr const* expr, size_t id)
         appendli("mov [rbx], rax");
         appendli("add rbx, 8");
     }
-    appendln("%s%zu_zero_memory_end:", LABEL_EXPR, id);
 
     // One by one evaluate the member variables for the elements of the struct.
     // Each member variable will be at the top of the stack after being
@@ -2480,8 +2478,6 @@ push_rvalue_binary(struct expr const* expr, size_t id)
         appendli("pop rax ; add wrapping lhs");
         appendli("add %s, %s", lhs_reg, rhs_reg);
         appendli("push rax");
-
-        appendln("%s%zu_end:", LABEL_EXPR, id);
         return;
     }
     case BOP_SUB: {
@@ -2526,8 +2522,6 @@ push_rvalue_binary(struct expr const* expr, size_t id)
         appendli("pop rax ; sub wrapping lhs");
         appendli("sub %s, %s", lhs_reg, rhs_reg);
         appendli("push rax");
-
-        appendln("%s%zu_end:", LABEL_EXPR, id);
         return;
     }
     case BOP_MUL: {
@@ -2570,8 +2564,6 @@ push_rvalue_binary(struct expr const* expr, size_t id)
         appendli("pop rax ; mul lhs");
         appendli("%s %s", mul, rhs_reg);
         appendli("push rax");
-
-        appendln("%s%zu_end:", LABEL_EXPR, id);
         return;
     }
     case BOP_DIV: /* fallthrough */
