@@ -2121,7 +2121,7 @@ push_rvalue_unary(struct expr const* expr, size_t id)
         push_rvalue(expr->data.unary.rhs);
         assert(expr->data.unary.rhs->type->size <= 8u);
         appendli("pop rax");
-        appendli("not rax");
+        appendli("not %s", reg_a(expr->type->size));
         appendli("push rax");
         return;
     }
