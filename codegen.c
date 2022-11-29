@@ -2102,7 +2102,7 @@ push_rvalue_unary(struct expr const* expr, size_t id)
             appendli("call __fatal_integer_out_of_range");
         }
         appendln("%s%zu_op:", LABEL_EXPR, id);
-        appendli("neg rax");
+        appendli("neg %s", reg_a(expr->type->size));
         appendli("push rax");
         return;
     }
@@ -2113,7 +2113,7 @@ push_rvalue_unary(struct expr const* expr, size_t id)
         push_rvalue(expr->data.unary.rhs);
 
         appendli("pop rax");
-        appendli("neg rax");
+        appendli("neg %s", reg_a(expr->type->size));
         appendli("push rax");
         return;
     }
