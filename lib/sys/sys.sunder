@@ -348,8 +348,8 @@ const MAP_FIXED:     ulong = 0x10;
 const MAP_ANONYMOUS: ulong = 0x20;
 
 # linux/include/uapi/linux/limits.h:
-const NAME_MAX: usize =    255; # chars in a file name
-const PATH_MAX: usize =   4096; # chars in a path name including nul
+const NAME_MAX: usize =  255; # chars in a file name
+const PATH_MAX: usize = 4096; # chars in a path name including nul
 
 # linux/arch/x86/include/asm/page_types.h:
 # PAGE_SIZE is defined in terms of PAGE_SHIFT (12 on x86 and x64).
