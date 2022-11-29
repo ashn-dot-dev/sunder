@@ -58,8 +58,8 @@ test() {
 TESTS= # empty
 if [ "$#" -ne 0 ]; then
     for arg in "$@"; do
-        if [ -d "${arg}" ]; then
-            FILES=$(echo ${arg}/*.test.sunder | sort)
+        if [ -d "$(realpath ${arg})" ]; then
+            FILES=$(find "$(realpath ${arg})" -name '*.test.sunder' | sort)
             TESTS=$(echo "${TESTS}" "${FILES}")
         else
             TESTS=$(echo "${TESTS}" "${arg}")
