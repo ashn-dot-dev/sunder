@@ -2086,21 +2086,19 @@ push_rvalue_unary(struct expr const* expr, size_t id)
     case UOP_NEG: {
         struct expr const* const rhs = expr->data.unary.rhs;
 
+        assert(type_is_sint(rhs->type));
         assert(rhs->type->size <= 8u);
         push_rvalue(expr->data.unary.rhs);
 
         char const* rhs_reg = reg_a(expr->data.unary.rhs->type->size);
         appendli("pop rax");
-        if (type_is_sint(rhs->type)) {
-            char* const min_cstr =
-                bigint_to_new_cstr(rhs->type->data.integer.min);
-            appendli("mov rbx, %s", min_cstr);
-            xalloc(min_cstr, XALLOC_FREE);
-            appendli(
-                "cmp %s, %s", rhs_reg, reg_b(expr->data.unary.rhs->type->size));
-            appendli("jne %s%zu_op", LABEL_EXPR, id);
-            appendli("call __fatal_integer_out_of_range");
-        }
+        char* const min_cstr = bigint_to_new_cstr(rhs->type->data.integer.min);
+        appendli("mov rbx, %s", min_cstr);
+        xalloc(min_cstr, XALLOC_FREE);
+        appendli(
+            "cmp %s, %s", rhs_reg, reg_b(expr->data.unary.rhs->type->size));
+        appendli("jne %s%zu_op", LABEL_EXPR, id);
+        appendli("call __fatal_integer_out_of_range");
         appendln("%s%zu_op:", LABEL_EXPR, id);
         appendli("neg %s", reg_a(expr->type->size));
         appendli("push rax");
@@ -2109,6 +2107,7 @@ push_rvalue_unary(struct expr const* expr, size_t id)
     case UOP_NEG_WRAPPING: {
         struct expr const* const rhs = expr->data.unary.rhs;
 
+        assert(type_is_sint(rhs->type));
         assert(rhs->type->size <= 8u);
         push_rvalue(expr->data.unary.rhs);
 
