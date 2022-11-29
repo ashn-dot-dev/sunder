@@ -83,10 +83,16 @@ func format_test8() void {
         (:[]std::formatter)[a_fmtr, a_fmtr, a_fmtr, a_fmtr, a_fmtr]);
 }
 
-# Test for minimum negative number (subject to integer out-of-range if negated).
+# Test for minimum negative numbers (subject to integer out-of-range if negated).
 func format_test9() void {
     var a: s8 = -128;
     var a_fmtr: std::formatter = std::formatter::init[[s8]](&a);
+
+    var args: [1]std::formatter = (:[1]std::formatter)[a_fmtr];
+    std::print_format_line(std::out(), "{}", args[0:countof(args)]);
+
+    var a: std::smax = std::smax::MIN;
+    var a_fmtr: std::formatter = std::formatter::init[[std::smax]](&a);
 
     var args: [1]std::formatter = (:[1]std::formatter)[a_fmtr];
     std::print_format_line(std::out(), "{}", args[0:countof(args)]);
@@ -151,5 +157,6 @@ func main() void {
 # 0 0 0b0 0o0 0x0
 #
 # -128
+# -9223372036854775808
 #
 # panic: invalid format specifier "#l"

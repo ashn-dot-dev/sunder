@@ -1334,14 +1334,7 @@ extend integer func _init_smax_from_str(str: []byte, radix: usize) std::result[[
     }
 
     if sign == -1 {
-        # Special case for the minimum value of a two's complement signed
-        # integer which will produce an integer out-of-range error when
-        # multiplied by negative one.
-        if magnitude == (:std::umax)std::smax::MAX + 1 {
-            return std::result[[std::smax, std::error]]::init_value(std::smax::MIN);
-        }
-
-        var value = (:std::smax)-1s * (:std::smax)magnitude;
+        var value = (:std::smax)-1s *% (:std::smax)magnitude;
         return std::result[[std::smax, std::error]]::init_value(value);
     }
 
@@ -1499,20 +1492,13 @@ extend integer func _format_smax(int: std::smax, writer: std::writer, fmt: []byt
         }
     }
 
-    var magnitude: std::umax = 0;
+    var magnitude: std::umax = uninit;
     if int >= 0 {
         # Absolute value of a non-negative integer is itself.
         magnitude = (:std::umax)int;
     }
-    elif int == std::smax::MIN {
-        # Special case for the minimum value of a two's complement signed
-        # integer, which will produce an integer out-of-range error when
-        # multiplied by negative one, as the negated (positive) value is
-        # un-representable as a two's complement ssize.
-        magnitude = (:std::umax)std::smax::MAX + 1;
-    }
     else {
-        magnitude = (:std::umax)((:std::smax)-1s * int);
+        magnitude = (:std::umax)((:std::smax)-1s *% int);
     }
 
     return integer::_format_umax(magnitude, writer, fmt);
