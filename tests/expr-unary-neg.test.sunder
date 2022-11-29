@@ -1,0 +1,21 @@
+import "std/core.sunder";
+
+func test[[T]](value: T) void {
+    value = -value;
+    std::print_format_line(
+        std::out(),
+        "{}",
+        (:[]std::formatter)[std::formatter::init[[T]](&value)]);
+}
+
+func main() void {
+    test[[s8]](+100);
+    test[[s8]](-100);
+    test[[s8]](+127);
+    test[[s8]](-128);
+}
+################################################################################
+# -100
+# 100
+# -127
+# fatal: arithmetic operation produces out-of-range result
