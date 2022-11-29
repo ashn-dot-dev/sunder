@@ -1,0 +1,7 @@
+func main() void {
+    const x = 1 -% 1;
+}
+################################################################################
+# [error-expr-binary-wrapping-sub-with-unsized-type.test.sunder:2] error: invalid arguments of type `integer` in wrapping binary `-%` expression
+#     const x = 1 -% 1;
+#                 ^

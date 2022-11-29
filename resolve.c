@@ -3958,8 +3958,18 @@ resolve_expr_unary_arithmetic(
             token_kind_to_cstr(op->kind));
     }
 
-    struct expr* const resolved =
-        expr_new_unary(&op->location, rhs->type, uop, rhs);
+    struct type const* const type = rhs->type;
+
+    bool const is_wrapping = uop == UOP_NEG_WRAPPING;
+    if (is_wrapping && type->size == SIZEOF_UNSIZED) {
+        fatal(
+            &op->location,
+            "invalid argument of type `%s` in wrapping unary `%s` expression",
+            type->name,
+            token_kind_to_cstr(op->kind));
+    }
+
+    struct expr* const resolved = expr_new_unary(&op->location, type, uop, rhs);
 
     freeze(resolved);
     return resolved;
@@ -4386,6 +4396,17 @@ resolve_expr_binary_arithmetic(
     }
 
     struct type const* const type = lhs->type; // Arbitrarily use lhs.
+
+    bool const is_wrapping = (bop == BOP_ADD_WRAPPING)
+        || (bop == BOP_SUB_WRAPPING) || (bop == BOP_MUL_WRAPPING);
+    if (is_wrapping && type->size == SIZEOF_UNSIZED) {
+        fatal(
+            &op->location,
+            "invalid arguments of type `%s` in wrapping binary `%s` expression",
+            type->name,
+            token_kind_to_cstr(op->kind));
+    }
+
     struct expr* resolved = expr_new_binary(&op->location, type, bop, lhs, rhs);
     freeze(resolved);
 

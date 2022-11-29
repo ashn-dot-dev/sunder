@@ -1,0 +1,7 @@
+func main() void {
+    const x = -%1;
+}
+################################################################################
+# [error-expr-unary-wrapping-neg-with-unsized-type.test.sunder:2] error: invalid argument of type `integer` in wrapping unary `-%` expression
+#     const x = -%1;
+#               ^
