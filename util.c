@@ -982,34 +982,6 @@ bigint__shiftr_limbs_(struct bigint* self, size_t nlimbs)
     bigint__normalize_(self);
 }
 
-// This function is "technically" part of the public API, but it is not given a
-// prototype, and is intended for debugging purposes only.
-// Expect this function to be removed in future versions of this header.
-void
-bigint_dump(struct bigint const* self)
-{
-    assert(self != NULL);
-
-    int sign = self->sign;
-    char signc = '0';
-    if (sign == +1) {
-        signc = '+';
-    }
-    if (sign == -1) {
-        signc = '-';
-    }
-
-    FILE* const fp = stdout;
-    fprintf(fp, "SIGN: '%c', COUNT: %zu, LIMBS: [", signc, self->count);
-    for (size_t i = 0; i < self->count; ++i) {
-        fprintf(fp, "0x%02X", (int)self->limbs[i]);
-        if (i != self->count - 1) {
-            fputs(", ", fp);
-        }
-    }
-    fputs("]\n", fp);
-}
-
 struct bigint*
 bigint_new(struct bigint const* othr)
 {
