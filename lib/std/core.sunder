@@ -18,12 +18,16 @@ struct error_info {
     var data: []byte;
 }
 
+# The set of all `std::error_info` constants used by the standard library.
 const _ALLOCATION_FAILURE = (:std::error_info){.data = "allocation failure"};
 const _BUFFER_FULL = (:std::error_info){.data = "buffer full"};
 const _PARSE_FAILURE = (:std::error_info){.data = "parse failure"};
 const _INVALID_ARGUMENT = (:error_info){.data = "invalid argument"};
 const _RESULT_OUT_OF_RANGE = (:error_info){.data = "result out-of-range"};
 
+# Type representing the outcome of a fallible computation. A result is either
+# in the value state, indicating computation success, or the error state,
+# indicating computation failure.
 struct result[[T, E]] {
     var _value: T;
     var _error: E;
@@ -76,6 +80,9 @@ struct result[[T, E]] {
     }
 }
 
+# Type representing a value that may not be present. An optional is either in
+# the value state, indicating that the value is present, or the empty state,
+# indicating that the value is absent.
 struct optional[[T]] {
     var _value: T;
     var _is_value: bool;
