@@ -4,267 +4,12 @@ import "sys";
 alias umax = sys::umax;
 alias smax = sys::smax;
 
-struct ptr[[T]] { # namespace
-    var __namespace__: any;
-
-    const NULL: *T = uninit;
-
-    # Equivalent to the C operation `ptr + n`.
-    func add(ptr: *T, n: usize) *T {
-        return (:*T)((:usize)ptr + n * sizeof(typeof(*ptr)));
-    }
-
-    # Equivalent to the C operation `ptr - n`.
-    func sub(ptr: *T, n: usize) *T {
-        return (:*T)((:usize)ptr - n * sizeof(typeof(*ptr)));
-    }
-}
-
-struct slice[[T]] { # namespace
-    var __namespace__: any;
-
-    # Copy the elements of `source` into `destination`. The source and
-    # destination buffers must contain the same number of elements.
-    func copy(destination: []T, source: []T) void {
-        if countof(destination) != countof(source) {
-            std::panic("source and destination buffers have different sizes");
-        }
-
-        if countof(source) == 0 {
-            # Nothing to copy.
-            return;
-        }
-
-        # If the copy operation is being performed on two slices into the same
-        # buffer then the direction in which the copy is performed does matter.
-        # Say there is some buffer:
-        #
-        #    0  1  2  3  4
-        #   [A][B][C][D][E]
-        #
-        # and the following copy operation is performed:
-        #
-        #   std::slice[[T]]::copy(buf[0:3], buf[1:4]);
-        #
-        # With a forwards copy the correct result is produced:
-        #
-        #    0  1  2  3  4
-        #   [A][B][C][D][E] <- initial buffer
-        #   [B][B][C][D][E] <- copy first element
-        #   [B][C][C][D][E] <- copy second element
-        #   [B][C][D][D][E] <- copy third element
-        #
-        # But with a backwards copy an incorrect result is produced:
-        #
-        #    0  1  2  3  4
-        #   [A][B][C][D][E] <- initial buffer
-        #   [A][B][D][D][E] <- copy first element
-        #   [A][D][D][D][E] <- copy second element
-        #   [D][D][D][D][E] <- copy third element
-        #
-        # So when the start of `destination` appears before the start of
-        # `source` the copy must be performed forwards, and when the start of
-        # `source` appears before the start of `destination` then copy must be
-        # performed backwards. When the start of `destination` and the start of
-        # `source` are the same, the copy is arbitrarily chosen to be performed
-        # forwards.
-        if &destination[0] <= &source[0] {
-            # Copy forwards.
-            for i in countof(source) {
-                destination[i] = source[i];
-            }
-        }
-        else {
-            # Copy backwards.
-            for i in countof(source) {
-                var index: usize = countof(source) - 1 - i;
-                destination[index] = source[index];
-            }
-        }
-    }
-
-    # Set every element of the provided slice to the provided value.
-    func fill(slice: []T, value: T) void {
-        for i in countof(slice) {
-            slice[i] = value;
-        }
-    }
-
-    # Allocate a slice of `count` elements using the provided allocator.
-    func new(allocator: std::allocator, count: usize) []T {
-        var result = allocator.allocate(alignof(T), count * sizeof(T));
-        if result.is_error() {
-            std::panic(result.error().*.data);
-        }
-        return (:[]T){(:*T)result.value(), count};
-    }
-
-    # Resize the provided slice to `new_count` elements using the provided
-    # allocator.
-    func resize(allocator: std::allocator, slice: []T, new_count: usize) []T {
-        var cur_count: usize = countof(slice);
-        var cur_size: usize = cur_count * sizeof(T);
-        var new_size: usize = new_count * sizeof(T);
-
-        var cur_pointer: *byte = *((:**byte)&slice);
-        var result = allocator.reallocate(cur_pointer, alignof(T), cur_size, new_size);
-        if result.is_error() {
-            std::panic(result.error().*.data);
-        }
-
-        return (:[]T){(:*T)result.value(), new_count};
-    }
-
-    # Deallocate the provided slice using the provided allocator.
-    func delete(allocator: std::allocator, slice: []T) void {
-        var pointer: *byte = *((:**byte)&slice);
-        var size: usize = countof(slice) * sizeof(T);
-        allocator.deallocate(pointer, alignof(T), size);
-    }
-}
-
-struct str { # namespace
-    var __namespace__: any;
-
-    # Returns true if `str` starts with `target`.
-    func starts_with(str: []byte, target: []byte) bool {
-        if countof(str) < countof(target) {
-            return false;
-        }
-
-        for i in countof(target) {
-            if str[i] != target[i] {
-                return false;
-            }
-        }
-
-        return true;
-    }
-
-    # Returns true if `str` ends with `target`.
-    func ends_with(str: []byte, target: []byte) bool {
-        if countof(str) < countof(target) {
-            return false;
-        }
-
-        var start = countof(str) - countof(target);
-        for i in countof(target) {
-            if str[start+i] != target[i] {
-                return false;
-            }
-        }
-
-        return true;
-    }
-
-    # Returns true if `str` contains `target`.
-    func contains(str: []byte, target: []byte) bool {
-        if countof(str) < countof(target) {
-            return false;
-        }
-
-        var start = 0u;
-        for start <= (countof(str) - countof(target)) {
-            var i = 0u;
-            for i < countof(target) {
-                if str[start+i] != target[i] {
-                    break;
-                }
-                i = i + 1;
-            }
-
-            if i == countof(target) {
-                return true;
-            }
-            start = start + 1;
-        }
-
-        return false;
-    }
-
-    # Return a newly allocated slice containing the fields of `str` split on
-    # all occurrences of `delimiter`. Consecutive delimiters are not grouped
-    # together and are deemed to delimit empty strings. Elements of the
-    # returned slice are created from, and thus share a lifetime with, the
-    # input string, with the exception of an optional final empty string in the
-    # case of `std::str::split("bytes<delimiter>", "<delimiter>", allocator);`,
-    # which has a static lifetime.
-    #
-    # Example:
-    #   var fields = std::str::split(input, " ", allocator);
-    #   defer std::slice[[[]byte]]::delete(allocator, fields);
-    #   for i in countof(fields) {
-    #       # Do something with each split field...
-    #   }
-    func split(str: []byte, delimiter: []byte, allocator: std::allocator) [][]byte {
-        var slice = std::slice[[[]byte]]::new(allocator, 0);
-
-        var start = 0u;
-        var cur = 0u;
-        for cur < countof(str) {
-            if not std::str::starts_with(str[cur:countof(str)], delimiter) {
-                cur = cur + 1;
-                continue;
-            }
-
-            slice = std::slice[[[]byte]]::resize(allocator, slice, countof(slice) + 1);
-            slice[countof(slice) - 1] = (:[]byte){&str[start], cur - start};
-            cur = cur + countof(delimiter);
-            start = cur;
-        }
-
-        slice = std::slice[[[]byte]]::resize(allocator, slice, countof(slice) + 1);
-        if start < countof(str) {
-            slice[countof(slice) - 1] = (:[]byte){&str[start], cur - start};
-        }
-        else {
-            slice[countof(slice) - 1] = (:[]byte){(:*byte)0u, 0};
-        }
-        return slice;
-    }
-
-    func eq(lhs: []byte, rhs: []byte) bool {
-        return lhs.compare(&rhs) == 0;
-    }
-
-    func ne(lhs: []byte, rhs: []byte) bool {
-        return lhs.compare(&rhs) != 0;
-    }
-
-    func lt(lhs: []byte, rhs: []byte) bool {
-        return lhs.compare(&rhs) < 0;
-    }
-
-    func le(lhs: []byte, rhs: []byte) bool {
-        return lhs.compare(&rhs) <= 0;
-    }
-
-    func gt(lhs: []byte, rhs: []byte) bool {
-        return lhs.compare(&rhs) > 0;
-    }
-
-    func ge(lhs: []byte, rhs: []byte) bool {
-        return lhs.compare(&rhs) >= 0;
-    }
-}
-
-struct cstr { # namespace
-    var __namespace__: any;
-
-    # Returns the number of bytes in `cstr` before the NUL terminator.
-    func count(cstr: *byte) usize {
-        var cur: *byte = cstr;
-        for *cur != '\0' {
-            cur = std::ptr[[byte]]::add(cur, 1);
-        }
-        return (:usize)cur - (:usize)cstr;
-    }
-
-    # Returns a view of `cstr` as if it were a byte slice.
-    func data(cstr: *byte) []byte {
-        return (:[]byte){cstr, std::cstr::count(cstr)};
-    }
-}
+# Common error type used within the Sunder standard library. The `std::error`
+# type is typically used as the error template argument in `std::result`
+# template instantiations. The layout of the `std::error_info` type is
+# guaranteed to match the layout of the `[]byte` type, and type punning from
+# `*[]byte` to `std::error` is explicitly supported.
+alias error = *std::error_info;
 
 # Strongly typed wrapper around a static byte-string providing information on
 # the category of error that has occurred.
@@ -272,13 +17,6 @@ struct error_info {
     # Static byte-string describing the category of error that has occurred.
     var data: []byte;
 }
-
-# Common error type used within the Sunder standard library. The `std::error`
-# type is typically used as the error template argument in `std::result`
-# template instantiations. The layout of the `std::error_info` type is
-# guaranteed to match the layout of the `[]byte` type, and type punning from
-# `*[]byte` to `std::error` is explicitly supported.
-alias error = *std::error_info;
 
 const _ALLOCATION_FAILURE = (:std::error_info){.data = "allocation failure"};
 const _BUFFER_FULL = (:std::error_info){.data = "buffer full"};
@@ -468,6 +206,370 @@ struct formatter {
     }
 }
 
+struct iterator_itable[[T]] {
+    var advance: func(*any) bool;
+    var current: func(*any) T;
+}
+
+struct iterator[[T]] {
+    var itable: *std::iterator_itable[[T]];
+    var object: *any;
+
+    func init[[I]](object: *I) iterator[[T]] {
+        const itable = (:std::iterator_itable[[T]]){
+            .advance = I::advance,
+            .current = I::current
+        };
+        return (:iterator[[T]]){
+            .itable = &itable,
+            .object = object
+        };
+    }
+
+    # Advance the iterator by one position. Returns true if the iterator was
+    # successfully advanced. Returns false if the iterator has reached an
+    # end-of-iteration condition.
+    func advance(self: *iterator[[T]]) bool {
+        return self.*.itable.*.advance(self.*.object);
+    }
+
+    # Returns the item at the current position of the iterator. If the backing
+    # iterator has not begun iteration, or if the backing iterator has reached
+    # an end-of-iteration condition, then the backing `current` function should
+    # panic.
+    func current(self: *iterator[[T]]) T {
+        return self.*.itable.*.current(self.*.object);
+    }
+}
+
+struct allocator_itable {
+    var allocate: func(*any, usize, usize) std::result[[*byte, std::error]];
+    var reallocate: func(*any, *byte, usize, usize, usize) std::result[[*byte, std::error]];
+    var deallocate: func(*any, *byte, usize, usize) void;
+}
+
+struct allocator {
+    var itable: *std::allocator_itable;
+    var object: *any;
+
+    func init[[T]](object: *T) allocator {
+        const itable = (:std::allocator_itable){
+            .allocate = T::allocate,
+            .reallocate = T::reallocate,
+            .deallocate = T::deallocate
+        };
+        return (:allocator){
+            .itable = &itable,
+            .object = object
+        };
+    }
+
+    # Attempt to allocate a chunk of memory with the provided size and
+    # alignment.
+    #
+    # On success, this function returns a pointer to the start of the allocated
+    # chunk.
+    func allocate(self: *allocator, align: usize, size: usize) std::result[[*byte, std::error]] {
+        return self.*.itable.*.allocate(self.*.object, align, size);
+    }
+
+    # Reallocate a chunk of memory with the provided size and alignment,
+    # starting at the address `ptr`, which was previously allocated by this
+    # allocator.
+    #
+    # On success, this function returns a pointer to the start of the
+    # reallocated block, which may have same address as the input `ptr`
+    # argument in the event of a no-op reallocation.
+    func reallocate(self: *allocator, ptr: *byte, align: usize, old_size: usize, new_size: usize) std::result[[*byte, std::error]] {
+        return self.*.itable.*.reallocate(self.*.object, ptr, align, old_size, new_size);
+    }
+
+    # Deallocate a chunk of memory with the provided size and alignment,
+    # starting at the address `ptr`, which was previously allocated by this
+    # allocator.
+    func deallocate(self: *allocator, ptr: *byte, align: usize, size: usize) void {
+        self.*.itable.*.deallocate(self.*.object, ptr, align, size);
+    }
+}
+
+struct ptr[[T]] { # namespace
+    var __namespace__: any;
+
+    const NULL: *T = uninit;
+
+    # Equivalent to the C operation `ptr + n`.
+    func add(ptr: *T, n: usize) *T {
+        return (:*T)((:usize)ptr + n * sizeof(typeof(*ptr)));
+    }
+
+    # Equivalent to the C operation `ptr - n`.
+    func sub(ptr: *T, n: usize) *T {
+        return (:*T)((:usize)ptr - n * sizeof(typeof(*ptr)));
+    }
+}
+
+struct slice[[T]] { # namespace
+    var __namespace__: any;
+
+    # Copy the elements of `source` into `destination`. The source and
+    # destination buffers must contain the same number of elements.
+    func copy(destination: []T, source: []T) void {
+        if countof(destination) != countof(source) {
+            std::panic("source and destination buffers have different sizes");
+        }
+
+        if countof(source) == 0 {
+            # Nothing to copy.
+            return;
+        }
+
+        # If the copy operation is being performed on two slices into the same
+        # buffer then the direction in which the copy is performed does matter.
+        # Say there is some buffer:
+        #
+        #    0  1  2  3  4
+        #   [A][B][C][D][E]
+        #
+        # and the following copy operation is performed:
+        #
+        #   std::slice[[T]]::copy(buf[0:3], buf[1:4]);
+        #
+        # With a forwards copy the correct result is produced:
+        #
+        #    0  1  2  3  4
+        #   [A][B][C][D][E] <- initial buffer
+        #   [B][B][C][D][E] <- copy first element
+        #   [B][C][C][D][E] <- copy second element
+        #   [B][C][D][D][E] <- copy third element
+        #
+        # But with a backwards copy an incorrect result is produced:
+        #
+        #    0  1  2  3  4
+        #   [A][B][C][D][E] <- initial buffer
+        #   [A][B][D][D][E] <- copy first element
+        #   [A][D][D][D][E] <- copy second element
+        #   [D][D][D][D][E] <- copy third element
+        #
+        # So when the start of `destination` appears before the start of
+        # `source` the copy must be performed forwards, and when the start of
+        # `source` appears before the start of `destination` then copy must be
+        # performed backwards. When the start of `destination` and the start of
+        # `source` are the same, the copy is arbitrarily chosen to be performed
+        # forwards.
+        if &destination[0] <= &source[0] {
+            # Copy forwards.
+            for i in countof(source) {
+                destination[i] = source[i];
+            }
+        }
+        else {
+            # Copy backwards.
+            for i in countof(source) {
+                var index: usize = countof(source) - 1 - i;
+                destination[index] = source[index];
+            }
+        }
+    }
+
+    # Set every element of the provided slice to the provided value.
+    func fill(slice: []T, value: T) void {
+        for i in countof(slice) {
+            slice[i] = value;
+        }
+    }
+
+    # Allocate a slice of `count` elements using the provided allocator.
+    func new(allocator: std::allocator, count: usize) []T {
+        var result = allocator.allocate(alignof(T), count * sizeof(T));
+        if result.is_error() {
+            std::panic(result.error().*.data);
+        }
+        return (:[]T){(:*T)result.value(), count};
+    }
+
+    # Resize the provided slice to `new_count` elements using the provided
+    # allocator.
+    func resize(allocator: std::allocator, slice: []T, new_count: usize) []T {
+        var cur_count: usize = countof(slice);
+        var cur_size: usize = cur_count * sizeof(T);
+        var new_size: usize = new_count * sizeof(T);
+
+        var cur_pointer: *byte = *((:**byte)&slice);
+        var result = allocator.reallocate(cur_pointer, alignof(T), cur_size, new_size);
+        if result.is_error() {
+            std::panic(result.error().*.data);
+        }
+
+        return (:[]T){(:*T)result.value(), new_count};
+    }
+
+    # Deallocate the provided slice using the provided allocator.
+    func delete(allocator: std::allocator, slice: []T) void {
+        var pointer: *byte = *((:**byte)&slice);
+        var size: usize = countof(slice) * sizeof(T);
+        allocator.deallocate(pointer, alignof(T), size);
+    }
+}
+
+struct slice_iterator[[T]] {
+    var _slice: []T;
+    var _index: std::optional[[usize]];
+
+    func init(slice: []T) slice_iterator[[T]] {
+        return (:slice_iterator[[T]]){
+            ._slice = slice,
+            ._index = std::optional[[usize]]::EMPTY
+        };
+    }
+
+    func advance(self: *slice_iterator[[T]]) bool {
+        if countof(self.*._slice) == 0 {
+            return false; # end-of-iteration
+        }
+
+        if self.*._index.is_empty() {
+            self.*._index = std::optional[[usize]]::init_value(0);
+            return true; # start-of-iteration
+        }
+
+        self.*._index = std::optional[[usize]]::init_value(self.*._index.value() + 1);
+        return self.*._index.value() < countof(self.*._slice);
+    }
+
+    func current(self: *slice_iterator[[T]]) *T {
+        if self.*._index.is_empty() or self.*._index.value() >= countof(self.*._slice) {
+            std::panic("invalid iterator");
+        }
+
+        return &self.*._slice[self.*._index.value()];
+    }
+}
+
+struct str { # namespace
+    var __namespace__: any;
+
+    # Returns true if `str` starts with `target`.
+    func starts_with(str: []byte, target: []byte) bool {
+        if countof(str) < countof(target) {
+            return false;
+        }
+
+        for i in countof(target) {
+            if str[i] != target[i] {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    # Returns true if `str` ends with `target`.
+    func ends_with(str: []byte, target: []byte) bool {
+        if countof(str) < countof(target) {
+            return false;
+        }
+
+        var start = countof(str) - countof(target);
+        for i in countof(target) {
+            if str[start+i] != target[i] {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    # Returns true if `str` contains `target`.
+    func contains(str: []byte, target: []byte) bool {
+        if countof(str) < countof(target) {
+            return false;
+        }
+
+        var start = 0u;
+        for start <= (countof(str) - countof(target)) {
+            var i = 0u;
+            for i < countof(target) {
+                if str[start+i] != target[i] {
+                    break;
+                }
+                i = i + 1;
+            }
+
+            if i == countof(target) {
+                return true;
+            }
+            start = start + 1;
+        }
+
+        return false;
+    }
+
+    # Return a newly allocated slice containing the fields of `str` split on
+    # all occurrences of `delimiter`. Consecutive delimiters are not grouped
+    # together and are deemed to delimit empty strings. Elements of the
+    # returned slice are created from, and thus share a lifetime with, the
+    # input string, with the exception of an optional final empty string in the
+    # case of `std::str::split("bytes<delimiter>", "<delimiter>", allocator);`,
+    # which has a static lifetime.
+    #
+    # Example:
+    #   var fields = std::str::split(input, " ", allocator);
+    #   defer std::slice[[[]byte]]::delete(allocator, fields);
+    #   for i in countof(fields) {
+    #       # Do something with each split field...
+    #   }
+    func split(str: []byte, delimiter: []byte, allocator: std::allocator) [][]byte {
+        var slice = std::slice[[[]byte]]::new(allocator, 0);
+
+        var start = 0u;
+        var cur = 0u;
+        for cur < countof(str) {
+            if not std::str::starts_with(str[cur:countof(str)], delimiter) {
+                cur = cur + 1;
+                continue;
+            }
+
+            slice = std::slice[[[]byte]]::resize(allocator, slice, countof(slice) + 1);
+            slice[countof(slice) - 1] = (:[]byte){&str[start], cur - start};
+            cur = cur + countof(delimiter);
+            start = cur;
+        }
+
+        slice = std::slice[[[]byte]]::resize(allocator, slice, countof(slice) + 1);
+        if start < countof(str) {
+            slice[countof(slice) - 1] = (:[]byte){&str[start], cur - start};
+        }
+        else {
+            slice[countof(slice) - 1] = (:[]byte){(:*byte)0u, 0};
+        }
+        return slice;
+    }
+
+    func eq(lhs: []byte, rhs: []byte) bool {
+        return lhs.compare(&rhs) == 0;
+    }
+
+    func ne(lhs: []byte, rhs: []byte) bool {
+        return lhs.compare(&rhs) != 0;
+    }
+
+    func lt(lhs: []byte, rhs: []byte) bool {
+        return lhs.compare(&rhs) < 0;
+    }
+
+    func le(lhs: []byte, rhs: []byte) bool {
+        return lhs.compare(&rhs) <= 0;
+    }
+
+    func gt(lhs: []byte, rhs: []byte) bool {
+        return lhs.compare(&rhs) > 0;
+    }
+
+    func ge(lhs: []byte, rhs: []byte) bool {
+        return lhs.compare(&rhs) >= 0;
+    }
+}
+
 struct str_reader {
     var _str: []byte;
     var _idx: usize;
@@ -521,6 +623,24 @@ struct str_writer {
 
         self.*._idx = self.*._idx + min_count;
         return std::result[[usize, std::error]]::init_value(min_count);
+    }
+}
+
+struct cstr { # namespace
+    var __namespace__: any;
+
+    # Returns the number of bytes in `cstr` before the NUL terminator.
+    func count(cstr: *byte) usize {
+        var cur: *byte = cstr;
+        for *cur != '\0' {
+            cur = std::ptr[[byte]]::add(cur, 1);
+        }
+        return (:usize)cur - (:usize)cstr;
+    }
+
+    # Returns a view of `cstr` as if it were a byte slice.
+    func data(cstr: *byte) []byte {
+        return (:[]byte){cstr, std::cstr::count(cstr)};
     }
 }
 
@@ -893,126 +1013,6 @@ func print_format(writer: std::writer, format: []byte, args: []std::formatter) v
 func print_format_line(writer: std::writer, format: []byte, args: []std::formatter) void {
     std::print_format(writer, format, args);
     std::print(writer, "\n");
-}
-
-struct iterator_itable[[T]] {
-    var advance: func(*any) bool;
-    var current: func(*any) T;
-}
-
-struct iterator[[T]] {
-    var itable: *std::iterator_itable[[T]];
-    var object: *any;
-
-    func init[[I]](object: *I) iterator[[T]] {
-        const itable = (:std::iterator_itable[[T]]){
-            .advance = I::advance,
-            .current = I::current
-        };
-        return (:iterator[[T]]){
-            .itable = &itable,
-            .object = object
-        };
-    }
-
-    # Advance the iterator by one position. Returns true if the iterator was
-    # successfully advanced. Returns false if the iterator has reached an
-    # end-of-iteration condition.
-    func advance(self: *iterator[[T]]) bool {
-        return self.*.itable.*.advance(self.*.object);
-    }
-
-    # Returns the item at the current position of the iterator. If the backing
-    # iterator has not begun iteration, or if the backing iterator has reached
-    # an end-of-iteration condition, then the backing `current` function should
-    # panic.
-    func current(self: *iterator[[T]]) T {
-        return self.*.itable.*.current(self.*.object);
-    }
-}
-
-struct slice_iterator[[T]] {
-    var _slice: []T;
-    var _index: std::optional[[usize]];
-
-    func init(slice: []T) slice_iterator[[T]] {
-        return (:slice_iterator[[T]]){
-            ._slice = slice,
-            ._index = std::optional[[usize]]::EMPTY
-        };
-    }
-
-    func advance(self: *slice_iterator[[T]]) bool {
-        if countof(self.*._slice) == 0 {
-            return false; # end-of-iteration
-        }
-
-        if self.*._index.is_empty() {
-            self.*._index = std::optional[[usize]]::init_value(0);
-            return true; # start-of-iteration
-        }
-
-        self.*._index = std::optional[[usize]]::init_value(self.*._index.value() + 1);
-        return self.*._index.value() < countof(self.*._slice);
-    }
-
-    func current(self: *slice_iterator[[T]]) *T {
-        if self.*._index.is_empty() or self.*._index.value() >= countof(self.*._slice) {
-            std::panic("invalid iterator");
-        }
-
-        return &self.*._slice[self.*._index.value()];
-    }
-}
-
-struct allocator_itable {
-    var allocate: func(*any, usize, usize) std::result[[*byte, std::error]];
-    var reallocate: func(*any, *byte, usize, usize, usize) std::result[[*byte, std::error]];
-    var deallocate: func(*any, *byte, usize, usize) void;
-}
-
-struct allocator {
-    var itable: *std::allocator_itable;
-    var object: *any;
-
-    func init[[T]](object: *T) allocator {
-        const itable = (:std::allocator_itable){
-            .allocate = T::allocate,
-            .reallocate = T::reallocate,
-            .deallocate = T::deallocate
-        };
-        return (:allocator){
-            .itable = &itable,
-            .object = object
-        };
-    }
-
-    # Attempt to allocate a chunk of memory with the provided size and
-    # alignment.
-    #
-    # On success, this function returns a pointer to the start of the allocated
-    # chunk.
-    func allocate(self: *allocator, align: usize, size: usize) std::result[[*byte, std::error]] {
-        return self.*.itable.*.allocate(self.*.object, align, size);
-    }
-
-    # Reallocate a chunk of memory with the provided size and alignment,
-    # starting at the address `ptr`, which was previously allocated by this
-    # allocator.
-    #
-    # On success, this function returns a pointer to the start of the
-    # reallocated block, which may have same address as the input `ptr`
-    # argument in the event of a no-op reallocation.
-    func reallocate(self: *allocator, ptr: *byte, align: usize, old_size: usize, new_size: usize) std::result[[*byte, std::error]] {
-        return self.*.itable.*.reallocate(self.*.object, ptr, align, old_size, new_size);
-    }
-
-    # Deallocate a chunk of memory with the provided size and alignment,
-    # starting at the address `ptr`, which was previously allocated by this
-    # allocator.
-    func deallocate(self: *allocator, ptr: *byte, align: usize, size: usize) void {
-        self.*.itable.*.deallocate(self.*.object, ptr, align, size);
-    }
 }
 
 # Allocate an object of type `T` using the provided allocator.
