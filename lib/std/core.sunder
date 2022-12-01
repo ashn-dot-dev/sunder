@@ -931,6 +931,40 @@ struct iterator[[T]] {
     }
 }
 
+struct slice_iterator[[T]] {
+    var _slice: []T;
+    var _index: std::optional[[usize]];
+
+    func init(slice: []T) slice_iterator[[T]] {
+        return (:slice_iterator[[T]]){
+            ._slice = slice,
+            ._index = std::optional[[usize]]::EMPTY
+        };
+    }
+
+    func advance(self: *slice_iterator[[T]]) bool {
+        if countof(self.*._slice) == 0 {
+            return false; # end-of-iteration
+        }
+
+        if self.*._index.is_empty() {
+            self.*._index = std::optional[[usize]]::init_value(0);
+            return true; # start-of-iteration
+        }
+
+        self.*._index = std::optional[[usize]]::init_value(self.*._index.value() + 1);
+        return self.*._index.value() < countof(self.*._slice);
+    }
+
+    func current(self: *slice_iterator[[T]]) *T {
+        if self.*._index.is_empty() or self.*._index.value() >= countof(self.*._slice) {
+            std::panic("invalid iterator");
+        }
+
+        return &self.*._slice[self.*._index.value()];
+    }
+}
+
 struct allocator_itable {
     var allocate: func(*any, usize, usize) std::result[[*byte, std::error]];
     var reallocate: func(*any, *byte, usize, usize, usize) std::result[[*byte, std::error]];

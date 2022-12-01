@@ -1,6 +1,5 @@
 namespace std;
 import "std/core.sunder";
-import "std/slice_iterator.sunder";
 
 struct hash_map_element[[K, V]] {
     const _STATE_NIL: usize = 0;
