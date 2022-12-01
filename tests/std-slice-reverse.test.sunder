@@ -1,0 +1,35 @@
+import "std/core.sunder";
+import "sys";
+
+func main() void {
+    var a = (:[5]byte)[0xAA, 0xBB, 0xCC, 0xDD, 0xEE];
+    std::slice[[byte]]::reverse(a[0:countof(a)]);
+    sys::dump[[[5]byte]](a);
+    std::slice[[byte]]::reverse(a[0:countof(a)]);
+    sys::dump[[[5]byte]](a);
+
+    var a = (:[4]byte)[0xAA, 0xBB, 0xCC, 0xDD];
+    std::slice[[byte]]::reverse(a[0:countof(a)]);
+    sys::dump[[[4]byte]](a);
+    std::slice[[byte]]::reverse(a[0:countof(a)]);
+    sys::dump[[[4]byte]](a);
+
+    var a = (:[1]byte)[0xAA];
+    std::slice[[byte]]::reverse(a[0:countof(a)]);
+    sys::dump[[[1]byte]](a);
+    std::slice[[byte]]::reverse(a[0:countof(a)]);
+    sys::dump[[[1]byte]](a);
+
+    var a = (:[0]byte)[];
+    std::slice[[byte]]::reverse(a[0:countof(a)]);
+    sys::dump[[[0]byte]](a);
+    std::slice[[byte]]::reverse(a[0:countof(a)]);
+    sys::dump[[[0]byte]](a);
+}
+################################################################################
+# EE DD CC BB AA
+# AA BB CC DD EE
+# DD CC BB AA
+# AA BB CC DD
+# AA
+# AA

@@ -378,6 +378,21 @@ struct slice[[T]] { # namespace
         }
     }
 
+    # Reverse the elements of the provided slice.
+    func reverse(slice: []T) void {
+        if countof(slice) <= 1 {
+            return;
+        }
+
+        var b = 0u;
+        var e = countof(slice) - 1;
+        for b < e {
+            std::swap[[T]](&slice[b], &slice[e]);
+            b = b + 1;
+            e = e - 1;
+        }
+    }
+
     # Allocate a slice of `count` elements using the provided allocator.
     func new(allocator: std::allocator, count: usize) []T {
         var result = allocator.allocate(alignof(T), count * sizeof(T));
@@ -1141,6 +1156,13 @@ func gt[[T]](lhs: *T, rhs: *T) bool {
 # Returns true if `lhs` is found to be greater than or equal to `rhs`.
 func ge[[T]](lhs: *T, rhs: *T) bool {
     return T::compare(lhs, rhs) >= 0;
+}
+
+# Exchange the contents of `x` and `y`.
+func swap[[T]](x: *T, y: *T) void {
+    var tmp = *x;
+    *x = *y;
+    *y = tmp;
 }
 
 # Returns the minimum value of `x` and `y`.

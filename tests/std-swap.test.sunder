@@ -1,0 +1,43 @@
+import "std/core.sunder";
+import "sys";
+
+struct foo {
+    var a: u16;
+    var b: u32;
+}
+
+func main() void {
+    var x = 0xAAy;
+    var y = 0xBBy;
+    std::swap[[byte]](&x, &y);
+    sys::dump[[byte]](x);
+    sys::dump[[byte]](y);
+    std::swap[[byte]](&x, &y);
+    sys::dump[[byte]](x);
+    sys::dump[[byte]](y);
+
+    var x = void::VALUE;
+    var y = void::VALUE;
+    std::swap[[void]](&x, &y);
+
+    var x = (:[2]u16)[0xAAAA, 0xBBBB];
+    var y = (:[2]u16)[0xCCCC, 0xDDDD];
+    std::swap[[[2]u16]](&x, &y);
+    sys::dump[[[2]u16]](x);
+    sys::dump[[[2]u16]](y);
+
+    var x = (:foo){.a = 0xAAAA, .b = 0xBBBBBBBB};
+    var y: foo = uninit;
+    std::swap[[foo]](&x, &y);
+    sys::dump[[foo]](x);
+    sys::dump[[foo]](y);
+}
+################################################################################
+# BB
+# AA
+# AA
+# BB
+# CC CC DD DD
+# AA AA BB BB
+# 00 00 00 00 00 00 00 00
+# AA AA 00 00 BB BB BB BB
