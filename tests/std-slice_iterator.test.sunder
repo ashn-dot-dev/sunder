@@ -1,4 +1,5 @@
 import "std/core.sunder";
+import "std/slice_iterator.sunder";
 
 func print_elements(iter: std::iterator[[*u32]]) void {
     for iter.advance() {
