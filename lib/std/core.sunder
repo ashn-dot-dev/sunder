@@ -1088,18 +1088,24 @@ const EXIT_SUCCESS: ssize = 0;
 const EXIT_FAILURE: ssize = 1;
 
 # Discontinue program execution.
+#
+# This function does not return.
 func exit(status: ssize) void {
     sys::exit((:s32)status);
 }
 
 # Print the provided string to standard error, followed by a newline, before
-# exiting with failure status. This function does not return.
+# exiting with failure status.
+#
+# This function does not return.
 func panic(why: []byte) void {
     std::panic_format("{}", (:[]std::formatter)[std::formatter::init[[[]byte]](&why)]);
 }
 
 # Print the provided formatted string to standard error, followed by a newline,
-# before exiting with failure status. This function does not return.
+# before exiting with failure status.
+#
+# This function does not return.
 func panic_format(format: []byte, args: []std::formatter) void {
     const PANIC_PREAMBLE = "panic: ";
     std::print(std::err(), PANIC_PREAMBLE);
