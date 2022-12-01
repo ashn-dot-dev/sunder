@@ -1,4 +1,5 @@
 import "std/core.sunder";
+import "sys";
 
 struct foo {
     var a: u32;
@@ -6,28 +7,15 @@ struct foo {
 }
 
 func main() void {
-    dump std::ptr[[u8]]::NULL;
-    dump std::ptr[[u16]]::NULL;
-    dump std::ptr[[u32]]::NULL;
-    dump std::ptr[[u64]]::NULL;
-    dump std::ptr[[foo]]::NULL;
+    std::assert((:usize)std::ptr[[u8]]::NULL == 0);
+    std::assert((:usize)std::ptr[[u16]]::NULL == 0);
+    std::assert((:usize)std::ptr[[u32]]::NULL == 0);
+    std::assert((:usize)std::ptr[[u64]]::NULL == 0);
+    std::assert((:usize)std::ptr[[foo]]::NULL == 0);
 
     var x: u16 = 0xBEEF;
     var y: u32 = 0xCAFEF00D;
 
-    dump std::ptr[[u16]]::NULL == &x;
-    dump std::ptr[[u16]]::NULL == (:*u16)0u;
-
-    dump std::ptr[[u32]]::NULL == &y;
-    dump std::ptr[[u32]]::NULL == (:*u32)0u;
+    std::assert(std::ptr[[u16]]::NULL != &x);
+    std::assert(std::ptr[[u32]]::NULL != &y);
 }
-################################################################################
-# 00 00 00 00 00 00 00 00
-# 00 00 00 00 00 00 00 00
-# 00 00 00 00 00 00 00 00
-# 00 00 00 00 00 00 00 00
-# 00 00 00 00 00 00 00 00
-# 00
-# 01
-# 00
-# 01

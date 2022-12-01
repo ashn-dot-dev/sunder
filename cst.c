@@ -326,18 +326,6 @@ cst_stmt_new_continue(struct source_location const* location)
 }
 
 struct cst_stmt*
-cst_stmt_new_dump(
-    struct source_location const* location, struct cst_expr const* expr)
-{
-    assert(location != NULL);
-    assert(expr != NULL);
-
-    struct cst_stmt* const self = cst_stmt_new(location, CST_STMT_DUMP);
-    self->data.dump.expr = expr;
-    return self;
-}
-
-struct cst_stmt*
 cst_stmt_new_return(
     struct source_location const* location, struct cst_expr const* expr)
 {

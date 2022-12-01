@@ -1,15 +1,17 @@
+import "sys";
+
 const gc0: byte = 0xABy;
 const gc1: byte = gc0;
 
 var gv0: byte = 0xBCy;
 
 func main() void {
-    dump gc0;
-    dump gc1;
+    sys::dump[[byte]](gc0);
+    sys::dump[[byte]](gc1);
 
-    dump gv0;
+    sys::dump[[byte]](gv0);
     var x: byte = gv0;
-    dump x;
+    sys::dump[[byte]](x);
 
     const lc0: byte = 0xCDy;
     const lc1: byte = lc0;
@@ -17,11 +19,11 @@ func main() void {
     var lv0: byte = 0xDEy;
     var lv1: byte = lv0;
 
-    dump lc0;
-    dump lc1;
+    sys::dump[[byte]](lc0);
+    sys::dump[[byte]](lc1);
 
-    dump lv0;
-    dump lv1;
+    sys::dump[[byte]](lv0);
+    sys::dump[[byte]](lv1);
 }
 ################################################################################
 # AB

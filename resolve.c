@@ -218,8 +218,6 @@ resolve_stmt_break(struct resolver* resolver, struct cst_stmt const* stmt);
 static struct stmt const*
 resolve_stmt_continue(struct resolver* resolver, struct cst_stmt const* stmt);
 static struct stmt const*
-resolve_stmt_dump(struct resolver* resolver, struct cst_stmt const* stmt);
-static struct stmt const*
 resolve_stmt_return(struct resolver* resolver, struct cst_stmt const* stmt);
 static struct stmt const*
 resolve_stmt_assign(struct resolver* resolver, struct cst_stmt const* stmt);
@@ -2337,9 +2335,6 @@ resolve_stmt(struct resolver* resolver, struct cst_stmt const* stmt)
     case CST_STMT_CONTINUE: {
         return resolve_stmt_continue(resolver, stmt);
     }
-    case CST_STMT_DUMP: {
-        return resolve_stmt_dump(resolver, stmt);
-    }
     case CST_STMT_RETURN: {
         return resolve_stmt_return(resolver, stmt);
     }
@@ -2681,26 +2676,6 @@ resolve_stmt_continue(struct resolver* resolver, struct cst_stmt const* stmt)
 
     struct stmt* const resolved = stmt_new_continue(
         stmt->location, resolver->current_defer, resolver->current_loop_defer);
-
-    freeze(resolved);
-    return resolved;
-}
-
-static struct stmt const*
-resolve_stmt_dump(struct resolver* resolver, struct cst_stmt const* stmt)
-{
-    assert(resolver != NULL);
-    assert(!resolver_is_global(resolver));
-    assert(stmt != NULL);
-    assert(stmt->kind == CST_STMT_DUMP);
-
-    struct expr const* expr = resolve_expr(resolver, stmt->data.dump.expr);
-    if (expr->type->size == SIZEOF_UNSIZED) {
-        fatal(
-            stmt->location, "type `%s` has no defined size", expr->type->name);
-    }
-
-    struct stmt* const resolved = stmt_new_dump(stmt->location, expr);
 
     freeze(resolved);
     return resolved;

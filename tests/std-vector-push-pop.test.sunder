@@ -1,10 +1,11 @@
 import "std/page_allocator.sunder";
 import "std/vector.sunder";
+import "sys";
 
 func dump_elements[[T]](pvec: *std::vector[[T]]) void {
     var slice: []T = pvec.*.data();
     for i in 0:countof(slice) {
-        dump slice[i];
+        sys::dump[[T]](slice[i]);
     }
 }
 
@@ -16,37 +17,37 @@ func main() void {
 
     # [A]
     vec.push(A);
-    dump vec.count();
+    sys::dump[[usize]](vec.count());
     dump_elements[[u8]](&vec);
 
     # [A][B]
     vec.push(B);
-    dump vec.count();
+    sys::dump[[usize]](vec.count());
     dump_elements[[u8]](&vec);
 
     # [A][B][C]
     vec.push(C);
-    dump vec.count();
+    sys::dump[[usize]](vec.count());
     dump_elements[[u8]](&vec);
 
     # [A][B]
     vec.pop();
-    dump vec.count();
+    sys::dump[[usize]](vec.count());
     dump_elements[[u8]](&vec);
 
     # [A]
     vec.pop();
-    dump vec.count();
+    sys::dump[[usize]](vec.count());
     dump_elements[[u8]](&vec);
 
     # Empty
     vec.pop();
-    dump vec.count();
+    sys::dump[[usize]](vec.count());
     dump_elements[[u8]](&vec);
 
     # Attempt to pop empty vec.
     vec.pop();
-    dump vec.count();
+    sys::dump[[usize]](vec.count());
     dump_elements[[u8]](&vec);
 }
 ################################################################################

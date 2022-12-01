@@ -1,6 +1,5 @@
-func nl() void {
-    # void-returning function that makes dump print a newline.
-}
+import "std/core.sunder";
+import "sys";
 
 const a: u64 = (:u64)true;
 const b: u64 = (:u64)false;
@@ -16,98 +15,112 @@ const h: u64 = (:u64)0x7777s16;
 const i: u64 = (:u64)-1s16;
 
 func main() void {
-    dump a;
-    dump b;
-    dump nl();
+    sys::dump[[u64]](a);
+    sys::dump[[u64]](b);
 
-    dump c;
-    dump d;
-    dump nl();
+    std::print(std::err(), "\n");
 
-    dump e;
-    dump f;
-    dump nl();
+    sys::dump[[u64]](c);
+    sys::dump[[s64]](d);
 
-    dump g;
-    dump h;
-    dump i;
-    dump nl();
+    std::print(std::err(), "\n");
 
-    dump (:byte)true;
-    dump (:u8)true;
-    dump (:s8)true;
-    dump (:u16)true;
-    dump (:s16)true;
-    dump (:u32)true;
-    dump (:s32)true;
-    dump (:u64)true;
-    dump (:s64)true;
-    dump nl();
+    sys::dump[[bool]](e);
+    sys::dump[[bool]](f);
 
-    dump (:byte)false;
-    dump (:u8)false;
-    dump (:s8)false;
-    dump (:u16)false;
-    dump (:s16)false;
-    dump (:u32)false;
-    dump (:s32)false;
-    dump (:u64)false;
-    dump (:s64)false;
-    dump nl();
+    std::print(std::err(), "\n");
 
-    dump (:bool)0x0000000000000000u64;
-    dump (:bool)0xFFFFFFFFFFFFFFFFu64;
-    dump (:bool)0x0000000000000000s64;
-    dump (:bool)-1s64;
-    dump nl();
+    sys::dump[[u64]](g);
+    sys::dump[[u64]](h);
+    sys::dump[[u64]](i);
 
-    dump (:u8)0xFFy;
-    dump (:s8)0xFFy;
-    dump (:u16)0xFFy;
-    dump (:s16)0xFFy;
-    dump (:u32)0xFFy;
-    dump (:s32)0xFFy;
-    dump (:u64)0xFFy;
-    dump (:s64)0xFFy;
-    dump nl();
+    std::print(std::err(), "\n");
 
-    dump (:byte)0x77u8;
-    dump (:byte)0x77s8;
-    dump (:byte)0xFFu8;
-    dump (:byte)-1s8;
-    dump (:byte)0xFFFFFFFFFFFFFFFFu64;
-    dump (:byte)-1s64;
-    dump nl();
+    sys::dump[[byte]]((:byte)true);
+    sys::dump[[u8]]((:u8)true);
+    sys::dump[[s8]]((:s8)true);
+    sys::dump[[u16]]((:u16)true);
+    sys::dump[[s16]]((:s16)true);
+    sys::dump[[u32]]((:u32)true);
+    sys::dump[[s32]]((:s32)true);
+    sys::dump[[u64]]((:u64)true);
+    sys::dump[[s64]]((:s64)true);
 
-    dump (:u64)0x77u8;
-    dump (:s64)0x77u8;
-    dump (:u64)0x77s8;
-    dump (:s64)0x77s8;
-    dump nl();
+    std::print(std::err(), "\n");
 
-    dump (:u64)0xFFu8;
-    dump (:s64)0xFFu8;
-    dump (:u64)-1s8;
-    dump (:s64)-1s8;
-    dump nl();
+    sys::dump[[byte]]((:byte)false);
+    sys::dump[[u8]]((:u8)false);
+    sys::dump[[s8]]((:s8)false);
+    sys::dump[[u16]]((:u16)false);
+    sys::dump[[s16]]((:s16)false);
+    sys::dump[[u32]]((:u32)false);
+    sys::dump[[s32]]((:s32)false);
+    sys::dump[[u64]]((:u64)false);
+    sys::dump[[s64]]((:s64)false);
 
-    dump (:ssize)0xFFFFFFFFFFFFFFFFu;
-    dump (:usize)-1s;
-    dump nl();
+    std::print(std::err(), "\n");
 
-    dump (:*byte)0xBBBBBBBBBBBBBBBBu;
-    dump (:usize)(:*byte)0xBBBBBBBBBBBBBBBBu;
-    dump nl();
+    sys::dump[[bool]]((:bool)0x0000000000000000u64);
+    sys::dump[[bool]]((:bool)0xFFFFFFFFFFFFFFFFu64);
+    sys::dump[[bool]]((:bool)0x0000000000000000s64);
+    sys::dump[[bool]]((:bool)-1s64);
+
+    std::print(std::err(), "\n");
+
+    sys::dump[[u8]]((:u8)0xFFy);
+    sys::dump[[s8]]((:s8)0xFFy);
+    sys::dump[[u16]]((:u16)0xFFy);
+    sys::dump[[s16]]((:s16)0xFFy);
+    sys::dump[[u32]]((:u32)0xFFy);
+    sys::dump[[s32]]((:s32)0xFFy);
+    sys::dump[[u64]]((:u64)0xFFy);
+    sys::dump[[s64]]((:s64)0xFFy);
+
+    std::print(std::err(), "\n");
+
+    sys::dump[[byte]]((:byte)0x77u8);
+    sys::dump[[byte]]((:byte)0x77s8);
+    sys::dump[[byte]]((:byte)0xFFu8);
+    sys::dump[[byte]]((:byte)-1s8);
+    sys::dump[[byte]]((:byte)0xFFFFFFFFFFFFFFFFu64);
+    sys::dump[[byte]]((:byte)-1s64);
+
+    std::print(std::err(), "\n");
+
+    sys::dump[[u64]]((:u64)0x77u8);
+    sys::dump[[s64]]((:s64)0x77u8);
+    sys::dump[[u64]]((:u64)0x77s8);
+    sys::dump[[s64]]((:s64)0x77s8);
+
+    std::print(std::err(), "\n");
+
+    sys::dump[[u64]]((:u64)0xFFu8);
+    sys::dump[[s64]]((:s64)0xFFu8);
+    sys::dump[[u64]]((:u64)-1s8);
+    sys::dump[[s64]]((:s64)-1s8);
+
+    std::print(std::err(), "\n");
+
+    sys::dump[[ssize]]((:ssize)0xFFFFFFFFFFFFFFFFu);
+    sys::dump[[usize]]((:usize)-1s);
+
+    std::print(std::err(), "\n");
+
+    sys::dump[[*byte]]((:*byte)0xBBBBBBBBBBBBBBBBu);
+    sys::dump[[usize]]((:usize)(:*byte)0xBBBBBBBBBBBBBBBBu);
+
+    std::print(std::err(), "\n");
 
     # pointer to pointer
-    dump (:*u32)(:*byte)0xCCCCCCCCCCCCCCCCu;
-    dump nl();
+    sys::dump[[*u32]]((:*u32)(:*byte)0xCCCCCCCCCCCCCCCCu);
+
+    std::print(std::err(), "\n");
 
     # Check negatives are sign-extended correctly.
-    dump (:u64)-1s8;
-    dump (:u64)-1s16;
-    dump (:u64)-1s32;
-    dump (:u64)-1s64;
+    sys::dump[[u64]]((:u64)-1s8);
+    sys::dump[[u64]]((:u64)-1s16);
+    sys::dump[[u64]]((:u64)-1s32);
+    sys::dump[[u64]]((:u64)-1s64);
 }
 ################################################################################
 # 01 00 00 00 00 00 00 00

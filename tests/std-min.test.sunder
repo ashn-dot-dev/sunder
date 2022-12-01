@@ -1,9 +1,10 @@
 import "std/core.sunder";
 import "std/big_integer.sunder";
 import "std/general_allocator.sunder";
+import "sys";
 
 func test_value[[T]](lhs: T, rhs: T) void {
-   dump *std::min[[T]](&lhs, &rhs);
+   sys::dump[[T]](*std::min[[T]](&lhs, &rhs));
 }
 
 func main() void {

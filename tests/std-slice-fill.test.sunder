@@ -1,16 +1,17 @@
 import "std/core.sunder";
+import "sys";
 
 func main() void {
     var a: [5]byte = (:[5]byte)[0xAA, 0xBB, 0xCC, 0xDD, 0xEE];
     std::slice[[byte]]::fill(a[0:countof(a)], 0xFF);
-    dump a;
+    sys::dump[[[5]byte]](a);
     std::slice[[byte]]::fill(a[0:countof(a)], 0xAA);
-    dump a;
+    sys::dump[[[5]byte]](a);
 
     # Test with non-8-bit type.
     var b: [5]u16 = (:[5]u16)[0xAAAA, 0xBBBB, 0xCCCC, 0xDDDD, 0xEEEE];
     std::slice[[u16]]::fill(b[0:countof(b)], 0xFFFF);
-    dump b;
+    sys::dump[[[5]u16]](b);
 }
 ################################################################################
 # FF FF FF FF FF

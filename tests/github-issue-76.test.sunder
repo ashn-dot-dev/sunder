@@ -11,7 +11,7 @@ struct foo[[T]] {
 func main() void {
     var yikes = 0xABCDu16;
     var bar = foo[[u16]]::init();
-    dump bar;
+    bar;
 
     yikes; # silence unused variable warning
 }

@@ -13,9 +13,9 @@ struct c {
 }
 
 func main() void {
-    dump sizeof(a);
-    dump sizeof(b);
-    dump sizeof(c);
+    sizeof(a);
+    sizeof(b);
+    sizeof(c);
 }
 ################################################################################
 # [github-issue-100.test.sunder:12] error: struct `c` contains a member variable of incomplete struct type `a`

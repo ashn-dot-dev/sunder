@@ -1,6 +1,6 @@
 func main() void {
     var x: s64 = -9223372036854775808s64;
-    dump -x;
+    -x;
 }
 ################################################################################
 # fatal: arithmetic operation produces out-of-range result

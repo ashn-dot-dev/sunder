@@ -1,3 +1,5 @@
+import "sys";
+
 const g_array: [3u]ssize = (:[3u]ssize)[1s, 3s, 5s];
 const g_slice: []ssize = (:[]ssize){&g_array[1u], 2u};
 
@@ -10,23 +12,23 @@ const slice_of_zero_sized_objects: [][0u]void =
     (:[][0u]void){&array_of_zero_sized_objects[0u], 2u};
 
 func main() void {
-    dump (:[]ssize){&g_array[0u], 3u}[0u];
-    dump (:[]ssize){&g_array[0u], 3u}[1u];
-    dump (:[]ssize){&g_array[0u], 3u}[2u];
+    sys::dump[[ssize]]((:[]ssize){&g_array[0u], 3u}[0u]);
+    sys::dump[[ssize]]((:[]ssize){&g_array[0u], 3u}[1u]);
+    sys::dump[[ssize]]((:[]ssize){&g_array[0u], 3u}[2u]);
 
     var slice: []ssize = (:[]ssize){&g_array[0u], 3u};
-    dump slice[0u];
-    dump slice[1u];
-    dump slice[2u];
+    sys::dump[[ssize]](slice[0u]);
+    sys::dump[[ssize]](slice[1u]);
+    sys::dump[[ssize]](slice[2u]);
 
     var ptr: *ssize = &slice[2u];
-    dump *ptr;
+    sys::dump[[ssize]](*ptr);
 
-    dump g_slice[0u];
-    dump g_slice[1u];
+    sys::dump[[ssize]](g_slice[0u]);
+    sys::dump[[ssize]](g_slice[1u]);
 
-    dump slice_of_zero_sized_objects[0u];
-    dump &slice_of_zero_sized_objects[0u];
+    sys::dump[[[0]void]](slice_of_zero_sized_objects[0u]);
+    sys::dump[[*[0]void]](&slice_of_zero_sized_objects[0u]);
 }
 ################################################################################
 # 01 00 00 00 00 00 00 00

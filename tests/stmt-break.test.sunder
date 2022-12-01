@@ -1,14 +1,16 @@
+import "sys";
+
 func main() void {
     for true {
         for i in 1u:5u {
             if i == 3u {
                 break;
             }
-            dump i;
+            sys::dump[[usize]](i);
         }
 
         break;
-        dump 0xDEADBEEFu32;
+        sys::dump[[u32]](0xDEADBEEFu32);
     }
 }
 ################################################################################

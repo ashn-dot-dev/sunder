@@ -854,7 +854,6 @@ enum token_kind {
     TOKEN_EXTEND,
     TOKEN_ALIAS,
     TOKEN_EXTERN,
-    TOKEN_DUMP,
     TOKEN_RETURN,
     TOKEN_DEFER,
     TOKEN_IF,
@@ -1096,7 +1095,6 @@ struct cst_stmt {
         CST_STMT_FOR_EXPR,
         CST_STMT_BREAK, /* no .data member */
         CST_STMT_CONTINUE, /* no .data member */
-        CST_STMT_DUMP,
         CST_STMT_RETURN,
         CST_STMT_ASSIGN,
         CST_STMT_EXPR,
@@ -1118,9 +1116,6 @@ struct cst_stmt {
             struct cst_expr const* expr;
             struct cst_block const* body;
         } for_expr;
-        struct {
-            struct cst_expr const* expr;
-        } dump;
         struct {
             struct cst_expr const* expr; // optional
         } return_;
@@ -1157,9 +1152,6 @@ struct cst_stmt*
 cst_stmt_new_break(struct source_location const* location);
 struct cst_stmt*
 cst_stmt_new_continue(struct source_location const* location);
-struct cst_stmt*
-cst_stmt_new_dump(
-    struct source_location const* location, struct cst_expr const* expr);
 struct cst_stmt*
 cst_stmt_new_return(
     struct source_location const* location, struct cst_expr const* expr);
@@ -1848,7 +1840,6 @@ struct stmt {
         STMT_FOR_EXPR,
         STMT_BREAK,
         STMT_CONTINUE,
-        STMT_DUMP,
         STMT_RETURN,
         STMT_ASSIGN,
         STMT_EXPR,
@@ -1881,9 +1872,6 @@ struct stmt {
             struct stmt const* defer_begin; // optional
             struct stmt const* defer_end; // optional
         } continue_;
-        struct {
-            struct expr const* expr;
-        } dump;
         struct {
             struct expr const* expr; // optional
             struct stmt const* defer; // optional
@@ -1924,8 +1912,6 @@ stmt_new_continue(
     struct source_location const* location,
     struct stmt const* defer_begin,
     struct stmt const* defer_end);
-struct stmt*
-stmt_new_dump(struct source_location const* location, struct expr const* expr);
 struct stmt*
 stmt_new_return(
     struct source_location const* location,

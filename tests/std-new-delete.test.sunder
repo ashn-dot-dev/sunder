@@ -7,11 +7,6 @@ func main() void {
     var allocator: std::allocator = std::allocator::init[[std::page_allocator]](std::page_allocator::the());
 
     var ptr: *u16 = std::new[[u16]](allocator);
-    dump *ptr;
-    *ptr = 0xBEEF;
-    dump *ptr;
+    *ptr = 0xBEEF; # Touch the memory to make sure we were allocated a valid page.
     std::delete[[u16]](allocator, ptr);
 }
-################################################################################
-# 00 00
-# EF BE

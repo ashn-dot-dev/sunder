@@ -1,6 +1,5 @@
-func nl() void {
-    # void-returning function that makes dump print a newline.
-}
+import "std/core.sunder";
+import "sys";
 
 func foo() ssize {
     return +123s;
@@ -15,15 +14,16 @@ func main() void {
     const f_le_f: bool = false <= false;
     const t_le_f: bool = true <= false;
     const f_le_t: bool = false <= true;
-    dump t_le_t;
-    dump f_le_f;
-    dump t_le_f;
-    dump f_le_t;
-    dump true <= true;
-    dump false <= false;
-    dump true <= false;
-    dump false <= true;
-    dump nl();
+    sys::dump[[bool]](t_le_t);
+    sys::dump[[bool]](f_le_f);
+    sys::dump[[bool]](t_le_f);
+    sys::dump[[bool]](f_le_t);
+    sys::dump[[bool]](true <= true);
+    sys::dump[[bool]](false <= false);
+    sys::dump[[bool]](true <= false);
+    sys::dump[[bool]](false <= true);
+
+    std::print(std::err(), "\n");
 
     const a: ssize = 123s;
     const b: ssize = 456s;
@@ -34,29 +34,32 @@ func main() void {
     const b_le_a: bool = b <= a;
     const a_le_c: bool = a <= c;
     const b_le_c: bool = b <= c;
-    dump a_le_a;
-    dump b_le_b;
-    dump a_le_b;
-    dump b_le_a;
-    dump a_le_c;
-    dump b_le_c;
-    dump nl();
+    sys::dump[[bool]](a_le_a);
+    sys::dump[[bool]](b_le_b);
+    sys::dump[[bool]](a_le_b);
+    sys::dump[[bool]](b_le_a);
+    sys::dump[[bool]](a_le_c);
+    sys::dump[[bool]](b_le_c);
 
-    dump 3u <= 3u;
-    dump 3u <= 5u;
-    dump 5u <= 3u;
-    dump nl();
+    std::print(std::err(), "\n");
+
+    sys::dump[[bool]](3u <= 3u);
+    sys::dump[[bool]](3u <= 5u);
+    sys::dump[[bool]](5u <= 3u);
+
+    std::print(std::err(), "\n");
 
     var x: ssize = +1s;
     var y: ssize = -1s;
-    dump x <= y;
-    dump y <= x;
-    dump nl();
+    sys::dump[[bool]](x <= y);
+    sys::dump[[bool]](y <= x);
 
-    dump 0x00u8 <= 0xFFu8;
-    dump 0xFFu8 <= 0x00u8;
-    dump 0x0000000000000000u64 <= 0xFFFFFFFFFFFFFFFFu64;
-    dump 0xFFFFFFFFFFFFFFFFu64 <= 0x0000000000000000u64;
+    std::print(std::err(), "\n");
+
+    sys::dump[[bool]](0x00u8 <= 0xFFu8);
+    sys::dump[[bool]](0xFFu8 <= 0x00u8);
+    sys::dump[[bool]](0x0000000000000000u64 <= 0xFFFFFFFFFFFFFFFFu64);
+    sys::dump[[bool]](0xFFFFFFFFFFFFFFFFu64 <= 0x0000000000000000u64);
 }
 ################################################################################
 # 01

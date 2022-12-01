@@ -34,7 +34,7 @@ func main() void {
     var argv = util::argv::new(allocator, (:[][]byte)[]);
     var parser = std::argument_parser::init_from_argv(options, argv);
 
-    dump parser.advance();
+    std::assert(not parser.advance());
     dump_parser_info(&parser);
 
     std::print(std::out(), "\n"); ##############################################
@@ -43,7 +43,7 @@ func main() void {
     var argv = util::argv::new(allocator, (:[][]byte)["arg0"]);
     var parser = std::argument_parser::init_from_argv(options, argv);
 
-    dump parser.advance();
+    std::assert(not parser.advance());
     dump_parser_info(&parser);
 
     std::print(std::out(), "\n"); ##############################################
@@ -55,11 +55,11 @@ func main() void {
         "arg2"
     ]);
     var parser = std::argument_parser::init_from_argv(options, argv);
-    dump parser.advance();
+    std::assert(parser.advance());
     dump_parser_info(&parser);
-    dump parser.advance();
+    std::assert(parser.advance());
     dump_parser_info(&parser);
-    dump parser.advance();
+    std::assert(not parser.advance());
     dump_parser_info(&parser);
 
     std::print(std::out(), "\n"); ##############################################
@@ -85,93 +85,74 @@ func main() void {
         "arg15"
     ]);
     var parser = std::argument_parser::init_from_argv(options, argv);
-    dump parser.advance();
+    std::assert(parser.advance());
     dump_parser_info(&parser);
-    dump parser.advance();
+    std::assert(parser.advance());
     dump_parser_info(&parser);
-    dump parser.advance();
+    std::assert(parser.advance());
     dump_parser_info(&parser);
-    dump parser.advance();
+    std::assert(parser.advance());
     dump_parser_info(&parser);
-    dump parser.advance();
+    std::assert(parser.advance());
     dump_parser_info(&parser);
-    dump parser.advance();
+    std::assert(parser.advance());
     dump_parser_info(&parser);
-    dump parser.advance();
+    std::assert(parser.advance());
     dump_parser_info(&parser);
-    dump parser.advance();
+    std::assert(parser.advance());
     dump_parser_info(&parser);
-    dump parser.advance();
+    std::assert(parser.advance());
     dump_parser_info(&parser);
-    dump parser.advance();
+    std::assert(parser.advance());
     dump_parser_info(&parser);
-    dump parser.advance();
+    std::assert(parser.advance());
     dump_parser_info(&parser);
-    dump parser.advance();
+    std::assert(parser.advance());
     dump_parser_info(&parser);
-    dump parser.advance();
+    std::assert(parser.advance());
     dump_parser_info(&parser);
-    dump parser.advance();
+    std::assert(not parser.advance());
     dump_parser_info(&parser);
 }
 ################################################################################
-# 00
 # parser option   => <empty>
 # parser argument => <empty>
 #
-# 00
 # parser option   => <empty>
 # parser argument => <empty>
 #
-# 01
 # parser option   => <empty>
 # parser argument => arg1
-# 01
 # parser option   => <empty>
 # parser argument => arg2
-# 00
 # parser option   => <empty>
 # parser argument => <empty>
 #
-# 01
 # parser option   => <empty>
 # parser argument => arg1
-# 01
 # parser option   => foo
 # parser argument => <empty>
-# 01
 # parser option   => foo
 # parser argument => <empty>
-# 01
 # parser option   => foo
 # parser argument => <empty>
-# 01
 # parser option   => <empty>
 # parser argument => arg5
-# 01
 # parser option   => bar
 # parser argument => arg7
-# 01
 # parser option   => bar
 # parser argument => arg9
-# 01
 # parser option   => <empty>
 # parser argument => -
-# 01
 # parser option   => <empty>
 # parser argument => --foo
-# 01
 # parser option   => <empty>
 # parser argument => --bar
-# 01
 # parser option   => <empty>
 # parser argument => --bar
-# 01
 # parser option   => <empty>
 # parser argument => --
-# 01
 # parser option   => <empty>
 # parser argument => arg15
-# 00
 # parser option   => <empty>
 # parser argument => <empty>

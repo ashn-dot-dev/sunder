@@ -2,27 +2,14 @@ import "std/core.sunder";
 import "std/ascii.sunder";
 
 func main() void {
-    dump std::ascii::is_whitespace(' ');
-    dump std::ascii::is_whitespace('\t');
-    dump std::ascii::is_whitespace('\n');
-    dump std::ascii::is_whitespace(0x0B);
-    dump std::ascii::is_whitespace(0x0C);
-    dump std::ascii::is_whitespace(0x0D);
+    std::assert(std::ascii::is_whitespace(' '));
+    std::assert(std::ascii::is_whitespace('\t'));
+    std::assert(std::ascii::is_whitespace('\n'));
+    std::assert(std::ascii::is_whitespace(0x0B));
+    std::assert(std::ascii::is_whitespace(0x0C));
+    std::assert(std::ascii::is_whitespace(0x0D));
 
-    std::print(std::out(), "\n");
-
-    dump std::ascii::is_whitespace('A');
-    dump std::ascii::is_whitespace(0x7F);
-    dump std::ascii::is_whitespace(0xFF);
+    std::assert(not std::ascii::is_whitespace('A'));
+    std::assert(not std::ascii::is_whitespace(0x7F));
+    std::assert(not std::ascii::is_whitespace(0xFF));
 }
-################################################################################
-# 01
-# 01
-# 01
-# 01
-# 01
-# 01
-#
-# 00
-# 00
-# 00

@@ -1,9 +1,9 @@
 import "std/core.sunder";
 
 func main() void {
-    dump sizeof([(:usize)s64::MAX][2]byte);
+    sizeof([(:usize)s64::MAX][2]byte);
 }
 ################################################################################
 # [error-array-size-exceeds-maximum-allowable-object-size-overflow.test.sunder:4] error: array size exceeds the maximum allowable object size
-#     dump sizeof([(:usize)s64::MAX][2]byte);
-#                 ^
+#     sizeof([(:usize)s64::MAX][2]byte);
+#            ^

@@ -24,7 +24,11 @@ func main() void {
             std::formatter::init[[[]byte]](&y)]);
     std::print_line(std::out(), string.data());
 
-    dump string.count();
+    var count = string.count();
+    std::print_format_line(
+        std::out(),
+        "count = {}",
+        (:[]std::formatter)[std::formatter::init[[usize]](&count)]);
 
     string.fini();
 }
@@ -33,4 +37,4 @@ func main() void {
 # foo
 # foobar
 # foobar - 123 some str
-# 15 00 00 00 00 00 00 00
+# count = 21

@@ -1,13 +1,15 @@
-func main() void {
-    dump (:bool)123;
-    dump (:byte)123;
-    dump (:u8)123;
-    dump (:usize)123;
+import "sys";
 
-    dump (:bool)(123 + 1);
-    dump (:byte)(123 + 1);
-    dump (:u8)(123 + 1);
-    dump (:usize)(123 + 1);
+func main() void {
+    sys::dump[[bool]]((:bool)123);
+    sys::dump[[byte]]((:byte)123);
+    sys::dump[[u8]]((:u8)123);
+    sys::dump[[usize]]((:usize)123);
+
+    sys::dump[[bool]]((:bool)(123 + 1));
+    sys::dump[[byte]]((:byte)(123 + 1));
+    sys::dump[[u8]]((:u8)(123 + 1));
+    sys::dump[[usize]]((:usize)(123 + 1));
 }
 ################################################################################
 # 01

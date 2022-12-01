@@ -1,41 +1,19 @@
 import "std/core.sunder";
 
 func main() void {
-    dump std::str::contains("", "");
-    dump std::str::contains("a", "");
-    dump std::str::contains("", "a");
+    std::assert(std::str::contains("", ""));
+    std::assert(std::str::contains("a", ""));
+    std::assert(not std::str::contains("", "a"));
 
-    std::print(std::out(), "\n");
+    std::assert(std::str::contains("foobar", "f"));
+    std::assert(std::str::contains("foobar", "fo"));
+    std::assert(std::str::contains("foobar", "foo"));
+    std::assert(not std::str::contains("foobar", "fooo"));
+    std::assert(std::str::contains("foobar", "bar"));
 
-    dump std::str::contains("foobar", "f");
-    dump std::str::contains("foobar", "fo");
-    dump std::str::contains("foobar", "foo");
-    dump std::str::contains("foobar", "fooo");
-    dump std::str::contains("foobar", "bar");
+    std::assert(std::str::contains("foobar", "foobar"));
+    std::assert(not std::str::contains("foobar", "barfoo"));
+    std::assert(not std::str::contains("foobar", "foobarg"));
 
-    std::print(std::out(), "\n");
-
-    dump std::str::contains("foobar", "foobar");
-    dump std::str::contains("foobar", "barfoo");
-    dump std::str::contains("foobar", "foobarg");
-
-    std::print(std::out(), "\n");
-
-    dump std::str::contains("kpvwblrizaabmnhz", "ab");
+    std::assert(std::str::contains("kpvwblrizaabmnhz", "ab"));
 }
-################################################################################
-# 01
-# 01
-# 00
-#
-# 01
-# 01
-# 01
-# 00
-# 01
-#
-# 01
-# 00
-# 00
-#
-# 01

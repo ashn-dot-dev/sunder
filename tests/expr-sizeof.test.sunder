@@ -1,3 +1,5 @@
+import "sys";
+
 const a: usize = sizeof(void);
 const b: usize = sizeof(u8);
 const c: usize = sizeof(u16);
@@ -12,18 +14,18 @@ const i: u16 = 0xABCDu16;
 const j: usize = sizeof(typeof(i));
 
 func main() void {
-    dump a;
-    dump b;
-    dump c;
-    dump d;
-    dump e;
-    dump f;
-    dump g;
-    dump h;
-    dump j;
+    sys::dump[[usize]](a);
+    sys::dump[[usize]](b);
+    sys::dump[[usize]](c);
+    sys::dump[[usize]](d);
+    sys::dump[[usize]](e);
+    sys::dump[[usize]](f);
+    sys::dump[[usize]](g);
+    sys::dump[[usize]](h);
+    sys::dump[[usize]](j);
 
-    dump sizeof(u16);
-    dump sizeof(typeof(i));
+    sys::dump[[usize]](sizeof(u16));
+    sys::dump[[usize]](sizeof(typeof(i)));
 }
 ################################################################################
 # 00 00 00 00 00 00 00 00

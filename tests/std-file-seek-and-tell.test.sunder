@@ -1,6 +1,6 @@
 import "std/core.sunder";
 import "std/fs.sunder";
-import "sys/sys.sunder";
+import "sys";
 
 func main() void {
     var result = std::file::open("data.tmp", std::file::OPEN_READ | std::file::OPEN_WRITE);
@@ -8,35 +8,35 @@ func main() void {
 
     file.write("ABCD");
     var result = file.tell();
-    dump result.value();
+    sys::dump[[usize]](result.value());
 
     file.write("EFGH");
     var result = file.tell();
-    dump result.value();
+    sys::dump[[usize]](result.value());
 
     file.seek(0, std::file::SEEK_START);
     var result = file.tell();
-    dump result.value();
+    sys::dump[[usize]](result.value());
 
     file.seek(1, std::file::SEEK_START);
     var result = file.tell();
-    dump result.value();
+    sys::dump[[usize]](result.value());
 
     file.seek(0, std::file::SEEK_END);
     var result = file.tell();
-    dump result.value();
+    sys::dump[[usize]](result.value());
 
     file.seek(-1, std::file::SEEK_END);
     var result = file.tell();
-    dump result.value();
+    sys::dump[[usize]](result.value());
 
     file.seek(-3, std::file::SEEK_CURRENT);
     var result = file.tell();
-    dump result.value();
+    sys::dump[[usize]](result.value());
 
     file.write("1234");
     var result = file.tell();
-    dump result.value();
+    sys::dump[[usize]](result.value());
 
     file.seek(0, std::file::SEEK_START);
     var buf = (:[512]byte)[0...];

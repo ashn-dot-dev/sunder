@@ -1,7 +1,9 @@
+import "sys";
+
 func main() void {
     var n: usize = 3u;
     for n != 7u {
-        dump n;
+        sys::dump[[usize]](n);
         n = n + 1u;
     }
 

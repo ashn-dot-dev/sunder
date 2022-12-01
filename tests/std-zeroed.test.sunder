@@ -1,4 +1,5 @@
 import "std/core.sunder";
+import "sys";
 
 struct foo {
     var x: byte;  # 1 byte
@@ -8,12 +9,12 @@ struct foo {
 }
 
 func main() void {
-    dump std::zeroed[[u8]]();
-    dump std::zeroed[[u16]]();
-    dump std::zeroed[[u32]]();
-    dump std::zeroed[[u64]]();
-    dump std::zeroed[[func(usize, ssize) void]]();
-    dump std::zeroed[[foo]]();
+    sys::dump[[u8]](std::zeroed[[u8]]());
+    sys::dump[[u16]](std::zeroed[[u16]]());
+    sys::dump[[u32]](std::zeroed[[u32]]());
+    sys::dump[[u64]](std::zeroed[[u64]]());
+    sys::dump[[func(usize, ssize) void]](std::zeroed[[func(usize, ssize) void]]());
+    sys::dump[[foo]](std::zeroed[[foo]]());
 }
 ################################################################################
 # 00

@@ -1,6 +1,5 @@
-func nl() void {
-    # void-returning function that makes dump print a newline.
-}
+import "std/core.sunder";
+import "sys";
 
 func main() void {
     const byte_a: byte = 0xABy;
@@ -12,16 +11,19 @@ func main() void {
     const bitnot_byte_c: byte = ~byte_c;
     const bitnot_byte_d: byte = ~byte_d;
 
-    dump bitnot_byte_a;
-    dump bitnot_byte_b;
-    dump bitnot_byte_c;
-    dump bitnot_byte_d;
-    dump nl();
-    dump ~byte_a;
-    dump ~byte_b;
-    dump ~byte_c;
-    dump ~byte_d;
-    dump nl();
+    sys::dump[[byte]](bitnot_byte_a);
+    sys::dump[[byte]](bitnot_byte_b);
+    sys::dump[[byte]](bitnot_byte_c);
+    sys::dump[[byte]](bitnot_byte_d);
+
+    std::print(std::err(), "\n");
+
+    sys::dump[[byte]](~byte_a);
+    sys::dump[[byte]](~byte_b);
+    sys::dump[[byte]](~byte_c);
+    sys::dump[[byte]](~byte_d);
+
+    std::print(std::err(), "\n");
 
     const u32_a: u32 = 0xDEADBEEFu32;
     const u32_b: u32 = 0xFFFFFFFFu32;
@@ -32,16 +34,19 @@ func main() void {
     const bitnot_u32_c: u32 = ~u32_c;
     const bitnot_u32_d: u32 = ~u32_d;
 
-    dump bitnot_u32_a;
-    dump bitnot_u32_b;
-    dump bitnot_u32_c;
-    dump bitnot_u32_d;
-    dump nl();
-    dump ~u32_a;
-    dump ~u32_b;
-    dump ~u32_c;
-    dump ~u32_d;
-    dump nl();
+    sys::dump[[u32]](bitnot_u32_a);
+    sys::dump[[u32]](bitnot_u32_b);
+    sys::dump[[u32]](bitnot_u32_c);
+    sys::dump[[u32]](bitnot_u32_d);
+
+    std::print(std::err(), "\n");
+
+    sys::dump[[u32]](~u32_a);
+    sys::dump[[u32]](~u32_b);
+    sys::dump[[u32]](~u32_c);
+    sys::dump[[u32]](~u32_d);
+
+    std::print(std::err(), "\n");
 
     const s8_a: s8 = -128s8; # 0x80 as s8
     const s8_b: s8 = -1s8; # 0xFF as s8
@@ -50,14 +55,17 @@ func main() void {
     const bitnot_s8_b: s8 = ~s8_b;
     const bitnot_s8_c: s8 = ~s8_c;
 
-    dump bitnot_s8_a;
-    dump bitnot_s8_b;
-    dump bitnot_s8_c;
-    dump nl();
-    dump ~s8_a;
-    dump ~s8_b;
-    dump ~s8_c;
-    dump nl();
+    sys::dump[[s8]](bitnot_s8_a);
+    sys::dump[[s8]](bitnot_s8_b);
+    sys::dump[[s8]](bitnot_s8_c);
+
+    std::print(std::err(), "\n");
+
+    sys::dump[[s8]](~s8_a);
+    sys::dump[[s8]](~s8_b);
+    sys::dump[[s8]](~s8_c);
+
+    std::print(std::err(), "\n");
 
     const s16_a: s16 = -32768s16; # 0x8000 as s16
     const s16_b: s16 = -1s16; # 0xFFFF as s16
@@ -68,15 +76,17 @@ func main() void {
     const bitnot_s16_c: s16 = ~s16_c;
     const bitnot_s16_d: s16 = ~s16_d;
 
-    dump bitnot_s16_a;
-    dump bitnot_s16_b;
-    dump bitnot_s16_c;
-    dump bitnot_s16_d;
-    dump nl();
-    dump ~s16_a;
-    dump ~s16_b;
-    dump ~s16_c;
-    dump ~s16_d;
+    sys::dump[[s16]](bitnot_s16_a);
+    sys::dump[[s16]](bitnot_s16_b);
+    sys::dump[[s16]](bitnot_s16_c);
+    sys::dump[[s16]](bitnot_s16_d);
+
+    std::print(std::err(), "\n");
+
+    sys::dump[[s16]](~s16_a);
+    sys::dump[[s16]](~s16_b);
+    sys::dump[[s16]](~s16_c);
+    sys::dump[[s16]](~s16_d);
 }
 ################################################################################
 # 54

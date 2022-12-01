@@ -2,43 +2,21 @@ import "std/core.sunder";
 import "std/ascii.sunder";
 
 func main() void {
-    dump std::ascii::is_lowercase('a');
-    dump std::ascii::is_lowercase('b');
-    dump std::ascii::is_lowercase('c');
-    dump std::ascii::is_lowercase('z');
+    std::assert(std::ascii::is_lowercase('a'));
+    std::assert(std::ascii::is_lowercase('b'));
+    std::assert(std::ascii::is_lowercase('c'));
+    std::assert(std::ascii::is_lowercase('z'));
 
-    std::print(std::out(), "\n");
+    std::assert(not std::ascii::is_lowercase('A'));
+    std::assert(not std::ascii::is_lowercase('B'));
+    std::assert(not std::ascii::is_lowercase('C'));
+    std::assert(not std::ascii::is_lowercase('Z'));
 
-    dump std::ascii::is_lowercase('A');
-    dump std::ascii::is_lowercase('B');
-    dump std::ascii::is_lowercase('C');
-    dump std::ascii::is_lowercase('Z');
-
-    std::print(std::out(), "\n");
-
-    dump std::ascii::is_lowercase('1');
-    dump std::ascii::is_lowercase('~');
-    dump std::ascii::is_lowercase('\n');
-    dump std::ascii::is_lowercase('\t');
-    dump std::ascii::is_lowercase(' ');
-    dump std::ascii::is_lowercase('@');
-    dump std::ascii::is_lowercase('[');
+    std::assert(not std::ascii::is_lowercase('1'));
+    std::assert(not std::ascii::is_lowercase('~'));
+    std::assert(not std::ascii::is_lowercase('\n'));
+    std::assert(not std::ascii::is_lowercase('\t'));
+    std::assert(not std::ascii::is_lowercase(' '));
+    std::assert(not std::ascii::is_lowercase('@'));
+    std::assert(not std::ascii::is_lowercase('['));
 }
-################################################################################
-# 01
-# 01
-# 01
-# 01
-#
-# 00
-# 00
-# 00
-# 00
-#
-# 00
-# 00
-# 00
-# 00
-# 00
-# 00
-# 00

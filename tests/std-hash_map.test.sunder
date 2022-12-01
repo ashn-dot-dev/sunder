@@ -11,8 +11,9 @@ func main() void {
     std::print_format_line(std::out(), "Count {}", (:[]std::formatter)[std::formatter::init[[usize]](&count)]);
     var lookup_foo = map.lookup("foo");
     var lookup_bar = map.lookup("bar");
-    dump lookup_foo.is_value();
-    dump lookup_bar.is_value();
+    std::assert(map.count() == 0);
+    std::assert(not lookup_foo.is_value());
+    std::assert(not lookup_bar.is_value());
 
     std::print(std::out(), "\n");
 
@@ -21,8 +22,8 @@ func main() void {
     std::print_format_line(std::out(), "Count {}", (:[]std::formatter)[std::formatter::init[[usize]](&count)]);
     var lookup_foo = map.lookup("foo");
     var lookup_bar = map.lookup("bar");
-    dump lookup_foo.is_value();
-    dump lookup_bar.is_value();
+    std::assert(lookup_foo.is_value());
+    std::assert(not lookup_bar.is_value());
     var value = lookup_foo.value();
     std::print_format_line(
         std::out(),
@@ -36,8 +37,8 @@ func main() void {
     std::print_format_line(std::out(), "Count {}", (:[]std::formatter)[std::formatter::init[[usize]](&count)]);
     var lookup_foo = map.lookup("foo");
     var lookup_bar = map.lookup("bar");
-    dump lookup_foo.is_value();
-    dump lookup_bar.is_value();
+    std::assert(lookup_foo.is_value());
+    std::assert(not lookup_bar.is_value());
     var value_foo = lookup_foo.value();
     std::print_format_line(
         std::out(),
@@ -51,8 +52,8 @@ func main() void {
     std::print_format_line(std::out(), "Count {}", (:[]std::formatter)[std::formatter::init[[usize]](&count)]);
     var lookup_foo = map.lookup("foo");
     var lookup_bar = map.lookup("bar");
-    dump lookup_foo.is_value();
-    dump lookup_bar.is_value();
+    std::assert(lookup_foo.is_value());
+    std::assert(lookup_bar.is_value());
     var value_foo = lookup_foo.value();
     var value_bar = lookup_bar.value();
     std::print_format_line(
@@ -69,8 +70,8 @@ func main() void {
     std::print_format_line(std::out(), "Count {}", (:[]std::formatter)[std::formatter::init[[usize]](&count)]);
     var lookup_foo = map.lookup("foo");
     var lookup_bar = map.lookup("bar");
-    dump lookup_foo.is_value();
-    dump lookup_bar.is_value();
+    std::assert(not lookup_foo.is_value());
+    std::assert(lookup_bar.is_value());
     var value_bar = lookup_bar.value();
     std::print_format_line(
         std::out(),
@@ -108,27 +109,17 @@ func main() void {
 }
 ################################################################################
 # Count 0
-# 00
-# 00
 #
 # Count 1
-# 01
-# 00
 # 123
 #
 # Count 1
-# 01
-# 00
 # 456
 #
 # Count 2
-# 01
-# 01
 # 456 789
 #
 # Count 1
-# 00
-# 01
 # 789
 # Removed 456
 #

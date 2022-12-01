@@ -1,3 +1,5 @@
+import "sys";
+
 struct empty { }
 
 var empty_a: empty = (:empty){};
@@ -86,27 +88,27 @@ struct baz {
 const baz_a: baz = (:baz){.value_a = 0xAA, .value_b = 0xBB};
 
 func main() void {
-    dump empty_a;
-    dump empty_b;
+    sys::dump[[empty]](empty_a);
+    sys::dump[[empty]](empty_b);
     empty_a = empty_b;
-    dump empty_a;
+    sys::dump[[empty]](empty_a);
 
-    dump point_a;
-    dump point_a.x;
-    dump point_a.y;
+    sys::dump[[point]](point_a);
+    sys::dump[[u32]](point_a.x);
+    sys::dump[[u32]](point_a.y);
     point_a.x = 0xDEADBEEF;
-    dump point_a;
-    dump point_a.x;
-    dump point_a.y;
-    dump point_b;
-    dump point_c;
-    dump point_d;
-    dump point_e;
+    sys::dump[[point]](point_a);
+    sys::dump[[u32]](point_a.x);
+    sys::dump[[u32]](point_a.y);
+    sys::dump[[point]](point_b);
+    sys::dump[[point]](point_c);
+    sys::dump[[point]](point_d);
+    sys::dump[[point]](point_e);
     point_a = point_b;
-    dump point_a;
+    sys::dump[[point]](point_a);
 
-    dump (:point){.x = array[0], .y = array[1]};
-    dump (:point){.x = array[0], .y = array[1]}.x;
+    sys::dump[[point]]((:point){.x = array[0], .y = array[1]});
+    sys::dump[[u32]]((:point){.x = array[0], .y = array[1]}.x);
 
     var foo_a: foo = (:foo){
         .w = 1s32,
@@ -134,19 +136,19 @@ func main() void {
         .r = 0x44,
         .s = 0x5566
     };
-    dump bar_a;
-    dump bar_b;
+    sys::dump[[bar]](bar_a);
+    sys::dump[[bar]](bar_b);
 
-    dump baz_a;
+    sys::dump[[baz]](baz_a);
     var baz_b: baz = baz::init(0xCC, 0xDD);
-    dump baz_b;
+    sys::dump[[baz]](baz_b);
     var baz_c: baz = baz::init_copy(&baz_b);
-    dump baz_c;
-    dump baz::CONSTANT_A;
-    dump baz::CONSTANT_B;
-    dump baz::CONSTANT_C;
-    dump baz::sum(&baz_c);
-    dump baz_c.sum();
+    sys::dump[[baz]](baz_c);
+    sys::dump[[u8]](baz::CONSTANT_A);
+    sys::dump[[u8]](baz::CONSTANT_B);
+    sys::dump[[u8]](baz::CONSTANT_C);
+    sys::dump[[u16]](baz::sum(&baz_c));
+    sys::dump[[u16]](baz_c.sum());
 }
 ################################################################################
 #

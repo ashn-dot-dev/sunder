@@ -1,11 +1,12 @@
 import "std";
+import "sys";
 import "import";
 
 func main() void {
-    dump a;
-    dump b();
+    sys::dump[[u16]](a);
+    sys::dump[[u16]](b());
     c = c + 1u16;
-    dump c;
+    sys::dump[[u16]](c);
 
     std::print_line(std::out(), "imported from the standard library");
 }

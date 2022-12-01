@@ -1,3 +1,5 @@
+import "sys";
+
 struct foo {
     var value: u32;
 
@@ -8,9 +10,9 @@ struct foo {
 
 func main() void {
     var x = (:foo){.value = 0xDEADBEEF};
-    dump x.value;
-    dump foo::as[[usize]](&x);
-    dump x.as[[usize]]();
+    sys::dump[[u32]](x.value);
+    sys::dump[[usize]](foo::as[[usize]](&x));
+    sys::dump[[usize]](x.as[[usize]]());
 }
 ################################################################################
 # EF BE AD DE

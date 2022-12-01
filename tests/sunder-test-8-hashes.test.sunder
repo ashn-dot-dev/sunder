@@ -1,5 +1,7 @@
+import "sys";
+
 func main() void {
-    dump 0x01u8;
+    sys::dump[[u8]](0x01);
 }
 ########
 # 01

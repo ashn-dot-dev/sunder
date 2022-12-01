@@ -1,3 +1,5 @@
+import "sys";
+
 func max[[T]](lhs: T, rhs: T) T {
     if lhs > rhs {
         return lhs;
@@ -30,29 +32,29 @@ func can_roundtrip[[A, B]]() bool {
 }
 
 func main() void {
-    dump max[[u16]](123u16, 456u16);
-    dump max[[u16]](123u16, 456u16); # Should reuse the first instantiation.
-    dump max[[s16]](+42s16, -42s16);
-    dump max[[u32]](0xDEADBEEFu32, 0xCAFEF00Du32);
+    sys::dump[[u16]](max[[u16]](123u16, 456u16));
+    sys::dump[[u16]](max[[u16]](123u16, 456u16)); # Should reuse the first instantiation.
+    sys::dump[[s16]](max[[s16]](+42s16, -42s16));
+    sys::dump[[u32]](max[[u32]](0xDEADBEEFu32, 0xCAFEF00Du32));
 
-    dump fib[[u16]](0);
-    dump fib[[u16]](1);
-    dump fib[[u16]](3);
-    dump fib[[u16]](5);
-    dump fib[[u16]](10);
+    sys::dump[[u16]](fib[[u16]](0));
+    sys::dump[[u16]](fib[[u16]](1));
+    sys::dump[[u16]](fib[[u16]](3));
+    sys::dump[[u16]](fib[[u16]](5));
+    sys::dump[[u16]](fib[[u16]](10));
 
-    dump fib[[u32]](0);
-    dump fib[[u32]](1);
-    dump fib[[u32]](3);
-    dump fib[[u32]](5);
-    dump fib[[u32]](10);
+    sys::dump[[u32]](fib[[u32]](0));
+    sys::dump[[u32]](fib[[u32]](1));
+    sys::dump[[u32]](fib[[u32]](3));
+    sys::dump[[u32]](fib[[u32]](5));
+    sys::dump[[u32]](fib[[u32]](10));
 
-    dump can_roundtrip[[u32, u8]]();
-    dump can_roundtrip[[u32, u16]]();
-    dump can_roundtrip[[u32, u32]]();
-    dump can_roundtrip[[u32, u64]]();
-    dump can_roundtrip[[u8, s8]]();
-    dump can_roundtrip[[s8, u8]]();
+    sys::dump[[bool]](can_roundtrip[[u32, u8]]());
+    sys::dump[[bool]](can_roundtrip[[u32, u16]]());
+    sys::dump[[bool]](can_roundtrip[[u32, u32]]());
+    sys::dump[[bool]](can_roundtrip[[u32, u64]]());
+    sys::dump[[bool]](can_roundtrip[[u8, s8]]());
+    sys::dump[[bool]](can_roundtrip[[s8, u8]]());
 }
 ################################################################################
 # C8 01

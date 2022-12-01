@@ -37,7 +37,6 @@
          | <stmt-for-expr>
          | <stmt-break>
          | <stmt-continue>
-         | <stmt-dump>
          | <stmt-return>
          | <stmt-assign>
          | <stmt-expr>
@@ -59,8 +58,6 @@
 <stmt-break> ::= "break" ";"
 
 <stmt-continue> ::= "continue" ";"
-
-<stmt-dump> ::= "dump" <expr> ";"
 
 <stmt-return> ::= "return" <expr>? ";"
 

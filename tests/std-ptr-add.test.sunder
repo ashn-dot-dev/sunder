@@ -1,21 +1,22 @@
 import "std/core.sunder";
+import "sys";
 
 func main() void {
-    dump std::ptr[[u8]]::add((:*u8)0u, 0);
-    dump std::ptr[[u8]]::add((:*u8)0u, 1);
-    dump std::ptr[[u8]]::add((:*u8)0u, 2);
+    sys::dump[[*u8]](std::ptr[[u8]]::add((:*u8)0u, 0));
+    sys::dump[[*u8]](std::ptr[[u8]]::add((:*u8)0u, 1));
+    sys::dump[[*u8]](std::ptr[[u8]]::add((:*u8)0u, 2));
 
-    dump std::ptr[[u16]]::add((:*u16)0u, 0);
-    dump std::ptr[[u16]]::add((:*u16)0u, 1);
-    dump std::ptr[[u16]]::add((:*u16)0u, 2);
+    sys::dump[[*u16]](std::ptr[[u16]]::add((:*u16)0u, 0));
+    sys::dump[[*u16]](std::ptr[[u16]]::add((:*u16)0u, 1));
+    sys::dump[[*u16]](std::ptr[[u16]]::add((:*u16)0u, 2));
 
-    dump std::ptr[[u32]]::add((:*u32)0u, 0);
-    dump std::ptr[[u32]]::add((:*u32)0u, 1);
-    dump std::ptr[[u32]]::add((:*u32)0u, 2);
+    sys::dump[[*u32]](std::ptr[[u32]]::add((:*u32)0u, 0));
+    sys::dump[[*u32]](std::ptr[[u32]]::add((:*u32)0u, 1));
+    sys::dump[[*u32]](std::ptr[[u32]]::add((:*u32)0u, 2));
 
-    dump std::ptr[[u64]]::add((:*u64)0u, 0);
-    dump std::ptr[[u64]]::add((:*u64)0u, 1);
-    dump std::ptr[[u64]]::add((:*u64)0u, 2);
+    sys::dump[[*u64]](std::ptr[[u64]]::add((:*u64)0u, 0));
+    sys::dump[[*u64]](std::ptr[[u64]]::add((:*u64)0u, 1));
+    sys::dump[[*u64]](std::ptr[[u64]]::add((:*u64)0u, 2));
 }
 ################################################################################
 # 00 00 00 00 00 00 00 00

@@ -655,8 +655,6 @@ codegen_stmt_break(struct stmt const* stmt, size_t id);
 static void
 codegen_stmt_continue(struct stmt const* stmt, size_t id);
 static void
-codegen_stmt_dump(struct stmt const* stmt, size_t id);
-static void
 codegen_stmt_return(struct stmt const* stmt, size_t id);
 static void
 codegen_stmt_assign(struct stmt const* stmt, size_t id);
@@ -1057,7 +1055,6 @@ codegen_stmt(struct stmt const* stmt)
         TABLE_ENTRY(STMT_FOR_EXPR, codegen_stmt_for_expr),
         TABLE_ENTRY(STMT_BREAK, codegen_stmt_break),
         TABLE_ENTRY(STMT_CONTINUE, codegen_stmt_continue),
-        TABLE_ENTRY(STMT_DUMP, codegen_stmt_dump),
         TABLE_ENTRY(STMT_RETURN, codegen_stmt_return),
         TABLE_ENTRY(STMT_ASSIGN, codegen_stmt_assign),
         TABLE_ENTRY(STMT_EXPR, codegen_stmt_expr),
@@ -1215,27 +1212,6 @@ codegen_stmt_continue(struct stmt const* stmt, size_t id)
 
     codegen_defers(stmt->data.break_.defer_begin, stmt->data.break_.defer_end);
     appendli("jmp %s%zu_body_end", LABEL_STMT, current_loop_id);
-}
-
-static void
-codegen_stmt_dump(struct stmt const* stmt, size_t id)
-{
-    assert(stmt != NULL);
-    assert(stmt->kind == STMT_DUMP);
-    (void)id;
-
-    appendli(
-        "; dump `%s` (%" PRIu64 " bytes)",
-        stmt->data.expr->type->name,
-        stmt->data.expr->type->size);
-    push_rvalue(stmt->data.expr);
-    appendli(
-        "push %#" PRIx64 " ; push type `%s` size",
-        stmt->data.expr->type->size,
-        stmt->data.expr->type->name);
-    appendli("call __dump");
-    appendli("pop rax ; pop type `%s` size", stmt->data.expr->type->name);
-    pop(stmt->data.expr->type->size);
 }
 
 static void
@@ -1621,7 +1597,7 @@ push_rvalue_struct(struct expr const* expr, size_t id)
 
     // Fill in stack bytes of the struct with zeros. Although this should not
     // really affect the user-visible portions of the language it will allow
-    // for dump statements to be deterministic in the bytes they print if we
+    // tools like sys::dump to be deterministic in the bytes they print if we
     // define padding bytes to always be zeroed for struct values created at
     // runtime.
     appendli("mov rax, 0"); // zero value

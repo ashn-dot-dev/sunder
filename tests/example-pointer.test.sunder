@@ -1,10 +1,12 @@
+import "sys";
+
 var v: usize = 0xCAFED00DCAFED00Du;
 const w: usize = 0xCAFEBABECAFEBABEu;
 const addressof_v: *usize = &v;
 const addressof_w: *usize = &w;
 
 const a: [3u]byte = (:[3u]byte)[0xAAy, 0xBBy, 0xCCy];
-const addressof_a1: *byte = &a[1u];
+const addressof_a: *byte = &a[1u];
 
 const b: [0u]ssize = (:[0u]ssize)[]; # zero-sized object
 const addressof_b: *[0u]ssize = &b;
@@ -14,41 +16,41 @@ func main() void {
     var addressof_x: *usize = &x;
     var dereference_addressof_x: usize = *addressof_x;
 
-    dump x;
-    dump *&x;
-    dump *&*&x;
-    dump *&*&*&*&x;
-    dump dereference_addressof_x;
+    sys::dump[[usize]](x);
+    sys::dump[[usize]](*&x);
+    sys::dump[[usize]](*&*&x);
+    sys::dump[[usize]](*&*&*&*&x);
+    sys::dump[[usize]](dereference_addressof_x);
 
     var y: [2u][3u]ssize = (:[2u][3u]ssize)[
         (:[3u]ssize)[1s, 3s, 5s],
         (:[3u]ssize)[2s, 4s, 6s]
     ];
-    dump y[1u][2u];
-    dump *&y[1u][2u];
+    sys::dump[[ssize]](y[1u][2u]);
+    sys::dump[[ssize]](*&y[1u][2u]);
 
     const z: usize = 0xDEADBEEFDEADBEEFu;
     var addressof_z: *usize = &z;
     var dereference_addressof_z: usize = *addressof_z;
-    dump z;
-    dump *&z;
-    dump *&*&z;
-    dump *&*&*&*&z;
-    dump dereference_addressof_z;
+    sys::dump[[usize]](z);
+    sys::dump[[usize]](*&z);
+    sys::dump[[usize]](*&*&z);
+    sys::dump[[usize]](*&*&*&*&z);
+    sys::dump[[usize]](dereference_addressof_z);
 
-    dump v;
-    dump *&v;
+    sys::dump[[usize]](v);
+    sys::dump[[usize]](*&v);
 
-    dump w;
-    dump *&w;
+    sys::dump[[usize]](w);
+    sys::dump[[usize]](*&w);
 
-    dump *addressof_v;
-    dump *addressof_w;
+    sys::dump[[usize]](*addressof_v);
+    sys::dump[[usize]](*addressof_w);
 
-    dump *addressof_a1;
+    sys::dump[[byte]](*addressof_a);
 
-    dump *addressof_b;
-    dump addressof_b;
+    sys::dump[[[0]ssize]](*addressof_b);
+    sys::dump[[*[0]ssize]](addressof_b);
 }
 ################################################################################
 # EE FF C0 1D E0 AF DC BA

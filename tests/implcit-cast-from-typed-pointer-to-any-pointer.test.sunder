@@ -1,3 +1,5 @@
+import "sys";
+
 const a: u16 = 0xBEEF;
 const b: *u16 = &a;
 
@@ -16,10 +18,10 @@ func main() void {
     var my_x: u16 = 0xF00D;
     g(&my_x, 0xDEADBEEF);
 
-    dump (:usize)b == (:usize)c;
-    dump (:usize)b == (:usize)d;
-    dump (:usize)b == (:usize)e;
-    dump my_x;
+    sys::dump[[bool]]((:usize)b == (:usize)c);
+    sys::dump[[bool]]((:usize)b == (:usize)d);
+    sys::dump[[bool]]((:usize)b == (:usize)e);
+    sys::dump[[u16]](my_x);
 }
 ################################################################################
 # 01

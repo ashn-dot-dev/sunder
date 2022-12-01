@@ -1,97 +1,99 @@
+import "sys";
+
 func main() void {
     if true {
-        dump 0xAAu;
+        sys::dump[[usize]](0xAAu);
     }
 
     if false {
-        dump 0xBBu;
+        sys::dump[[usize]](0xBBu);
     }
 
     if true {
-        dump 0xAAu;
+        sys::dump[[usize]](0xAAu);
     }
     else {
-        dump 0xBBu;
+        sys::dump[[usize]](0xBBu);
     }
 
     if false {
-        dump 0xAAu;
+        sys::dump[[usize]](0xAAu);
     }
     else {
-        dump 0xBBu;
+        sys::dump[[usize]](0xBBu);
     }
 
     if true {
-        dump 0xAAu;
+        sys::dump[[usize]](0xAAu);
     }
     elif false {
-        dump 0xBBu;
+        sys::dump[[usize]](0xBBu);
     }
     elif false {
-        dump 0xCCu;
+        sys::dump[[usize]](0xCCu);
     }
     else {
-        dump 0xDDu;
+        sys::dump[[usize]](0xDDu);
     }
 
     if false {
-        dump 0xAAu;
+        sys::dump[[usize]](0xAAu);
     }
     elif true {
-        dump 0xBBu;
+        sys::dump[[usize]](0xBBu);
     }
     elif false {
-        dump 0xCCu;
+        sys::dump[[usize]](0xCCu);
     }
     else {
-        dump 0xDDu;
+        sys::dump[[usize]](0xDDu);
     }
 
     if false {
-        dump 0xAAu;
+        sys::dump[[usize]](0xAAu);
     }
     elif false {
-        dump 0xBBu;
+        sys::dump[[usize]](0xBBu);
     }
     elif true {
-        dump 0xCCu;
+        sys::dump[[usize]](0xCCu);
     }
     else {
-        dump 0xDDu;
+        sys::dump[[usize]](0xDDu);
     }
 
     if false {
-        dump 0xAAu;
+        sys::dump[[usize]](0xAAu);
     }
     elif false {
-        dump 0xBBu;
+        sys::dump[[usize]](0xBBu);
     }
     elif false {
-        dump 0xCCu;
+        sys::dump[[usize]](0xCCu);
     }
     else {
-        dump 0xDDu;
+        sys::dump[[usize]](0xDDu);
     }
 
     var b: bool = true;
     if b {
-        dump 0xABu;
+        sys::dump[[usize]](0xABu);
     }
 
     var x: usize = 123u;
     if x == x {
-        dump 0xCDu;
+        sys::dump[[usize]](0xCDu);
     }
     if x != x {
-        dump 0xEFu;
+        sys::dump[[usize]](0xEFu);
     }
 
     if true {
         if false {
-            dump 0x11u;
+            sys::dump[[usize]](0x11u);
         }
         else {
-            dump 0x22u;
+            sys::dump[[usize]](0x22u);
         }
     }
 }

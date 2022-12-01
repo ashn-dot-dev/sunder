@@ -385,3 +385,8 @@ extern func unlink(pathname: *byte) ssize;
 extern var argc: usize;
 extern var argv: **byte;
 extern var envp: **byte;
+
+extern func _dump(object_addr: *any, object_size: usize) void;
+func dump[[T]](object: T) void {
+    _dump(&object, sizeof(T));
+}

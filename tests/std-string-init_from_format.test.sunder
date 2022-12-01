@@ -12,10 +12,17 @@ func main() void {
         (:[]std::formatter)[
             std::formatter::init[[u16]](&x),
             std::formatter::init[[[]byte]](&y)]);
-    dump string.count();
+
+    var count = string.count();
+    std::print_format_line(
+        std::out(),
+        "count = {}",
+        (:[]std::formatter)[std::formatter::init[[usize]](&count)]);
+
     std::print_line(std::out(), string.data());
+
     string.fini();
 }
 ################################################################################
-# 0C 00 00 00 00 00 00 00
+# count = 12
 # 123 some str

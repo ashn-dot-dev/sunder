@@ -1,9 +1,12 @@
 import "std/core.sunder";
 
 func main() void {
-    dump std::cstr::count(&"\0"[0]);
-    dump std::cstr::count(&"123\0"[0]);
+    var count = std::cstr::count(&"\0"[0]);
+    std::print_format_line(std::err(), "count = {}", (:[]std::formatter)[std::formatter::init[[typeof(count)]](&count)]);
+
+    var count = std::cstr::count(&"123\0"[0]);
+    std::print_format_line(std::err(), "count = {}", (:[]std::formatter)[std::formatter::init[[typeof(count)]](&count)]);
 }
 ################################################################################
-# 00 00 00 00 00 00 00 00
-# 03 00 00 00 00 00 00 00
+# count = 0
+# count = 3

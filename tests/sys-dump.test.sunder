@@ -1,16 +1,18 @@
+import "sys";
+
 func foo() void {
     # this function does nothing
 }
 
 func main() void {
-    dump true;
-    dump false;
-    dump 0xAAu;
-    dump 0xABCDu;
-    dump foo();
-    dump 0x76543210u;
-    dump 0xDEADBEEFu;
-    dump 0xBADCAFE01DC0FFEEu;
+    sys::dump[[bool]](true);
+    sys::dump[[bool]](false);
+    sys::dump[[usize]](0xAAu);
+    sys::dump[[usize]](0xABCDu);
+    sys::dump[[void]](foo());
+    sys::dump[[usize]](0x76543210u);
+    sys::dump[[usize]](0xDEADBEEFu);
+    sys::dump[[usize]](0xBADCAFE01DC0FFEEu);
 }
 ################################################################################
 # 01

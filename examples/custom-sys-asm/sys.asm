@@ -1,9 +1,3 @@
-; BUILTIN DUMP SUBROUTINE
-; =======================
-section .text
-__dump:
-    ret
-
 ; BUILTIN FATAL SUBROUTINE
 ; ========================
 section .text

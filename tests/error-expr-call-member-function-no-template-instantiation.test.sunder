@@ -8,9 +8,9 @@ struct foo {
 
 func main() void {
     var x = (:foo){.value = 0xDEADBEEF};
-    dump x.as();
+    x.as();
 }
 ################################################################################
 # [error-expr-call-member-function-no-template-instantiation.test.sunder:11] error: template instantiation of `as` requires a template argument list
-#     dump x.as();
-#            ^
+#     x.as();
+#       ^

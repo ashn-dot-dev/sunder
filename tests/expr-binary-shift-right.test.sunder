@@ -1,3 +1,5 @@
+import "sys";
+
 func main() void {
     const a = 0xFFFFFFFFFFFFFFFFu >> 0;
     const b = 0xFFFFFFFFFFFFFFFFu >> 1;
@@ -6,38 +8,38 @@ func main() void {
     const e = 0xFFFFFFFFFFFFFFFFu >> 63;
     const f = 0xFFFFFFFFFFFFFFFFu >> 64;
 
-    dump a;
-    dump b;
-    dump c;
-    dump d;
-    dump e;
-    dump f;
+    sys::dump[[usize]](a);
+    sys::dump[[usize]](b);
+    sys::dump[[usize]](c);
+    sys::dump[[usize]](d);
+    sys::dump[[usize]](e);
+    sys::dump[[usize]](f);
 
     var x = 0xFF00000000000000u;
-    dump x >> 0;
-    dump x >> 1;
-    dump x >> 2;
-    dump x >> 8;
-    dump x >> 63;
-    dump x >> 64;
+    sys::dump[[usize]](x >> 0);
+    sys::dump[[usize]](x >> 1);
+    sys::dump[[usize]](x >> 2);
+    sys::dump[[usize]](x >> 8);
+    sys::dump[[usize]](x >> 63);
+    sys::dump[[usize]](x >> 64);
 
     var y = 0x7FFFFFFFFFFFFFFFs;
-    dump y >> 0;
-    dump y >> 1;
-    dump y >> 2;
-    dump y >> 8;
-    dump y >> 48;
-    dump y >> 63;
-    dump y >> 64;
+    sys::dump[[ssize]](y >> 0);
+    sys::dump[[ssize]](y >> 1);
+    sys::dump[[ssize]](y >> 2);
+    sys::dump[[ssize]](y >> 8);
+    sys::dump[[ssize]](y >> 48);
+    sys::dump[[ssize]](y >> 63);
+    sys::dump[[ssize]](y >> 64);
 
     var z = (:ssize)(0xF100000000000000u);
-    dump z >> 0;
-    dump z >> 1;
-    dump z >> 2;
-    dump z >> 8;
-    dump z >> 48;
-    dump z >> 63;
-    dump z >> 64;
+    sys::dump[[ssize]](z >> 0);
+    sys::dump[[ssize]](z >> 1);
+    sys::dump[[ssize]](z >> 2);
+    sys::dump[[ssize]](z >> 8);
+    sys::dump[[ssize]](z >> 48);
+    sys::dump[[ssize]](z >> 63);
+    sys::dump[[ssize]](z >> 64);
 
     var some_u8 = 1u8;
     var some_u16 = 1u16;
@@ -52,18 +54,18 @@ func main() void {
     var some_s32_neg = -1s32;
     var some_s64_neg = -1s64;
 
-    dump some_u8 >> 1;
-    dump some_u16 >> 1;
-    dump some_u32 >> 1;
-    dump some_u64 >> 1;
-    dump some_s8_pos >> 1;
-    dump some_s16_pos >> 1;
-    dump some_s32_pos >> 1;
-    dump some_s64_pos >> 1;
-    dump some_s8_neg >> 1;
-    dump some_s16_neg >> 1;
-    dump some_s32_neg >> 1;
-    dump some_s64_neg >> 1;
+    sys::dump[[u8]](some_u8 >> 1);
+    sys::dump[[u16]](some_u16 >> 1);
+    sys::dump[[u32]](some_u32 >> 1);
+    sys::dump[[u64]](some_u64 >> 1);
+    sys::dump[[s8]](some_s8_pos >> 1);
+    sys::dump[[s16]](some_s16_pos >> 1);
+    sys::dump[[s32]](some_s32_pos >> 1);
+    sys::dump[[s64]](some_s64_pos >> 1);
+    sys::dump[[s8]](some_s8_neg >> 1);
+    sys::dump[[s16]](some_s16_neg >> 1);
+    sys::dump[[s32]](some_s32_neg >> 1);
+    sys::dump[[s64]](some_s64_neg >> 1);
 }
 ################################################################################
 # FF FF FF FF FF FF FF FF

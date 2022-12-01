@@ -1,13 +1,14 @@
 import "std/core.sunder";
 import "std/page_allocator.sunder";
 import "std/string.sunder";
+import "sys";
 
 func main() void {
     var string = std::string::init(std::allocator::init[[std::page_allocator]](std::page_allocator::the()));
-    dump string.start();
-    dump string.count();
-    dump string.capacity();
-    dump string.data();
+    sys::dump[[*byte]](string.start());
+    sys::dump[[usize]](string.count());
+    sys::dump[[usize]](string.capacity());
+    sys::dump[[[]byte]](string.data());
     string.fini();
 }
 ################################################################################

@@ -1,9 +1,11 @@
+import "sys";
+
 func main() void {
     const foo = 1u16;
-    dump foo;
+    sys::dump[[u16]](foo);
 
     const foo = 2u32;
-    dump foo;
+    sys::dump[[u32]](foo);
 }
 ################################################################################
 # 01 00

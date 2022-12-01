@@ -71,8 +71,6 @@ parse_stmt_break(struct parser* parser);
 static struct cst_stmt const*
 parse_stmt_continue(struct parser* parser);
 static struct cst_stmt const*
-parse_stmt_dump(struct parser* parser);
-static struct cst_stmt const*
 parse_stmt_return(struct parser* parser);
 
 // Precedence levels roughly follow the precedence levels described in the
@@ -607,10 +605,6 @@ parse_stmt(struct parser* parser)
         return parse_stmt_continue(parser);
     }
 
-    if (check_current(parser, TOKEN_DUMP)) {
-        return parse_stmt_dump(parser);
-    }
-
     if (check_current(parser, TOKEN_RETURN)) {
         return parse_stmt_return(parser);
     }
@@ -794,23 +788,6 @@ parse_stmt_continue(struct parser* parser)
     expect_current(parser, TOKEN_SEMICOLON);
 
     struct cst_stmt* const product = cst_stmt_new_continue(location);
-
-    freeze(product);
-    return product;
-}
-
-static struct cst_stmt const*
-parse_stmt_dump(struct parser* parser)
-{
-    assert(parser != NULL);
-    assert(check_current(parser, TOKEN_DUMP));
-
-    struct source_location const* const location =
-        &expect_current(parser, TOKEN_DUMP)->location;
-    struct cst_expr const* const expr = parse_expr(parser);
-    expect_current(parser, TOKEN_SEMICOLON);
-
-    struct cst_stmt* const product = cst_stmt_new_dump(location, expr);
 
     freeze(product);
     return product;

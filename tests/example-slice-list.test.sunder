@@ -1,41 +1,43 @@
-var zero_sized_variable: []u16 = (:[]u16)[];
-const zero_sized_constant: []u16 = (:[]u16)[];
+import "sys";
+
+var empty_variable: []u16 = (:[]u16)[];
+const empty_constant: []u16 = (:[]u16)[];
 
 var d: []u16 = (:[]u16)[];
 const a: []u16 = (:[]u16)[0xAAAA, 0xBBBB, 0xCCCC];
 var b: []u16 = (:[]u16)[0xAAAA, 0xBBBB, 0xCCCC];
 
 func main() void {
-    dump zero_sized_variable;
-    dump zero_sized_constant;
+    sys::dump[[[]u16]](empty_variable);
+    sys::dump[[[]u16]](empty_constant);
 
-    dump countof(a);
-    dump a[0];
-    dump a[1];
-    dump a[2];
+    sys::dump[[usize]](countof(a));
+    sys::dump[[u16]](a[0]);
+    sys::dump[[u16]](a[1]);
+    sys::dump[[u16]](a[2]);
 
     b[2] = 0xDDDD;
-    dump countof(b);
-    dump b[0];
-    dump b[1];
-    dump b[2];
+    sys::dump[[usize]](countof(b));
+    sys::dump[[u16]](b[0]);
+    sys::dump[[u16]](b[1]);
+    sys::dump[[u16]](b[2]);
 
     const c: []u16 = (:[]u16)[0x1111, 0x2222, 0x3333];
-    dump countof(c);
-    dump c[0];
-    dump c[1];
-    dump c[2];
+    sys::dump[[usize]](countof(c));
+    sys::dump[[u16]](c[0]);
+    sys::dump[[u16]](c[1]);
+    sys::dump[[u16]](c[2]);
 
     var d: []u16 = (:[]u16)[0x1111, 0x2222, 0x3333];
-    dump countof(d);
+    sys::dump[[usize]](countof(d));
     d[0] = 0xBEEF;
     d[2] = 0xCAFE;
-    dump d[0];
-    dump d[1];
-    dump d[2];
+    sys::dump[[u16]](d[0]);
+    sys::dump[[u16]](d[1]);
+    sys::dump[[u16]](d[2]);
 
-    dump countof((:[]u16)[0xDEAD, 0xBEEF]);
-    dump (:[]u16)[0xDEAD, 0xBEEF][1];
+    sys::dump[[usize]](countof((:[]u16)[0xDEAD, 0xBEEF]));
+    sys::dump[[u16]]((:[]u16)[0xDEAD, 0xBEEF][1]);
 }
 ################################################################################
 # 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00

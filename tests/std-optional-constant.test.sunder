@@ -2,11 +2,9 @@ import "std/core.sunder";
 
 func main() void {
     var a: std::optional[[u16]] = std::optional[[u16]]::EMPTY;
-    dump a.is_value();
-    dump a.is_empty();
-    dump a.value(); # boom
+    std::assert(not a.is_value());
+    std::assert(a.is_empty());
+    a.value(); # boom
 }
 ################################################################################
-# 00
-# 01
 # panic: attempted to retrieve value from empty std::optional

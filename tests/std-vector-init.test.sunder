@@ -1,13 +1,14 @@
 import "std/core.sunder";
 import "std/page_allocator.sunder";
 import "std/vector.sunder";
+import "sys";
 
 func main() void {
     var vec: std::vector[[u32]] = std::vector[[u32]]::init(std::allocator::init[[std::page_allocator]](std::page_allocator::the()));
-    dump vec.start();
-    dump vec.count();
-    dump vec.capacity();
-    dump vec.data();
+    sys::dump[[*u32]](vec.start());
+    sys::dump[[usize]](vec.count());
+    sys::dump[[usize]](vec.capacity());
+    sys::dump[[[]u32]](vec.data());
     vec.fini();
 }
 ################################################################################

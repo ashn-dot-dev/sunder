@@ -1,3 +1,5 @@
+import "sys";
+
 var zero_sized_variable: [0]u16 = (:[0]u16)[];
 const zero_sized_constant: [0]u16 = (:[0]u16)[];
 
@@ -5,7 +7,7 @@ const arr0: [3u]ssize = (:[3u]ssize)[1s, 3s, 5s];
 var arr1: [3u]ssize = (:[3u]ssize)[1s, 3s, 5s];
 
 func dump_arr_of_3_ssize(arr: [3u]ssize) void {
-    dump arr;
+    sys::dump[[[3]ssize]](arr);
 }
 
 const x0: ssize = 123s;
@@ -25,26 +27,26 @@ const array_of_zero_sized_objects: [2u][0u]void =
     ];
 
 func main() void {
-    dump zero_sized_variable;
-    dump zero_sized_constant;
+    sys::dump[[[0]u16]](zero_sized_variable);
+    sys::dump[[[0]u16]](zero_sized_constant);
 
     const arr2: [3u]ssize = (:[3u]ssize)[1s, 3s, 5s];
     var arr3: [3u]ssize = (:[3u]ssize)[1s, 3s, 5s];
 
-    dump arr0;
-    dump arr1;
-    dump arr2;
-    dump arr3;
+    sys::dump[[[3]ssize]](arr0);
+    sys::dump[[[3]ssize]](arr1);
+    sys::dump[[[3]ssize]](arr2);
+    sys::dump[[[3]ssize]](arr3);
 
     const arr4: [5u]bool = (:[5u]bool)[true, true, false, true, false];
     var arr5: [5u]bool = (:[5u]bool)[true, true, false, true, false];
-    dump arr4;
-    dump arr5;
+    sys::dump[[[5]bool]](arr4);
+    sys::dump[[[5]bool]](arr5);
 
     const arr6: [0u]ssize = (:[0u]ssize)[];
     var arr7: [0u]ssize = (:[0u]ssize)[];
-    dump arr6;
-    dump arr7;
+    sys::dump[[[0]ssize]](arr6);
+    sys::dump[[[0]ssize]](arr7);
 
     dump_arr_of_3_ssize(arr0);
     dump_arr_of_3_ssize(arr1);
@@ -59,8 +61,8 @@ func main() void {
         (:[3u]bool)[true, false, true],
         (:[3u]bool)[false, true, false]
     ];
-    dump arr8;
-    dump arr9;
+    sys::dump[[[2][3]bool]](arr8);
+    sys::dump[[[2][3]bool]](arr9);
 
     const arr10: [1u][1u][0u]ssize = (:[1u][1u][0u]ssize)[
         (:[1u][0u]ssize)[
@@ -72,8 +74,8 @@ func main() void {
             (:[0u]ssize)[]
         ]
     ];
-    dump arr10;
-    dump arr11;
+    sys::dump[[[1][1][0]ssize]](arr10);
+    sys::dump[[[1][1][0]ssize]](arr11);
 
     const arr12: [1u][1u][1u]usize = (:[1u][1u][1u]usize)[
         (:[1u][1u]usize)[
@@ -85,15 +87,15 @@ func main() void {
             (:[1u]usize)[0xFFFFFFFFFFFFFFFFu]
         ]
     ];
-    dump arr12;
-    dump arr13;
+    sys::dump[[[1][1][1]usize]](arr12);
+    sys::dump[[[1][1][1]usize]](arr13);
 
-    dump *array_of_pointers[2u];
-    dump *array_of_array_of_pointers[0u][2u];
+    sys::dump[[ssize]](*array_of_pointers[2u]);
+    sys::dump[[ssize]](*array_of_array_of_pointers[0u][2u]);
 
-    dump array_of_zero_sized_objects[0u];
-    dump array_of_zero_sized_objects[1u];
-    dump &array_of_zero_sized_objects[0u];
+    sys::dump[[[0]void]](array_of_zero_sized_objects[0u]);
+    sys::dump[[[0]void]](array_of_zero_sized_objects[1u]);
+    sys::dump[[*[0]void]](&array_of_zero_sized_objects[0u]);
 }
 
 ################################################################################

@@ -1,6 +1,5 @@
-func nl() void {
-    # void-returning function that makes dump print a newline.
-}
+import "std/core.sunder";
+import "sys";
 
 func foo() ssize {
     return +123s;
@@ -15,15 +14,16 @@ func main() void {
     const f_eq_f: bool = false == false;
     const t_eq_f: bool = true == false;
     const f_eq_t: bool = false == true;
-    dump t_eq_t;
-    dump f_eq_f;
-    dump t_eq_f;
-    dump f_eq_t;
-    dump true == true;
-    dump false == false;
-    dump true == false;
-    dump false == true;
-    dump nl();
+    sys::dump[[bool]](t_eq_t);
+    sys::dump[[bool]](f_eq_f);
+    sys::dump[[bool]](t_eq_f);
+    sys::dump[[bool]](f_eq_t);
+    sys::dump[[bool]](true == true);
+    sys::dump[[bool]](false == false);
+    sys::dump[[bool]](true == false);
+    sys::dump[[bool]](false == true);
+
+    std::print(std::err(), "\n");
 
     const a: ssize = 123s;
     const b: ssize = 456s;
@@ -34,35 +34,38 @@ func main() void {
     const b_eq_a: bool = b == a;
     const a_eq_c: bool = a == c;
     const b_eq_c: bool = b == c;
-    dump a_eq_a;
-    dump b_eq_b;
-    dump a_eq_b;
-    dump b_eq_a;
-    dump a_eq_c;
-    dump b_eq_c;
-    dump nl();
+    sys::dump[[bool]](a_eq_a);
+    sys::dump[[bool]](b_eq_b);
+    sys::dump[[bool]](a_eq_b);
+    sys::dump[[bool]](b_eq_a);
+    sys::dump[[bool]](a_eq_c);
+    sys::dump[[bool]](b_eq_c);
+
+    std::print(std::err(), "\n");
 
     const foo_eq_foo: bool = foo == foo;
     const bar_eq_bar: bool = bar == bar;
     const foo_eq_bar: bool = foo == bar;
     const bar_eq_foo: bool = bar == foo;
-    dump foo_eq_foo;
-    dump bar_eq_bar;
-    dump foo_eq_bar;
-    dump bar_eq_foo;
-    dump foo == foo;
-    dump bar == bar;
-    dump foo == bar;
-    dump bar == foo;
-    dump nl();
+    sys::dump[[bool]](foo_eq_foo);
+    sys::dump[[bool]](bar_eq_bar);
+    sys::dump[[bool]](foo_eq_bar);
+    sys::dump[[bool]](bar_eq_foo);
+    sys::dump[[bool]](foo == foo);
+    sys::dump[[bool]](bar == bar);
+    sys::dump[[bool]](foo == bar);
+    sys::dump[[bool]](bar == foo);
 
-    dump 3u == 3u;
-    dump 3u == 5u;
-    dump nl();
+    std::print(std::err(), "\n");
+
+    sys::dump[[bool]](3u == 3u);
+    sys::dump[[bool]](3u == 5u);
+
+    std::print(std::err(), "\n");
 
     var x: ssize = +1s;
     var y: ssize = -1s;
-    dump x == y;
+    sys::dump[[bool]](x == y);
 }
 ################################################################################
 # 01

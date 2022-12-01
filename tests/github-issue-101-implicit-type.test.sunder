@@ -8,7 +8,7 @@ struct foo {
 }
 
 func main() void {
-    dump sizeof(foo);
+    sizeof(foo);
 }
 ################################################################################
 # [github-issue-101-implicit-type.test.sunder:6] error: struct type `foo` is incomplete

@@ -1,15 +1,16 @@
 import "std/core.sunder";
+import "sys";
 
 func test[[T]](value: T) void {
-    dump value;
-    dump -%value;
+    sys::dump[[T]](value);
+    sys::dump[[T]](-%value);
 }
 
 func main() void {
     const x = -%-128s8;
-    dump x;
+    sys::dump[[s8]](x);
     const y = -%+127s8;
-    dump y;
+    sys::dump[[s8]](y);
 
     std::print(std::out(), "\n");
 

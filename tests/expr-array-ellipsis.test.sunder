@@ -1,3 +1,5 @@
+import "sys";
+
 const a: [5u]u16 = (:[5u]u16)[0xAAu16, 0xBBu16, 0xCCu16...];
 const b: [5u]u16 = (:[5u]u16)[0xAAu16...];
 
@@ -14,13 +16,13 @@ func main() void {
     var d: [5u]u16 = (:[5u]u16)[0xAAu16...];
     var e: [0u]u16 = (:[0u]u16)[0xFFFFu16...];
 
-    dump a;
-    dump b;
-    dump c;
-    dump d;
-    dump e;
-    dump f;
-    dump g;
+    sys::dump[[[5]u16]](a);
+    sys::dump[[[5]u16]](b);
+    sys::dump[[[5]u16]](c);
+    sys::dump[[[5]u16]](d);
+    sys::dump[[[0]u16]](e);
+    sys::dump[[[3][5]u16]](f);
+    sys::dump[[[2][2][3]u16]](g);
 }
 ################################################################################
 # AA 00 BB 00 CC 00 CC 00 CC 00

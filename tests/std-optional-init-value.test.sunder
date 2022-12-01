@@ -1,12 +1,11 @@
 import "std/core.sunder";
+import "sys";
 
 func main() void {
     var a: std::optional[[u16]] = std::optional[[u16]]::init_value(0xBEEF);
-    dump a.is_value();
-    dump a.is_empty();
-    dump a.value();
+    std::assert(a.is_value());
+    std::assert(not a.is_empty());
+    sys::dump[[u16]](a.value());
 }
 ################################################################################
-# 01
-# 00
 # EF BE

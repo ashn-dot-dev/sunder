@@ -1,3 +1,5 @@
+import "sys";
+
 struct primitive[[T]] {
     var value: T;
 }
@@ -18,9 +20,9 @@ struct pair[[A, B]] {
 }
 
 func main() void {
-    dump (:primitive[[u16]]){.value = 0xBEEF}.value;
-    dump (:primitive[[u16]]){.value = 0xBEEF}.value;  # Should reuse the first instantiation.
-    dump (:primitive[[u32]]){.value = 0xDEADBEEF}.value;
+    sys::dump[[u16]]((:primitive[[u16]]){.value = 0xBEEF}.value);
+    sys::dump[[u16]]((:primitive[[u16]]){.value = 0xBEEF}.value);  # Should reuse the first instantiation.
+    sys::dump[[u32]]((:primitive[[u32]]){.value = 0xDEADBEEF}.value);
 
     var primitive_a_: primitive[[u16]] = (:primitive[[u16]]){.value = 123};
     const primitive_b_: primitive[[u16]] = (:primitive[[u16]]){.value = 123};
@@ -29,20 +31,20 @@ func main() void {
         .first = 0xBEEF,
         .second = 0xCAFEF00D
     };
-    dump pair_a;
-    dump pair_a.first;
-    dump pair_a.second;
+    sys::dump[[pair[[u16, u32]]]](pair_a);
+    sys::dump[[u16]](pair_a.first);
+    sys::dump[[u32]](pair_a.second);
     var pair_b: pair[[u8, u8]] = (:pair[[u8, u8]]){
         .first = 0xFF,
         .second = 0xEE
     };
-    dump pair_b;
-    dump pair_b.first;
-    dump pair_b.second;
+    sys::dump[[pair[[u8, u8]]]](pair_b);
+    sys::dump[[u8]](pair_b.first);
+    sys::dump[[u8]](pair_b.second);
     var pair_c: pair[[u16, u32]] = pair[[u16, u32]]::init(0xBEEF, 0xCAFEF00D);
-    dump pair_c;
-    dump pair_c.first;
-    dump pair_c.second;
+    sys::dump[[pair[[u16, u32]]]](pair_c);
+    sys::dump[[u16]](pair_c.first);
+    sys::dump[[u32]](pair_c.second);
 }
 ################################################################################
 # EF BE

@@ -11,17 +11,19 @@ struct point {
 
 func main() void {
     var num = s32::square(12);
-    dump num.is_even();
+    std::assert(num.is_even());
 
     var p = point::init(0xAAAA, 0xBBBB);
-    dump p;
+    std::assert(p.x == 0xAAAA);
+    std::assert(p.y == 0xBBBB);
     p.zero();
-    dump p;
+    std::assert(p.x == 0);
+    std::assert(p.y == 0);
 
-    dump u32::MIN;
-    dump u32::MAX;
-    dump s32::MIN;
-    dump s32::MAX;
+    std::assert(u32::MIN == +0);
+    std::assert(u32::MAX == +4294967295);
+    std::assert(s32::MIN == -2147483648);
+    std::assert(s32::MAX == +2147483647);
 }
 
 extend s32 func square(value: s32) s32 {
@@ -37,11 +39,3 @@ extend point func zero(self: *point) void {
 }
 
 extend point const ZEROED: point = (:point){.x = 0, .y = 0};
-################################################################################
-# 01
-# AA AA BB BB
-# 00 00 00 00
-# 00 00 00 00
-# FF FF FF FF
-# 00 00 00 80
-# FF FF FF 7F

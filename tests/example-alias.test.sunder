@@ -1,4 +1,5 @@
 import "std";
+import "sys";
 
 alias i32 = s32;
 var a: i32 = 123;
@@ -26,18 +27,18 @@ struct non_empty_struct {
 alias some_non_empty_struct = non_empty_struct;
 
 func main() void {
-    dump a;
-    dump b;
+    sys::dump[[i32]](a);
+    sys::dump[[unsigned8]](b);
 
     alias foo = s32;
     var bar: foo = -1;
-    dump bar;
+    sys::dump[[foo]](bar);
 
     var r = some_result::init_error("foo");
     std::print_line(std::out(), r.error());
 
     var i: i32 = 123;
-    dump i32::hash(&i);
+    sys::dump[[usize]](i32::hash(&i));
 
     alias str = *byte;
     var _: str = &"foo"[0];

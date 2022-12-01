@@ -1,73 +1,75 @@
+import "sys";
+
 func main() void {
     # Equality comparison.
     var u8_eq_integer: bool = 1u8 == 1;
     var integer_eq_u8: bool = 1 == 1u8;
-    dump u8_eq_integer;
-    dump integer_eq_u8;
+    sys::dump[[bool]](u8_eq_integer);
+    sys::dump[[bool]](integer_eq_u8);
 
     # Order comparison.
     var u8_lt_integer: bool = 1u8 < 1;
     var integer_lt_u8: bool = 1 < 1u8;
-    dump u8_lt_integer;
-    dump integer_lt_u8;
+    sys::dump[[bool]](u8_lt_integer);
+    sys::dump[[bool]](integer_lt_u8);
 
     # Unary arithmetic expression.
     var pos: s32 = +123;
     var neg: s32 = -123;
-    dump pos;
-    dump neg;
+    sys::dump[[s32]](pos);
+    sys::dump[[s32]](neg);
 
     # Binary arithmetic expression.
     var u8_add_integer: u8 = 0xFEu8 + 1;
     var integer_add_u8: u8 = 1 + 0xFEu8;
-    dump u8_add_integer;
-    dump integer_add_u8;
+    sys::dump[[u8]](u8_add_integer);
+    sys::dump[[u8]](integer_add_u8);
 
     # Make sure constants fold at compile-time.
     var u8_add_integer_add_integer: u8 = 0xFCu8 + 1 + 2;
     var integer_add_integer_add_u8: u8 = 1 + 2 + 0xFCu8;
-    dump u8_add_integer_add_integer;
-    dump integer_add_integer_add_u8;
+    sys::dump[[u8]](u8_add_integer_add_integer);
+    sys::dump[[u8]](integer_add_integer_add_u8);
 
     # Array type, array literal, and index expression.
     var array: [1 + 2]byte = (:[3]byte)[1, 3, 5];
-    dump array[0];
-    dump array[1];
-    dump array[1 + 1];
+    sys::dump[[byte]](array[0]);
+    sys::dump[[byte]](array[1]);
+    sys::dump[[byte]](array[1 + 1]);
     array = (:[3]byte)[0xAB...];
-    dump array;
+    sys::dump[[[3]byte]](array);
     array = (:[3]byte)[1, 3, 5];
-    dump array;
+    sys::dump[[[3]byte]](array);
 
     # Slice literal.
     var slice: []byte = (:[]byte){&array[1], 2};
-    dump slice[0];
-    dump slice[1];
+    sys::dump[[byte]](slice[0]);
+    sys::dump[[byte]](slice[1]);
 
     # Slice expression.
-    dump array[1:3][0];
-    dump array[1:3][1];
+    sys::dump[[byte]](array[1:3][0]);
+    sys::dump[[byte]](array[1:3][1]);
 
     # For-range indices.
     for i in 0xA:0xF {
-        dump i;
+        sys::dump[[usize]](i);
     }
 
     # Function parameters and return.
-    dump myfunc(0xAB, 0xF00F);
+    sys::dump[[s32]](myfunc(0xAB, 0xF00F));
 
     # Right hand side of assignment.
     const x: s32 = 135;
-    dump x;
+    sys::dump[[s32]](x);
     var y: s32 = 123;
-    dump y;
+    sys::dump[[s32]](y);
     y = 456;
-    dump y;
+    sys::dump[[s32]](y);
 }
 
 func myfunc(a: byte, b: usize) s32 {
-    dump a;
-    dump b;
+    sys::dump[[byte]](a);
+    sys::dump[[usize]](b);
     return 123;
 }
 ################################################################################

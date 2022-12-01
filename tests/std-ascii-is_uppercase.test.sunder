@@ -2,43 +2,21 @@ import "std/core.sunder";
 import "std/ascii.sunder";
 
 func main() void {
-    dump std::ascii::is_uppercase('A');
-    dump std::ascii::is_uppercase('B');
-    dump std::ascii::is_uppercase('C');
-    dump std::ascii::is_uppercase('Z');
+    std::assert(std::ascii::is_uppercase('A'));
+    std::assert(std::ascii::is_uppercase('B'));
+    std::assert(std::ascii::is_uppercase('C'));
+    std::assert(std::ascii::is_uppercase('Z'));
 
-    std::print(std::out(), "\n");
+    std::assert(not std::ascii::is_uppercase('a'));
+    std::assert(not std::ascii::is_uppercase('b'));
+    std::assert(not std::ascii::is_uppercase('c'));
+    std::assert(not std::ascii::is_uppercase('z'));
 
-    dump std::ascii::is_uppercase('a');
-    dump std::ascii::is_uppercase('b');
-    dump std::ascii::is_uppercase('c');
-    dump std::ascii::is_uppercase('z');
-
-    std::print(std::out(), "\n");
-
-    dump std::ascii::is_uppercase('1');
-    dump std::ascii::is_uppercase('~');
-    dump std::ascii::is_uppercase('\n');
-    dump std::ascii::is_uppercase('\t');
-    dump std::ascii::is_uppercase(' ');
-    dump std::ascii::is_uppercase('@');
-    dump std::ascii::is_uppercase('[');
+    std::assert(not std::ascii::is_uppercase('1'));
+    std::assert(not std::ascii::is_uppercase('~'));
+    std::assert(not std::ascii::is_uppercase('\n'));
+    std::assert(not std::ascii::is_uppercase('\t'));
+    std::assert(not std::ascii::is_uppercase(' '));
+    std::assert(not std::ascii::is_uppercase('@'));
+    std::assert(not std::ascii::is_uppercase('['));
 }
-################################################################################
-# 01
-# 01
-# 01
-# 01
-#
-# 00
-# 00
-# 00
-# 00
-#
-# 00
-# 00
-# 00
-# 00
-# 00
-# 00
-# 00

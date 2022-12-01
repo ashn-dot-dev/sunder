@@ -17,14 +17,12 @@ func main() void {
     var iter = std::slice_iterator[[u32]]::init((:[]u32)[1, 2, 3]);
     print_elements(std::iterator[[*u32]]::init[[std::slice_iterator[[u32]]]](&iter));
 
-    dump iter.advance();
-    dump iter.advance(); # Should be able to advance multiple times without panic.
-    dump iter.current(); # Iterator was used up. This should panic.
+    std::assert(not iter.advance());
+    std::assert(not iter.advance()); # Should be able to advance multiple times without panic.
+    iter.current(); # Iterator was used up. This should panic.
 }
 ################################################################################
 # 1
 # 2
 # 3
-# 00
-# 00
 # panic: invalid iterator

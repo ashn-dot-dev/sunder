@@ -1,25 +1,27 @@
+import "sys";
+
 const a: u16 = 0xAAAAu16;
 const b: typeof(a) = a;
 const c: typeof(b) = a;
 const d: typeof(0u16 + 1u16) = a;
 
 func dump1234() void {
-    dump 0x1234u16;
+    sys::dump[[u16]](0x1234);
 }
 
 func dumpABCD() void {
-    dump 0xABCDu16;
+    sys::dump[[u16]](0xABCD);
 }
 
 func main() void {
-    dump a;
-    dump b;
-    dump c;
-    dump d;
+    sys::dump[[u16]](a);
+    sys::dump[[u16]](b);
+    sys::dump[[u16]](c);
+    sys::dump[[u16]](d);
 
     const e: [3u]u8 = (:[3u]u8)[0xAAu8, 0xBBu8, 0xCCu8];
     const f: typeof((*&e)[0u:0u]) = e[0u:3u];
-    dump f[1u];
+    sys::dump[[u8]](f[1u]);
 
     const g: typeof(dump1234) = dumpABCD;
     g();

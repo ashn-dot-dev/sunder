@@ -1,14 +1,13 @@
 import "std/core.sunder";
+import "sys";
 
 func main() void {
     var a: std::result[[void, u16]] = std::result[[void, u16]]::init_error(0xBEEF);
-    dump a.is_value();
-    dump a.is_error();
-    dump a.error();
-    dump a.value(); # boom
+    std::assert(not a.is_value());
+    std::assert(a.is_error());
+    sys::dump[[u16]](a.error());
+    a.value(); # boom
 }
 ################################################################################
-# 00
-# 01
 # EF BE
 # panic: attempted to retrieve value from std::result in the error state

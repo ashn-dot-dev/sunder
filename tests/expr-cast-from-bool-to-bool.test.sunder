@@ -1,14 +1,16 @@
+import "sys";
+
 func main() void {
-    dump (:bool)true;
-    dump (:bool)false;
+    sys::dump[[bool]]((:bool)true);
+    sys::dump[[bool]]((:bool)false);
 
     var x = true;
-    dump (:bool)x;
-    dump (:bool)(:bool)x;
+    sys::dump[[bool]]((:bool)x);
+    sys::dump[[bool]]((:bool)(:bool)x);
 
     const y = true;
-    dump (:bool)y;
-    dump (:bool)(:bool)y;
+    sys::dump[[bool]]((:bool)y);
+    sys::dump[[bool]]((:bool)(:bool)y);
 }
 ################################################################################
 # 01

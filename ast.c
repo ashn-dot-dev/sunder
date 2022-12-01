@@ -1007,17 +1007,6 @@ stmt_new_continue(
 }
 
 struct stmt*
-stmt_new_dump(struct source_location const* location, struct expr const* expr)
-{
-    assert(location != NULL);
-    assert(expr != NULL);
-
-    struct stmt* const self = stmt_new(location, STMT_DUMP);
-    self->data.dump.expr = expr;
-    return self;
-}
-
-struct stmt*
 stmt_new_return(
     struct source_location const* location,
     struct expr const* expr,

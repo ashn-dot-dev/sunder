@@ -45,7 +45,7 @@ func test0() void {
     ];
     var result = std::write_format(std::out(), "{} and {}", args[0:countof(args)]);
     std::print(std::out(), "\n"); # Separate '\n' to test format string ending in "{}".
-    dump result.value();
+    std::assert(result.is_value());
 }
 
 func test1() void {
@@ -59,7 +59,7 @@ func test1() void {
         std::formatter::init[[int]](&i)
     ];
     var result = std::write_format(std::out(), "{} {d} {b} {o} {x}\n", args[0:countof(args)]);
-    dump result.value();
+    std::assert(result.is_value());
 }
 
 func test2() void {
@@ -71,7 +71,7 @@ func test2() void {
         std::formatter::init[[person]](&bob)
     ];
     var result = std::write_format(std::out(), "{{ {} {{ {} {{\n", args[0:countof(args)]);
-    dump result.value();
+    std::assert(result.is_value());
 }
 
 func test3() void {
@@ -83,7 +83,7 @@ func test3() void {
         std::formatter::init[[person]](&bob)
     ];
     var result = std::write_format(std::out(), "}} {} }} {} }}\n", args[0:countof(args)]);
-    dump result.value();
+    std::assert(result.is_value());
 }
 
 func test4() void {
@@ -93,7 +93,7 @@ func test4() void {
         std::formatter::init[[person]](&alice)
     ];
     var result = std::write_format(std::out(), "{{{}\n", args[0:countof(args)]);
-    dump result.value();
+    std::assert(result.is_value());
 }
 
 # Test that std::write_format works as expected when called with array-slice
@@ -110,7 +110,7 @@ func test5() void {
         (:[]std::formatter)[
             std::formatter::init[[person]](&alice),
             std::formatter::init[[person]](&bob)]);
-    dump result.value();
+    std::assert(result.is_value());
 }
 
 func main() void {
@@ -123,14 +123,8 @@ func main() void {
 }
 ################################################################################
 # Alice and Bob
-#
 # decimal decimal binary octal hexadecimal
-#
 # { Alice { Bob {
-#
 # } Alice } Bob }
-#
 # {Alice
-#
 # Alice and Bob as an array-slice
-#

@@ -1,3 +1,5 @@
+import "sys";
+
 struct s1 {
     var x: u32;
 }
@@ -44,22 +46,22 @@ func main() void {
         .v = (:s2){.x = uninit, .y = uninit}
     };
 
-    dump a;
-    dump b;
-    dump c;
-    dump d;
-    dump e;
-    dump f[0];
+    sys::dump[[s1]](a);
+    sys::dump[[s2]](b);
+    sys::dump[[s2]](c);
+    sys::dump[[s3]](d);
+    sys::dump[[[2]s3]](e);
+    sys::dump[[s3]](f[0]);
 
-    dump A;
-    dump B;
-    dump C;
-    dump D;
-    dump E;
-    dump F[0];
+    sys::dump[[s1]](A);
+    sys::dump[[s2]](B);
+    sys::dump[[s2]](C);
+    sys::dump[[s3]](D);
+    sys::dump[[[2]s3]](E);
+    sys::dump[[s3]](F[0]);
 
-    dump h.y;
-    dump i.x;
+    sys::dump[[u32]](h.y);
+    sys::dump[[u32]](i.x);
 }
 ################################################################################
 # 00 00 00 00

@@ -1,20 +1,21 @@
 import "std/core.sunder";
+import "sys";
 
 func main() void {
     # Should copy forwards.
     var a: [5]byte = (:[5]byte)[0xAA, 0xBB, 0xCC, 0xDD, 0xEE];
     std::slice[[byte]]::copy(a[0:3], a[1:4]);
-    dump a;
+    sys::dump[[[5]byte]](a);
 
     # Should copy backwards.
     var b: [5]byte = (:[5]byte)[0xAA, 0xBB, 0xCC, 0xDD, 0xEE];
     std::slice[[byte]]::copy(b[1:4], b[0:3]);
-    dump b;
+    sys::dump[[[5]byte]](b);
 
     # Test with non-8-bit type.
     var c: [5]u16 = (:[5]u16)[0xAAAA, 0xBBBB, 0xCCCC, 0xDDDD, 0xEEEE];
     std::slice[[u16]]::copy(c[0:3], c[1:4]);
-    dump c;
+    sys::dump[[[5]u16]](c);
 
     # Should panic with mismatched slice counts.
     var d: [5]byte = (:[5]byte)[0xAA, 0xBB, 0xCC, 0xDD, 0xEE];

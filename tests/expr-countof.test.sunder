@@ -1,3 +1,5 @@
+import "sys";
+
 const a: usize = countof((:[3u]u16)[0xAAAAu16, 0xBBBBu16, 0xCCCCu16]);
 
 const b: [3u]u16 = (:[3u]u16)[0xAAAAu16, 0xBBBBu16, 0xCCCCu16];
@@ -8,7 +10,7 @@ const e: []u16 = b[1u:3u];
 const f: usize = countof(e);
 
 func ident(val: u16) u16 {
-    dump val;
+    sys::dump[[u16]](val);
     return val;
 }
 
@@ -23,24 +25,24 @@ func foo() *[3u]u16 {
 }
 
 func main() void {
-    dump a;
-    dump c;
-    dump d;
-    dump f;
+    sys::dump[[usize]](a);
+    sys::dump[[usize]](c);
+    sys::dump[[usize]](d);
+    sys::dump[[usize]](f);
 
-    dump countof((:[3u]u16)[0xAAAAu16, 0xBBBBu16, 0xCCCCu16]);
+    sys::dump[[usize]](countof((:[3u]u16)[0xAAAAu16, 0xBBBBu16, 0xCCCCu16]));
 
     var g: usize = countof((:[3u]u16)[0xAAAAu16, 0xBBBBu16, 0xCCCCu16]);
     var h: usize = countof(b[1u:3u]);
-    dump g;
-    dump h;
+    sys::dump[[usize]](g);
+    sys::dump[[usize]](h);
 
-    dump countof((:[3u]u16)[
+    sys::dump[[usize]](countof((:[3u]u16)[
         ident(0xAAAAu16),
         ident(0xBBBBu16),
         ident(0xCCCCu16)
-    ]);
-    dump countof(*foo());
+    ]));
+    sys::dump[[usize]](countof(*foo()));
 }
 ################################################################################
 # 03 00 00 00 00 00 00 00

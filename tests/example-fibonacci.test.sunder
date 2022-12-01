@@ -1,3 +1,5 @@
+import "sys";
+
 func fibonacci(n: usize) usize {
     if n == 0u {
         return 0u;
@@ -9,17 +11,17 @@ func fibonacci(n: usize) usize {
 }
 
 func main() void {
-    dump fibonacci(0u);
-    dump fibonacci(1u);
-    dump fibonacci(2u);
-    dump fibonacci(3u);
-    dump fibonacci(4u);
-    dump fibonacci(5u);
-    dump fibonacci(6u);
-    dump fibonacci(7u);
-    dump fibonacci(8u);
-    dump fibonacci(9u);
-    dump fibonacci(10u);
+    sys::dump[[usize]](fibonacci(0u));
+    sys::dump[[usize]](fibonacci(1u));
+    sys::dump[[usize]](fibonacci(2u));
+    sys::dump[[usize]](fibonacci(3u));
+    sys::dump[[usize]](fibonacci(4u));
+    sys::dump[[usize]](fibonacci(5u));
+    sys::dump[[usize]](fibonacci(6u));
+    sys::dump[[usize]](fibonacci(7u));
+    sys::dump[[usize]](fibonacci(8u));
+    sys::dump[[usize]](fibonacci(9u));
+    sys::dump[[usize]](fibonacci(10u));
 }
 ################################################################################
 # 00 00 00 00 00 00 00 00

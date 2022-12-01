@@ -1,14 +1,13 @@
-func nl() void {
-    # void-returning function that makes dump print a newline.
-}
+import "std/core.sunder";
+import "sys";
 
-func FF_t() bool {
-    dump 0xFFu;
+func func_t() bool {
+    std::print_line(std::err(), "func_t");
     return true;
 }
 
-func EE_f() bool {
-    dump 0xEEu;
+func func_f() bool {
+    std::print_line(std::err(), "func_f");
     return false;
 }
 
@@ -17,26 +16,30 @@ func main() void {
     const f_or_f: bool = false or false;
     const t_or_f: bool = true or false;
     const f_or_t: bool = false or true;
-    dump t_or_t;
-    dump f_or_f;
-    dump t_or_f;
-    dump f_or_t;
-    dump true or true;
-    dump false or false;
-    dump true or false;
-    dump false or true;
-    dump nl();
+    sys::dump[[bool]](t_or_t);
+    sys::dump[[bool]](f_or_f);
+    sys::dump[[bool]](t_or_f);
+    sys::dump[[bool]](f_or_t);
+    sys::dump[[bool]](true or true);
+    sys::dump[[bool]](false or false);
+    sys::dump[[bool]](true or false);
+    sys::dump[[bool]](false or true);
 
-    dump FF_t() or FF_t();
-    dump nl();
+    std::print(std::err(), "\n");
 
-    dump EE_f() or EE_f();
-    dump nl();
+    sys::dump[[bool]](func_t() or func_t());
 
-    dump FF_t() or EE_f();
-    dump nl();
+    std::print(std::err(), "\n");
 
-    dump EE_f() or FF_t();
+    sys::dump[[bool]](func_f() or func_f());
+
+    std::print(std::err(), "\n");
+
+    sys::dump[[bool]](func_t() or func_f());
+
+    std::print(std::err(), "\n");
+
+    sys::dump[[bool]](func_f() or func_t());
 }
 ################################################################################
 # 01
@@ -48,16 +51,16 @@ func main() void {
 # 01
 # 01
 #
-# FF 00 00 00 00 00 00 00
+# func_t
 # 01
 #
-# EE 00 00 00 00 00 00 00
-# EE 00 00 00 00 00 00 00
+# func_f
+# func_f
 # 00
 #
-# FF 00 00 00 00 00 00 00
+# func_t
 # 01
 #
-# EE 00 00 00 00 00 00 00
-# FF 00 00 00 00 00 00 00
+# func_f
+# func_t
 # 01

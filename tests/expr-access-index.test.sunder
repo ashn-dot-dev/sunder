@@ -1,3 +1,5 @@
+import "sys";
+
 const a: u16 = (:[3u]u16)[0xAAAAu16, 0xBBBBu16, 0xCCCCu16][1u];
 
 const b: [3u]u16 = (:[3u]u16)[0xAAAAu16, 0xBBBBu16, 0xCCCCu16];
@@ -13,42 +15,42 @@ const f: u16 = d[1u][2u];
 var g: [3u]u16 = (:[3u]u16)[0xAAAAu16, 0xBBBBu16, 0xCCCCu16];
 
 func main() void {
-    dump a;
-    dump c;
+    sys::dump[[u16]](a);
+    sys::dump[[u16]](c);
 
-    dump e;
-    dump f;
+    sys::dump[[[3]u16]](e);
+    sys::dump[[u16]](f);
 
     g[0u] = 0xDDDDu16;
     g[1u] = 0xEEEEu16;
     g[2u] = 0xFFFFu16;
-    dump g[0u];
-    dump g[1u];
-    dump g[2u];
+    sys::dump[[u16]](g[0u]);
+    sys::dump[[u16]](g[1u]);
+    sys::dump[[u16]](g[2u]);
 
-    dump (:[3u]u16)[0xABABu16, 0xCDCDu16, 0xEFEFu16][0u];
-    dump (:[3u]u16)[0xABABu16, 0xCDCDu16, 0xEFEFu16][1u];
-    dump (:[3u]u16)[0xABABu16, 0xCDCDu16, 0xEFEFu16][2u];
+    sys::dump[[u16]]((:[3u]u16)[0xABABu16, 0xCDCDu16, 0xEFEFu16][0u]);
+    sys::dump[[u16]]((:[3u]u16)[0xABABu16, 0xCDCDu16, 0xEFEFu16][1u]);
+    sys::dump[[u16]]((:[3u]u16)[0xABABu16, 0xCDCDu16, 0xEFEFu16][2u]);
 
     var h: [3u]u16 = (:[3u]u16)[0xAAAAu16, 0xBBBBu16, 0xCCCCu16];
-    dump h[0u];
-    dump h[1u];
-    dump h[2u];
+    sys::dump[[u16]](h[0u]);
+    sys::dump[[u16]](h[1u]);
+    sys::dump[[u16]](h[2u]);
     h[0u] = 0xDDDDu16;
     h[1u] = 0xEEEEu16;
     h[2u] = 0xFFFFu16;
-    dump h[0u];
-    dump h[1u];
-    dump h[2u];
+    sys::dump[[u16]](h[0u]);
+    sys::dump[[u16]](h[1u]);
+    sys::dump[[u16]](h[2u]);
 
     const i: [3u]u16 = (:[3u]u16)[0xAAAAu16, 0xBBBBu16, 0xCCCCu16];
-    dump i[0u];
-    dump i[1u];
-    dump i[2u];
+    sys::dump[[u16]](i[0u]);
+    sys::dump[[u16]](i[1u]);
+    sys::dump[[u16]](i[2u]);
 
     var j: []u16 = b[1u:3u];
-    dump j[0u];
-    dump j[1u];
+    sys::dump[[u16]](j[0u]);
+    sys::dump[[u16]](j[1u]);
 }
 ################################################################################
 # BB BB

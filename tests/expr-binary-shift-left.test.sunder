@@ -1,3 +1,5 @@
+import "sys";
+
 func main() void {
     const a = 1u << 0;
     const b = 1u << 1;
@@ -6,20 +8,20 @@ func main() void {
     const e = 1u << 63;
     const f = 1u << 64;
 
-    dump a;
-    dump b;
-    dump c;
-    dump d;
-    dump e;
-    dump f;
+    sys::dump[[usize]](a);
+    sys::dump[[usize]](b);
+    sys::dump[[usize]](c);
+    sys::dump[[usize]](d);
+    sys::dump[[usize]](e);
+    sys::dump[[usize]](f);
 
     var x = 1u;
-    dump x << 0;
-    dump x << 1;
-    dump x << 2;
-    dump x << 8;
-    dump x << 63;
-    dump x << 64;
+    sys::dump[[usize]](x << 0);
+    sys::dump[[usize]](x << 1);
+    sys::dump[[usize]](x << 2);
+    sys::dump[[usize]](x << 8);
+    sys::dump[[usize]](x << 63);
+    sys::dump[[usize]](x << 64);
 
     var some_u8 = 1u8;
     var some_u16 = 1u16;
@@ -30,14 +32,14 @@ func main() void {
     var some_s32 = -1s32;
     var some_s64 = -1s64;
 
-    dump some_u8 << 1;
-    dump some_u16 << 1;
-    dump some_u32 << 1;
-    dump some_u64 << 1;
-    dump some_s8 << 1;
-    dump some_s16 << 1;
-    dump some_s32 << 1;
-    dump some_s64 << 1;
+    sys::dump[[u8]](some_u8 << 1);
+    sys::dump[[u16]](some_u16 << 1);
+    sys::dump[[u32]](some_u32 << 1);
+    sys::dump[[u64]](some_u64 << 1);
+    sys::dump[[s8]](some_s8 << 1);
+    sys::dump[[s16]](some_s16 << 1);
+    sys::dump[[s32]](some_s32 << 1);
+    sys::dump[[s64]](some_s64 << 1);
 }
 ################################################################################
 # 01 00 00 00 00 00 00 00

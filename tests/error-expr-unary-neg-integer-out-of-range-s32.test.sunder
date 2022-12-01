@@ -1,6 +1,6 @@
 func main() void {
     var x: s32 = -2147483648s32;
-    dump -x;
+    -x;
 }
 ################################################################################
 # fatal: arithmetic operation produces out-of-range result

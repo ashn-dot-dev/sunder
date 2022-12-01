@@ -1,13 +1,15 @@
+import "sys";
+
 func main() void {
-    dump (:byte)1y;
+    sys::dump[[byte]]((:byte)1y);
 
     var x = 1y;
-    dump (:byte)x;
-    dump (:byte)(:byte)x;
+    sys::dump[[byte]]((:byte)x);
+    sys::dump[[byte]]((:byte)(:byte)x);
 
     const y = true;
-    dump (:byte)y;
-    dump (:byte)(:byte)y;
+    sys::dump[[byte]]((:byte)y);
+    sys::dump[[byte]]((:byte)(:byte)y);
 }
 ################################################################################
 # 01

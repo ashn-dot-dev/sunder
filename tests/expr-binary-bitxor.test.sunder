@@ -1,6 +1,5 @@
-func nl() void {
-    # void-returning function that makes dump print a newline.
-}
+import "std/core.sunder";
+import "sys";
 
 func main() void {
     const t_bitxor_t: bool = true ^ true;
@@ -8,16 +7,19 @@ func main() void {
     const t_bitxor_f: bool = true ^ false;
     const f_bitxor_t: bool = false ^ true;
 
-    dump t_bitxor_t;
-    dump f_bitxor_f;
-    dump t_bitxor_f;
-    dump f_bitxor_t;
-    dump nl();
-    dump true ^ true;
-    dump false ^ false;
-    dump true ^ false;
-    dump false ^ true;
-    dump nl();
+    sys::dump[[bool]](t_bitxor_t);
+    sys::dump[[bool]](f_bitxor_f);
+    sys::dump[[bool]](t_bitxor_f);
+    sys::dump[[bool]](f_bitxor_t);
+
+    std::print(std::err(), "\n");
+
+    sys::dump[[bool]](true ^ true);
+    sys::dump[[bool]](false ^ false);
+    sys::dump[[bool]](true ^ false);
+    sys::dump[[bool]](false ^ true);
+
+    std::print(std::err(), "\n");
 
     const byte_a: byte = 0xABy;
     const byte_b: byte = 0xFFy;
@@ -29,16 +31,19 @@ func main() void {
     const byte_a_bitxor_byte_c: byte = byte_a ^ byte_c;
     const byte_d_bitxor_byte_e: byte = byte_d ^ byte_e;
 
-    dump byte_a_bitxor_byte_a;
-    dump byte_a_bitxor_byte_b;
-    dump byte_a_bitxor_byte_c;
-    dump byte_d_bitxor_byte_e;
-    dump nl();
-    dump 0xABu8 ^ 0xABu8;
-    dump 0xABu8 ^ 0xFFu8;
-    dump 0xABu8 ^ 0x00u8;
-    dump 0b10101100u8 ^ 0b11001010u8;
-    dump nl();
+    sys::dump[[byte]](byte_a_bitxor_byte_a);
+    sys::dump[[byte]](byte_a_bitxor_byte_b);
+    sys::dump[[byte]](byte_a_bitxor_byte_c);
+    sys::dump[[byte]](byte_d_bitxor_byte_e);
+
+    std::print(std::err(), "\n");
+
+    sys::dump[[u8]](0xABu8 ^ 0xABu8);
+    sys::dump[[u8]](0xABu8 ^ 0xFFu8);
+    sys::dump[[u8]](0xABu8 ^ 0x00u8);
+    sys::dump[[u8]](0b10101100u8 ^ 0b11001010u8);
+
+    std::print(std::err(), "\n");
 
     const u32_a: u32 = 0xDEADBEEFu32;
     const u32_b: u32 = 0xFFFFFFFFu32;
@@ -50,16 +55,19 @@ func main() void {
     const u32_a_bitxor_u32_c: u32 = u32_a ^ u32_c;
     const u32_d_bitxor_u32_e: u32 = u32_d ^ u32_e;
 
-    dump u32_a_bitxor_u32_a;
-    dump u32_a_bitxor_u32_b;
-    dump u32_a_bitxor_u32_c;
-    dump u32_d_bitxor_u32_e;
-    dump nl();
-    dump 0xDEADBEEFu32 ^ 0xDEADBEEFu32;
-    dump 0xDEADBEEFu32 ^ 0xFFFFFFFFu32;
-    dump 0xDEADBEEFu32 ^ 0x00000000u32;
-    dump 0b10101100111100001111111100000000u32 ^ 0b11001010110011001111111100000000u32;
-    dump nl();
+    sys::dump[[u32]](u32_a_bitxor_u32_a);
+    sys::dump[[u32]](u32_a_bitxor_u32_b);
+    sys::dump[[u32]](u32_a_bitxor_u32_c);
+    sys::dump[[u32]](u32_d_bitxor_u32_e);
+
+    std::print(std::err(), "\n");
+
+    sys::dump[[u32]](0xDEADBEEFu32 ^ 0xDEADBEEFu32);
+    sys::dump[[u32]](0xDEADBEEFu32 ^ 0xFFFFFFFFu32);
+    sys::dump[[u32]](0xDEADBEEFu32 ^ 0x00000000u32);
+    sys::dump[[u32]](0b10101100111100001111111100000000u32 ^ 0b11001010110011001111111100000000u32);
+
+    std::print(std::err(), "\n");
 
     const s8_a: s8 = -128s8; # 0x80 as s8
     const s8_b: s8 = -1s8; # 0xFF as s8
@@ -68,14 +76,17 @@ func main() void {
     const s8_a_bitxor_s8_b: s8 = s8_a ^ s8_b;
     const s8_a_bitxor_s8_c: s8 = s8_a ^ s8_c;
 
-    dump s8_a_bitxor_s8_a;
-    dump s8_a_bitxor_s8_b;
-    dump s8_a_bitxor_s8_c;
-    dump nl();
-    dump -128s8 ^ -128s8;
-    dump -128s8 ^ -1s8;
-    dump -128s8 ^ 0s8;
-    dump nl();
+    sys::dump[[s8]](s8_a_bitxor_s8_a);
+    sys::dump[[s8]](s8_a_bitxor_s8_b);
+    sys::dump[[s8]](s8_a_bitxor_s8_c);
+
+    std::print(std::err(), "\n");
+
+    sys::dump[[s8]](-128s8 ^ -128s8);
+    sys::dump[[s8]](-128s8 ^ -1s8);
+    sys::dump[[s8]](-128s8 ^ 0s8);
+
+    std::print(std::err(), "\n");
 
     const s16_a: s16 = -32768s16; # 0x8000 as s16
     const s16_b: s16 = -1s16; # 0xFFFF as s16
@@ -90,21 +101,23 @@ func main() void {
     const s16_e_bitxor_s16_b: s16 = s16_e ^ s16_b;
     const s16_e_bitxor_s16_c: s16 = s16_e ^ s16_c;
 
-    dump s16_a_bitxor_s16_a;
-    dump s16_a_bitxor_s16_b;
-    dump s16_a_bitxor_s16_c;
-    dump s16_d_bitxor_s16_b;
-    dump s16_d_bitxor_s16_c;
-    dump s16_e_bitxor_s16_b;
-    dump s16_e_bitxor_s16_c;
-    dump nl();
-    dump -32768s16 ^ -32768s16;
-    dump -32768s16 ^ -1s16;
-    dump -32768s16 ^ 0s16;
-    dump -16657s16 ^ -1s16;
-    dump -16657s16 ^ 0s16;
-    dump 0x0123s16 ^ -1s16;
-    dump 0x0123s16 ^ 0s16;
+    sys::dump[[s16]](s16_a_bitxor_s16_a);
+    sys::dump[[s16]](s16_a_bitxor_s16_b);
+    sys::dump[[s16]](s16_a_bitxor_s16_c);
+    sys::dump[[s16]](s16_d_bitxor_s16_b);
+    sys::dump[[s16]](s16_d_bitxor_s16_c);
+    sys::dump[[s16]](s16_e_bitxor_s16_b);
+    sys::dump[[s16]](s16_e_bitxor_s16_c);
+
+    std::print(std::err(), "\n");
+
+    sys::dump[[s16]](-32768s16 ^ -32768s16);
+    sys::dump[[s16]](-32768s16 ^ -1s16);
+    sys::dump[[s16]](-32768s16 ^ 0s16);
+    sys::dump[[s16]](-16657s16 ^ -1s16);
+    sys::dump[[s16]](-16657s16 ^ 0s16);
+    sys::dump[[s16]](0x0123s16 ^ -1s16);
+    sys::dump[[s16]](0x0123s16 ^ 0s16);
 }
 ################################################################################
 # 00

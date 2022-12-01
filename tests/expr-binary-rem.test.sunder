@@ -1,117 +1,119 @@
+import "sys";
+
 # Function that takes values to make sure logic is executed at runtime and not
 # at compile time in a constant expression.
-func test_rem[[T]](dividend: T, divisor: T) T {
-    return dividend % divisor;
+func test_rem[[T]](dividend: T, divisor: T) void  {
+    sys::dump[[T]](dividend % divisor);
 }
 
 func u_pos_rem_pos() void {
-    dump test_rem[[u8]] (3, 1);
-    dump test_rem[[u16]](3, 1);
-    dump test_rem[[u32]](3, 1);
-    dump test_rem[[u64]](3, 1);
+    test_rem[[u8]] (3, 1);
+    test_rem[[u16]](3, 1);
+    test_rem[[u32]](3, 1);
+    test_rem[[u64]](3, 1);
 
-    dump test_rem[[u8]] (3, 2);
-    dump test_rem[[u16]](3, 2);
-    dump test_rem[[u32]](3, 2);
-    dump test_rem[[u64]](3, 2);
+    test_rem[[u8]] (3, 2);
+    test_rem[[u16]](3, 2);
+    test_rem[[u32]](3, 2);
+    test_rem[[u64]](3, 2);
 
-    dump test_rem[[u8]] (3, 3);
-    dump test_rem[[u16]](3, 3);
-    dump test_rem[[u32]](3, 3);
-    dump test_rem[[u64]](3, 3);
+    test_rem[[u8]] (3, 3);
+    test_rem[[u16]](3, 3);
+    test_rem[[u32]](3, 3);
+    test_rem[[u64]](3, 3);
 
-    dump test_rem[[u8]] (3, 4);
-    dump test_rem[[u16]](3, 4);
-    dump test_rem[[u32]](3, 4);
-    dump test_rem[[u64]](3, 4);
+    test_rem[[u8]] (3, 4);
+    test_rem[[u16]](3, 4);
+    test_rem[[u32]](3, 4);
+    test_rem[[u64]](3, 4);
 }
 
 func s_pos_rem_pos() void {
-    dump test_rem[[s8]] (+3, +1);
-    dump test_rem[[s16]](+3, +1);
-    dump test_rem[[s32]](+3, +1);
-    dump test_rem[[s64]](+3, +1);
+    test_rem[[s8]] (+3, +1);
+    test_rem[[s16]](+3, +1);
+    test_rem[[s32]](+3, +1);
+    test_rem[[s64]](+3, +1);
 
-    dump test_rem[[s8]] (+3, +2);
-    dump test_rem[[s16]](+3, +2);
-    dump test_rem[[s32]](+3, +2);
-    dump test_rem[[s64]](+3, +2);
+    test_rem[[s8]] (+3, +2);
+    test_rem[[s16]](+3, +2);
+    test_rem[[s32]](+3, +2);
+    test_rem[[s64]](+3, +2);
 
-    dump test_rem[[s8]] (+3, +3);
-    dump test_rem[[s16]](+3, +3);
-    dump test_rem[[s32]](+3, +3);
-    dump test_rem[[s64]](+3, +3);
+    test_rem[[s8]] (+3, +3);
+    test_rem[[s16]](+3, +3);
+    test_rem[[s32]](+3, +3);
+    test_rem[[s64]](+3, +3);
 
-    dump test_rem[[s8]] (+3, +4);
-    dump test_rem[[s16]](+3, +4);
-    dump test_rem[[s32]](+3, +4);
-    dump test_rem[[s64]](+3, +4);
+    test_rem[[s8]] (+3, +4);
+    test_rem[[s16]](+3, +4);
+    test_rem[[s32]](+3, +4);
+    test_rem[[s64]](+3, +4);
 }
 
 func s_neg_rem_pos() void {
-    dump test_rem[[s8]] (-3, +1);
-    dump test_rem[[s16]](-3, +1);
-    dump test_rem[[s32]](-3, +1);
-    dump test_rem[[s64]](-3, +1);
+    test_rem[[s8]] (-3, +1);
+    test_rem[[s16]](-3, +1);
+    test_rem[[s32]](-3, +1);
+    test_rem[[s64]](-3, +1);
 
-    dump test_rem[[s8]] (-3, +2);
-    dump test_rem[[s16]](-3, +2);
-    dump test_rem[[s32]](-3, +2);
-    dump test_rem[[s64]](-3, +2);
+    test_rem[[s8]] (-3, +2);
+    test_rem[[s16]](-3, +2);
+    test_rem[[s32]](-3, +2);
+    test_rem[[s64]](-3, +2);
 
-    dump test_rem[[s8]] (-3, +3);
-    dump test_rem[[s16]](-3, +3);
-    dump test_rem[[s32]](-3, +3);
-    dump test_rem[[s64]](-3, +3);
+    test_rem[[s8]] (-3, +3);
+    test_rem[[s16]](-3, +3);
+    test_rem[[s32]](-3, +3);
+    test_rem[[s64]](-3, +3);
 
-    dump test_rem[[s8]] (-3, +4);
-    dump test_rem[[s16]](-3, +4);
-    dump test_rem[[s32]](-3, +4);
-    dump test_rem[[s64]](-3, +4);
+    test_rem[[s8]] (-3, +4);
+    test_rem[[s16]](-3, +4);
+    test_rem[[s32]](-3, +4);
+    test_rem[[s64]](-3, +4);
 }
 
 func s_pos_rem_neg() void {
-    dump test_rem[[s8]] (+3, -1);
-    dump test_rem[[s16]](+3, -1);
-    dump test_rem[[s32]](+3, -1);
-    dump test_rem[[s64]](+3, -1);
+    test_rem[[s8]] (+3, -1);
+    test_rem[[s16]](+3, -1);
+    test_rem[[s32]](+3, -1);
+    test_rem[[s64]](+3, -1);
 
-    dump test_rem[[s8]] (+3, -2);
-    dump test_rem[[s16]](+3, -2);
-    dump test_rem[[s32]](+3, -2);
-    dump test_rem[[s64]](+3, -2);
+    test_rem[[s8]] (+3, -2);
+    test_rem[[s16]](+3, -2);
+    test_rem[[s32]](+3, -2);
+    test_rem[[s64]](+3, -2);
 
-    dump test_rem[[s8]] (+3, -3);
-    dump test_rem[[s16]](+3, -3);
-    dump test_rem[[s32]](+3, -3);
-    dump test_rem[[s64]](+3, -3);
+    test_rem[[s8]] (+3, -3);
+    test_rem[[s16]](+3, -3);
+    test_rem[[s32]](+3, -3);
+    test_rem[[s64]](+3, -3);
 
-    dump test_rem[[s8]] (+3, -4);
-    dump test_rem[[s16]](+3, -4);
-    dump test_rem[[s32]](+3, -4);
-    dump test_rem[[s64]](+3, -4);
+    test_rem[[s8]] (+3, -4);
+    test_rem[[s16]](+3, -4);
+    test_rem[[s32]](+3, -4);
+    test_rem[[s64]](+3, -4);
 }
 
 func s_neg_rem_neg() void {
-    dump test_rem[[s8]] (-3, -1);
-    dump test_rem[[s16]](-3, -1);
-    dump test_rem[[s32]](-3, -1);
-    dump test_rem[[s64]](-3, -1);
+    test_rem[[s8]] (-3, -1);
+    test_rem[[s16]](-3, -1);
+    test_rem[[s32]](-3, -1);
+    test_rem[[s64]](-3, -1);
 
-    dump test_rem[[s8]] (-3, -2);
-    dump test_rem[[s16]](-3, -2);
-    dump test_rem[[s32]](-3, -2);
-    dump test_rem[[s64]](-3, -2);
+    test_rem[[s8]] (-3, -2);
+    test_rem[[s16]](-3, -2);
+    test_rem[[s32]](-3, -2);
+    test_rem[[s64]](-3, -2);
 
-    dump test_rem[[s8]] (-3, -3);
-    dump test_rem[[s16]](-3, -3);
-    dump test_rem[[s32]](-3, -3);
-    dump test_rem[[s64]](-3, -3);
+    test_rem[[s8]] (-3, -3);
+    test_rem[[s16]](-3, -3);
+    test_rem[[s32]](-3, -3);
+    test_rem[[s64]](-3, -3);
 
-    dump test_rem[[s8]] (-3, -4);
-    dump test_rem[[s16]](-3, -4);
-    dump test_rem[[s32]](-3, -4);
-    dump test_rem[[s64]](-3, -4);
+    test_rem[[s8]] (-3, -4);
+    test_rem[[s16]](-3, -4);
+    test_rem[[s32]](-3, -4);
+    test_rem[[s64]](-3, -4);
 }
 
 func main() void {

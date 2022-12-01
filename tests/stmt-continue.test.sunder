@@ -1,3 +1,5 @@
+import "sys";
+
 func main() void {
     var x: usize = 1u;
     for x != 0u {
@@ -5,12 +7,12 @@ func main() void {
             if i < 3u {
                 continue;
             }
-            dump i;
+            sys::dump[[usize]](i);
         }
 
         x = 0u;
         continue;
-        dump 0xDEADBEEFu32;
+        sys::dump[[u32]](0xDEADBEEFu32);
     }
 }
 ################################################################################

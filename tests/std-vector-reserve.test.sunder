@@ -1,38 +1,39 @@
 import "std/page_allocator.sunder";
 import "std/vector.sunder";
+import "sys";
 
 func main() void {
     var vec: std::vector[[u8]] = std::vector[[u8]]::init(std::allocator::init[[std::page_allocator]](std::page_allocator::the()));
-    dump vec.count();
-    dump vec.capacity();
+    sys::dump[[usize]](vec.count());
+    sys::dump[[usize]](vec.capacity());
 
     vec.reserve(0);
-    dump vec.count();
-    dump vec.capacity();
+    sys::dump[[usize]](vec.count());
+    sys::dump[[usize]](vec.capacity());
 
     vec.reserve(1);
-    dump vec.count();
-    dump vec.capacity();
+    sys::dump[[usize]](vec.count());
+    sys::dump[[usize]](vec.capacity());
 
     vec.reserve(0);
-    dump vec.count();
-    dump vec.capacity();
+    sys::dump[[usize]](vec.count());
+    sys::dump[[usize]](vec.capacity());
 
     vec.reserve(1);
-    dump vec.count();
-    dump vec.capacity();
+    sys::dump[[usize]](vec.count());
+    sys::dump[[usize]](vec.capacity());
 
     vec.reserve(2);
-    dump vec.count();
-    dump vec.capacity();
+    sys::dump[[usize]](vec.count());
+    sys::dump[[usize]](vec.capacity());
 
     vec.reserve(0xBEEF);
-    dump vec.count();
-    dump vec.capacity();
+    sys::dump[[usize]](vec.count());
+    sys::dump[[usize]](vec.capacity());
 
     vec.reserve(0);
-    dump vec.count();
-    dump vec.capacity();
+    sys::dump[[usize]](vec.count());
+    sys::dump[[usize]](vec.capacity());
 
     vec.fini();
 }

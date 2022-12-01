@@ -24,7 +24,7 @@ func main() void {
 
     var b: []byte = "lorem ipsum dolor sit amet";
     var c: []byte = "consectetur adipiscing elit";
-    dump b[1u] == c[1u]; # o
+    std::assert(b[1u] == c[1u]); # o
 }
 ################################################################################
 # Hello, world!
@@ -35,4 +35,3 @@ func main() void {
 # >"<
 # >\<
 # bar
-# 01

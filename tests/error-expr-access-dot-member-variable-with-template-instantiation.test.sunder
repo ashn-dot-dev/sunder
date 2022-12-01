@@ -4,9 +4,9 @@ struct foo {
 
 func main() void {
     var x = (:foo){.value = 0xDEADBEEF};
-    dump x.value[[usize]];
+    x.value[[usize]];
 }
 ################################################################################
 # [error-expr-access-dot-member-variable-with-template-instantiation.test.sunder:7] error: attempted template instantiation of member variable `value` on type `foo`
-#     dump x.value[[usize]];
-#           ^
+#     x.value[[usize]];
+#      ^

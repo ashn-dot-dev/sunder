@@ -1,3 +1,5 @@
+import "sys";
+
 const a: usize = alignof(void);
 const b: usize = alignof(u8);
 const c: usize = alignof(u16);
@@ -12,18 +14,18 @@ const i: u16 = 0xABCDu16;
 const j: usize = alignof(typeof(i));
 
 func main() void {
-    dump a;
-    dump b;
-    dump c;
-    dump d;
-    dump e;
-    dump f;
-    dump g;
-    dump h;
-    dump j;
+    sys::dump[[usize]](a);
+    sys::dump[[usize]](b);
+    sys::dump[[usize]](c);
+    sys::dump[[usize]](d);
+    sys::dump[[usize]](e);
+    sys::dump[[usize]](f);
+    sys::dump[[usize]](g);
+    sys::dump[[usize]](h);
+    sys::dump[[usize]](j);
 
-    dump alignof(u16);
-    dump alignof(typeof(i));
+    sys::dump[[usize]](alignof(u16));
+    sys::dump[[usize]](alignof(typeof(i)));
 }
 ################################################################################
 # 00 00 00 00 00 00 00 00

@@ -1,3 +1,5 @@
+import "sys";
+
 struct s {
     var foo: u32;
     var bar: u32;
@@ -15,16 +17,16 @@ func main() void {
     const y: u32 = uninit;
     const z: s = uninit;
 
-    dump a;
-    dump b;
-    dump c;
-    dump d;
-    dump e;
-    dump f;
-    dump g;
+    sys::dump[[u8]](a);
+    sys::dump[[u16]](b);
+    sys::dump[[u32]](c);
+    sys::dump[[u64]](d);
+    sys::dump[[*byte]](e);
+    sys::dump[[[]byte]](f);
+    sys::dump[[s]](g);
 
-    dump y;
-    dump z;
+    sys::dump[[u32]](y);
+    sys::dump[[s]](z);
 }
 ################################################################################
 # 00

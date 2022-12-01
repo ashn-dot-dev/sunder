@@ -1,21 +1,22 @@
 import "std/core.sunder";
+import "sys";
 
 func main() void {
-    dump std::ptr[[u8]]::sub((:*u8)0x10u, 0);
-    dump std::ptr[[u8]]::sub((:*u8)0x10u, 1);
-    dump std::ptr[[u8]]::sub((:*u8)0x10u, 2);
+    sys::dump[[*u8]](std::ptr[[u8]]::sub((:*u8)0x10u, 0));
+    sys::dump[[*u8]](std::ptr[[u8]]::sub((:*u8)0x10u, 1));
+    sys::dump[[*u8]](std::ptr[[u8]]::sub((:*u8)0x10u, 2));
 
-    dump std::ptr[[u16]]::sub((:*u16)0x10u, 0);
-    dump std::ptr[[u16]]::sub((:*u16)0x10u, 1);
-    dump std::ptr[[u16]]::sub((:*u16)0x10u, 2);
+    sys::dump[[*u16]](std::ptr[[u16]]::sub((:*u16)0x10u, 0));
+    sys::dump[[*u16]](std::ptr[[u16]]::sub((:*u16)0x10u, 1));
+    sys::dump[[*u16]](std::ptr[[u16]]::sub((:*u16)0x10u, 2));
 
-    dump std::ptr[[u32]]::sub((:*u32)0x10u, 0);
-    dump std::ptr[[u32]]::sub((:*u32)0x10u, 1);
-    dump std::ptr[[u32]]::sub((:*u32)0x10u, 2);
+    sys::dump[[*u32]](std::ptr[[u32]]::sub((:*u32)0x10u, 0));
+    sys::dump[[*u32]](std::ptr[[u32]]::sub((:*u32)0x10u, 1));
+    sys::dump[[*u32]](std::ptr[[u32]]::sub((:*u32)0x10u, 2));
 
-    dump std::ptr[[u64]]::sub((:*u64)0x10u, 0);
-    dump std::ptr[[u64]]::sub((:*u64)0x10u, 1);
-    dump std::ptr[[u64]]::sub((:*u64)0x10u, 2);
+    sys::dump[[*u64]](std::ptr[[u64]]::sub((:*u64)0x10u, 0));
+    sys::dump[[*u64]](std::ptr[[u64]]::sub((:*u64)0x10u, 1));
+    sys::dump[[*u64]](std::ptr[[u64]]::sub((:*u64)0x10u, 2));
 }
 ################################################################################
 # 10 00 00 00 00 00 00 00
@@ -30,4 +31,3 @@ func main() void {
 # 10 00 00 00 00 00 00 00
 # 08 00 00 00 00 00 00 00
 # 00 00 00 00 00 00 00 00
-

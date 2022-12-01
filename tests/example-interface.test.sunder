@@ -1,3 +1,5 @@
+import "sys";
+
 struct foo_itable {
     var aa: func(*any) void;
     var bb: func(*any) void;
@@ -24,14 +26,14 @@ struct bar {
     var y: u32;
 
     func aa(self_: *bar) void {
-        dump 0xAAu8;
+        sys::dump[[u8]](0xAAu8);
     }
 
     func bb(self: *bar) void {
-        dump 0xBBu8;
-        dump *self;
-        dump (*self).x;
-        dump (*self).y;
+        sys::dump[[u8]](0xBBu8);
+        sys::dump[[bar]](*self);
+        sys::dump[[u32]]((*self).x);
+        sys::dump[[u32]]((*self).y);
     }
 }
 
@@ -40,14 +42,14 @@ struct baz {
     var y: u16;
 
     func aa(self_: *baz) void {
-        dump 0xAAu8;
+        sys::dump[[u8]](0xAAu8);
     }
 
     func bb(self: *baz) void {
-        dump 0xBBu8;
-        dump *self;
-        dump (*self).x;
-        dump (*self).y;
+        sys::dump[[u8]](0xBBu8);
+        sys::dump[[baz]](*self);
+        sys::dump[[u16]]((*self).x);
+        sys::dump[[u16]]((*self).y);
     }
 }
 

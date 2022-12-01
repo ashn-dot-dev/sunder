@@ -2,43 +2,21 @@ import "std/core.sunder";
 import "std/ascii.sunder";
 
 func main() void {
-    dump std::ascii::is_letter('a');
-    dump std::ascii::is_letter('b');
-    dump std::ascii::is_letter('c');
-    dump std::ascii::is_letter('z');
+    std::assert(std::ascii::is_letter('a'));
+    std::assert(std::ascii::is_letter('b'));
+    std::assert(std::ascii::is_letter('c'));
+    std::assert(std::ascii::is_letter('z'));
 
-    std::print(std::out(), "\n");
+    std::assert(std::ascii::is_letter('A'));
+    std::assert(std::ascii::is_letter('B'));
+    std::assert(std::ascii::is_letter('C'));
+    std::assert(std::ascii::is_letter('Z'));
 
-    dump std::ascii::is_letter('A');
-    dump std::ascii::is_letter('B');
-    dump std::ascii::is_letter('C');
-    dump std::ascii::is_letter('Z');
-
-    std::print(std::out(), "\n");
-
-    dump std::ascii::is_letter('1');
-    dump std::ascii::is_letter('~');
-    dump std::ascii::is_letter('\n');
-    dump std::ascii::is_letter('\t');
-    dump std::ascii::is_letter(' ');
-    dump std::ascii::is_letter('@');
-    dump std::ascii::is_letter('[');
+    std::assert(not std::ascii::is_letter('1'));
+    std::assert(not std::ascii::is_letter('~'));
+    std::assert(not std::ascii::is_letter('\n'));
+    std::assert(not std::ascii::is_letter('\t'));
+    std::assert(not std::ascii::is_letter(' '));
+    std::assert(not std::ascii::is_letter('@'));
+    std::assert(not std::ascii::is_letter('['));
 }
-################################################################################
-# 01
-# 01
-# 01
-# 01
-#
-# 01
-# 01
-# 01
-# 01
-#
-# 00
-# 00
-# 00
-# 00
-# 00
-# 00
-# 00

@@ -1,10 +1,12 @@
+import "sys";
+
 func main() void {
     var a = 0xAAAAu16;
     a.dumpme();
 }
 
 extend u16 func dumpme(self: *u16) void {
-    dump *self;
+    sys::dump[[u16]](*self);
 }
 ################################################################################
 # AA AA
