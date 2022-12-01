@@ -524,13 +524,18 @@ struct str_writer {
     }
 }
 
-struct input_reader {
-    func read(self_: *input_reader, buf: []byte) std::result[[usize, std::error]] {
+# Lightweight version of `std::file` which only supports `read` and `write`.
+# This internal struct is used as the backing type for the reader and writer
+# objects returned by `std::input`, `std::out`, and `std::err`.
+struct _file {
+    var _fd: sys::sint;
+
+    func read(self: *_file, buf: []byte) std::result[[usize, std::error]] {
         if countof(buf) == 0 {
             return std::result[[usize, std::error]]::init_value(0);
         }
 
-        var sysret = sys::read(sys::STDIN_FILENO, &buf[0u], countof(buf));
+        var sysret = sys::read(self.*._fd, &buf[0u], countof(buf));
         if sysret < 0 {
             return std::result[[usize, std::error]]::init_error((:std::error)sys::error(-sysret));
         }
@@ -538,89 +543,36 @@ struct input_reader {
         return std::result[[usize, std::error]]::init_value((:usize)sysret);
     }
 
-    func the() *input_reader {
-        const the = (:input_reader){};
-        return &the;
-    }
-}
-
-struct out_writer {
-    func write(self_: *out_writer, buf: []byte) std::result[[usize, std::error]] {
+    func write(self: *_file, buf: []byte) std::result[[usize, std::error]] {
         if countof(buf) == 0 {
             return std::result[[usize, std::error]]::init_value(0);
         }
 
-        var sysret = sys::write(sys::STDOUT_FILENO, &buf[0u], countof(buf));
+        var sysret = sys::write(self.*._fd, &buf[0u], countof(buf));
         if sysret < 0 {
             return std::result[[usize, std::error]]::init_error((:std::error)sys::error(-sysret));
         }
 
         return std::result[[usize, std::error]]::init_value((:usize)sysret);
-    }
-
-    func the() *out_writer {
-        const the = (:out_writer){};
-        return &the;
-    }
-}
-
-struct err_writer {
-    func write(self_: *err_writer, buf: []byte) std::result[[usize, std::error]] {
-        if countof(buf) == 0 {
-            return std::result[[usize, std::error]]::init_value(0);
-        }
-
-        var sysret = sys::write(sys::STDERR_FILENO, &buf[0u], countof(buf));
-        if sysret < 0 {
-            return std::result[[usize, std::error]]::init_error((:std::error)sys::error(-sysret));
-        }
-
-        return std::result[[usize, std::error]]::init_value((:usize)sysret);
-    }
-
-    func the() *err_writer {
-        const the = (:err_writer){};
-        return &the;
     }
 }
 
 # Returns the reader interface associated with the standard input stream.
 func input() std::reader {
-    const input = (:input_reader){};
-    const input_itable = (:reader_itable){
-        .read = std::input_reader::read
-    };
-    const input_reader = (:std::reader){
-        .itable = &input_itable,
-        .object = &input
-    };
-    return input_reader;
+    const input = (:std::_file){._fd = sys::STDIN_FILENO};
+    return std::reader::init[[std::_file]](&input);
 }
 
 # Returns the writer interface associated with the standard output stream.
 func out() std::writer {
-    const out = (:out_writer){};
-    const out_itable = (:writer_itable){
-        .write = std::out_writer::write
-    };
-    const out_writer = (:std::writer){
-        .itable = &out_itable,
-        .object = &out
-    };
-    return out_writer;
+    const out = (:std::_file){._fd = sys::STDOUT_FILENO};
+    return std::writer::init[[std::_file]](&out);
 }
 
 # Returns the writer interface associated with the standard error stream.
 func err() std::writer {
-    const err = (:err_writer){};
-    const err_itable = (:writer_itable){
-        .write = std::err_writer::write
-    };
-    const err_writer = (:std::writer){
-        .itable = &err_itable,
-        .object = &err
-    };
-    return err_writer;
+    const err = (:std::_file){._fd = sys::STDERR_FILENO};
+    return std::writer::init[[std::_file]](&err);
 }
 
 # Read from the provided reader, invoking the reader's `read` function
