@@ -4,11 +4,10 @@ import "sys";
 alias umax = sys::umax;
 alias smax = sys::smax;
 
-# Common error type used within the Sunder standard library. The `std::error`
-# type is typically used as the error template argument in `std::result`
-# template instantiations. The layout of the `std::error_info` type is
-# guaranteed to match the layout of the `[]byte` type, and type punning from
-# `*[]byte` to `std::error` is explicitly supported.
+# Common error type used within the standard library. The `std::error` type is
+# typically provided as the error template argument in `std::result` template
+# instantiations. Type punning from `*[]byte` to `std::error` is explicitly
+# supported.
 alias error = *std::error_info;
 
 # Strongly typed wrapper around a static byte-string providing information on
@@ -62,6 +61,7 @@ struct result[[T, E]] {
     }
 
     # Returns the value associated with a result in the value state.
+    #
     # Panics if the result is in the error state.
     func value(self: *result[[T, E]]) T {
         if not self.*._is_value {
@@ -71,6 +71,7 @@ struct result[[T, E]] {
     }
 
     # Returns the error associated with a result in the error state.
+    #
     # Panics if the result is in the value state.
     func error(self: *result[[T, E]]) E {
         if self.*._is_value {
@@ -87,6 +88,7 @@ struct optional[[T]] {
     var _value: T;
     var _is_value: bool;
 
+    # Optional in the empty state.
     const EMPTY = (:optional[[T]]){
         ._value = uninit,
         ._is_value = false
@@ -116,6 +118,7 @@ struct optional[[T]] {
     }
 
     # Returns the value associated with a non-empty optional.
+    #
     # Panics if the optional is in the empty state.
     func value(self: *optional[[T]]) T {
         if not self.*._is_value {
@@ -129,6 +132,7 @@ struct reader_itable {
     var read: func(*any, []byte) std::result[[usize, std::error]];
 }
 
+# Interface representing the read end of a byte stream.
 struct reader {
     var itable: *std::reader_itable;
     var object: *any;
@@ -150,7 +154,7 @@ struct reader {
     # On success, this function returns the number of bytes read, which must be
     # less than or equal to `countof(buf)`, and which may be less than
     # `countof(buf)` in the event of a partial read. A successful read of size
-    # zero indicates an end-of-input condition for non-zero `countof(buf)`
+    # zero indicates an end-of-stream condition for non-zero `countof(buf)`
     # buffer sizes.
     func read(self: *reader, buf: []byte) std::result[[usize, std::error]] {
         return self.*.itable.*.read(self.*.object, buf);
@@ -161,6 +165,7 @@ struct writer_itable {
     var write: func(*any, []byte) std::result[[usize, std::error]];
 }
 
+# Interface representing the write end of a byte stream.
 struct writer {
     var itable: *std::writer_itable;
     var object: *any;
@@ -189,6 +194,9 @@ struct formatter_itable {
     var format: func(*any, std::writer, []byte) std::result[[void, std::error]];
 }
 
+# Interface wrapping the format member function. Types which implement format
+# may be written to byte streams using type-specific formatting semantics via
+# functions such as `std::write_format` and `std::print_format`.
 struct formatter {
     var itable: *std::formatter_itable;
     var object: *any;
@@ -218,6 +226,20 @@ struct iterator_itable[[T]] {
     var current: func(*any) T;
 }
 
+# Interface used to traverse a collection of elements independently of the
+# collection's underlying data representation.
+#
+# Example:
+#
+#   # Iterate over a collection of type `foo`, holding elements of type
+#   # `foo_element`, using the iterator interface applied to the concrete
+#   # iterator object of type `foo_iterator`.
+#   var iter = foo_iterator::init(&foo_object);
+#   var iter = std::iterator[[foo_element]]::init[[foo]](&iter);
+#   for iter.advance() {
+#       var current = iter.current();
+#       # Do something with the current element...
+#   }
 struct iterator[[T]] {
     var itable: *std::iterator_itable[[T]];
     var object: *any;
@@ -255,6 +277,8 @@ struct allocator_itable {
     var deallocate: func(*any, *byte, usize, usize) void;
 }
 
+# Interface for types managing the dynamic allocation, reallocation, and
+# deallocation of memory.
 struct allocator {
     var itable: *std::allocator_itable;
     var object: *any;
@@ -271,8 +295,8 @@ struct allocator {
         };
     }
 
-    # Attempt to allocate a chunk of memory with the provided size and
-    # alignment.
+    # Attempt to allocate a chunk of memory with the provided alignment and
+    # size.
     #
     # On success, this function returns a pointer to the start of the allocated
     # chunk.
@@ -280,12 +304,12 @@ struct allocator {
         return self.*.itable.*.allocate(self.*.object, align, size);
     }
 
-    # Reallocate a chunk of memory with the provided size and alignment,
+    # Reallocate a chunk of memory with the provided alignment and size,
     # starting at the address `ptr`, which was previously allocated by this
     # allocator.
     #
     # On success, this function returns a pointer to the start of the
-    # reallocated block, which may have same address as the input `ptr`
+    # reallocated chunk, which may have same address as the input `ptr`
     # argument in the event of a no-op reallocation.
     func reallocate(self: *allocator, ptr: *byte, align: usize, old_size: usize, new_size: usize) std::result[[*byte, std::error]] {
         return self.*.itable.*.reallocate(self.*.object, ptr, align, old_size, new_size);
@@ -302,6 +326,7 @@ struct allocator {
 struct ptr[[T]] { # namespace
     var __namespace__: any;
 
+    # Equivalent to the C NULL pointer cast as type T.
     const NULL: *T = uninit;
 
     # Equivalent to the C operation `ptr + n`.
@@ -433,6 +458,7 @@ struct slice[[T]] { # namespace
     }
 }
 
+# Iterator traversing over the elements of a slice.
 struct slice_iterator[[T]] {
     var _slice: []T;
     var _index: std::optional[[usize]];
@@ -567,31 +593,39 @@ struct str { # namespace
         return slice;
     }
 
+    # Returns true if `lhs` is lexicographically equal to `rhs`.
     func eq(lhs: []byte, rhs: []byte) bool {
         return lhs.compare(&rhs) == 0;
     }
 
+    # Returns true if `lhs` is not lexicographically equal to `rhs`.
     func ne(lhs: []byte, rhs: []byte) bool {
         return lhs.compare(&rhs) != 0;
     }
 
+    # Returns true if `lhs` is lexicographically less than to `rhs`.
     func lt(lhs: []byte, rhs: []byte) bool {
         return lhs.compare(&rhs) < 0;
     }
 
+    # Returns true if `lhs` is lexicographically less than or equal to `rhs`.
     func le(lhs: []byte, rhs: []byte) bool {
         return lhs.compare(&rhs) <= 0;
     }
 
+    # Returns true if `lhs` is lexicographically greater than to `rhs`.
     func gt(lhs: []byte, rhs: []byte) bool {
         return lhs.compare(&rhs) > 0;
     }
 
+    # Returns true if `lhs` is lexicographically greater than or equal to
+    # `rhs`.
     func ge(lhs: []byte, rhs: []byte) bool {
         return lhs.compare(&rhs) >= 0;
     }
 }
 
+# Utility type implementing the reader interface for a byte buffer.
 struct str_reader {
     var _str: []byte;
     var _idx: usize;
@@ -618,6 +652,7 @@ struct str_reader {
     }
 }
 
+# Utility type implementing the writer interface for a byte buffer.
 struct str_writer {
     var _str: []byte;
     var _idx: usize;
@@ -718,7 +753,7 @@ func err() std::writer {
 }
 
 # Read from the provided reader, invoking the reader's `read` function
-# repeatedly until either an end-of-input condition is reached or an error
+# repeatedly until either an end-of-stream condition is reached or an error
 # occurs.
 #
 # On success, this function returns a slice of bytes containing the read data,
@@ -1140,7 +1175,7 @@ func eq[[T]](lhs: *T, rhs: *T) bool {
     return T::compare(lhs, rhs) == 0;
 }
 
-# Returns true if `lhs` is found to be equal to `rhs`.
+# Returns true if `lhs` is found to be not equal to `rhs`.
 func ne[[T]](lhs: *T, rhs: *T) bool {
     return T::compare(lhs, rhs) != 0;
 }
