@@ -118,4 +118,12 @@ func main() void {
     std::assert(res.is_error());
     std::assert(linear_allocator._old_offset == 1);
     std::assert(linear_allocator._cur_offset == 1024);
+
+    # Scenario discovered from code in the wild where a reallocation after a
+    # zero-sized allocation attempted to use the null pointer for offset
+    # calculations into the backing buffer.
+    var mem = (:[64]byte)[0...];
+    var linear_allocator = std::linear_allocator::init(mem[0:countof(mem)]);
+    var allocator = std::allocator::init[[std::linear_allocator]](&linear_allocator);
+    var _ = std::str::split("123-456-789", "-", allocator);
 }

@@ -22,7 +22,9 @@ struct linear_allocator {
 
     func allocate(self: *linear_allocator, align: usize, size: usize) std::result[[*byte, std::error]] {
         if size == 0 {
-            # Nothing to allocate.
+            # Nothing to allocate. The null pointer is returned so that this
+            # allocator does not forward align the current offset for an
+            # allocation of size zero.
             return std::result[[*byte, std::error]]::init_value((:*byte)0u);
         }
 
@@ -40,6 +42,12 @@ struct linear_allocator {
     }
 
     func reallocate(self: *linear_allocator, ptr: *byte, align: usize, old_size: usize, new_size: usize) std::result[[*byte, std::error]] {
+        if old_size == 0 {
+            # Nothing was allocated in the previous allocate/reallocate call.
+            std::assert(ptr == std::ptr[[byte]]::NULL);
+            return self.*.allocate(align, new_size);
+        }
+
         var offset = (:usize)ptr - (:usize)*((:**byte)&self.*._buf);
 
         # True if the provided block of memory came from the most recent
