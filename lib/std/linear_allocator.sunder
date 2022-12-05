@@ -25,7 +25,7 @@ struct linear_allocator {
             # Nothing to allocate. The null pointer is returned so that this
             # allocator does not forward align the current offset for an
             # allocation of size zero.
-            return std::result[[*byte, std::error]]::init_value((:*byte)0u);
+            return std::result[[*byte, std::error]]::init_value(std::ptr[[byte]]::NULL);
         }
 
         var buf_addr: usize = (:usize)*((:**byte)&self.*._buf);
