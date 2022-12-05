@@ -902,6 +902,7 @@ token_kind_nud(enum token_kind kind)
         return parse_expr_alignof;
     }
     case TOKEN_NOT: /* fallthrough */
+    case TOKEN_STARTOF: /* fallthrough */
     case TOKEN_COUNTOF: /* fallthrough */
     case TOKEN_PLUS: /* fallthrough */
     case TOKEN_DASH: /* fallthrough */
@@ -1251,7 +1252,7 @@ parse_expr_nud_unary(struct parser* parser)
     assert(parser != NULL);
 
     struct token const* const op = advance_token(parser);
-    bool const paren = op->kind == TOKEN_COUNTOF;
+    bool const paren = op->kind == TOKEN_STARTOF || op->kind == TOKEN_COUNTOF;
 
     if (paren) {
         expect_current(parser, TOKEN_LPAREN);

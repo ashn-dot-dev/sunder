@@ -15,7 +15,7 @@ struct linear_allocator {
     }
 
     func init_from_slice[[T]](slice: []T) linear_allocator {
-        var buf_start: *byte = *((:**byte)&slice);
+        var buf_start: *byte = startof(slice);
         var buf_count: usize = countof(slice) * sizeof(T);
         return linear_allocator::init((:[]byte){buf_start, buf_count});
     }
@@ -28,7 +28,7 @@ struct linear_allocator {
             return std::result[[*byte, std::error]]::init_value(std::ptr[[byte]]::NULL);
         }
 
-        var buf_addr: usize = (:usize)*((:**byte)&self.*._buf);
+        var buf_addr: usize = (:usize)startof(self.*._buf);
         var cur_addr: usize = buf_addr + self.*._cur_offset;
         var offset: usize = std::forward_align(cur_addr, align) - buf_addr;
 
@@ -48,7 +48,7 @@ struct linear_allocator {
             return self.*.allocate(align, new_size);
         }
 
-        var offset = (:usize)ptr - (:usize)*((:**byte)&self.*._buf);
+        var offset = (:usize)ptr - (:usize)startof(self.*._buf);
 
         # True if the provided block of memory came from the most recent
         # allocation, in which case some or all of the already allocated memory

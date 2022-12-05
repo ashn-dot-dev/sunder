@@ -55,6 +55,7 @@ static struct vstr token_kind_vstrs[TOKEN_EOF + 1u] = {
     [TOKEN_BREAK] = VSTR_INIT_STR_LITERAL("break"),
     [TOKEN_CONTINUE] = VSTR_INIT_STR_LITERAL("continue"),
     [TOKEN_ALIGNOF] = VSTR_INIT_STR_LITERAL("alignof"),
+    [TOKEN_STARTOF] = VSTR_INIT_STR_LITERAL("startof"),
     [TOKEN_COUNTOF] = VSTR_INIT_STR_LITERAL("countof"),
     [TOKEN_SIZEOF] = VSTR_INIT_STR_LITERAL("sizeof"),
     [TOKEN_TYPEOF] = VSTR_INIT_STR_LITERAL("typeof"),

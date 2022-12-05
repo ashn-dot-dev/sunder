@@ -2118,6 +2118,14 @@ push_rvalue_unary(struct expr const* expr, size_t id)
         push_lvalue(expr->data.unary.rhs);
         return;
     }
+    case UOP_STARTOF: {
+        assert(expr->data.unary.rhs->type->kind == TYPE_SLICE);
+        push_rvalue(expr->data.unary.rhs);
+        appendli("pop rax ; pop slice start word");
+        appendli("pop rbx ; pop slice count word");
+        appendli("push rax ; push slice start word");
+        return;
+    }
     case UOP_COUNTOF: {
         // TODO: Currently the right-hand-side array or slice expression in a
         // countof expression is always evaluated since the right-hand-side
@@ -2147,7 +2155,7 @@ push_rvalue_unary(struct expr const* expr, size_t id)
 
         if (expr->data.unary.rhs->type->kind == TYPE_SLICE) {
             push_rvalue(expr->data.unary.rhs);
-            appendli("pop rax ; pop slice pointer word");
+            appendli("pop rax ; pop slice start word");
             return;
         }
 
@@ -2846,6 +2854,7 @@ push_lvalue_unary(struct expr const* expr, size_t id)
     case UOP_NEG_WRAPPING: /* fallthrough */
     case UOP_BITNOT: /* fallthrough */
     case UOP_ADDRESSOF: /* fallthrough */
+    case UOP_STARTOF: /* fallthrough */
     case UOP_COUNTOF: {
         UNREACHABLE();
     }

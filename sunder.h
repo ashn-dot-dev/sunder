@@ -864,6 +864,7 @@ enum token_kind {
     TOKEN_BREAK,
     TOKEN_CONTINUE,
     TOKEN_ALIGNOF,
+    TOKEN_STARTOF,
     TOKEN_COUNTOF,
     TOKEN_SIZEOF,
     TOKEN_TYPEOF,
@@ -2008,6 +2009,7 @@ struct expr {
                 UOP_BITNOT,
                 UOP_DEREFERENCE,
                 UOP_ADDRESSOF,
+                UOP_STARTOF,
                 UOP_COUNTOF,
             } op;
             // Called the "right hand side" even though the expression is

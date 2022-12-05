@@ -441,7 +441,7 @@ struct slice[[T]] { # namespace
         var cur_size: usize = cur_count * sizeof(T);
         var new_size: usize = new_count * sizeof(T);
 
-        var cur_pointer: *byte = *((:**byte)&slice);
+        var cur_pointer: *byte = (:*byte)startof(slice);
         var result = allocator.reallocate(cur_pointer, alignof(T), cur_size, new_size);
         if result.is_error() {
             std::panic(result.error().*.data);
@@ -452,7 +452,7 @@ struct slice[[T]] { # namespace
 
     # Deallocate the provided slice using the provided allocator.
     func delete(allocator: std::allocator, slice: []T) void {
-        var pointer: *byte = *((:**byte)&slice);
+        var pointer: *byte = (:*byte)startof(slice);
         var size: usize = countof(slice) * sizeof(T);
         allocator.deallocate(pointer, alignof(T), size);
     }

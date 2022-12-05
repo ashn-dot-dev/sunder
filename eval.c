@@ -691,6 +691,18 @@ eval_rvalue_unary(struct expr const* expr)
     case UOP_ADDRESSOF: {
         return eval_lvalue(expr->data.unary.rhs);
     }
+    case UOP_STARTOF: {
+        assert(expr->type->kind == TYPE_POINTER);
+
+        struct value* const rhs = eval_rvalue(expr->data.unary.rhs);
+        assert(rhs->type->kind == TYPE_SLICE);
+        assert(rhs->data.slice.pointer->type->kind == TYPE_POINTER);
+        struct value* res = value_new_pointer(
+            expr->type, rhs->data.slice.pointer->data.pointer);
+
+        value_del(rhs);
+        return res;
+    }
     case UOP_COUNTOF: {
         assert(expr->type->kind == TYPE_USIZE);
         struct value* res = NULL;
@@ -713,8 +725,8 @@ eval_rvalue_unary(struct expr const* expr)
         default:
             UNREACHABLE();
         }
-        value_del(rhs);
 
+        value_del(rhs);
         return res;
     }
     }
@@ -1256,6 +1268,7 @@ eval_lvalue_unary(struct expr const* expr)
     case UOP_NEG_WRAPPING: /* fallthrough */
     case UOP_BITNOT: /* fallthrough */
     case UOP_ADDRESSOF: /* fallthrough */
+    case UOP_STARTOF:
     case UOP_COUNTOF:
         UNREACHABLE();
     }

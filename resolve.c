@@ -289,6 +289,9 @@ static struct expr const*
 resolve_expr_unary_addressof(
     struct resolver* resolver, struct token const* op, struct expr const* rhs);
 static struct expr const*
+resolve_expr_unary_startof(
+    struct resolver* resolver, struct token const* op, struct expr const* rhs);
+static struct expr const*
 resolve_expr_unary_countof(
     struct resolver* resolver, struct token const* op, struct expr const* rhs);
 static struct expr const*
@@ -3841,6 +3844,9 @@ resolve_expr_unary(struct resolver* resolver, struct cst_expr const* expr)
     case TOKEN_NOT: {
         return resolve_expr_unary_logical(resolver, op, UOP_NOT, rhs);
     }
+    case TOKEN_STARTOF: {
+        return resolve_expr_unary_startof(resolver, op, rhs);
+    }
     case TOKEN_COUNTOF: {
         return resolve_expr_unary_countof(resolver, op, rhs);
     }
@@ -4021,6 +4027,33 @@ resolve_expr_unary_addressof(
 
     struct expr* const resolved = expr_new_unary(
         &op->location, type_unique_pointer(rhs->type), UOP_ADDRESSOF, rhs);
+
+    freeze(resolved);
+    return resolved;
+}
+
+static struct expr const*
+resolve_expr_unary_startof(
+    struct resolver* resolver, struct token const* op, struct expr const* rhs)
+{
+    assert(resolver != NULL);
+    assert(op != NULL);
+    assert(op->kind == TOKEN_STARTOF);
+    assert(rhs != NULL);
+    (void)resolver;
+
+    if (rhs->type->kind != TYPE_SLICE) {
+        fatal(
+            rhs->location,
+            "expected slice type (received `%s`)",
+            rhs->type->name);
+    }
+
+    struct expr* const resolved = expr_new_unary(
+        &op->location,
+        type_unique_pointer(rhs->type->data.slice.base),
+        UOP_STARTOF,
+        rhs);
 
     freeze(resolved);
     return resolved;
