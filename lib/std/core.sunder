@@ -272,9 +272,9 @@ struct iterator[[T]] {
 }
 
 struct allocator_itable {
-    var allocate: func(*any, usize, usize) std::result[[*byte, std::error]];
-    var reallocate: func(*any, *byte, usize, usize, usize) std::result[[*byte, std::error]];
-    var deallocate: func(*any, *byte, usize, usize) void;
+    var allocate: func(*any, usize, usize) std::result[[*any, std::error]];
+    var reallocate: func(*any, *any, usize, usize, usize) std::result[[*any, std::error]];
+    var deallocate: func(*any, *any, usize, usize) void;
 }
 
 # Interface for types managing the dynamic allocation, reallocation, and
@@ -300,7 +300,7 @@ struct allocator {
     #
     # On success, this function returns a pointer to the start of the allocated
     # chunk.
-    func allocate(self: *allocator, align: usize, size: usize) std::result[[*byte, std::error]] {
+    func allocate(self: *allocator, align: usize, size: usize) std::result[[*any, std::error]] {
         return self.*.itable.*.allocate(self.*.object, align, size);
     }
 
@@ -311,14 +311,14 @@ struct allocator {
     # On success, this function returns a pointer to the start of the
     # reallocated chunk, which may have same address as the input `ptr`
     # argument in the event of a no-op reallocation.
-    func reallocate(self: *allocator, ptr: *byte, align: usize, old_size: usize, new_size: usize) std::result[[*byte, std::error]] {
+    func reallocate(self: *allocator, ptr: *any, align: usize, old_size: usize, new_size: usize) std::result[[*any, std::error]] {
         return self.*.itable.*.reallocate(self.*.object, ptr, align, old_size, new_size);
     }
 
     # Deallocate a chunk of memory with the provided size and alignment,
     # starting at the address `ptr`, which was previously allocated by this
     # allocator.
-    func deallocate(self: *allocator, ptr: *byte, align: usize, size: usize) void {
+    func deallocate(self: *allocator, ptr: *any, align: usize, size: usize) void {
         self.*.itable.*.deallocate(self.*.object, ptr, align, size);
     }
 }

@@ -18,11 +18,11 @@ func main() void {
     var pointers = (:[1000]*byte)[(:*byte)0u...];
     for i in 0:countof(pointers) {
         var result = allocator.allocate(16, i);
-        pointers[i] = result.value();
+        pointers[i] = (:*byte)result.value();
     }
     for i in 0:countof(pointers) {
         var result = allocator.reallocate(pointers[i], 16, i, i*42);
-        pointers[i] = result.value();
+        pointers[i] = (:*byte)result.value();
     }
     for i in 0:countof(pointers) {
         allocator.deallocate(pointers[i], 16, i*42);

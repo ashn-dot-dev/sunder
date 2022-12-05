@@ -7,11 +7,11 @@ struct general_allocator_element {
     var _prev: *general_allocator_element; # nullable
     var _next: *general_allocator_element; # nullable
 
-    var _start: *byte;
+    var _start: *any;
     var _align: usize;
     var _size: usize;
 
-    func start(self: *general_allocator_element) *byte {
+    func start(self: *general_allocator_element) *any {
         return self.*._start;
     }
 
@@ -39,57 +39,57 @@ struct general_allocator {
         }
     }
 
-    func allocate(self: *general_allocator, align: usize, size: usize) std::result[[*byte, std::error]] {
+    func allocate(self: *general_allocator, align: usize, size: usize) std::result[[*any, std::error]] {
         var offset = std::forward_align(sizeof(general_allocator_element), align);
         var result = std::page_allocator::the().*.allocate(sys::PAGE_SIZE, offset + size);
         if result.is_error() {
             return result;
         }
 
-        var bytes = result.value();
-        var element = (:*general_allocator_element)bytes;
+        var memory = result.value();
+        var element = (:*general_allocator_element)memory;
         *element = (:general_allocator_element){
             ._prev = std::ptr[[std::general_allocator_element]]::NULL,
             ._next = std::ptr[[std::general_allocator_element]]::NULL,
-            ._start = std::ptr[[byte]]::add(bytes, offset),
+            ._start = std::ptr[[byte]]::add((:*byte)memory, offset),
             ._align = align,
             ._size = size
         };
 
         self.*._insert_element(element);
-        return std::result[[*byte, std::error]]::init_value(element.*._start);
+        return std::result[[*any, std::error]]::init_value(element.*._start);
     }
 
-    func reallocate(self: *general_allocator, ptr: *byte, align: usize, old_size: usize, new_size: usize) std::result[[*byte, std::error]] {
+    func reallocate(self: *general_allocator, ptr: *any, align: usize, old_size: usize, new_size: usize) std::result[[*any, std::error]] {
         var offset = std::forward_align(sizeof(general_allocator_element), align);
-        var element = (:*general_allocator_element)std::ptr[[byte]]::sub(ptr, offset);
+        var element = (:*general_allocator_element)std::ptr[[byte]]::sub((:*byte)ptr, offset);
         self.*._remove_element(element);
 
-        var result = std::page_allocator::the().*.reallocate((:*byte)element, sys::PAGE_SIZE, old_size + offset, new_size + offset);
+        var result = std::page_allocator::the().*.reallocate((:*any)element, sys::PAGE_SIZE, old_size + offset, new_size + offset);
         if result.is_error() {
             return result;
         }
 
-        var bytes = result.value();
-        var element = (:*general_allocator_element)bytes;
+        var memory = result.value();
+        var element = (:*general_allocator_element)memory;
         *element = (:general_allocator_element){
             ._prev = std::ptr[[general_allocator_element]]::NULL,
             ._next = std::ptr[[general_allocator_element]]::NULL,
-            ._start = std::ptr[[byte]]::add(bytes, offset),
+            ._start = std::ptr[[byte]]::add((:*byte)memory, offset),
             ._align = align,
             ._size = new_size
         };
 
         self.*._insert_element(element);
-        return std::result[[*byte, std::error]]::init_value(element.*._start);
+        return std::result[[*any, std::error]]::init_value(element.*._start);
     }
 
-    func deallocate(self: *general_allocator, ptr: *byte, align: usize, size: usize) void {
+    func deallocate(self: *general_allocator, ptr: *any, align: usize, size: usize) void {
         var offset = std::forward_align(sizeof(general_allocator_element), align);
-        var element = (:*general_allocator_element)std::ptr[[byte]]::sub(ptr, offset);
+        var element = (:*general_allocator_element)std::ptr[[byte]]::sub((:*byte)ptr, offset);
 
         self.*._remove_element(element);
-        std::page_allocator::the().*.deallocate((:*byte)element, sys::PAGE_SIZE, size + offset);
+        std::page_allocator::the().*.deallocate((:*any)element, sys::PAGE_SIZE, size + offset);
     }
 
     func _insert_element(self: *general_allocator, element: *general_allocator_element) void {

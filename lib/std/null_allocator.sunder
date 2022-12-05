@@ -7,16 +7,16 @@ import "std/core.sunder";
 # members constants `ITABLE`, `OBJECT`, and `ALLOCATOR` are provided to
 # explicitly support using the null allocator for constant definitions.
 struct null_allocator {
-    func allocate(self_: *null_allocator, align_: usize, size_: usize) std::result[[*byte, std::error]] {
-        return std::result[[*byte, std::error]]::init_error(std::error::ALLOCATION_FAILURE);
+    func allocate(self_: *null_allocator, align_: usize, size_: usize) std::result[[*any, std::error]] {
+        return std::result[[*any, std::error]]::init_error(std::error::ALLOCATION_FAILURE);
     }
 
-    func reallocate(self_: *null_allocator, ptr_: *byte, align_: usize, old_size_: usize, new_size_: usize) std::result[[*byte, std::error]] {
+    func reallocate(self_: *null_allocator, ptr_: *any, align_: usize, old_size_: usize, new_size_: usize) std::result[[*any, std::error]] {
         std::panic("attempted null_allocator reallocation");
-        return std::result[[*byte, std::error]]::init_error(std::error::ALLOCATION_FAILURE);
+        return std::result[[*any, std::error]]::init_error(std::error::ALLOCATION_FAILURE);
     }
 
-    func deallocate(self_: *null_allocator, ptr_: *byte, align_: usize, size_: usize) void {
+    func deallocate(self_: *null_allocator, ptr_: *any, align_: usize, size_: usize) void {
         std::panic("attempted null_allocator deallocation");
     }
 
