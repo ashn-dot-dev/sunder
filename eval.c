@@ -705,29 +705,27 @@ eval_rvalue_unary(struct expr const* expr)
     }
     case UOP_COUNTOF: {
         assert(expr->type->kind == TYPE_USIZE);
-        struct value* res = NULL;
 
-        struct value* const rhs = eval_rvalue(expr->data.unary.rhs);
-        switch (rhs->type->kind) {
-        case TYPE_ARRAY: {
-            res = value_new_integer(
+        if (expr->data.unary.rhs->type->kind == TYPE_ARRAY) {
+            return value_new_integer(
                 context()->builtin.usize,
-                bigint_new_umax(rhs->type->data.array.count));
-            break;
+                bigint_new_umax(expr->data.unary.rhs->type->data.array.count));
         }
-        case TYPE_SLICE: {
+
+        if (expr->data.unary.rhs->type->kind == TYPE_SLICE) {
+            struct value* const rhs = eval_rvalue(expr->data.unary.rhs);
+
             assert(rhs->data.slice.count->type->kind == TYPE_USIZE);
-            res = value_new_integer(
+            struct value* const res = value_new_integer(
                 context()->builtin.usize,
                 bigint_new(rhs->data.slice.count->data.integer));
-            break;
-        }
-        default:
-            UNREACHABLE();
+
+            value_del(rhs);
+            return res;
         }
 
-        value_del(rhs);
-        return res;
+
+        UNREACHABLE();
     }
     }
 

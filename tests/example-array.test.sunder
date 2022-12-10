@@ -96,6 +96,12 @@ func main() void {
     sys::dump[[[0]void]](array_of_zero_sized_objects[0u]);
     sys::dump[[[0]void]](array_of_zero_sized_objects[1u]);
     sys::dump[[*[0]void]](&array_of_zero_sized_objects[0u]);
+
+    # Array sizes can be used in constant expressions, even if a symbol for the
+    # array is a non-constant expression.
+    var x = (:[3]ssize)[0...];
+    var _ = (:[countof(x)]ssize)[0...];
+    const _ = (:[countof(x)]ssize)[0...];
 }
 
 ################################################################################
