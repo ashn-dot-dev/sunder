@@ -490,6 +490,14 @@ order_symbol(struct orderer* orderer, struct cst_symbol const* symbol)
     assert(orderer != NULL);
     assert(sbuf_count(symbol->elements) > 0);
 
+    // Always attempt to order all symbol template arguments, regardless of
+    // whether the symbol belongs to the current module or not, since symbol
+    // template arguments may refer to types that *are* in this module.
+    for (size_t i = 0; i < sbuf_count(symbol->elements); ++i) {
+        order_template_argument_list(
+            orderer, symbol->elements[i]->template_arguments);
+    }
+
     // If the namespace prefix matches the module namespace then order the
     // non-prefix portion of the symbol. The eventual call to order_name will
     // silently ignore symbols from other modules, but will correctly order any
@@ -507,8 +515,6 @@ order_symbol(struct orderer* orderer, struct cst_symbol const* symbol)
         // Module does not have a namespace. Perform ordering based on the
         // first symbol element in the symbol.
         order_identifier(orderer, symbol->elements[0]->identifier);
-        order_template_argument_list(
-            orderer, symbol->elements[0]->template_arguments);
         return;
     }
 
@@ -537,8 +543,6 @@ order_symbol(struct orderer* orderer, struct cst_symbol const* symbol)
 
     // Perform ordering based on the non-prefix portion of the symbol.
     order_identifier(orderer, symbol->elements[namespace_count]->identifier);
-    order_template_argument_list(
-        orderer, symbol->elements[namespace_count]->template_arguments);
 }
 
 static void

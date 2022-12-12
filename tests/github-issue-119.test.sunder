@@ -1,0 +1,12 @@
+import "std";
+
+struct foo {
+    var map: std::hash_map[[ssize, bar]];
+}
+
+struct bar {
+    var baz: []byte;
+}
+
+func main() void {
+}
