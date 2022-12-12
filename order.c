@@ -191,14 +191,6 @@ order_decl(struct orderer* orderer, struct cst_decl const* decl)
         sbuf(struct cst_identifier const* const) const template_parameters =
             decl->data.function.template_parameters;
         if (sbuf_count(template_parameters) != 0) {
-            // TODO: Not sure how we want to handle ordering of generic
-            // functions. Ignoring the ordering of generic functions is fine
-            // for now since the MVP of generics has been used to implement
-            // dependency-free functions such as std::min and std::max. At some
-            // point in the future we should and circle back to this and
-            // re-evaluate the ordering of generics in general.
-            //
-            // See also => comment under CST_DECL_STRUCT case.
             return;
         }
         struct cst_function_parameter const* const* const function_parameters =
@@ -213,14 +205,6 @@ order_decl(struct orderer* orderer, struct cst_decl const* decl)
         sbuf(struct cst_identifier const* const) const template_parameters =
             decl->data.struct_.template_parameters;
         if (sbuf_count(template_parameters) != 0) {
-            // TODO: Not sure how we want to handle ordering of generic
-            // structs. Ignoring the ordering of generic structs is fine for
-            // now since the MVP of generics has been used to implement
-            // dependency-free structs such as std::int. At some point in the
-            // future we should and circle back to this and re-evaluate the
-            // ordering of generics in general.
-            //
-            // See also => comment under CST_DECL_FUNCTION case.
             return;
         }
 
