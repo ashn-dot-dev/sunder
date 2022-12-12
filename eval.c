@@ -724,7 +724,6 @@ eval_rvalue_unary(struct expr const* expr)
             return res;
         }
 
-
         UNREACHABLE();
     }
     }
