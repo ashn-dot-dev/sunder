@@ -2,6 +2,7 @@ namespace std;
 import "std/core.sunder";
 import "sys";
 
+# Type and associated filesystem operations for a directory.
 struct directory {
     var _fd: sys::sint;
     var _buf: [1024]byte;

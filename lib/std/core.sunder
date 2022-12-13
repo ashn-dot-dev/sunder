@@ -701,6 +701,12 @@ struct cstr { # namespace
     }
 }
 
+# Type and associated filesystem operations for a regular file.
+#
+# The minimal definition of `std::file`, implementing the reader and writer
+# interfaces, is defined in this module in order to support use of the standard
+# input, output, and error streams. This type is extended with additional
+# functionality in `std/fs.sunder`.
 struct file {
     var _fd: sys::sint;
 
