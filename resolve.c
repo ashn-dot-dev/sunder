@@ -94,24 +94,20 @@ qualified_name(char const* prefix, char const* name);
 // Returns the qualified address as an interned string.
 static char const* // interned
 qualified_addr(char const* prefix, char const* name);
-// Normalize the provided name with the provided prefix.
-// Providing a NULL prefix parameter implies no prefix.
+// Normalize the provided name.
 // Providing a zero unique_id parameter implies the symbol is the first and
 // potentially only symbol with the given name and should not have the unique
 // identifier appended to the normalized symbol (matches gcc behavior for
 // multiple local static symbols defined with the same name within the same
 // function).
-// If the provided name contains template information (e.g. foo[[u64]]) then
-// the template information will be discarded (e.g. foo[[u64]] is truncated to
-// foo in the example above).
 // Returns the normalized name as an interned string.
 static char const* // interned
-normalize(char const* prefix, char const* name, unsigned unique_id);
-// Returns the normalization of the provided name within the provided prefix
-// via the normalize function. Linearly increments unique IDs starting at zero
-// until a unique ID is found that does not cause a name collision.
+normalize(char const* name, unsigned unique_id);
+// Returns the normalization of the provided name via the normalize function.
+// Linearly increments unique IDs starting at zero until a unique ID is found
+// that does not cause a name collision.
 static char const* // interned
-normalize_unique(char const* prefix, char const* name);
+normalize_unique(char const* name);
 // Add the provided static symbol to the list of static symbols within the
 // compilation context.
 static void
@@ -410,10 +406,18 @@ resolver_reserve_storage_static(struct resolver* self, char const* name)
     assert(self != NULL);
     assert(name != NULL);
 
-    char const* const name_normalized =
-        normalize_unique(self->current_static_addr_prefix, name);
+    struct string* const tmp = string_new(NULL, 0);
+    if (self->current_static_addr_prefix != NULL) {
+        string_append_fmt(tmp, "%s.", self->current_static_addr_prefix);
+    }
+    string_append_cstr(tmp, name);
+
+    char const* const normalized = normalize_unique(string_start(tmp));
+
+    string_del(tmp);
+
     struct address* const address =
-        address_new(address_init_static(name_normalized, 0u));
+        address_new(address_init_static(normalized, 0u));
     freeze(address);
     return address;
 }
@@ -461,34 +465,31 @@ qualified_addr(char const* prefix, char const* name)
 }
 
 static char const*
-normalize(char const* prefix, char const* name, unsigned unique_id)
+normalize(char const* name, unsigned unique_id)
 {
     assert(name != NULL);
 
     // Substitute invalid assembly character symbols with replacement
     // characters within the provided name.
-    struct string* const name_string = string_new(NULL, 0);
+    struct string* const s = string_new(NULL, 0);
     for (char const* search = name; *search != '\0'; ++search) {
-        if (safe_isalnum(*search) || *search == '_') {
-            string_append_fmt(name_string, "%c", *search);
+        if (cstr_starts_with(search, "::")) {
+            string_append_cstr(s, ".");
+            search += 1;
+            continue;
+        }
+
+        if (safe_isalnum(*search) || *search == '_' || *search == '.') {
+            string_append_fmt(s, "%c", *search);
             continue;
         }
 
         // Replace all non valid identifier characters with an underscore.
-        string_append_cstr(name_string, "_");
+        string_append_cstr(s, "_");
     }
-    assert(string_count(name_string) != 0);
+    assert(string_count(s) != 0);
 
-    struct string* const s = string_new(NULL, 0);
-
-    // <prefix>.
-    if (prefix != NULL) {
-        string_append_fmt(s, "%s.", prefix);
-    }
-    // <prefix>.<name>
-    string_append_fmt(
-        s, "%.*s", (int)string_count(name_string), string_start(name_string));
-    // <prefix>.<name>.<unique-id>
+    // <name>.<unique-id>
     if (unique_id != 0) {
         string_append_fmt(s, ".%u", unique_id);
     }
@@ -496,17 +497,16 @@ normalize(char const* prefix, char const* name, unsigned unique_id)
     char const* const interned = intern(string_start(s), string_count(s));
 
     string_del(s);
-    string_del(name_string);
     return interned;
 }
 
 static char const*
-normalize_unique(char const* prefix, char const* name)
+normalize_unique(char const* name)
 {
     assert(name != NULL);
 
     unsigned unique_id = 0u;
-    char const* normalized = normalize(prefix, name, unique_id);
+    char const* normalized = normalize(name, unique_id);
     while (true) {
         bool name_collision = false;
         for (size_t i = 0; i < sbuf_count(context()->static_symbols); ++i) {
@@ -527,7 +527,7 @@ normalize_unique(char const* prefix, char const* name)
 
         // Name collision was found. Try a different name with the next
         // sequential unique ID.
-        normalized = normalize(prefix, name, ++unique_id);
+        normalized = normalize(name, ++unique_id);
     }
 
     return normalized;
@@ -1907,7 +1907,7 @@ resolve_decl_extend(struct resolver* resolver, struct cst_decl const* decl)
         resolver->current_symbol_table;
 
     resolver->current_symbol_name_prefix = type->name;
-    resolver->current_static_addr_prefix = normalize(NULL, type->name, 0);
+    resolver->current_static_addr_prefix = normalize(type->name, 0);
     resolver->current_symbol_table = symbol_table;
     struct symbol const* const symbol =
         resolve_decl(resolver, decl->data.extend.decl);
@@ -2068,13 +2068,6 @@ complete_struct(
 
     // Add all member definitions to the struct in the order that they were
     // defined in.
-    //
-    // TODO: This current symbol name prefix and addr prefix do not take into
-    // account the namespace prefix! Adjust this so that the prefixes use
-    // <namespace>.<typename> instead just <typename>.
-    //
-    // Look for a similar comment under resolve_decl_extend which also shares
-    // this problem.
     char const* const save_symbol_name_prefix =
         resolver->current_symbol_name_prefix;
     char const* const save_static_addr_prefix =
@@ -2084,7 +2077,7 @@ complete_struct(
 
     resolver->current_symbol_name_prefix = symbol_xget_type(symbol)->name;
     resolver->current_static_addr_prefix =
-        normalize(NULL, symbol_xget_type(symbol)->name, 0);
+        normalize(symbol_xget_type(symbol)->name, 0);
     resolver->current_symbol_table = struct_symbols;
 
     // If the struct contains no member variable declarations, then the struct
