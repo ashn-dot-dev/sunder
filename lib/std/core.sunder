@@ -701,13 +701,10 @@ struct cstr { # namespace
     }
 }
 
-# Lightweight version of `std::file` which only supports `read` and `write`.
-# This internal struct is used as the backing type for the reader and writer
-# objects returned by `std::input`, `std::out`, and `std::err`.
-struct _file {
+struct file {
     var _fd: sys::sint;
 
-    func read(self: *_file, buf: []byte) std::result[[usize, std::error]] {
+    func read(self: *file, buf: []byte) std::result[[usize, std::error]] {
         if countof(buf) == 0 {
             return std::result[[usize, std::error]]::init_value(0);
         }
@@ -720,7 +717,7 @@ struct _file {
         return std::result[[usize, std::error]]::init_value((:usize)sysret);
     }
 
-    func write(self: *_file, buf: []byte) std::result[[usize, std::error]] {
+    func write(self: *file, buf: []byte) std::result[[usize, std::error]] {
         if countof(buf) == 0 {
             return std::result[[usize, std::error]]::init_value(0);
         }
@@ -736,20 +733,20 @@ struct _file {
 
 # Returns the reader interface associated with the standard input stream.
 func input() std::reader {
-    const input = (:std::_file){._fd = sys::STDIN_FILENO};
-    return std::reader::init[[std::_file]](&input);
+    const input = (:std::file){._fd = sys::STDIN_FILENO};
+    return std::reader::init[[std::file]](&input);
 }
 
 # Returns the writer interface associated with the standard output stream.
 func out() std::writer {
-    const out = (:std::_file){._fd = sys::STDOUT_FILENO};
-    return std::writer::init[[std::_file]](&out);
+    const out = (:std::file){._fd = sys::STDOUT_FILENO};
+    return std::writer::init[[std::file]](&out);
 }
 
 # Returns the writer interface associated with the standard error stream.
 func err() std::writer {
-    const err = (:std::_file){._fd = sys::STDERR_FILENO};
-    return std::writer::init[[std::_file]](&err);
+    const err = (:std::file){._fd = sys::STDERR_FILENO};
+    return std::writer::init[[std::file]](&err);
 }
 
 # Read from the provided reader, invoking the reader's `read` function

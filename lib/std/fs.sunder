@@ -2,158 +2,6 @@ namespace std;
 import "std/core.sunder";
 import "sys";
 
-struct file {
-    var _fd: sys::sint;
-
-    # Open a file for reading.
-    const OPEN_READ: usize = 0b001;
-    # Open a file for writing.
-    # The file is created if it does not exist.
-    # The file is truncated if it does exist.
-    const OPEN_WRITE: usize = 0b010;
-    # Open a file for writing (appended).
-    # The file is created if it does not exist.
-    # Data is appended to the end of the file when written.
-    const OPEN_APPEND: usize = 0b100;
-
-    # Open a regular file.
-    func open(path: []byte, mode: usize) std::result[[std::file, std::error]] {
-        var flags: sys::sint = 0;
-        if mode == 0 {
-            # OPEN_READ, OPEN_WRITE, or OPEN_APPEND must be selected.
-            return std::result[[std::file, std::error]]::init_error(std::error::INVALID_ARGUMENT);
-        }
-        if (mode & OPEN_WRITE != 0) and (mode & OPEN_APPEND != 0) {
-            # Attempted open with both non-appending and appending write modes.
-            return std::result[[std::file, std::error]]::init_error(std::error::INVALID_ARGUMENT);
-        }
-
-        if (mode & OPEN_READ != 0) and (mode & OPEN_WRITE != 0) {
-            flags = sys::O_RDWR | sys::O_CREAT | sys::O_TRUNC;
-        }
-        elif (mode & OPEN_READ != 0) and (mode & OPEN_APPEND != 0) {
-            flags = sys::O_RDWR | sys::O_CREAT | sys::O_APPEND;
-        }
-        elif mode & OPEN_READ != 0 {
-            flags = sys::O_RDONLY;
-        }
-        elif mode & OPEN_WRITE != 0 {
-            flags = sys::O_WRONLY | sys::O_CREAT | sys::O_TRUNC;
-        }
-        elif mode & OPEN_APPEND != 0 {
-            flags = sys::O_WRONLY | sys::O_CREAT | sys::O_APPEND;
-        }
-        else {
-            std::panic("unreachable");
-        }
-
-        if countof(path) >= sys::PATH_MAX {
-            return std::result[[std::file, std::error]]::init_error((:std::error)sys::error(sys::EINVAL));
-        }
-        var path_cstr = (:[sys::PATH_MAX]byte)[0...];
-        std::slice[[byte]]::copy(path_cstr[0:countof(path)], path);
-
-        var sysret = sys::open(&path_cstr[0], flags, 0o666);
-        if sysret < 0 {
-            return std::result[[std::file, std::error]]::init_error((:std::error)sys::error(-sysret));
-        }
-
-        var file = (:std::file){._fd = (:sys::sint)sysret};
-        return std::result[[std::file, std::error]]::init_value(file);
-    }
-
-    # Close an open regular file.
-    func close(self: *file) std::result[[void, std::error]] {
-        var sysret = sys::close(self.*._fd);
-        if sysret < 0 {
-            return std::result[[void, std::error]]::init_error((:std::error)sys::error(-sysret));
-        }
-
-        return std::result[[void, std::error]]::init_value(void::VALUE);
-    }
-
-    func read(self: *file, buf: []byte) std::result[[usize, std::error]] {
-        if countof(buf) == 0 {
-            return std::result[[usize, std::error]]::init_value(0);
-        }
-
-        var sysret = sys::read(self.*._fd, &buf[0u], countof(buf));
-        if sysret < 0 {
-            return std::result[[usize, std::error]]::init_error((:std::error)sys::error(-sysret));
-        }
-
-        return std::result[[usize, std::error]]::init_value((:usize)sysret);
-    }
-
-    func write(self: *file, buf: []byte) std::result[[usize, std::error]] {
-        if countof(buf) == 0 {
-            return std::result[[usize, std::error]]::init_value(0);
-        }
-
-        var sysret = sys::write(self.*._fd, &buf[0u], countof(buf));
-        if sysret < 0 {
-            return std::result[[usize, std::error]]::init_error((:std::error)sys::error(-sysret));
-        }
-
-        return std::result[[usize, std::error]]::init_value((:usize)sysret);
-    }
-
-    # Seek from the start of the file.
-    const SEEK_START: usize = (:usize)sys::SEEK_SET;
-    # Seek from the current position of the file position indicator.
-    const SEEK_CURRENT: usize = (:usize)sys::SEEK_CUR;
-    # Seek from the end of the file.
-    const SEEK_END: usize = (:usize)sys::SEEK_END;
-
-    # Set the file position indicatior of an open file to `offset` bytes
-    # relative to the position indicated by `from`.
-    func seek(self: *file, offset: ssize, from: usize) std::result[[void, std::error]] {
-        var sysret = sys::lseek(self.*._fd, offset, (:sys::uint)from);
-        if sysret < 0 {
-            return std::result[[void, std::error]]::init_error((:std::error)sys::error(-sysret));
-        }
-
-        return std::result[[void, std::error]]::init_value(void::VALUE);
-    }
-
-    # Returns the current value of the file position indicator of an open file.
-    func tell(self: *file) std::result[[usize, std::error]] {
-        var sysret = sys::lseek(self.*._fd, 0, sys::SEEK_CUR);
-        if sysret < 0 {
-            return std::result[[usize, std::error]]::init_error((:std::error)sys::error(-sysret));
-        }
-
-        return std::result[[usize, std::error]]::init_value((:usize)sysret);
-    }
-
-    # Create an empty file if it does not exist.
-    func create(path: []byte)  std::result[[void, std::error]] {
-        var result = std::file::open(path, std::file::OPEN_WRITE);
-        if result.is_error() {
-            return std::result[[void, std::error]]::init_error(result.error());
-        }
-
-        var file = result.value();
-        return file.close();
-    }
-
-    # Remove a file.
-    func remove(path: []byte) std::result[[void, std::error]] {
-        if countof(path) >= sys::PATH_MAX {
-            return std::result[[void, std::error]]::init_error((:std::error)sys::error(sys::EINVAL));
-        }
-        var path_cstr = (:[sys::PATH_MAX]byte)[0...];
-        std::slice[[byte]]::copy(path_cstr[0:countof(path)], path);
-
-        var sysret = sys::unlink(&path_cstr[0]);
-        if sysret < 0 {
-            return std::result[[void, std::error]]::init_error((:std::error)sys::error(-sysret));
-        }
-
-        return std::result[[void, std::error]]::init_value(void::VALUE);
-    }
-}
-
 struct directory {
     var _fd: sys::sint;
     var _buf: [1024]byte;
@@ -264,4 +112,127 @@ struct directory {
 
         return std::result[[void, std::error]]::init_value(void::VALUE);
     }
+}
+
+# Open a file for reading.
+extend file const OPEN_READ: usize = 0b001;
+# Open a file for writing.
+# The file is created if it does not exist.
+# The file is truncated if it does exist.
+extend file const OPEN_WRITE: usize = 0b010;
+# Open a file for writing (appended).
+# The file is created if it does not exist.
+# Data is appended to the end of the file when written.
+extend file const OPEN_APPEND: usize = 0b100;
+
+# Open a regular file.
+extend file func open(path: []byte, mode: usize) std::result[[std::file, std::error]] {
+    var flags: sys::sint = 0;
+    if mode == 0 {
+        # OPEN_READ, OPEN_WRITE, or OPEN_APPEND must be selected.
+        return std::result[[std::file, std::error]]::init_error(std::error::INVALID_ARGUMENT);
+    }
+    if (mode & std::file::OPEN_WRITE != 0) and (mode & std::file::OPEN_APPEND != 0) {
+        # Attempted open with both non-appending and appending write modes.
+        return std::result[[std::file, std::error]]::init_error(std::error::INVALID_ARGUMENT);
+    }
+
+    if (mode & std::file::OPEN_READ != 0) and (mode & std::file::OPEN_WRITE != 0) {
+        flags = sys::O_RDWR | sys::O_CREAT | sys::O_TRUNC;
+    }
+    elif (mode & std::file::OPEN_READ != 0) and (mode & std::file::OPEN_APPEND != 0) {
+        flags = sys::O_RDWR | sys::O_CREAT | sys::O_APPEND;
+    }
+    elif mode & std::file::OPEN_READ != 0 {
+        flags = sys::O_RDONLY;
+    }
+    elif mode & std::file::OPEN_WRITE != 0 {
+        flags = sys::O_WRONLY | sys::O_CREAT | sys::O_TRUNC;
+    }
+    elif mode & std::file::OPEN_APPEND != 0 {
+        flags = sys::O_WRONLY | sys::O_CREAT | sys::O_APPEND;
+    }
+    else {
+        std::panic("unreachable");
+    }
+
+    if countof(path) >= sys::PATH_MAX {
+        return std::result[[std::file, std::error]]::init_error((:std::error)sys::error(sys::EINVAL));
+    }
+    var path_cstr = (:[sys::PATH_MAX]byte)[0...];
+    std::slice[[byte]]::copy(path_cstr[0:countof(path)], path);
+
+    var sysret = sys::open(&path_cstr[0], flags, 0o666);
+    if sysret < 0 {
+        return std::result[[std::file, std::error]]::init_error((:std::error)sys::error(-sysret));
+    }
+
+    var file = (:std::file){._fd = (:sys::sint)sysret};
+    return std::result[[std::file, std::error]]::init_value(file);
+}
+
+# Close an open regular file.
+extend file func close(self: *file) std::result[[void, std::error]] {
+    var sysret = sys::close(self.*._fd);
+    if sysret < 0 {
+        return std::result[[void, std::error]]::init_error((:std::error)sys::error(-sysret));
+    }
+
+    return std::result[[void, std::error]]::init_value(void::VALUE);
+}
+
+
+# Seek from the start of the file.
+extend file const SEEK_START: usize = (:usize)sys::SEEK_SET;
+# Seek from the current position of the file position indicator.
+extend file const SEEK_CURRENT: usize = (:usize)sys::SEEK_CUR;
+# Seek from the end of the file.
+extend file const SEEK_END: usize = (:usize)sys::SEEK_END;
+
+# Set the file position indicatior of an open file to `offset` bytes
+# relative to the position indicated by `from`.
+extend file func seek(self: *file, offset: ssize, from: usize) std::result[[void, std::error]] {
+    var sysret = sys::lseek(self.*._fd, offset, (:sys::uint)from);
+    if sysret < 0 {
+        return std::result[[void, std::error]]::init_error((:std::error)sys::error(-sysret));
+    }
+
+    return std::result[[void, std::error]]::init_value(void::VALUE);
+}
+
+# Returns the current value of the file position indicator of an open file.
+extend file func tell(self: *file) std::result[[usize, std::error]] {
+    var sysret = sys::lseek(self.*._fd, 0, sys::SEEK_CUR);
+    if sysret < 0 {
+        return std::result[[usize, std::error]]::init_error((:std::error)sys::error(-sysret));
+    }
+
+    return std::result[[usize, std::error]]::init_value((:usize)sysret);
+}
+
+# Create an empty file if it does not exist.
+extend file func create(path: []byte)  std::result[[void, std::error]] {
+    var result = std::file::open(path, std::file::OPEN_WRITE);
+    if result.is_error() {
+        return std::result[[void, std::error]]::init_error(result.error());
+    }
+
+    var file = result.value();
+    return file.close();
+}
+
+# Remove a file.
+extend file func remove(path: []byte) std::result[[void, std::error]] {
+    if countof(path) >= sys::PATH_MAX {
+        return std::result[[void, std::error]]::init_error((:std::error)sys::error(sys::EINVAL));
+    }
+    var path_cstr = (:[sys::PATH_MAX]byte)[0...];
+    std::slice[[byte]]::copy(path_cstr[0:countof(path)], path);
+
+    var sysret = sys::unlink(&path_cstr[0]);
+    if sysret < 0 {
+        return std::result[[void, std::error]]::init_error((:std::error)sys::error(-sysret));
+    }
+
+    return std::result[[void, std::error]]::init_value(void::VALUE);
 }
