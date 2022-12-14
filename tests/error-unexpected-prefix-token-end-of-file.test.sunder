@@ -1,0 +1,3 @@
+func main() void {
+################################################################################
+# [error-unexpected-prefix-token-end-of-file.test.sunder:4] error: unrecognized prefix token `end-of-file` in expression

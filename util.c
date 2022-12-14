@@ -2046,7 +2046,7 @@ source_line_end(char const* ptr)
 }
 
 static void
-messagev_(
+messagev(
     bool show_template_instantiation_stack,
     struct source_location const* location,
     char const* level_text,
@@ -2093,7 +2093,7 @@ messagev_(
     vfprintf(stderr, fmt, args);
     fputs("\n", stderr);
 
-    if (psrc != NO_PSRC) {
+    if (psrc != NO_PSRC && *psrc != '\0') {
         assert(path != NULL);
         char const* const line_start = source_line_start(psrc);
         char const* const line_end = source_line_end(psrc);
@@ -2123,7 +2123,7 @@ info(struct source_location const* location, char const* fmt, ...)
 {
     va_list args;
     va_start(args, fmt);
-    messagev_(false, location, "info", ANSI_MSG_INFO, fmt, args);
+    messagev(false, location, "info", ANSI_MSG_INFO, fmt, args);
     va_end(args);
 }
 
@@ -2132,7 +2132,7 @@ warning(struct source_location const* location, char const* fmt, ...)
 {
     va_list args;
     va_start(args, fmt);
-    messagev_(true, location, "warning", ANSI_MSG_WARNING, fmt, args);
+    messagev(true, location, "warning", ANSI_MSG_WARNING, fmt, args);
     va_end(args);
 }
 
@@ -2141,7 +2141,7 @@ error(struct source_location const* location, char const* fmt, ...)
 {
     va_list args;
     va_start(args, fmt);
-    messagev_(true, location, "error", ANSI_MSG_ERROR, fmt, args);
+    messagev(true, location, "error", ANSI_MSG_ERROR, fmt, args);
     va_end(args);
 }
 
@@ -2150,7 +2150,7 @@ fatal(struct source_location const* location, char const* fmt, ...)
 {
     va_list args;
     va_start(args, fmt);
-    messagev_(true, location, "error", ANSI_MSG_ERROR, fmt, args);
+    messagev(true, location, "error", ANSI_MSG_ERROR, fmt, args);
     va_end(args);
 
     exit(EXIT_FAILURE);
