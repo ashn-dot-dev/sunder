@@ -49,9 +49,6 @@ static void
 order_template_argument_list(
     struct orderer* orderer, struct cst_typespec const* const* arguments);
 static void
-order_function_parameter(
-    struct orderer* orderer, struct cst_function_parameter const* parameter);
-static void
 order_typespec(struct orderer* orderer, struct cst_typespec const* typespec);
 static void
 order_symbol(struct orderer* orderer, struct cst_symbol const* symbol);
@@ -196,7 +193,7 @@ order_decl(struct orderer* orderer, struct cst_decl const* decl)
         struct cst_function_parameter const* const* const function_parameters =
             decl->data.function.function_parameters;
         for (size_t i = 0; i < sbuf_count(function_parameters); ++i) {
-            order_function_parameter(orderer, function_parameters[i]);
+            order_typespec(orderer, function_parameters[i]->typespec);
         }
         order_typespec(orderer, decl->data.function.return_typespec);
         return;
@@ -265,7 +262,7 @@ order_decl(struct orderer* orderer, struct cst_decl const* decl)
         struct cst_function_parameter const* const* const function_parameters =
             decl->data.extern_function.function_parameters;
         for (size_t i = 0; i < sbuf_count(function_parameters); ++i) {
-            order_function_parameter(orderer, function_parameters[i]);
+            order_typespec(orderer, function_parameters[i]->typespec);
         }
         order_typespec(orderer, decl->data.extern_function.return_typespec);
         return;
@@ -390,16 +387,6 @@ order_template_argument_list(
 }
 
 static void
-order_function_parameter(
-    struct orderer* orderer, struct cst_function_parameter const* parameter)
-{
-    assert(orderer != NULL);
-    assert(parameter != NULL);
-
-    order_typespec(orderer, parameter->typespec);
-}
-
-static void
 order_typespec(struct orderer* orderer, struct cst_typespec const* typespec)
 {
     assert(orderer != NULL);
@@ -429,7 +416,10 @@ order_typespec(struct orderer* orderer, struct cst_typespec const* typespec)
         order_expr(orderer, typespec->data.typeof_.expr);
         return;
     }
-    case CST_TYPESPEC_POINTER: /* fallthrough */
+    case CST_TYPESPEC_POINTER: {
+        order_typespec(orderer, typespec->data.pointer.base);
+        return;
+    }
     case CST_TYPESPEC_SLICE: {
         // Pointer and slice type specifiers are unique because the size of
         // those types will always be the same regardless of the type of their
@@ -461,6 +451,7 @@ order_typespec(struct orderer* orderer, struct cst_typespec const* typespec)
         //             size_t count;
         //         } slice;
         //     };
+        order_typespec(orderer, typespec->data.slice.base);
         return;
     }
     }
