@@ -37,10 +37,10 @@ alias ulong     = usize;
 alias slonglong = s64;
 alias ulonglong = u64;
 
-alias mode_t      = uint;
-alias off_t       = slong;
-alias size_t      = ulong;
-alias ssize_t     = slong;
+alias mode_t  = uint;
+alias off_t   = slong;
+alias size_t  = ulong;
+alias ssize_t = slong;
 
 const EPERM:           ssize = 1;
 const ENOENT:          ssize = 2;
