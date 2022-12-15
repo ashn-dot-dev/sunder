@@ -362,7 +362,7 @@ const PAGE_SIZE: usize = 4096;
 ###     unsigned short  d_reclen;
 ###     char            d_name[1];
 ### };
-struct linux_dirent {
+struct dirent {
     var d_ino: ulong;
     var d_off: ulong;
     var d_reclen: ushort;
@@ -377,7 +377,7 @@ extern func lseek(fd: sint, offset: off_t, whence: uint) ssize;
 extern func mmap(addr: ulong, len: ulong, prot: ulong, flags: ulong, fd: ulong, off: ulong) ssize;
 extern func munmap(addr: ulong, len: usize) ssize;
 extern func exit(error_code: sint) void;
-extern func getdents(fd: sint, dirent: *linux_dirent, count: uint) ssize;
+extern func getdents(fd: sint, dirent: *dirent, count: uint) ssize;
 extern func mkdir(pathname: *byte, mode: mode_t) ssize;
 extern func rmdir(pathname: *byte) ssize;
 extern func unlink(pathname: *byte) ssize;
