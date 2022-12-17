@@ -1489,12 +1489,6 @@ push_rvalue_array_list(struct expr const* expr, size_t id)
         expr->data.array_list.elements;
     struct type const* const element_type = expr->type->data.array.base;
     uint64_t const element_size = element_type->size;
-    // TODO: This loop is manually unrolled here, but should probably be turned
-    // into an actual asm loop for elements with trivial initialization.
-    // Basically we should account for the scenario where a brainfuck
-    // interpreter allocates an array 30000 zeroed bytes, which would cause the
-    // equivalent of memcpy(&my_array[index], &my_zero, 0x8) inlined thousands
-    // of times.
     for (size_t i = 0; i < sbuf_count(elements); ++i) {
         assert(elements[i]->type == element_type);
         push_rvalue(elements[i]);
@@ -2127,13 +2121,6 @@ push_rvalue_unary(struct expr const* expr, size_t id)
         return;
     }
     case UOP_COUNTOF: {
-        // TODO: Currently the right-hand-side array or slice expression in a
-        // countof expression is always evaluated since the right-hand-side
-        // expression may exhibit side effects. In the future there is an
-        // optimization opportunity to skip evaluation of the right-hand-side
-        // expression if it can be determined that the expression does not
-        // contain side effects (e.g. it is an identifier).
-
         if (expr->data.unary.rhs->type->kind == TYPE_ARRAY) {
             // If possible evaluate the left hand side of the expression as an
             // lvalue so that we do not push the entire contents of the array

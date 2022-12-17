@@ -628,10 +628,6 @@ xget_symbol(struct resolver* resolver, struct cst_symbol const* target)
                 // depending on A it sees that A is "already ordered" even
                 // though that is not entirely true. This is a special case
                 // error check that accounts for this scenario.
-                //
-                // TODO: See if we can move this error into the ordering phase
-                // by introducing a TLDECL_INCOMPLETE ordering state instead of
-                // handling this case here.
                 fatal(
                     target->elements[i - 1]->location,
                     "use of incomplete type `%s`",
@@ -740,9 +736,6 @@ xget_template_instance(
 
     // Currently, functions and structs are the only declarations that can be
     // templated, so the rest off this function will only cater to these cases.
-    //
-    // TODO: Go over the common code in these two condition branches and remove
-    // the duplicate and/or redundant logic.
     assert(decl->kind == CST_DECL_FUNCTION || decl->kind == CST_DECL_STRUCT);
     if (decl->kind == CST_DECL_FUNCTION) {
         sbuf(struct cst_identifier const* const) const template_parameters =
@@ -814,8 +807,6 @@ xget_template_instance(
         struct symbol_table* const instance_symbol_table =
             symbol_table_new(symbol->data.template.parent_symbol_table);
         for (size_t i = 0; i < template_parameters_count; ++i) {
-            // TODO: Should we use the template parameter location or the
-            // template argument location for the type symbol location?
             struct symbol* const symbol = symbol_new_type(
                 template_parameters[i]->location, template_types[i]);
             freeze(symbol);
@@ -950,8 +941,6 @@ xget_template_instance(
         struct symbol_table* const instance_symbol_table =
             symbol_table_new(symbol->data.template.parent_symbol_table);
         for (size_t i = 0; i < template_parameters_count; ++i) {
-            // TODO: Should we use the template parameter location or the
-            // template argument location for the type symbol location?
             struct symbol* const symbol = symbol_new_type(
                 template_parameters[i]->location, template_types[i]);
             freeze(symbol);
@@ -2720,12 +2709,6 @@ resolve_stmt_assign(struct resolver* resolver, struct cst_stmt const* stmt)
         resolve_expr(resolver, stmt->data.assign.lhs);
     struct expr const* rhs = resolve_expr(resolver, stmt->data.assign.rhs);
 
-    // TODO: Rather than query if lhs is an lvalue, perhaps there could
-    // function `validate_expr_is_lvalue` in resolve.c which traverses the
-    // expression tree and emits an error with more context about *why* a
-    // specific expression is not an lvalue. Currently it's up to the user to
-    // figure out *why* lhs is not an lvalue, and better information could ease
-    // debugging.
     if (!expr_is_lvalue(lhs)) {
         fatal(
             lhs->location,
@@ -3016,11 +2999,6 @@ resolve_expr_bytes(struct resolver* resolver, struct cst_expr const* expr)
     size_t const count = string_count(bytes);
     struct type const* const type = type_unique_array(
         expr->location, count + 1 /*NUL*/, context()->builtin.byte);
-    // TODO: Allocating a value for each and every byte in the bytes literal
-    // feels wasteful. It may be worth investigating some specific ascii or
-    // asciiz static object that would use the expr's string directly and then
-    // generate a readable string in the output assembly during the codegen
-    // phase.
     sbuf(struct value*) elements = NULL;
     for (size_t i = 0; i < count; ++i) {
         uint8_t const byte = (uint8_t)string_start(bytes)[i];
@@ -3373,8 +3351,6 @@ resolve_expr_cast(struct resolver* resolver, struct cst_expr const* expr)
     return explicit_cast(expr->location, type, rhs);
 }
 
-// TODO: Remove redundant logic in this function that is the same for member
-// and non-member functions calls (such as the argument type checking code).
 static struct expr const*
 resolve_expr_call(struct resolver* resolver, struct cst_expr const* expr)
 {

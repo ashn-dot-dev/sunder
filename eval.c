@@ -263,12 +263,6 @@ eval_rvalue_cast(struct expr const* expr)
     // assembler/linker and has no meaningful representation at compile-time.
     // Absolute addresses are *not* supported at the language level, so it is a
     // hard error to cast to/from a pointer type.
-    //
-    // TODO: There is a case to be made for casting a pointer of type T1 to a
-    // pointer of type T2 in a compile time expression as long as the language
-    // continues to disallow pointer dereference in compile-time expressions.
-    // In the future check if this a valid/common enough use case to include at
-    // the language level.
     if (from->type->kind == TYPE_POINTER) {
         fatal(
             expr->location,
