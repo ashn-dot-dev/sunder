@@ -1022,7 +1022,16 @@ codegen_static_function(struct symbol const* symbol)
     appendli("mov rbp, rsp");
     // Adjust the stack pointer to make space for locals.
     assert(function->local_stack_offset <= 0);
-    appendli("add rsp, %d ; local stack space", function->local_stack_offset);
+    uint64_t stack_size = (uint64_t)-function->local_stack_offset;
+    appendli("sub rsp, %#" PRIx64 " ; local stack space", stack_size);
+    // Zero-initialize local stack objects.
+    uint64_t stack_cur = 0u;
+    assert(stack_size % 8 == 0);
+    appendli("mov rax, 0");
+    while ((stack_size - stack_cur) != 0) {
+        appendli("mov [rsp + %#" PRIx64 "], rax", stack_cur);
+        stack_cur += 8u;
+    }
 
     assert(current_function == NULL);
     current_function = function;
