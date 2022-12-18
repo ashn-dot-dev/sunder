@@ -14,11 +14,21 @@ var f: []byte = uninit;
 var g: s = uninit;
 
 func main() void {
-    # Uninitialized local variables do not have a defined bit pattern. These
-    # declarations are here just to make sure the syntax & semantic analysis
-    # works for local variables.
-    var y_: u32 = uninit;
-    var z_: s = uninit;
+    sys::dump[[u8]](a);
+    sys::dump[[u16]](b);
+    sys::dump[[u32]](c);
+    sys::dump[[u64]](d);
+    sys::dump[[*byte]](e);
+    sys::dump[[[]byte]](f);
+    sys::dump[[s]](g);
+
+    var a: u8 = uninit;
+    var b: u16 = uninit;
+    var c: u32 = uninit;
+    var d: u64 = uninit;
+    var e: *byte = uninit;
+    var f: []byte = uninit;
+    var g: s = uninit;
 
     sys::dump[[u8]](a);
     sys::dump[[u16]](b);
@@ -29,6 +39,13 @@ func main() void {
     sys::dump[[s]](g);
 }
 ################################################################################
+# 00
+# 00 00
+# 00 00 00 00
+# 00 00 00 00 00 00 00 00
+# 00 00 00 00 00 00 00 00
+# 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+# 00 00 00 00 00 00 00 00
 # 00
 # 00 00
 # 00 00 00 00
