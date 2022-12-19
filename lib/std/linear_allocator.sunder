@@ -1,11 +1,16 @@
 namespace std;
 import "std/core.sunder";
 
+# Allocator that allocates and reallocates out of a fixed buffer of memory,
+# also known as a bump allocator.
+#
+# Deallocation with `std::linear_allocator::deallocate` is a no-op.
 struct linear_allocator {
     var _buf: []byte;
     var _old_offset: usize; # Previous offset into the backing buffer.
     var _cur_offset: usize; # Current offset into the backing buffer.
 
+    # Initialize a linear allocator with the provided buffer of memory.
     func init(buf: []byte) linear_allocator {
         return (:std::linear_allocator){
             ._buf = buf,
@@ -14,6 +19,16 @@ struct linear_allocator {
         };
     }
 
+    # Initialize a linear allocator with a buffer of memory created from an
+    # existing slice of some type `T`. Useful for scenarios where the allocator
+    # will be used to allocate elements of type `T`.
+    #
+    # Example:
+    #   var memory = (:[64]ssize)[0...];
+    #   var allocator = std::linear_allocator::init_from_slice[[ssize]](memory[0:countof(memory)]);
+    #   var allocator = std::allocator::init[[typeof(allocator)]](&allocator);
+    #   # Later...
+    #   var x = std::new[[ssize]](allocator);
     func init_from_slice[[T]](slice: []T) linear_allocator {
         var buf_start = startof(slice);
         var buf_count = countof(slice) * sizeof(T);
@@ -86,6 +101,8 @@ struct linear_allocator {
         # no-op
     }
 
+    # Deallocate all allocated memory in the linear allocator at once,
+    # invalidating memory previously allocated by this allocator.
     func deallocate_all(self: *linear_allocator) void {
         self.*._old_offset = 0;
         self.*._cur_offset = 0;

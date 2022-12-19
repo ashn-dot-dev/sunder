@@ -2,6 +2,15 @@ namespace std;
 import "std/core.sunder";
 import "sys";
 
+# Iterate over a program argument list.
+#
+# Example:
+#   # Iterate over the program arguments, starting with argument zero, i.e. the
+#   # program name.
+#   var iter = std::argument_iterator::init();
+#   for iter.advance() {
+#       std::print_line(std::out(), iter.current());
+#   }
 struct argument_iterator {
     var _argv: **byte;
     var _index: std::optional[[usize]];
@@ -57,6 +66,56 @@ struct argument_iterator {
     }
 }
 
+# Parse a program argument list.
+#
+# Initializer functions are provided with the `options` list containing the
+# strings that will be treated as option flag when parsed. Parsed options can
+# start with any number of dashes, so `-foo`, `--foo`, and `---foo` are all
+# parsed as the option string "foo". An option string may contain a trailing
+# ':' character, signifying that the option requires an additional option
+# argument.
+#
+# Example:
+#   var parser = std::argument_parser::init((:[][]byte)[
+#       "abc",
+#       "def:"
+#   ]);
+#
+#   for parser.advance() {
+#       if parser.check_option("abc") {
+#           var opt = parser.option_value();
+#           std::print_format_line(
+#               std::out(),
+#               "Option `{}`",
+#               (:[]std::formatter)[std::formatter::init[[[]byte]](&opt)]);
+#           continue;
+#       }
+#
+#       if parser.check_option("def") {
+#           var opt = parser.option_value();
+#           var arg = parser.argument_value();
+#           std::print_format_line(
+#               std::out(),
+#               "Option `{}` with required argument `{}`",
+#               (:[]std::formatter)[
+#                   std::formatter::init[[[]byte]](&opt),
+#                   std::formatter::init[[[]byte]](&arg)]);
+#           continue;
+#       }
+#
+#       var argument = parser.argument_value();
+#       std::print_format_line(
+#           std::out(),
+#           "Positional argument `{}`",
+#           (:[]std::formatter)[std::formatter::init[[[]byte]](&argument)]);
+#    }
+#
+# Example output:
+#   $ sunder-run example.sunder --abc foo --def bar baz
+#   Option `abc`
+#   Positional argument `foo`
+#   Option `def` with required argument `bar`
+#   Positional argument `baz`
 struct argument_parser {
     var _options: [][]byte;
     var _iterator: argument_iterator;
@@ -176,6 +235,7 @@ struct argument_parser {
         return true;
     }
 
+    # Returns true if `opt` is the current parsed option.
     func check_option(self: *argument_parser, opt: []byte) bool {
         if self.*._opt.is_empty() {
             return false;
@@ -183,10 +243,13 @@ struct argument_parser {
         return std::str::eq(self.*._opt.value(), opt);
     }
 
+    # Returns the current option if an option was parsed.
     func option(self: *argument_parser) std::optional[[[]byte]] {
         return self.*._opt;
     }
 
+    # Convenience function that retrieves the value from the optional returned
+    # by `std::argument_parser::option`.
     func option_value(self: *argument_parser) []byte {
         if self.*._opt.is_empty() {
             std::panic("attempted to retrieve empty argument parser option value");
@@ -194,10 +257,16 @@ struct argument_parser {
         return self.*._opt.value();
     }
 
+    # Returns the current argument.
+    # Empty for options with no required argument.
+    # Non-empty for options with a required argument.
+    # Non-empty for positional parameters.
     func argument(self: *argument_parser) std::optional[[[]byte]] {
         return self.*._arg;
     }
 
+    # Convenience function that retrieves the value from the optional returned
+    # by `std::argument_parser::argument`.
     func argument_value(self: *argument_parser) []byte {
         if self.*._arg.is_empty() {
             std::panic("attempted to retrieve empty argument parser argument value");

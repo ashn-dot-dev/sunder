@@ -1049,7 +1049,9 @@ func print(writer: std::writer, str: []byte) void {
 
 # Write `countof(buf)` bytes, followed by a newline, to the provided writer,
 # invoking the writer's `write` function repeatedly until all bytes have been
-# written or an error occurs. This function panics on error.
+# written or an error occurs.
+#
+# This function panics on error.
 func print_line(writer: std::writer, str: []byte) void {
     var result = std::write_line(writer, str);
     if result.is_error() {
@@ -1059,7 +1061,9 @@ func print_line(writer: std::writer, str: []byte) void {
 
 # Write formatted bytes to the provided writer, invoking the writer's `write`
 # function repeatedly until either all bytes have been written or an error
-# occurs. This function panics on error.
+# occurs.
+#
+# This function panics on error.
 func print_format(writer: std::writer, format: []byte, args: []std::formatter) void {
     var result = std::write_format(writer, format, args);
     if result.is_error() {
@@ -1069,7 +1073,9 @@ func print_format(writer: std::writer, format: []byte, args: []std::formatter) v
 
 # Write formatted bytes, followed by a newline, to the provided writer,
 # invoking the writer's `write` function repeatedly until either all bytes have
-# been written or an error occurs. This function panics on error.
+# been written or an error occurs.
+#
+# This function panics on error.
 func print_format_line(writer: std::writer, format: []byte, args: []std::formatter) void {
     std::print_format(writer, format, args);
     std::print(writer, "\n");

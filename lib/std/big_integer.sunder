@@ -5,6 +5,7 @@ import "std/null_allocator.sunder";
 import "std/string.sunder";
 import "std/vector.sunder";
 
+# Managed arbitrary precision integer type.
 struct big_integer {
     # Allocator used to allocate limbs for this big integer. The allocator is
     # also used as the backing allocator for intermediate objects created while
@@ -24,6 +25,7 @@ struct big_integer {
     # Number of bits in each limb of the integer.
     const _BITS_PER_LIMB = sizeof(u32) * 8;
 
+    # Initialize a big integer with the value zero.
     func init(allocator: std::allocator) big_integer {
         return (:big_integer){
             ._allocator = allocator,
@@ -32,12 +34,14 @@ struct big_integer {
         };
     }
 
+    # Initialize a big integer with the value of another big integer.
     func init_from_big_integer(allocator: std::allocator, from: *big_integer) big_integer {
         var self = big_integer::init(allocator);
         big_integer::assign(&self, from);
         return self;
     }
 
+    # Initialize a big integer with the value of a primitive integer.
     func init_from_int[[T]](allocator: std::allocator, int: T) big_integer {
         std::assert(sizeof(T) <= sizeof(u64));
         if int >= 0 {
@@ -76,6 +80,7 @@ struct big_integer {
         return self;
     }
 
+    # Initialize a big integer with the value parsed from a byte slice.
     func init_from_str(allocator: std::allocator, str: []byte, radix: usize) std::result[[big_integer, std::error]] {
         if radix != 0 and radix != 2 and radix != 8 and radix != 10 and radix != 16 {
             return std::result[[big_integer, std::error]]::init_error(std::error::INVALID_ARGUMENT);
@@ -165,10 +170,12 @@ struct big_integer {
         return std::result[[big_integer, std::error]]::init_value(self);
     }
 
+    # Finalize resources associated with the big integer.
     func fini(self: *big_integer) void {
         std::slice[[u32]]::delete(self.*._allocator, self.*._limbs);
     }
 
+    # Convert a big integer to a primitive integer of type `T`.
     func to_int[[T]](self: *big_integer) std::result[[T, std::error]] {
         std::assert(sizeof(T) <= sizeof(u64));
         var buf = (:[64]byte)[0...]; # More than enough space.
@@ -178,6 +185,7 @@ struct big_integer {
         return T::init_from_str(string.data(), 0);
     }
 
+    # self = from
     func assign(self: *big_integer, from: *big_integer) void {
         if self == from {
             return;

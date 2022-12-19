@@ -21,12 +21,18 @@ struct hash_map_element[[K, V]] {
     var _value: V;
 }
 
+# Managed type mapping keys of type `K` to values of type `V` with O(1) average
+# time complexity for lookup, insert, and remove operations.
+#
+# A type `K` may be used as a key type `K` impements a `hash` function with the
+# signature `func hash(self: *K) usize`.
 struct hash_map[[K, V]] {
     var _allocator: std::allocator;
     var _elements: []hash_map_element[[K, V]];
     var _n: usize; # Number of USE entries in the map.
     var _q: usize; # Number of non-NIL entries in the map.
 
+    # Initialize an empty map.
     func init(allocator: std::allocator) hash_map[[K, V]] {
         return (:hash_map[[K, V]]){
             ._allocator = allocator,
@@ -36,6 +42,7 @@ struct hash_map[[K, V]] {
         };
     }
 
+    # Finalize resources associated with the map.
     func fini(self: *hash_map[[K, V]]) void {
         if countof(self.*._elements) != 0 {
             std::slice[[hash_map_element[[K, V]]]]::delete(self.*._allocator, self.*._elements);
@@ -171,6 +178,7 @@ struct hash_map[[K, V]] {
     }
 }
 
+# Iterate over the elements of a hash map.
 struct hash_map_iterator[[K, V]] {
     var _iterator: std::slice_iterator[[hash_map_element[[K, V]]]];
 

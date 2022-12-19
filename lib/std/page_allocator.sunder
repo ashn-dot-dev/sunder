@@ -2,6 +2,8 @@ namespace std;
 import "std/core.sunder";
 import "sys";
 
+# Allocator that directly allocates, reallocates, and deallocates pages from
+# the operating system using mmap and munmap.
 struct page_allocator {
     func allocate(self_: *page_allocator, align: usize, size: usize) std::result[[*any, std::error]] {
         if align == 0 {

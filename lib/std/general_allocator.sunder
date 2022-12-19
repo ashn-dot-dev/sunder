@@ -11,28 +11,49 @@ struct general_allocator_element {
     var _align: usize;
     var _size: usize;
 
+    # Returns a pointer to the start of the allocated memory.
     func start(self: *general_allocator_element) *any {
         return self.*._start;
     }
 
+    # Returns the alignment of the allocated memory.
     func align(self: *general_allocator_element) usize {
         return self.*._align;
     }
 
+    # Returns the size of the allocated memory in bytes.
     func size(self: *general_allocator_element) usize {
         return self.*._size;
     }
 }
 
+# General purpose heap allocator. This allocator tracks allocations and will
+# automatically deallocate memory when `std::general_allocator::fini` is
+# called.
+#
+# Example:
+#   var allocator = std::general_allocator::init();
+#   defer allocator.fini();
+#   var allocator = std::allocator::init[[typeof(allocator)]](&allocator);
+#   # Later...
+#   var x = std::new[[foo]](allocator);
+#   # At this point the memory allocated by `std::new` can be explicitly
+#   # deallocated later with `std::delete` *or* the deferred `allocator.fini()`
+#   # will handle deallocation at scope exit if the memory has not already been
+#   # explicitly deallocated.
 struct general_allocator {
     var _elements: *general_allocator_element; # nullable
 
+    # Initialize a general allocator.
     func init() general_allocator {
         return (:general_allocator){
             ._elements = std::ptr[[general_allocator_element]]::NULL
         };
     }
 
+    # Finalize resources associated with the general allocator. Memory that was
+    # allocated by this allocator, and which has not yet been explicitly
+    # deallocated, will be deallocated during finalization.
     func fini(self: *general_allocator) void {
         for self.*._elements != std::ptr[[std::general_allocator_element]]::NULL {
             self.*.deallocate(self.*._elements.*._start, self.*._elements.*._align, self.*._elements.*._size);
@@ -124,6 +145,7 @@ struct general_allocator {
     }
 }
 
+# Iterate over the live allocations of a general allocator.
 struct general_allocator_iterator {
     var _general_allocator: *std::general_allocator;
     var _current: std::optional[[*general_allocator_element]];
