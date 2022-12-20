@@ -1096,7 +1096,7 @@ func delete[[T]](allocator: std::allocator, object: *T) void {
     allocator.deallocate((:*byte)object, alignof(T), sizeof(T));
 }
 
-# Align the provided memory address up to the nearest the specified alignment.
+# Align the provided memory address up to the nearest specified alignment.
 func forward_align(addr: usize, align: usize) usize {
     if align == 0 {
         return addr;
