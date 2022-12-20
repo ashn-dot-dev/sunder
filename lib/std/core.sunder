@@ -230,7 +230,6 @@ struct iterator_itable[[T]] {
 # collection's underlying data representation.
 #
 # Example:
-#
 #   # Iterate over a collection of type `foo`, holding elements of type
 #   # `foo_element`, using the iterator interface applied to the concrete
 #   # iterator object of type `foo_iterator`.
