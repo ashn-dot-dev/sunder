@@ -236,8 +236,6 @@ struct big_integer {
     }
 
     func hash(self: *big_integer) usize {
-        # NOTE: This hash function was chosen because it was easy to implement.
-        # The uniformity of the hash has *not* been properly evaluated.
         var hash: usize = 0;
         for i in countof(self.*._limbs) {
             hash = hash +% (:usize)self.*._limbs[i];
