@@ -2084,10 +2084,8 @@ push_rvalue_unary(struct expr const* expr, size_t id)
         return;
     }
     case UOP_NEG_WRAPPING: {
-        struct expr const* const rhs = expr->data.unary.rhs;
-
-        assert(type_is_sint(rhs->type));
-        assert(rhs->type->size <= 8u);
+        assert(type_is_sint(expr->data.unary.rhs->type));
+        assert(expr->data.unary.rhs->type->size <= 8u);
         push_rvalue(expr->data.unary.rhs);
 
         appendli("pop rax");
