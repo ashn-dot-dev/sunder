@@ -337,15 +337,15 @@ const SEEK_SET: uint = 0x0;
 const SEEK_CUR: uint = 0x1;
 const SEEK_END: uint = 0x2;
 
-const PROT_NONE:  ulong = 0x0;
-const PROT_READ:  ulong = 0x1;
-const PROT_WRITE: ulong = 0x2;
-const PROT_EXEC:  ulong = 0x4;
+const PROT_NONE:  sint = 0x0;
+const PROT_READ:  sint = 0x1;
+const PROT_WRITE: sint = 0x2;
+const PROT_EXEC:  sint = 0x4;
 
-const MAP_SHARED:    ulong = 0x01;
-const MAP_PRIVATE:   ulong = 0x02;
-const MAP_FIXED:     ulong = 0x10;
-const MAP_ANONYMOUS: ulong = 0x20;
+const MAP_SHARED:    sint = 0x01;
+const MAP_PRIVATE:   sint = 0x02;
+const MAP_FIXED:     sint = 0x10;
+const MAP_ANONYMOUS: sint = 0x20;
 
 # linux/include/uapi/linux/limits.h:
 const NAME_MAX: usize =  255; # chars in a file name
@@ -369,13 +369,13 @@ struct dirent {
     var d_name: byte;
 }
 
-extern func read(fd: sint, buf: *char, count: usize) ssize;
-extern func write(fd: sint, buf: *char, count: usize) ssize;
+extern func read(fd: sint, buf: *char, count: size_t) ssize;
+extern func write(fd: sint, buf: *char, count: size_t) ssize;
 extern func open(filename: *char, flags: sint, mode: mode_t) ssize;
 extern func close(fd: sint) ssize;
 extern func lseek(fd: sint, offset: off_t, whence: uint) ssize;
-extern func mmap(addr: ulong, len: ulong, prot: ulong, flags: ulong, fd: ulong, off: ulong) ssize;
-extern func munmap(addr: ulong, len: usize) ssize;
+extern func mmap(addr: *any, len: size_t, prot: sint, flags: sint, fd: sint, off: off_t) ssize;
+extern func munmap(addr: *any, len: size_t) ssize;
 extern func exit(error_code: sint) void;
 extern func getdents(fd: sint, dirent: *dirent, count: uint) ssize;
 extern func mkdir(pathname: *byte, mode: mode_t) ssize;

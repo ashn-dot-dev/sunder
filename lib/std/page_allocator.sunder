@@ -44,7 +44,7 @@ struct page_allocator {
         }
 
         # NULL addr indicates no address hint.
-        const addr: usize = 0u;
+        const addr = 0u;
 
         # Give the page(s) read and write permissions.
         const prot = sys::PROT_READ | sys::PROT_WRITE;
@@ -54,10 +54,10 @@ struct page_allocator {
         const flags = sys::MAP_PRIVATE | sys::MAP_ANONYMOUS;
 
         # Should be -1 when MAP_ANONYMOUS is specified.
-        const fd: usize = (:usize)-1s;
+        const fd = (:sys::sint)-1s;
 
         # Should be 0 when MAP_ANONYMOUS is specified.
-        const off: usize = 0u;
+        const off = (:sys::off_t)0u;
 
         var sysret: ssize = sys::mmap(addr, size, prot, flags, fd, off);
         if sysret < 0 {
@@ -124,7 +124,7 @@ struct page_allocator {
             std::panic("invalid alignment");
         }
 
-        var sysret: ssize = sys::munmap((:usize)ptr, size);
+        var sysret = sys::munmap((:usize)ptr, size);
         if sysret < 0 {
             std::panic("munmap error");
         }
