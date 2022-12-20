@@ -69,7 +69,7 @@ struct argument_iterator {
 # Parse a program argument list.
 #
 # Initializer functions are provided with the `options` list containing the
-# strings that will be treated as option flag when parsed. Parsed options can
+# strings that will be treated as option flags when parsed. Parsed options can
 # start with any number of dashes, so `-foo`, `--foo`, and `---foo` are all
 # parsed as the option string "foo". An option string may contain a trailing
 # ':' character, signifying that the option requires an additional option
