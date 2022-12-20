@@ -213,8 +213,8 @@ order_decl(struct orderer* orderer, struct cst_decl const* decl)
             orderer_tldecl_lookup(orderer, decl->name);
         if (tldecl == NULL) {
             // The returned tldecl may be NULL if this struct declaration is
-            // part of an extend declaration. We return early here as the will
-            // report this error when the extend declaration is resolved.
+            // part of an extend declaration. We return early here since an
+            // error will be reported when the extend declaration is resolved.
             return;
         }
         tldecl->state = TLDECL_ORDERED;
