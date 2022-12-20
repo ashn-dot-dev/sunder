@@ -1038,7 +1038,9 @@ func write_format(writer: std::writer, format: []byte, args: []std::formatter) s
 
 # Write `countof(buf)` bytes to the provided writer, invoking the writer's
 # `write` function repeatedly until either all bytes have been written or an
-# error occurs. This function panics on error.
+# error occurs.
+#
+# This function panics on error.
 func print(writer: std::writer, str: []byte) void {
     var result = std::write_all(writer, str);
     if result.is_error() {
