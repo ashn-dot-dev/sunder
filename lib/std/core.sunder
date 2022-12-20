@@ -13,7 +13,6 @@ alias error = *std::error_info;
 # Strongly typed wrapper around a static byte-string providing information on
 # the category of error that has occurred.
 struct error_info {
-    # Static byte-string describing the category of error that has occurred.
     var data: []byte;
 }
 
@@ -234,7 +233,7 @@ struct iterator_itable[[T]] {
 #   # `foo_element`, using the iterator interface applied to the concrete
 #   # iterator object of type `foo_iterator`.
 #   var iter = foo_iterator::init(&foo_object);
-#   var iter = std::iterator[[foo_element]]::init[[foo]](&iter);
+#   var iter = std::iterator[[foo_element]]::init[[foo_iterator]](&iter);
 #   for iter.advance() {
 #       var current = iter.current();
 #       # Do something with the current element...
@@ -425,6 +424,8 @@ struct slice[[T]] { # namespace
     }
 
     # Allocate a slice of `count` elements using the provided allocator.
+    #
+    # This function panics on error.
     func new(allocator: std::allocator, count: usize) []T {
         var result = allocator.allocate(alignof(T), count * sizeof(T));
         if result.is_error() {
@@ -435,6 +436,8 @@ struct slice[[T]] { # namespace
 
     # Resize the provided slice to `new_count` elements using the provided
     # allocator.
+    #
+    # This function panics on error.
     func resize(allocator: std::allocator, slice: []T, new_count: usize) []T {
         var cur_count: usize = countof(slice);
         var cur_size: usize = cur_count * sizeof(T);
@@ -1083,6 +1086,8 @@ func print_format_line(writer: std::writer, format: []byte, args: []std::formatt
 }
 
 # Allocate an object of type `T` using the provided allocator.
+#
+# This function panics on error.
 func new[[T]](allocator: std::allocator) *T {
     var result = allocator.allocate(alignof(T), sizeof(T));
     if result.is_error() {

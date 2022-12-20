@@ -59,7 +59,7 @@ struct page_allocator {
         # Should be 0 when MAP_ANONYMOUS is specified.
         const off = (:sys::off_t)0u;
 
-        var sysret: ssize = sys::mmap(addr, size, prot, flags, fd, off);
+        var sysret: ssize = sys::mmap((:*any)addr, size, prot, flags, fd, off);
         if sysret < 0 {
             return std::result[[*any, std::error]]::init_error((:std::error)sys::error(-sysret));
         }
@@ -124,7 +124,7 @@ struct page_allocator {
             std::panic("invalid alignment");
         }
 
-        var sysret = sys::munmap((:usize)ptr, size);
+        var sysret = sys::munmap(ptr, size);
         if sysret < 0 {
             std::panic("munmap error");
         }

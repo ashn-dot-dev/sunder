@@ -5,8 +5,8 @@ import "sys";
 # Iterate over a program argument list.
 #
 # Example:
-#   # Iterate over the program arguments, starting with argument zero, i.e. the
-#   # program name.
+#   # Iterate over the program arguments, starting with argument zero (i.e. the
+#   # program name).
 #   var iter = std::argument_iterator::init();
 #   for iter.advance() {
 #       std::print_line(std::out(), iter.current());
@@ -15,8 +15,8 @@ struct argument_iterator {
     var _argv: **byte;
     var _index: std::optional[[usize]];
 
-    # Initialize an argument iterator using the arguments provided by the
-    # hosted environment at program startup.
+    # Initialize an argument iterator using the program arguments provided by
+    # the hosted environment at program startup.
     #
     # The behavior of this function is implementation defined for programs
     # executing in a freestanding environment. The behavior of this function is
@@ -68,12 +68,13 @@ struct argument_iterator {
 
 # Parse a program argument list.
 #
-# Initializer functions are provided with the `options` list containing the
-# strings that will be treated as option flags when parsed. Parsed options can
-# start with any number of dashes, so `-foo`, `--foo`, and `---foo` are all
-# parsed as the option string "foo". An option string may contain a trailing
-# ':' character, signifying that the option requires an additional option
-# argument.
+# Initializer functions are provided with the `options` list containing strings
+# that will be treated as option flags when parsed. Parsed options may start
+# with any number of dashes, so `-foo`, `--foo`, and `---foo` are all parsed as
+# the option string "foo". An option string may contain a trailing ':'
+# character, signifying that the option requires an additional option argument.
+# If the argument "--" is encountered, then it will be skipped and all
+# subsequent program arguments will be parsed as positional arguments.
 #
 # Example:
 #   var parser = std::argument_parser::init((:[][]byte)[
@@ -111,11 +112,12 @@ struct argument_iterator {
 #    }
 #
 # Example output:
-#   $ sunder-run example.sunder --abc foo --def bar baz
+#   $ sunder-run example.sunder --abc foo --def bar baz -- --abc
 #   Option `abc`
 #   Positional argument `foo`
 #   Option `def` with required argument `bar`
 #   Positional argument `baz`
+#   Positional argument `--abc`
 struct argument_parser {
     var _options: [][]byte;
     var _iterator: argument_iterator;
