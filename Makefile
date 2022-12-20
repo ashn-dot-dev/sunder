@@ -22,8 +22,6 @@ GNU_BASE = \
 	-std=c99 -pedantic-errors \
 	-Wall -Wextra \
 	-Werror=conversion \
-	-Werror=double-promotion \
-	-Werror=float-equal \
 	-Werror=implicit-function-declaration \
 	-Werror=incompatible-pointer-types \
 	-Werror=vla
