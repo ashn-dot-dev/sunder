@@ -543,6 +543,15 @@ type_can_compare_order(struct type const* self)
 }
 
 struct address
+address_init_absolute(uint64_t absolute)
+{
+    struct address self = {0};
+    self.kind = ADDRESS_ABSOLUTE;
+    self.data.absolute = absolute;
+    return self;
+}
+
+struct address
 address_init_static(char const* name, uint64_t offset)
 {
     assert(name != NULL);

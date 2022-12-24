@@ -254,24 +254,40 @@ eval_rvalue_cast(struct expr const* expr)
     struct value* const from = eval_rvalue(expr->data.cast.expr);
 
     // Check if the value casted from is already the correct type. Also allows
-    // us to assume `from->type != expr->type` from this point forward.
+    // us to assume `from->type->kind != expr->type->kind` from this point
+    // forward. Illegal casts of the same type kind (e.g. cast []u16 to []u32)
+    // should have produced a fatal error during the resolve phase.
+    assert(from->type->kind != TYPE_ANY);
+    assert(from->type->kind != TYPE_VOID);
+    assert(from->type->kind != TYPE_ARRAY);
+    assert(from->type->kind != TYPE_SLICE);
+    assert(from->type->kind != TYPE_STRUCT);
     if (from->type->kind == expr->type->kind) {
         return from;
     }
 
     // The representation of a non-absolute address is chosen by the
     // assembler/linker and has no meaningful representation at compile-time.
-    // Absolute addresses are *not* supported at the language level, so it is a
-    // hard error to cast to/from a pointer type.
     if (from->type->kind == TYPE_POINTER) {
+        assert(expr->type->kind == TYPE_USIZE);
         fatal(
             expr->location,
-            "constant expression contains cast from pointer type");
+            "constant expression contains cast from pointer type `%s` to non-pointer type `%s`",
+            from->type->name,
+            expr->type->name);
     }
+
+    // Casting from a compile-time known usize value to absolute address.
     if (expr->type->kind == TYPE_POINTER) {
-        fatal(
-            expr->location,
-            "constant expression contains cast to pointer type");
+        assert(from->type->kind == TYPE_USIZE);
+        uint64_t absolute = 0;
+        if (bigint_to_u64(&absolute, from->data.integer)) {
+            UNREACHABLE();
+        }
+        struct value* const result =
+            value_new_pointer(expr->type, address_init_absolute(absolute));
+        value_del(from);
+        return result;
     }
 
     // Special cases when casting from unsized integers. Check to make sure

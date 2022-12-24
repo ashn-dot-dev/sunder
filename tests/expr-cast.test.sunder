@@ -121,6 +121,16 @@ func main() void {
     sys::dump[[u64]]((:u64)-1s16);
     sys::dump[[u64]]((:u64)-1s32);
     sys::dump[[u64]]((:u64)-1s64);
+
+    std::print(std::err(), "\n");
+
+    # Check constant expression casts.
+    # usize -> pointer is allowed
+    # pointer -> pointer is allowed
+    const x = (:*byte)0xAABBCCDDAABBCCDDu;
+    const y = (:*bool)x;
+    sys::dump[[*byte]](x);
+    sys::dump[[*bool]](y);
 }
 ################################################################################
 # 01 00 00 00 00 00 00 00
@@ -199,3 +209,6 @@ func main() void {
 # FF FF FF FF FF FF FF FF
 # FF FF FF FF FF FF FF FF
 # FF FF FF FF FF FF FF FF
+#
+# DD CC BB AA DD CC BB AA
+# DD CC BB AA DD CC BB AA

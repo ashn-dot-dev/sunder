@@ -1,6 +1,6 @@
 const x: byte = 0xFFy;
 const y: usize = (:usize)&x;
 ################################################################################
-# [error-expr-cast-const-from-pointer.test.sunder:2] error: constant expression contains cast from pointer type
+# [error-expr-cast-const-from-pointer.test.sunder:2] error: constant expression contains cast from pointer type `*byte` to non-pointer type `usize`
 # const y: usize = (:usize)&x;
 #                  ^

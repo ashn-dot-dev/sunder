@@ -1,5 +1,0 @@
-const x: *byte = (:*byte)0xDEADBEEFDEADBEEFu;
-################################################################################
-# [error-expr-cast-const-to-pointer.test.sunder:1] error: constant expression contains cast to pointer type
-# const x: *byte = (:*byte)0xDEADBEEFDEADBEEFu;
-#                  ^

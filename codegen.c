@@ -236,16 +236,28 @@ append_dx_static_initializer(struct value const* value)
             return;
         }
 
-        assert(address->kind == ADDRESS_STATIC);
-        if (address->data.static_.offset == 0) {
-            appendli("dq $%s", address->data.static_.name);
+        switch (address->kind) {
+        case ADDRESS_ABSOLUTE: {
+            appendli("dq %" PRIu64, address->data.absolute);
+            break;
         }
-        else {
-            appendli(
-                "dq ($%s + %" PRIu64 ")",
-                address->data.static_.name,
-                address->data.static_.offset);
+        case ADDRESS_STATIC: {
+            if (address->data.static_.offset == 0) {
+                appendli("dq $%s", address->data.static_.name);
+            }
+            else {
+                appendli(
+                    "dq ($%s + %" PRIu64 ")",
+                    address->data.static_.name,
+                    address->data.static_.offset);
+            }
+            break;
         }
+        case ADDRESS_LOCAL: {
+            UNREACHABLE();
+        }
+        }
+
         return;
     }
     case TYPE_ARRAY: {
@@ -344,6 +356,11 @@ push_address(struct address const* address)
     assert(address != NULL);
 
     switch (address->kind) {
+    case ADDRESS_ABSOLUTE: {
+        appendli("mov rax, %" PRIu64, address->data.absolute);
+        appendli("push rax");
+        break;
+    }
     case ADDRESS_STATIC: {
         if (address->data.static_.offset == 0) {
             // More aesthetically pleasing without the `+ offset` component.

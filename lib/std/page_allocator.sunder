@@ -44,7 +44,7 @@ struct page_allocator {
         }
 
         # NULL addr indicates no address hint.
-        const addr = 0u;
+        const addr = (:*any)0u;
 
         # Give the page(s) read and write permissions.
         const prot = sys::PROT_READ | sys::PROT_WRITE;
@@ -59,7 +59,7 @@ struct page_allocator {
         # Should be 0 when MAP_ANONYMOUS is specified.
         const off = (:sys::off_t)0u;
 
-        var sysret: ssize = sys::mmap((:*any)addr, size, prot, flags, fd, off);
+        var sysret: ssize = sys::mmap(addr, size, prot, flags, fd, off);
         if sysret < 0 {
             return std::result[[*any, std::error]]::init_error((:std::error)sys::error(-sysret));
         }

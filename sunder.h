@@ -1688,10 +1688,12 @@ type_can_compare_order(struct type const* self);
 
 struct address {
     enum address_kind {
+        ADDRESS_ABSOLUTE,
         ADDRESS_STATIC,
         ADDRESS_LOCAL,
     } kind;
     union {
+        uint64_t absolute;
         struct {
             // Full normalized name, including nested namespace information,
             // uniquely identifying the base region of the static storage
@@ -1705,6 +1707,8 @@ struct address {
         } local;
     } data;
 };
+struct address
+address_init_absolute(uint64_t absolute);
 struct address
 address_init_static(char const* name, uint64_t offset);
 struct address

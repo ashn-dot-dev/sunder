@@ -325,7 +325,7 @@ struct ptr[[T]] { # namespace
     var __namespace__: any;
 
     # Equivalent to the C NULL pointer cast as type T.
-    const NULL: *T = uninit;
+    const NULL: *T = (:*T)0u;
 
     # Equivalent to the C operation `ptr + n`.
     func add(ptr: *T, n: usize) *T {
