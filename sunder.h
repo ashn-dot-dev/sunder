@@ -159,6 +159,12 @@ cstr_starts_with(char const* cstr, char const* target);
 bool
 cstr_ends_with(char const* cstr, char const* target);
 
+// Initialize the interned string set.
+void
+intern_init(void);
+// Deinitialize the interned string set.
+void
+intern_fini(void);
 // Intern the string specified by the first count bytes of start.
 // Returns the canonical NUL-terminated representation of the interned string.
 char const*
@@ -171,9 +177,6 @@ intern_cstr(char const* cstr);
 // Returns the canonical NUL-terminated representation of the interned string.
 char const*
 intern_fmt(char const* fmt, ...);
-// Deinitialize the interned string list free interned strings.
-void
-intern_fini(void);
 
 // General purpose type-safe dynamic array (a.k.a stretchy buffer).
 //

@@ -423,23 +423,107 @@ cstr_ends_with(char const* cstr, char const* target)
     return safe_memcmp(start, target, target_count) == 0;
 }
 
-// List of heap-allocated interned cstrings.
-sbuf(char*) interned;
+// Variation of djb2 that hashes a start-count pair.
+static unsigned long
+hash_djb2(char const* start, size_t count)
+{
+    unsigned long hash = 5381;
+
+    for (size_t i = 0; i < count; ++i) {
+        hash = ((hash << 5) + hash) + (unsigned long)start[i];
+    }
+
+    return hash;
+}
+
+struct interned_element {
+    char* string; // Optional (NULL indicates the element is not in use).
+    size_t count; // Number of bytes in the string before the final NUL.
+    unsigned long hash; // Hash of the string contents.
+};
+
+// Hash set of interned cstrings.
+static sbuf(struct interned_element) interned;
+// Number of in-use elements within the intern hash set.
+static size_t interned_count = 0;
+
+void
+intern_init(void)
+{
+    assert(sbuf_count(interned) == 0);
+
+    sbuf_resize(interned, 64); // Arbitrary initial count.
+    for (size_t i = 0; i < sbuf_count(interned); ++i) {
+        interned[i] = (struct interned_element){0};
+    }
+}
+
+void
+intern_fini(void)
+{
+    for (size_t i = 0; i < sbuf_count(interned); ++i) {
+        if (interned[i].string != NULL) {
+            xalloc(interned[i].string, XALLOC_FREE);
+        }
+    }
+    sbuf_fini(interned);
+}
 
 char const*
 intern(char const* start, size_t count)
 {
     assert(start != NULL || count == 0);
+    unsigned long const hash = hash_djb2(start, count);
 
-    for (size_t i = 0; i < sbuf_count(interned); ++i) {
-        char const* const s = interned[i];
-        if (count == strlen(s) && safe_memcmp(s, start, count) == 0) {
-            return s;
+    // Check to see if the string has already been interned.
+    for (size_t index = hash % sbuf_count(interned);
+         interned[index].string != NULL;
+         index = (index + 1) % sbuf_count(interned)) {
+        if (interned[index].count != count) {
+            continue;
         }
+        if (safe_memcmp(interned[index].string, start, count) != 0) {
+            continue;
+        }
+
+        return interned[index].string;
     }
 
-    char* const str = cstr_new(start, count);
-    sbuf_push(interned, str);
+    // Check to see if the set needs resizeing.
+    if (2 * (interned_count + 1) > sbuf_count(interned)) {
+        // Insert at 50% occupancy. Create a new set with double the existing
+        // element count, populate that set with the existing key-value pairs,
+        // and then replace the existing set with the new set.
+        sbuf(struct interned_element) new = NULL;
+        sbuf_resize(new, sbuf_count(interned) * 2);
+        for (size_t i = 0; i < sbuf_count(new); ++i) {
+            new[i] = (struct interned_element){0};
+        }
+
+        for (size_t i = 0; i < sbuf_count(interned); ++i) {
+            if (interned[i].string == NULL) {
+                continue;
+            }
+
+            size_t index = interned[i].hash % sbuf_count(new);
+            while (new[index].string != NULL) {
+                index = (index + 1) % sbuf_count(new);
+            }
+            new[index] = interned[i];
+        }
+
+        sbuf_fini(interned);
+        interned = new;
+    }
+
+    // Insert into the set.
+    size_t index = hash % sbuf_count(interned);
+    while (interned[index].string != NULL) {
+        index = (index + 1) % sbuf_count(interned);
+    }
+    char* str = cstr_new(start, count);
+    interned[index] = (struct interned_element){str, count, hash};
+    interned_count += 1;
     return str;
 }
 
@@ -465,15 +549,6 @@ intern_fmt(char const* fmt, ...)
 
     string_del(s);
     return interned;
-}
-
-void
-intern_fini(void)
-{
-    for (size_t i = 0; i < sbuf_count(interned); ++i) {
-        xalloc(interned[i], XALLOC_FREE);
-    }
-    sbuf_fini(interned);
 }
 
 STATIC_ASSERT(

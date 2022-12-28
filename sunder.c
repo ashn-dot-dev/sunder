@@ -138,6 +138,7 @@ static struct context s_context;
 void
 context_init(void)
 {
+    intern_init();
     s_context.interned.empty = intern_cstr("");
     s_context.interned.builtin = intern_cstr("builtin");
     s_context.interned.return_ = intern_cstr("return");
