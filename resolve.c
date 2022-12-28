@@ -540,21 +540,6 @@ register_static_symbol(struct symbol const* symbol)
     assert(symbol_xget_address(symbol) != NULL);
     assert(symbol_xget_address(symbol)->kind == ADDRESS_STATIC);
 
-    // Verify that a static symbol with the provided address does not already
-    // exists. This should never happen in practice, so this is a sanity check.
-    for (size_t i = 0; i < sbuf_count(context()->static_symbols); ++i) {
-        bool const exists =
-            symbol_xget_address(context()->static_symbols[i])->data.static_.name
-            == symbol_xget_address(symbol)->data.static_.name;
-        if (exists) {
-            fatal(
-                symbol->location,
-                "[%s] normalized symbol name `%s` already exists",
-                __func__,
-                symbol_xget_address(symbol)->data.static_.name);
-        }
-    }
-
     sbuf_push(context()->static_symbols, symbol);
 }
 
