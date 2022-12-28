@@ -509,7 +509,9 @@ normalize_unique(char const* name)
     char const* normalized = normalize(name, unique_id);
     while (true) {
         bool name_collision = false;
-        for (size_t i = 0; i < sbuf_count(context()->static_symbols); ++i) {
+        // Iterating over the static symbol list from back to front was shown
+        // to be more performant than iterating from front to back in practice.
+        for (size_t i = sbuf_count(context()->static_symbols); i--;) {
             struct symbol const* const symbol = context()->static_symbols[i];
             struct address const* const address = symbol_xget_address(symbol);
             assert(address->kind == ADDRESS_STATIC);
