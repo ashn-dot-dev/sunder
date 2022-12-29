@@ -36,9 +36,7 @@ The top-level `Makefile` contains the following important targets:
 + `format` => Run `clang-format` over the compiler sources.
 + `clean` => Remove build artifacts.
 
-Targets will execute with `CC=c99` and `CFLAGS='-O0 -g'` by default. Additional
-compiler/compiler-flag combinations are listed below, but the default `CC` and
-`CFLAGS` selection should be fine for most cases.
+Targets will execute with `CC=c99` using release mode `CFLAGS` by default.
 
 Specific compiler/compiler-flag combinations include:
 
