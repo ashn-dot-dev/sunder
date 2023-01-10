@@ -318,7 +318,7 @@ append_dx_static_initializer(struct value const* value)
 
             appendli(
                 "; `%s` member variable `%s` of type `%s`",
-                def->type->name,
+                value->type->name,
                 def->name,
                 def->type->name);
             if (member_variable_vals[i] != NULL) {
