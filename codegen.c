@@ -991,7 +991,8 @@ codegen_static_object(struct symbol const* symbol)
     }
 
     assert(symbol_xget_address(symbol)->data.static_.offset == 0);
-    append("$%s:\n", symbol_xget_address(symbol)->data.static_.name);
+    appendln("align %" PRIu64 ", nop", symbol_xget_type(symbol)->align);
+    appendln("$%s:", symbol_xget_address(symbol)->data.static_.name);
     if (symbol->data.variable->value != NULL) {
         // Variable is initialized.
         append_dx_static_initializer(symbol_xget_value(NULL, symbol));
