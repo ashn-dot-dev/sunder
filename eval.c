@@ -269,7 +269,6 @@ eval_rvalue_cast(struct expr const* expr)
     // The representation of a non-absolute address is chosen by the
     // assembler/linker and has no meaningful representation at compile-time.
     if (from->type->kind == TYPE_POINTER) {
-        assert(expr->type->kind == TYPE_USIZE);
         fatal(
             expr->location,
             "constant expression contains cast from pointer type `%s` to non-pointer type `%s`",
@@ -279,15 +278,44 @@ eval_rvalue_cast(struct expr const* expr)
 
     // Casting from a compile-time known usize value to absolute address.
     if (expr->type->kind == TYPE_POINTER) {
-        assert(from->type->kind == TYPE_USIZE);
-        uint64_t absolute = 0;
-        if (bigint_to_u64(&absolute, from->data.integer)) {
+        switch (from->type->kind) {
+        case TYPE_USIZE: {
+            uint64_t absolute = 0;
+            if (bigint_to_u64(&absolute, from->data.integer)) {
+                UNREACHABLE();
+            }
+            struct value* const result =
+                value_new_pointer(expr->type, address_init_absolute(absolute));
+            value_del(from);
+            return result;
+        }
+        case TYPE_FUNCTION: {
+            struct value* const result =
+                value_new_pointer(expr->type, *from->data.function->address);
+            value_del(from);
+            return result;
+        }
+        case TYPE_ANY: /* fallthrough */
+        case TYPE_VOID: /* fallthrough */
+        case TYPE_BOOL: /* fallthrough */
+        case TYPE_BYTE: /* fallthrough */
+        case TYPE_U8: /* fallthrough */
+        case TYPE_S8: /* fallthrough */
+        case TYPE_U16: /* fallthrough */
+        case TYPE_S16: /* fallthrough */
+        case TYPE_U32: /* fallthrough */
+        case TYPE_S32: /* fallthrough */
+        case TYPE_U64: /* fallthrough */
+        case TYPE_S64: /* fallthrough */
+        case TYPE_SSIZE: /* fallthrough */
+        case TYPE_INTEGER: /* fallthrough */
+        case TYPE_POINTER: /* fallthrough */
+        case TYPE_ARRAY: /* fallthrough */
+        case TYPE_SLICE: /* fallthrough */
+        case TYPE_STRUCT: {
             UNREACHABLE();
         }
-        struct value* const result =
-            value_new_pointer(expr->type, address_init_absolute(absolute));
-        value_del(from);
-        return result;
+        }
     }
 
     // Special cases when casting from unsized integers. Check to make sure

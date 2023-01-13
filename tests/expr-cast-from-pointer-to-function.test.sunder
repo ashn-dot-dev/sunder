@@ -1,0 +1,5 @@
+const ptr = (:*any)123u;
+
+func main() void {
+    var x_ = (:func([]byte, *u32, ssize) s32)ptr;
+}

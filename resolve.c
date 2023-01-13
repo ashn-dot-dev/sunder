@@ -1098,6 +1098,10 @@ explicit_cast(
             expr->type->name);
     }
 
+    bool const cast_type_is_pointer_to_any =
+        type->kind == TYPE_POINTER && type->data.pointer.base->kind == TYPE_ANY;
+    bool const expr_type_is_pointer_to_any = expr->type->kind == TYPE_POINTER
+        && expr->type->data.pointer.base->kind == TYPE_ANY;
     bool const valid = (type_is_int(type) && type_is_int(expr->type))
         || (type_is_int(type) && expr->type->kind == TYPE_BOOL)
         || (type_is_int(type) && expr->type->kind == TYPE_BYTE)
@@ -1109,8 +1113,10 @@ explicit_cast(
         || (type->kind == TYPE_BYTE && type_is_int(expr->type))
         || (type->kind == TYPE_POINTER && expr->type->kind == TYPE_POINTER)
         || (type->kind == TYPE_POINTER && expr->type->kind == TYPE_USIZE)
+        || (cast_type_is_pointer_to_any && expr->type->kind == TYPE_FUNCTION)
         || (type->kind == TYPE_USIZE && expr->type->kind == TYPE_POINTER)
-        || (type->kind == TYPE_FUNCTION && expr->type->kind == TYPE_FUNCTION);
+        || (type->kind == TYPE_FUNCTION && expr->type->kind == TYPE_FUNCTION)
+        || (type->kind == TYPE_FUNCTION && expr_type_is_pointer_to_any);
     if (!valid) {
         fatal(
             location,
