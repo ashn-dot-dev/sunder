@@ -744,6 +744,46 @@ static void
 push_rvalue_unary_countof(struct expr const* expr, size_t id);
 static void
 push_rvalue_binary(struct expr const* expr, size_t id);
+static void
+push_rvalue_binary_or(struct expr const* expr, size_t id);
+static void
+push_rvalue_binary_and(struct expr const* expr, size_t id);
+static void
+push_rvalue_binary_shl(struct expr const* expr, size_t id);
+static void
+push_rvalue_binary_shr(struct expr const* expr, size_t id);
+static void
+push_rvalue_binary_eq(struct expr const* expr, size_t id);
+static void
+push_rvalue_binary_ne(struct expr const* expr, size_t id);
+static void
+push_rvalue_binary_le(struct expr const* expr, size_t id);
+static void
+push_rvalue_binary_lt(struct expr const* expr, size_t id);
+static void
+push_rvalue_binary_ge(struct expr const* expr, size_t id);
+static void
+push_rvalue_binary_gt(struct expr const* expr, size_t id);
+static void
+push_rvalue_binary_add(struct expr const* expr, size_t id);
+static void
+push_rvalue_binary_add_wrapping(struct expr const* expr, size_t id);
+static void
+push_rvalue_binary_sub(struct expr const* expr, size_t id);
+static void
+push_rvalue_binary_sub_wrapping(struct expr const* expr, size_t id);
+static void
+push_rvalue_binary_mul(struct expr const* expr, size_t id);
+static void
+push_rvalue_binary_mul_wrapping(struct expr const* expr, size_t id);
+static void
+push_rvalue_binary_divrem(struct expr const* expr, size_t id);
+static void
+push_rvalue_binary_bitor(struct expr const* expr, size_t id);
+static void
+push_rvalue_binary_bitxor(struct expr const* expr, size_t id);
+static void
+push_rvalue_binary_bitand(struct expr const* expr, size_t id);
 
 static void
 push_lvalue(struct expr const* expr);
@@ -2291,520 +2331,697 @@ push_rvalue_binary(struct expr const* expr, size_t id)
 
     switch (expr->data.binary.op) {
     case BOP_OR: {
-        assert(expr->data.binary.lhs->type->kind == TYPE_BOOL);
-        assert(expr->data.binary.rhs->type->kind == TYPE_BOOL);
-        assert(expr->data.binary.lhs->type->size == 1u);
-        assert(expr->data.binary.rhs->type->size == 1u);
-
-        char const* lhs_reg = reg_a(expr->data.binary.lhs->type->size);
-        char const* rhs_reg = reg_b(expr->data.binary.rhs->type->size);
-        appendln("%s%zu_lhs:", LABEL_EXPR, id);
-        push_rvalue(expr->data.binary.lhs);
-        appendli("pop rax");
-        appendli("mov rbx, 0x00");
-        appendli("cmp %s, %s", lhs_reg, rhs_reg);
-        appendli("jne %s%zu_true", LABEL_EXPR, id);
-        appendli("jmp %s%zu_rhs", LABEL_EXPR, id);
-
-        appendln("%s%zu_rhs:", LABEL_EXPR, id);
-        push_rvalue(expr->data.binary.rhs);
-        appendli("pop rax");
-        appendli("mov rbx, 0x00");
-        appendli("cmp %s, %s", lhs_reg, rhs_reg);
-        appendli("jne %s%zu_true", LABEL_EXPR, id);
-        appendli("jmp %s%zu_false", LABEL_EXPR, id);
-
-        appendln("%s%zu_true:", LABEL_EXPR, id);
-        appendli("push 0x01");
-        appendli("jmp %s%zu_end", LABEL_EXPR, id);
-
-        appendln("%s%zu_false:", LABEL_EXPR, id);
-        appendli("push 0x00");
-
-        appendln("%s%zu_end:", LABEL_EXPR, id);
+        push_rvalue_binary_or(expr, id);
         return;
     }
     case BOP_AND: {
-        assert(expr->data.binary.lhs->type->kind == TYPE_BOOL);
-        assert(expr->data.binary.rhs->type->kind == TYPE_BOOL);
-        assert(expr->data.binary.lhs->type->size == 1u);
-        assert(expr->data.binary.rhs->type->size == 1u);
-
-        char const* lhs_reg = reg_a(expr->data.binary.lhs->type->size);
-        char const* rhs_reg = reg_b(expr->data.binary.rhs->type->size);
-        appendln("%s%zu_lhs:", LABEL_EXPR, id);
-        push_rvalue(expr->data.binary.lhs);
-        appendli("pop rax");
-        appendli("mov rbx, 0x00");
-        appendli("cmp %s, %s", lhs_reg, rhs_reg);
-        appendli("jne %s%zu_rhs", LABEL_EXPR, id);
-        appendli("jmp %s%zu_false", LABEL_EXPR, id);
-
-        appendln("%s%zu_rhs:", LABEL_EXPR, id);
-        push_rvalue(expr->data.binary.rhs);
-        appendli("pop rax");
-        appendli("mov rbx, 0x00");
-        appendli("cmp %s, %s", lhs_reg, rhs_reg);
-        appendli("jne %s%zu_true", LABEL_EXPR, id);
-        appendli("jmp %s%zu_false", LABEL_EXPR, id);
-
-        appendln("%s%zu_true:", LABEL_EXPR, id);
-        appendli("push 0x01");
-        appendli("jmp %s%zu_end", LABEL_EXPR, id);
-
-        appendln("%s%zu_false:", LABEL_EXPR, id);
-        appendli("push 0x00");
-
-        appendln("%s%zu_end:", LABEL_EXPR, id);
+        push_rvalue_binary_and(expr, id);
         return;
     }
     case BOP_SHL: {
-        assert(type_is_int(expr->data.binary.lhs->type));
-        assert(expr->data.binary.rhs->type->kind == TYPE_USIZE);
-
-        push_rvalue(expr->data.binary.lhs);
-        push_rvalue(expr->data.binary.rhs);
-
-        appendli("pop rcx ; shift rhs");
-        appendli("mov rbx, 64");
-        appendli("cmp rcx, rbx");
-        appendli("jl %s%zu_shift", LABEL_EXPR, id);
-        appendli("pop rbx ; discard lhs");
-        appendli("push 0");
-        appendli("jmp %s%zu_end", LABEL_EXPR, id);
-        appendln("%s%zu_shift:", LABEL_EXPR, id);
-        appendli("pop rax ; shift lhs");
-        mov_rax_reg_a_with_zero_or_sign_extend(expr->data.binary.lhs->type);
-        appendli("shl rax, cl");
-        appendli("push rax");
-
-        appendln("%s%zu_end:", LABEL_EXPR, id);
+        push_rvalue_binary_shl(expr, id);
         return;
     }
     case BOP_SHR: {
-        assert(type_is_int(expr->data.binary.lhs->type));
-        assert(expr->data.binary.rhs->type->kind == TYPE_USIZE);
-
-        push_rvalue(expr->data.binary.lhs);
-        push_rvalue(expr->data.binary.rhs);
-
-        appendli("pop rcx ; shift rhs");
-        appendli("mov rbx, 64");
-        appendli("cmp rcx, rbx");
-        appendli("jl %s%zu_shift", LABEL_EXPR, id);
-        if (type_is_sint(expr->data.binary.lhs->type)) {
-            appendli("pop rbx ; discard lhs, but cmov based on high bit");
-            appendli("mov r8, 0");
-            appendli("mov r9, 0xFFFFFFFFFFFFFFFF");
-            appendli("cmp rbx, 0");
-            appendli("cmovge rax, r8 ; non-negative integer");
-            appendli("cmovl rax, r9 ; neative-integer");
-            appendli("push rax");
-        }
-        else {
-            appendli("pop rbx ; discard lhs");
-            appendli("push 0");
-        }
-        appendli("jmp %s%zu_end", LABEL_EXPR, id);
-        appendln("%s%zu_shift:", LABEL_EXPR, id);
-        appendli("pop rax ; shift lhs");
-        mov_rax_reg_a_with_zero_or_sign_extend(expr->data.binary.lhs->type);
-        appendli(
-            "%s rax, cl",
-            type_is_sint(expr->data.binary.lhs->type) ? "sar" : "shr");
-        appendli("push rax");
-
-        appendln("%s%zu_end:", LABEL_EXPR, id);
+        push_rvalue_binary_shr(expr, id);
         return;
     }
     case BOP_EQ: {
-        assert(expr->data.binary.lhs->type->size >= 1u);
-        assert(expr->data.binary.lhs->type->size <= 8u);
-        assert(expr->data.binary.rhs->type->size >= 1u);
-        assert(expr->data.binary.rhs->type->size <= 8u);
-        assert(expr->data.binary.lhs->type == expr->data.binary.rhs->type);
-
-        push_rvalue(expr->data.binary.lhs);
-        push_rvalue(expr->data.binary.rhs);
-
-        char const* lhs_reg = reg_a(expr->data.binary.lhs->type->size);
-        char const* rhs_reg = reg_b(expr->data.binary.rhs->type->size);
-        appendli("pop rbx");
-        appendli("pop rax");
-        appendli("mov rcx, 0"); // result (default false)
-        appendli("mov rdx, 1"); // register holding true
-        appendli("cmp %s, %s", lhs_reg, rhs_reg);
-        appendli("cmove rcx, rdx");
-        appendli("push rcx");
+        push_rvalue_binary_eq(expr, id);
         return;
     }
     case BOP_NE: {
-        assert(expr->data.binary.lhs->type->size >= 1u);
-        assert(expr->data.binary.lhs->type->size <= 8u);
-        assert(expr->data.binary.rhs->type->size >= 1u);
-        assert(expr->data.binary.rhs->type->size <= 8u);
-        assert(expr->data.binary.lhs->type == expr->data.binary.rhs->type);
-
-        push_rvalue(expr->data.binary.lhs);
-        push_rvalue(expr->data.binary.rhs);
-
-        char const* lhs_reg = reg_a(expr->data.binary.lhs->type->size);
-        char const* rhs_reg = reg_b(expr->data.binary.rhs->type->size);
-        appendli("pop rbx");
-        appendli("pop rax");
-        appendli("mov rcx, 0"); // result (default false)
-        appendli("mov rdx, 1"); // register holding true
-        appendli("cmp %s, %s", lhs_reg, rhs_reg);
-        appendli("cmovne rcx, rdx");
-        appendli("push rcx");
+        push_rvalue_binary_ne(expr, id);
         return;
     }
     case BOP_LE: {
-        assert(expr->data.binary.lhs->type->size >= 1u);
-        assert(expr->data.binary.lhs->type->size <= 8u);
-        assert(expr->data.binary.rhs->type->size >= 1u);
-        assert(expr->data.binary.rhs->type->size <= 8u);
-        assert(expr->data.binary.lhs->type == expr->data.binary.rhs->type);
-        struct type const* const xhs_type = expr->data.binary.lhs->type;
-
-        push_rvalue(expr->data.binary.lhs);
-        push_rvalue(expr->data.binary.rhs);
-
-        char const* lhs_reg = reg_a(expr->data.binary.lhs->type->size);
-        char const* rhs_reg = reg_b(expr->data.binary.rhs->type->size);
-        appendli("pop rbx");
-        appendli("pop rax");
-        appendli("mov rcx, 0"); // result (default false)
-        appendli("mov rdx, 1"); // register holding true
-        appendli("cmp %s, %s", lhs_reg, rhs_reg);
-        appendli("%s rcx, rdx", type_is_sint(xhs_type) ? "cmovle" : "cmovbe");
-        appendli("push rcx");
+        push_rvalue_binary_le(expr, id);
         return;
     }
     case BOP_LT: {
-        assert(expr->data.binary.lhs->type->size >= 1u);
-        assert(expr->data.binary.lhs->type->size <= 8u);
-        assert(expr->data.binary.rhs->type->size >= 1u);
-        assert(expr->data.binary.rhs->type->size <= 8u);
-        assert(expr->data.binary.lhs->type == expr->data.binary.rhs->type);
-        struct type const* const xhs_type = expr->data.binary.lhs->type;
-
-        push_rvalue(expr->data.binary.lhs);
-        push_rvalue(expr->data.binary.rhs);
-
-        char const* lhs_reg = reg_a(expr->data.binary.lhs->type->size);
-        char const* rhs_reg = reg_b(expr->data.binary.rhs->type->size);
-        appendli("pop rbx");
-        appendli("pop rax");
-        appendli("mov rcx, 0"); // result (default false)
-        appendli("mov rdx, 1"); // register holding true
-        appendli("cmp %s, %s", lhs_reg, rhs_reg);
-        appendli("%s rcx, rdx", type_is_sint(xhs_type) ? "cmovl" : "cmovb");
-        appendli("push rcx");
+        push_rvalue_binary_lt(expr, id);
         return;
     }
     case BOP_GE: {
-        assert(expr->data.binary.lhs->type->size >= 1u);
-        assert(expr->data.binary.lhs->type->size <= 8u);
-        assert(expr->data.binary.rhs->type->size >= 1u);
-        assert(expr->data.binary.rhs->type->size <= 8u);
-        assert(expr->data.binary.lhs->type == expr->data.binary.rhs->type);
-        struct type const* const xhs_type = expr->data.binary.lhs->type;
-
-        push_rvalue(expr->data.binary.lhs);
-        push_rvalue(expr->data.binary.rhs);
-
-        char const* lhs_reg = reg_a(expr->data.binary.lhs->type->size);
-        char const* rhs_reg = reg_b(expr->data.binary.rhs->type->size);
-        appendli("pop rbx");
-        appendli("pop rax");
-        appendli("mov rcx, 0"); // result (default false)
-        appendli("mov rdx, 1"); // register holding true
-        appendli("cmp %s, %s", lhs_reg, rhs_reg);
-        appendli("%s rcx, rdx", type_is_sint(xhs_type) ? "cmovge" : "cmovae");
-        appendli("push rcx");
+        push_rvalue_binary_ge(expr, id);
         return;
     }
     case BOP_GT: {
-        assert(expr->data.binary.lhs->type->size >= 1u);
-        assert(expr->data.binary.lhs->type->size <= 8u);
-        assert(expr->data.binary.rhs->type->size >= 1u);
-        assert(expr->data.binary.rhs->type->size <= 8u);
-        assert(expr->data.binary.lhs->type == expr->data.binary.rhs->type);
-        struct type const* const xhs_type = expr->data.binary.lhs->type;
-
-        push_rvalue(expr->data.binary.lhs);
-        push_rvalue(expr->data.binary.rhs);
-
-        char const* lhs_reg = reg_a(expr->data.binary.lhs->type->size);
-        char const* rhs_reg = reg_b(expr->data.binary.rhs->type->size);
-        appendli("pop rbx");
-        appendli("pop rax");
-        appendli("mov rcx, 0"); // result (default false)
-        appendli("mov rdx, 1"); // register holding true
-        appendli("cmp %s, %s", lhs_reg, rhs_reg);
-        appendli("%s rcx, rdx", type_is_sint(xhs_type) ? "cmovg" : "cmova");
-        appendli("push rcx");
+        push_rvalue_binary_gt(expr, id);
         return;
     }
     case BOP_ADD: {
-        assert(expr->data.binary.lhs->type->size >= 1u);
-        assert(expr->data.binary.lhs->type->size <= 8u);
-        assert(expr->data.binary.rhs->type->size >= 1u);
-        assert(expr->data.binary.rhs->type->size <= 8u);
-        assert(expr->data.binary.lhs->type == expr->data.binary.rhs->type);
-        struct type const* const xhs_type = expr->data.binary.lhs->type;
-
-        char const* const lhs_reg = reg_a(xhs_type->size);
-        char const* const rhs_reg = reg_b(xhs_type->size);
-        char const* const jmp_not_overflow =
-            type_is_sint(xhs_type) ? "jno" : "jnc";
-
-        push_rvalue(expr->data.binary.lhs);
-        push_rvalue(expr->data.binary.rhs);
-        appendli("pop rbx ; add rhs");
-        appendli("pop rax ; add lhs");
-        appendli("add %s, %s", lhs_reg, rhs_reg);
-        appendli("push rax");
-        appendli("%s %s%zu_end", jmp_not_overflow, LABEL_EXPR, id);
-        appendli("call __fatal_integer_out_of_range");
-
-        appendln("%s%zu_end:", LABEL_EXPR, id);
+        push_rvalue_binary_add(expr, id);
         return;
     }
     case BOP_ADD_WRAPPING: {
-        assert(expr->data.binary.lhs->type->size >= 1u);
-        assert(expr->data.binary.lhs->type->size <= 8u);
-        assert(expr->data.binary.rhs->type->size >= 1u);
-        assert(expr->data.binary.rhs->type->size <= 8u);
-        assert(expr->data.binary.lhs->type == expr->data.binary.rhs->type);
-        struct type const* const xhs_type = expr->data.binary.lhs->type;
-
-        char const* const lhs_reg = reg_a(xhs_type->size);
-        char const* const rhs_reg = reg_b(xhs_type->size);
-
-        push_rvalue(expr->data.binary.lhs);
-        push_rvalue(expr->data.binary.rhs);
-        appendli("pop rbx ; add wrapping rhs");
-        appendli("pop rax ; add wrapping lhs");
-        appendli("add %s, %s", lhs_reg, rhs_reg);
-        appendli("push rax");
+        push_rvalue_binary_add_wrapping(expr, id);
         return;
     }
     case BOP_SUB: {
-        assert(expr->data.binary.lhs->type->size >= 1u);
-        assert(expr->data.binary.lhs->type->size <= 8u);
-        assert(expr->data.binary.rhs->type->size >= 1u);
-        assert(expr->data.binary.rhs->type->size <= 8u);
-        assert(expr->data.binary.lhs->type == expr->data.binary.rhs->type);
-        struct type const* const xhs_type = expr->data.binary.lhs->type;
-
-        char const* const lhs_reg = reg_a(xhs_type->size);
-        char const* const rhs_reg = reg_b(xhs_type->size);
-        char const* const jmp_not_overflow =
-            type_is_sint(xhs_type) ? "jno" : "jnc";
-
-        push_rvalue(expr->data.binary.lhs);
-        push_rvalue(expr->data.binary.rhs);
-        appendli("pop rbx ; sub rhs");
-        appendli("pop rax ; sub lhs");
-        appendli("sub %s, %s", lhs_reg, rhs_reg);
-        appendli("push rax");
-        appendli("%s %s%zu_end", jmp_not_overflow, LABEL_EXPR, id);
-        appendli("call __fatal_integer_out_of_range");
-
-        appendln("%s%zu_end:", LABEL_EXPR, id);
+        push_rvalue_binary_sub(expr, id);
         return;
     }
     case BOP_SUB_WRAPPING: {
-        assert(expr->data.binary.lhs->type->size >= 1u);
-        assert(expr->data.binary.lhs->type->size <= 8u);
-        assert(expr->data.binary.rhs->type->size >= 1u);
-        assert(expr->data.binary.rhs->type->size <= 8u);
-        assert(expr->data.binary.lhs->type == expr->data.binary.rhs->type);
-        struct type const* const xhs_type = expr->data.binary.lhs->type;
-
-        char const* const lhs_reg = reg_a(xhs_type->size);
-        char const* const rhs_reg = reg_b(xhs_type->size);
-
-        push_rvalue(expr->data.binary.lhs);
-        push_rvalue(expr->data.binary.rhs);
-        appendli("pop rbx ; sub wrapping rhs");
-        appendli("pop rax ; sub wrapping lhs");
-        appendli("sub %s, %s", lhs_reg, rhs_reg);
-        appendli("push rax");
+        push_rvalue_binary_sub_wrapping(expr, id);
         return;
     }
     case BOP_MUL: {
-        assert(expr->data.binary.lhs->type->size >= 1u);
-        assert(expr->data.binary.lhs->type->size <= 8u);
-        assert(expr->data.binary.rhs->type->size >= 1u);
-        assert(expr->data.binary.rhs->type->size <= 8u);
-        assert(expr->data.binary.lhs->type == expr->data.binary.rhs->type);
-        struct type const* const xhs_type = expr->data.binary.lhs->type;
-
-        char const* const rhs_reg = reg_b(xhs_type->size);
-        char const* const mul = type_is_sint(xhs_type) ? "imul" : "mul";
-
-        push_rvalue(expr->data.binary.lhs);
-        push_rvalue(expr->data.binary.rhs);
-        appendli("pop rbx ; mul rhs");
-        appendli("pop rax ; mul lhs");
-        appendli("%s %s", mul, rhs_reg);
-        appendli("push rax");
-        appendli("jno %s%zu_end", LABEL_EXPR, id);
-        appendli("call __fatal_integer_out_of_range");
-
-        appendln("%s%zu_end:", LABEL_EXPR, id);
+        push_rvalue_binary_mul(expr, id);
         return;
     }
     case BOP_MUL_WRAPPING: {
-        assert(expr->data.binary.lhs->type->size >= 1u);
-        assert(expr->data.binary.lhs->type->size <= 8u);
-        assert(expr->data.binary.rhs->type->size >= 1u);
-        assert(expr->data.binary.rhs->type->size <= 8u);
-        assert(expr->data.binary.lhs->type == expr->data.binary.rhs->type);
-        struct type const* const xhs_type = expr->data.binary.lhs->type;
-
-        char const* const rhs_reg = reg_b(xhs_type->size);
-        char const* const mul = type_is_sint(xhs_type) ? "imul" : "mul";
-
-        push_rvalue(expr->data.binary.lhs);
-        push_rvalue(expr->data.binary.rhs);
-        appendli("pop rbx ; mul rhs");
-        appendli("pop rax ; mul lhs");
-        appendli("%s %s", mul, rhs_reg);
-        appendli("push rax");
+        push_rvalue_binary_mul_wrapping(expr, id);
         return;
     }
     case BOP_DIV: /* fallthrough */
     case BOP_REM: {
-        assert(expr->data.binary.lhs->type->size >= 1u);
-        assert(expr->data.binary.lhs->type->size <= 8u);
-        assert(expr->data.binary.rhs->type->size >= 1u);
-        assert(expr->data.binary.rhs->type->size <= 8u);
-        assert(expr->data.binary.lhs->type == expr->data.binary.rhs->type);
-        struct type const* const xhs_type = expr->data.binary.lhs->type;
-
-        char const* const rhs_reg = reg_b(xhs_type->size);
-        char const* const div = type_is_sint(xhs_type) ? "idiv" : "div";
-
-        push_rvalue(expr->data.binary.lhs);
-        push_rvalue(expr->data.binary.rhs);
-        appendli("pop rbx ; div rhs");
-        appendli("pop rax ; div lhs");
-        if (type_is_sint(xhs_type)) {
-            // Sign extend to fill the upper portion of the dividend.
-            // https://www.felixcloutier.com/x86/cbw:cwde:cdqe
-            // https://www.felixcloutier.com/x86/cwd:cdq:cqo
-            switch (xhs_type->size) {
-            case 1:
-                appendli("cbw ; sign extend AL into AX");
-                break;
-            case 2:
-                appendli("cwd ; sign extend AX into DX:AX");
-                break;
-            case 4:
-                appendli("cdq ; sign extend EAX into EDX:EAX");
-                break;
-            case 8:
-                appendli("cqo ; sign extend RAX into RDX:RAX");
-                break;
-            default:
-                UNREACHABLE();
-            }
-        }
-        else {
-            assert(type_is_uint(xhs_type));
-            // Clear the upper portion of the dividend.
-            appendli("xor rdx, rdx");
-            // Zero extend the dividend into itself.
-            mov_rax_reg_a_with_zero_or_sign_extend(xhs_type);
-        }
-        appendli("mov rcx, 0");
-        appendli(
-            "cmp %s, %s",
-            rhs_reg,
-            reg_c(xhs_type->size)); // divide-by-zero check
-        appendli("jne %s%zu_op", LABEL_EXPR, id);
-        appendli("call __fatal_integer_divide_by_zero");
-        appendli("%s%zu_op:", LABEL_EXPR, id);
-        appendli("%s %s", div, rhs_reg);
-
-        // https://www.felixcloutier.com/x86/div
-        // https://www.felixcloutier.com/x86/idiv
-        //
-        // Operand Size            | Dividend | Divisor | Quotient | Remainder
-        // Word/byte               | AX       | r/m8    | AL       | AH
-        // Doubleword/word         | DX:AX    | r/m16   | AX       | DX
-        // Quadword/doubleword     | EDX:EAX  | r/m32   | EAX      | EDX
-        // Doublequadword/quadword | RDX:RAX  | r/m64   | RAX      | RDX
-        if (expr->data.binary.op == BOP_DIV) {
-            appendli("push rax");
-        }
-        else {
-            assert(expr->data.binary.op == BOP_REM);
-            if (xhs_type->size == 1) {
-                appendli("mov al, ah");
-                appendli("push rax");
-            }
-            else {
-                appendli("push rdx");
-            }
-        }
+        push_rvalue_binary_divrem(expr, id);
         return;
     }
     case BOP_BITOR: {
-        assert(expr->data.binary.lhs->type->size >= 1u);
-        assert(expr->data.binary.lhs->type->size <= 8u);
-        assert(expr->data.binary.rhs->type->size >= 1u);
-        assert(expr->data.binary.rhs->type->size <= 8u);
-        assert(expr->data.binary.lhs->type == expr->data.binary.rhs->type);
-
-        push_rvalue(expr->data.binary.lhs);
-        push_rvalue(expr->data.binary.rhs);
-
-        appendli("pop rbx");
-        appendli("pop rax");
-        appendli("or rax, rbx");
-        appendli("push rax");
+        push_rvalue_binary_bitor(expr, id);
         return;
     }
     case BOP_BITXOR: {
-        assert(expr->data.binary.lhs->type->size >= 1u);
-        assert(expr->data.binary.lhs->type->size <= 8u);
-        assert(expr->data.binary.rhs->type->size >= 1u);
-        assert(expr->data.binary.rhs->type->size <= 8u);
-        assert(expr->data.binary.lhs->type == expr->data.binary.rhs->type);
-
-        push_rvalue(expr->data.binary.lhs);
-        push_rvalue(expr->data.binary.rhs);
-
-        appendli("pop rbx");
-        appendli("pop rax");
-        appendli("xor rax, rbx");
-        appendli("push rax");
+        push_rvalue_binary_bitxor(expr, id);
         return;
     }
     case BOP_BITAND: {
-        assert(expr->data.binary.lhs->type->size >= 1u);
-        assert(expr->data.binary.lhs->type->size <= 8u);
-        assert(expr->data.binary.rhs->type->size >= 1u);
-        assert(expr->data.binary.rhs->type->size <= 8u);
-        assert(expr->data.binary.lhs->type == expr->data.binary.rhs->type);
-
-        push_rvalue(expr->data.binary.lhs);
-        push_rvalue(expr->data.binary.rhs);
-
-        appendli("pop rbx");
-        appendli("pop rax");
-        appendli("and rax, rbx");
-        appendli("push rax");
+        push_rvalue_binary_bitand(expr, id);
         return;
     }
     }
 
     UNREACHABLE();
+}
+
+static void
+push_rvalue_binary_or(struct expr const* expr, size_t id)
+{
+    assert(expr->kind == EXPR_BINARY);
+    assert(expr->data.binary.op == BOP_OR);
+    assert(expr->data.binary.lhs->type->kind == TYPE_BOOL);
+    assert(expr->data.binary.rhs->type->kind == TYPE_BOOL);
+    assert(expr->data.binary.lhs->type->size == 1u);
+    assert(expr->data.binary.rhs->type->size == 1u);
+
+    char const* lhs_reg = reg_a(expr->data.binary.lhs->type->size);
+    char const* rhs_reg = reg_b(expr->data.binary.rhs->type->size);
+    appendln("%s%zu_lhs:", LABEL_EXPR, id);
+    push_rvalue(expr->data.binary.lhs);
+    appendli("pop rax");
+    appendli("mov rbx, 0x00");
+    appendli("cmp %s, %s", lhs_reg, rhs_reg);
+    appendli("jne %s%zu_true", LABEL_EXPR, id);
+    appendli("jmp %s%zu_rhs", LABEL_EXPR, id);
+
+    appendln("%s%zu_rhs:", LABEL_EXPR, id);
+    push_rvalue(expr->data.binary.rhs);
+    appendli("pop rax");
+    appendli("mov rbx, 0x00");
+    appendli("cmp %s, %s", lhs_reg, rhs_reg);
+    appendli("jne %s%zu_true", LABEL_EXPR, id);
+    appendli("jmp %s%zu_false", LABEL_EXPR, id);
+
+    appendln("%s%zu_true:", LABEL_EXPR, id);
+    appendli("push 0x01");
+    appendli("jmp %s%zu_end", LABEL_EXPR, id);
+
+    appendln("%s%zu_false:", LABEL_EXPR, id);
+    appendli("push 0x00");
+
+    appendln("%s%zu_end:", LABEL_EXPR, id);
+}
+
+static void
+push_rvalue_binary_and(struct expr const* expr, size_t id)
+{
+    assert(expr->kind == EXPR_BINARY);
+    assert(expr->data.binary.op == BOP_AND);
+    assert(expr->data.binary.lhs->type->kind == TYPE_BOOL);
+    assert(expr->data.binary.rhs->type->kind == TYPE_BOOL);
+    assert(expr->data.binary.lhs->type->size == 1u);
+    assert(expr->data.binary.rhs->type->size == 1u);
+
+    char const* lhs_reg = reg_a(expr->data.binary.lhs->type->size);
+    char const* rhs_reg = reg_b(expr->data.binary.rhs->type->size);
+    appendln("%s%zu_lhs:", LABEL_EXPR, id);
+    push_rvalue(expr->data.binary.lhs);
+    appendli("pop rax");
+    appendli("mov rbx, 0x00");
+    appendli("cmp %s, %s", lhs_reg, rhs_reg);
+    appendli("jne %s%zu_rhs", LABEL_EXPR, id);
+    appendli("jmp %s%zu_false", LABEL_EXPR, id);
+
+    appendln("%s%zu_rhs:", LABEL_EXPR, id);
+    push_rvalue(expr->data.binary.rhs);
+    appendli("pop rax");
+    appendli("mov rbx, 0x00");
+    appendli("cmp %s, %s", lhs_reg, rhs_reg);
+    appendli("jne %s%zu_true", LABEL_EXPR, id);
+    appendli("jmp %s%zu_false", LABEL_EXPR, id);
+
+    appendln("%s%zu_true:", LABEL_EXPR, id);
+    appendli("push 0x01");
+    appendli("jmp %s%zu_end", LABEL_EXPR, id);
+
+    appendln("%s%zu_false:", LABEL_EXPR, id);
+    appendli("push 0x00");
+
+    appendln("%s%zu_end:", LABEL_EXPR, id);
+}
+
+static void
+push_rvalue_binary_shl(struct expr const* expr, size_t id)
+{
+    assert(expr->kind == EXPR_BINARY);
+    assert(expr->data.binary.op == BOP_SHL);
+    assert(type_is_int(expr->data.binary.lhs->type));
+    assert(expr->data.binary.rhs->type->kind == TYPE_USIZE);
+
+    push_rvalue(expr->data.binary.lhs);
+    push_rvalue(expr->data.binary.rhs);
+
+    appendli("pop rcx ; shift rhs");
+    appendli("mov rbx, 64");
+    appendli("cmp rcx, rbx");
+    appendli("jl %s%zu_shift", LABEL_EXPR, id);
+    appendli("pop rbx ; discard lhs");
+    appendli("push 0");
+    appendli("jmp %s%zu_end", LABEL_EXPR, id);
+    appendln("%s%zu_shift:", LABEL_EXPR, id);
+    appendli("pop rax ; shift lhs");
+    mov_rax_reg_a_with_zero_or_sign_extend(expr->data.binary.lhs->type);
+    appendli("shl rax, cl");
+    appendli("push rax");
+
+    appendln("%s%zu_end:", LABEL_EXPR, id);
+}
+
+static void
+push_rvalue_binary_shr(struct expr const* expr, size_t id)
+{
+    assert(expr->kind == EXPR_BINARY);
+    assert(expr->data.binary.op == BOP_SHR);
+    assert(type_is_int(expr->data.binary.lhs->type));
+    assert(expr->data.binary.rhs->type->kind == TYPE_USIZE);
+
+    push_rvalue(expr->data.binary.lhs);
+    push_rvalue(expr->data.binary.rhs);
+
+    appendli("pop rcx ; shift rhs");
+    appendli("mov rbx, 64");
+    appendli("cmp rcx, rbx");
+    appendli("jl %s%zu_shift", LABEL_EXPR, id);
+    if (type_is_sint(expr->data.binary.lhs->type)) {
+        appendli("pop rbx ; discard lhs, but cmov based on high bit");
+        appendli("mov r8, 0");
+        appendli("mov r9, 0xFFFFFFFFFFFFFFFF");
+        appendli("cmp rbx, 0");
+        appendli("cmovge rax, r8 ; non-negative integer");
+        appendli("cmovl rax, r9 ; neative-integer");
+        appendli("push rax");
+    }
+    else {
+        appendli("pop rbx ; discard lhs");
+        appendli("push 0");
+    }
+    appendli("jmp %s%zu_end", LABEL_EXPR, id);
+    appendln("%s%zu_shift:", LABEL_EXPR, id);
+    appendli("pop rax ; shift lhs");
+    mov_rax_reg_a_with_zero_or_sign_extend(expr->data.binary.lhs->type);
+    appendli(
+        "%s rax, cl",
+        type_is_sint(expr->data.binary.lhs->type) ? "sar" : "shr");
+    appendli("push rax");
+
+    appendln("%s%zu_end:", LABEL_EXPR, id);
+}
+
+static void
+push_rvalue_binary_eq(struct expr const* expr, size_t id)
+{
+    assert(expr->kind == EXPR_BINARY);
+    assert(expr->data.binary.op == BOP_EQ);
+    assert(expr->data.binary.lhs->type->size >= 1u);
+    assert(expr->data.binary.lhs->type->size <= 8u);
+    assert(expr->data.binary.rhs->type->size >= 1u);
+    assert(expr->data.binary.rhs->type->size <= 8u);
+    assert(expr->data.binary.lhs->type == expr->data.binary.rhs->type);
+    (void)id;
+
+    push_rvalue(expr->data.binary.lhs);
+    push_rvalue(expr->data.binary.rhs);
+
+    char const* lhs_reg = reg_a(expr->data.binary.lhs->type->size);
+    char const* rhs_reg = reg_b(expr->data.binary.rhs->type->size);
+    appendli("pop rbx");
+    appendli("pop rax");
+    appendli("mov rcx, 0"); // result (default false)
+    appendli("mov rdx, 1"); // register holding true
+    appendli("cmp %s, %s", lhs_reg, rhs_reg);
+    appendli("cmove rcx, rdx");
+    appendli("push rcx");
+}
+
+static void
+push_rvalue_binary_ne(struct expr const* expr, size_t id)
+{
+    assert(expr->kind == EXPR_BINARY);
+    assert(expr->data.binary.op == BOP_NE);
+    assert(expr->data.binary.lhs->type->size >= 1u);
+    assert(expr->data.binary.lhs->type->size <= 8u);
+    assert(expr->data.binary.rhs->type->size >= 1u);
+    assert(expr->data.binary.rhs->type->size <= 8u);
+    assert(expr->data.binary.lhs->type == expr->data.binary.rhs->type);
+    (void)id;
+
+    push_rvalue(expr->data.binary.lhs);
+    push_rvalue(expr->data.binary.rhs);
+
+    char const* lhs_reg = reg_a(expr->data.binary.lhs->type->size);
+    char const* rhs_reg = reg_b(expr->data.binary.rhs->type->size);
+    appendli("pop rbx");
+    appendli("pop rax");
+    appendli("mov rcx, 0"); // result (default false)
+    appendli("mov rdx, 1"); // register holding true
+    appendli("cmp %s, %s", lhs_reg, rhs_reg);
+    appendli("cmovne rcx, rdx");
+    appendli("push rcx");
+}
+
+static void
+push_rvalue_binary_le(struct expr const* expr, size_t id)
+{
+    assert(expr->kind == EXPR_BINARY);
+    assert(expr->data.binary.op == BOP_LE);
+    assert(expr->data.binary.lhs->type->size >= 1u);
+    assert(expr->data.binary.lhs->type->size <= 8u);
+    assert(expr->data.binary.rhs->type->size >= 1u);
+    assert(expr->data.binary.rhs->type->size <= 8u);
+    assert(expr->data.binary.lhs->type == expr->data.binary.rhs->type);
+    (void)id;
+
+    struct type const* const xhs_type = expr->data.binary.lhs->type;
+
+    push_rvalue(expr->data.binary.lhs);
+    push_rvalue(expr->data.binary.rhs);
+
+    char const* lhs_reg = reg_a(expr->data.binary.lhs->type->size);
+    char const* rhs_reg = reg_b(expr->data.binary.rhs->type->size);
+    appendli("pop rbx");
+    appendli("pop rax");
+    appendli("mov rcx, 0"); // result (default false)
+    appendli("mov rdx, 1"); // register holding true
+    appendli("cmp %s, %s", lhs_reg, rhs_reg);
+    appendli("%s rcx, rdx", type_is_sint(xhs_type) ? "cmovle" : "cmovbe");
+    appendli("push rcx");
+}
+
+static void
+push_rvalue_binary_lt(struct expr const* expr, size_t id)
+{
+    assert(expr->kind == EXPR_BINARY);
+    assert(expr->data.binary.op == BOP_LT);
+    assert(expr->data.binary.lhs->type->size >= 1u);
+    assert(expr->data.binary.lhs->type->size <= 8u);
+    assert(expr->data.binary.rhs->type->size >= 1u);
+    assert(expr->data.binary.rhs->type->size <= 8u);
+    assert(expr->data.binary.lhs->type == expr->data.binary.rhs->type);
+    (void)id;
+
+    struct type const* const xhs_type = expr->data.binary.lhs->type;
+
+    push_rvalue(expr->data.binary.lhs);
+    push_rvalue(expr->data.binary.rhs);
+
+    char const* lhs_reg = reg_a(expr->data.binary.lhs->type->size);
+    char const* rhs_reg = reg_b(expr->data.binary.rhs->type->size);
+    appendli("pop rbx");
+    appendli("pop rax");
+    appendli("mov rcx, 0"); // result (default false)
+    appendli("mov rdx, 1"); // register holding true
+    appendli("cmp %s, %s", lhs_reg, rhs_reg);
+    appendli("%s rcx, rdx", type_is_sint(xhs_type) ? "cmovl" : "cmovb");
+    appendli("push rcx");
+}
+
+static void
+push_rvalue_binary_ge(struct expr const* expr, size_t id)
+{
+    assert(expr->kind == EXPR_BINARY);
+    assert(expr->data.binary.op == BOP_GE);
+    assert(expr->data.binary.lhs->type->size >= 1u);
+    assert(expr->data.binary.lhs->type->size <= 8u);
+    assert(expr->data.binary.rhs->type->size >= 1u);
+    assert(expr->data.binary.rhs->type->size <= 8u);
+    assert(expr->data.binary.lhs->type == expr->data.binary.rhs->type);
+    struct type const* const xhs_type = expr->data.binary.lhs->type;
+    (void)id;
+
+    push_rvalue(expr->data.binary.lhs);
+    push_rvalue(expr->data.binary.rhs);
+
+    char const* lhs_reg = reg_a(expr->data.binary.lhs->type->size);
+    char const* rhs_reg = reg_b(expr->data.binary.rhs->type->size);
+    appendli("pop rbx");
+    appendli("pop rax");
+    appendli("mov rcx, 0"); // result (default false)
+    appendli("mov rdx, 1"); // register holding true
+    appendli("cmp %s, %s", lhs_reg, rhs_reg);
+    appendli("%s rcx, rdx", type_is_sint(xhs_type) ? "cmovge" : "cmovae");
+    appendli("push rcx");
+}
+
+static void
+push_rvalue_binary_gt(struct expr const* expr, size_t id)
+{
+    assert(expr->kind == EXPR_BINARY);
+    assert(expr->data.binary.op == BOP_GT);
+    assert(expr->data.binary.lhs->type->size >= 1u);
+    assert(expr->data.binary.lhs->type->size <= 8u);
+    assert(expr->data.binary.rhs->type->size >= 1u);
+    assert(expr->data.binary.rhs->type->size <= 8u);
+    assert(expr->data.binary.lhs->type == expr->data.binary.rhs->type);
+    (void)id;
+
+    struct type const* const xhs_type = expr->data.binary.lhs->type;
+
+    push_rvalue(expr->data.binary.lhs);
+    push_rvalue(expr->data.binary.rhs);
+
+    char const* lhs_reg = reg_a(expr->data.binary.lhs->type->size);
+    char const* rhs_reg = reg_b(expr->data.binary.rhs->type->size);
+    appendli("pop rbx");
+    appendli("pop rax");
+    appendli("mov rcx, 0"); // result (default false)
+    appendli("mov rdx, 1"); // register holding true
+    appendli("cmp %s, %s", lhs_reg, rhs_reg);
+    appendli("%s rcx, rdx", type_is_sint(xhs_type) ? "cmovg" : "cmova");
+    appendli("push rcx");
+}
+
+static void
+push_rvalue_binary_add(struct expr const* expr, size_t id)
+{
+    assert(expr->kind == EXPR_BINARY);
+    assert(expr->data.binary.op == BOP_ADD);
+    assert(expr->data.binary.lhs->type->size >= 1u);
+    assert(expr->data.binary.lhs->type->size <= 8u);
+    assert(expr->data.binary.rhs->type->size >= 1u);
+    assert(expr->data.binary.rhs->type->size <= 8u);
+    assert(expr->data.binary.lhs->type == expr->data.binary.rhs->type);
+
+    struct type const* const xhs_type = expr->data.binary.lhs->type;
+
+    char const* const lhs_reg = reg_a(xhs_type->size);
+    char const* const rhs_reg = reg_b(xhs_type->size);
+    char const* const jmp_not_overflow = type_is_sint(xhs_type) ? "jno" : "jnc";
+
+    push_rvalue(expr->data.binary.lhs);
+    push_rvalue(expr->data.binary.rhs);
+    appendli("pop rbx ; add rhs");
+    appendli("pop rax ; add lhs");
+    appendli("add %s, %s", lhs_reg, rhs_reg);
+    appendli("push rax");
+    appendli("%s %s%zu_end", jmp_not_overflow, LABEL_EXPR, id);
+    appendli("call __fatal_integer_out_of_range");
+
+    appendln("%s%zu_end:", LABEL_EXPR, id);
+}
+
+static void
+push_rvalue_binary_add_wrapping(struct expr const* expr, size_t id)
+{
+    assert(expr->kind == EXPR_BINARY);
+    assert(expr->data.binary.op == BOP_ADD_WRAPPING);
+    assert(expr->data.binary.lhs->type->size >= 1u);
+    assert(expr->data.binary.lhs->type->size <= 8u);
+    assert(expr->data.binary.rhs->type->size >= 1u);
+    assert(expr->data.binary.rhs->type->size <= 8u);
+    assert(expr->data.binary.lhs->type == expr->data.binary.rhs->type);
+    (void)id;
+
+    struct type const* const xhs_type = expr->data.binary.lhs->type;
+
+    char const* const lhs_reg = reg_a(xhs_type->size);
+    char const* const rhs_reg = reg_b(xhs_type->size);
+
+    push_rvalue(expr->data.binary.lhs);
+    push_rvalue(expr->data.binary.rhs);
+    appendli("pop rbx ; add wrapping rhs");
+    appendli("pop rax ; add wrapping lhs");
+    appendli("add %s, %s", lhs_reg, rhs_reg);
+    appendli("push rax");
+}
+
+static void
+push_rvalue_binary_sub(struct expr const* expr, size_t id)
+{
+    assert(expr->kind == EXPR_BINARY);
+    assert(expr->data.binary.op == BOP_SUB);
+    assert(expr->data.binary.lhs->type->size >= 1u);
+    assert(expr->data.binary.lhs->type->size <= 8u);
+    assert(expr->data.binary.rhs->type->size >= 1u);
+    assert(expr->data.binary.rhs->type->size <= 8u);
+    assert(expr->data.binary.lhs->type == expr->data.binary.rhs->type);
+    struct type const* const xhs_type = expr->data.binary.lhs->type;
+
+    char const* const lhs_reg = reg_a(xhs_type->size);
+    char const* const rhs_reg = reg_b(xhs_type->size);
+    char const* const jmp_not_overflow = type_is_sint(xhs_type) ? "jno" : "jnc";
+
+    push_rvalue(expr->data.binary.lhs);
+    push_rvalue(expr->data.binary.rhs);
+    appendli("pop rbx ; sub rhs");
+    appendli("pop rax ; sub lhs");
+    appendli("sub %s, %s", lhs_reg, rhs_reg);
+    appendli("push rax");
+    appendli("%s %s%zu_end", jmp_not_overflow, LABEL_EXPR, id);
+    appendli("call __fatal_integer_out_of_range");
+
+    appendln("%s%zu_end:", LABEL_EXPR, id);
+}
+
+static void
+push_rvalue_binary_sub_wrapping(struct expr const* expr, size_t id)
+{
+    assert(expr->kind == EXPR_BINARY);
+    assert(expr->data.binary.op == BOP_SUB_WRAPPING);
+    assert(expr->data.binary.lhs->type->size >= 1u);
+    assert(expr->data.binary.lhs->type->size <= 8u);
+    assert(expr->data.binary.rhs->type->size >= 1u);
+    assert(expr->data.binary.rhs->type->size <= 8u);
+    assert(expr->data.binary.lhs->type == expr->data.binary.rhs->type);
+    (void)id;
+
+    struct type const* const xhs_type = expr->data.binary.lhs->type;
+
+    char const* const lhs_reg = reg_a(xhs_type->size);
+    char const* const rhs_reg = reg_b(xhs_type->size);
+
+    push_rvalue(expr->data.binary.lhs);
+    push_rvalue(expr->data.binary.rhs);
+    appendli("pop rbx ; sub wrapping rhs");
+    appendli("pop rax ; sub wrapping lhs");
+    appendli("sub %s, %s", lhs_reg, rhs_reg);
+    appendli("push rax");
+}
+
+static void
+push_rvalue_binary_mul(struct expr const* expr, size_t id)
+{
+    assert(expr->kind == EXPR_BINARY);
+    assert(expr->data.binary.op == BOP_MUL);
+    assert(expr->data.binary.lhs->type->size >= 1u);
+    assert(expr->data.binary.lhs->type->size <= 8u);
+    assert(expr->data.binary.rhs->type->size >= 1u);
+    assert(expr->data.binary.rhs->type->size <= 8u);
+    assert(expr->data.binary.lhs->type == expr->data.binary.rhs->type);
+    struct type const* const xhs_type = expr->data.binary.lhs->type;
+
+    char const* const rhs_reg = reg_b(xhs_type->size);
+    char const* const mul = type_is_sint(xhs_type) ? "imul" : "mul";
+
+    push_rvalue(expr->data.binary.lhs);
+    push_rvalue(expr->data.binary.rhs);
+    appendli("pop rbx ; mul rhs");
+    appendli("pop rax ; mul lhs");
+    appendli("%s %s", mul, rhs_reg);
+    appendli("push rax");
+    appendli("jno %s%zu_end", LABEL_EXPR, id);
+    appendli("call __fatal_integer_out_of_range");
+
+    appendln("%s%zu_end:", LABEL_EXPR, id);
+}
+
+static void
+push_rvalue_binary_mul_wrapping(struct expr const* expr, size_t id)
+{
+    assert(expr->kind == EXPR_BINARY);
+    assert(expr->data.binary.op == BOP_MUL_WRAPPING);
+    assert(expr->data.binary.lhs->type->size >= 1u);
+    assert(expr->data.binary.lhs->type->size <= 8u);
+    assert(expr->data.binary.rhs->type->size >= 1u);
+    assert(expr->data.binary.rhs->type->size <= 8u);
+    assert(expr->data.binary.lhs->type == expr->data.binary.rhs->type);
+    (void)id;
+
+    struct type const* const xhs_type = expr->data.binary.lhs->type;
+
+    char const* const rhs_reg = reg_b(xhs_type->size);
+    char const* const mul = type_is_sint(xhs_type) ? "imul" : "mul";
+
+    push_rvalue(expr->data.binary.lhs);
+    push_rvalue(expr->data.binary.rhs);
+    appendli("pop rbx ; mul rhs");
+    appendli("pop rax ; mul lhs");
+    appendli("%s %s", mul, rhs_reg);
+    appendli("push rax");
+}
+
+static void
+push_rvalue_binary_divrem(struct expr const* expr, size_t id)
+{
+    assert(expr->kind == EXPR_BINARY);
+    assert(expr->data.binary.op == BOP_DIV || expr->data.binary.op == BOP_REM);
+    assert(expr->data.binary.lhs->type->size >= 1u);
+    assert(expr->data.binary.lhs->type->size <= 8u);
+    assert(expr->data.binary.rhs->type->size >= 1u);
+    assert(expr->data.binary.rhs->type->size <= 8u);
+    assert(expr->data.binary.lhs->type == expr->data.binary.rhs->type);
+    struct type const* const xhs_type = expr->data.binary.lhs->type;
+
+    char const* const rhs_reg = reg_b(xhs_type->size);
+    char const* const div = type_is_sint(xhs_type) ? "idiv" : "div";
+
+    push_rvalue(expr->data.binary.lhs);
+    push_rvalue(expr->data.binary.rhs);
+    appendli("pop rbx ; div rhs");
+    appendli("pop rax ; div lhs");
+    if (type_is_sint(xhs_type)) {
+        // Sign extend to fill the upper portion of the dividend.
+        // https://www.felixcloutier.com/x86/cbw:cwde:cdqe
+        // https://www.felixcloutier.com/x86/cwd:cdq:cqo
+        switch (xhs_type->size) {
+        case 1:
+            appendli("cbw ; sign extend AL into AX");
+            break;
+        case 2:
+            appendli("cwd ; sign extend AX into DX:AX");
+            break;
+        case 4:
+            appendli("cdq ; sign extend EAX into EDX:EAX");
+            break;
+        case 8:
+            appendli("cqo ; sign extend RAX into RDX:RAX");
+            break;
+        default:
+            UNREACHABLE();
+        }
+    }
+    else {
+        assert(type_is_uint(xhs_type));
+        // Clear the upper portion of the dividend.
+        appendli("xor rdx, rdx");
+        // Zero extend the dividend into itself.
+        mov_rax_reg_a_with_zero_or_sign_extend(xhs_type);
+    }
+    appendli("mov rcx, 0");
+    appendli(
+        "cmp %s, %s",
+        rhs_reg,
+        reg_c(xhs_type->size)); // divide-by-zero check
+    appendli("jne %s%zu_op", LABEL_EXPR, id);
+    appendli("call __fatal_integer_divide_by_zero");
+    appendli("%s%zu_op:", LABEL_EXPR, id);
+    appendli("%s %s", div, rhs_reg);
+
+    // https://www.felixcloutier.com/x86/div
+    // https://www.felixcloutier.com/x86/idiv
+    //
+    // Operand Size            | Dividend | Divisor | Quotient | Remainder
+    // Word/byte               | AX       | r/m8    | AL       | AH
+    // Doubleword/word         | DX:AX    | r/m16   | AX       | DX
+    // Quadword/doubleword     | EDX:EAX  | r/m32   | EAX      | EDX
+    // Doublequadword/quadword | RDX:RAX  | r/m64   | RAX      | RDX
+    if (expr->data.binary.op == BOP_DIV) {
+        appendli("push rax");
+    }
+    else {
+        assert(expr->data.binary.op == BOP_REM);
+        if (xhs_type->size == 1) {
+            appendli("mov al, ah");
+            appendli("push rax");
+        }
+        else {
+            appendli("push rdx");
+        }
+    }
+}
+
+static void
+push_rvalue_binary_bitor(struct expr const* expr, size_t id)
+{
+    assert(expr->kind == EXPR_BINARY);
+    assert(expr->data.binary.op == BOP_BITOR);
+    assert(expr->data.binary.lhs->type->size >= 1u);
+    assert(expr->data.binary.lhs->type->size <= 8u);
+    assert(expr->data.binary.rhs->type->size >= 1u);
+    assert(expr->data.binary.rhs->type->size <= 8u);
+    assert(expr->data.binary.lhs->type == expr->data.binary.rhs->type);
+    (void)id;
+
+    push_rvalue(expr->data.binary.lhs);
+    push_rvalue(expr->data.binary.rhs);
+
+    appendli("pop rbx");
+    appendli("pop rax");
+    appendli("or rax, rbx");
+    appendli("push rax");
+}
+
+static void
+push_rvalue_binary_bitxor(struct expr const* expr, size_t id)
+{
+    assert(expr->kind == EXPR_BINARY);
+    assert(expr->data.binary.op == BOP_BITXOR);
+    assert(expr->data.binary.lhs->type->size >= 1u);
+    assert(expr->data.binary.lhs->type->size <= 8u);
+    assert(expr->data.binary.rhs->type->size >= 1u);
+    assert(expr->data.binary.rhs->type->size <= 8u);
+    assert(expr->data.binary.lhs->type == expr->data.binary.rhs->type);
+    (void)id;
+
+    push_rvalue(expr->data.binary.lhs);
+    push_rvalue(expr->data.binary.rhs);
+
+    appendli("pop rbx");
+    appendli("pop rax");
+    appendli("xor rax, rbx");
+    appendli("push rax");
+}
+
+static void
+push_rvalue_binary_bitand(struct expr const* expr, size_t id)
+{
+    assert(expr->kind == EXPR_BINARY);
+    assert(expr->data.binary.op == BOP_BITAND);
+    assert(expr->data.binary.lhs->type->size >= 1u);
+    assert(expr->data.binary.lhs->type->size <= 8u);
+    assert(expr->data.binary.rhs->type->size >= 1u);
+    assert(expr->data.binary.rhs->type->size <= 8u);
+    assert(expr->data.binary.lhs->type == expr->data.binary.rhs->type);
+    (void)id;
+
+    push_rvalue(expr->data.binary.lhs);
+    push_rvalue(expr->data.binary.rhs);
+
+    appendli("pop rbx");
+    appendli("pop rax");
+    appendli("and rax, rbx");
+    appendli("push rax");
 }
 
 static void
