@@ -2164,6 +2164,7 @@ push_rvalue_unary(struct expr const* expr, size_t id)
 static void
 push_rvalue_unary_not(struct expr const* expr, size_t id)
 {
+    assert(expr != NULL);
     assert(expr->kind == EXPR_UNARY);
     assert(expr->data.unary.op == UOP_NOT);
     assert(expr->data.unary.rhs->type->size <= 8u);
@@ -2182,6 +2183,7 @@ push_rvalue_unary_not(struct expr const* expr, size_t id)
 static void
 push_rvalue_unary_pos(struct expr const* expr, size_t id)
 {
+    assert(expr != NULL);
     assert(expr->kind == EXPR_UNARY);
     assert(expr->data.unary.op == UOP_POS);
     (void)id;
@@ -2192,6 +2194,7 @@ push_rvalue_unary_pos(struct expr const* expr, size_t id)
 static void
 push_rvalue_unary_neg(struct expr const* expr, size_t id)
 {
+    assert(expr != NULL);
     assert(expr->kind == EXPR_UNARY);
     assert(expr->data.unary.op == UOP_NEG);
 
@@ -2217,6 +2220,7 @@ push_rvalue_unary_neg(struct expr const* expr, size_t id)
 static void
 push_rvalue_unary_neg_wrapping(struct expr const* expr, size_t id)
 {
+    assert(expr != NULL);
     assert(expr->kind == EXPR_UNARY);
     assert(expr->data.unary.op == UOP_NEG_WRAPPING);
     (void)id;
@@ -2233,6 +2237,7 @@ push_rvalue_unary_neg_wrapping(struct expr const* expr, size_t id)
 static void
 push_rvalue_unary_bitnot(struct expr const* expr, size_t id)
 {
+    assert(expr != NULL);
     assert(expr->kind == EXPR_UNARY);
     assert(expr->data.unary.op == UOP_BITNOT);
     (void)id;
@@ -2247,6 +2252,7 @@ push_rvalue_unary_bitnot(struct expr const* expr, size_t id)
 static void
 push_rvalue_unary_dereference(struct expr const* expr, size_t id)
 {
+    assert(expr != NULL);
     assert(expr->kind == EXPR_UNARY);
     assert(expr->data.unary.op == UOP_DEREFERENCE);
     assert(expr->data.unary.rhs->type->kind == TYPE_POINTER);
@@ -2267,6 +2273,7 @@ push_rvalue_unary_dereference(struct expr const* expr, size_t id)
 static void
 push_rvalue_unary_addressof(struct expr const* expr, size_t id)
 {
+    assert(expr != NULL);
     assert(expr->kind == EXPR_UNARY);
     assert(expr->data.unary.op == UOP_ADDRESSOF);
     (void)id;
@@ -2277,6 +2284,7 @@ push_rvalue_unary_addressof(struct expr const* expr, size_t id)
 static void
 push_rvalue_unary_startof(struct expr const* expr, size_t id)
 {
+    assert(expr != NULL);
     assert(expr->kind == EXPR_UNARY);
     assert(expr->data.unary.op == UOP_STARTOF);
     assert(expr->data.unary.rhs->type->kind == TYPE_SLICE);
@@ -2291,6 +2299,7 @@ push_rvalue_unary_startof(struct expr const* expr, size_t id)
 static void
 push_rvalue_unary_countof(struct expr const* expr, size_t id)
 {
+    assert(expr != NULL);
     assert(expr->kind == EXPR_UNARY);
     assert(expr->data.unary.op == UOP_COUNTOF);
     (void)id;
@@ -2419,6 +2428,7 @@ push_rvalue_binary(struct expr const* expr, size_t id)
 static void
 push_rvalue_binary_or(struct expr const* expr, size_t id)
 {
+    assert(expr != NULL);
     assert(expr->kind == EXPR_BINARY);
     assert(expr->data.binary.op == BOP_OR);
     assert(expr->data.binary.lhs->type->kind == TYPE_BOOL);
@@ -2457,6 +2467,7 @@ push_rvalue_binary_or(struct expr const* expr, size_t id)
 static void
 push_rvalue_binary_and(struct expr const* expr, size_t id)
 {
+    assert(expr != NULL);
     assert(expr->kind == EXPR_BINARY);
     assert(expr->data.binary.op == BOP_AND);
     assert(expr->data.binary.lhs->type->kind == TYPE_BOOL);
@@ -2495,6 +2506,7 @@ push_rvalue_binary_and(struct expr const* expr, size_t id)
 static void
 push_rvalue_binary_shl(struct expr const* expr, size_t id)
 {
+    assert(expr != NULL);
     assert(expr->kind == EXPR_BINARY);
     assert(expr->data.binary.op == BOP_SHL);
     assert(type_is_int(expr->data.binary.lhs->type));
@@ -2522,6 +2534,7 @@ push_rvalue_binary_shl(struct expr const* expr, size_t id)
 static void
 push_rvalue_binary_shr(struct expr const* expr, size_t id)
 {
+    assert(expr != NULL);
     assert(expr->kind == EXPR_BINARY);
     assert(expr->data.binary.op == BOP_SHR);
     assert(type_is_int(expr->data.binary.lhs->type));
@@ -2562,6 +2575,7 @@ push_rvalue_binary_shr(struct expr const* expr, size_t id)
 static void
 push_rvalue_binary_eq(struct expr const* expr, size_t id)
 {
+    assert(expr != NULL);
     assert(expr->kind == EXPR_BINARY);
     assert(expr->data.binary.op == BOP_EQ);
     assert(expr->data.binary.lhs->type->size >= 1u);
@@ -2588,6 +2602,7 @@ push_rvalue_binary_eq(struct expr const* expr, size_t id)
 static void
 push_rvalue_binary_ne(struct expr const* expr, size_t id)
 {
+    assert(expr != NULL);
     assert(expr->kind == EXPR_BINARY);
     assert(expr->data.binary.op == BOP_NE);
     assert(expr->data.binary.lhs->type->size >= 1u);
@@ -2614,6 +2629,7 @@ push_rvalue_binary_ne(struct expr const* expr, size_t id)
 static void
 push_rvalue_binary_le(struct expr const* expr, size_t id)
 {
+    assert(expr != NULL);
     assert(expr->kind == EXPR_BINARY);
     assert(expr->data.binary.op == BOP_LE);
     assert(expr->data.binary.lhs->type->size >= 1u);
@@ -2642,6 +2658,7 @@ push_rvalue_binary_le(struct expr const* expr, size_t id)
 static void
 push_rvalue_binary_lt(struct expr const* expr, size_t id)
 {
+    assert(expr != NULL);
     assert(expr->kind == EXPR_BINARY);
     assert(expr->data.binary.op == BOP_LT);
     assert(expr->data.binary.lhs->type->size >= 1u);
@@ -2670,6 +2687,7 @@ push_rvalue_binary_lt(struct expr const* expr, size_t id)
 static void
 push_rvalue_binary_ge(struct expr const* expr, size_t id)
 {
+    assert(expr != NULL);
     assert(expr->kind == EXPR_BINARY);
     assert(expr->data.binary.op == BOP_GE);
     assert(expr->data.binary.lhs->type->size >= 1u);
@@ -2677,8 +2695,9 @@ push_rvalue_binary_ge(struct expr const* expr, size_t id)
     assert(expr->data.binary.rhs->type->size >= 1u);
     assert(expr->data.binary.rhs->type->size <= 8u);
     assert(expr->data.binary.lhs->type == expr->data.binary.rhs->type);
-    struct type const* const xhs_type = expr->data.binary.lhs->type;
     (void)id;
+
+    struct type const* const xhs_type = expr->data.binary.lhs->type;
 
     push_rvalue(expr->data.binary.lhs);
     push_rvalue(expr->data.binary.rhs);
@@ -2697,6 +2716,7 @@ push_rvalue_binary_ge(struct expr const* expr, size_t id)
 static void
 push_rvalue_binary_gt(struct expr const* expr, size_t id)
 {
+    assert(expr != NULL);
     assert(expr->kind == EXPR_BINARY);
     assert(expr->data.binary.op == BOP_GT);
     assert(expr->data.binary.lhs->type->size >= 1u);
@@ -2725,6 +2745,7 @@ push_rvalue_binary_gt(struct expr const* expr, size_t id)
 static void
 push_rvalue_binary_add(struct expr const* expr, size_t id)
 {
+    assert(expr != NULL);
     assert(expr->kind == EXPR_BINARY);
     assert(expr->data.binary.op == BOP_ADD);
     assert(expr->data.binary.lhs->type->size >= 1u);
@@ -2754,6 +2775,7 @@ push_rvalue_binary_add(struct expr const* expr, size_t id)
 static void
 push_rvalue_binary_add_wrapping(struct expr const* expr, size_t id)
 {
+    assert(expr != NULL);
     assert(expr->kind == EXPR_BINARY);
     assert(expr->data.binary.op == BOP_ADD_WRAPPING);
     assert(expr->data.binary.lhs->type->size >= 1u);
@@ -2779,6 +2801,7 @@ push_rvalue_binary_add_wrapping(struct expr const* expr, size_t id)
 static void
 push_rvalue_binary_sub(struct expr const* expr, size_t id)
 {
+    assert(expr != NULL);
     assert(expr->kind == EXPR_BINARY);
     assert(expr->data.binary.op == BOP_SUB);
     assert(expr->data.binary.lhs->type->size >= 1u);
@@ -2786,6 +2809,7 @@ push_rvalue_binary_sub(struct expr const* expr, size_t id)
     assert(expr->data.binary.rhs->type->size >= 1u);
     assert(expr->data.binary.rhs->type->size <= 8u);
     assert(expr->data.binary.lhs->type == expr->data.binary.rhs->type);
+
     struct type const* const xhs_type = expr->data.binary.lhs->type;
 
     char const* const lhs_reg = reg_a(xhs_type->size);
@@ -2807,6 +2831,7 @@ push_rvalue_binary_sub(struct expr const* expr, size_t id)
 static void
 push_rvalue_binary_sub_wrapping(struct expr const* expr, size_t id)
 {
+    assert(expr != NULL);
     assert(expr->kind == EXPR_BINARY);
     assert(expr->data.binary.op == BOP_SUB_WRAPPING);
     assert(expr->data.binary.lhs->type->size >= 1u);
@@ -2832,6 +2857,7 @@ push_rvalue_binary_sub_wrapping(struct expr const* expr, size_t id)
 static void
 push_rvalue_binary_mul(struct expr const* expr, size_t id)
 {
+    assert(expr != NULL);
     assert(expr->kind == EXPR_BINARY);
     assert(expr->data.binary.op == BOP_MUL);
     assert(expr->data.binary.lhs->type->size >= 1u);
@@ -2839,6 +2865,7 @@ push_rvalue_binary_mul(struct expr const* expr, size_t id)
     assert(expr->data.binary.rhs->type->size >= 1u);
     assert(expr->data.binary.rhs->type->size <= 8u);
     assert(expr->data.binary.lhs->type == expr->data.binary.rhs->type);
+
     struct type const* const xhs_type = expr->data.binary.lhs->type;
 
     char const* const rhs_reg = reg_b(xhs_type->size);
@@ -2859,6 +2886,7 @@ push_rvalue_binary_mul(struct expr const* expr, size_t id)
 static void
 push_rvalue_binary_mul_wrapping(struct expr const* expr, size_t id)
 {
+    assert(expr != NULL);
     assert(expr->kind == EXPR_BINARY);
     assert(expr->data.binary.op == BOP_MUL_WRAPPING);
     assert(expr->data.binary.lhs->type->size >= 1u);
@@ -2884,6 +2912,7 @@ push_rvalue_binary_mul_wrapping(struct expr const* expr, size_t id)
 static void
 push_rvalue_binary_divrem(struct expr const* expr, size_t id)
 {
+    assert(expr != NULL);
     assert(expr->kind == EXPR_BINARY);
     assert(expr->data.binary.op == BOP_DIV || expr->data.binary.op == BOP_REM);
     assert(expr->data.binary.lhs->type->size >= 1u);
@@ -2891,6 +2920,7 @@ push_rvalue_binary_divrem(struct expr const* expr, size_t id)
     assert(expr->data.binary.rhs->type->size >= 1u);
     assert(expr->data.binary.rhs->type->size <= 8u);
     assert(expr->data.binary.lhs->type == expr->data.binary.rhs->type);
+
     struct type const* const xhs_type = expr->data.binary.lhs->type;
 
     char const* const rhs_reg = reg_b(xhs_type->size);
@@ -2964,6 +2994,7 @@ push_rvalue_binary_divrem(struct expr const* expr, size_t id)
 static void
 push_rvalue_binary_bitor(struct expr const* expr, size_t id)
 {
+    assert(expr != NULL);
     assert(expr->kind == EXPR_BINARY);
     assert(expr->data.binary.op == BOP_BITOR);
     assert(expr->data.binary.lhs->type->size >= 1u);
@@ -2985,6 +3016,7 @@ push_rvalue_binary_bitor(struct expr const* expr, size_t id)
 static void
 push_rvalue_binary_bitxor(struct expr const* expr, size_t id)
 {
+    assert(expr != NULL);
     assert(expr->kind == EXPR_BINARY);
     assert(expr->data.binary.op == BOP_BITXOR);
     assert(expr->data.binary.lhs->type->size >= 1u);
@@ -3006,6 +3038,7 @@ push_rvalue_binary_bitxor(struct expr const* expr, size_t id)
 static void
 push_rvalue_binary_bitand(struct expr const* expr, size_t id)
 {
+    assert(expr != NULL);
     assert(expr->kind == EXPR_BINARY);
     assert(expr->data.binary.op == BOP_BITAND);
     assert(expr->data.binary.lhs->type->size >= 1u);
