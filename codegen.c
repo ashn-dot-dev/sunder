@@ -725,6 +725,24 @@ push_rvalue_alignof(struct expr const* expr, size_t id);
 static void
 push_rvalue_unary(struct expr const* expr, size_t id);
 static void
+push_rvalue_unary_not(struct expr const* expr, size_t id);
+static void
+push_rvalue_unary_pos(struct expr const* expr, size_t id);
+static void
+push_rvalue_unary_neg(struct expr const* expr, size_t id);
+static void
+push_rvalue_unary_neg_wrapping(struct expr const* expr, size_t id);
+static void
+push_rvalue_unary_bitnot(struct expr const* expr, size_t id);
+static void
+push_rvalue_unary_dereference(struct expr const* expr, size_t id);
+static void
+push_rvalue_unary_addressof(struct expr const* expr, size_t id);
+static void
+push_rvalue_unary_startof(struct expr const* expr, size_t id);
+static void
+push_rvalue_unary_countof(struct expr const* expr, size_t id);
+static void
 push_rvalue_binary(struct expr const* expr, size_t id);
 
 static void
@@ -2063,116 +2081,203 @@ push_rvalue_unary(struct expr const* expr, size_t id)
 
     switch (expr->data.unary.op) {
     case UOP_NOT: {
-        assert(expr->data.unary.rhs->type->size <= 8u);
-
-        push_rvalue(expr->data.unary.rhs);
-
-        char const* rhs_reg = reg_a(expr->data.unary.rhs->type->size);
-        appendli("pop rax");
-        appendli("mov rbx, 0");
-        appendli(
-            "cmp %s, %s", rhs_reg, reg_b(expr->data.unary.rhs->type->size));
-        appendli("setz al");
-        appendli("push rax");
+        push_rvalue_unary_not(expr, id);
         return;
     }
     case UOP_POS: {
-        push_rvalue(expr->data.unary.rhs);
+        push_rvalue_unary_pos(expr, id);
         return;
     }
     case UOP_NEG: {
-        struct expr const* const rhs = expr->data.unary.rhs;
-
-        assert(type_is_sint(rhs->type));
-        assert(rhs->type->size <= 8u);
-        push_rvalue(expr->data.unary.rhs);
-
-        char const* rhs_reg = reg_a(expr->data.unary.rhs->type->size);
-        appendli("pop rax");
-        char* const min_cstr = bigint_to_new_cstr(rhs->type->data.integer.min);
-        appendli("mov rbx, %s", min_cstr);
-        xalloc(min_cstr, XALLOC_FREE);
-        appendli(
-            "cmp %s, %s", rhs_reg, reg_b(expr->data.unary.rhs->type->size));
-        appendli("jne %s%zu_op", LABEL_EXPR, id);
-        appendli("call __fatal_integer_out_of_range");
-        appendln("%s%zu_op:", LABEL_EXPR, id);
-        appendli("neg %s", reg_a(expr->type->size));
-        appendli("push rax");
+        push_rvalue_unary_neg(expr, id);
         return;
     }
     case UOP_NEG_WRAPPING: {
-        assert(type_is_sint(expr->data.unary.rhs->type));
-        assert(expr->data.unary.rhs->type->size <= 8u);
-        push_rvalue(expr->data.unary.rhs);
-
-        appendli("pop rax");
-        appendli("neg %s", reg_a(expr->type->size));
-        appendli("push rax");
+        push_rvalue_unary_neg_wrapping(expr, id);
         return;
     }
     case UOP_BITNOT: {
-        push_rvalue(expr->data.unary.rhs);
-        assert(expr->data.unary.rhs->type->size <= 8u);
-        appendli("pop rax");
-        appendli("not %s", reg_a(expr->type->size));
-        appendli("push rax");
+        push_rvalue_unary_bitnot(expr, id);
         return;
     }
     case UOP_DEREFERENCE: {
-        assert(expr->data.unary.rhs->type->kind == TYPE_POINTER);
-        if (expr->data.unary.rhs->type->data.pointer.base->size == 0) {
-            // Dereferencing an object with zero size produces a result with
-            // no size (equivalent to no result).
-            return;
-        }
-        push_rvalue(expr->data.unary.rhs);
-        appendli("pop rax ; pointer object being dereferenced");
-        uint64_t const size = expr->type->size;
-        push(size);
-        copy_rax_rsp_via_rcx(size);
+        push_rvalue_unary_dereference(expr, id);
         return;
     }
     case UOP_ADDRESSOF: {
-        push_lvalue(expr->data.unary.rhs);
+        push_rvalue_unary_addressof(expr, id);
         return;
     }
     case UOP_STARTOF: {
-        assert(expr->data.unary.rhs->type->kind == TYPE_SLICE);
-        push_rvalue(expr->data.unary.rhs);
-        appendli("pop rax ; pop slice start word");
-        appendli("pop rbx ; pop slice count word");
-        appendli("push rax ; push slice start word");
+        push_rvalue_unary_startof(expr, id);
         return;
     }
     case UOP_COUNTOF: {
-        if (expr->data.unary.rhs->type->kind == TYPE_ARRAY) {
-            // If possible evaluate the left hand side of the expression as an
-            // lvalue so that we do not push the entire contents of the array
-            // onto the stack.
-            if (expr_is_lvalue(expr->data.unary.rhs)) {
-                push_lvalue(expr->data.unary.rhs);
-                appendli("pop rax ; discard array lvalue");
-            }
-            else {
-                push_rvalue(expr->data.unary.rhs);
-                pop(expr->data.unary.rhs->type->size);
-            }
-            appendli(
-                "mov rax, %" PRIu64 "; array count",
-                expr->data.unary.rhs->type->data.array.count);
-            appendli("push rax");
-            return;
-        }
-
-        if (expr->data.unary.rhs->type->kind == TYPE_SLICE) {
-            push_rvalue(expr->data.unary.rhs);
-            appendli("pop rax ; pop slice start word");
-            return;
-        }
-
-        UNREACHABLE();
+        push_rvalue_unary_countof(expr, id);
+        return;
     }
+    }
+
+    UNREACHABLE();
+}
+
+static void
+push_rvalue_unary_not(struct expr const* expr, size_t id)
+{
+    assert(expr->kind == EXPR_UNARY);
+    assert(expr->data.unary.op == UOP_NOT);
+    assert(expr->data.unary.rhs->type->size <= 8u);
+    (void)id;
+
+    push_rvalue(expr->data.unary.rhs);
+
+    char const* rhs_reg = reg_a(expr->data.unary.rhs->type->size);
+    appendli("pop rax");
+    appendli("mov rbx, 0");
+    appendli("cmp %s, %s", rhs_reg, reg_b(expr->data.unary.rhs->type->size));
+    appendli("setz al");
+    appendli("push rax");
+}
+
+static void
+push_rvalue_unary_pos(struct expr const* expr, size_t id)
+{
+    assert(expr->kind == EXPR_UNARY);
+    assert(expr->data.unary.op == UOP_POS);
+    (void)id;
+
+    push_rvalue(expr->data.unary.rhs);
+}
+
+static void
+push_rvalue_unary_neg(struct expr const* expr, size_t id)
+{
+    assert(expr->kind == EXPR_UNARY);
+    assert(expr->data.unary.op == UOP_NEG);
+
+    struct expr const* const rhs = expr->data.unary.rhs;
+
+    assert(type_is_sint(rhs->type));
+    assert(rhs->type->size <= 8u);
+    push_rvalue(expr->data.unary.rhs);
+
+    char const* rhs_reg = reg_a(expr->data.unary.rhs->type->size);
+    appendli("pop rax");
+    char* const min_cstr = bigint_to_new_cstr(rhs->type->data.integer.min);
+    appendli("mov rbx, %s", min_cstr);
+    xalloc(min_cstr, XALLOC_FREE);
+    appendli("cmp %s, %s", rhs_reg, reg_b(expr->data.unary.rhs->type->size));
+    appendli("jne %s%zu_op", LABEL_EXPR, id);
+    appendli("call __fatal_integer_out_of_range");
+    appendln("%s%zu_op:", LABEL_EXPR, id);
+    appendli("neg %s", reg_a(expr->type->size));
+    appendli("push rax");
+}
+
+static void
+push_rvalue_unary_neg_wrapping(struct expr const* expr, size_t id)
+{
+    assert(expr->kind == EXPR_UNARY);
+    assert(expr->data.unary.op == UOP_NEG_WRAPPING);
+    (void)id;
+
+    assert(type_is_sint(expr->data.unary.rhs->type));
+    assert(expr->data.unary.rhs->type->size <= 8u);
+    push_rvalue(expr->data.unary.rhs);
+
+    appendli("pop rax");
+    appendli("neg %s", reg_a(expr->type->size));
+    appendli("push rax");
+}
+
+static void
+push_rvalue_unary_bitnot(struct expr const* expr, size_t id)
+{
+    assert(expr->kind == EXPR_UNARY);
+    assert(expr->data.unary.op == UOP_BITNOT);
+    (void)id;
+
+    push_rvalue(expr->data.unary.rhs);
+    assert(expr->data.unary.rhs->type->size <= 8u);
+    appendli("pop rax");
+    appendli("not %s", reg_a(expr->type->size));
+    appendli("push rax");
+}
+
+static void
+push_rvalue_unary_dereference(struct expr const* expr, size_t id)
+{
+    assert(expr->kind == EXPR_UNARY);
+    assert(expr->data.unary.op == UOP_DEREFERENCE);
+    assert(expr->data.unary.rhs->type->kind == TYPE_POINTER);
+    (void)id;
+
+    if (expr->data.unary.rhs->type->data.pointer.base->size == 0) {
+        // Dereferencing an object with zero size produces a result with
+        // no size (equivalent to no result).
+        return;
+    }
+    push_rvalue(expr->data.unary.rhs);
+    appendli("pop rax ; pointer object being dereferenced");
+    uint64_t const size = expr->type->size;
+    push(size);
+    copy_rax_rsp_via_rcx(size);
+}
+
+static void
+push_rvalue_unary_addressof(struct expr const* expr, size_t id)
+{
+    assert(expr->kind == EXPR_UNARY);
+    assert(expr->data.unary.op == UOP_ADDRESSOF);
+    (void)id;
+
+    push_lvalue(expr->data.unary.rhs);
+}
+
+static void
+push_rvalue_unary_startof(struct expr const* expr, size_t id)
+{
+    assert(expr->kind == EXPR_UNARY);
+    assert(expr->data.unary.op == UOP_STARTOF);
+    assert(expr->data.unary.rhs->type->kind == TYPE_SLICE);
+    (void)id;
+
+    push_rvalue(expr->data.unary.rhs);
+    appendli("pop rax ; pop slice start word");
+    appendli("pop rbx ; pop slice count word");
+    appendli("push rax ; push slice start word");
+}
+
+static void
+push_rvalue_unary_countof(struct expr const* expr, size_t id)
+{
+    assert(expr->kind == EXPR_UNARY);
+    assert(expr->data.unary.op == UOP_COUNTOF);
+    (void)id;
+
+    if (expr->data.unary.rhs->type->kind == TYPE_ARRAY) {
+        // If possible evaluate the left hand side of the expression as an
+        // lvalue so that we do not push the entire contents of the array
+        // onto the stack.
+        if (expr_is_lvalue(expr->data.unary.rhs)) {
+            push_lvalue(expr->data.unary.rhs);
+            appendli("pop rax ; discard array lvalue");
+        }
+        else {
+            push_rvalue(expr->data.unary.rhs);
+            pop(expr->data.unary.rhs->type->size);
+        }
+        appendli(
+            "mov rax, %" PRIu64 "; array count",
+            expr->data.unary.rhs->type->data.array.count);
+        appendli("push rax");
+        return;
+    }
+
+    if (expr->data.unary.rhs->type->kind == TYPE_SLICE) {
+        push_rvalue(expr->data.unary.rhs);
+        appendli("pop rax ; pop slice start word");
+        return;
     }
 
     UNREACHABLE();
