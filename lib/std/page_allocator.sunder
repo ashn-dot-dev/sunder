@@ -12,7 +12,7 @@ struct page_allocator {
                 # use case when allocating for any zero-sized type:
                 # allocate(alignof(:void), sizeof(:void)); Use NULL as the
                 # canonical address for this situation.
-                return std::result[[*any, std::error]]::init_value((:*any)0u);
+                return std::result[[*any, std::error]]::init_value(std::NULL);
             }
             return std::result[[*any, std::error]]::init_error(std::error::INVALID_ARGUMENT);
         }
@@ -40,11 +40,11 @@ struct page_allocator {
         # buffer), so we choose to return the NULL pointer as the "valid"
         # memory location.
         if size == 0 {
-            return std::result[[*any, std::error]]::init_value((:*any)0u);
+            return std::result[[*any, std::error]]::init_value(std::NULL);
         }
 
         # NULL addr indicates no address hint.
-        const addr = (:*any)0u;
+        const addr = std::NULL;
 
         # Give the page(s) read and write permissions.
         const prot = sys::PROT_READ | sys::PROT_WRITE;

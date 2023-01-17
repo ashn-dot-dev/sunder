@@ -321,11 +321,14 @@ struct allocator {
     }
 }
 
+# Generic NULL constant. Equivalent to the C NULL pointer cast as type `*any`.
+const NULL = (:*any)0u;
+
 struct ptr[[T]] { # namespace
     var __namespace__: any;
 
-    # Equivalent to the C NULL pointer cast as type T.
-    const NULL: *T = (:*T)0u;
+    # Typed NULL constant. Equivalent to the C NULL pointer cast as type `*T`.
+    const NULL = (:*T)0u;
 
     # Equivalent to the C operation `ptr + n`.
     func add(ptr: *T, n: usize) *T {

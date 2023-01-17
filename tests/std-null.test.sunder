@@ -1,0 +1,22 @@
+import "std/core.sunder";
+
+func main() void {
+    # Ensure that std::NULL can be used in comparisons.
+    std::NULL == std::NULL;
+    std::ptr[[byte]]::NULL == std::NULL;
+    std::NULL == std::ptr[[byte]]::NULL;
+    if foo() != std::NULL {
+        # then do something...
+    }
+
+    # Conversion from *any to *T still requires casting.
+    bar((:*ssize)std::NULL);
+}
+
+func foo() *ssize {
+    return (:*ssize)123u; # pretend we allocate...
+}
+
+func bar(ptr_: *ssize) void {
+    # do nothing...
+}
