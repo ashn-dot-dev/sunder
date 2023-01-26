@@ -467,57 +467,46 @@ order_symbol(struct orderer* orderer, struct cst_symbol const* symbol)
 
     // Always attempt to order all symbol template arguments, regardless of
     // whether the symbol belongs to the current module or not, since symbol
-    // template arguments may refer to types that *are* in this module.
+    // template arguments may refer to symbols that *are* in this module.
     for (size_t i = 0; i < sbuf_count(symbol->elements); ++i) {
         order_template_argument_list(
             orderer, symbol->elements[i]->template_arguments);
     }
 
-    // If the namespace prefix matches the module namespace then order the
-    // non-prefix portion of the symbol. The eventual call to order_name will
-    // silently ignore symbols from other modules, but will correctly order any
-    // symbols within *this* module.
-    //
-    // If this module does not have a namespace then order the symbol based on
-    // its first symbol element. If that element corresponds to a declaration
-    // in this module (e.g. a struct) then the symbol will be correctly
-    // ordered. If that element does not correspond to a declaration in this
-    // module then again the order_name will silently ignore it assuming it is
-    // defined elsewhere.
-    struct cst_namespace const* const namespace =
-        orderer->module->cst->namespace;
-    if (namespace == NULL) {
-        // Module does not have a namespace. Perform ordering based on the
-        // first symbol element in the symbol.
-        order_identifier(orderer, symbol->elements[0]->identifier);
-        return;
-    }
+    char const* const symbol_elem0_name = symbol->elements[0]->identifier->name;
+    bool const symbol_elem0_defined_in_current_module =
+        orderer_tldecl_lookup(orderer, symbol_elem0_name) != NULL;
+    bool const search_qualified_symbol =
+        symbol->is_from_root || !symbol_elem0_defined_in_current_module;
+    if (search_qualified_symbol) {
+        struct cst_namespace const* const namespace =
+            orderer->module->cst->namespace;
+        size_t const namespace_count =
+            namespace != NULL ? sbuf_count(namespace->identifiers) : 0;
+        for (size_t i = 0; i < namespace_count; ++i) {
+            char const* const element_name =
+                symbol->elements[i]->identifier->name;
+            char const* const namespace_name = namespace->identifiers[i]->name;
+            if (element_name == namespace_name) {
+                // Continue matching against the current module namespace.
+                continue;
+            }
 
-    size_t const namespace_count = sbuf_count(namespace->identifiers);
-    assert(namespace_count >= 1);
-    if (sbuf_count(symbol->elements) != (namespace_count + 1)) {
-        // Current symbol refers to the current namespace, a parent namespace,
-        // or a symbol under a parent namespace. Let the resolution of the
-        // symbol occur during the resolve phase.
-        return;
-    }
-
-    for (size_t i = 0; i < namespace_count; ++i) {
-        char const* const element_name = symbol->elements[i]->identifier->name;
-        char const* const namespace_name = namespace->identifiers[i]->name;
-        if (element_name == namespace_name) {
-            // Continue matching against the current module namespace.
-            continue;
+            // Module namespace does not fully match the current module
+            // namespace. Assume that the symbol refers to a construct defined
+            // under a parent namespace in some other module.
+            return;
         }
 
-        // Module namespace does not fully match the current module namespace.
-        // Assume that the symbol refers to a construct defined under a parent
-        // namespace in some other module.
+        // Perform ordering based on the non-prefix portion of the symbol.
+        order_identifier(
+            orderer, symbol->elements[namespace_count]->identifier);
         return;
     }
 
-    // Perform ordering based on the non-prefix portion of the symbol.
-    order_identifier(orderer, symbol->elements[namespace_count]->identifier);
+    // Perform ordering based on the first element of the symbol.
+    assert(!symbol->is_from_root);
+    order_identifier(orderer, symbol->elements[0]->identifier);
 }
 
 static void

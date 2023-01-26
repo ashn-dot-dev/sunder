@@ -2,7 +2,7 @@ namespace foo::bar;
 
 # Out-of-order dependecy on b.
 # References b using a fully qualified identifier.
-var b2: byte = foo::bar::b;
+var b2: byte = ::foo::bar::b;
 
 # Out-of-order dependecy on b.
 # References b using an unqualified identifier.

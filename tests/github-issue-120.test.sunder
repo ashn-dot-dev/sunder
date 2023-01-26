@@ -1,0 +1,4 @@
+import "github-issue-120";
+
+# Just make sure that the imported module compiles.
+func main() void { }
