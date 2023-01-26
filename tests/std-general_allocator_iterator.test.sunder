@@ -1,5 +1,4 @@
-import "std/core.sunder";
-import "std/general_allocator.sunder";
+import "std";
 
 func main() void {
     var general_allocator = std::general_allocator::init();

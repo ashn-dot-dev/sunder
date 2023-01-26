@@ -1,4 +1,4 @@
-import "std/core.sunder";
+import "std";
 
 func main() void {
     var a: std::optional[[u16]] = std::optional[[u16]]::init_empty();

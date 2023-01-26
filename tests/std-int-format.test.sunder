@@ -1,4 +1,4 @@
-import "std/core.sunder";
+import "std";
 
 func format_test0() void {
     var a: u32 = 0xDEADBEEF;

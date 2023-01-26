@@ -1,5 +1,4 @@
-import "std/core.sunder";
-import "std/ascii.sunder";
+import "std";
 
 func main() void {
     std::assert(std::ascii::is_digit('0'));

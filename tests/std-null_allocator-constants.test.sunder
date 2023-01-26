@@ -1,6 +1,4 @@
-import "std/core.sunder";
-import "std/null_allocator.sunder";
-import "std/string.sunder";
+import "std";
 
 func main() void {
     var _ = std::string::init(std::null_allocator::ALLOCATOR);

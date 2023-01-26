@@ -1,4 +1,4 @@
-import "std/core.sunder";
+import "std";
 
 func main() void {
     var t = true;

@@ -1,4 +1,4 @@
-import "std/core.sunder";
+import "std";
 
 func test_success(str: []byte) void {
     var buf = (:[64]byte)[0...];

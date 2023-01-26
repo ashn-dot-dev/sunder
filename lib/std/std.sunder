@@ -1,0 +1,4236 @@
+namespace std;
+import "sys";
+
+alias umax = sys::umax;
+alias smax = sys::smax;
+
+# Common error type used within the standard library. The `std::error` type is
+# typically provided as the error template argument in `std::result` template
+# instantiations. Type punning from `*[]byte` to `std::error` is explicitly
+# supported.
+alias error = *std::error_info;
+
+# Strongly typed wrapper around a static byte-string providing information on
+# the category of error that has occurred.
+struct error_info {
+    var data: []byte;
+}
+
+# The set of all `std::error_info` constants used by the standard library.
+const _ALLOCATION_FAILURE = (:std::error_info){.data = "allocation failure"};
+const _BUFFER_FULL = (:std::error_info){.data = "buffer full"};
+const _PARSE_FAILURE = (:std::error_info){.data = "parse failure"};
+const _INVALID_ARGUMENT = (:error_info){.data = "invalid argument"};
+const _RESULT_OUT_OF_RANGE = (:error_info){.data = "result out-of-range"};
+
+# Type representing the outcome of a fallible computation. A result is either
+# in the value state, indicating computation success, or the error state,
+# indicating computation failure.
+struct result[[T, E]] {
+    var _value: T;
+    var _error: E;
+    var _is_value: bool;
+
+    # Initialize a result in the value state (success).
+    func init_value(value: T) result[[T, E]] {
+        return (:result[[T, E]]){
+            ._value = value,
+            ._error = uninit,
+            ._is_value = true
+        };
+    }
+
+    # Initialize a result in the error state (failure).
+    func init_error(error: E) result[[T, E]] {
+        return (:result[[T, E]]){
+            ._value = uninit,
+            ._error = error,
+            ._is_value = false
+        };
+    }
+
+    # Returns true if the result is in the value state.
+    func is_value(self: *result[[T, E]]) bool {
+        return self.*._is_value;
+    }
+
+    # Returns true if the result is in the error state.
+    func is_error(self: *result[[T, E]]) bool {
+        return not self.*._is_value;
+    }
+
+    # Returns the value associated with a result in the value state.
+    #
+    # Panics if the result is in the error state.
+    func value(self: *result[[T, E]]) T {
+        if not self.*._is_value {
+            std::panic("attempted to retrieve value from std::result in the error state");
+        }
+        return self.*._value;
+    }
+
+    # Returns the error associated with a result in the error state.
+    #
+    # Panics if the result is in the value state.
+    func error(self: *result[[T, E]]) E {
+        if self.*._is_value {
+            std::panic("attempted to retrieve error from std::result in the value state");
+        }
+        return self.*._error;
+    }
+}
+
+# Type representing a value that may not be present. An optional is either in
+# the value state, indicating that the value is present, or the empty state,
+# indicating that the value is absent.
+struct optional[[T]] {
+    var _value: T;
+    var _is_value: bool;
+
+    # Optional in the empty state.
+    const EMPTY = (:optional[[T]]){
+        ._value = uninit,
+        ._is_value = false
+    };
+
+    # Initialize an optional in the value state (value is present).
+    func init_value(value: T) optional[[T]] {
+        return (:optional[[T]]){
+            ._value = value,
+            ._is_value = true
+        };
+    }
+
+    # Initialize an optional in the empty state (value is absent).
+    func init_empty() optional[[T]] {
+        return optional[[T]]::EMPTY;
+    }
+
+    # Returns true if the optional is in the value state.
+    func is_value(self: *optional[[T]]) bool {
+        return self.*._is_value;
+    }
+
+    # Returns true if the optional is in the empty state.
+    func is_empty(self: *optional[[T]]) bool {
+        return not self.*._is_value;
+    }
+
+    # Returns the value associated with a non-empty optional.
+    #
+    # Panics if the optional is in the empty state.
+    func value(self: *optional[[T]]) T {
+        if not self.*._is_value {
+            std::panic("attempted to retrieve value from empty std::optional");
+        }
+        return self.*._value;
+    }
+}
+
+struct reader_itable {
+    var read: func(*any, []byte) std::result[[usize, std::error]];
+}
+
+# Interface representing the read end of a byte stream.
+struct reader {
+    var itable: *std::reader_itable;
+    var object: *any;
+
+    func init[[T]](object: *T) reader {
+        const itable = (:std::reader_itable){
+            .read = T::read
+        };
+        return (:reader){
+            .itable = &itable,
+            .object = object
+        };
+    }
+
+    # Attempt to read `countof(buf)` bytes using the provided reader. The read
+    # operation may mutate any portion of `buf`, even if less than
+    # `countof(buf)` bytes are read.
+    #
+    # On success, this function returns the number of bytes read, which must be
+    # less than or equal to `countof(buf)`, and which may be less than
+    # `countof(buf)` in the event of a partial read. A successful read of size
+    # zero indicates an end-of-stream condition for non-zero `countof(buf)`
+    # buffer sizes.
+    func read(self: *reader, buf: []byte) std::result[[usize, std::error]] {
+        return self.*.itable.*.read(self.*.object, buf);
+    }
+}
+
+struct writer_itable {
+    var write: func(*any, []byte) std::result[[usize, std::error]];
+}
+
+# Interface representing the write end of a byte stream.
+struct writer {
+    var itable: *std::writer_itable;
+    var object: *any;
+
+    func init[[T]](object: *T) writer {
+        const itable = (:std::writer_itable){
+            .write = T::write
+        };
+        return (:writer){
+            .itable = &itable,
+            .object = object
+        };
+    }
+
+    # Attempt to write `countof(buf)` bytes to the provided writer. The write
+    # operation must not mutate the contents of `buf`.
+    #
+    # On success, this function returns the number of bytes written, which may
+    # be less than `countof(buf)` in the event of a partial write.
+    func write(self: *writer, buf: []byte) std::result[[usize, std::error]] {
+        return self.*.itable.*.write(self.*.object, buf);
+    }
+}
+
+struct formatter_itable {
+    var format: func(*any, std::writer, []byte) std::result[[void, std::error]];
+}
+
+# Interface wrapping the format member function. Types which implement format
+# may be written to byte streams using type-specific formatting semantics via
+# functions such as `std::write_format` and `std::print_format`.
+struct formatter {
+    var itable: *std::formatter_itable;
+    var object: *any;
+
+    func init[[T]](object: *T) formatter {
+        const itable = (:std::formatter_itable){
+            .format = T::format
+        };
+        return (:formatter){
+            .itable = &itable,
+            .object = object
+        };
+    }
+
+    # Write a formatted representation of `self` to the provided writer. The
+    # format specifier `fmt` describes *how* to format `self`. Generally, each
+    # type will implement its own type-specific format specifier(s). However,
+    # the empty format specifier, `""`, should always be handled as a default
+    # formatting case.
+    func format(self: *formatter, writer: std::writer, fmt: []byte) std::result[[void, std::error]] {
+        return self.*.itable.*.format(self.*.object, writer, fmt);
+    }
+}
+
+struct iterator_itable[[T]] {
+    var advance: func(*any) bool;
+    var current: func(*any) T;
+}
+
+# Interface used to traverse a collection of elements independently of the
+# collection's underlying data representation.
+#
+# Example:
+#   # Iterate over a collection of type `foo`, holding elements of type
+#   # `foo_element`, using the iterator interface applied to the concrete
+#   # iterator object of type `foo_iterator`.
+#   var iter = foo_iterator::init(&foo_object);
+#   var iter = std::iterator[[foo_element]]::init[[foo_iterator]](&iter);
+#   for iter.advance() {
+#       var current = iter.current();
+#       # Do something with the current element...
+#   }
+struct iterator[[T]] {
+    var itable: *std::iterator_itable[[T]];
+    var object: *any;
+
+    func init[[I]](object: *I) iterator[[T]] {
+        const itable = (:std::iterator_itable[[T]]){
+            .advance = I::advance,
+            .current = I::current
+        };
+        return (:iterator[[T]]){
+            .itable = &itable,
+            .object = object
+        };
+    }
+
+    # Advance the iterator by one position. Returns true if the iterator was
+    # successfully advanced. Returns false if the iterator has reached an
+    # end-of-iteration condition.
+    func advance(self: *iterator[[T]]) bool {
+        return self.*.itable.*.advance(self.*.object);
+    }
+
+    # Returns the item at the current position of the iterator. If the backing
+    # iterator has not begun iteration, or if the backing iterator has reached
+    # an end-of-iteration condition, then the backing `current` function should
+    # panic.
+    func current(self: *iterator[[T]]) T {
+        return self.*.itable.*.current(self.*.object);
+    }
+}
+
+struct allocator_itable {
+    var allocate: func(*any, usize, usize) std::result[[*any, std::error]];
+    var reallocate: func(*any, *any, usize, usize, usize) std::result[[*any, std::error]];
+    var deallocate: func(*any, *any, usize, usize) void;
+}
+
+# Interface for types managing the dynamic allocation, reallocation, and
+# deallocation of memory.
+struct allocator {
+    var itable: *std::allocator_itable;
+    var object: *any;
+
+    func init[[T]](object: *T) allocator {
+        const itable = (:std::allocator_itable){
+            .allocate = T::allocate,
+            .reallocate = T::reallocate,
+            .deallocate = T::deallocate
+        };
+        return (:allocator){
+            .itable = &itable,
+            .object = object
+        };
+    }
+
+    # Attempt to allocate a chunk of memory with the provided alignment and
+    # size.
+    #
+    # On success, this function returns a pointer to the start of the allocated
+    # chunk.
+    func allocate(self: *allocator, align: usize, size: usize) std::result[[*any, std::error]] {
+        return self.*.itable.*.allocate(self.*.object, align, size);
+    }
+
+    # Reallocate a chunk of memory with the provided alignment and size,
+    # starting at the address `ptr`, which was previously allocated by this
+    # allocator.
+    #
+    # On success, this function returns a pointer to the start of the
+    # reallocated chunk, which may have same address as the input `ptr`
+    # argument in the event of a no-op reallocation.
+    func reallocate(self: *allocator, ptr: *any, align: usize, old_size: usize, new_size: usize) std::result[[*any, std::error]] {
+        return self.*.itable.*.reallocate(self.*.object, ptr, align, old_size, new_size);
+    }
+
+    # Deallocate a chunk of memory with the provided size and alignment,
+    # starting at the address `ptr`, which was previously allocated by this
+    # allocator.
+    func deallocate(self: *allocator, ptr: *any, align: usize, size: usize) void {
+        self.*.itable.*.deallocate(self.*.object, ptr, align, size);
+    }
+}
+
+# Allocator that will never successfully allocate, reallocate, or free memory.
+# The purpose of this allocator is to provide a type that may be used as the
+# allocator member for constants of a managed type such as `std::big_integer`.
+# The members constants `ITABLE`, `OBJECT`, and `ALLOCATOR` are provided to
+# explicitly support using the null allocator for constant definitions.
+struct null_allocator {
+    func allocate(self_: *null_allocator, align_: usize, size_: usize) std::result[[*any, std::error]] {
+        return std::result[[*any, std::error]]::init_error(std::error::ALLOCATION_FAILURE);
+    }
+
+    func reallocate(self_: *null_allocator, ptr_: *any, align_: usize, old_size_: usize, new_size_: usize) std::result[[*any, std::error]] {
+        std::panic("attempted null_allocator reallocation");
+        return std::result[[*any, std::error]]::init_error(std::error::ALLOCATION_FAILURE);
+    }
+
+    func deallocate(self_: *null_allocator, ptr_: *any, align_: usize, size_: usize) void {
+        std::panic("attempted null_allocator deallocation");
+    }
+
+    func the() *null_allocator {
+        const the = (:null_allocator){};
+        return &the;
+    }
+
+    const ITABLE: std::allocator_itable = (:std::allocator_itable){
+        .allocate = null_allocator::allocate,
+        .reallocate = null_allocator::reallocate,
+        .deallocate = null_allocator::deallocate
+    };
+
+    const OBJECT: std::null_allocator = (:std::null_allocator){};
+
+    const ALLOCATOR: std::allocator = (:std::allocator){
+        .itable = &null_allocator::ITABLE,
+        .object = &null_allocator::OBJECT
+    };
+}
+
+# Allocator that allocates and reallocates out of a fixed buffer of memory,
+# also known as a bump allocator.
+#
+# Deallocation with `std::linear_allocator::deallocate` is a no-op.
+struct linear_allocator {
+    var _buf: []byte;
+    var _old_offset: usize; # Previous offset into the backing buffer.
+    var _cur_offset: usize; # Current offset into the backing buffer.
+
+    # Initialize a linear allocator with the provided buffer of memory.
+    func init(buf: []byte) linear_allocator {
+        return (:std::linear_allocator){
+            ._buf = buf,
+            ._old_offset = 0,
+            ._cur_offset = 0
+        };
+    }
+
+    # Initialize a linear allocator with a buffer of memory created from an
+    # existing slice of some type `T`. Useful for scenarios where the allocator
+    # will be used to allocate elements of type `T`.
+    #
+    # Example:
+    #   var memory = (:[64]ssize)[0...];
+    #   var allocator = std::linear_allocator::init_from_slice[[ssize]](memory[0:countof(memory)]);
+    #   var allocator = std::allocator::init[[typeof(allocator)]](&allocator);
+    #   # Later...
+    #   var x = std::new[[ssize]](allocator);
+    func init_from_slice[[T]](slice: []T) linear_allocator {
+        var buf_start = startof(slice);
+        var buf_count = countof(slice) * sizeof(T);
+        return linear_allocator::init((:[]byte){(:*byte)buf_start, buf_count});
+    }
+
+    func allocate(self: *linear_allocator, align: usize, size: usize) std::result[[*any, std::error]] {
+        if size == 0 {
+            # Nothing to allocate. The null pointer is returned so that this
+            # allocator does not forward align the current offset for an
+            # allocation of size zero.
+            return std::result[[*any, std::error]]::init_value(std::ptr[[byte]]::NULL);
+        }
+
+        var buf_addr: usize = (:usize)startof(self.*._buf);
+        var cur_addr: usize = buf_addr + self.*._cur_offset;
+        var offset: usize = std::forward_align(cur_addr, align) - buf_addr;
+
+        if offset + size > countof(self.*._buf) {
+            return std::result[[*any, std::error]]::init_error(std::error::ALLOCATION_FAILURE);
+        }
+
+        self.*._old_offset = self.*._cur_offset;
+        self.*._cur_offset = offset + size;
+        return std::result[[*any, std::error]]::init_value(&self.*._buf[offset]);
+    }
+
+    func reallocate(self: *linear_allocator, ptr: *any, align: usize, old_size: usize, new_size: usize) std::result[[*any, std::error]] {
+        if old_size == 0 {
+            # Nothing was allocated in the previous allocate/reallocate call.
+            std::assert(ptr == std::ptr[[byte]]::NULL);
+            return self.*.allocate(align, new_size);
+        }
+
+        var offset = (:usize)ptr - (:usize)startof(self.*._buf);
+
+        # True if the provided block of memory came from the most recent
+        # allocation, in which case some or all of the already allocated memory
+        # may be reclaimed.
+        var is_tail_allocation = offset >= self.*._old_offset;
+
+        if new_size < old_size {
+            if is_tail_allocation {
+                self.*._cur_offset = self.*._cur_offset - (old_size - new_size);
+            }
+            return std::result[[*any, std::error]]::init_value(ptr);
+        }
+
+        if is_tail_allocation {
+            if (new_size - old_size) > (countof(self.*._buf) - self.*._cur_offset) {
+                return std::result[[*any, std::error]]::init_error(std::error::ALLOCATION_FAILURE);
+            }
+            self.*._cur_offset = self.*._cur_offset + (new_size - old_size);
+            return std::result[[*any, std::error]]::init_value(ptr);
+        }
+
+        # Reallocation of memory that did *not* come from the most recent
+        # allocation. The existing memory cannot be reclaimed, so it is left as
+        # is and a new chunk of memory is allocated from the backing buffer.
+        var result = self.*.allocate(align, new_size);
+        if result.is_error() {
+            return result;
+        }
+        var new = result.value();
+        std::slice[[byte]]::copy((:[]byte){(:*byte)new, old_size}, (:[]byte){(:*byte)ptr, old_size});
+        return std::result[[*any, std::error]]::init_value(new);
+    }
+
+    func deallocate(self_: *linear_allocator, ptr_: *any, align_: usize, size_: usize) void {
+        # no-op
+    }
+
+    # Deallocate all allocated memory in the linear allocator at once,
+    # invalidating memory previously allocated by this allocator.
+    func deallocate_all(self: *linear_allocator) void {
+        self.*._old_offset = 0;
+        self.*._cur_offset = 0;
+    }
+}
+
+# Allocator that directly allocates, reallocates, and deallocates pages from
+# the operating system using mmap and munmap.
+struct page_allocator {
+    func allocate(self_: *page_allocator, align: usize, size: usize) std::result[[*any, std::error]] {
+        if align == 0 {
+            if size == 0 {
+                # Allocating zero bytes with an alignment of zero is a valid
+                # use case when allocating for any zero-sized type:
+                # allocate(alignof(:void), sizeof(:void)); Use NULL as the
+                # canonical address for this situation.
+                return std::result[[*any, std::error]]::init_value(std::NULL);
+            }
+            return std::result[[*any, std::error]]::init_error(std::error::INVALID_ARGUMENT);
+        }
+
+        # If the requested alignment is larger than the page size then there is
+        # no way for the kernel to map arbitrary page(s) for the allocation.
+        if align > sys::PAGE_SIZE {
+            return std::result[[*any, std::error]]::init_error(std::error::INVALID_ARGUMENT);
+        }
+
+        # The requested alignment must be a power of two. The expression:
+        #   (x & (x - 1)) == 0
+        # will evaluate as true for any non-zero x that is a power of two. We
+        # check for an alignment of zero above, so it is safe to perform this
+        # check here without the `x == 0 or ...` component that would normally
+        # be required to prevent underflow.
+        var is_power_of_two: bool = (align & (align - 1)) == 0;
+        if not is_power_of_two {
+            return std::result[[*any, std::error]]::init_error(std::error::INVALID_ARGUMENT);
+        }
+
+        # According to POSIX, a call to mmap with a len argument of zero shall
+        # fail and no mapping shall be established. A request for zero bytes of
+        # memory *is* a valid and common case (e.g. allocating a zero element
+        # buffer), so we choose to return the NULL pointer as the "valid"
+        # memory location.
+        if size == 0 {
+            return std::result[[*any, std::error]]::init_value(std::NULL);
+        }
+
+        # NULL addr indicates no address hint.
+        const addr = std::NULL;
+
+        # Give the page(s) read and write permissions.
+        const prot = sys::PROT_READ | sys::PROT_WRITE;
+
+        # Create a private mapping not backed by a file.
+        # The contents of the mapped region are initialized to zero.
+        const flags = sys::MAP_PRIVATE | sys::MAP_ANONYMOUS;
+
+        # Should be -1 when MAP_ANONYMOUS is specified.
+        const fd = (:sys::sint)-1s;
+
+        # Should be 0 when MAP_ANONYMOUS is specified.
+        const off = (:sys::off_t)0u;
+
+        var sysret: ssize = sys::mmap(addr, size, prot, flags, fd, off);
+        if sysret < 0 {
+            return std::result[[*any, std::error]]::init_error((:std::error)sys::error(-sysret));
+        }
+
+        return std::result[[*any, std::error]]::init_value((:*any)(:usize)sysret);
+    }
+
+    func reallocate(self: *page_allocator, ptr: *any, align: usize, old_size: usize, new_size: usize) std::result[[*any, std::error]] {
+        var old_page_count = old_size / sys::PAGE_SIZE + (:usize)((old_size % sys::PAGE_SIZE) != 0);
+        var new_page_count = new_size / sys::PAGE_SIZE + (:usize)((new_size % sys::PAGE_SIZE) != 0);
+        if old_page_count == new_page_count {
+            # Re-use existing allocated page(s).
+            return std::result[[*any, std::error]]::init_value(ptr);
+        }
+
+        var result = self.*.allocate(align, new_size);
+        if result.is_error() {
+            return result;
+        }
+        var new: *any = result.value();
+
+        # Number of bytes that will need to by copied from the old buffer to
+        # the new buffer. If the new buffer has a smaller size then the old
+        # buffer then we should only copy that smaller number of bytes.
+        var copy_size: usize = old_size;
+        if new_size < old_size {
+            copy_size = new_size;
+        }
+
+        std::slice[[byte]]::copy((:[]byte){(:*byte)new, copy_size}, (:[]byte){(:*byte)ptr, copy_size});
+        self.*.deallocate(ptr, align, old_size);
+        return std::result[[*any, std::error]]::init_value(new);
+    }
+
+    func deallocate(self_: *page_allocator, ptr: *any, align: usize, size: usize) void {
+        if align == 0 {
+            if size != 0 {
+                std::panic("invalid alignment");
+            }
+            # Calls to allocate with align of zero and size of zero are always
+            # handed the NULL pointer as a result.
+            if (:usize)ptr != 0 {
+                std::panic("invalid pointer");
+            }
+            # Nothing to deallocate.
+            return;
+        }
+
+        if size == 0 {
+            # std::page_allocator::allocate will not perform a call to mmap
+            # when the requested # allocation size is zero. Likewise, munmap
+            # should *not* be called if the current buffer size is zero as
+            # there is nothing to deallocate.
+            return;
+        }
+
+        if align > sys::PAGE_SIZE {
+            std::panic("invalid alignment");
+        }
+        var is_power_of_two: bool = (align & (align - 1)) == 0;
+        if not is_power_of_two {
+            std::panic("invalid alignment");
+        }
+
+        var sysret = sys::munmap(ptr, size);
+        if sysret < 0 {
+            std::panic("munmap error");
+        }
+    }
+
+    func the() *page_allocator {
+        const the = (:page_allocator){};
+        return &the;
+    }
+}
+
+struct general_allocator_element {
+    var _prev: *general_allocator_element; # nullable
+    var _next: *general_allocator_element; # nullable
+
+    var _start: *any;
+    var _align: usize;
+    var _size: usize;
+
+    # Returns a pointer to the start of the allocated memory.
+    func start(self: *general_allocator_element) *any {
+        return self.*._start;
+    }
+
+    # Returns the alignment of the allocated memory.
+    func align(self: *general_allocator_element) usize {
+        return self.*._align;
+    }
+
+    # Returns the size of the allocated memory in bytes.
+    func size(self: *general_allocator_element) usize {
+        return self.*._size;
+    }
+}
+
+# General purpose heap allocator. This allocator tracks allocations and will
+# automatically deallocate memory when `std::general_allocator::fini` is
+# called.
+#
+# Example:
+#   var allocator = std::general_allocator::init();
+#   defer allocator.fini();
+#   var allocator = std::allocator::init[[typeof(allocator)]](&allocator);
+#   # Later...
+#   var x = std::new[[foo]](allocator);
+#   # At this point the memory allocated by `std::new` can be explicitly
+#   # deallocated later with `std::delete` *or* the deferred `allocator.fini()`
+#   # will handle deallocation at scope exit if the memory has not already been
+#   # explicitly deallocated.
+struct general_allocator {
+    var _elements: *general_allocator_element; # nullable
+
+    # Initialize a general allocator.
+    func init() general_allocator {
+        return (:general_allocator){
+            ._elements = std::ptr[[general_allocator_element]]::NULL
+        };
+    }
+
+    # Finalize resources associated with the general allocator. Memory that was
+    # allocated by this allocator, and which has not yet been explicitly
+    # deallocated, will be deallocated during finalization.
+    func fini(self: *general_allocator) void {
+        for self.*._elements != std::ptr[[std::general_allocator_element]]::NULL {
+            self.*.deallocate(self.*._elements.*._start, self.*._elements.*._align, self.*._elements.*._size);
+        }
+    }
+
+    func allocate(self: *general_allocator, align: usize, size: usize) std::result[[*any, std::error]] {
+        var offset = std::forward_align(sizeof(general_allocator_element), align);
+        var result = std::page_allocator::the().*.allocate(sys::PAGE_SIZE, offset + size);
+        if result.is_error() {
+            return result;
+        }
+
+        var memory = result.value();
+        var element = (:*general_allocator_element)memory;
+        *element = (:general_allocator_element){
+            ._prev = std::ptr[[std::general_allocator_element]]::NULL,
+            ._next = std::ptr[[std::general_allocator_element]]::NULL,
+            ._start = std::ptr[[byte]]::add((:*byte)memory, offset),
+            ._align = align,
+            ._size = size
+        };
+
+        self.*._insert_element(element);
+        return std::result[[*any, std::error]]::init_value(element.*._start);
+    }
+
+    func reallocate(self: *general_allocator, ptr: *any, align: usize, old_size: usize, new_size: usize) std::result[[*any, std::error]] {
+        var offset = std::forward_align(sizeof(general_allocator_element), align);
+        var element = (:*general_allocator_element)std::ptr[[byte]]::sub((:*byte)ptr, offset);
+        self.*._remove_element(element);
+
+        var result = std::page_allocator::the().*.reallocate((:*any)element, sys::PAGE_SIZE, old_size + offset, new_size + offset);
+        if result.is_error() {
+            return result;
+        }
+
+        var memory = result.value();
+        var element = (:*general_allocator_element)memory;
+        *element = (:general_allocator_element){
+            ._prev = std::ptr[[general_allocator_element]]::NULL,
+            ._next = std::ptr[[general_allocator_element]]::NULL,
+            ._start = std::ptr[[byte]]::add((:*byte)memory, offset),
+            ._align = align,
+            ._size = new_size
+        };
+
+        self.*._insert_element(element);
+        return std::result[[*any, std::error]]::init_value(element.*._start);
+    }
+
+    func deallocate(self: *general_allocator, ptr: *any, align: usize, size: usize) void {
+        var offset = std::forward_align(sizeof(general_allocator_element), align);
+        var element = (:*general_allocator_element)std::ptr[[byte]]::sub((:*byte)ptr, offset);
+
+        self.*._remove_element(element);
+        std::page_allocator::the().*.deallocate((:*any)element, sys::PAGE_SIZE, size + offset);
+    }
+
+    func _insert_element(self: *general_allocator, element: *general_allocator_element) void {
+        if self.*._elements == std::ptr[[std::general_allocator_element]]::NULL {
+            element.*._prev = element;
+            element.*._next = element;
+            self.*._elements = element;
+            return;
+        }
+
+        element.*._prev = self.*._elements.*._prev;
+        element.*._next = self.*._elements;
+        element.*._prev.*._next = element;
+        element.*._next.*._prev = element;
+        self.*._elements = element;
+    }
+
+    func _remove_element(self: *general_allocator, element: *general_allocator_element) void {
+        var prev = element.*._prev;
+        var next = element.*._next;
+
+        var is_only_element = prev == element and next == element;
+        if is_only_element {
+            std::assert(self.*._elements == element);
+            self.*._elements = std::ptr[[general_allocator_element]]::NULL;
+            return;
+        }
+
+        prev.*._next = next;
+        next.*._prev = prev;
+        self.*._elements = next;
+    }
+}
+
+# Iterate over the live allocations of a general allocator.
+struct general_allocator_iterator {
+    var _general_allocator: *std::general_allocator;
+    var _current: std::optional[[*general_allocator_element]];
+
+    func init(general_allocator: *std::general_allocator) general_allocator_iterator {
+        return (:general_allocator_iterator){
+            ._general_allocator = general_allocator,
+            ._current = std::optional[[*general_allocator_element]]::EMPTY
+        };
+    }
+
+    func advance(self: *general_allocator_iterator) bool {
+        if self.*._general_allocator.*._elements == std::ptr[[std::general_allocator_element]]::NULL {
+            return false; # end-of-iteration
+        }
+
+        if self.*._current.is_empty() {
+            self.*._current = std::optional[[*general_allocator_element]]::init_value(self.*._general_allocator.*._elements);
+            return true; # start-of-iteration
+        }
+
+        self.*._current = std::optional[[*general_allocator_element]]::init_value(self.*._current.value().*._next);
+        return self.*._current.value() != self.*._general_allocator.*._elements;
+    }
+
+    func current(self: *general_allocator_iterator) *general_allocator_element {
+        if self.*._current.is_empty() {
+            std::panic("invalid iterator");
+        }
+
+        return self.*._current.value();
+    }
+}
+
+# Generic NULL constant. Equivalent to the C NULL pointer cast as type `*any`.
+const NULL = (:*any)0u;
+
+struct ptr[[T]] { # namespace
+    var __namespace__: any;
+
+    # Typed NULL constant. Equivalent to the C NULL pointer cast as type `*T`.
+    const NULL = (:*T)0u;
+
+    # Equivalent to the C operation `ptr + n`.
+    func add(ptr: *T, n: usize) *T {
+        return (:*T)((:usize)ptr + n * sizeof(typeof(*ptr)));
+    }
+
+    # Equivalent to the C operation `ptr - n`.
+    func sub(ptr: *T, n: usize) *T {
+        return (:*T)((:usize)ptr - n * sizeof(typeof(*ptr)));
+    }
+}
+
+struct slice[[T]] { # namespace
+    var __namespace__: any;
+
+    # Copy the elements of `source` into `destination`. The source and
+    # destination buffers must contain the same number of elements.
+    func copy(destination: []T, source: []T) void {
+        if countof(destination) != countof(source) {
+            std::panic("source and destination buffers have different sizes");
+        }
+
+        if countof(source) == 0 {
+            # Nothing to copy.
+            return;
+        }
+
+        # If the copy operation is being performed on two slices into the same
+        # buffer then the direction in which the copy is performed does matter.
+        # Say there is some buffer:
+        #
+        #    0  1  2  3  4
+        #   [A][B][C][D][E]
+        #
+        # and the following copy operation is performed:
+        #
+        #   std::slice[[T]]::copy(buf[0:3], buf[1:4]);
+        #
+        # With a forwards copy the correct result is produced:
+        #
+        #    0  1  2  3  4
+        #   [A][B][C][D][E] <- initial buffer
+        #   [B][B][C][D][E] <- copy first element
+        #   [B][C][C][D][E] <- copy second element
+        #   [B][C][D][D][E] <- copy third element
+        #
+        # But with a backwards copy an incorrect result is produced:
+        #
+        #    0  1  2  3  4
+        #   [A][B][C][D][E] <- initial buffer
+        #   [A][B][D][D][E] <- copy first element
+        #   [A][D][D][D][E] <- copy second element
+        #   [D][D][D][D][E] <- copy third element
+        #
+        # So when the start of `destination` appears before the start of
+        # `source` the copy must be performed forwards, and when the start of
+        # `source` appears before the start of `destination` then copy must be
+        # performed backwards. When the start of `destination` and the start of
+        # `source` are the same, the copy is arbitrarily chosen to be performed
+        # forwards.
+        if &destination[0] <= &source[0] {
+            # Copy forwards.
+            for i in countof(source) {
+                destination[i] = source[i];
+            }
+        }
+        else {
+            # Copy backwards.
+            for i in countof(source) {
+                var index: usize = countof(source) - 1 - i;
+                destination[index] = source[index];
+            }
+        }
+    }
+
+    # Set every element of the provided slice to the provided value.
+    func fill(slice: []T, value: T) void {
+        for i in countof(slice) {
+            slice[i] = value;
+        }
+    }
+
+    # Reverse the elements of the provided slice.
+    func reverse(slice: []T) void {
+        if countof(slice) <= 1 {
+            return;
+        }
+
+        var b = 0u;
+        var e = countof(slice) - 1;
+        for b < e {
+            std::swap[[T]](&slice[b], &slice[e]);
+            b = b + 1;
+            e = e - 1;
+        }
+    }
+
+    # Allocate a slice of `count` elements using the provided allocator.
+    #
+    # This function panics on error.
+    func new(allocator: std::allocator, count: usize) []T {
+        var result = allocator.allocate(alignof(T), count * sizeof(T));
+        if result.is_error() {
+            std::panic(result.error().*.data);
+        }
+        return (:[]T){(:*T)result.value(), count};
+    }
+
+    # Resize the provided slice to `new_count` elements using the provided
+    # allocator.
+    #
+    # This function panics on error.
+    func resize(allocator: std::allocator, slice: []T, new_count: usize) []T {
+        var cur_count: usize = countof(slice);
+        var cur_size: usize = cur_count * sizeof(T);
+        var new_size: usize = new_count * sizeof(T);
+
+        var cur_pointer: *byte = (:*byte)startof(slice);
+        var result = allocator.reallocate(cur_pointer, alignof(T), cur_size, new_size);
+        if result.is_error() {
+            std::panic(result.error().*.data);
+        }
+
+        return (:[]T){(:*T)result.value(), new_count};
+    }
+
+    # Deallocate the provided slice using the provided allocator.
+    func delete(allocator: std::allocator, slice: []T) void {
+        var pointer: *byte = (:*byte)startof(slice);
+        var size: usize = countof(slice) * sizeof(T);
+        allocator.deallocate(pointer, alignof(T), size);
+    }
+}
+
+# Iterator traversing over the elements of a slice.
+struct slice_iterator[[T]] {
+    var _slice: []T;
+    var _index: std::optional[[usize]];
+
+    func init(slice: []T) slice_iterator[[T]] {
+        return (:slice_iterator[[T]]){
+            ._slice = slice,
+            ._index = std::optional[[usize]]::EMPTY
+        };
+    }
+
+    func advance(self: *slice_iterator[[T]]) bool {
+        if countof(self.*._slice) == 0 {
+            return false; # end-of-iteration
+        }
+
+        if self.*._index.is_empty() {
+            self.*._index = std::optional[[usize]]::init_value(0);
+            return true; # start-of-iteration
+        }
+
+        self.*._index = std::optional[[usize]]::init_value(self.*._index.value() + 1);
+        return self.*._index.value() < countof(self.*._slice);
+    }
+
+    func current(self: *slice_iterator[[T]]) *T {
+        if self.*._index.is_empty() or self.*._index.value() >= countof(self.*._slice) {
+            std::panic("invalid iterator");
+        }
+
+        return &self.*._slice[self.*._index.value()];
+    }
+}
+
+struct str { # namespace
+    var __namespace__: any;
+
+    # Returns true if `str` starts with `target`.
+    func starts_with(str: []byte, target: []byte) bool {
+        if countof(str) < countof(target) {
+            return false;
+        }
+
+        for i in countof(target) {
+            if str[i] != target[i] {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    # Returns true if `str` ends with `target`.
+    func ends_with(str: []byte, target: []byte) bool {
+        if countof(str) < countof(target) {
+            return false;
+        }
+
+        var start = countof(str) - countof(target);
+        for i in countof(target) {
+            if str[start+i] != target[i] {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    # Returns true if `str` contains `target`.
+    func contains(str: []byte, target: []byte) bool {
+        if countof(str) < countof(target) {
+            return false;
+        }
+
+        var start = 0u;
+        for start <= (countof(str) - countof(target)) {
+            var i = 0u;
+            for i < countof(target) {
+                if str[start+i] != target[i] {
+                    break;
+                }
+                i = i + 1;
+            }
+
+            if i == countof(target) {
+                return true;
+            }
+            start = start + 1;
+        }
+
+        return false;
+    }
+
+    # Return a newly allocated slice containing the fields of `str` split on
+    # all occurrences of `delimiter`. Consecutive delimiters are not grouped
+    # together and are deemed to delimit empty strings. Elements of the
+    # returned slice are created from, and thus share a lifetime with, the
+    # input string, with the exception of an optional final empty string in the
+    # case of `std::str::split("bytes<delimiter>", "<delimiter>", allocator);`,
+    # which has a static lifetime.
+    #
+    # Example:
+    #   var fields = std::str::split(input, " ", allocator);
+    #   defer std::slice[[[]byte]]::delete(allocator, fields);
+    #   for i in countof(fields) {
+    #       # Do something with each split field...
+    #   }
+    func split(str: []byte, delimiter: []byte, allocator: std::allocator) [][]byte {
+        var slice = std::slice[[[]byte]]::new(allocator, 0);
+
+        var start = 0u;
+        var cur = 0u;
+        for cur < countof(str) {
+            if not std::str::starts_with(str[cur:countof(str)], delimiter) {
+                cur = cur + 1;
+                continue;
+            }
+
+            slice = std::slice[[[]byte]]::resize(allocator, slice, countof(slice) + 1);
+            slice[countof(slice) - 1] = (:[]byte){&str[start], cur - start};
+            cur = cur + countof(delimiter);
+            start = cur;
+        }
+
+        slice = std::slice[[[]byte]]::resize(allocator, slice, countof(slice) + 1);
+        if start < countof(str) {
+            slice[countof(slice) - 1] = (:[]byte){&str[start], cur - start};
+        }
+        else {
+            slice[countof(slice) - 1] = (:[]byte){(:*byte)0u, 0};
+        }
+        return slice;
+    }
+
+    # Returns true if `lhs` is lexicographically equal to `rhs`.
+    func eq(lhs: []byte, rhs: []byte) bool {
+        return lhs.compare(&rhs) == 0;
+    }
+
+    # Returns true if `lhs` is not lexicographically equal to `rhs`.
+    func ne(lhs: []byte, rhs: []byte) bool {
+        return lhs.compare(&rhs) != 0;
+    }
+
+    # Returns true if `lhs` is lexicographically less than to `rhs`.
+    func lt(lhs: []byte, rhs: []byte) bool {
+        return lhs.compare(&rhs) < 0;
+    }
+
+    # Returns true if `lhs` is lexicographically less than or equal to `rhs`.
+    func le(lhs: []byte, rhs: []byte) bool {
+        return lhs.compare(&rhs) <= 0;
+    }
+
+    # Returns true if `lhs` is lexicographically greater than to `rhs`.
+    func gt(lhs: []byte, rhs: []byte) bool {
+        return lhs.compare(&rhs) > 0;
+    }
+
+    # Returns true if `lhs` is lexicographically greater than or equal to
+    # `rhs`.
+    func ge(lhs: []byte, rhs: []byte) bool {
+        return lhs.compare(&rhs) >= 0;
+    }
+}
+
+# Utility type implementing the reader interface for a byte buffer.
+struct str_reader {
+    var _str: []byte;
+    var _idx: usize;
+
+    func init(str: []byte) str_reader {
+        return (:str_reader){
+            ._str = str,
+            ._idx = 0
+        };
+    }
+
+    func read(self: *str_reader, buf: []byte) std::result[[usize, std::error]] {
+        std::assert(self.*._idx <= countof(self.*._str));
+        var cur_count = countof(self.*._str) - self.*._idx;
+        var buf_count = countof(buf);
+        var min_count = *std::min[[usize]](&cur_count, &buf_count);
+
+        var dst = buf[0:min_count];
+        var src = self.*._str[self.*._idx : self.*._idx + min_count];
+        std::slice[[byte]]::copy(dst, src);
+
+        self.*._idx = self.*._idx + min_count;
+        return std::result[[usize, std::error]]::init_value(min_count);
+    }
+}
+
+# Utility type implementing the writer interface for a byte buffer.
+struct str_writer {
+    var _str: []byte;
+    var _idx: usize;
+
+    func init(str: []byte) str_writer {
+        return (:str_writer){
+            ._str = str,
+            ._idx = 0
+        };
+    }
+
+    func write(self: *str_writer, buf: []byte) std::result[[usize, std::error]] {
+        std::assert(self.*._idx <= countof(self.*._str));
+        if (self.*._idx == countof(self.*._str)) {
+            return std::result[[usize, std::error]]::init_error(std::error::BUFFER_FULL);
+        }
+
+        var cur_count = countof(self.*._str) - self.*._idx;
+        var buf_count = countof(buf);
+        var min_count = *std::min[[usize]](&cur_count, &buf_count);
+
+        var src = buf[0:min_count];
+        var dst = self.*._str[self.*._idx : self.*._idx + min_count];
+        std::slice[[byte]]::copy(dst, src);
+
+        self.*._idx = self.*._idx + min_count;
+        return std::result[[usize, std::error]]::init_value(min_count);
+    }
+}
+
+struct cstr { # namespace
+    var __namespace__: any;
+
+    # Returns the number of bytes in `cstr` before the NUL terminator.
+    func count(cstr: *byte) usize {
+        var cur: *byte = cstr;
+        for *cur != '\0' {
+            cur = std::ptr[[byte]]::add(cur, 1);
+        }
+        return (:usize)cur - (:usize)cstr;
+    }
+
+    # Returns a view of `cstr` as if it were a byte slice.
+    func data(cstr: *byte) []byte {
+        return (:[]byte){cstr, std::cstr::count(cstr)};
+    }
+}
+
+struct ascii { # namespace
+    var __namespace__: any;
+
+    # Returns true if `char` is in the range of bytes from '0' to '9'.
+    func is_digit(char: byte) bool {
+        return '0' <= char and char <= '9';
+    }
+
+    # Returns true if `char` is in the range of bytes from 'a' to 'z'.
+    func is_lowercase(char: byte) bool {
+        return 'a' <= char and char <= 'z';
+    }
+
+    # Returns `char` converted to lowercase.
+    func to_lowercase(char: byte) byte {
+        if std::ascii::is_uppercase(char) {
+            return char | 0x20;
+        }
+        return char;
+    }
+
+    # Returns true if `char` is in the range of bytes from 'A' to 'Z'.
+    func is_uppercase(char: byte) bool {
+        return 'A' <= char and char <= 'Z';
+    }
+
+    # Returns `char` converted to uppercase.
+    func to_uppercase(char: byte) byte {
+        if std::ascii::is_lowercase(char) {
+            return char & 0x5F;
+        }
+        return char;
+    }
+
+    # Returns true if `char` is an uppercase or lowercase letter.
+    func is_letter(char: byte) bool {
+        return std::ascii::is_uppercase(char) or std::ascii::is_lowercase(char);
+    }
+
+    # Returns true if `char` is a whitespace character: space, horizontal tab,
+    # vertical tab, form feed, carriage return, or newline.
+    func is_whitespace(char: byte) bool {
+        return char == ' '
+            or char == '\t'
+            or char == '\n'
+            or char == 0x0B  # vertical tab
+            or char == 0x0C  # form feed
+            or char == 0x0D; # carriage return
+    }
+
+    # Returns a view of `str` with leading and trailing whitespace removed.
+    func view_trimmed(str: []byte) []byte {
+        var start = 0u;
+        var end = countof(str);
+
+        # Trim front.
+        for start != end and std::ascii::is_whitespace(str[start]) {
+            start = start + 1;
+        }
+
+        # Trim back.
+        for end != start and std::ascii::is_whitespace(str[end - 1]) {
+            end = end - 1;
+        }
+
+        return str[start:end];
+    }
+}
+
+# Returns the reader interface associated with the standard input stream.
+func input() std::reader {
+    const input = (:std::file){._fd = sys::STDIN_FILENO};
+    return std::reader::init[[std::file]](&input);
+}
+
+# Returns the writer interface associated with the standard output stream.
+func out() std::writer {
+    const out = (:std::file){._fd = sys::STDOUT_FILENO};
+    return std::writer::init[[std::file]](&out);
+}
+
+# Returns the writer interface associated with the standard error stream.
+func err() std::writer {
+    const err = (:std::file){._fd = sys::STDERR_FILENO};
+    return std::writer::init[[std::file]](&err);
+}
+
+# Read from the provided reader, invoking the reader's `read` function
+# repeatedly until either an end-of-stream condition is reached or an error
+# occurs.
+#
+# On success, this function returns a slice of bytes containing the read data,
+# allocated using the provided allocator.
+func read_all(reader: std::reader, allocator: std::allocator) std::result[[[]byte, std::error]] {
+    var bytes = std::slice[[byte]]::new(allocator, 0);
+
+    var buf = (:[4096]byte)[0...];
+    for true {
+        var result = reader.read(buf[0:countof(buf)]);
+        if result.is_error() {
+            std::slice[[byte]]::delete(allocator, bytes);
+            return std::result[[[]byte, std::error]]::init_error(result.error());
+        }
+
+        var read_size = result.value();
+        if read_size == 0 {
+            break;
+        }
+
+        var cur_count = countof(bytes);
+        var new_count = cur_count + read_size;
+        bytes = std::slice[[byte]]::resize(allocator, bytes, new_count);
+        std::slice[[byte]]::copy(bytes[cur_count:new_count], buf[0:read_size]);
+    }
+
+    return std::result[[[]byte, std::error]]::init_value(bytes);
+}
+
+# Read from the provided reader, invoking the reader's `read` function
+# repeatedly until a newline is encountered, an end-of-input condition is
+# reached, or an error occurs. If an end-of-input condition is encountered
+# while reading a line, and the line is empty, an empty optional is returned.
+# If an end-of-input condition is encountered while reading a non-empty line,
+# it is treated as a newline.
+#
+# On success, this function returns a non-empty optional slice of bytes
+# containing the read line without the ending newline, allocated using the
+# provided allocator. If an end-of-input condition is encountered while reading
+# an empty line, then an empty optional is returned.
+#
+# Example:
+#   var result = std::read_line(reader, allocator);
+#   if result.is_error() {
+#       # Handle the error...
+#   }
+#   var optional = result.value();
+#   if optional.is_empty() {
+#       # End-of-input was encountered. Possibly the end of a file stream, or
+#       # EOF sent from a keyboard when reading standard input.
+#       #
+#       # Handle the empty optional...
+#   }
+#   var line = optional.value();
+#   # Queue up the allocated buffer for deletion. This defer should be omitted
+#   # if the line is to be used/stored for further computation outside of the
+#   # current function/block.
+#   defer std::slice[[byte]]::delete(allocator, line);
+#   if countof(line) == 0 {
+#       # The read line consists of a single newline character, "\n", which was
+#       # trimmed away within `std::read_line`. Possibly an empty line in a
+#       # text file, or a user hitting Enter/Return without typing when reading
+#       # standard input.
+#   }
+func read_line(reader: std::reader, allocator: std::allocator) std::result[[std::optional[[[]byte]], std::error]] {
+    var bytes = std::slice[[byte]]::new(allocator, 0);
+
+    var c: byte = uninit;
+    for true {
+        var result = reader.read((:[]byte){&c, 1});
+        if result.is_error() {
+            std::slice[[byte]]::delete(allocator, bytes);
+            return std::result[[std::optional[[[]byte]], std::error]]::init_error(result.error());
+        }
+
+        var read_size = result.value();
+        if read_size == 0 {
+            if countof(bytes) == 0 {
+                # End-of-input encountered while reading an empty line.
+                std::slice[[byte]]::delete(allocator, bytes);
+                return std::result[[std::optional[[[]byte]], std::error]]::init_value(std::optional[[[]byte]]::EMPTY);
+            }
+            # End-of-input encountered while reading a non-empty line.
+            break;
+        }
+
+        if c == '\n' {
+            # End-of-line reached.
+            break;
+        }
+
+        var cur_count = countof(bytes);
+        var new_count = cur_count + read_size;
+        bytes = std::slice[[byte]]::resize(allocator, bytes, new_count);
+        std::slice[[byte]]::copy(bytes[cur_count:new_count], (:[]byte){&c, 1});
+    }
+
+    return std::result[[std::optional[[[]byte]], std::error]]::init_value(std::optional[[[]byte]]::init_value(bytes));
+}
+
+# Write `countof(buf)` bytes to the provided writer, invoking the writer's
+# `write` function repeatedly until either all bytes have been written or an
+# error occurs.
+func write_all(writer: std::writer, buf: []byte) std::result[[void, std::error]] {
+    var written: usize = 0;
+    for written < countof(buf) {
+        var result = writer.write(buf[written:countof(buf)]);
+        if result.is_error() {
+            return std::result[[void, std::error]]::init_error(result.error());
+        }
+        written = written + result.value();
+    }
+    return std::result[[void, std::error]]::init_value(void::VALUE);
+}
+
+# Write `countof(buf)` bytes, followed by a newline, to the provided writer,
+# invoking the writer's `write` function repeatedly until either all bytes have
+# been written or an error occurs.
+func write_line(writer: std::writer, buf: []byte) std::result[[void, std::error]] {
+    var result = std::write_all(writer, buf);
+    if result.is_error() {
+        return std::result[[void, std::error]]::init_error(result.error());
+    }
+
+    var result = std::write_all(writer, "\n");
+    if result.is_error() {
+        return std::result[[void, std::error]]::init_error(result.error());
+    }
+
+    return std::result[[void, std::error]]::init_value(void::VALUE);
+}
+
+# Write formatted bytes to the provided writer, invoking the writer's `write`
+# function repeatedly until either all bytes have been written or an error
+# occurs.
+func write_format(writer: std::writer, format: []byte, args: []std::formatter) std::result[[void, std::error]] {
+    # Current format argument index.
+    var arg: usize = 0;
+
+    # Walking along the format string accumulating bytes to be written verbatim.
+    #   "some{fmt}text"
+    #    ^^^^     ^^^^ Walking along either of the byte spans "some" or "text".
+    const STATE_WALKING: ssize = 0;
+
+    # Inside of a `fmt` string.
+    #   "some{fmt}text"
+    #         ^^^-- Walking (fmtting) along the text between the '{' '}' bytes.
+    const STATE_FMTTING: ssize = 1;
+
+    # Current state.
+    var state: ssize = STATE_WALKING;
+
+    # Start and end indices of the current state.
+    var start: usize = 0;
+    var end: usize = start;
+
+    # Format message passed to `std::panic` when an invalid format string is
+    # encountered. This message contains a format specifier for the `fmt` str.
+    const INVALID_FORMAT_STRING_MESSAGE = "invalid format string \"{e}\"\n";
+
+    for end < countof(format) {
+        if state == STATE_WALKING {
+            if format[end] != '{' and format[end] != '}' {
+                # "some{fmt}text"
+                #  ^^^^     ^^^^ Any non-'{' non-'}' character.
+                end = end + 1;
+                continue;
+            }
+
+            if (end + 1) == countof(format) {
+                # "some{"
+                #      ^
+                # "some}"
+                #      ^ End-of-format-string '{' or '}' character.
+                std::panic_format(INVALID_FORMAT_STRING_MESSAGE, (:[]std::formatter)[std::formatter::init[[[]byte]](&format)]);
+            }
+
+            if format[end] == format[end + 1] {
+                # "some{{text"
+                #      ^^
+                # "some}}text"
+                #      ^^ Escaped '{' or '}' character.
+                var result = std::write_all(writer, format[start:end+1]);
+                if result.is_error() {
+                    return result;
+                }
+                start = end + 2;
+                end = start;
+                continue;
+            }
+
+            if format[end] == '}' {
+                # "some}text"
+                #      ^ End-of-fmt when not in the fmt-parsing state.
+                std::panic_format(
+                    INVALID_FORMAT_STRING_MESSAGE,
+                    (:[]std::formatter)[std::formatter::init[[[]byte]](&format)]);
+            }
+
+            # "some{fmt}text"
+            #      ^ Start of format specifier.
+            var result = std::write_all(writer, format[start:end]);
+            if result.is_error() {
+                return result;
+            }
+            start = end + 1;
+            end = start;
+            state = STATE_FMTTING;
+            if arg == countof(args) {
+                std::panic("invalid format argument count");
+            }
+            continue;
+        }
+
+        if state == STATE_FMTTING {
+            if format[end] != '{' and format[end] != '}' {
+                # "some{fmt}text"
+                #       ^^^ Any non-'{' non-'}' character.
+                end = end + 1;
+                continue;
+            }
+
+            if (end + 1) < countof(format) and format[end] == format[end + 1] {
+                # "some{f{{t}text"
+                #        ^^
+                # "some{f}}t}text"
+                #        ^^ Escaped '{' or '}' character is not allowed inside
+                #           a fmt string.
+                std::panic_format(
+                    INVALID_FORMAT_STRING_MESSAGE,
+                    (:[]std::formatter)[std::formatter::init[[[]byte]](&format)]);
+            }
+
+            # "some{fmt}text"
+            #          ^ End of format specifier.
+            var fmt = format[start:end];
+            var result = args[arg].format(writer, fmt);
+            if result.is_error() {
+                if result.error() == std::error::INVALID_ARGUMENT {
+                    std::panic_format(
+                        "invalid format specifier \"{e}\"",
+                        (:[]std::formatter)[std::formatter::init[[[]byte]](&fmt)]);
+                }
+                return result;
+            }
+            start = end + 1;
+            end = start;
+            arg = arg + 1;
+            state = STATE_WALKING;
+            continue;
+        }
+
+        std::panic("unreachable");
+    }
+
+    # "some{fmt"
+    #          ^ End-of-format-string reached while in the formatting state.
+    if state == STATE_FMTTING {
+        std::panic_format(INVALID_FORMAT_STRING_MESSAGE, (:[]std::formatter)[std::formatter::init[[[]byte]](&format)]);
+    }
+
+    # "some{fmt}text"
+    #           ^^^^ Write the remaining walked text.
+    var result = std::write_all(writer, format[start:end]);
+    if result.is_error() {
+        return result;
+    }
+
+    # Call with a format string "some {fmt} text" (N format specifiers) and N+M
+    # format arguments for some non-zero M. Passing extra format arguments is a
+    # hard error, but there is a specific check for this error *after* the rest
+    # of the walked text has been written so that users will be able to observe
+    # that an error occurred even though the full formatted string was written.
+    if arg != countof(args) {
+        std::panic("invalid format argument count");
+    }
+
+    return std::result[[void, std::error]]::init_value(void::VALUE);
+}
+
+# Write `countof(buf)` bytes to the provided writer, invoking the writer's
+# `write` function repeatedly until either all bytes have been written or an
+# error occurs.
+#
+# This function panics on error.
+func print(writer: std::writer, str: []byte) void {
+    var result = std::write_all(writer, str);
+    if result.is_error() {
+        std::panic(result.error().*.data);
+    }
+}
+
+# Write `countof(buf)` bytes, followed by a newline, to the provided writer,
+# invoking the writer's `write` function repeatedly until all bytes have been
+# written or an error occurs.
+#
+# This function panics on error.
+func print_line(writer: std::writer, str: []byte) void {
+    var result = std::write_line(writer, str);
+    if result.is_error() {
+        std::panic(result.error().*.data);
+    }
+}
+
+# Write formatted bytes to the provided writer, invoking the writer's `write`
+# function repeatedly until either all bytes have been written or an error
+# occurs.
+#
+# This function panics on error.
+func print_format(writer: std::writer, format: []byte, args: []std::formatter) void {
+    var result = std::write_format(writer, format, args);
+    if result.is_error() {
+        std::panic(result.error().*.data);
+    }
+}
+
+# Write formatted bytes, followed by a newline, to the provided writer,
+# invoking the writer's `write` function repeatedly until either all bytes have
+# been written or an error occurs.
+#
+# This function panics on error.
+func print_format_line(writer: std::writer, format: []byte, args: []std::formatter) void {
+    std::print_format(writer, format, args);
+    std::print(writer, "\n");
+}
+
+# Allocate an object of type `T` using the provided allocator.
+#
+# This function panics on error.
+func new[[T]](allocator: std::allocator) *T {
+    var result = allocator.allocate(alignof(T), sizeof(T));
+    if result.is_error() {
+        std::panic(result.error().*.data);
+    }
+    return (:*T)result.value();
+}
+
+# Deallocate the provided object of type `T` using the provided allocator.
+func delete[[T]](allocator: std::allocator, object: *T) void {
+    allocator.deallocate((:*byte)object, alignof(T), sizeof(T));
+}
+
+# Align the provided memory address up to the nearest specified alignment.
+func forward_align(addr: usize, align: usize) usize {
+    if align == 0 {
+        return addr;
+    }
+
+    # The expression:
+    #   (x & (x - 1)) == 0
+    # will evaluate as true for any non-zero x that is a power of two. We
+    # check for an alignment of zero above, so it is safe to perform this
+    # check here without the `x == 0 or ...` component that would normally
+    # be required to prevent underflow.
+    var align_is_power_of_two = (align & (align - 1)) == 0;
+    if align_is_power_of_two {
+        # Same as (addr % align) but faster as `align` is a power of two.
+        var modulo = addr & (align - 1);
+
+        # If the address is not aligned, then push the address to the next
+        # value which is aligned.
+        if modulo != 0 {
+            addr = addr + (align - modulo);
+        }
+
+        return addr;
+    }
+
+    # Align is not a power of two. Count up until the address meets the
+    # specified alignment.
+    for (addr % align) != 0 {
+        addr = addr + 1;
+    }
+
+    return addr;
+}
+
+# Returns an object of type `T` with all bytes (including padding) zeroed.
+func zeroed[[T]]() T {
+    const object: T = uninit;
+    return object;
+}
+
+const EXIT_SUCCESS: ssize = 0;
+const EXIT_FAILURE: ssize = 1;
+
+# Discontinue program execution.
+#
+# This function does not return.
+func exit(status: ssize) void {
+    sys::exit((:s32)status);
+}
+
+# Print the provided string to standard error, followed by a newline, before
+# exiting with failure status.
+#
+# This function does not return.
+func panic(why: []byte) void {
+    std::panic_format("{}", (:[]std::formatter)[std::formatter::init[[[]byte]](&why)]);
+}
+
+# Print the provided formatted string to standard error, followed by a newline,
+# before exiting with failure status.
+#
+# This function does not return.
+func panic_format(format: []byte, args: []std::formatter) void {
+    const PANIC_PREAMBLE = "panic: ";
+    std::print(std::err(), PANIC_PREAMBLE);
+    std::print_format(std::err(), format, args);
+    std::print(std::err(), "\n");
+    std::exit(std::EXIT_FAILURE);
+}
+
+# Panics if the provided condition does not evaluate as true.
+func assert(condition: bool) void {
+    if not condition {
+        std::panic("assert failure");
+    }
+}
+
+# Returns a signed integer less than, equal to, or greater than zero if `lhs`
+# is found, respectively, to be less than, equal to, or greater than `rhs`.
+func compare[[T]](lhs: *T, rhs: *T) ssize {
+    return T::compare(lhs, rhs);
+}
+
+# Returns true if `lhs` is found to be equal to `rhs`.
+func eq[[T]](lhs: *T, rhs: *T) bool {
+    return T::compare(lhs, rhs) == 0;
+}
+
+# Returns true if `lhs` is found to be not equal to `rhs`.
+func ne[[T]](lhs: *T, rhs: *T) bool {
+    return T::compare(lhs, rhs) != 0;
+}
+
+# Returns true if `lhs` is found to be less than `rhs`.
+func lt[[T]](lhs: *T, rhs: *T) bool {
+    return T::compare(lhs, rhs) < 0;
+}
+
+# Returns true if `lhs` is found to be less than or equal to `rhs`.
+func le[[T]](lhs: *T, rhs: *T) bool {
+    return T::compare(lhs, rhs) <= 0;
+}
+
+# Returns true if `lhs` is found to be greater than `rhs`.
+func gt[[T]](lhs: *T, rhs: *T) bool {
+    return T::compare(lhs, rhs) > 0;
+}
+
+# Returns true if `lhs` is found to be greater than or equal to `rhs`.
+func ge[[T]](lhs: *T, rhs: *T) bool {
+    return T::compare(lhs, rhs) >= 0;
+}
+
+# Exchange the contents of `x` and `y`.
+func swap[[T]](x: *T, y: *T) void {
+    var tmp = *x;
+    *x = *y;
+    *y = tmp;
+}
+
+# Returns the minimum value of `x` and `y`.
+func min[[T]](x: *T, y: *T) *T {
+    if std::lt[[T]](x, y) {
+        return x;
+    }
+    return y;
+}
+
+# Returns the maximum value of `x` and `y`.
+func max[[T]](x: *T, y: *T) *T {
+    if std::gt[[T]](x, y) {
+        return x;
+    }
+    return y;
+}
+
+# Managed arbitrary precision integer type.
+struct big_integer {
+    # Allocator used to allocate limbs for this big integer. The allocator is
+    # also used as the backing allocator for intermediate objects created while
+    # performing arithmetic operations.
+    var _allocator: std::allocator;
+    # -1 if the integer <  0
+    #  0 if the integer == 0
+    # +1 if the integer >  0
+    var _sign: ssize;
+    # Magnitude of the integer, represented as a little endian list of u32.
+    # Unsigned 32 bit integers are used as the limb type so that limb
+    # arithmetic may be performed using 64 bit integers without loss of
+    # information or integer out-of-range behavior. The integer zero will have
+    # `countof(limbs) == 0`.
+    var _limbs: []u32;
+
+    # Number of bits in each limb of the integer.
+    const _BITS_PER_LIMB = sizeof(u32) * 8;
+
+    # Initialize a big integer with the value zero.
+    func init(allocator: std::allocator) big_integer {
+        return (:big_integer){
+            ._allocator = allocator,
+            ._sign = 0,
+            ._limbs = std::slice[[u32]]::new(allocator, 0)
+        };
+    }
+
+    # Initialize a big integer with the value of another big integer.
+    func init_from_big_integer(allocator: std::allocator, from: *big_integer) big_integer {
+        var self = big_integer::init(allocator);
+        big_integer::assign(&self, from);
+        return self;
+    }
+
+    # Initialize a big integer with the value of a primitive integer.
+    func init_from_int[[T]](allocator: std::allocator, int: T) big_integer {
+        std::assert(sizeof(T) <= sizeof(u64));
+        if int >= 0 {
+            var self = (:big_integer){
+                ._allocator = allocator,
+                ._sign = +1s,
+                ._limbs = std::slice[[u32]]::new(allocator, 2)
+            };
+            self._limbs[0] = (:u32)int;
+            self._limbs[1] = (:u32)(int >> 32);
+            self._normalize();
+            return self;
+        }
+
+        var magnitude: u64 = uninit;
+        # Special case for the minimum value of a two's complement signed
+        # integer, which will produce an integer out-of-range error when
+        # multiplied by negative one, as the negated (positive) value is
+        # un-representable as a two's complement signed type `T`.
+        std::assert(T::MIN < 0);
+        if int == T::MIN {
+            magnitude = (:u64)T::MAX + 1;
+        }
+        else {
+            magnitude = (:u64)((:T)-1s * int);
+        }
+
+        var self = (:big_integer){
+            ._allocator = allocator,
+            ._sign = -1s,
+            ._limbs = std::slice[[u32]]::new(allocator, 2)
+        };
+        self._limbs[0] = (:u32)magnitude;
+        self._limbs[1] = (:u32)(magnitude >> 32);
+        self._normalize();
+        return self;
+    }
+
+    # Initialize a big integer with the value parsed from a byte slice.
+    func init_from_str(allocator: std::allocator, str: []byte, radix: usize) std::result[[big_integer, std::error]] {
+        if radix != 0 and radix != 2 and radix != 8 and radix != 10 and radix != 16 {
+            return std::result[[big_integer, std::error]]::init_error(std::error::INVALID_ARGUMENT);
+        }
+
+        var cur: usize = 0;
+        var end: usize = countof(str);
+
+        # Parse optional sign (+ or -).
+        var sign: ssize = +1;
+        if (end - cur) > countof("+") and str[cur] == '+' {
+            cur = cur + 1;
+        }
+        if (end - cur) > countof("-") and str[cur] == '-' {
+            sign = -1;
+            cur = cur + 1;
+        }
+
+        # Parse radix.
+        if radix == 0 {
+            var is_bin = (end - cur) >= countof("0b") and str[cur] == '0' and str[cur+1] == 'b';
+            var is_oct = (end - cur) >= countof("0o") and str[cur] == '0' and str[cur+1] == 'o';
+            var is_hex = (end - cur) >= countof("0x") and str[cur] == '0' and str[cur+1] == 'x';
+
+            if is_bin {
+                radix = 2;
+                cur = cur + countof("0b");
+            }
+            elif is_oct {
+                radix = 8;
+                cur = cur + countof("0o");
+            }
+            elif is_hex {
+                radix = 16;
+                cur = cur + countof("0x");
+            }
+            else {
+                radix = 10;
+            }
+        }
+        var radix_big_integer = (:big_integer){
+            ._allocator = std::null_allocator::ALLOCATOR,
+            ._sign = +1,
+            ._limbs = (:[]u32)[(:u32)radix]
+        };
+
+        # Parse digits.
+        if cur == end {
+            return std::result[[big_integer, std::error]]::init_error(std::error::PARSE_FAILURE);
+        }
+        var self = big_integer::init(allocator);
+        for cur != end {
+            var c = str[cur];
+            cur = cur + 1;
+
+            var digit: usize = 0;
+            if '0' <= c and c <= '9' {
+                digit = (:usize)c - '0';
+            }
+            elif 'A' <= c and c <= 'F' {
+                digit = (:usize)c - 'A' + 0xA;
+            }
+            elif 'a' <= c and c <= 'f' {
+                digit = (:usize)c - 'a' + 0xA;
+            }
+            else {
+                self.fini();
+                return std::result[[big_integer, std::error]]::init_error(std::error::PARSE_FAILURE);
+            }
+
+            if digit >= radix {
+                self.fini();
+                return std::result[[big_integer, std::error]]::init_error(std::error::PARSE_FAILURE);
+            }
+
+            var digit_big_integer = (:big_integer){
+                ._allocator = std::null_allocator::ALLOCATOR,
+                ._sign = +1,
+                ._limbs = (:[]u32)[(:u32)digit]
+            };
+            big_integer::mul(&self, &self, &radix_big_integer);
+            big_integer::add(&self, &self, &digit_big_integer);
+        }
+
+        self._sign = sign;
+        self._normalize();
+        return std::result[[big_integer, std::error]]::init_value(self);
+    }
+
+    # Finalize resources associated with the big integer.
+    func fini(self: *big_integer) void {
+        std::slice[[u32]]::delete(self.*._allocator, self.*._limbs);
+    }
+
+    # Convert a big integer to a primitive integer of type `T`.
+    func to_int[[T]](self: *big_integer) std::result[[T, std::error]] {
+        std::assert(sizeof(T) <= sizeof(u64));
+        var buf = (:[64]byte)[0...]; # More than enough space.
+        var allocator = std::linear_allocator::init(buf[0:countof(buf)]);
+        var allocator = std::allocator::init[[typeof(allocator)]](&allocator);
+        var string = std::string::init_from_format(allocator, "{}", (:[]std::formatter)[std::formatter::init[[big_integer]](self)]);
+        return T::init_from_str(string.data(), 0);
+    }
+
+    # self = from
+    func assign(self: *big_integer, from: *big_integer) void {
+        if self == from {
+            return;
+        }
+
+        self.*._sign = from.*._sign;
+        self.*._limbs = std::slice[[u32]]::resize(self.*._allocator, self.*._limbs, countof(from.*._limbs));
+
+        if self.*._sign != 0 {
+            std::assert(countof(self.*._limbs) != 0);
+            std::slice[[u32]]::copy(self.*._limbs, from.*._limbs);
+        }
+    }
+
+    func compare(lhs: *big_integer, rhs: *big_integer) ssize {
+        if lhs.*._sign > rhs.*._sign {
+            return +1;
+        }
+        if lhs.*._sign < rhs.*._sign {
+            return -1;
+        }
+
+        std::assert(lhs.*._sign == rhs.*._sign);
+        var sign = lhs.*._sign;
+        if countof(lhs.*._limbs) > countof(rhs.*._limbs) {
+            return sign;
+        }
+        if countof(lhs.*._limbs) < countof(rhs.*._limbs) {
+            return -sign;
+        }
+
+        std::assert(countof(lhs.*._limbs) == countof(rhs.*._limbs));
+        var count = countof(lhs.*._limbs);
+        for i in count {
+            var limb_idx = count - i - 1;
+            var lhs_limb = lhs.*._limbs[limb_idx];
+            var rhs_limb = rhs.*._limbs[limb_idx];
+
+            if (lhs_limb > rhs_limb) {
+                return sign;
+            }
+            if (lhs_limb < rhs_limb) {
+                return -sign;
+            }
+        }
+
+        return 0;
+    }
+
+    func hash(self: *big_integer) usize {
+        var hash: usize = 0;
+        for i in countof(self.*._limbs) {
+            hash = hash +% (:usize)self.*._limbs[i];
+        }
+        return hash;
+    }
+
+    # Accepted format language:
+    #   [#][radix]
+    #
+    # Use of "#" indicates that the alternate form of the integer should be
+    # formatted. Integers formatted in decimal are unchanged. Integers
+    # formatted in binary are prefixed with "0b". Integers formatted in octal
+    # are prefixed with "0o". And integers formatted in hexadecimal are
+    # prefixed with "0x".
+    #
+    # Accepted strings for radix:
+    #   ""  => decimal (default)
+    #   "d" => decimal
+    #   "b" => binary
+    #   "o" => octal
+    #   "x" => hexadecimal (lower)
+    #   "X" => hexadecimal (upper)
+    func format(self: *big_integer, writer: std::writer, fmt: []byte) std::result[[void, std::error]] {
+        if countof(self.*._limbs) == 0 {
+            var int: smax = 0;
+            return smax::format(&int, writer, fmt);
+        }
+        if countof(self.*._limbs) == 1 {
+            var int: smax = (:smax)self.*._sign * (:smax)self.*._limbs[0];
+            return smax::format(&int, writer, fmt);
+        }
+
+        const DIGITS_TABLE_COUNT: usize = 16;
+        const DIGITS_TABLE_LOWER = (:[DIGITS_TABLE_COUNT]byte)[
+            '0', '1', '2', '3', '4', '5', '6', '7',
+            '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'
+        ];
+        const DIGITS_TABLE_UPPER = (:[DIGITS_TABLE_COUNT]byte)[
+            '0', '1', '2', '3', '4', '5', '6', '7',
+            '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'
+        ];
+
+        var fmt_idx = 0u;
+
+        var is_digits_prefix = false;
+        if fmt_idx < countof(fmt) and fmt[fmt_idx] == '#' {
+            is_digits_prefix = true;
+            fmt_idx = fmt_idx + 1;
+        }
+
+        var radix = std::big_integer::init_from_int[[usize]](self.*._allocator, 10);
+        defer radix.fini();
+        var digits_prefix: []byte = "";
+        var digits_table: []byte = DIGITS_TABLE_LOWER[0:DIGITS_TABLE_COUNT];
+
+        if fmt_idx < countof(fmt) {
+            var c: byte = fmt[fmt_idx];
+            fmt_idx = fmt_idx + 1;
+
+            if c == 'd' {
+                # Decimal defaults already set.
+            }
+            elif c == 'b' {
+                radix = std::big_integer::init_from_int[[usize]](self.*._allocator, 2);
+                digits_prefix = "0b";
+            }
+            elif c == 'o' {
+                radix = std::big_integer::init_from_int[[usize]](self.*._allocator, 8);
+                digits_prefix = "0o";
+            }
+            elif c == 'x' {
+                radix = std::big_integer::init_from_int[[usize]](self.*._allocator, 16);
+                digits_prefix = "0x";
+            }
+            elif c == 'X' {
+                radix = std::big_integer::init_from_int[[usize]](self.*._allocator, 16);
+                digits_prefix = "0x";
+                digits_table = DIGITS_TABLE_UPPER[0:DIGITS_TABLE_COUNT];
+            }
+            else {
+                return std::result[[void, std::error]]::init_error(std::error::INVALID_ARGUMENT);
+            }
+        }
+
+        if fmt_idx != countof(fmt) {
+            return std::result[[void, std::error]]::init_error(std::error::INVALID_ARGUMENT);
+        }
+
+        var magnitude = big_integer::init_from_big_integer(self.*._allocator, self);
+        big_integer::assign(&magnitude, self);
+        big_integer::abs(&magnitude, &magnitude);
+        defer magnitude.fini();
+
+        var output = std::vector[[byte]]::init(self.*._allocator);
+        defer output.fini();
+
+        if magnitude._sign == 0 {
+            std::assert(countof(self.*._limbs) == 0);
+            # Write a single zero digit.
+            output.insert(0u, '0');
+        }
+        for magnitude._sign != 0 {
+            std::assert(countof(self.*._limbs) != 0);
+
+            var div = big_integer::init(self.*._allocator);
+            defer div.fini();
+            var rem = big_integer::init(self.*._allocator);
+            defer rem.fini();
+            big_integer::_divrem(&div, &rem, &magnitude, &radix);
+
+            if rem._sign == 0 {
+                output.insert(0u, '0');
+            }
+            elif rem._sign == +1 {
+                std::assert(countof(rem._limbs) == 1);
+                var digit = digits_table[(:usize)rem._limbs[0]];
+                output.insert(0u, digit);
+            }
+            else {
+                std::panic("unreachable");
+            }
+
+            big_integer::assign(&magnitude, &div);
+        }
+
+        if is_digits_prefix and countof(digits_prefix) != 0 {
+            std::assert(countof(digits_prefix) == 2);
+            output.insert(0u, digits_prefix[0]);
+            output.insert(1u, digits_prefix[1]);
+        }
+        if self.*._sign == -1 {
+            output.insert(0u, '-');
+        }
+        return std::write_all(writer, output.data());
+    }
+
+    # res = -rhs
+    func neg(res: *big_integer, rhs: *big_integer) void {
+        big_integer::assign(res, rhs);
+        # +1 * -1 == -1
+        # -1 * -1 == +1
+        #  0 * -1 ==  0
+        res.*._sign = res.*._sign * -1;
+    }
+
+    # res = abs(rhs)
+    func abs(res: *big_integer, rhs: *big_integer) void {
+        big_integer::assign(res, rhs);
+        # +1 * +1 == +1
+        # -1 * -1 == +1
+        #  0 *  0 ==  0
+        res.*._sign = rhs.*._sign * rhs.*._sign;
+    }
+
+    # res = lhs + rhs
+    func add(res: *big_integer, lhs: *big_integer, rhs: *big_integer) void {
+        # 0 + rhs == rhs
+        if lhs.*._sign == 0 {
+            big_integer::assign(res, rhs);
+            return;
+        }
+        # lhs + 0 == lhs
+        if rhs.*._sign == 0 {
+            big_integer::assign(res, lhs);
+            return;
+        }
+        # (+lhs) + (-rhs) == (+lhs) - (+rhs)
+        if (lhs.*._sign == +1) and (rhs.*._sign == -1) {
+            var tmp_rhs = big_integer::init(res.*._allocator);
+            big_integer::neg(&tmp_rhs, rhs);
+            big_integer::sub(res, lhs, &tmp_rhs);
+            tmp_rhs.fini();
+            return;
+        }
+        # (-lhs) + (+rhs) == (+rhs) - (+lhs)
+        if (lhs.*._sign == -1) and (rhs.*._sign == +1) {
+            var tmp_lhs = big_integer::init(res.*._allocator);
+            big_integer::neg(&tmp_lhs, lhs);
+            big_integer::sub(res, rhs, &tmp_lhs);
+            tmp_lhs.fini();
+            return;
+        }
+
+        # (+lhs) + (+rhs) == +(lhs + rhs)
+        # (-lhs) + (-rhs) == -(lhs + rhs)
+        std::assert(lhs.*._sign == rhs.*._sign);
+        var sign = lhs.*._sign;
+        var lhs_limb_count = countof(lhs.*._limbs);
+        var rhs_limb_count = countof(rhs.*._limbs);
+        var limb_count = 1 + *std::max[[usize]](&lhs_limb_count, &rhs_limb_count);
+        var tmp_res = (:big_integer){
+            ._allocator = res.*._allocator,
+            ._sign = sign,
+            ._limbs = std::slice[[u32]]::new(res.*._allocator, limb_count)
+        };
+
+        var carry: u64 = 0;
+        for i in countof(tmp_res._limbs) {
+            var lhs_limb: u64 = 0;
+            if i < countof(lhs.*._limbs) {
+                lhs_limb = (:u64)lhs.*._limbs[i]; # upcast
+            }
+            var rhs_limb: u64 = 0;
+            if i < countof(rhs.*._limbs) {
+                rhs_limb = (:u64)rhs.*._limbs[i]; # upcast
+            }
+            var tot: u64 = lhs_limb + rhs_limb + carry;
+
+            tmp_res._limbs[i] = (:u32)tot;
+            carry = (:u64)(tot > (:u64)u32::MAX);
+        }
+        std::assert(carry == 0);
+
+        tmp_res._normalize();
+        big_integer::assign(res, &tmp_res);
+        tmp_res.fini();
+    }
+
+    # res = lhs - rhs
+    func sub(res: *big_integer, lhs: *big_integer, rhs: *big_integer) void {
+        # 0 - rhs == -(rhs)
+        if lhs.*._sign == 0 {
+            big_integer::neg(res, rhs);
+            return;
+        }
+        # lhs - 0 == lhs
+        if rhs.*._sign == 0 {
+            big_integer::assign(res, lhs);
+            return;
+        }
+        # (+lhs) - (-rhs) == (+lhs) + (+rhs)
+        if (lhs.*._sign == +1) and (rhs.*._sign == -1) {
+            var tmp_rhs = big_integer::init(res.*._allocator);
+            big_integer::neg(&tmp_rhs, rhs);
+            big_integer::add(res, lhs, &tmp_rhs);
+            tmp_rhs.fini();
+            return;
+        }
+        # (-lhs) - (+rhs) == (-lhs) + (-rhs)
+        if (lhs.*._sign == -1) and (rhs.*._sign == +1) {
+            var tmp_rhs = big_integer::init(res.*._allocator);
+            big_integer::neg(&tmp_rhs, rhs);
+            big_integer::add(res, lhs, &tmp_rhs);
+            tmp_rhs.fini();
+            return;
+        }
+
+        # (+lhs) - (+rhs) == +(lhs - rhs)
+        # (-lhs) - (-rhs) == -(lhs - rhs)
+        std::assert(lhs.*._sign == rhs.*._sign);
+        var sign = lhs.*._sign;
+        # Note that the expression (lhs - rhs) will require flipping the sign
+        # of the result if the magnitude of lhs is greater than the magnitude
+        # of rhs:
+        # (+5) - (+3) == +2
+        # (+3) - (+5) == -2
+        # (-5) - (-3) == -2
+        # (-3) - (-5) == +2
+        var cmp = big_integer::compare(lhs, rhs);
+        var neg = ((sign == +1) and (cmp < 0)) or ((sign == -1) and (cmp > 0));
+        if neg {
+            var tmp = lhs;
+            lhs = rhs;
+            rhs = tmp;
+        }
+
+        var lhs_limb_count = countof(lhs.*._limbs);
+        var rhs_limb_count = countof(rhs.*._limbs);
+        var limb_count = *std::max[[usize]](&lhs_limb_count, &rhs_limb_count);
+        var tmp_res = (:big_integer){
+            ._allocator = res.*._allocator,
+            ._sign = sign,
+            ._limbs = std::slice[[u32]]::new(res.*._allocator, limb_count)
+        };
+
+        var borrow: u64 = 0;
+        for i in countof(tmp_res._limbs) {
+            var lhs_limb: u64 = 0;
+            if i < countof(lhs.*._limbs) {
+                lhs_limb = (:u64)lhs.*._limbs[i]; # upcast
+            }
+            var rhs_limb: u64 = 0;
+            if i < countof(rhs.*._limbs) {
+                rhs_limb = (:u64)rhs.*._limbs[i]; # upcast
+            }
+            var tot: u64 = (lhs_limb -% rhs_limb) -% borrow;
+
+            tmp_res._limbs[i] = (:u32)tot;
+            borrow = (:u64)(tot > (:u64)u32::MAX);
+        }
+        std::assert(borrow == 0);
+
+        if (neg) {
+            big_integer::neg(&tmp_res, &tmp_res);
+        }
+        tmp_res._normalize();
+        big_integer::assign(res, &tmp_res);
+        tmp_res.fini();
+    }
+
+    # res = lhs * rhs
+    func mul(res: *big_integer, lhs: *big_integer, rhs: *big_integer) void {
+        # 0 * rhs == 0
+        # lhs * 0 == 0
+        if lhs.*._sign == 0 or rhs.*._sign == 0 {
+            var zero = big_integer::init(res.*._allocator);
+            defer zero.fini();
+            big_integer::assign(res, &zero);
+            return;
+        }
+
+        # Algorithm M (Multiplication of Nonnegative Integers)
+        # Source: Art of Computer Programming, Volume 2: Seminumerical
+        #         Algorithms (Third Edition) page. 268.
+        var count = countof(lhs.*._limbs) + countof(rhs.*._limbs);
+        var tmp_w = big_integer::init(res.*._allocator); # abs(res)
+        tmp_w._resize(count);
+
+        var w = tmp_w._limbs;
+        var u = lhs.*._limbs;
+        var v = rhs.*._limbs;
+        var m = countof(lhs.*._limbs);
+        var n = countof(rhs.*._limbs);
+        const b: u64 = (:u64)u32::MAX + 1;
+        for j in n {
+            if v[j] == 0 {
+                w[j + m] = 0;
+                continue;
+            }
+            var k: u64 = 0;
+            for i in m {
+                var u_limb: u64 = 0;
+                if i < countof(u) {
+                    u_limb = (:u64)u[i];
+                }
+
+                var v_limb: u64 = 0;
+                if j < countof(v) {
+                    v_limb = (:u64)v[j];
+                }
+
+                var t: u64 = u_limb * v_limb + (:u64)w[i + j] + k;
+                w[i + j] = (:u32)(t % b);
+                k = t / b;
+                assert(k <= b);
+            }
+            w[j + m] = (:u32)k;
+        }
+
+        tmp_w._sign = lhs.*._sign * rhs.*._sign;
+        tmp_w._normalize();
+        big_integer::assign(res, &tmp_w);
+        tmp_w.fini();
+    }
+
+    # res = lhs / rhs
+    func div(res: *big_integer, lhs: *big_integer, rhs: *big_integer) void {
+        var rem = big_integer::init(res.*._allocator);
+        defer rem.fini();
+        big_integer::_divrem(res, &rem, lhs, rhs);
+    }
+
+    # res = lhs % rhs
+    func rem(res: *big_integer, lhs: *big_integer, rhs: *big_integer) void {
+        var div = big_integer::init(res.*._allocator);
+        defer div.fini();
+        big_integer::_divrem(&div, res, lhs, rhs);
+    }
+
+    func _resize(self: *big_integer, new_count: usize) void {
+        var cur_count = countof(self.*._limbs);
+        if new_count <= cur_count {
+            self.*._limbs = std::slice[[u32]]::resize(self.*._allocator, self.*._limbs, new_count);
+            return;
+        }
+
+        self.*._limbs = std::slice[[u32]]::resize(self.*._allocator, self.*._limbs, new_count);
+        std::slice[[u32]]::fill(self.*._limbs[cur_count:new_count], 0);
+    }
+
+    func _normalize(self: *big_integer) void {
+        var count = countof(self.*._limbs);
+        for count != 0 and self.*._limbs[count - 1] == 0 {
+            count = count - 1;
+        }
+
+        self.*._limbs = std::slice[[u32]]::resize(self.*._allocator, self.*._limbs, count);
+        if (count == 0) {
+            self.*._sign = 0;
+        }
+    }
+
+    func _magnitude_bit_count(self: *big_integer) usize {
+        if countof(self.*._limbs) == 0 {
+            return 0;
+        }
+
+        var top = self.*._limbs[countof(self.*._limbs) - 1];
+        var top_bit_count = 0u;
+        for top != 0 {
+            top_bit_count = top_bit_count + 1;
+            top = top >> 1;
+        }
+
+        return (countof(self.*._limbs) - 1) * big_integer::_BITS_PER_LIMB + top_bit_count;
+    }
+
+    func _magnitude_set_bit(self: *big_integer, n: usize, value: bool) void {
+        var limb_idx = n / big_integer::_BITS_PER_LIMB;
+        if limb_idx >= countof(self.*._limbs) {
+            if not value {
+                # The abstract unallocated bit is already zero so re-setting it
+                # to zero does not change the representation of self. Return
+                # early rather than going through the trouble of resizing and
+                # then normalizing for what is essentially a NOP.
+                return;
+            }
+            self.*._resize(limb_idx + 1);
+        }
+
+        var plimb: *u32 = &self.*._limbs[limb_idx];
+        var mask = 1u32 << (n % big_integer::_BITS_PER_LIMB);
+        if (value) {
+            *plimb = *plimb | mask;
+        }
+        else {
+            *plimb = *plimb & ~mask;
+        }
+
+        if self.*._sign == 0 and value {
+            # If the integer was zero (i.e. had sign zero) before and a bit was
+            # just flipped "on" then treat that integer as it if turned from
+            # the integer zero to a positive integer.
+            self.*._sign = +1;
+        }
+        self.*._normalize();
+    }
+
+    func _magnitude_get_bit(self: *big_integer, n: usize) bool {
+        if n >= (countof(self.*._limbs) * big_integer::_BITS_PER_LIMB) {
+            return false;
+        }
+
+        var limb = self.*._limbs[n / big_integer::_BITS_PER_LIMB];
+        var mask = 1u32 << (n % big_integer::_BITS_PER_LIMB);
+        return (limb & mask) != 0;
+    }
+
+    func _magnitude_shiftl(self: *big_integer, nbits: usize) void {
+        if nbits == 0 {
+            return;
+        }
+        if self.*._sign == 0 {
+            return;
+        }
+
+        big_integer::_magnitude_shiftl_limbs(self, nbits / big_integer::_BITS_PER_LIMB);
+        for _ in (nbits % big_integer::_BITS_PER_LIMB) {
+            if (self.*._limbs[countof(self.*._limbs) - 1] & 0x80000000u32) != 0 {
+                self.*._resize(countof(self.*._limbs) + 1);
+                self.*._limbs[countof(self.*._limbs) - 1] = 0x00000000u32;
+            }
+
+            # [limb0 << 1][limb1 << 1 | msbit(limb0)][limb2 << 1 | msbit(limb1)]...
+            var i = countof(self.*._limbs) - 1;
+            for i > 0 {
+                self.*._limbs[i] = self.*._limbs[i] << 1;
+                if (self.*._limbs[i - 1] & 0x80000000u32) != 0 {
+                    self.*._limbs[i] = self.*._limbs[i] | 0x00000001u32;
+                }
+
+                i = i - 1;
+            }
+            self.*._limbs[0] = self.*._limbs[0] << 1u;
+        }
+    }
+
+    # Shift left by nlimbs number of limbs.
+    # Example:
+    #      -0xFFEE shifted by nlimbs=2 becomes -0xFFEE0000 with 8-bit limbs.
+    func _magnitude_shiftl_limbs(self: *big_integer, nlimbs: usize) void {
+        if nlimbs == 0 {
+            return;
+        }
+
+        self.*._resize(countof(self.*._limbs) + nlimbs);
+        std::slice[[u32]]::copy(
+            self.*._limbs[nlimbs : countof(self.*._limbs)],
+            self.*._limbs[0 : countof(self.*._limbs) - nlimbs]);
+        std::slice[[u32]]::fill(self.*._limbs[0:nlimbs], 0u32);
+    }
+
+    # div = lhs / rhs
+    # rem = lhs % rhs
+    # The allocator of `div` is used to allocate intermediate objects.
+    func _divrem(div: *big_integer, rem: *big_integer, lhs: *big_integer, rhs: *big_integer) void {
+        # lhs / 0 == undefined
+        if (rhs.*._sign == 0) {
+            std::panic("divide by zero");
+        }
+
+        # Binary Long Division Algorithm
+        # Source: https://en.wikipedia.org/wiki/Division_algorithm#Long_division
+        #
+        # The following algorithm, the binary version of the famous long
+        # division, will divide N by D, placing the quotient in Q and the
+        # remainder in R. In the following code, all values are treated as
+        # unsigned integers.
+        #
+        # if D = 0 then error(DivisionByZeroException) end
+        # Q := 0                  -- Initialize quotient and remainder to zero
+        # R := 0
+        # for i := n − 1 .. 0 do  -- Where n is number of bits in N
+        #   R := R << 1           -- Left-shift R by 1 bit
+        #   R(0) := N(i)          -- Set the least-significant bit of R equal
+        #                            to bit i of the numerator
+        #   if R ≥ D then
+        #     R := R − D
+        #     Q(i) := 1
+        #   end
+        # end
+        var Q = big_integer::init(div.*._allocator); # abs(div)
+        var R = big_integer::init(div.*._allocator); # abs(rem)
+        var N = big_integer::init(div.*._allocator); # abs(lhs)
+        big_integer::abs(&N, lhs);
+        var D = big_integer::init(div.*._allocator); # abs(rhs)
+        big_integer::abs(&D, rhs);
+        var i = big_integer::_magnitude_bit_count(lhs);
+        for i != 0 {
+            i = i - 1;
+            big_integer::_magnitude_shiftl(&R, 1);
+            big_integer::_magnitude_set_bit(&R, 0, big_integer::_magnitude_get_bit(&N, i));
+            if big_integer::compare(&R, &D) >= 0 {
+                big_integer::sub(&R, &R, &D);
+                big_integer::_magnitude_set_bit(&Q, i, true);
+            }
+        }
+
+        # printf("%2d %2d\n", +7 / +3, +7 % +3); // 2  1
+        # printf("%2d %2d\n", +7 / -3, +7 % -3); //-2  1
+        # printf("%2d %2d\n", -7 / +3, -7 % +3); //-2 -1
+        # printf("%2d %2d\n", -7 / -3, -7 % -3); // 2 -1
+        # ISO-IEC-9899-1999 Section 6.5.5 - Multiplicative operators:
+        # > When integers are divided, the result of the / operator is the
+        # > algebraic quotient with any fractional part discarded. If the
+        # > quotient a/b is representable, the expression (a/b)*b + a%b shall
+        # > equal a.
+        Q._sign = lhs.*._sign * rhs.*._sign;
+        R._sign = lhs.*._sign;
+
+        Q._normalize();
+        big_integer::assign(div, &Q);
+        R._normalize();
+        big_integer::assign(rem, &R);
+        Q.fini();
+        R.fini();
+        N.fini();
+        D.fini();
+    }
+}
+
+# Managed dynamic byte string type.
+struct string {
+    var _allocator: std::allocator;
+    var _start: *byte;
+    var _count: usize;
+    var _capacity: usize;
+
+    # Initialize a string with a count and capacity of zero.
+    func init(allocator: std::allocator) string {
+        return (:string){
+            ._allocator = allocator,
+            ._start = (:*byte)0u,
+            ._count = 0,
+            ._capacity = 0
+        };
+    }
+
+    # Initialize a string as a copy of `str`.
+    func init_from_str(allocator: std::allocator, str: []byte) string {
+        var self = string::init(allocator);
+        std::print(std::writer::init[[std::string]](&self), str);
+        return self;
+    }
+
+    # Initialize a string from the provided format.
+    func init_from_format(allocator: std::allocator, format: []byte, args: []std::formatter) string {
+        var self = string::init(allocator);
+        std::print_format(std::writer::init[[std::string]](&self), format, args);
+        return self;
+    }
+
+    # Finalize resources assocaited with the string.
+    func fini(self: *string) void {
+        if self.*._capacity != 0 {
+            std::slice[[byte]]::delete(self.*._allocator, (:[]byte){self.*._start, self.*._capacity});
+        }
+    }
+
+    # Returns a pointer to the first byte of the string.
+    func start(self: *string) *byte {
+        return self.*._start;
+    }
+
+    # Returns the number of bytes in the string.
+    func count(self: *string) usize {
+        return self.*._count;
+    }
+
+    # Returns the number of bytes the string can hold without reallocating.
+    func capacity(self: *string) usize {
+        return self.*._capacity;
+    }
+
+    # Returns a view of the string bytes.
+    func data(self: *string) []byte {
+        return (:[]byte){self.*._start, self.*._count};
+    }
+
+    # Compares the strings as if they were byte slices.
+    func compare(lhs: *string, rhs: *string) ssize {
+        var lhs_data = lhs.*.data();
+        var rhs_data = rhs.*.data();
+        return lhs_data.compare(&rhs_data);
+    }
+
+    # Hashes the string as if it were a byte slice.
+    func hash(self: *string) usize {
+        var data = self.*.data();
+        return data.hash();
+    }
+
+    # Formats the string as if it were a byte slice using the same format
+    # specifiers as the `[]byte` format function.
+    func format(self: *string, writer: std::writer, fmt: []byte) std::result[[void, std::error]] {
+        var data = self.*.data();
+        return data.format(writer, fmt);
+    }
+
+    # Reserve storage such that the string can hold at least `capacity`
+    # bytes without reallocating.
+    func reserve(self: *string, capacity: usize) void {
+        if capacity <= self.*._capacity {
+            return;
+        }
+
+        if self.*._capacity == 0 {
+            var new = std::slice[[byte]]::new(self.*._allocator, capacity);
+            self.*._start = &new[0];
+            self.*._capacity = capacity;
+            return;
+        }
+
+        var cur = (:[]byte){self.*._start, self.*._capacity};
+        var new = std::slice[[byte]]::resize(self.*._allocator, cur, capacity);
+        self.*._start = &new[0];
+        self.*._capacity = capacity;
+    }
+
+    # Resize the string to `count` bytes.
+    func resize(self: *string, count: usize) void {
+        if count > self.*._capacity {
+            self.*.reserve(count);
+        }
+
+        self.*._count = count;
+    }
+
+    # Implements the writer interface.
+    func write(self: *string, buf: []byte) std::result[[usize, std::error]] {
+        var end = self.*._count;
+        self.*.resize(end + countof(buf));
+        std::slice[[byte]]::copy(self.*.data()[end : end + countof(buf)], buf);
+        return std::result[[usize, std::error]]::init_value(countof(buf));
+    }
+}
+
+# Managed dynamic array type.
+struct vector[[T]] {
+    var _allocator: std::allocator;
+    var _start: *T;
+    var _count: usize;
+    var _capacity: usize;
+
+    # Initialize a vector with a count and capacity of zero.
+    func init(allocator: std::allocator) vector[[T]] {
+        return (:vector[[T]]){
+            ._allocator = allocator,
+            ._start = (:*T)0u,
+            ._count = 0,
+            ._capacity = 0
+        };
+    }
+
+    # Finalize resources associated with the vector.
+    func fini(self: *vector[[T]]) void {
+        if self.*._capacity != 0 {
+            std::slice[[T]]::delete(self.*._allocator, (:[]T){self.*._start, self.*._capacity});
+        }
+    }
+
+    # Returns a pointer to the first element of the vector.
+    func start(self: *vector[[T]]) *T {
+        return self.*._start;
+    }
+
+    # Returns the number of elements in the vector.
+    func count(self: *vector[[T]]) usize {
+        return self.*._count;
+    }
+
+    # Returns the number of elements the vector can hold without reallocating.
+    func capacity(self: *vector[[T]]) usize {
+        return self.*._capacity;
+    }
+
+    # Returns a view of the vector elements.
+    func data(self: *vector[[T]]) []T {
+        return (:[]T){self.*._start, self.*._count};
+    }
+
+    # Reserve storage such that the vector can hold at least `capacity`
+    # elements without reallocating.
+    func reserve(self: *vector[[T]], capacity: usize) void {
+        if capacity <= self.*._capacity {
+            return;
+        }
+
+        if self.*._capacity == 0 {
+            var new = std::slice[[T]]::new(self.*._allocator, capacity);
+            self.*._start = &new[0];
+            self.*._capacity = capacity;
+            return;
+        }
+
+        var cur = (:[]T){self.*._start, self.*._capacity};
+        var new = std::slice[[T]]::resize(self.*._allocator, cur, capacity);
+        self.*._start = &new[0];
+        self.*._capacity = capacity;
+    }
+
+    # Resize the vector to `count` elements.
+    func resize(self: *vector[[T]], count: usize) void {
+        if count > self.*._capacity {
+            self.*.reserve(count);
+        }
+
+        self.*._count = count;
+    }
+
+    # Insert `value` into the vector at position `index`. Calling
+    # `std::vector::insert` with `index` equal to the count of the vector is
+    # equivalent to calling `std::vector::push` with the provided value.
+    #
+    # Panics if the provided index is greater than the count of the vector.
+    func insert(self: *vector[[T]], index: usize, value: T) void {
+        if index > self.*._count {
+            std::panic("invalid index");
+        }
+
+        if self.*._count == 0 {
+            self.*.resize(1);
+            self.*.data()[0] = value;
+            return;
+        }
+
+        # [A][B][C][D][E]
+        # [A][B][C][D][E][ ]
+        if self.*._count == self.*._capacity {
+            const GROWTH_FACTOR: usize = 2;
+            self.*.reserve(self.*._capacity * GROWTH_FACTOR);
+        }
+
+        # [A][B][C][D][E][ ]
+        # [A][B][ ][C][D][E]
+        var n: usize = self.*._count - index;
+        var mem: []T = (:[]T){self.*._start, self.*._capacity};
+        var src: []T = mem[index     : index + n];
+        var dst: []T = mem[index + 1 : index + n + 1];
+        std::slice[[T]]::copy(dst, src);
+        self.*._count = self.*._count + 1;
+
+        # [A][B][ ][C][D][E]
+        # [A][B][X][C][D][E]
+        self.*.data()[index] = value;
+    }
+
+    # Removes and returns the element from the vector at posisiton `index`.
+    #
+    # Panics if the provided index is out of bounds.
+    func remove(self: *vector[[T]], index: usize) T {
+        if index >= self.*._count {
+            std::panic("invalid index");
+        }
+
+        # [A][B][X][C][D][E]
+        # [A][B][C][D][E][ ]
+        var n: usize = (self.*._count - 1) - index;
+        var mem: []T = (:[]T){self.*._start, self.*._capacity};
+        var src: []T = mem[index + 1 : index + n + 1];
+        var dst: []T = mem[index     : index + n];
+        var res = mem[index];
+        std::slice[[T]]::copy(dst, src);
+        self.*._count = self.*._count - 1;
+        return res;
+    }
+
+    # Append `value` to the end of the vector.
+    func push(self: *vector[[T]], value: T) void {
+        self.*.insert(self.*._count, value);
+    }
+
+    # Removes and returns the last element of the vector.
+    func pop(self: *vector[[T]]) T {
+        if self.*._count == 0 {
+            std::panic("attempted to pop empty vector");
+        }
+        return self.*.remove(self.*._count - 1);
+    }
+}
+
+# Key-value pair used in map operations.
+struct key_value_pair[[K, V]] {
+    var key: K;
+    var value: V;
+}
+
+# View of a key object and value object conceptually belonging to a key-value
+# pair, even if the key object and value object are stored separately. Used in
+# map operations.
+struct key_value_view[[K, V]] {
+    var key: *K;
+    var value: *V;
+}
+
+struct hash_map_element[[K, V]] {
+    const _STATE_NIL: usize = 0;
+    const _STATE_USE: usize = 1;
+    const _STATE_DEL: usize = 2;
+    var _state: usize;
+
+    # The key associated with this element.
+    #
+    # The hash function and compare function of this key type are used for
+    # insertion and lookup within the hash map. As such, mutation of the `key`
+    # member would invalidate this element's corresponding hash map, and any
+    # program that *does* perform such mutation is considered ill-formed.
+    var _key: K;
+
+    # The value associated with this element.
+    #
+    # Mutation of this member is permitted in well-formed programs.
+    var _value: V;
+}
+
+# Managed type mapping keys of type `K` to values of type `V` with O(1) average
+# time complexity for lookup, insert, and remove operations.
+#
+# A type `K` may be used as a key type if `K` impements a `hash` function with
+# the signature `func hash(self: *K) usize`.
+struct hash_map[[K, V]] {
+    var _allocator: std::allocator;
+    var _elements: []hash_map_element[[K, V]];
+    var _n: usize; # Number of USE entries in the map.
+    var _q: usize; # Number of non-NIL entries in the map.
+
+    # Initialize an empty map.
+    func init(allocator: std::allocator) hash_map[[K, V]] {
+        return (:hash_map[[K, V]]){
+            ._allocator = allocator,
+            ._elements = (:[]hash_map_element[[K, V]])[],
+            ._n = 0,
+            ._q = 0
+        };
+    }
+
+    # Finalize resources associated with the map.
+    func fini(self: *hash_map[[K, V]]) void {
+        if countof(self.*._elements) != 0 {
+            std::slice[[hash_map_element[[K, V]]]]::delete(self.*._allocator, self.*._elements);
+        }
+    }
+
+    # Returns the number of key-value pairs in the map.
+    func count(self: *hash_map[[K, V]]) usize {
+        return self.*._n;
+    }
+
+    # Returns true if the map contains a key-value pair with the provided key.
+    func contains(self: *hash_map[[K, V]], key: K) bool {
+        var item = self.*.lookup(key);
+        return item.is_value();
+    }
+
+    # Returns a non-empty optional containing the value associated with the
+    # provided key if such a key-value pair exists in the map.
+    func lookup(self: *hash_map[[K, V]], key: K) std::optional[[V]] {
+        if countof(self.*._elements) == 0 {
+            return std::optional[[V]]::EMPTY;
+        }
+
+        var index = key.hash() % countof(self.*._elements);
+        for self.*._elements[index]._state != hash_map_element[[K, V]]::_STATE_NIL {
+            if self.*._elements[index]._state == hash_map_element[[K, V]]::_STATE_USE and std::eq[[K]](&key, &self.*._elements[index]._key) {
+                return std::optional[[V]]::init_value(self.*._elements[index]._value);
+            }
+            index = (index + 1) % countof(self.*._elements);
+        }
+        return std::optional[[V]]::EMPTY;
+    }
+
+    # Insert the provided key and value into the map. If a key-value pair
+    # associated with the provided key exists, then it is overwritten and a
+    # non-empty optional containing the existing key-value pair is returned.
+    func insert(self: *hash_map[[K, V]], key: K, value: V) std::optional[[std::key_value_pair[[K, V]]]] {
+        if countof(self.*._elements) == 0 {
+            # Initial insert. An initial slice count of 16 was chosen
+            # semi-arbitrarily. The initial slice count must be two or greater
+            # in order to prevent the lookup loop from spinning forever.
+            self.*._elements = std::slice[[hash_map_element[[K, V]]]]::new(self.*._allocator, 16);
+            std::slice[[hash_map_element[[K, V]]]]::fill(self.*._elements, std::zeroed[[hash_map_element[[K, V]]]]());
+        }
+        elif 2 * (self.*._q + 1) > countof(self.*._elements) {
+            # Insert at 50% occupancy. Create a new hash map with double the
+            # existing element count, populate that map with this map's
+            # key-value pairs, and then replace this map with the new map.
+            var new = (:hash_map[[K, V]]){
+                ._allocator = self.*._allocator,
+                ._elements = std::slice[[hash_map_element[[K, V]]]]::new(self.*._allocator, countof(self.*._elements) * 2),
+                ._n = 0,
+                ._q = 0
+            };
+            for i in 0:countof(self.*._elements) {
+                if self.*._elements[i]._state == hash_map_element[[K, V]]::_STATE_USE {
+                    var existing = new.insert(self.*._elements[i]._key, self.*._elements[i]._value);
+                    std::assert(existing.is_empty());
+                }
+            }
+            std::slice[[hash_map_element[[K, V]]]]::delete(self.*._allocator, self.*._elements);
+            *self = new;
+        }
+
+        var index = key.hash() % countof(self.*._elements);
+        for true {
+            if self.*._elements[index]._state == hash_map_element[[K, V]]::_STATE_NIL {
+                self.*._elements[index] = (:hash_map_element[[K, V]]){
+                    ._state = hash_map_element[[K, V]]::_STATE_USE,
+                    ._key = key,
+                    ._value = value
+                };
+                self.*._n = self.*._n + 1;
+                self.*._q = self.*._q + 1;
+                return std::optional[[std::key_value_pair[[K, V]]]]::EMPTY;
+            }
+
+            if self.*._elements[index]._state == hash_map_element[[K, V]]::_STATE_DEL {
+                self.*._elements[index] = (:hash_map_element[[K, V]]){
+                    ._state = hash_map_element[[K, V]]::_STATE_USE,
+                    ._key = key,
+                    ._value = value
+                };
+                self.*._n = self.*._n + 1;
+                return std::optional[[std::key_value_pair[[K, V]]]]::EMPTY;
+            }
+
+            # _STATE_USE
+            if std::eq[[K]](&key, &self.*._elements[index]._key) {
+                var existing = self.*._elements[index];
+                var kv = (:std::key_value_pair[[K, V]]){
+                    .key = existing._key,
+                    .value = existing._value
+                };
+                self.*._elements[index] = (:hash_map_element[[K, V]]){
+                    ._state = hash_map_element[[K, V]]::_STATE_USE,
+                    ._key = key,
+                    ._value = value
+                };
+                return std::optional[[std::key_value_pair[[K, V]]]]::init_value(kv);
+            }
+
+            index = (index + 1) % countof(self.*._elements);
+        }
+
+        std::assert(false); # unreachable
+        return std::optional[[std::key_value_pair[[K, V]]]]::EMPTY;
+    }
+
+    # Remove the key-value pair associated with the provided key if such a
+    # key-value pair exists in the map. Returns a non-empty optional containing
+    # the key-value pair if the pair was removed.
+    func remove(self: *hash_map[[K, V]], key: K) std::optional[[std::key_value_pair[[K, V]]]] {
+        if countof(self.*._elements) == 0 {
+            return std::optional[[std::key_value_pair[[K, V]]]]::EMPTY;
+        }
+
+        var index = key.hash() % countof(self.*._elements);
+        for self.*._elements[index]._state != hash_map_element[[K, V]]::_STATE_NIL {
+            if self.*._elements[index]._state == hash_map_element[[K, V]]::_STATE_USE and std::eq[[K]](&key, &self.*._elements[index]._key) {
+                var kv = (:std::key_value_pair[[K, V]]){
+                    .key = self.*._elements[index]._key,
+                    .value = self.*._elements[index]._value
+                };
+                self.*._elements[index]._state = hash_map_element[[K, V]]::_STATE_DEL;
+                self.*._n = self.*._n - 1;
+                return std::optional[[std::key_value_pair[[K, V]]]]::init_value(kv);
+            }
+            index = (index + 1) % countof(self.*._elements);
+        }
+        return std::optional[[std::key_value_pair[[K, V]]]]::EMPTY;
+    }
+}
+
+# Iterate over the elements of a hash map.
+struct hash_map_iterator[[K, V]] {
+    var _iterator: std::slice_iterator[[hash_map_element[[K, V]]]];
+
+    func init(map: *std::hash_map[[K, V]]) hash_map_iterator[[K, V]] {
+        return (:hash_map_iterator[[K, V]]){
+            ._iterator = std::slice_iterator[[hash_map_element[[K, V]]]]::init(map.*._elements)
+        };
+    }
+
+    func advance(self: *hash_map_iterator[[K, V]]) bool {
+        for self.*._iterator.advance() {
+            var current = self.*._iterator.current();
+            if current.*._state != hash_map_element[[K, V]]::_STATE_USE {
+                continue;
+            }
+
+            return true;
+        }
+
+        return false; # end-of-iteration
+    }
+
+    func current(self: *hash_map_iterator[[K, V]]) std::key_value_view[[K, V]] {
+        var element = self.*._iterator.current();
+        return (:std::key_value_view[[K, V]]){
+            .key = &element.*._key,
+            .value = &element.*._value
+        };
+    }
+}
+
+# Stable sorting algorithm with O(n*log(n)) average time complexity,
+# O(n*log(n)) worst case time complexity, and O(n) space complexity.
+func merge_sort[[T]](slice: []T, allocator: std::allocator) void {
+    if countof(slice) <= 1 {
+        return;
+    }
+
+    var slice0 = std::slice[[T]]::new(allocator, countof(slice)/2);
+    var slice1 = std::slice[[T]]::new(allocator, countof(slice) - countof(slice)/2);
+    defer {
+        std::slice[[T]]::delete(allocator, slice0);
+        std::slice[[T]]::delete(allocator, slice1);
+    }
+    std::slice[[T]]::copy(slice0, slice[0:countof(slice)/2]);
+    std::slice[[T]]::copy(slice1, slice[countof(slice)/2:countof(slice)]);
+
+    merge_sort[[T]](slice0, allocator);
+    merge_sort[[T]](slice1, allocator);
+
+    var i0 = 0u;
+    var i1 = 0u;
+    for i in countof(slice) {
+        if i0 == countof(slice0) {
+            slice[i] = slice1[i1];
+            i1 = i1 + 1;
+        }
+        elif i1 == countof(slice1) {
+            slice[i] = slice0[i0];
+            i0 = i0 + 1;
+        }
+        elif std::compare[[T]](&slice0[i0], &slice1[i1]) < 0 {
+            slice[i] = slice0[i0];
+            i0 = i0 + 1;
+        }
+        else {
+            slice[i] = slice1[i1];
+            i1 = i1 + 1;
+        }
+    }
+}
+
+# Non-stable sorting algorithm with O(n*log(n)) average time complexity,
+# O(n^2)) worst case time complexity, and O(log(n)) space complexity.
+func quick_sort[[T]](slice: []T) void {
+    if countof(slice) <= 1 {
+        return;
+    }
+
+    var pivot = slice[countof(slice) / 2];
+    var i = 0u;
+    var j = countof(slice) - 1;
+    for true {
+        for std::lt[[T]](&slice[i], &pivot) {
+            i = i + 1;
+        }
+
+        for std::gt[[T]](&slice[j], &pivot) {
+            j = j - 1;
+        }
+
+        if i >= j {
+            break;
+        }
+
+        var tmp = slice[i];
+        slice[i] = slice[j];
+        slice[j] = tmp;
+        i = i + 1;
+        j = j - 1;
+    }
+
+    quick_sort[[T]](slice[0:i]);
+    quick_sort[[T]](slice[i:countof(slice)]);
+}
+
+# Type and associated filesystem operations for a regular file.
+struct file {
+    var _fd: sys::sint;
+
+    # Open a file for reading.
+    const OPEN_READ: usize = 0b001;
+    # Open a file for writing.
+    # The file is created if it does not exist.
+    # The file is truncated if it does exist.
+    const OPEN_WRITE: usize = 0b010;
+    # Open a file for writing (appended).
+    # The file is created if it does not exist.
+    # Data is appended to the end of the file when written.
+    const OPEN_APPEND: usize = 0b100;
+
+    # Open a regular file.
+    func open(path: []byte, mode: usize) std::result[[std::file, std::error]] {
+        var flags: sys::sint = 0;
+        if mode == 0 {
+            # OPEN_READ, OPEN_WRITE, or OPEN_APPEND must be selected.
+            return std::result[[std::file, std::error]]::init_error(std::error::INVALID_ARGUMENT);
+        }
+        if (mode & std::file::OPEN_WRITE != 0) and (mode & std::file::OPEN_APPEND != 0) {
+            # Attempted open with both non-appending and appending write modes.
+            return std::result[[std::file, std::error]]::init_error(std::error::INVALID_ARGUMENT);
+        }
+
+        if (mode & std::file::OPEN_READ != 0) and (mode & std::file::OPEN_WRITE != 0) {
+            flags = sys::O_RDWR | sys::O_CREAT | sys::O_TRUNC;
+        }
+        elif (mode & std::file::OPEN_READ != 0) and (mode & std::file::OPEN_APPEND != 0) {
+            flags = sys::O_RDWR | sys::O_CREAT | sys::O_APPEND;
+        }
+        elif mode & std::file::OPEN_READ != 0 {
+            flags = sys::O_RDONLY;
+        }
+        elif mode & std::file::OPEN_WRITE != 0 {
+            flags = sys::O_WRONLY | sys::O_CREAT | sys::O_TRUNC;
+        }
+        elif mode & std::file::OPEN_APPEND != 0 {
+            flags = sys::O_WRONLY | sys::O_CREAT | sys::O_APPEND;
+        }
+        else {
+            std::panic("unreachable");
+        }
+
+        if countof(path) >= sys::PATH_MAX {
+            return std::result[[std::file, std::error]]::init_error((:std::error)sys::error(sys::EINVAL));
+        }
+        var path_cstr = (:[sys::PATH_MAX]byte)[0...];
+        std::slice[[byte]]::copy(path_cstr[0:countof(path)], path);
+
+        var sysret = sys::open(&path_cstr[0], flags, 0o666);
+        if sysret < 0 {
+            return std::result[[std::file, std::error]]::init_error((:std::error)sys::error(-sysret));
+        }
+
+        var file = (:std::file){._fd = (:sys::sint)sysret};
+        return std::result[[std::file, std::error]]::init_value(file);
+    }
+
+    # Close an open regular file.
+    func close(self: *file) std::result[[void, std::error]] {
+        var sysret = sys::close(self.*._fd);
+        if sysret < 0 {
+            return std::result[[void, std::error]]::init_error((:std::error)sys::error(-sysret));
+        }
+
+        return std::result[[void, std::error]]::init_value(void::VALUE);
+    }
+
+    func read(self: *file, buf: []byte) std::result[[usize, std::error]] {
+        if countof(buf) == 0 {
+            return std::result[[usize, std::error]]::init_value(0);
+        }
+
+        var sysret = sys::read(self.*._fd, &buf[0u], countof(buf));
+        if sysret < 0 {
+            return std::result[[usize, std::error]]::init_error((:std::error)sys::error(-sysret));
+        }
+
+        return std::result[[usize, std::error]]::init_value((:usize)sysret);
+    }
+
+    func write(self: *file, buf: []byte) std::result[[usize, std::error]] {
+        if countof(buf) == 0 {
+            return std::result[[usize, std::error]]::init_value(0);
+        }
+
+        var sysret = sys::write(self.*._fd, &buf[0u], countof(buf));
+        if sysret < 0 {
+            return std::result[[usize, std::error]]::init_error((:std::error)sys::error(-sysret));
+        }
+
+        return std::result[[usize, std::error]]::init_value((:usize)sysret);
+    }
+
+    # Seek from the start of the file.
+    const SEEK_START: usize = (:usize)sys::SEEK_SET;
+    # Seek from the current position of the file position indicator.
+    const SEEK_CURRENT: usize = (:usize)sys::SEEK_CUR;
+    # Seek from the end of the file.
+    const SEEK_END: usize = (:usize)sys::SEEK_END;
+
+    # Set the file position indicatior of an open file to `offset` bytes
+    # relative to the position indicated by `from`.
+    func seek(self: *file, offset: ssize, from: usize) std::result[[void, std::error]] {
+        var sysret = sys::lseek(self.*._fd, offset, (:sys::uint)from);
+        if sysret < 0 {
+            return std::result[[void, std::error]]::init_error((:std::error)sys::error(-sysret));
+        }
+
+        return std::result[[void, std::error]]::init_value(void::VALUE);
+    }
+
+    # Returns the current value of the file position indicator of an open file.
+    func tell(self: *file) std::result[[usize, std::error]] {
+        var sysret = sys::lseek(self.*._fd, 0, sys::SEEK_CUR);
+        if sysret < 0 {
+            return std::result[[usize, std::error]]::init_error((:std::error)sys::error(-sysret));
+        }
+
+        return std::result[[usize, std::error]]::init_value((:usize)sysret);
+    }
+
+    # Create an empty file if it does not exist.
+    func create(path: []byte)  std::result[[void, std::error]] {
+        var result = std::file::open(path, std::file::OPEN_WRITE);
+        if result.is_error() {
+            return std::result[[void, std::error]]::init_error(result.error());
+        }
+
+        var file = result.value();
+        return file.close();
+    }
+
+    # Remove a file.
+    func remove(path: []byte) std::result[[void, std::error]] {
+        if countof(path) >= sys::PATH_MAX {
+            return std::result[[void, std::error]]::init_error((:std::error)sys::error(sys::EINVAL));
+        }
+        var path_cstr = (:[sys::PATH_MAX]byte)[0...];
+        std::slice[[byte]]::copy(path_cstr[0:countof(path)], path);
+
+        var sysret = sys::unlink(&path_cstr[0]);
+        if sysret < 0 {
+            return std::result[[void, std::error]]::init_error((:std::error)sys::error(-sysret));
+        }
+
+        return std::result[[void, std::error]]::init_value(void::VALUE);
+    }
+}
+
+# Type and associated filesystem operations for a directory.
+struct directory {
+    var _fd: sys::sint;
+    var _buf: [1024]byte;
+    var _buf_idx: usize;
+    var _buf_end: usize;
+    var _current: std::optional[[std::result[[[]byte, std::error]]]];
+
+    # Open a directory.
+    func open(path: []byte) std::result[[std::directory, std::error]] {
+        var flags: sys::sint = sys::O_RDONLY | sys::O_DIRECTORY | sys::O_CLOEXEC;
+
+        if countof(path) >= sys::PATH_MAX {
+            return std::result[[std::directory, std::error]]::init_error((:std::error)sys::error(sys::EINVAL));
+        }
+        var path_cstr = (:[sys::PATH_MAX]byte)[0...];
+        std::slice[[byte]]::copy(path_cstr[0:countof(path)], path);
+
+        var sysret = sys::open(&path_cstr[0], flags, 0);
+        if sysret < 0 {
+            return std::result[[std::directory, std::error]]::init_error((:std::error)sys::error(-sysret));
+        }
+
+        var directory = (:std::directory){
+            ._fd = (:sys::sint)sysret,
+            ._buf = (:[1024]byte)[0...],
+            ._buf_idx = 0,
+            ._buf_end = 0,
+            ._current = std::optional[[std::result[[[]byte, std::error]]]]::EMPTY
+        };
+        return std::result[[std::directory, std::error]]::init_value(directory);
+    }
+
+    # Close an open directory.
+    func close(self: *directory) std::result[[void, std::error]] {
+        var sysret = sys::close(self.*._fd);
+        if sysret < 0 {
+            return std::result[[void, std::error]]::init_error((:std::error)sys::error(-sysret));
+        }
+
+        return std::result[[void, std::error]]::init_value(void::VALUE);
+    }
+
+    # Advance the current directory entry.
+    func advance(self: *directory) bool {
+        if self.*._buf_idx >= self.*._buf_end {
+            var sysret = sys::getdents(self.*._fd, (:*sys::dirent)&self.*._buf[0], (:sys::uint)countof(self.*._buf));
+            if sysret == 0 {
+                self.*._current = std::optional[[std::result[[[]byte, std::error]]]]::EMPTY;
+                return false; # end-of-iteration
+            }
+            if sysret < 0 {
+                var result = std::result[[[]byte, std::error]]::init_error((:std::error)sys::error(-sysret));
+                self.*._current = std::optional[[std::result[[[]byte, std::error]]]]::init_value(result);
+                return true;
+            }
+
+            self.*._buf_idx = 0;
+            self.*._buf_end = (:usize)sysret;
+        }
+
+        var dirent = (:*sys::dirent)&self.*._buf[self.*._buf_idx];
+        var result = std::result[[[]byte, std::error]]::init_value(std::cstr::data(&dirent.*.d_name));
+        self.*._current = std::optional[[std::result[[[]byte, std::error]]]]::init_value(result);
+        self.*._buf_idx = self.*._buf_idx + (:usize)dirent.*.d_reclen;
+        return true;
+    }
+
+    # Returns the current directory entry name or an error result if an IO
+    # error occurred while reading this directory.
+    #
+    # A value result may be invalidated by the next call to
+    # `std::directory::advance` or `std::directory::close`.
+    func current(self: *directory) std::result[[[]byte, std::error]] {
+        if self.*._current.is_empty() {
+            std::panic("invalid iterator");
+        }
+        return self.*._current.value();
+    }
+
+    # Create an empty directory if it does not exist.
+    func create(path: []byte)  std::result[[void, std::error]] {
+        if countof(path) >= sys::PATH_MAX {
+            return std::result[[void, std::error]]::init_error((:std::error)sys::error(sys::EINVAL));
+        }
+        var path_cstr = (:[sys::PATH_MAX]byte)[0...];
+        std::slice[[byte]]::copy(path_cstr[0:countof(path)], path);
+
+        var sysret = sys::mkdir(&path_cstr[0], 0o666);
+        if sysret < 0 {
+            return std::result[[void, std::error]]::init_error((:std::error)sys::error(-sysret));
+        }
+
+        return std::result[[void, std::error]]::init_value(void::VALUE);
+    }
+
+    # Remove an empty directory.
+    func remove(path: []byte) std::result[[void, std::error]] {
+        if countof(path) >= sys::PATH_MAX {
+            return std::result[[void, std::error]]::init_error((:std::error)sys::error(sys::EINVAL));
+        }
+        var path_cstr = (:[sys::PATH_MAX]byte)[0...];
+        std::slice[[byte]]::copy(path_cstr[0:countof(path)], path);
+
+        var sysret = sys::rmdir(&path_cstr[0]);
+        if sysret < 0 {
+            return std::result[[void, std::error]]::init_error((:std::error)sys::error(-sysret));
+        }
+
+        return std::result[[void, std::error]]::init_value(void::VALUE);
+    }
+}
+
+# Iterate over a program argument list.
+#
+# Example:
+#   # Iterate over the program arguments, starting with argument zero (i.e. the
+#   # program name).
+#   var iter = std::argument_iterator::init();
+#   for iter.advance() {
+#       std::print_line(std::out(), iter.current());
+#   }
+struct argument_iterator {
+    var _argv: **byte;
+    var _index: std::optional[[usize]];
+
+    # Initialize an argument iterator using the program arguments provided by
+    # the hosted environment at program startup.
+    #
+    # The behavior of this function is implementation defined for programs
+    # executing in a freestanding environment. The behavior of this function is
+    # implementation defined if the Sunder `main` function was not used as the
+    # program entry point.
+    func init() argument_iterator {
+        return argument_iterator::init_from_argv(sys::argv);
+    }
+
+    # Initialize an argument iterator from a C-style argument vector. The
+    # provided argv *must* contain a NULL-terminated list of NUL-terminated
+    # strings in accordance ISO/IEC 9899:1999 section 5.1.2.2.1.
+    func init_from_argv(argv: **byte) argument_iterator {
+        return (:argument_iterator){
+            ._argv = argv,
+            ._index = std::optional[[usize]]::EMPTY
+        };
+    }
+
+    func advance(self: *argument_iterator) bool {
+        if self.*._index.is_empty() {
+            self.*._index = std::optional[[usize]]::init_value(0); # start-of-iteration
+        }
+        else {
+            self.*._index = std::optional[[usize]]::init_value(self.*._index.value() + 1);
+        }
+
+        var arg = std::ptr[[*byte]]::add(self.*._argv, self.*._index.value());
+        if *arg == std::ptr[[byte]]::NULL {
+            return false; # end of iteration
+        }
+
+        return true;
+    }
+
+    func current(self: *argument_iterator) []byte {
+        if self.*._index.is_empty() {
+            std::panic("invalid iterator");
+        }
+
+        var arg = std::ptr[[*byte]]::add(self.*._argv, self.*._index.value());
+        if *arg == std::ptr[[byte]]::NULL {
+            std::panic("invalid iterator");
+        }
+
+        return std::cstr::data(*arg);
+    }
+}
+
+# Parse a program argument list.
+#
+# Initializer functions are provided with the `options` list containing strings
+# that will be treated as option flags when parsed. Parsed options may start
+# with any number of dashes, so `-foo`, `--foo`, and `---foo` are all parsed as
+# the option string "foo". An option string may contain a trailing ':'
+# character, signifying that the option requires an additional option argument.
+# If the argument "--" is encountered, then it will be skipped and all
+# subsequent program arguments will be parsed as positional arguments.
+#
+# Example:
+#   var parser = std::argument_parser::init((:[][]byte)[
+#       "abc",
+#       "def:"
+#   ]);
+#
+#   for parser.advance() {
+#       if parser.check_option("abc") {
+#           var opt = parser.option_value();
+#           std::print_format_line(
+#               std::out(),
+#               "Option `{}`",
+#               (:[]std::formatter)[std::formatter::init[[[]byte]](&opt)]);
+#           continue;
+#       }
+#
+#       if parser.check_option("def") {
+#           var opt = parser.option_value();
+#           var arg = parser.argument_value();
+#           std::print_format_line(
+#               std::out(),
+#               "Option `{}` with required argument `{}`",
+#               (:[]std::formatter)[
+#                   std::formatter::init[[[]byte]](&opt),
+#                   std::formatter::init[[[]byte]](&arg)]);
+#           continue;
+#       }
+#
+#       var argument = parser.argument_value();
+#       std::print_format_line(
+#           std::out(),
+#           "Positional argument `{}`",
+#           (:[]std::formatter)[std::formatter::init[[[]byte]](&argument)]);
+#    }
+#
+# Example output:
+#   $ sunder-run example.sunder --abc foo --def bar baz -- --abc
+#   Option `abc`
+#   Positional argument `foo`
+#   Option `def` with required argument `bar`
+#   Positional argument `baz`
+#   Positional argument `--abc`
+struct argument_parser {
+    var _options: [][]byte;
+    var _iterator: argument_iterator;
+    var _verbatim: bool;
+    var _opt: std::optional[[[]byte]];
+    var _arg: std::optional[[[]byte]];
+
+    # Initialize an argument parser using using the arguments provided by the
+    # hosted environment at program startup. The first argument (program name)
+    # is skipped and *not* treated as an argument by the parser.
+    #
+    # The behavior of this function is implementation defined for programs
+    # executing in a freestanding environment. The behavior of this function is
+    # implementation defined if the Sunder `main` function was not used as the
+    # program entry point.
+    func init(options: [][]byte) argument_parser {
+        return std::argument_parser::init_from_argv(options, sys::argv);
+    }
+
+    # Initialize an argument parser from a C-style argument vector. The
+    # provided argv *must* contain a NULL-terminated list of NUL-terminated
+    # strings in accordance ISO/IEC 9899:1999 section 5.1.2.2.1.
+    func init_from_argv(options: [][]byte, argv: **byte) argument_parser {
+        var self = (:argument_parser){
+            ._options = options,
+            ._iterator = std::argument_iterator::init_from_argv(argv),
+            ._verbatim = false,
+            ._opt = std::optional[[[]byte]]::EMPTY,
+            ._arg = std::optional[[[]byte]]::EMPTY
+        };
+
+        # Skip past the first argument (program name).
+        self._iterator.advance();
+
+        return self;
+    }
+
+    func advance(self: *argument_parser) bool {
+        self.*._opt = std::optional[[[]byte]]::EMPTY;
+        self.*._arg = std::optional[[[]byte]]::EMPTY;
+
+        if not self.*._iterator.advance() {
+            return false;
+        }
+
+        var str = self.*._iterator.current();
+        if self.*._verbatim {
+            self.*._arg = std::optional[[[]byte]]::init_value(str);
+            return true;
+        }
+
+        # The argument "--" signals that all following arguments should be
+        # interpreted verbatim and not parsed as option strings.
+        if std::str::eq(str, "--") {
+            self.*._verbatim = true;
+            return self.*.advance();
+        }
+
+        # The argument "-" is *not* treated as the start of an option string
+        # since "-" is traditionally used to denote the standard input file.
+        if std::str::eq(str, "-") {
+            self.*._arg = std::optional[[[]byte]]::init_value(str);
+            return true;
+        }
+
+        # Positional argument.
+        if not std::str::starts_with(str, "-") {
+            self.*._arg = std::optional[[[]byte]]::init_value(str);
+            return true;
+        }
+
+        # Option strings of the form "-<option>", "--<option>", etc. Remove the
+        # leading dashes so that `str` contains only the text of the option.
+        for std::str::starts_with(str, "-") {
+            str = str[countof("-"):countof(str)];
+        }
+
+        var should_parse_arg = false;
+        var idx = std::optional[[usize]]::EMPTY;
+        for i in countof(self.*._options) {
+            should_parse_arg = false;
+            var opt = self.*._options[i];
+
+            if std::str::ends_with(opt, ":") { # Required argument.
+                opt = str[0 : countof(opt) - 1];
+                should_parse_arg = true;
+            }
+
+            if std::str::eq(str, opt) {
+                idx = std::optional[[usize]]::init_value(i);
+                break;
+            }
+        }
+        if idx.is_empty() {
+            std::print_format_line(
+                std::err(),
+                "error: unrecognized option `{}`",
+                (:[]std::formatter)[
+                    std::formatter::init[[[]byte]](&str)]);
+            std::exit(std::EXIT_FAILURE);
+        }
+
+        self.*._opt = std::optional[[[]byte]]::init_value(str);
+        if not should_parse_arg {
+            return true;
+        }
+
+        if not self.*._iterator.advance() {
+            std::print_format_line(
+                std::err(),
+                "error: missing required argument for option `{}`",
+                (:[]std::formatter)[
+                    std::formatter::init[[[]byte]](&str)]);
+            std::exit(std::EXIT_FAILURE);
+        }
+        self.*._arg = std::optional[[[]byte]]::init_value(self.*._iterator.current());
+        return true;
+    }
+
+    # Returns true if `opt` is the current parsed option.
+    func check_option(self: *argument_parser, opt: []byte) bool {
+        if self.*._opt.is_empty() {
+            return false;
+        }
+        return std::str::eq(self.*._opt.value(), opt);
+    }
+
+    # Returns the current option if an option was parsed.
+    func option(self: *argument_parser) std::optional[[[]byte]] {
+        return self.*._opt;
+    }
+
+    # Convenience function that retrieves the value from the optional returned
+    # by `std::argument_parser::option`.
+    func option_value(self: *argument_parser) []byte {
+        if self.*._opt.is_empty() {
+            std::panic("attempted to retrieve empty argument parser option value");
+        }
+        return self.*._opt.value();
+    }
+
+    # Returns the current argument.
+    # Empty for options with no required argument.
+    # Non-empty for options with a required argument.
+    # Non-empty for positional parameters.
+    func argument(self: *argument_parser) std::optional[[[]byte]] {
+        return self.*._arg;
+    }
+
+    # Convenience function that retrieves the value from the optional returned
+    # by `std::argument_parser::argument`.
+    func argument_value(self: *argument_parser) []byte {
+        if self.*._arg.is_empty() {
+            std::panic("attempted to retrieve empty argument parser argument value");
+        }
+        return self.*._arg.value();
+    }
+}
+
+extend void const VALUE: void = uninit;
+extend void func format(self_: *bool, writer: std::writer, fmt: []byte) std::result[[void, std::error]] {
+    if countof(fmt) != 0 {
+        return std::result[[void, std::error]]::init_error(std::error::INVALID_ARGUMENT);
+    }
+
+    return std::write_all(writer, "void");
+}
+
+extend bool func format(self: *bool, writer: std::writer, fmt: []byte) std::result[[void, std::error]] {
+    if countof(fmt) != 0 {
+        return std::result[[void, std::error]]::init_error(std::error::INVALID_ARGUMENT);
+    }
+
+    if *self {
+        return std::write_all(writer, "true");
+    }
+
+    return std::write_all(writer, "false");
+}
+
+extend integer func _init_umax_from_str(str: []byte, radix: usize) std::result[[std::umax, std::error]] {
+    if radix != 0 and radix != 2 and radix != 8 and radix != 10 and radix != 16 {
+        return std::result[[umax, std::error]]::init_error(std::error::INVALID_ARGUMENT);
+    }
+
+    var cur: usize = 0;
+    var end: usize = countof(str);
+
+    # Parse optional + sign.
+    if (end - cur) > countof("+") and str[cur] == '+' {
+        cur = cur + 1;
+    }
+
+    # Parse radix.
+    if radix == 0 {
+        var is_bin = (end - cur) >= countof("0b") and str[cur] == '0' and str[cur+1] == 'b';
+        var is_oct = (end - cur) >= countof("0o") and str[cur] == '0' and str[cur+1] == 'o';
+        var is_hex = (end - cur) >= countof("0x") and str[cur] == '0' and str[cur+1] == 'x';
+
+        if is_bin {
+            radix = 2;
+            cur = cur + countof("0b");
+        }
+        elif is_oct {
+            radix = 8;
+            cur = cur + countof("0o");
+        }
+        elif is_hex {
+            radix = 16;
+            cur = cur + countof("0x");
+        }
+        else {
+            radix = 10;
+        }
+    }
+
+    # Parse digits.
+    if cur == end {
+        return std::result[[std::umax, std::error]]::init_error(std::error::PARSE_FAILURE);
+    }
+    var accum: std::umax = 0;
+    for cur != end {
+        var c = str[cur];
+        cur = cur + 1;
+
+        var digit: std::umax = 0;
+        if '0' <= c and c <= '9' {
+            digit = (:std::umax)c - '0';
+        }
+        elif 'A' <= c and c <= 'F' {
+            digit = (:std::umax)c - 'A' + 0xA;
+        }
+        elif 'a' <= c and c <= 'f' {
+            digit = (:std::umax)c - 'a' + 0xA;
+        }
+        else {
+            return std::result[[std::umax, std::error]]::init_error(std::error::PARSE_FAILURE);
+        }
+
+        if (:usize)digit >= radix {
+            return std::result[[std::umax, std::error]]::init_error(std::error::PARSE_FAILURE);
+        }
+
+        if accum != 0 and std::umax::MAX / accum < (:typeof(accum))radix {
+            return std::result[[std::umax, std::error]]::init_error(std::error::RESULT_OUT_OF_RANGE);
+        }
+        accum = accum * (:typeof(accum))radix;
+
+        if std::umax::MAX - accum < (:typeof(accum))digit {
+            return std::result[[std::umax, std::error]]::init_error(std::error::RESULT_OUT_OF_RANGE);
+        }
+        accum = accum + (:typeof(accum))digit;
+    }
+
+    return std::result[[std::umax, std::error]]::init_value(accum);
+}
+
+extend integer func _init_smax_from_str(str: []byte, radix: usize) std::result[[std::smax, std::error]] {
+    var sign = +1s;
+    if countof(str) != 0 and str[0] == '-' {
+        sign = -1s;
+        str = str[1:countof(str)];
+    }
+
+    var result = integer::_init_umax_from_str(str, radix);
+    if result.is_error() {
+        return std::result[[std::smax, std::error]]::init_error(result.error());
+    }
+
+    var magnitude = result.value();
+    var is_out_of_range =
+        sign == +1 and magnitude > (:std::umax)std::smax::MAX or
+        sign == -1 and magnitude > (:std::umax)std::smax::MAX + 1;
+    if is_out_of_range {
+        return std::result[[std::smax, std::error]]::init_error(std::error::RESULT_OUT_OF_RANGE);
+    }
+
+    if sign == -1 {
+        var value = (:std::smax)-1s *% (:std::smax)magnitude;
+        return std::result[[std::smax, std::error]]::init_value(value);
+    }
+
+    return std::result[[std::smax, std::error]]::init_value((:std::smax)result.value());
+}
+
+extend integer func _init_uint_from_str[[T]](str: []byte, radix: usize) std::result[[T, std::error]] {
+    var result = integer::_init_umax_from_str(str, radix);
+    if result.is_error() {
+        return std::result[[T, std::error]]::init_error(result.error());
+    }
+    if result.value() > (:std::umax)T::MAX {
+        return std::result[[T, std::error]]::init_error(std::error::RESULT_OUT_OF_RANGE);
+    }
+    return std::result[[T, std::error]]::init_value((:T)result.value());
+}
+
+extend integer func _init_sint_from_str[[T]](str: []byte, radix: usize) std::result[[T, std::error]] {
+    var result = integer::_init_smax_from_str(str, radix);
+    if result.is_error() {
+        return std::result[[T, std::error]]::init_error(result.error());
+    }
+    if result.value() < (:std::smax)T::MIN or result.value() > (:std::smax)T::MAX {
+        return std::result[[T, std::error]]::init_error(std::error::RESULT_OUT_OF_RANGE);
+    }
+    return std::result[[T, std::error]]::init_value((:T)result.value());
+}
+
+extend integer func _compare[[T]](lhs: T, rhs: T) ssize {
+    if lhs < rhs { return -1; }
+    if lhs > rhs { return +1; }
+    return 0;
+}
+
+# Accepted format language:
+#   [#][radix]
+#
+# Use of "#" indicates that the alternate form of the integer should be
+# formatted. Integers formatted in decimal are unchanged. Integers formatted in
+# binary are prefixed with "0b". Integers formatted in octal are prefixed with
+# "0o". And integers formatted in hexadecimal are prefixed with "0x".
+#
+# Accepted strings for radix:
+#   ""  => decimal (default)
+#   "d" => decimal
+#   "b" => binary
+#   "o" => octal
+#   "x" => hexadecimal (lower)
+#   "X" => hexadecimal (upper)
+extend integer func _format_umax(int: std::umax, writer: std::writer, fmt: []byte) std::result[[void, std::error]] {
+    const DIGITS_TABLE_LOWER = (:[]byte)[
+        '0', '1', '2', '3', '4', '5', '6', '7',
+        '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'
+    ];
+    const DIGITS_TABLE_UPPER = (:[]byte)[
+        '0', '1', '2', '3', '4', '5', '6', '7',
+        '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'
+    ];
+
+    var fmt_idx = 0u;
+
+    var is_digits_prefix = false;
+    if fmt_idx < countof(fmt) and fmt[fmt_idx] == '#' {
+        is_digits_prefix = true;
+        fmt_idx = fmt_idx + 1;
+    }
+
+    var radix: usize = 10;
+    var digits_prefix: []byte = "";
+    var digits_table: []byte = DIGITS_TABLE_LOWER;
+
+    if fmt_idx < countof(fmt) {
+        var c: byte = fmt[fmt_idx];
+        fmt_idx = fmt_idx + 1;
+
+        if c == 'd' {
+            # Decimal defaults already set.
+        }
+        elif c == 'b' {
+            radix = 2;
+            digits_prefix = "0b";
+        }
+        elif c == 'o' {
+            radix = 8;
+            digits_prefix = "0o";
+        }
+        elif c == 'x' {
+            radix = 16;
+            digits_prefix = "0x";
+        }
+        elif c == 'X' {
+            radix = 16;
+            digits_prefix = "0x";
+            digits_table = DIGITS_TABLE_UPPER;
+        }
+        else {
+            return std::result[[void, std::error]]::init_error(std::error::INVALID_ARGUMENT);
+        }
+    }
+
+    if fmt_idx != countof(fmt) {
+        return std::result[[void, std::error]]::init_error(std::error::INVALID_ARGUMENT);
+    }
+
+    const OUTPUT_COUNT: usize = countof("0b") + sizeof(usize) * 8;
+    var output = (:[OUTPUT_COUNT]byte)[0...];
+    var output_index: usize = countof(output) - 1;
+
+    if int == 0 {
+        # Write a single zero digit.
+        output[output_index] = '0';
+        output_index = output_index - 1;
+    }
+    for int != 0 {
+        var div: std::umax = int / (:std::umax)radix;
+        var rem: std::umax = int - (:std::umax)radix * (int / (:std::umax)radix);
+
+        var digit: byte = digits_table[(:usize)rem];
+        output[output_index] = digit;
+        output_index = output_index - 1;
+
+        int = div;
+    }
+
+    if is_digits_prefix and countof(digits_prefix) != 0 {
+        for i in countof(digits_prefix) {
+            output[output_index] = digits_prefix[countof(digits_prefix) - i - 1];
+            output_index = output_index - 1;
+        }
+    }
+
+    return std::write_all(writer, output[output_index+1:countof(output)]);
+}
+
+# Accepted format language:
+#   [#][radix]
+#
+# Use of "#" indicates that the alternate form of the integer should be
+# formatted. Integers formatted in decimal are unchanged. Integers formatted in
+# binary are prefixed with "0b". Integers formatted in octal are prefixed with
+# "0o". And integers formatted in hexadecimal are prefixed with "0x".
+#
+# Accepted strings for radix:
+#   ""  => decimal (default)
+#   "d" => decimal
+#   "b" => binary
+#   "o" => octal
+#   "x" => hexadecimal (lower)
+#   "X" => hexadecimal (upper)
+extend integer func _format_smax(int: std::smax, writer: std::writer, fmt: []byte) std::result[[void, std::error]] {
+    if int < 0 {
+        var result = std::write_all(writer, "-");
+        if result.is_error() {
+            return result;
+        }
+    }
+
+    var magnitude: std::umax = uninit;
+    if int >= 0 {
+        # Absolute value of a non-negative integer is itself.
+        magnitude = (:std::umax)int;
+    }
+    else {
+        magnitude = (:std::umax)((:std::smax)-1s *% int);
+    }
+
+    return integer::_format_umax(magnitude, writer, fmt);
+}
+
+extend byte const MIN: byte = 0x00;
+extend byte const MAX: byte = 0xFF;
+extend byte const BITS: usize = 8;
+extend byte func compare(lhs: *byte, rhs: *byte) ssize {
+    return integer::_compare[[std::umax]]((:std::umax)*lhs, (:std::umax)*rhs);
+}
+extend byte func hash(self: *byte) usize {
+    return (:usize)*self;
+}
+extend byte func format(self: *byte, writer: std::writer, fmt: []byte) std::result[[void, std::error]] {
+    var int = (:u8)*self;
+    return u8::format(&int, writer, fmt);
+}
+
+extend u8 const MIN: u8 = 0x00;
+extend u8 const MAX: u8 = 0xFF;
+extend u8 func init_from_str(str: []byte, radix: usize) std::result[[u8, std::error]] {
+    return integer::_init_uint_from_str[[u8]](str, radix);
+}
+extend u8 func compare(lhs: *u8, rhs: *u8) ssize {
+    return integer::_compare[[std::umax]]((:std::umax)*lhs, (:std::umax)*rhs);
+}
+extend u8 func hash(self: *u8) usize {
+    return (:usize)*self;
+}
+extend u8 func format(self: *u8, writer: std::writer, fmt: []byte) std::result[[void, std::error]] {
+    return integer::_format_umax((:std::umax)*self, writer, fmt);
+}
+
+extend u16 const MIN: u16 = 0x0000;
+extend u16 const MAX: u16 = 0xFFFF;
+extend u16 func init_from_str(str: []byte, radix: usize) std::result[[u16, std::error]] {
+    return integer::_init_uint_from_str[[u16]](str, radix);
+}
+extend u16 func compare(lhs: *u16, rhs: *u16) ssize {
+    return integer::_compare[[std::umax]]((:std::umax)*lhs, (:std::umax)*rhs);
+}
+extend u16 func hash(self: *u16) usize {
+    return (:usize)*self;
+}
+extend u16 func format(self: *u16, writer: std::writer, fmt: []byte) std::result[[void, std::error]] {
+    return integer::_format_umax((:std::umax)*self, writer, fmt);
+}
+
+extend u32 const MIN: u32 = 0x00000000;
+extend u32 const MAX: u32 = 0xFFFFFFFF;
+extend u32 func init_from_str(str: []byte, radix: usize) std::result[[u32, std::error]] {
+    return integer::_init_uint_from_str[[u32]](str, radix);
+}
+extend u32 func compare(lhs: *u32, rhs: *u32) ssize {
+    return integer::_compare[[std::umax]]((:std::umax)*lhs, (:std::umax)*rhs);
+}
+extend u32 func hash(self: *u32) usize {
+    return (:usize)*self;
+}
+extend u32 func format(self: *u32, writer: std::writer, fmt: []byte) std::result[[void, std::error]] {
+    return integer::_format_umax((:std::umax)*self, writer, fmt);
+}
+
+extend u64 const MIN: u64 = 0x0000000000000000;
+extend u64 const MAX: u64 = 0xFFFFFFFFFFFFFFFF;
+extend u64 func init_from_str(str: []byte, radix: usize) std::result[[u64, std::error]] {
+    return integer::_init_uint_from_str[[u64]](str, radix);
+}
+extend u64 func compare(lhs: *u64, rhs: *u64) ssize {
+    return integer::_compare[[std::umax]]((:std::umax)*lhs, (:std::umax)*rhs);
+}
+extend u64 func hash(self: *u64) usize {
+    return (:usize)*self;
+}
+extend u64 func format(self: *u64, writer: std::writer, fmt: []byte) std::result[[void, std::error]] {
+    return integer::_format_umax((:std::umax)*self, writer, fmt);
+}
+
+extend usize const MIN: usize = (:usize)u64::MIN;
+extend usize const MAX: usize = (:usize)u64::MAX;
+extend usize func init_from_str(str: []byte, radix: usize) std::result[[usize, std::error]] {
+    return integer::_init_uint_from_str[[usize]](str, radix);
+}
+extend usize func compare(lhs: *usize, rhs: *usize) ssize {
+    return integer::_compare[[std::umax]]((:std::umax)*lhs, (:std::umax)*rhs);
+}
+extend usize func hash(self: *usize) usize {
+    return *self;
+}
+extend usize func format(self: *usize, writer: std::writer, fmt: []byte) std::result[[void, std::error]] {
+    return integer::_format_umax((:std::umax)*self, writer, fmt);
+}
+
+extend s8 const MIN: s8 = (:s8)0x80u8;
+extend s8 const MAX: s8 = (:s8)0x7Fu8;
+extend s8 func init_from_str(str: []byte, radix: usize) std::result[[s8, std::error]] {
+    return integer::_init_sint_from_str[[s8]](str, radix);
+}
+extend s8 func compare(lhs: *s8, rhs: *s8) ssize {
+    return integer::_compare[[std::smax]]((:std::smax)*lhs, (:std::smax)*rhs);
+}
+extend s8 func hash(self: *s8) usize {
+    return (:usize)*self;
+}
+extend s8 func format(self: *s8, writer: std::writer, fmt: []byte) std::result[[void, std::error]] {
+    return integer::_format_smax((:std::smax)*self, writer, fmt);
+}
+
+extend s16 const MIN: s16 = (:s16)0x8000u16;
+extend s16 const MAX: s16 = (:s16)0x7FFFu16;
+extend s16 func init_from_str(str: []byte, radix: usize) std::result[[s16, std::error]] {
+    return integer::_init_sint_from_str[[s16]](str, radix);
+}
+extend s16 func compare(lhs: *s16, rhs: *s16) ssize {
+    return integer::_compare[[std::smax]]((:std::smax)*lhs, (:std::smax)*rhs);
+}
+extend s16 func hash(self: *s16) usize {
+    return (:usize)*self;
+}
+extend s16 func format(self: *s16, writer: std::writer, fmt: []byte) std::result[[void, std::error]] {
+    return integer::_format_smax((:std::smax)*self, writer, fmt);
+}
+
+extend s32 const MIN: s32 = (:s32)0x80000000u32;
+extend s32 const MAX: s32 = (:s32)0x7FFFFFFFu32;
+extend s32 func init_from_str(str: []byte, radix: usize) std::result[[s32, std::error]] {
+    return integer::_init_sint_from_str[[s32]](str, radix);
+}
+extend s32 func compare(lhs: *s32, rhs: *s32) ssize {
+    return integer::_compare[[std::smax]]((:std::smax)*lhs, (:std::smax)*rhs);
+}
+extend s32 func hash(self: *s32) usize {
+    return (:usize)*self;
+}
+extend s32 func format(self: *s32, writer: std::writer, fmt: []byte) std::result[[void, std::error]] {
+    return integer::_format_smax((:std::smax)*self, writer, fmt);
+}
+
+extend s64 const MIN: s64 = (:s64)0x8000000000000000u64;
+extend s64 const MAX: s64 = (:s64)0x7FFFFFFFFFFFFFFFu64;
+extend s64 func init_from_str(str: []byte, radix: usize) std::result[[s64, std::error]] {
+    return integer::_init_sint_from_str[[s64]](str, radix);
+}
+extend s64 func compare(lhs: *s64, rhs: *s64) ssize {
+    return integer::_compare[[std::smax]]((:std::smax)*lhs, (:std::smax)*rhs);
+}
+extend s64 func hash(self: *s64) usize {
+    return (:usize)*self;
+}
+extend s64 func format(self: *s64, writer: std::writer, fmt: []byte) std::result[[void, std::error]] {
+    return integer::_format_smax((:std::smax)*self, writer, fmt);
+}
+
+extend ssize const MIN: ssize = (:ssize)s64::MIN;
+extend ssize const MAX: ssize = (:ssize)s64::MAX;
+extend ssize func init_from_str(str: []byte, radix: usize) std::result[[ssize, std::error]] {
+    return integer::_init_sint_from_str[[ssize]](str, radix);
+}
+extend ssize func compare(lhs: *ssize, rhs: *ssize) ssize {
+    return integer::_compare[[std::smax]]((:std::smax)*lhs, (:std::smax)*rhs);
+}
+extend ssize func hash(self: *ssize) usize {
+    return (:usize)*self;
+}
+extend ssize func format(self: *ssize, writer: std::writer, fmt: []byte) std::result[[void, std::error]] {
+    return integer::_format_smax((:std::smax)*self, writer, fmt);
+}
+
+extend []byte func compare(lhs: *[]byte, rhs: *[]byte) ssize {
+    var lhs_data = *lhs;
+    var rhs_data = *rhs;
+    var lhs_count = countof(lhs_data);
+    var rhs_count = countof(rhs_data);
+    var count = *std::min[[usize]](&lhs_count, &rhs_count);
+    for i in count {
+        if lhs_data[i] != rhs_data[i] {
+            return (:ssize)lhs_data[i] - (:ssize)rhs_data[i];
+        }
+    }
+    return (:ssize)countof(lhs_data) - (:ssize)countof(rhs_data);
+}
+
+extend []byte func hash(self: *[]byte) usize {
+    # Implementation of djb2 with an additional statement that zeroes the upper
+    # five bits of the hash before the multiplication in order to prevent
+    # overflow.
+    var hash = 5381u;
+    for i in countof(*self) {
+        const MASK = 0b11111u << ((sizeof(usize) * byte::BITS) - 5);
+        hash = (hash & MASK) * 33 + (:usize)self.*[i];
+    }
+    return hash;
+}
+
+# Accepted format specifiers:
+#   ""  => verbatim (default)
+#   "e" => escaped (e.g. "\0\t\n\'\"\xFFabc)
+extend []byte func format(self: *[]byte, writer: std::writer, fmt: []byte) std::result[[void, std::error]] {
+    # Format specifier: ""
+    if countof(fmt) == 0 {
+        return std::write_all(writer, *self);
+    }
+
+    # Format specifier: "e"
+    if countof(fmt) == 1 and fmt[0] == 'e' {
+        for i in countof(*self) {
+            var c: byte = self.*[i];
+            if c == '\0' {
+                var result = std::write_all(writer, "\\0");
+                if result.is_error() {
+                    return result;
+                }
+                continue;
+            }
+            if c == '\t' {
+                var result = std::write_all(writer, "\\t");
+                if result.is_error() {
+                    return result;
+                }
+                continue;
+            }
+            if c == '\n' {
+                var result = std::write_all(writer, "\\n");
+                if result.is_error() {
+                    return result;
+                }
+                continue;
+            }
+            if c == '\'' {
+                var result = std::write_all(writer, "\\\'");
+                if result.is_error() {
+                    return result;
+                }
+                continue;
+            }
+            if c == '\"' {
+                var result = std::write_all(writer, "\\\"");
+                if result.is_error() {
+                    return result;
+                }
+                continue;
+            }
+            if c == '\\' {
+                var result = std::write_all(writer, "\\\\");
+                if result.is_error() {
+                    return result;
+                }
+                continue;
+            }
+            if c < ' ' or c > '~' {
+                const DIGITS = (:[]byte)[
+                    '0', '1', '2', '3', '4', '5', '6', '7',
+                    '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'
+                ];
+                var hex = (:[]byte)[
+                    DIGITS[(:usize)c & 0xF0 >> 4],
+                    DIGITS[(:usize)c & 0x0F]
+                ];
+                var result = std::write_format(
+                    writer,
+                    "\\x{}",
+                    (:[]std::formatter)[
+                        std::formatter::init[[[]byte]](&hex)]);
+                if result.is_error() {
+                    return result;
+                }
+                continue;
+            }
+            var result = std::write_all(writer, (:[]byte){&c, 1});
+            if result.is_error() {
+                return result;
+            }
+        }
+        return std::result[[void, std::error]]::init_value(void::VALUE);
+    }
+
+    return std::result[[void, std::error]]::init_error(std::error::INVALID_ARGUMENT);
+}
+
+extend error const ALLOCATION_FAILURE = &std::_ALLOCATION_FAILURE;
+extend error const BUFFER_FULL = &std::_BUFFER_FULL;
+extend error const PARSE_FAILURE = &std::_PARSE_FAILURE;
+extend error const INVALID_ARGUMENT = &std::_INVALID_ARGUMENT;
+extend error const RESULT_OUT_OF_RANGE = &std::_RESULT_OUT_OF_RANGE;
+
+extend big_integer const ZERO = (:std::big_integer){
+    ._allocator = std::null_allocator::ALLOCATOR,
+    ._sign = 0,
+    ._limbs = (:[]u32)[]
+};
+
+extend big_integer const POSITIVE_ONE = (:std::big_integer){
+    ._allocator = std::null_allocator::ALLOCATOR,
+    ._sign = +1,
+    ._limbs = (:[]u32)[1]
+};
+
+extend big_integer const NEGATIVE_ONE = (:std::big_integer){
+    ._allocator = std::null_allocator::ALLOCATOR,
+    ._sign = -1,
+    ._limbs = (:[]u32)[1]
+};
+
+extend big_integer const POSITIVE_TWO = (:std::big_integer){
+    ._allocator = std::null_allocator::ALLOCATOR,
+    ._sign = +1,
+    ._limbs = (:[]u32)[2]
+};
+
+extend big_integer const NEGATIVE_TWO = (:std::big_integer){
+    ._allocator = std::null_allocator::ALLOCATOR,
+    ._sign = -1,
+    ._limbs = (:[]u32)[2]
+};
+
+extend big_integer const POSITIVE_TEN = (:std::big_integer){
+    ._allocator = std::null_allocator::ALLOCATOR,
+    ._sign = +1,
+    ._limbs = (:[]u32)[10]
+};
+
+extend big_integer const NEGATIVE_TEN = (:std::big_integer){
+    ._allocator = std::null_allocator::ALLOCATOR,
+    ._sign = -1,
+    ._limbs = (:[]u32)[10]
+};

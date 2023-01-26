@@ -1,5 +1,4 @@
-import "std/core.sunder";
-import "std/linear_allocator.sunder";
+import "std";
 
 func main() void {
     var slice = (:[]u64)[0, 0, 0, 0];

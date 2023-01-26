@@ -1,4 +1,4 @@
-import "std/core.sunder";
+import "std";
 
 func test(addr: usize, align: usize) void {
     var answer = std::forward_align(addr, align);

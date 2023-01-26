@@ -1,4 +1,4 @@
-import "std/core.sunder";
+import "std";
 
 func test[[T]](lhs: T, rhs: T) void {
     var result: T = lhs -% rhs;

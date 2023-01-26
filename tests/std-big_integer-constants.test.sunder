@@ -1,5 +1,4 @@
-import "std/big_integer.sunder";
-import "std/core.sunder";
+import "std";
 
 func main() void {
     std::print_format_line(

@@ -1,4 +1,4 @@
-import "std/core.sunder";
+import "std";
 
 func normal() void {
     # Skipping '\0' and since it is a pain to check.

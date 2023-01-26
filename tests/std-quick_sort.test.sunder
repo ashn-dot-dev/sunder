@@ -1,5 +1,4 @@
-import "std/sort.sunder";
-import "std/general_allocator.sunder";
+import "std";
 
 func test[[T]](slice: []T) void {
     std::quick_sort[[T]](slice);

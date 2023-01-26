@@ -1,5 +1,4 @@
-import "std/core.sunder";
-import "std/general_allocator.sunder";
+import "std";
 
 func test(allocator: std::allocator, str: []byte) void {
     var rstr = std::str_reader::init(str);

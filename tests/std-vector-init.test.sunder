@@ -1,6 +1,4 @@
-import "std/core.sunder";
-import "std/page_allocator.sunder";
-import "std/vector.sunder";
+import "std";
 import "sys";
 
 func main() void {

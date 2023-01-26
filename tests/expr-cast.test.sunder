@@ -1,4 +1,4 @@
-import "std/core.sunder";
+import "std";
 import "sys";
 
 const a: u64 = (:u64)true;

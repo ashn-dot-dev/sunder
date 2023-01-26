@@ -1,5 +1,4 @@
-import "std/core.sunder";
-import "std/fs.sunder";
+import "std";
 
 func main() void {
     var file = (:std::file){._fd = -1};

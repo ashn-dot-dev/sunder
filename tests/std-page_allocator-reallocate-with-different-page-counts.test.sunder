@@ -1,8 +1,7 @@
 # Verify that reallocating where the new total size requires a different number
 # of pages than the old total size does not lead to any unexpected behavior.
 
-import "std/core.sunder";
-import "std/page_allocator.sunder";
+import "std";
 import "sys";
 
 func main() void {

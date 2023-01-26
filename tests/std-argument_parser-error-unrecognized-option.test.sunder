@@ -1,7 +1,5 @@
-import "std/core.sunder";
-import "std/argument.sunder";
-import "std/general_allocator.sunder";
-import "util/argv.sunder";
+import "std";
+import "util";
 
 func main() void {
     var allocator = std::general_allocator::init();

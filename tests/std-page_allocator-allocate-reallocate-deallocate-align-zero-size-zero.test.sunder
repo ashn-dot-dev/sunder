@@ -1,5 +1,4 @@
-import "std/core.sunder";
-import "std/page_allocator.sunder";
+import "std";
 
 func main() void {
     var allocator: std::allocator = std::allocator::init[[std::page_allocator]](std::page_allocator::the());

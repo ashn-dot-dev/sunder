@@ -1,7 +1,4 @@
-import "std/core.sunder";
-import "std/big_integer.sunder";
-import "std/general_allocator.sunder";
-import "std/hash_map.sunder";
+import "std";
 
 func main() void {
     var allocator = std::general_allocator::init();

@@ -1,5 +1,5 @@
 namespace util::argv;
-import "std/core.sunder";
+import "std";
 
 # Transform the provided arguments into an C-style argument vector.
 func new(allocator: std::allocator, arguments: [][]byte) **byte {

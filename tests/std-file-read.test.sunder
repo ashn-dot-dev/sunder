@@ -1,5 +1,4 @@
-import "std/core.sunder";
-import "std/fs.sunder";
+import "std";
 
 func main() void {
     var result = std::file::open("data.txt", std::file::OPEN_READ);

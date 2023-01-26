@@ -1,4 +1,4 @@
-import "std/core.sunder";
+import "std";
 
 func main() void {
     var result = std::write_all(std::out(), "Call to write_all (stdout)!\n");

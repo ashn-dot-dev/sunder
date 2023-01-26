@@ -1,5 +1,4 @@
-import "std/core.sunder";
-import "std/page_allocator.sunder";
+import "std";
 
 func main() void {
     # Using std::page_allocator since it was the first allocator that happened

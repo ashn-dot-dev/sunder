@@ -1,6 +1,4 @@
-import "std/big_integer.sunder";
-import "std/core.sunder";
-import "std/general_allocator.sunder";
+import "std";
 
 func display_big_integer_internals(big_integer: *std::big_integer) void {
     var sign = "0";

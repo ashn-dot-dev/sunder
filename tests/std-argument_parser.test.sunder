@@ -1,7 +1,5 @@
-import "std/core.sunder";
-import "std/argument.sunder";
-import "std/general_allocator.sunder";
-import "util/argv.sunder";
+import "std";
+import "util";
 
 func dump_parser_info(parser: *std::argument_parser) void {
     var opt = parser.*.option();

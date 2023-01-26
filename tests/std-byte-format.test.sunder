@@ -1,4 +1,4 @@
-import "std/core.sunder";
+import "std";
 
 func test(b: byte, format: []byte) void {
     std::print_format_line(

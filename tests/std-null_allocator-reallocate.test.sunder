@@ -1,4 +1,4 @@
-import "std/null_allocator.sunder";
+import "std";
 
 func main() void {
     std::null_allocator::the().*.reallocate((:*byte)0u, 0, 0, 0);

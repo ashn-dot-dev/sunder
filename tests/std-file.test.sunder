@@ -1,5 +1,4 @@
-import "std/core.sunder";
-import "std/fs.sunder";
+import "std";
 import "sys/sys.sunder";
 
 func main() void {

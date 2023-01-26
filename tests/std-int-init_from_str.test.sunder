@@ -1,4 +1,4 @@
-import "std/core.sunder";
+import "std";
 
 func nominal_dec() void {
     var result = ssize::init_from_str("0", 0);
