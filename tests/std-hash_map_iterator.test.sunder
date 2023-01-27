@@ -1,8 +1,7 @@
 import "std";
 
 func main() void {
-    var allocator = std::allocator::init[[std::page_allocator]](std::page_allocator::the());
-    var map = std::hash_map[[[]byte, ssize]]::init(allocator);
+    var map = std::hash_map[[[]byte, ssize]]::init();
 
     map.insert("foo", 0x123);
     map.insert("bar", 0x456);

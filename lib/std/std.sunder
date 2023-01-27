@@ -2865,7 +2865,13 @@ struct hash_map[[K, V]] {
     var _q: usize; # Number of non-NIL entries in the map.
 
     # Initialize an empty map.
-    func init(allocator: std::allocator) hash_map[[K, V]] {
+    func init() hash_map[[K, V]] {
+        return init_with_allocator(std::global_allocator());
+    }
+
+    # Initialize an empty map.
+    # The provided allocator is used for backing storage.
+    func init_with_allocator(allocator: std::allocator) hash_map[[K, V]] {
         return (:hash_map[[K, V]]){
             ._allocator = allocator,
             ._elements = (:[]hash_map_element[[K, V]])[],

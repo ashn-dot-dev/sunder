@@ -1,7 +1,7 @@
 import "std";
 
 func main() void {
-    var map = std::hash_map[[std::string, []byte]]::init(std::global_allocator());
+    var map = std::hash_map[[std::string, []byte]]::init();
     defer map.fini();
 
     map.insert(std::string::init_from_str("foo"), "foo value");

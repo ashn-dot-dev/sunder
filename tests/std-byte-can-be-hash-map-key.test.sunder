@@ -1,16 +1,8 @@
 import "std";
 
 func main() void {
-    var allocator = std::general_allocator::init();
-    defer {
-        allocator.fini();
-    }
-    var allocator = std::allocator::init[[typeof(allocator)]](&allocator);
-
-    var map = std::hash_map[[byte, []byte]]::init(allocator);
-    defer {
-        map.fini();
-    }
+    var map = std::hash_map[[byte, []byte]]::init();
+    defer map.fini();
 
     map.insert(byte::MIN, "value 1");
     map.insert(byte::MAX, "value 2");

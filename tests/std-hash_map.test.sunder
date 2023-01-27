@@ -1,9 +1,8 @@
 import "std";
 
 func main() void {
-    var allocator = std::allocator::init[[std::page_allocator]](std::page_allocator::the());
-
-    var map = std::hash_map[[[]byte, ssize]]::init(allocator);
+    var map = std::hash_map[[[]byte, ssize]]::init();
+    defer map.fini();
 
     var count = map.count();
     std::print_format_line(std::out(), "Count {}", (:[]std::formatter)[std::formatter::init[[usize]](&count)]);
@@ -83,11 +82,12 @@ func main() void {
         (:[]std::formatter)[
             std::formatter::init[[ssize]](&removed.value)]);
 
-    map.fini();
-
     std::print(std::out(), "\n");
 
-    var map = std::hash_map[[ssize, usize]]::init(allocator);
+    # Test map inserts. Also test std::map::init_with_allocator.
+    var map = std::hash_map[[ssize, usize]]::init_with_allocator(std::global_allocator());
+    defer map.fini();
+
     for x in 0x123456:0x123456+100000 {
         map.insert((:ssize)x, x);
     }
@@ -103,7 +103,6 @@ func main() void {
     }
     var count = map.count();
     std::print_format_line(std::out(), "Count {}", (:[]std::formatter)[std::formatter::init[[usize]](&count)]);
-    map.fini();
 }
 ################################################################################
 # Count 0

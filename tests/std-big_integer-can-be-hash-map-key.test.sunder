@@ -2,15 +2,11 @@ import "std";
 
 func main() void {
     var allocator = std::general_allocator::init();
-    defer {
-        allocator.fini();
-    }
+    defer allocator.fini();
     var allocator = std::allocator::init[[typeof(allocator)]](&allocator);
 
-    var map = std::hash_map[[std::big_integer, []byte]]::init(allocator);
-    defer {
-        map.fini();
-    }
+    var map = std::hash_map[[std::big_integer, []byte]]::init();
+    defer map.fini();
 
     var result = std::big_integer::init_from_str(allocator, "0", 0);
     map.insert(result.value(), "value 1");
