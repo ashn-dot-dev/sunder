@@ -7,10 +7,10 @@ func main() void {
     }
     var allocator = std::allocator::init[[typeof(allocator)]](&allocator);
 
-    var res = std::big_integer::init(allocator);
-    var lhs = std::big_integer::init_from_str(allocator, "23683804034828013499051778376295261514260767120149", 0);
+    var res = std::big_integer::init_with_allocator(allocator);
+    var lhs = std::big_integer::init_from_str_with_allocator(allocator, "23683804034828013499051778376295261514260767120149", 0);
     var lhs = lhs.value();
-    var rhs = std::big_integer::init_from_str(allocator, "-22381747887658630369484257092659804022968970706773", 0);
+    var rhs = std::big_integer::init_from_str_with_allocator(allocator, "-22381747887658630369484257092659804022968970706773", 0);
     var rhs = rhs.value();
 
     std::big_integer::add(&res, &lhs, &rhs);

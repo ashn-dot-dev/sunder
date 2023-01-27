@@ -14,16 +14,12 @@ func main() void {
     test_value[[ssize]](+123, -123);
     test_value[[ssize]](0, 0);
 
-    var general_allocator = std::general_allocator::init();
-    defer { general_allocator.fini(); }
-    var allocator = std::allocator::init[[typeof(general_allocator)]](&general_allocator);
-
-    var x = std::big_integer::init_from_str(allocator, "+12345678901234567890", 0);
+    var x = std::big_integer::init_from_str("+12345678901234567890", 0);
     var x = x.value();
-    defer { x.fini(); }
-    var y = std::big_integer::init_from_str(allocator, "-12345678901234567890", 0);
+    defer x.fini();
+    var y = std::big_integer::init_from_str("-12345678901234567890", 0);
     var y = y.value();
-    defer { y.fini(); }
+    defer y.fini();
     var min = std::min[[std::big_integer]](&x, &y);
     std::print_format_line(std::out(), "{}", (:[]std::formatter)[std::formatter::init[[std::big_integer]](min)]);
 }

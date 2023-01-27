@@ -1,26 +1,26 @@
 import "std";
 
 func test_add(allocator: std::allocator) void {
-    var res = std::big_integer::init(allocator);
+    var res = std::big_integer::init_with_allocator(allocator);
     defer {
         res.fini();
     }
 
-    var rhs = std::big_integer::init_from_str(allocator, "123", 0);
+    var rhs = std::big_integer::init_from_str_with_allocator(allocator, "123", 0);
     var rhs = rhs.value();
     defer {
         rhs.fini();
     }
     std::big_integer::add(&res, &res, &rhs);
 
-    var rhs = std::big_integer::init_from_str(allocator, "456", 0);
+    var rhs = std::big_integer::init_from_str_with_allocator(allocator, "456", 0);
     var rhs = rhs.value();
     defer {
         rhs.fini();
     }
     std::big_integer::add(&res, &res, &rhs);
 
-    var rhs = std::big_integer::init_from_str(allocator, "1234567890123456789012345678901234567890", 0);
+    var rhs = std::big_integer::init_from_str_with_allocator(allocator, "1234567890123456789012345678901234567890", 0);
     var rhs = rhs.value();
     defer { rhs.fini(); }
     std::big_integer::add(&res, &res, &rhs);
@@ -29,26 +29,26 @@ func test_add(allocator: std::allocator) void {
 }
 
 func test_sub(allocator: std::allocator) void {
-    var res = std::big_integer::init(allocator);
+    var res = std::big_integer::init_with_allocator(allocator);
     defer {
         res.fini();
     }
 
-    var rhs = std::big_integer::init_from_str(allocator, "123", 0);
+    var rhs = std::big_integer::init_from_str_with_allocator(allocator, "123", 0);
     var rhs = rhs.value();
     defer {
         rhs.fini();
     }
     std::big_integer::sub(&res, &res, &rhs);
 
-    var rhs = std::big_integer::init_from_str(allocator, "456", 0);
+    var rhs = std::big_integer::init_from_str_with_allocator(allocator, "456", 0);
     var rhs = rhs.value();
     defer {
         rhs.fini();
     }
     std::big_integer::sub(&res, &res, &rhs);
 
-    var rhs = std::big_integer::init_from_str(allocator, "1234567890123456789012345678901234567890", 0);
+    var rhs = std::big_integer::init_from_str_with_allocator(allocator, "1234567890123456789012345678901234567890", 0);
     var rhs = rhs.value();
     defer { rhs.fini(); }
     std::big_integer::sub(&res, &res, &rhs);

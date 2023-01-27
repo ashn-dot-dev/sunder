@@ -33,8 +33,8 @@ func test_init_from_int[[T]](allocator: std::allocator, int: T) void {
         std::out(),
         "input int: {}",
         (:[]std::formatter)[std::formatter::init[[T]](&int)]);
-    var big_integer = std::big_integer::init_from_int[[T]](allocator, int);
-    defer { big_integer.fini(); }
+    var big_integer = std::big_integer::init_from_int_with_allocator[[T]](allocator, int);
+    defer big_integer.fini();
     display_big_integer_internals(&big_integer);
     std::print_format_line(
         std::out(),
@@ -47,8 +47,8 @@ func test_to_int_roundtrip[[T]](allocator: std::allocator, int: T) void {
         std::out(),
         "input int: {}",
         (:[]std::formatter)[std::formatter::init[[T]](&int)]);
-    var big_integer = std::big_integer::init_from_int[[T]](allocator, int);
-    defer { big_integer.fini(); }
+    var big_integer = std::big_integer::init_from_int_with_allocator[[T]](allocator, int);
+    defer big_integer.fini();
     var result = big_integer.to_int[[T]]();
     var int = result.value();
     std::print_format_line(
@@ -62,9 +62,9 @@ func test_init_from_str_success(allocator: std::allocator, str: []byte, radix: u
         std::out(),
         "input str: \"{e}\"",
         (:[]std::formatter)[std::formatter::init[[[]byte]](&str)]);
-    var result = std::big_integer::init_from_str(allocator, str, radix);
+    var result = std::big_integer::init_from_str_with_allocator(allocator, str, radix);
     var big_integer = result.value();
-    defer { big_integer.fini(); }
+    defer big_integer.fini();
     display_big_integer_internals(&big_integer);
     std::print_format_line(
         std::out(),
@@ -77,18 +77,18 @@ func test_init_from_str_failure(allocator: std::allocator, str: []byte, radix: u
         std::out(),
         "input str: \"{e}\"",
         (:[]std::formatter)[std::formatter::init[[[]byte]](&str)]);
-    var result = std::big_integer::init_from_str(allocator, str, radix);
+    var result = std::big_integer::init_from_str_with_allocator(allocator, str, radix);
     std::print_line(std::out(), result.error().*.data);
 }
 
 func test_compare(allocator: std::allocator, lhs_str: []byte, rhs_str: []byte) void {
-    var lhs_result = std::big_integer::init_from_str(allocator, lhs_str, 0);
+    var lhs_result = std::big_integer::init_from_str_with_allocator(allocator, lhs_str, 0);
     var lhs = lhs_result.value();
-    defer { lhs.fini(); }
+    defer lhs.fini();
 
-    var rhs_result = std::big_integer::init_from_str(allocator, rhs_str, 0);
+    var rhs_result = std::big_integer::init_from_str_with_allocator(allocator, rhs_str, 0);
     var rhs = rhs_result.value();
-    defer { rhs.fini(); }
+    defer rhs.fini();
 
     var cmp = std::big_integer::compare(&lhs, &rhs);
 
@@ -102,9 +102,9 @@ func test_compare(allocator: std::allocator, lhs_str: []byte, rhs_str: []byte) v
 }
 
 func test_format(allocator: std::allocator, str: []byte) void {
-    var result = std::big_integer::init_from_str(allocator, str, 0);
+    var result = std::big_integer::init_from_str_with_allocator(allocator, str, 0);
     var big_integer = result.value();
-    defer { big_integer.fini(); }
+    defer big_integer.fini();
 
     var fmts = (:[][]byte)[
         "{}",
@@ -130,11 +130,11 @@ func test_format(allocator: std::allocator, str: []byte) void {
 
 func main() void {
     var allocator = std::general_allocator::init();
-    defer { allocator.fini(); }
+    defer allocator.fini();
     var allocator = std::allocator::init[[typeof(allocator)]](&allocator);
 
-    var big_integer = std::big_integer::init(allocator);
-    defer { big_integer.fini(); }
+    var big_integer = std::big_integer::init_with_allocator(allocator);
+    defer big_integer.fini();
     display_big_integer_internals(&big_integer);
 
     std::print(std::out(), "\n");
@@ -305,11 +305,11 @@ func main() void {
     std::print(std::out(), "\n");
 
     # Test zero divided non-zero equals zero.
-    var lhs = std::big_integer::init_from_str(allocator, "0", 0);
+    var lhs = std::big_integer::init_from_str_with_allocator(allocator, "0", 0);
     var lhs = lhs.value();
-    var rhs = std::big_integer::init_from_str(allocator, "1", 0);
+    var rhs = std::big_integer::init_from_str_with_allocator(allocator, "1", 0);
     var rhs = rhs.value();
-    var div = std::big_integer::init(allocator);
+    var div = std::big_integer::init_with_allocator(allocator);
     defer {
         lhs.fini();
         rhs.fini();
@@ -321,11 +321,11 @@ func main() void {
     std::print(std::out(), "\n");
 
     # Test a panic from divide by zero.
-    var lhs = std::big_integer::init_from_str(allocator, "1", 0);
+    var lhs = std::big_integer::init_from_str_with_allocator(allocator, "1", 0);
     var lhs = lhs.value();
-    var rhs = std::big_integer::init_from_str(allocator, "0", 0);
+    var rhs = std::big_integer::init_from_str_with_allocator(allocator, "0", 0);
     var rhs = rhs.value();
-    var div = std::big_integer::init(allocator);
+    var div = std::big_integer::init_with_allocator(allocator);
     defer {
         lhs.fini();
         rhs.fini();

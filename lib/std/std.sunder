@@ -1744,9 +1744,7 @@ func max[[T]](x: *T, y: *T) *T {
 
 # Managed arbitrary precision integer type.
 struct big_integer {
-    # Allocator used to allocate limbs for this big integer. The allocator is
-    # also used as the backing allocator for intermediate objects created while
-    # performing arithmetic operations.
+    # Allocator used for limb backing storage.
     var _allocator: std::allocator;
     # -1 if the integer <  0
     #  0 if the integer == 0
@@ -1763,7 +1761,13 @@ struct big_integer {
     const _BITS_PER_LIMB = sizeof(u32) * 8;
 
     # Initialize a big integer with the value zero.
-    func init(allocator: std::allocator) big_integer {
+    func init() big_integer {
+        return big_integer::init_with_allocator(std::global_allocator());
+    }
+
+    # Initialize a big integer with the value zero.
+    # The provided allocator is used for backing storage.
+    func init_with_allocator(allocator: std::allocator) big_integer {
         return (:big_integer){
             ._allocator = allocator,
             ._sign = 0,
@@ -1772,14 +1776,26 @@ struct big_integer {
     }
 
     # Initialize a big integer with the value of another big integer.
-    func init_from_big_integer(allocator: std::allocator, from: *big_integer) big_integer {
-        var self = big_integer::init(allocator);
+    func init_from_big_integer(from: *big_integer) big_integer {
+        return big_integer::init_from_big_integer_with_allocator(std::global_allocator(), from);
+    }
+
+    # Initialize a big integer with the value of another big integer.
+    # The provided allocator is used for backing storage.
+    func init_from_big_integer_with_allocator(allocator: std::allocator, from: *big_integer) big_integer {
+        var self = big_integer::init_with_allocator(allocator);
         big_integer::assign(&self, from);
         return self;
     }
 
     # Initialize a big integer with the value of a primitive integer.
-    func init_from_int[[T]](allocator: std::allocator, int: T) big_integer {
+    func init_from_int[[T]](int: T) big_integer {
+        return big_integer::init_from_int_with_allocator[[T]](std::global_allocator(), int);
+    }
+
+    # Initialize a big integer with the value of a primitive integer.
+    # The provided allocator is used for backing storage.
+    func init_from_int_with_allocator[[T]](allocator: std::allocator, int: T) big_integer {
         std::assert(sizeof(T) <= sizeof(u64));
         if int >= 0 {
             var self = (:big_integer){
@@ -1818,7 +1834,13 @@ struct big_integer {
     }
 
     # Initialize a big integer with the value parsed from a byte slice.
-    func init_from_str(allocator: std::allocator, str: []byte, radix: usize) std::result[[big_integer, std::error]] {
+    func init_from_str(str: []byte, radix: usize) std::result[[big_integer, std::error]] {
+        return big_integer::init_from_str_with_allocator(std::global_allocator(), str, radix);
+    }
+
+    # Initialize a big integer with the value parsed from a byte slice.
+    # The provided allocator is used for backing storage.
+    func init_from_str_with_allocator(allocator: std::allocator, str: []byte, radix: usize) std::result[[big_integer, std::error]] {
         if radix != 0 and radix != 2 and radix != 8 and radix != 10 and radix != 16 {
             return std::result[[big_integer, std::error]]::init_error(std::error::INVALID_ARGUMENT);
         }
@@ -1868,7 +1890,7 @@ struct big_integer {
         if cur == end {
             return std::result[[big_integer, std::error]]::init_error(std::error::PARSE_FAILURE);
         }
-        var self = big_integer::init(allocator);
+        var self = big_integer::init_with_allocator(allocator);
         for cur != end {
             var c = str[cur];
             cur = cur + 1;
@@ -2024,7 +2046,7 @@ struct big_integer {
             fmt_idx = fmt_idx + 1;
         }
 
-        var radix = std::big_integer::init_from_int[[usize]](self.*._allocator, 10);
+        var radix: std::big_integer = uninit;
         defer radix.fini();
         var digits_prefix: []byte = "";
         var digits_table: []byte = DIGITS_TABLE_LOWER[0:DIGITS_TABLE_COUNT];
@@ -2034,22 +2056,22 @@ struct big_integer {
             fmt_idx = fmt_idx + 1;
 
             if c == 'd' {
-                # Decimal defaults already set.
+                radix = std::big_integer::init_from_int[[usize]](10);
             }
             elif c == 'b' {
-                radix = std::big_integer::init_from_int[[usize]](self.*._allocator, 2);
+                radix = std::big_integer::init_from_int[[usize]](2);
                 digits_prefix = "0b";
             }
             elif c == 'o' {
-                radix = std::big_integer::init_from_int[[usize]](self.*._allocator, 8);
+                radix = std::big_integer::init_from_int[[usize]](8);
                 digits_prefix = "0o";
             }
             elif c == 'x' {
-                radix = std::big_integer::init_from_int[[usize]](self.*._allocator, 16);
+                radix = std::big_integer::init_from_int[[usize]](16);
                 digits_prefix = "0x";
             }
             elif c == 'X' {
-                radix = std::big_integer::init_from_int[[usize]](self.*._allocator, 16);
+                radix = std::big_integer::init_from_int[[usize]](16);
                 digits_prefix = "0x";
                 digits_table = DIGITS_TABLE_UPPER[0:DIGITS_TABLE_COUNT];
             }
@@ -2057,17 +2079,21 @@ struct big_integer {
                 return std::result[[void, std::error]]::init_error(std::error::INVALID_ARGUMENT);
             }
         }
+        else {
+            # Default to decimal formatting.
+            radix = std::big_integer::init_from_int[[usize]](10);
+        }
 
         if fmt_idx != countof(fmt) {
             return std::result[[void, std::error]]::init_error(std::error::INVALID_ARGUMENT);
         }
 
-        var magnitude = big_integer::init_from_big_integer(self.*._allocator, self);
+        var magnitude = big_integer::init_from_big_integer(self);
         big_integer::assign(&magnitude, self);
         big_integer::abs(&magnitude, &magnitude);
         defer magnitude.fini();
 
-        var output = std::vector[[byte]]::init_with_allocator(self.*._allocator);
+        var output = std::vector[[byte]]::init();
         defer output.fini();
 
         if magnitude._sign == 0 {
@@ -2078,9 +2104,9 @@ struct big_integer {
         for magnitude._sign != 0 {
             std::assert(countof(self.*._limbs) != 0);
 
-            var div = big_integer::init(self.*._allocator);
+            var div = big_integer::init();
             defer div.fini();
-            var rem = big_integer::init(self.*._allocator);
+            var rem = big_integer::init();
             defer rem.fini();
             big_integer::_divrem(&div, &rem, &magnitude, &radix);
 
@@ -2142,7 +2168,7 @@ struct big_integer {
         }
         # (+lhs) + (-rhs) == (+lhs) - (+rhs)
         if (lhs.*._sign == +1) and (rhs.*._sign == -1) {
-            var tmp_rhs = big_integer::init(res.*._allocator);
+            var tmp_rhs = big_integer::init();
             big_integer::neg(&tmp_rhs, rhs);
             big_integer::sub(res, lhs, &tmp_rhs);
             tmp_rhs.fini();
@@ -2150,7 +2176,7 @@ struct big_integer {
         }
         # (-lhs) + (+rhs) == (+rhs) - (+lhs)
         if (lhs.*._sign == -1) and (rhs.*._sign == +1) {
-            var tmp_lhs = big_integer::init(res.*._allocator);
+            var tmp_lhs = big_integer::init();
             big_integer::neg(&tmp_lhs, lhs);
             big_integer::sub(res, rhs, &tmp_lhs);
             tmp_lhs.fini();
@@ -2165,9 +2191,9 @@ struct big_integer {
         var rhs_limb_count = countof(rhs.*._limbs);
         var limb_count = 1 + *std::max[[usize]](&lhs_limb_count, &rhs_limb_count);
         var tmp_res = (:big_integer){
-            ._allocator = res.*._allocator,
+            ._allocator = std::global_allocator(),
             ._sign = sign,
-            ._limbs = std::slice[[u32]]::new(res.*._allocator, limb_count)
+            ._limbs = std::slice[[u32]]::new(std::global_allocator(), limb_count)
         };
 
         var carry: u64 = 0;
@@ -2206,7 +2232,7 @@ struct big_integer {
         }
         # (+lhs) - (-rhs) == (+lhs) + (+rhs)
         if (lhs.*._sign == +1) and (rhs.*._sign == -1) {
-            var tmp_rhs = big_integer::init(res.*._allocator);
+            var tmp_rhs = big_integer::init();
             big_integer::neg(&tmp_rhs, rhs);
             big_integer::add(res, lhs, &tmp_rhs);
             tmp_rhs.fini();
@@ -2214,7 +2240,7 @@ struct big_integer {
         }
         # (-lhs) - (+rhs) == (-lhs) + (-rhs)
         if (lhs.*._sign == -1) and (rhs.*._sign == +1) {
-            var tmp_rhs = big_integer::init(res.*._allocator);
+            var tmp_rhs = big_integer::init();
             big_integer::neg(&tmp_rhs, rhs);
             big_integer::add(res, lhs, &tmp_rhs);
             tmp_rhs.fini();
@@ -2244,9 +2270,9 @@ struct big_integer {
         var rhs_limb_count = countof(rhs.*._limbs);
         var limb_count = *std::max[[usize]](&lhs_limb_count, &rhs_limb_count);
         var tmp_res = (:big_integer){
-            ._allocator = res.*._allocator,
+            ._allocator = std::global_allocator(),
             ._sign = sign,
-            ._limbs = std::slice[[u32]]::new(res.*._allocator, limb_count)
+            ._limbs = std::slice[[u32]]::new(std::global_allocator(), limb_count)
         };
 
         var borrow: u64 = 0;
@@ -2279,7 +2305,7 @@ struct big_integer {
         # 0 * rhs == 0
         # lhs * 0 == 0
         if lhs.*._sign == 0 or rhs.*._sign == 0 {
-            var zero = big_integer::init(res.*._allocator);
+            var zero = big_integer::init();
             defer zero.fini();
             big_integer::assign(res, &zero);
             return;
@@ -2289,7 +2315,7 @@ struct big_integer {
         # Source: Art of Computer Programming, Volume 2: Seminumerical
         #         Algorithms (Third Edition) page. 268.
         var count = countof(lhs.*._limbs) + countof(rhs.*._limbs);
-        var tmp_w = big_integer::init(res.*._allocator); # abs(res)
+        var tmp_w = big_integer::init(); # abs(res)
         tmp_w._resize(count);
 
         var w = tmp_w._limbs;
@@ -2331,14 +2357,14 @@ struct big_integer {
 
     # res = lhs / rhs
     func div(res: *big_integer, lhs: *big_integer, rhs: *big_integer) void {
-        var rem = big_integer::init(res.*._allocator);
+        var rem = big_integer::init();
         defer rem.fini();
         big_integer::_divrem(res, &rem, lhs, rhs);
     }
 
     # res = lhs % rhs
     func rem(res: *big_integer, lhs: *big_integer, rhs: *big_integer) void {
-        var div = big_integer::init(res.*._allocator);
+        var div = big_integer::init();
         defer div.fini();
         big_integer::_divrem(&div, res, lhs, rhs);
     }
@@ -2495,11 +2521,11 @@ struct big_integer {
         #     Q(i) := 1
         #   end
         # end
-        var Q = big_integer::init(div.*._allocator); # abs(div)
-        var R = big_integer::init(div.*._allocator); # abs(rem)
-        var N = big_integer::init(div.*._allocator); # abs(lhs)
+        var Q = big_integer::init(); # abs(div)
+        var R = big_integer::init(); # abs(rem)
+        var N = big_integer::init(); # abs(lhs)
         big_integer::abs(&N, lhs);
-        var D = big_integer::init(div.*._allocator); # abs(rhs)
+        var D = big_integer::init(); # abs(rhs)
         big_integer::abs(&D, rhs);
         var i = big_integer::_magnitude_bit_count(lhs);
         for i != 0 {

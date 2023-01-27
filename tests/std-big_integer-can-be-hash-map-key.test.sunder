@@ -1,22 +1,18 @@
 import "std";
 
 func main() void {
-    var allocator = std::general_allocator::init();
-    defer allocator.fini();
-    var allocator = std::allocator::init[[typeof(allocator)]](&allocator);
-
     var map = std::hash_map[[std::big_integer, []byte]]::init();
     defer map.fini();
 
-    var result = std::big_integer::init_from_str(allocator, "0", 0);
+    var result = std::big_integer::init_from_str("0", 0);
     map.insert(result.value(), "value 1");
-    var result = std::big_integer::init_from_str(allocator, "+0xBEEFBEEFBEEFBEEF", 0);
+    var result = std::big_integer::init_from_str("+0xBEEFBEEFBEEFBEEF", 0);
     map.insert(result.value(), "value 2");
-    var result = std::big_integer::init_from_str(allocator, "-0xBEEFBEEFBEEFBEEF", 0);
+    var result = std::big_integer::init_from_str("-0xBEEFBEEFBEEFBEEF", 0);
     map.insert(result.value(), "value 3");
-    var result = std::big_integer::init_from_str(allocator, "-0xBEEFBEEFBEEFBEEF", 0);
+    var result = std::big_integer::init_from_str("-0xBEEFBEEFBEEFBEEF", 0);
     map.insert(result.value(), "value 4");
-    var result = std::big_integer::init_from_str(allocator, "0xFFFFFFFFFFFFFFFF", 0);
+    var result = std::big_integer::init_from_str("0xFFFFFFFFFFFFFFFF", 0);
     map.insert(result.value(), "value 5");
 
     var iterator = std::hash_map_iterator[[std::big_integer, []byte]]::init(&map);

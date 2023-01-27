@@ -6,7 +6,7 @@ func main() void {
     defer allocator.fini();
     var allocator = std::allocator::init[[typeof(allocator)]](&allocator);
 
-    var sum = std::big_integer::init(allocator);
+    var sum = std::big_integer::init();
     defer sum.fini();
 
     for true {
@@ -28,7 +28,7 @@ func main() void {
             continue;
         }
 
-        var result = std::big_integer::init_from_str(allocator, optional.value(), 0);
+        var result = std::big_integer::init_from_str(optional.value(), 0);
         if result.is_error() {
             std::print_line(std::err(), result.error().*.data);
             std::exit(std::EXIT_FAILURE);
