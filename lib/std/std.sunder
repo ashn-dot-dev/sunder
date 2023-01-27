@@ -2543,7 +2543,13 @@ struct string {
     var _capacity: usize;
 
     # Initialize a string with a count and capacity of zero.
-    func init(allocator: std::allocator) string {
+    func init() string {
+        return string::init_with_allocator(std::global_allocator());
+    }
+
+    # Initialize a string with a count and capacity of zero.
+    # The provided allocator is used for backing storage.
+    func init_with_allocator(allocator: std::allocator) string {
         return (:string){
             ._allocator = allocator,
             ._start = (:*byte)0u,
@@ -2554,14 +2560,14 @@ struct string {
 
     # Initialize a string as a copy of `str`.
     func init_from_str(allocator: std::allocator, str: []byte) string {
-        var self = string::init(allocator);
+        var self = string::init_with_allocator(allocator);
         std::print(std::writer::init[[std::string]](&self), str);
         return self;
     }
 
     # Initialize a string from the provided format.
     func init_from_format(allocator: std::allocator, format: []byte, args: []std::formatter) string {
-        var self = string::init(allocator);
+        var self = string::init_with_allocator(allocator);
         std::print_format(std::writer::init[[std::string]](&self), format, args);
         return self;
     }

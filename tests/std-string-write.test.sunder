@@ -1,7 +1,7 @@
 import "std";
 
 func main() void {
-    var string = std::string::init(std::allocator::init[[std::page_allocator]](std::page_allocator::the()));
+    var string = std::string::init();
     var writer = std::writer::init[[std::string]](&string);
 
     std::print_line(std::out(), string.data());

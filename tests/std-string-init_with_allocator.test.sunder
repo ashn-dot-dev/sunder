@@ -2,7 +2,7 @@ import "std";
 import "sys";
 
 func main() void {
-    var string = std::string::init();
+    var string = std::string::init_with_allocator(std::global_allocator());
     defer string.fini();
 
     sys::dump[[*byte]](string.start());
@@ -15,3 +15,4 @@ func main() void {
 # 00 00 00 00 00 00 00 00
 # 00 00 00 00 00 00 00 00
 # 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+

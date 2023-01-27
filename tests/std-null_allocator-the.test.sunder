@@ -1,5 +1,5 @@
 import "std";
 
 func main() void {
-    var _ = std::string::init(std::allocator::init[[std::null_allocator]](std::null_allocator::the()));
+    var _ = std::string::init_with_allocator(std::allocator::init[[std::null_allocator]](std::null_allocator::the()));
 }
