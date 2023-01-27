@@ -1,0 +1,6 @@
+import "std";
+
+func main() void {
+    var x = std::new[[ssize]](std::global_allocator());
+    std::delete[[ssize]](std::global_allocator(), x);
+}
