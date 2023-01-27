@@ -70,7 +70,7 @@ func main() void {
     var success = true;
     var lines = std::slice[[usize]]::new(allocator, source_size);
     var jumps = std::slice[[usize]]::new(allocator, source_size);
-    var stack = std::vector[[usize]]::init(allocator);
+    var stack = std::vector[[usize]]::init_with_allocator(allocator);
     var line = 1u;
     for i in source_size {
         lines[i] = line;

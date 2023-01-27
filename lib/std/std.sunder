@@ -2067,7 +2067,7 @@ struct big_integer {
         big_integer::abs(&magnitude, &magnitude);
         defer magnitude.fini();
 
-        var output = std::vector[[byte]]::init(self.*._allocator);
+        var output = std::vector[[byte]]::init_with_allocator(self.*._allocator);
         defer output.fini();
 
         if magnitude._sign == 0 {
@@ -2677,7 +2677,13 @@ struct vector[[T]] {
     var _capacity: usize;
 
     # Initialize a vector with a count and capacity of zero.
-    func init(allocator: std::allocator) vector[[T]] {
+    func init() vector[[T]] {
+        return std::vector[[T]]::init_with_allocator(std::global_allocator());
+    }
+
+    # Initialize a vector with a count and capacity of zero.
+    # The provided allocator is used for backing storage.
+    func init_with_allocator(allocator: std::allocator) vector[[T]] {
         return (:vector[[T]]){
             ._allocator = allocator,
             ._start = (:*T)0u,

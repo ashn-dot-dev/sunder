@@ -25,7 +25,7 @@ struct tree_iterator {
     var cur: std::optional[[*node]];
 
     func init(t: *tree) tree_iterator {
-        var stack = std::vector[[*::node]]::init(std::allocator::init[[std::page_allocator]](std::page_allocator::the()));
+        var stack = std::vector[[*::node]]::init();
 
         var node: std::optional[[*::node]] = t.*.root;
         for node.is_value() {

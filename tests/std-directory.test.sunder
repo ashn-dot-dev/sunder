@@ -16,29 +16,24 @@ func bubble_sort[[T]](slice: []T) void {
 func main() void {
     var result = std::directory::open("util");
     var dir = result.value();
-    defer {
-        dir.close();
-    }
+    defer dir.close();
 
-    var allocator = std::general_allocator::init();
-    defer { allocator.fini(); }
-    var allocator = std::allocator::init[[typeof(allocator)]](&allocator);
-    var vector = std::vector[[[]byte]]::init(allocator);
+    var vec = std::vector[[[]byte]]::init();
 
     for dir.advance() {
         var current = dir.current();
         var name = current.value();
 
-        var str = std::slice[[byte]]::new(allocator, countof(name));
+        var str = std::slice[[byte]]::new(std::global_allocator(), countof(name));
         std::slice[[byte]]::copy(str, name);
-        vector.push(str);
+        vec.push(str);
     }
 
     # Sort so file ordering is deterministic on all filesystems.
-    bubble_sort[[[]byte]](vector.data());
+    bubble_sort[[[]byte]](vec.data());
 
-    for i in vector.count() {
-        std::print_line(std::out(), vector.data()[i]);
+    for i in vec.count() {
+        std::print_line(std::out(), vec.data()[i]);
     }
 }
 ################################################################################

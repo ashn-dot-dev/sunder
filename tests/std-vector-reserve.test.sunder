@@ -2,7 +2,9 @@ import "std";
 import "sys";
 
 func main() void {
-    var vec: std::vector[[u8]] = std::vector[[u8]]::init(std::allocator::init[[std::page_allocator]](std::page_allocator::the()));
+    var vec: std::vector[[u8]] = std::vector[[u8]]::init();
+    defer vec.fini();
+
     sys::dump[[usize]](vec.count());
     sys::dump[[usize]](vec.capacity());
 
@@ -33,8 +35,6 @@ func main() void {
     vec.reserve(0);
     sys::dump[[usize]](vec.count());
     sys::dump[[usize]](vec.capacity());
-
-    vec.fini();
 }
 ################################################################################
 # 00 00 00 00 00 00 00 00
