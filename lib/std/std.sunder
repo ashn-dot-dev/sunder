@@ -1918,7 +1918,7 @@ struct big_integer {
         var buf = (:[64]byte)[0...]; # More than enough space.
         var allocator = std::linear_allocator::init(buf[0:countof(buf)]);
         var allocator = std::allocator::init[[typeof(allocator)]](&allocator);
-        var string = std::string::init_from_format(allocator, "{}", (:[]std::formatter)[std::formatter::init[[big_integer]](self)]);
+        var string = std::string::init_from_format_with_allocator(allocator, "{}", (:[]std::formatter)[std::formatter::init[[big_integer]](self)]);
         return T::init_from_str(string.data(), 0);
     }
 
@@ -2572,7 +2572,13 @@ struct string {
     }
 
     # Initialize a string from the provided format.
-    func init_from_format(allocator: std::allocator, format: []byte, args: []std::formatter) string {
+    func init_from_format(format: []byte, args: []std::formatter) string {
+        return string::init_from_format_with_allocator(std::global_allocator(), format, args);
+    }
+
+    # Initialize a string from the provided format.
+    # The provided allocator is used for backing storage.
+    func init_from_format_with_allocator(allocator: std::allocator, format: []byte, args: []std::formatter) string {
         var self = string::init_with_allocator(allocator);
         std::print_format(std::writer::init[[std::string]](&self), format, args);
         return self;
