@@ -1,20 +1,12 @@
 import "std";
 
 func main() void {
-    var allocator = std::general_allocator::init();
-    defer {
-        allocator.fini();
-    }
-    var allocator = std::allocator::init[[typeof(allocator)]](&allocator);
+    var map = std::hash_map[[std::string, []byte]]::init(std::global_allocator());
+    defer map.fini();
 
-    var map = std::hash_map[[std::string, []byte]]::init(allocator);
-    defer {
-        map.fini();
-    }
-
-    map.insert(std::string::init_from_str(allocator, "foo"), "foo value");
-    map.insert(std::string::init_from_str(allocator, "bar"), "bar value 1");
-    map.insert(std::string::init_from_str(allocator, "bar"), "bar value 2");
+    map.insert(std::string::init_from_str("foo"), "foo value");
+    map.insert(std::string::init_from_str("bar"), "bar value 1");
+    map.insert(std::string::init_from_str("bar"), "bar value 2");
 
     var iterator = std::hash_map_iterator[[std::string, []byte]]::init(&map);
     for iterator.advance() {
