@@ -2212,7 +2212,7 @@ struct big_integer {
             defer div.fini();
             var rem = big_integer::init();
             defer rem.fini();
-            big_integer::_divrem(&div, &rem, &magnitude, &radix);
+            big_integer::divrem(&div, &rem, &magnitude, &radix);
 
             if rem._sign == 0 {
                 output.insert(0u, '0');
@@ -2463,14 +2463,81 @@ struct big_integer {
     func div(res: *big_integer, lhs: *big_integer, rhs: *big_integer) void {
         var rem = big_integer::init();
         defer rem.fini();
-        big_integer::_divrem(res, &rem, lhs, rhs);
+        big_integer::divrem(res, &rem, lhs, rhs);
     }
 
     # res = lhs % rhs
     func rem(res: *big_integer, lhs: *big_integer, rhs: *big_integer) void {
         var div = big_integer::init();
         defer div.fini();
-        big_integer::_divrem(&div, res, lhs, rhs);
+        big_integer::divrem(&div, res, lhs, rhs);
+    }
+
+    # div = lhs / rhs
+    # rem = lhs % rhs
+    func divrem(div: *big_integer, rem: *big_integer, lhs: *big_integer, rhs: *big_integer) void {
+        # lhs / 0 == undefined
+        if (rhs.*._sign == 0) {
+            std::panic("divide by zero");
+        }
+
+        # Binary Long Division Algorithm
+        # Source: https://en.wikipedia.org/wiki/Division_algorithm#Long_division
+        #
+        # The following algorithm, the binary version of the famous long
+        # division, will divide N by D, placing the quotient in Q and the
+        # remainder in R. In the following code, all values are treated as
+        # unsigned integers.
+        #
+        # if D = 0 then error(DivisionByZeroException) end
+        # Q := 0                  -- Initialize quotient and remainder to zero
+        # R := 0
+        # for i := n − 1 .. 0 do  -- Where n is number of bits in N
+        #   R := R << 1           -- Left-shift R by 1 bit
+        #   R(0) := N(i)          -- Set the least-significant bit of R equal
+        #                            to bit i of the numerator
+        #   if R ≥ D then
+        #     R := R − D
+        #     Q(i) := 1
+        #   end
+        # end
+        var Q = big_integer::init(); # abs(div)
+        var R = big_integer::init(); # abs(rem)
+        var N = big_integer::init(); # abs(lhs)
+        big_integer::abs(&N, lhs);
+        var D = big_integer::init(); # abs(rhs)
+        big_integer::abs(&D, rhs);
+        var i = big_integer::_magnitude_bit_count(lhs);
+        for i != 0 {
+            i = i - 1;
+            big_integer::_magnitude_shiftl(&R, 1);
+            big_integer::_magnitude_set_bit(&R, 0, big_integer::_magnitude_get_bit(&N, i));
+            if big_integer::compare(&R, &D) >= 0 {
+                big_integer::sub(&R, &R, &D);
+                big_integer::_magnitude_set_bit(&Q, i, true);
+            }
+        }
+
+        # printf("%2d %2d\n", +7 / +3, +7 % +3); // 2  1
+        # printf("%2d %2d\n", +7 / -3, +7 % -3); //-2  1
+        # printf("%2d %2d\n", -7 / +3, -7 % +3); //-2 -1
+        # printf("%2d %2d\n", -7 / -3, -7 % -3); // 2 -1
+        # ISO-IEC-9899-1999 Section 6.5.5 - Multiplicative operators:
+        # > When integers are divided, the result of the / operator is the
+        # > algebraic quotient with any fractional part discarded. If the
+        # > quotient a/b is representable, the expression (a/b)*b + a%b shall
+        # > equal a.
+        Q._sign = lhs.*._sign * rhs.*._sign;
+        R._sign = lhs.*._sign;
+
+        Q._normalize();
+        big_integer::assign(div, &Q);
+        R._normalize();
+        big_integer::assign(rem, &R);
+        Q.fini();
+        R.fini();
+        N.fini();
+        D.fini();
     }
 
     func _resize(self: *big_integer, new_count: usize) void {
@@ -2594,74 +2661,6 @@ struct big_integer {
             self.*._limbs[nlimbs : countof(self.*._limbs)],
             self.*._limbs[0 : countof(self.*._limbs) - nlimbs]);
         std::slice[[u32]]::fill(self.*._limbs[0:nlimbs], 0u32);
-    }
-
-    # div = lhs / rhs
-    # rem = lhs % rhs
-    # The allocator of `div` is used to allocate intermediate objects.
-    func _divrem(div: *big_integer, rem: *big_integer, lhs: *big_integer, rhs: *big_integer) void {
-        # lhs / 0 == undefined
-        if (rhs.*._sign == 0) {
-            std::panic("divide by zero");
-        }
-
-        # Binary Long Division Algorithm
-        # Source: https://en.wikipedia.org/wiki/Division_algorithm#Long_division
-        #
-        # The following algorithm, the binary version of the famous long
-        # division, will divide N by D, placing the quotient in Q and the
-        # remainder in R. In the following code, all values are treated as
-        # unsigned integers.
-        #
-        # if D = 0 then error(DivisionByZeroException) end
-        # Q := 0                  -- Initialize quotient and remainder to zero
-        # R := 0
-        # for i := n − 1 .. 0 do  -- Where n is number of bits in N
-        #   R := R << 1           -- Left-shift R by 1 bit
-        #   R(0) := N(i)          -- Set the least-significant bit of R equal
-        #                            to bit i of the numerator
-        #   if R ≥ D then
-        #     R := R − D
-        #     Q(i) := 1
-        #   end
-        # end
-        var Q = big_integer::init(); # abs(div)
-        var R = big_integer::init(); # abs(rem)
-        var N = big_integer::init(); # abs(lhs)
-        big_integer::abs(&N, lhs);
-        var D = big_integer::init(); # abs(rhs)
-        big_integer::abs(&D, rhs);
-        var i = big_integer::_magnitude_bit_count(lhs);
-        for i != 0 {
-            i = i - 1;
-            big_integer::_magnitude_shiftl(&R, 1);
-            big_integer::_magnitude_set_bit(&R, 0, big_integer::_magnitude_get_bit(&N, i));
-            if big_integer::compare(&R, &D) >= 0 {
-                big_integer::sub(&R, &R, &D);
-                big_integer::_magnitude_set_bit(&Q, i, true);
-            }
-        }
-
-        # printf("%2d %2d\n", +7 / +3, +7 % +3); // 2  1
-        # printf("%2d %2d\n", +7 / -3, +7 % -3); //-2  1
-        # printf("%2d %2d\n", -7 / +3, -7 % +3); //-2 -1
-        # printf("%2d %2d\n", -7 / -3, -7 % -3); // 2 -1
-        # ISO-IEC-9899-1999 Section 6.5.5 - Multiplicative operators:
-        # > When integers are divided, the result of the / operator is the
-        # > algebraic quotient with any fractional part discarded. If the
-        # > quotient a/b is representable, the expression (a/b)*b + a%b shall
-        # > equal a.
-        Q._sign = lhs.*._sign * rhs.*._sign;
-        R._sign = lhs.*._sign;
-
-        Q._normalize();
-        big_integer::assign(div, &Q);
-        R._normalize();
-        big_integer::assign(rem, &R);
-        Q.fini();
-        R.fini();
-        N.fini();
-        D.fini();
     }
 }
 
