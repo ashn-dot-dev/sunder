@@ -124,5 +124,5 @@ func main() void {
     var mem = (:[64]byte)[0...];
     var linear_allocator = std::linear_allocator::init(mem[0:countof(mem)]);
     var allocator = std::allocator::init[[std::linear_allocator]](&linear_allocator);
-    var _ = std::str::split("123-456-789", "-", allocator);
+    var _ = std::str::split_with_allocator(allocator, "123-456-789", "-");
 }

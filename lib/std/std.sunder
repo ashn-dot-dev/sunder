@@ -1049,16 +1049,40 @@ struct str { # namespace
     # together and are deemed to delimit empty strings. Elements of the
     # returned slice are created from, and thus share a lifetime with, the
     # input string, with the exception of an optional final empty string in the
-    # case of `std::str::split("bytes<delimiter>", "<delimiter>", allocator);`,
+    # case of:
+    #
+    #   std::str::split("bytes<delimiter>", "<delimiter>");
+    #
     # which has a static lifetime.
     #
     # Example:
-    #   var fields = std::str::split(input, " ", allocator);
-    #   defer std::slice[[[]byte]]::delete(allocator, fields);
+    #   var fields = std::str::split(input, " ");
+    #   defer std::slice[[[]byte]]::delete(fields);
     #   for i in countof(fields) {
     #       # Do something with each split field...
     #   }
-    func split(str: []byte, delimiter: []byte, allocator: std::allocator) [][]byte {
+    func split(str: []byte, delimiter: []byte) [][]byte {
+        return std::str::split_with_allocator(std::global_allocator(), str, delimiter);
+    }
+
+    # Return a newly allocated slice, using the provided allocator, containing
+    # the fields of `str` split on all occurrences of `delimiter`. Consecutive
+    # delimiters are not grouped together and are deemed to delimit empty
+    # strings. Elements of the returned slice are created from, and thus share
+    # a lifetime with, the input string, with the exception of an optional
+    # final empty string in the case of
+    #
+    #   std::str::split_with_allocator(allocator, "bytes<delimiter>", "<delimiter>")
+    #
+    # which has a static lifetime.
+    #
+    # Example:
+    #   var fields = std::str::split_with_allocator(allocator, input, " ");
+    #   defer std::slice[[[]byte]]::delete_with_allocator(allocator, fields);
+    #   for i in countof(fields) {
+    #       # Do something with each split field...
+    #   }
+    func split_with_allocator(allocator: std::allocator, str: []byte, delimiter: []byte) [][]byte {
         var slice = std::slice[[[]byte]]::new_with_allocator(allocator, 0);
 
         var start = 0u;

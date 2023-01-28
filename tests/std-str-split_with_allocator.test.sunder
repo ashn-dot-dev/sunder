@@ -1,6 +1,6 @@
 import "std";
 
-func test_split(input: []byte, delimiter: []byte) void {
+func test_split(allocator: std::allocator, input: []byte, delimiter: []byte) void {
     std::print_format_line(
         std::out(),
         "input: \"{}\", delimiter: \"{}\"",
@@ -8,8 +8,8 @@ func test_split(input: []byte, delimiter: []byte) void {
             std::formatter::init[[[]byte]](&input),
             std::formatter::init[[[]byte]](&delimiter)]);
 
-    var split = std::str::split(input, delimiter);
-    defer std::slice[[[]byte]]::delete(split);
+    var split = std::str::split_with_allocator(allocator, input, delimiter);
+    defer std::slice[[[]byte]]::delete_with_allocator(allocator, split);
 
     std::print(std::out(), "split: ");
     for i in countof(split) {
@@ -25,14 +25,18 @@ func test_split(input: []byte, delimiter: []byte) void {
 }
 
 func main() void {
-    test_split("ABC", " ");
-    test_split("A B C", " ");
-    test_split("A  B  C", " ");
-    test_split("foo bar baz", "a");
+    var allocator = std::general_allocator::init();
+    defer allocator.fini();
+    var allocator = std::allocator::init[[typeof(allocator)]](&allocator);
 
-    test_split("<>A<>B<>C", "<>");
-    test_split("A<>B<>C<>", "<>");
-    test_split("<>A<>B<>C<>", "<>");
+    test_split(allocator, "ABC", " ");
+    test_split(allocator, "A B C", " ");
+    test_split(allocator, "A  B  C", " ");
+    test_split(allocator, "foo bar baz", "a");
+
+    test_split(allocator, "<>A<>B<>C", "<>");
+    test_split(allocator, "A<>B<>C<>", "<>");
+    test_split(allocator, "<>A<>B<>C<>", "<>");
 }
 ################################################################################
 # input: "ABC", delimiter: " "
