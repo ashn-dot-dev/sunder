@@ -1308,9 +1308,19 @@ func err() std::writer {
 # repeatedly until either an end-of-stream condition is reached or an error
 # occurs.
 #
-# On success, this function returns a slice of bytes containing the read data,
-# allocated using the provided allocator.
-func read_all(reader: std::reader, allocator: std::allocator) std::result[[[]byte, std::error]] {
+# On success, this function returns a newly allocated slice of bytes containing
+# the read data, allocated using the global allocator.
+func read_all(reader: std::reader) std::result[[[]byte, std::error]] {
+    return std::read_all_with_allocator(std::global_allocator(), reader);
+}
+
+# Read from the provided reader, invoking the reader's `read` function
+# repeatedly until either an end-of-stream condition is reached or an error
+# occurs.
+#
+# On success, this function returns a newly allocated slice of bytes containing
+# the read data, allocated using the provided allocator.
+func read_all_with_allocator(allocator: std::allocator, reader: std::reader) std::result[[[]byte, std::error]] {
     var bytes = std::slice[[byte]]::new_with_allocator(allocator, 0);
 
     var buf = (:[4096]byte)[0...];

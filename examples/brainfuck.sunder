@@ -50,11 +50,7 @@ func main() void {
     var file = result.value();
     defer file.close();
 
-    var allocator = std::general_allocator::init();
-    defer allocator.fini();
-    var allocator = std::allocator::init[[typeof(allocator)]](&allocator);
-
-    var result = std::read_all(std::reader::init[[std::file]](&file), allocator);
+    var result = std::read_all(std::reader::init[[std::file]](&file));
     if result.is_error() {
         std::print_format_line(
             std::err(),
@@ -64,8 +60,10 @@ func main() void {
                 std::formatter::init[[[]byte]](&result.error().*.data)]);
         std::exit(std::EXIT_FAILURE);
     }
+
     var source = result.value();
     var source_size = countof(source);
+    defer std::slice[[byte]]::delete(source);
 
     var success = true;
     var lines = std::slice[[usize]]::new(source_size);
