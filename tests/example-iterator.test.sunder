@@ -5,8 +5,8 @@ struct node {
     var r: std::optional[[*node]];
     var value: []byte;
 
-    func new(allocator: std::allocator, l: std::optional[[*node]], r: std::optional[[*node]], value: []byte) *node {
-        var self = std::new[[node]](allocator);
+    func new(l: std::optional[[*node]], r: std::optional[[*node]], value: []byte) *node {
+        var self = std::new[[node]]();
         *self = (:node){
             .l = l,
             .r = r,
@@ -76,15 +76,13 @@ struct tree_iterator {
 }
 
 func main() void {
-    var allocator = std::allocator::init[[std::page_allocator]](std::page_allocator::the());
-
-    var A = node::new(allocator, std::optional[[*node]]::init_empty(), std::optional[[*node]]::init_empty(), "A");
-    var C = node::new(allocator, std::optional[[*node]]::init_empty(), std::optional[[*node]]::init_empty(), "C");
-    var E = node::new(allocator, std::optional[[*node]]::init_empty(), std::optional[[*node]]::init_empty(), "E");
-    var G = node::new(allocator, std::optional[[*node]]::init_empty(), std::optional[[*node]]::init_empty(), "G");
-    var B = node::new(allocator, std::optional[[*node]]::init_value(A), std::optional[[*node]]::init_value(C), "B");
-    var F = node::new(allocator, std::optional[[*node]]::init_value(E), std::optional[[*node]]::init_value(G), "F");
-    var D = node::new(allocator, std::optional[[*node]]::init_value(B), std::optional[[*node]]::init_value(F), "D");
+    var A = node::new(std::optional[[*node]]::init_empty(), std::optional[[*node]]::init_empty(), "A");
+    var C = node::new(std::optional[[*node]]::init_empty(), std::optional[[*node]]::init_empty(), "C");
+    var E = node::new(std::optional[[*node]]::init_empty(), std::optional[[*node]]::init_empty(), "E");
+    var G = node::new(std::optional[[*node]]::init_empty(), std::optional[[*node]]::init_empty(), "G");
+    var B = node::new(std::optional[[*node]]::init_value(A), std::optional[[*node]]::init_value(C), "B");
+    var F = node::new(std::optional[[*node]]::init_value(E), std::optional[[*node]]::init_value(G), "F");
+    var D = node::new(std::optional[[*node]]::init_value(B), std::optional[[*node]]::init_value(F), "D");
     #     __D__
     #    /     \
     #   B       F
@@ -95,19 +93,19 @@ func main() void {
     };
 
     var iter = tree_iterator::init(&t);
-    defer { iter.fini(); }
+    defer iter.fini();
     var iter = std::iterator[[*node]]::init[[tree_iterator]](&iter);
     for iter.advance() {
         std::print_line(std::out(), iter.current().*.value);
     }
 
-    std::delete[[node]](allocator, A);
-    std::delete[[node]](allocator, B);
-    std::delete[[node]](allocator, C);
-    std::delete[[node]](allocator, D);
-    std::delete[[node]](allocator, E);
-    std::delete[[node]](allocator, G);
-    std::delete[[node]](allocator, G);
+    std::delete[[node]](A);
+    std::delete[[node]](B);
+    std::delete[[node]](C);
+    std::delete[[node]](D);
+    std::delete[[node]](E);
+    std::delete[[node]](F);
+    std::delete[[node]](G);
 }
 ################################################################################
 # A

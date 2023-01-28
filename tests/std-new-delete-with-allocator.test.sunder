@@ -1,0 +1,9 @@
+import "std";
+
+func main() void {
+    var allocator = std::allocator::init[[std::page_allocator]](std::page_allocator::the());
+
+    var ptr: *u16 = std::new_with_allocator[[u16]](allocator);
+    *ptr = 0xBEEF; # Touch the memory to make sure we were allocated a valid page.
+    std::delete_with_allocator[[u16]](allocator, ptr);
+}
