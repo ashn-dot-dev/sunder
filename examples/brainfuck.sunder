@@ -69,6 +69,12 @@ func main() void {
     var lines = std::slice[[usize]]::new(source_size);
     var jumps = std::slice[[usize]]::new(source_size);
     var stack = std::vector[[usize]]::init();
+    defer {
+        std::slice[[usize]]::delete(lines);
+        std::slice[[usize]]::delete(jumps);
+        stack.fini();
+    }
+
     var line = 1u;
     for i in source_size {
         lines[i] = line;
