@@ -3180,22 +3180,22 @@ struct hash_map_iterator[[K, V]] {
 
 # Stable sorting algorithm with O(n*log(n)) average time complexity,
 # O(n*log(n)) worst case time complexity, and O(n) space complexity.
-func merge_sort[[T]](slice: []T, allocator: std::allocator) void {
+func merge_sort[[T]](slice: []T) void {
     if countof(slice) <= 1 {
         return;
     }
 
-    var slice0 = std::slice[[T]]::new_with_allocator(allocator, countof(slice)/2);
-    var slice1 = std::slice[[T]]::new_with_allocator(allocator, countof(slice) - countof(slice)/2);
+    var slice0 = std::slice[[T]]::new(countof(slice)/2);
+    var slice1 = std::slice[[T]]::new(countof(slice) - countof(slice)/2);
     defer {
-        std::slice[[T]]::delete_with_allocator(allocator, slice0);
-        std::slice[[T]]::delete_with_allocator(allocator, slice1);
+        std::slice[[T]]::delete(slice0);
+        std::slice[[T]]::delete(slice1);
     }
     std::slice[[T]]::copy(slice0, slice[0:countof(slice)/2]);
     std::slice[[T]]::copy(slice1, slice[countof(slice)/2:countof(slice)]);
 
-    merge_sort[[T]](slice0, allocator);
-    merge_sort[[T]](slice1, allocator);
+    merge_sort[[T]](slice0);
+    merge_sort[[T]](slice1);
 
     var i0 = 0u;
     var i1 = 0u;

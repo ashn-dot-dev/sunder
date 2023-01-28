@@ -1,7 +1,7 @@
 import "std";
 
 func test[[T]](slice: []T) void {
-    std::merge_sort[[T]](slice, std::global_allocator());
+    std::merge_sort[[T]](slice);
     for i in 1:countof(slice) {
         var prev = i - 1;
         if std::lt[[T]](&slice[i], &slice[prev]) {
