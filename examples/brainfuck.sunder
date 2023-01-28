@@ -68,9 +68,9 @@ func main() void {
     var source_size = countof(source);
 
     var success = true;
-    var lines = std::slice[[usize]]::new(allocator, source_size);
-    var jumps = std::slice[[usize]]::new(allocator, source_size);
-    var stack = std::vector[[usize]]::init_with_allocator(allocator);
+    var lines = std::slice[[usize]]::new(source_size);
+    var jumps = std::slice[[usize]]::new(source_size);
+    var stack = std::vector[[usize]]::init();
     var line = 1u;
     for i in source_size {
         lines[i] = line;

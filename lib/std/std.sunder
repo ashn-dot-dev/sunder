@@ -894,10 +894,17 @@ struct slice[[T]] { # namespace
         }
     }
 
+    # Allocate a slice of `count` elements.
+    #
+    # This function panics on error.
+    func new(count: usize) []T {
+        return std::slice[[T]]::new_with_allocator(std::global_allocator(), count);
+    }
+
     # Allocate a slice of `count` elements using the provided allocator.
     #
     # This function panics on error.
-    func new(allocator: std::allocator, count: usize) []T {
+    func new_with_allocator(allocator: std::allocator, count: usize) []T {
         var result = allocator.allocate(alignof(T), count * sizeof(T));
         if result.is_error() {
             std::panic(result.error().*.data);
@@ -905,11 +912,18 @@ struct slice[[T]] { # namespace
         return (:[]T){(:*T)result.value(), count};
     }
 
+    # Resize the provided slice to `new_count` elements.
+    #
+    # This function panics on error.
+    func resize(slice: []T, new_count: usize) []T {
+        return std::slice[[T]]::resize_with_allocator(std::global_allocator(), slice, new_count);
+    }
+
     # Resize the provided slice to `new_count` elements using the provided
     # allocator.
     #
     # This function panics on error.
-    func resize(allocator: std::allocator, slice: []T, new_count: usize) []T {
+    func resize_with_allocator(allocator: std::allocator, slice: []T, new_count: usize) []T {
         var cur_count: usize = countof(slice);
         var cur_size: usize = cur_count * sizeof(T);
         var new_size: usize = new_count * sizeof(T);
@@ -923,8 +937,13 @@ struct slice[[T]] { # namespace
         return (:[]T){(:*T)result.value(), new_count};
     }
 
+    # Deallocate the provided slice.
+    func delete(slice: []T) void {
+        std::slice[[T]]::delete_with_allocator(std::global_allocator(), slice);
+    }
+
     # Deallocate the provided slice using the provided allocator.
-    func delete(allocator: std::allocator, slice: []T) void {
+    func delete_with_allocator(allocator: std::allocator, slice: []T) void {
         var pointer: *byte = (:*byte)startof(slice);
         var size: usize = countof(slice) * sizeof(T);
         allocator.deallocate(pointer, alignof(T), size);
@@ -1040,7 +1059,7 @@ struct str { # namespace
     #       # Do something with each split field...
     #   }
     func split(str: []byte, delimiter: []byte, allocator: std::allocator) [][]byte {
-        var slice = std::slice[[[]byte]]::new(allocator, 0);
+        var slice = std::slice[[[]byte]]::new_with_allocator(allocator, 0);
 
         var start = 0u;
         var cur = 0u;
@@ -1050,13 +1069,13 @@ struct str { # namespace
                 continue;
             }
 
-            slice = std::slice[[[]byte]]::resize(allocator, slice, countof(slice) + 1);
+            slice = std::slice[[[]byte]]::resize_with_allocator(allocator, slice, countof(slice) + 1);
             slice[countof(slice) - 1] = (:[]byte){&str[start], cur - start};
             cur = cur + countof(delimiter);
             start = cur;
         }
 
-        slice = std::slice[[[]byte]]::resize(allocator, slice, countof(slice) + 1);
+        slice = std::slice[[[]byte]]::resize_with_allocator(allocator, slice, countof(slice) + 1);
         if start < countof(str) {
             slice[countof(slice) - 1] = (:[]byte){&str[start], cur - start};
         }
@@ -1268,13 +1287,13 @@ func err() std::writer {
 # On success, this function returns a slice of bytes containing the read data,
 # allocated using the provided allocator.
 func read_all(reader: std::reader, allocator: std::allocator) std::result[[[]byte, std::error]] {
-    var bytes = std::slice[[byte]]::new(allocator, 0);
+    var bytes = std::slice[[byte]]::new_with_allocator(allocator, 0);
 
     var buf = (:[4096]byte)[0...];
     for true {
         var result = reader.read(buf[0:countof(buf)]);
         if result.is_error() {
-            std::slice[[byte]]::delete(allocator, bytes);
+            std::slice[[byte]]::delete_with_allocator(allocator, bytes);
             return std::result[[[]byte, std::error]]::init_error(result.error());
         }
 
@@ -1285,7 +1304,7 @@ func read_all(reader: std::reader, allocator: std::allocator) std::result[[[]byt
 
         var cur_count = countof(bytes);
         var new_count = cur_count + read_size;
-        bytes = std::slice[[byte]]::resize(allocator, bytes, new_count);
+        bytes = std::slice[[byte]]::resize_with_allocator(allocator, bytes, new_count);
         std::slice[[byte]]::copy(bytes[cur_count:new_count], buf[0:read_size]);
     }
 
@@ -1328,13 +1347,13 @@ func read_all(reader: std::reader, allocator: std::allocator) std::result[[[]byt
 #       # standard input.
 #   }
 func read_line(reader: std::reader, allocator: std::allocator) std::result[[std::optional[[[]byte]], std::error]] {
-    var bytes = std::slice[[byte]]::new(allocator, 0);
+    var bytes = std::slice[[byte]]::new_with_allocator(allocator, 0);
 
     var c: byte = uninit;
     for true {
         var result = reader.read((:[]byte){&c, 1});
         if result.is_error() {
-            std::slice[[byte]]::delete(allocator, bytes);
+            std::slice[[byte]]::delete_with_allocator(allocator, bytes);
             return std::result[[std::optional[[[]byte]], std::error]]::init_error(result.error());
         }
 
@@ -1342,7 +1361,7 @@ func read_line(reader: std::reader, allocator: std::allocator) std::result[[std:
         if read_size == 0 {
             if countof(bytes) == 0 {
                 # End-of-input encountered while reading an empty line.
-                std::slice[[byte]]::delete(allocator, bytes);
+                std::slice[[byte]]::delete_with_allocator(allocator, bytes);
                 return std::result[[std::optional[[[]byte]], std::error]]::init_value(std::optional[[[]byte]]::EMPTY);
             }
             # End-of-input encountered while reading a non-empty line.
@@ -1356,7 +1375,7 @@ func read_line(reader: std::reader, allocator: std::allocator) std::result[[std:
 
         var cur_count = countof(bytes);
         var new_count = cur_count + read_size;
-        bytes = std::slice[[byte]]::resize(allocator, bytes, new_count);
+        bytes = std::slice[[byte]]::resize_with_allocator(allocator, bytes, new_count);
         std::slice[[byte]]::copy(bytes[cur_count:new_count], (:[]byte){&c, 1});
     }
 
@@ -1771,7 +1790,7 @@ struct big_integer {
         return (:big_integer){
             ._allocator = allocator,
             ._sign = 0,
-            ._limbs = std::slice[[u32]]::new(allocator, 0)
+            ._limbs = std::slice[[u32]]::new_with_allocator(allocator, 0)
         };
     }
 
@@ -1801,7 +1820,7 @@ struct big_integer {
             var self = (:big_integer){
                 ._allocator = allocator,
                 ._sign = +1s,
-                ._limbs = std::slice[[u32]]::new(allocator, 2)
+                ._limbs = std::slice[[u32]]::new_with_allocator(allocator, 2)
             };
             self._limbs[0] = (:u32)int;
             self._limbs[1] = (:u32)(int >> 32);
@@ -1825,7 +1844,7 @@ struct big_integer {
         var self = (:big_integer){
             ._allocator = allocator,
             ._sign = -1s,
-            ._limbs = std::slice[[u32]]::new(allocator, 2)
+            ._limbs = std::slice[[u32]]::new_with_allocator(allocator, 2)
         };
         self._limbs[0] = (:u32)magnitude;
         self._limbs[1] = (:u32)(magnitude >> 32);
@@ -1931,7 +1950,7 @@ struct big_integer {
 
     # Finalize resources associated with the big integer.
     func fini(self: *big_integer) void {
-        std::slice[[u32]]::delete(self.*._allocator, self.*._limbs);
+        std::slice[[u32]]::delete_with_allocator(self.*._allocator, self.*._limbs);
     }
 
     # Convert a big integer to a primitive integer of type `T`.
@@ -1951,7 +1970,7 @@ struct big_integer {
         }
 
         self.*._sign = from.*._sign;
-        self.*._limbs = std::slice[[u32]]::resize(self.*._allocator, self.*._limbs, countof(from.*._limbs));
+        self.*._limbs = std::slice[[u32]]::resize_with_allocator(self.*._allocator, self.*._limbs, countof(from.*._limbs));
 
         if self.*._sign != 0 {
             std::assert(countof(self.*._limbs) != 0);
@@ -2193,7 +2212,7 @@ struct big_integer {
         var tmp_res = (:big_integer){
             ._allocator = std::global_allocator(),
             ._sign = sign,
-            ._limbs = std::slice[[u32]]::new(std::global_allocator(), limb_count)
+            ._limbs = std::slice[[u32]]::new(limb_count)
         };
 
         var carry: u64 = 0;
@@ -2272,7 +2291,7 @@ struct big_integer {
         var tmp_res = (:big_integer){
             ._allocator = std::global_allocator(),
             ._sign = sign,
-            ._limbs = std::slice[[u32]]::new(std::global_allocator(), limb_count)
+            ._limbs = std::slice[[u32]]::new(limb_count)
         };
 
         var borrow: u64 = 0;
@@ -2372,11 +2391,11 @@ struct big_integer {
     func _resize(self: *big_integer, new_count: usize) void {
         var cur_count = countof(self.*._limbs);
         if new_count <= cur_count {
-            self.*._limbs = std::slice[[u32]]::resize(self.*._allocator, self.*._limbs, new_count);
+            self.*._limbs = std::slice[[u32]]::resize_with_allocator(self.*._allocator, self.*._limbs, new_count);
             return;
         }
 
-        self.*._limbs = std::slice[[u32]]::resize(self.*._allocator, self.*._limbs, new_count);
+        self.*._limbs = std::slice[[u32]]::resize_with_allocator(self.*._allocator, self.*._limbs, new_count);
         std::slice[[u32]]::fill(self.*._limbs[cur_count:new_count], 0);
     }
 
@@ -2386,7 +2405,7 @@ struct big_integer {
             count = count - 1;
         }
 
-        self.*._limbs = std::slice[[u32]]::resize(self.*._allocator, self.*._limbs, count);
+        self.*._limbs = std::slice[[u32]]::resize_with_allocator(self.*._allocator, self.*._limbs, count);
         if (count == 0) {
             self.*._sign = 0;
         }
@@ -2613,7 +2632,7 @@ struct string {
     # Finalize resources assocaited with the string.
     func fini(self: *string) void {
         if self.*._capacity != 0 {
-            std::slice[[byte]]::delete(self.*._allocator, (:[]byte){self.*._start, self.*._capacity});
+            std::slice[[byte]]::delete_with_allocator(self.*._allocator, (:[]byte){self.*._start, self.*._capacity});
         }
     }
 
@@ -2665,14 +2684,14 @@ struct string {
         }
 
         if self.*._capacity == 0 {
-            var new = std::slice[[byte]]::new(self.*._allocator, capacity);
+            var new = std::slice[[byte]]::new_with_allocator(self.*._allocator, capacity);
             self.*._start = &new[0];
             self.*._capacity = capacity;
             return;
         }
 
         var cur = (:[]byte){self.*._start, self.*._capacity};
-        var new = std::slice[[byte]]::resize(self.*._allocator, cur, capacity);
+        var new = std::slice[[byte]]::resize_with_allocator(self.*._allocator, cur, capacity);
         self.*._start = &new[0];
         self.*._capacity = capacity;
     }
@@ -2721,7 +2740,7 @@ struct vector[[T]] {
     # Finalize resources associated with the vector.
     func fini(self: *vector[[T]]) void {
         if self.*._capacity != 0 {
-            std::slice[[T]]::delete(self.*._allocator, (:[]T){self.*._start, self.*._capacity});
+            std::slice[[T]]::delete_with_allocator(self.*._allocator, (:[]T){self.*._start, self.*._capacity});
         }
     }
 
@@ -2753,14 +2772,14 @@ struct vector[[T]] {
         }
 
         if self.*._capacity == 0 {
-            var new = std::slice[[T]]::new(self.*._allocator, capacity);
+            var new = std::slice[[T]]::new_with_allocator(self.*._allocator, capacity);
             self.*._start = &new[0];
             self.*._capacity = capacity;
             return;
         }
 
         var cur = (:[]T){self.*._start, self.*._capacity};
-        var new = std::slice[[T]]::resize(self.*._allocator, cur, capacity);
+        var new = std::slice[[T]]::resize_with_allocator(self.*._allocator, cur, capacity);
         self.*._start = &new[0];
         self.*._capacity = capacity;
     }
@@ -2909,7 +2928,7 @@ struct hash_map[[K, V]] {
     # Finalize resources associated with the map.
     func fini(self: *hash_map[[K, V]]) void {
         if countof(self.*._elements) != 0 {
-            std::slice[[hash_map_element[[K, V]]]]::delete(self.*._allocator, self.*._elements);
+            std::slice[[hash_map_element[[K, V]]]]::delete_with_allocator(self.*._allocator, self.*._elements);
         }
     }
 
@@ -2949,7 +2968,7 @@ struct hash_map[[K, V]] {
             # Initial insert. An initial slice count of 16 was chosen
             # semi-arbitrarily. The initial slice count must be two or greater
             # in order to prevent the lookup loop from spinning forever.
-            self.*._elements = std::slice[[hash_map_element[[K, V]]]]::new(self.*._allocator, 16);
+            self.*._elements = std::slice[[hash_map_element[[K, V]]]]::new_with_allocator(self.*._allocator, 16);
             std::slice[[hash_map_element[[K, V]]]]::fill(self.*._elements, std::zeroed[[hash_map_element[[K, V]]]]());
         }
         elif 2 * (self.*._q + 1) > countof(self.*._elements) {
@@ -2958,7 +2977,7 @@ struct hash_map[[K, V]] {
             # key-value pairs, and then replace this map with the new map.
             var new = (:hash_map[[K, V]]){
                 ._allocator = self.*._allocator,
-                ._elements = std::slice[[hash_map_element[[K, V]]]]::new(self.*._allocator, countof(self.*._elements) * 2),
+                ._elements = std::slice[[hash_map_element[[K, V]]]]::new_with_allocator(self.*._allocator, countof(self.*._elements) * 2),
                 ._n = 0,
                 ._q = 0
             };
@@ -2968,7 +2987,7 @@ struct hash_map[[K, V]] {
                     std::assert(existing.is_empty());
                 }
             }
-            std::slice[[hash_map_element[[K, V]]]]::delete(self.*._allocator, self.*._elements);
+            std::slice[[hash_map_element[[K, V]]]]::delete_with_allocator(self.*._allocator, self.*._elements);
             *self = new;
         }
 
@@ -3081,11 +3100,11 @@ func merge_sort[[T]](slice: []T, allocator: std::allocator) void {
         return;
     }
 
-    var slice0 = std::slice[[T]]::new(allocator, countof(slice)/2);
-    var slice1 = std::slice[[T]]::new(allocator, countof(slice) - countof(slice)/2);
+    var slice0 = std::slice[[T]]::new_with_allocator(allocator, countof(slice)/2);
+    var slice1 = std::slice[[T]]::new_with_allocator(allocator, countof(slice) - countof(slice)/2);
     defer {
-        std::slice[[T]]::delete(allocator, slice0);
-        std::slice[[T]]::delete(allocator, slice1);
+        std::slice[[T]]::delete_with_allocator(allocator, slice0);
+        std::slice[[T]]::delete_with_allocator(allocator, slice1);
     }
     std::slice[[T]]::copy(slice0, slice[0:countof(slice)/2]);
     std::slice[[T]]::copy(slice1, slice[countof(slice)/2:countof(slice)]);

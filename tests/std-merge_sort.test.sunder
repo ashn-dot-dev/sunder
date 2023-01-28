@@ -1,13 +1,7 @@
 import "std";
 
 func test[[T]](slice: []T) void {
-    var allocator = std::general_allocator::init();
-    defer {
-        allocator.fini();
-    }
-    var allocator = std::allocator::init[[std::general_allocator]](&allocator);
-
-    std::merge_sort[[T]](slice, allocator);
+    std::merge_sort[[T]](slice, std::global_allocator());
     for i in 1:countof(slice) {
         var prev = i - 1;
         if std::lt[[T]](&slice[i], &slice[prev]) {

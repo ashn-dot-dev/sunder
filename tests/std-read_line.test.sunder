@@ -11,14 +11,14 @@ func test(allocator: std::allocator, str: []byte) void {
             break;
         }
         var bytes = optional.value();
-        defer { std::slice[[byte]]::delete(allocator, bytes); }
+        defer std::slice[[byte]]::delete_with_allocator(allocator, bytes);
         std::print_line(std::out(), bytes);
     }
 }
 
 func main() void {
     var allocator = std::general_allocator::init();
-    defer { allocator.fini(); }
+    defer allocator.fini();
     var allocator = std::allocator::init[[typeof(allocator)]](&allocator);
 
     test(allocator, "LINE 1\n");

@@ -1,0 +1,23 @@
+import "std";
+
+func main() void {
+    var allocator = std::allocator::init[[std::page_allocator]](std::page_allocator::the());
+
+    var slice: []u16 = std::slice[[u16]]::new_with_allocator(allocator, 2048);
+    for i in 0:countof(slice) {
+        slice[i] = 0xBEEF;
+    }
+
+    slice = std::slice[[u16]]::resize_with_allocator(allocator, slice, 4096);
+    for i in 0:countof(slice) {
+        slice[i] = 0xF00D;
+    }
+
+    slice = std::slice[[u16]]::resize_with_allocator(allocator, slice, 1000);
+    for i in 0:countof(slice) {
+        slice[i] = 0xCAFE;
+    }
+
+    std::slice[[u16]]::delete_with_allocator(allocator, slice);
+}
+

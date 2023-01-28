@@ -23,9 +23,7 @@ func dump_parser_info(parser: *std::argument_parser) void {
 
 func main() void {
     var allocator = std::general_allocator::init();
-    defer {
-        allocator.fini();
-    }
+    defer allocator.fini();
     var allocator = std::allocator::init[[typeof(allocator)]](&allocator);
 
     var options = (:[][]byte)[];

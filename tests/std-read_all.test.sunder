@@ -11,7 +11,7 @@ func main() void {
     var bytes = read_result.value();
     std::print(std::out(), bytes);
 
-    std::slice[[byte]]::delete(allocator, bytes);
+    std::slice[[byte]]::delete_with_allocator(allocator, bytes);
     file.close();
 }
 ################################################################################

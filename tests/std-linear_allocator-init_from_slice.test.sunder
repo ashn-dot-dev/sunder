@@ -5,10 +5,10 @@ func main() void {
     var allocator = std::linear_allocator::init_from_slice[[u64]](slice);
     var allocator = std::allocator::init[[typeof(allocator)]](&allocator);
 
-    std::slice[[u32]]::new(allocator, 7);
+    std::slice[[u32]]::new_with_allocator(allocator, 7);
     std::print_line(std::out(), "allocated 7 u32 values");
 
-    std::slice[[u16]]::new(allocator, 2);
+    std::slice[[u16]]::new_with_allocator(allocator, 2);
     std::print_line(std::out(), "allocated 2 u16 values");
 
     # At this point the allocator should be at capacity and any allocation

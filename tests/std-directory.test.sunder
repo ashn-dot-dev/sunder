@@ -24,7 +24,7 @@ func main() void {
         var current = dir.current();
         var name = current.value();
 
-        var str = std::slice[[byte]]::new(std::global_allocator(), countof(name));
+        var str = std::slice[[byte]]::new(countof(name));
         std::slice[[byte]]::copy(str, name);
         vec.push(str);
     }

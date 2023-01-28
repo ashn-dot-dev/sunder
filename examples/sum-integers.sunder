@@ -21,7 +21,7 @@ func main() void {
             # End-of-input.
             break;
         }
-        defer std::slice[[byte]]::delete(allocator, optional.value());
+        defer std::slice[[byte]]::delete_with_allocator(allocator, optional.value());
 
         if countof(optional.value()) == 0 {
             # Skip line consisting of a single '\n'.

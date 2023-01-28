@@ -9,7 +9,7 @@ func test_split(input: []byte, delimiter: []byte, allocator: std::allocator) voi
             std::formatter::init[[[]byte]](&delimiter)]);
 
     var split = std::str::split(input, delimiter, allocator);
-    defer std::slice[[[]byte]]::delete(allocator, split);
+    defer std::slice[[[]byte]]::delete_with_allocator(allocator, split);
 
     std::print(std::out(), "split: ");
     for i in countof(split) {
