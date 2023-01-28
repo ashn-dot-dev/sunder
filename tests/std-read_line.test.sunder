@@ -1,32 +1,28 @@
 import "std";
 
-func test(allocator: std::allocator, str: []byte) void {
+func test(str: []byte) void {
     var rstr = std::str_reader::init(str);
     var reader = std::reader::init[[typeof(rstr)]](&rstr);
 
     for true {
-        var read_result = std::read_line(reader, allocator);
+        var read_result = std::read_line(reader);
         var optional = read_result.value();
         if optional.is_empty() {
             break;
         }
         var bytes = optional.value();
-        defer std::slice[[byte]]::delete_with_allocator(allocator, bytes);
+        defer std::slice[[byte]]::delete(bytes);
         std::print_line(std::out(), bytes);
     }
 }
 
 func main() void {
-    var allocator = std::general_allocator::init();
-    defer allocator.fini();
-    var allocator = std::allocator::init[[typeof(allocator)]](&allocator);
-
-    test(allocator, "LINE 1\n");
-    test(allocator, "LINE 1");
-    test(allocator, "LINE 1\nLINE 2\n");
-    test(allocator, "LINE 1\nLINE 2");
-    test(allocator, "");
-    test(allocator, "LINE 1\nLINE 2\nLINE 3\n");
+    test("LINE 1\n");
+    test("LINE 1");
+    test("LINE 1\nLINE 2\n");
+    test("LINE 1\nLINE 2");
+    test("");
+    test("LINE 1\nLINE 2\nLINE 3\n");
 }
 ################################################################################
 # LINE 1

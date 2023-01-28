@@ -140,10 +140,7 @@ import "std";
 func main() void {
     std::print(std::out(), "What is your name?\n> ");
 
-    var allocator = std::general_allocator::init();
-    defer allocator.fini();
-
-    var result = std::read_line(std::input(), std::allocator::init[[typeof(allocator)]](&allocator));
+    var result = std::read_line(std::input());
     if result.is_error() {
         std::print_line(std::err(), result.error().*.data);
         std::exit(std::EXIT_FAILURE);

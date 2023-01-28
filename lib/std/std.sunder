@@ -1354,11 +1354,11 @@ func read_all_with_allocator(allocator: std::allocator, reader: std::reader) std
 #
 # On success, this function returns a non-empty optional slice of bytes
 # containing the read line without the ending newline, allocated using the
-# provided allocator. If an end-of-input condition is encountered while reading
+# global allocator. If an end-of-input condition is encountered while reading
 # an empty line, then an empty optional is returned.
 #
 # Example:
-#   var result = std::read_line(reader, allocator);
+#   var result = std::read_line(reader);
 #   if result.is_error() {
 #       # Handle the error...
 #   }
@@ -1373,14 +1373,53 @@ func read_all_with_allocator(allocator: std::allocator, reader: std::reader) std
 #   # Queue up the allocated buffer for deletion. This defer should be omitted
 #   # if the line is to be used/stored for further computation outside of the
 #   # current function/block.
-#   defer std::slice[[byte]]::delete(allocator, line);
+#   defer std::slice[[byte]]::delete(line);
 #   if countof(line) == 0 {
 #       # The read line consists of a single newline character, "\n", which was
-#       # trimmed away within `std::read_line`. Possibly an empty line in a
-#       # text file, or a user hitting Enter/Return without typing when reading
-#       # standard input.
+#       # trimmed within `std::read_line_with_allocator`. Possibly an empty
+#       # line in a text file, or a user hitting Enter/Return without typing
+#       # when reading from standard input.
 #   }
-func read_line(reader: std::reader, allocator: std::allocator) std::result[[std::optional[[[]byte]], std::error]] {
+func read_line(reader: std::reader) std::result[[std::optional[[[]byte]], std::error]] {
+    return std::read_line_with_allocator(std::global_allocator(), reader);
+}
+
+# Read from the provided reader, invoking the reader's `read` function
+# repeatedly until a newline is encountered, an end-of-input condition is
+# reached, or an error occurs. If an end-of-input condition is encountered
+# while reading a line, and the line is empty, an empty optional is returned.
+# If an end-of-input condition is encountered while reading a non-empty line,
+# it is treated as a newline.
+#
+# On success, this function returns a non-empty optional slice of bytes
+# containing the read line without the ending newline, allocated using the
+# provided allocator. If an end-of-input condition is encountered while reading
+# an empty line, then an empty optional is returned.
+#
+# Example:
+#   var result = std::read_line_with_allocator(allocator, reader);
+#   if result.is_error() {
+#       # Handle the error...
+#   }
+#   var optional = result.value();
+#   if optional.is_empty() {
+#       # End-of-input was encountered. Possibly the end of a file stream, or
+#       # EOF sent from a keyboard when reading standard input.
+#       #
+#       # Handle the empty optional...
+#   }
+#   var line = optional.value();
+#   # Queue up the allocated buffer for deletion. This defer should be omitted
+#   # if the line is to be used/stored for further computation outside of the
+#   # current function/block.
+#   defer std::slice[[byte]]::delete_with_allocator(allocator, line);
+#   if countof(line) == 0 {
+#       # The read line consists of a single newline character, "\n", which was
+#       # trimmed within `std::read_line_with_allocator`. Possibly an empty
+#       # line in a text file, or a user hitting Enter/Return without typing
+#       # when reading from standard input.
+#   }
+func read_line_with_allocator(allocator: std::allocator, reader: std::reader) std::result[[std::optional[[[]byte]], std::error]] {
     var bytes = std::slice[[byte]]::new_with_allocator(allocator, 0);
 
     var c: byte = uninit;
