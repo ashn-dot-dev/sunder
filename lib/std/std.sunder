@@ -486,7 +486,7 @@ struct page_allocator {
             if size == 0 {
                 # Allocating zero bytes with an alignment of zero is a valid
                 # use case when allocating for any zero-sized type:
-                # allocate(alignof(:void), sizeof(:void)); Use NULL as the
+                # allocate(alignof(void), sizeof(void)); Use NULL as the
                 # canonical address for this situation.
                 return std::result[[*any, std::error]]::init_value(std::NULL);
             }
