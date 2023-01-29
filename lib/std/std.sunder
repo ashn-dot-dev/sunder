@@ -356,15 +356,15 @@ struct null_allocator {
         return &the;
     }
 
-    const ITABLE: std::allocator_itable = (:std::allocator_itable){
+    const ITABLE = (:std::allocator_itable){
         .allocate = null_allocator::allocate,
         .reallocate = null_allocator::reallocate,
         .deallocate = null_allocator::deallocate
     };
 
-    const OBJECT: std::null_allocator = (:std::null_allocator){};
+    const OBJECT = (:std::null_allocator){};
 
-    const ALLOCATOR: std::allocator = (:std::allocator){
+    const ALLOCATOR = (:std::allocator){
         .itable = &null_allocator::ITABLE,
         .object = &null_allocator::OBJECT
     };
