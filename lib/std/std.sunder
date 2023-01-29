@@ -397,7 +397,7 @@ struct linear_allocator {
     #   var allocator = std::linear_allocator::init_from_slice[[ssize]](memory[0:countof(memory)]);
     #   var allocator = std::allocator::init[[typeof(allocator)]](&allocator);
     #   # Later...
-    #   var x = std::new[[ssize]](allocator);
+    #   var x = std::new_with_allocator[[ssize]](allocator);
     func init_from_slice[[T]](slice: []T) linear_allocator {
         var buf_start = startof(slice);
         var buf_count = countof(slice) * sizeof(T);
@@ -645,11 +645,11 @@ struct general_allocator_element {
 #   defer allocator.fini();
 #   var allocator = std::allocator::init[[typeof(allocator)]](&allocator);
 #   # Later...
-#   var x = std::new[[foo]](allocator);
-#   # At this point the memory allocated by `std::new` can be explicitly
-#   # deallocated later with `std::delete` *or* the deferred `allocator.fini()`
-#   # will handle deallocation at scope exit if the memory has not already been
-#   # explicitly deallocated.
+#   var x = std::new_with_allocator[[foo]](allocator);
+#   # At this point the memory allocated by `std::new_with_allocator` can be
+#   # explicitly deallocated later with `std::delete` *or* the deferred
+#   # `allocator.fini()` will handle deallocation at scope exit if the memory
+#   # has not already been explicitly deallocated.
 struct general_allocator {
     var _elements: *general_allocator_element; # nullable
 
