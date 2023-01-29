@@ -3216,40 +3216,6 @@ func sort[[T]](slice: []T) void {
     }
 }
 
-# Non-stable sorting algorithm with O(n*log(n)) average time complexity,
-# O(n^2)) worst case time complexity, and O(log(n)) space complexity.
-func quick_sort[[T]](slice: []T) void {
-    if countof(slice) <= 1 {
-        return;
-    }
-
-    var pivot = slice[countof(slice) / 2];
-    var i = 0u;
-    var j = countof(slice) - 1;
-    for true {
-        for std::lt[[T]](&slice[i], &pivot) {
-            i = i + 1;
-        }
-
-        for std::gt[[T]](&slice[j], &pivot) {
-            j = j - 1;
-        }
-
-        if i >= j {
-            break;
-        }
-
-        var tmp = slice[i];
-        slice[i] = slice[j];
-        slice[j] = tmp;
-        i = i + 1;
-        j = j - 1;
-    }
-
-    quick_sort[[T]](slice[0:i]);
-    quick_sort[[T]](slice[i:countof(slice)]);
-}
-
 # Type and associated filesystem operations for a regular file.
 struct file {
     var _fd: sys::sint;
