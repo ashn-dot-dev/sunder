@@ -647,9 +647,9 @@ struct general_allocator_element {
 #   # Later...
 #   var x = std::new_with_allocator[[foo]](allocator);
 #   # At this point the memory allocated by `std::new_with_allocator` can be
-#   # explicitly deallocated later with `std::delete` *or* the deferred
-#   # `allocator.fini()` will handle deallocation at scope exit if the memory
-#   # has not already been explicitly deallocated.
+#   # explicitly deallocated with `std::delete_with_allocator`. If the memory
+#   # is not explicitly deallocated then the deferred `allocator.fini()` call
+#   # will automatically handle deallocation at scope exit.
 struct general_allocator {
     var _elements: *general_allocator_element; # nullable
 
