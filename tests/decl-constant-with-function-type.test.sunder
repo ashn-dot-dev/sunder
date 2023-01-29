@@ -1,8 +1,8 @@
 import "sys/sys.sunder";
 
-const fn_one: func() ssize = one;
-const fn_sub: func(ssize, ssize) ssize = sub;
-const fn_exit: func(s32) void = sys::exit;
+let fn_one: func() ssize = one;
+let fn_sub: func(ssize, ssize) ssize = sub;
+let fn_exit: func(s32) void = sys::exit;
 
 func one() ssize {
     return 1s;

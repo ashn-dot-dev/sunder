@@ -7,7 +7,7 @@ func main() void {
     sys::dump[[byte]]((:byte)x);
     sys::dump[[byte]]((:byte)(:byte)x);
 
-    const y = true;
+    let y = true;
     sys::dump[[byte]]((:byte)y);
     sys::dump[[byte]]((:byte)(:byte)y);
 }

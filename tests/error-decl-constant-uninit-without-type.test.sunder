@@ -1,5 +1,5 @@
-const x = uninit;
+let x = uninit;
 ################################################################################
 # [error-decl-constant-uninit-without-type.test.sunder:1] error: uninitialized constant `x` requires a type specifier
-# const x = uninit;
-#       ^
+# let x = uninit;
+#     ^

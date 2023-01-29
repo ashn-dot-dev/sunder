@@ -3,7 +3,7 @@ import "std";
 func normal() void {
     # Skipping '\0' and since it is a pain to check.
     # Using newline for the escaped hex sequence.
-    const str = "hello\t\n\'\"\x0A";
+    let str = "hello\t\n\'\"\x0A";
     std::print_format_line(
         std::out(),
         "{}",
@@ -12,7 +12,7 @@ func normal() void {
 }
 
 func escaped() void {
-    const str = "hello\t\n\'\"\x10\xAB";
+    let str = "hello\t\n\'\"\x10\xAB";
     std::print_format_line(
         std::out(),
         "{e}",

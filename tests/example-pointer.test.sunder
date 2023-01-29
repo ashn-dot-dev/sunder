@@ -1,15 +1,15 @@
 import "sys";
 
 var v: usize = 0xCAFED00DCAFED00Du;
-const w: usize = 0xCAFEBABECAFEBABEu;
-const addressof_v: *usize = &v;
-const addressof_w: *usize = &w;
+let w: usize = 0xCAFEBABECAFEBABEu;
+let addressof_v: *usize = &v;
+let addressof_w: *usize = &w;
 
-const a: [3u]byte = (:[3u]byte)[0xAAy, 0xBBy, 0xCCy];
-const addressof_a: *byte = &a[1u];
+let a: [3u]byte = (:[3u]byte)[0xAAy, 0xBBy, 0xCCy];
+let addressof_a: *byte = &a[1u];
 
-const b: [0u]ssize = (:[0u]ssize)[]; # zero-sized object
-const addressof_b: *[0u]ssize = &b;
+let b: [0u]ssize = (:[0u]ssize)[]; # zero-sized object
+let addressof_b: *[0u]ssize = &b;
 
 func main() void {
     var x: usize = 0xBADCAFE01DC0FFEEu;
@@ -29,7 +29,7 @@ func main() void {
     sys::dump[[ssize]](y[1u][2u]);
     sys::dump[[ssize]](*&y[1u][2u]);
 
-    const z: usize = 0xDEADBEEFDEADBEEFu;
+    let z: usize = 0xDEADBEEFDEADBEEFu;
     var addressof_z: *usize = &z;
     var dereference_addressof_z: usize = *addressof_z;
     sys::dump[[usize]](z);

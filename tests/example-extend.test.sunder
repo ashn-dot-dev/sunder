@@ -38,4 +38,4 @@ extend point func zero(self: *point) void {
     *self = point::ZEROED;
 }
 
-extend point const ZEROED: point = (:point){.x = 0, .y = 0};
+extend point let ZEROED: point = (:point){.x = 0, .y = 0};

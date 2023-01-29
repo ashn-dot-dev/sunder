@@ -1,7 +1,7 @@
 struct foo {
     var x: usize;
 
-    const c: u16 = 123;
+    let c: u16 = 123;
 }
 
 func main() void {

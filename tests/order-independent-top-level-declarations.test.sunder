@@ -1,8 +1,8 @@
 import "sys";
 
-const baz: ssize = bar + 1s;
-const foo: ssize = 1s;
-const bar: ssize = foo + 1s;
+let baz: ssize = bar + 1s;
+let foo: ssize = 1s;
+let bar: ssize = foo + 1s;
 
 func fn_a() void {
     fn_b();

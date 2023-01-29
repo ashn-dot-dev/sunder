@@ -1,0 +1,5 @@
+let x: typeof(123) = 123;
+################################################################################
+# [error-decl-constant-type-unsized.test.sunder:1] error: declaration of constant with unsized type `integer`
+# let x: typeof(123) = 123;
+# ^

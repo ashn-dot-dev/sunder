@@ -12,10 +12,10 @@ func func_f() bool {
 }
 
 func main() void {
-    const t_and_t: bool = true and true;
-    const f_and_f: bool = false and false;
-    const t_and_f: bool = true and false;
-    const f_and_t: bool = false and true;
+    let t_and_t: bool = true and true;
+    let f_and_f: bool = false and false;
+    let t_and_f: bool = true and false;
+    let f_and_t: bool = false and true;
     sys::dump[[bool]](t_and_t);
     sys::dump[[bool]](f_and_f);
     sys::dump[[bool]](t_and_f);

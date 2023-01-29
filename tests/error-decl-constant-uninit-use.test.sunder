@@ -1,7 +1,7 @@
-const a: ssize = 123;
-const b: ssize = uninit;
-const c = a + b;
+let a: ssize = 123;
+let b: ssize = uninit;
+let c = a + b;
 ################################################################################
 # [error-decl-constant-uninit-use.test.sunder:3] error: constant `b` of type `ssize` is uninitialized
-# const c = a + b;
-#               ^
+# let c = a + b;
+#             ^

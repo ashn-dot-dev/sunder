@@ -1,0 +1,5 @@
+let x = &"foobar"[0];
+################################################################################
+# [error-expr-access-index-lhs-slice-lvalue-in-constant-expr.test.sunder:1] error: constant expression contains lvalue slice indexing operation
+# let x = &"foobar"[0];
+#                  ^

@@ -12,10 +12,10 @@ func func_f() bool {
 }
 
 func main() void {
-    const t_or_t: bool = true or true;
-    const f_or_f: bool = false or false;
-    const t_or_f: bool = true or false;
-    const f_or_t: bool = false or true;
+    let t_or_t: bool = true or true;
+    let f_or_f: bool = false or false;
+    let t_or_f: bool = true or false;
+    let f_or_t: bool = false or true;
     sys::dump[[bool]](t_or_t);
     sys::dump[[bool]](f_or_f);
     sys::dump[[bool]](t_or_f);

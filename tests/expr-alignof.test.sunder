@@ -1,17 +1,17 @@
 import "sys";
 
-const a: usize = alignof(void);
-const b: usize = alignof(u8);
-const c: usize = alignof(u16);
-const d: usize = alignof(u32);
-const e: usize = alignof(u64);
-const f: usize = alignof(usize);
+let a: usize = alignof(void);
+let b: usize = alignof(u8);
+let c: usize = alignof(u16);
+let d: usize = alignof(u32);
+let e: usize = alignof(u64);
+let f: usize = alignof(usize);
 
-const g: usize = alignof([5u]u8);
-const h: usize = alignof([2u]u64);
+let g: usize = alignof([5u]u8);
+let h: usize = alignof([2u]u64);
 
-const i: u16 = 0xABCDu16;
-const j: usize = alignof(typeof(i));
+let i: u16 = 0xABCDu16;
+let j: usize = alignof(typeof(i));
 
 func main() void {
     sys::dump[[usize]](a);

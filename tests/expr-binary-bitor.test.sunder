@@ -2,10 +2,10 @@ import "std";
 import "sys";
 
 func main() void {
-    const t_bitor_t: bool = true | true;
-    const f_bitor_f: bool = false | false;
-    const t_bitor_f: bool = true | false;
-    const f_bitor_t: bool = false | true;
+    let t_bitor_t: bool = true | true;
+    let f_bitor_f: bool = false | false;
+    let t_bitor_f: bool = true | false;
+    let f_bitor_t: bool = false | true;
 
     sys::dump[[bool]](t_bitor_t);
     sys::dump[[bool]](f_bitor_f);
@@ -21,15 +21,15 @@ func main() void {
 
     std::print(std::err(), "\n");
 
-    const byte_a: byte = 0xABy;
-    const byte_b: byte = 0xFFy;
-    const byte_c: byte = 0x00y;
-    const byte_d: byte = 0b10101100y;
-    const byte_e: byte = 0b11001010y;
-    const byte_a_bitor_byte_a: byte = byte_a | byte_a;
-    const byte_a_bitor_byte_b: byte = byte_a | byte_b;
-    const byte_a_bitor_byte_c: byte = byte_a | byte_c;
-    const byte_d_bitor_byte_e: byte = byte_d | byte_e;
+    let byte_a: byte = 0xABy;
+    let byte_b: byte = 0xFFy;
+    let byte_c: byte = 0x00y;
+    let byte_d: byte = 0b10101100y;
+    let byte_e: byte = 0b11001010y;
+    let byte_a_bitor_byte_a: byte = byte_a | byte_a;
+    let byte_a_bitor_byte_b: byte = byte_a | byte_b;
+    let byte_a_bitor_byte_c: byte = byte_a | byte_c;
+    let byte_d_bitor_byte_e: byte = byte_d | byte_e;
 
     sys::dump[[byte]](byte_a_bitor_byte_a);
     sys::dump[[byte]](byte_a_bitor_byte_b);
@@ -45,15 +45,15 @@ func main() void {
 
     std::print(std::err(), "\n");
 
-    const u32_a: u32 = 0xDEADBEEFu32;
-    const u32_b: u32 = 0xFFFFFFFFu32;
-    const u32_c: u32 = 0x00000000u32;
-    const u32_d: u32 = 0b10101100111100001111111100000000u32;
-    const u32_e: u32 = 0b11001010110011001111111100000000u32;
-    const u32_a_bitor_u32_a: u32 = u32_a | u32_a;
-    const u32_a_bitor_u32_b: u32 = u32_a | u32_b;
-    const u32_a_bitor_u32_c: u32 = u32_a | u32_c;
-    const u32_d_bitor_u32_e: u32 = u32_d | u32_e;
+    let u32_a: u32 = 0xDEADBEEFu32;
+    let u32_b: u32 = 0xFFFFFFFFu32;
+    let u32_c: u32 = 0x00000000u32;
+    let u32_d: u32 = 0b10101100111100001111111100000000u32;
+    let u32_e: u32 = 0b11001010110011001111111100000000u32;
+    let u32_a_bitor_u32_a: u32 = u32_a | u32_a;
+    let u32_a_bitor_u32_b: u32 = u32_a | u32_b;
+    let u32_a_bitor_u32_c: u32 = u32_a | u32_c;
+    let u32_d_bitor_u32_e: u32 = u32_d | u32_e;
 
     sys::dump[[u32]](u32_a_bitor_u32_a);
     sys::dump[[u32]](u32_a_bitor_u32_b);
@@ -69,12 +69,12 @@ func main() void {
 
     std::print(std::err(), "\n");
 
-    const s8_a: s8 = -128s8; # 0x80 as s8
-    const s8_b: s8 = -1s8; # 0xFF as s8
-    const s8_c: s8 = 0s8; # 0x00 as s8
-    const s8_a_bitor_s8_a: s8 = s8_a | s8_a;
-    const s8_a_bitor_s8_b: s8 = s8_a | s8_b;
-    const s8_a_bitor_s8_c: s8 = s8_a | s8_c;
+    let s8_a: s8 = -128s8; # 0x80 as s8
+    let s8_b: s8 = -1s8; # 0xFF as s8
+    let s8_c: s8 = 0s8; # 0x00 as s8
+    let s8_a_bitor_s8_a: s8 = s8_a | s8_a;
+    let s8_a_bitor_s8_b: s8 = s8_a | s8_b;
+    let s8_a_bitor_s8_c: s8 = s8_a | s8_c;
 
     sys::dump[[s8]](s8_a_bitor_s8_a);
     sys::dump[[s8]](s8_a_bitor_s8_b);
@@ -88,18 +88,18 @@ func main() void {
 
     std::print(std::err(), "\n");
 
-    const s16_a: s16 = -32768s16; # 0x8000 as s16
-    const s16_b: s16 = -1s16; # 0xFFFF as s16
-    const s16_c: s16 = 0s16; # 0x0000 as s16
-    const s16_d: s16 = -16657s16; # 0xBEEF as s16
-    const s16_e: s16 = 0x0123s16;
-    const s16_a_bitor_s16_a: s16 = s16_a | s16_a;
-    const s16_a_bitor_s16_b: s16 = s16_a | s16_b;
-    const s16_a_bitor_s16_c: s16 = s16_a | s16_c;
-    const s16_d_bitor_s16_b: s16 = s16_d | s16_b;
-    const s16_d_bitor_s16_c: s16 = s16_d | s16_c;
-    const s16_e_bitor_s16_b: s16 = s16_e | s16_b;
-    const s16_e_bitor_s16_c: s16 = s16_e | s16_c;
+    let s16_a: s16 = -32768s16; # 0x8000 as s16
+    let s16_b: s16 = -1s16; # 0xFFFF as s16
+    let s16_c: s16 = 0s16; # 0x0000 as s16
+    let s16_d: s16 = -16657s16; # 0xBEEF as s16
+    let s16_e: s16 = 0x0123s16;
+    let s16_a_bitor_s16_a: s16 = s16_a | s16_a;
+    let s16_a_bitor_s16_b: s16 = s16_a | s16_b;
+    let s16_a_bitor_s16_c: s16 = s16_a | s16_c;
+    let s16_d_bitor_s16_b: s16 = s16_d | s16_b;
+    let s16_d_bitor_s16_c: s16 = s16_d | s16_c;
+    let s16_e_bitor_s16_b: s16 = s16_e | s16_b;
+    let s16_e_bitor_s16_c: s16 = s16_e | s16_c;
 
     sys::dump[[s16]](s16_a_bitor_s16_a);
     sys::dump[[s16]](s16_a_bitor_s16_b);

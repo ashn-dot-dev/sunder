@@ -7,7 +7,7 @@ struct foo {
 }
 
 struct bar[[T]] {
-    const VALUE: T = 123;
+    let VALUE: T = 123;
 }
 
 func main() void {
@@ -15,8 +15,8 @@ func main() void {
 }
 ################################################################################
 # [error-template-stack-report-invalid-template-member-function.test.sunder:10] error: incompatible type `integer` (expected `*byte`)
-#     const VALUE: T = 123;
-#                      ^
+#     let VALUE: T = 123;
+#                    ^
 # [error-template-stack-report-invalid-template-member-function.test.sunder:5] info: ...encountered during template instantiation of `whatever::bar[[*byte]]`
 #         return bar[[T]]::VALUE;
 #                ^

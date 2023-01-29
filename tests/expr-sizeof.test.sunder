@@ -1,17 +1,17 @@
 import "sys";
 
-const a: usize = sizeof(void);
-const b: usize = sizeof(u8);
-const c: usize = sizeof(u16);
-const d: usize = sizeof(u32);
-const e: usize = sizeof(u64);
-const f: usize = sizeof(usize);
+let a: usize = sizeof(void);
+let b: usize = sizeof(u8);
+let c: usize = sizeof(u16);
+let d: usize = sizeof(u32);
+let e: usize = sizeof(u64);
+let f: usize = sizeof(usize);
 
-const g: usize = sizeof([5u]u8);
-const h: usize = sizeof([2u]u64);
+let g: usize = sizeof([5u]u8);
+let h: usize = sizeof([2u]u64);
 
-const i: u16 = 0xABCDu16;
-const j: usize = sizeof(typeof(i));
+let i: u16 = 0xABCDu16;
+let j: usize = sizeof(typeof(i));
 
 func main() void {
     sys::dump[[usize]](a);

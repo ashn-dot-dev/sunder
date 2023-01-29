@@ -10,10 +10,10 @@ func bar() ssize {
 }
 
 func main() void {
-    const t_gt_t: bool = true > true;
-    const f_gt_f: bool = false > false;
-    const t_gt_f: bool = true > false;
-    const f_gt_t: bool = false > true;
+    let t_gt_t: bool = true > true;
+    let f_gt_f: bool = false > false;
+    let t_gt_f: bool = true > false;
+    let f_gt_t: bool = false > true;
     sys::dump[[bool]](t_gt_t);
     sys::dump[[bool]](f_gt_f);
     sys::dump[[bool]](t_gt_f);
@@ -25,15 +25,15 @@ func main() void {
 
     std::print(std::err(), "\n");
 
-    const a: ssize = 123s;
-    const b: ssize = 456s;
-    const c: ssize = a;
-    const a_gt_a: bool = a > a;
-    const b_gt_b: bool = b > b;
-    const a_gt_b: bool = a > b;
-    const b_gt_a: bool = b > a;
-    const a_gt_c: bool = a > c;
-    const b_gt_c: bool = b > c;
+    let a: ssize = 123s;
+    let b: ssize = 456s;
+    let c: ssize = a;
+    let a_gt_a: bool = a > a;
+    let b_gt_b: bool = b > b;
+    let a_gt_b: bool = a > b;
+    let b_gt_a: bool = b > a;
+    let a_gt_c: bool = a > c;
+    let b_gt_c: bool = b > c;
     sys::dump[[bool]](a_gt_a);
     sys::dump[[bool]](b_gt_b);
     sys::dump[[bool]](a_gt_b);

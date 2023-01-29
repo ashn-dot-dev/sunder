@@ -851,7 +851,7 @@ enum token_kind {
     TOKEN_NAMESPACE,
     TOKEN_IMPORT,
     TOKEN_VAR,
-    TOKEN_CONST,
+    TOKEN_LET,
     TOKEN_FUNC,
     TOKEN_STRUCT,
     TOKEN_EXTEND,

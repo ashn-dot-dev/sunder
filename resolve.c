@@ -40,7 +40,7 @@ struct resolver {
     // True if the resolver is executing within a constant declaration.
     // Currently, this is only used to tell whether slice-list backing arrays
     // should be declared as variables or constants.
-    bool is_within_const_decl;
+    bool is_within_constant_decl;
 
     // True if the resolver is executing within a loop statement. Set to true
     // when a loop body is being resolved, and set to false once the loop body
@@ -1561,7 +1561,7 @@ resolve_decl_constant(struct resolver* resolver, struct cst_decl const* decl)
     assert(decl != NULL);
     assert(decl->kind == CST_DECL_CONSTANT);
 
-    resolver->is_within_const_decl = true;
+    resolver->is_within_constant_decl = true;
 
     struct expr const* expr = NULL;
     if (decl->data.constant.expr != NULL) {
@@ -1609,7 +1609,7 @@ resolve_decl_constant(struct resolver* resolver, struct cst_decl const* decl)
         !resolver_is_global(resolver));
     register_static_symbol(symbol);
 
-    resolver->is_within_const_decl = false;
+    resolver->is_within_constant_decl = false;
 
     return symbol;
 }
@@ -3098,7 +3098,7 @@ resolve_expr_list(struct resolver* resolver, struct cst_expr const* expr)
         expr->location, elements_count, type->data.slice.base);
 
     bool const is_global = resolver_is_global(resolver);
-    bool const is_static = is_global || resolver->is_within_const_decl;
+    bool const is_static = is_global || resolver->is_within_constant_decl;
     struct address const* const array_address = is_static
         ? resolver_reserve_storage_static(resolver, array_name)
         : resolver_reserve_storage_local(resolver, array_type);
@@ -3129,7 +3129,7 @@ resolve_expr_list(struct resolver* resolver, struct cst_expr const* expr)
     freeze(array_object);
 
     struct symbol* const array_symbol =
-        (resolver->is_within_const_decl
+        (resolver->is_within_constant_decl
              ? symbol_new_constant
              : symbol_new_variable)(expr->location, array_name, array_object);
     if (is_static) {

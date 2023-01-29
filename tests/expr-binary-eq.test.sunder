@@ -10,10 +10,10 @@ func bar() ssize {
 }
 
 func main() void {
-    const t_eq_t: bool = true == true;
-    const f_eq_f: bool = false == false;
-    const t_eq_f: bool = true == false;
-    const f_eq_t: bool = false == true;
+    let t_eq_t: bool = true == true;
+    let f_eq_f: bool = false == false;
+    let t_eq_f: bool = true == false;
+    let f_eq_t: bool = false == true;
     sys::dump[[bool]](t_eq_t);
     sys::dump[[bool]](f_eq_f);
     sys::dump[[bool]](t_eq_f);
@@ -25,15 +25,15 @@ func main() void {
 
     std::print(std::err(), "\n");
 
-    const a: ssize = 123s;
-    const b: ssize = 456s;
-    const c: ssize = a;
-    const a_eq_a: bool = a == a;
-    const b_eq_b: bool = b == b;
-    const a_eq_b: bool = a == b;
-    const b_eq_a: bool = b == a;
-    const a_eq_c: bool = a == c;
-    const b_eq_c: bool = b == c;
+    let a: ssize = 123s;
+    let b: ssize = 456s;
+    let c: ssize = a;
+    let a_eq_a: bool = a == a;
+    let b_eq_b: bool = b == b;
+    let a_eq_b: bool = a == b;
+    let b_eq_a: bool = b == a;
+    let a_eq_c: bool = a == c;
+    let b_eq_c: bool = b == c;
     sys::dump[[bool]](a_eq_a);
     sys::dump[[bool]](b_eq_b);
     sys::dump[[bool]](a_eq_b);
@@ -43,10 +43,10 @@ func main() void {
 
     std::print(std::err(), "\n");
 
-    const foo_eq_foo: bool = foo == foo;
-    const bar_eq_bar: bool = bar == bar;
-    const foo_eq_bar: bool = foo == bar;
-    const bar_eq_foo: bool = bar == foo;
+    let foo_eq_foo: bool = foo == foo;
+    let bar_eq_bar: bool = bar == bar;
+    let foo_eq_bar: bool = foo == bar;
+    let bar_eq_foo: bool = bar == foo;
     sys::dump[[bool]](foo_eq_foo);
     sys::dump[[bool]](bar_eq_bar);
     sys::dump[[bool]](foo_eq_bar);

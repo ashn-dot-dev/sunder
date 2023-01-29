@@ -1,8 +1,8 @@
 import "sys";
 
 func main() void {
-    const not_t: bool = not true;
-    const not_f: bool = not false;
+    let not_t: bool = not true;
+    let not_f: bool = not false;
     sys::dump[[bool]](not_t);
     sys::dump[[bool]](not_f);
     sys::dump[[bool]](not true);

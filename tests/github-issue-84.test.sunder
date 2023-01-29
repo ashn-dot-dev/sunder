@@ -1,5 +1,5 @@
 struct foo[[T]] {
-    const INDEX: T = 1;
+    let INDEX: T = 1;
 }
 
 func main() void {

@@ -1,7 +1,7 @@
 import "sys";
 
-const gc0: byte = 0xABy;
-const gc1: byte = gc0;
+let gc0: byte = 0xABy;
+let gc1: byte = gc0;
 
 var gv0: byte = 0xBCy;
 
@@ -13,8 +13,8 @@ func main() void {
     var x: byte = gv0;
     sys::dump[[byte]](x);
 
-    const lc0: byte = 0xCDy;
-    const lc1: byte = lc0;
+    let lc0: byte = 0xCDy;
+    let lc1: byte = lc0;
 
     var lv0: byte = 0xDEy;
     var lv1: byte = lv0;

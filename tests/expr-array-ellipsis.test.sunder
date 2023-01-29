@@ -1,10 +1,10 @@
 import "sys";
 
-const a: [5u]u16 = (:[5u]u16)[0xAAu16, 0xBBu16, 0xCCu16...];
-const b: [5u]u16 = (:[5u]u16)[0xAAu16...];
+let a: [5u]u16 = (:[5u]u16)[0xAAu16, 0xBBu16, 0xCCu16...];
+let b: [5u]u16 = (:[5u]u16)[0xAAu16...];
 
-const f: [3u][5u]u16 = (:[3u][5u]u16)[(:[5u]u16)[0xAA, 0xBB, 0xCC...]...];
-const g: [2u][2u][3u]u16 = (:[2u][2u][3u]u16)[
+let f: [3u][5u]u16 = (:[3u][5u]u16)[(:[5u]u16)[0xAA, 0xBB, 0xCC...]...];
+let g: [2u][2u][3u]u16 = (:[2u][2u][3u]u16)[
     (:[2u][3u]u16)[
         (:[3u]u16)[0xFF...],
         (:[3u]u16)[0xAA, 0xBB, 0xCC...]...

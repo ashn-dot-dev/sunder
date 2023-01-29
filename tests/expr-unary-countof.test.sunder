@@ -1,13 +1,13 @@
 import "sys";
 
-const a: usize = countof((:[3u]u16)[0xAAAAu16, 0xBBBBu16, 0xCCCCu16]);
+let a: usize = countof((:[3u]u16)[0xAAAAu16, 0xBBBBu16, 0xCCCCu16]);
 
-const b: [3u]u16 = (:[3u]u16)[0xAAAAu16, 0xBBBBu16, 0xCCCCu16];
-const c: usize = countof(b);
-const d: usize = countof(b[1u:3u]);
+let b: [3u]u16 = (:[3u]u16)[0xAAAAu16, 0xBBBBu16, 0xCCCCu16];
+let c: usize = countof(b);
+let d: usize = countof(b[1u:3u]);
 
-const e: []u16 = b[1u:3u];
-const f: usize = countof(e);
+let e: []u16 = b[1u:3u];
+let f: usize = countof(e);
 
 func ident(val: u16) u16 {
     sys::dump[[u16]](val);

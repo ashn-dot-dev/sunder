@@ -1,14 +1,14 @@
 import "sys";
 
-const g_array: [3u]ssize = (:[3u]ssize)[1s, 3s, 5s];
-const g_slice: []ssize = (:[]ssize){&g_array[1u], 2u};
+let g_array: [3u]ssize = (:[3u]ssize)[1s, 3s, 5s];
+let g_slice: []ssize = (:[]ssize){&g_array[1u], 2u};
 
-const array_of_zero_sized_objects: [2u][0u]void =
+let array_of_zero_sized_objects: [2u][0u]void =
     (:[2u][0u]void)[
         (:[0u]void)[],
         (:[0u]void)[]
     ];
-const slice_of_zero_sized_objects: [][0u]void =
+let slice_of_zero_sized_objects: [][0u]void =
     (:[][0u]void){&array_of_zero_sized_objects[0u], 2u};
 
 func main() void {

@@ -1,0 +1,7 @@
+func main() void {
+    let x: s8 = 127s8 * 2s8;
+}
+################################################################################
+# [error-expr-binary-mul-integer-out-of-range-constant.test.sunder:2] error: arithmetic operation produces out-of-range result (127 * 2 == 254)
+#     let x: s8 = 127s8 * 2s8;
+#                       ^

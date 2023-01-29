@@ -49,7 +49,7 @@ func test0() void {
 }
 
 func test1() void {
-    const i: int = (:int){};
+    let i: int = (:int){};
 
     var args: [5]std::formatter = (:[5]std::formatter)[
         std::formatter::init[[int]](&i),

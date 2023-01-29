@@ -338,7 +338,7 @@ parse_decl(struct parser* parser)
         return parse_decl_variable(parser);
     }
 
-    if (check_current(parser, TOKEN_CONST)) {
+    if (check_current(parser, TOKEN_LET)) {
         return parse_decl_constant(parser);
     }
 
@@ -415,7 +415,7 @@ parse_decl_constant(struct parser* parser)
     assert(parser != NULL);
 
     struct source_location const* const location =
-        &expect_current(parser, TOKEN_CONST)->location;
+        &expect_current(parser, TOKEN_LET)->location;
     struct cst_identifier const* const identifier = parse_identifier(parser);
     struct cst_typespec const* typespec = NULL;
     if (check_current(parser, TOKEN_COLON)) {
@@ -579,7 +579,7 @@ parse_stmt(struct parser* parser)
 {
     assert(parser != NULL);
 
-    if (check_current(parser, TOKEN_VAR) || check_current(parser, TOKEN_CONST)
+    if (check_current(parser, TOKEN_VAR) || check_current(parser, TOKEN_LET)
         || check_current(parser, TOKEN_FUNC)
         || check_current(parser, TOKEN_ALIAS)) {
         return parse_stmt_decl(parser);
@@ -1507,7 +1507,7 @@ parse_member(struct parser* parser)
         return parse_member_variable(parser);
     }
 
-    if (check_current(parser, TOKEN_CONST)) {
+    if (check_current(parser, TOKEN_LET)) {
         return parse_member_constant(parser);
     }
 

@@ -3,9 +3,9 @@ func foo(bar_: []byte, baz_: *u32, qux_: ssize) s32 {
 }
 
 var a = (:*any)foo;
-const b = (:*any)foo;
+let b = (:*any)foo;
 
 func main() void {
     var x_ = (:*any)foo;
-    const y_ = (:*any)foo;
+    let y_ = (:*any)foo;
 }

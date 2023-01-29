@@ -5,14 +5,14 @@ struct s {
     var bar: u32;
 }
 
-const a = 0xAAu8;
-const b = 0xBBBBu16;
-const c = 0xCCCCCCCCu32;
-const d = 0xDDDDDDDDDDDDDDDDu64;
-const e = (:s){.foo = 0xDEADBEEF, .bar = 0xCAFEF00D};
+let a = 0xAAu8;
+let b = 0xBBBBu16;
+let c = 0xCCCCCCCCu32;
+let d = 0xDDDDDDDDDDDDDDDDu64;
+let e = (:s){.foo = 0xDEADBEEF, .bar = 0xCAFEF00D};
 
 func main() void {
-    const f = (:s32)0xFFFFu16;
+    let f = (:s32)0xFFFFu16;
 
     sys::dump[[u8]](a);
     sys::dump[[u16]](b);

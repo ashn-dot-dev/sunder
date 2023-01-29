@@ -1,10 +1,10 @@
 import "sys";
 
 var empty_variable: []u16 = (:[]u16)[];
-const empty_constant: []u16 = (:[]u16)[];
+let empty_constant: []u16 = (:[]u16)[];
 
 var d: []u16 = (:[]u16)[];
-const a: []u16 = (:[]u16)[0xAAAA, 0xBBBB, 0xCCCC];
+let a: []u16 = (:[]u16)[0xAAAA, 0xBBBB, 0xCCCC];
 var b: []u16 = (:[]u16)[0xAAAA, 0xBBBB, 0xCCCC];
 
 func main() void {
@@ -22,7 +22,7 @@ func main() void {
     sys::dump[[u16]](b[1]);
     sys::dump[[u16]](b[2]);
 
-    const c: []u16 = (:[]u16)[0x1111, 0x2222, 0x3333];
+    let c: []u16 = (:[]u16)[0x1111, 0x2222, 0x3333];
     sys::dump[[usize]](countof(c));
     sys::dump[[u16]](c[0]);
     sys::dump[[u16]](c[1]);

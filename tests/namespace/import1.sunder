@@ -11,12 +11,12 @@ var b3: byte = b;
 # Make sure that the module symbol table was properly set to foo::bar. No name
 # collisions should occur for either the foo or bar identifiers (foo::bar::foo
 # and foo::bar::bar respectively).
-const foo: u16 = 0xBEEFu16;
-const bar: u16 = 0xBEEFu16;
+let foo: u16 = 0xBEEFu16;
+let bar: u16 = 0xBEEFu16;
 
 var a: byte = 0xAAy;
 
-const b: byte = 0xBBy;
+let b: byte = 0xBBy;
 
 func c() byte {
     var result: u8 = (:u8)b;

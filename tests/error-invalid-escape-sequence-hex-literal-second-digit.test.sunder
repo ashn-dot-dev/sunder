@@ -1,5 +1,5 @@
-const a: byte = '\xAZ';
+let a: byte = '\xAZ';
 ################################################################################
 # [error-invalid-escape-sequence-hex-literal-second-digit.test.sunder:1] error: invalid hexadecimal escape sequence
-# const a: byte = '\xAZ';
-#                  ^
+# let a: byte = '\xAZ';
+#                ^

@@ -22,8 +22,8 @@ func main() void {
     w; # The first declaration of w is used.
     var w = 456s; # The second declaration of w is unused.
 
-    const X = 123s; # X is unused
-    const Y = X; # X is used
+    let X = 123s; # X is unused
+    let Y = X; # X is used
     # Y is unsued
 
     alias str = *byte; # str is unused
@@ -54,7 +54,7 @@ func main() void {
 #     ^
 # info: use variable `w` in an expression or rename the variable to `w_`
 # [warning-unused-symbol.test.sunder:26] warning: unused constant `Y`
-#     const Y = X; # X is used
+#     let Y = X; # X is used
 #     ^
 # info: use constant `Y` in an expression or rename the constant to `Y_`
 # [warning-unused-symbol.test.sunder:29] warning: unused type `str`

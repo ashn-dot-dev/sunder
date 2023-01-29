@@ -1,9 +1,9 @@
 import "sys";
 
-const a: u16 = 0xAAAAu16;
-const b: typeof(a) = a;
-const c: typeof(b) = a;
-const d: typeof(0u16 + 1u16) = a;
+let a: u16 = 0xAAAAu16;
+let b: typeof(a) = a;
+let c: typeof(b) = a;
+let d: typeof(0u16 + 1u16) = a;
 
 func dump1234() void {
     sys::dump[[u16]](0x1234);
@@ -19,11 +19,11 @@ func main() void {
     sys::dump[[u16]](c);
     sys::dump[[u16]](d);
 
-    const e: [3u]u8 = (:[3u]u8)[0xAAu8, 0xBBu8, 0xCCu8];
-    const f: typeof((*&e)[0u:0u]) = e[0u:3u];
+    let e: [3u]u8 = (:[3u]u8)[0xAAu8, 0xBBu8, 0xCCu8];
+    let f: typeof((*&e)[0u:0u]) = e[0u:3u];
     sys::dump[[u8]](f[1u]);
 
-    const g: typeof(dump1234) = dumpABCD;
+    let g: typeof(dump1234) = dumpABCD;
     g();
 }
 ################################################################################

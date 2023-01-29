@@ -1,6 +1,6 @@
-const foo: ssize = 1s;
-const bar: foo = 2s;
+let foo: ssize = 1s;
+let bar: foo = 2s;
 ################################################################################
 # [error-identifier-is-not-a-type.test.sunder:2] error: identifier `foo` is not a type
-# const bar: foo = 2s;
-#            ^
+# let bar: foo = 2s;
+#          ^

@@ -1,5 +1,5 @@
-const x = 123;
+let x = 123;
 ################################################################################
 # [error-decl-constant-type-unsized-automatic-type-deduction.test.sunder:1] error: declaration of constant with unsized type `integer`
-# const x = 123;
+# let x = 123;
 # ^

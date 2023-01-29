@@ -17,7 +17,7 @@ func main() void {
     sys::dump[[usize]](i);
 
     # Check that the range works with general expressions.
-    const begin: usize = 1u + 2u;
+    let begin: usize = 1u + 2u;
     var end: usize = seven();
     for i in begin:end {
         sys::dump[[usize]](i);
@@ -29,7 +29,7 @@ func main() void {
     }
 
     # Explicit issue using caused by jge instead of jnb during codegen.
-    const USIZE_MAX = 0xFFFFFFFFFFFFFFFFu;
+    let USIZE_MAX = 0xFFFFFFFFFFFFFFFFu;
     for _ in 0:USIZE_MAX {
         sys::dump[[u32]](0xDEADBEEFu32);
         break;

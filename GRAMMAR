@@ -7,8 +7,8 @@
 <decl-variable> ::= "var" <identifier> (":" <typespec>)? "=" <expr> ";"
                   | "var" <identifier> ":" <typespec> "=" "uninit" ";"
 
-<decl-constant> ::= "const" <identifier> (":" <typespec>)? "=" <expr> ";"
-                  | "const" <identifier> ":" <typespec> "=" "uninit" ";"
+<decl-constant> ::= "let" <identifier> (":" <typespec>)? "=" <expr> ";"
+                  | "let" <identifier> ":" <typespec> "=" "uninit" ";"
 
 <decl-function> ::= "func" <identifier> <template-parameter-list>? "(" <parameter-list> ")" <typespec> <block>
 
@@ -170,7 +170,7 @@
 
 <member-variable> ::= "var" <identifier> ":" <typespec> ";"
 
-<member-constant> ::= <decl-const>
+<member-constant> ::= <decl-constant>
 
 <member-function> ::=  <decl-function>
 

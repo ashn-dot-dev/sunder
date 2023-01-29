@@ -7,9 +7,9 @@ func test[[T]](value: T) void {
 }
 
 func main() void {
-    const x = -%-128s8;
+    let x = -%-128s8;
     sys::dump[[s8]](x);
-    const y = -%+127s8;
+    let y = -%+127s8;
     sys::dump[[s8]](y);
 
     std::print(std::out(), "\n");

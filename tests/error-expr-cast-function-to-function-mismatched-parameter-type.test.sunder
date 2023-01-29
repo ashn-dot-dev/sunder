@@ -1,6 +1,6 @@
 func f(x: usize, y: ssize) void { }
-const g = (:func(usize, usize) void)f;
+let g = (:func(usize, usize) void)f;
 ################################################################################
 # [error-expr-cast-function-to-function-mismatched-parameter-type.test.sunder:2] error: cannot convert from `func(usize, ssize) void` to `func(usize, usize) void` (mismatched parameter types `ssize` and `usize`)
-# const g = (:func(usize, usize) void)f;
-#           ^
+# let g = (:func(usize, usize) void)f;
+#         ^

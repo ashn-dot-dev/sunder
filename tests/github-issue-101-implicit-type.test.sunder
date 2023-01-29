@@ -3,7 +3,7 @@ import "std";
 struct foo {
     var x: u32;
     var y: u32;
-    const C = (:foo){};
+    let C = (:foo){};
     var z: u32;
 }
 
@@ -12,5 +12,5 @@ func main() void {
 }
 ################################################################################
 # [github-issue-101-implicit-type.test.sunder:6] error: struct type `foo` is incomplete
-#     const C = (:foo){};
-#               ^
+#     let C = (:foo){};
+#             ^

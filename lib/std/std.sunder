@@ -17,11 +17,11 @@ struct error_info {
 }
 
 # The set of all `std::error_info` constants used by the standard library.
-const _ALLOCATION_FAILURE = (:std::error_info){.data = "allocation failure"};
-const _BUFFER_FULL = (:std::error_info){.data = "buffer full"};
-const _PARSE_FAILURE = (:std::error_info){.data = "parse failure"};
-const _INVALID_ARGUMENT = (:error_info){.data = "invalid argument"};
-const _RESULT_OUT_OF_RANGE = (:error_info){.data = "result out-of-range"};
+let _ALLOCATION_FAILURE = (:std::error_info){.data = "allocation failure"};
+let _BUFFER_FULL = (:std::error_info){.data = "buffer full"};
+let _PARSE_FAILURE = (:std::error_info){.data = "parse failure"};
+let _INVALID_ARGUMENT = (:error_info){.data = "invalid argument"};
+let _RESULT_OUT_OF_RANGE = (:error_info){.data = "result out-of-range"};
 
 # Type representing the outcome of a fallible computation. A result is either
 # in the value state, indicating computation success, or the error state,
@@ -88,7 +88,7 @@ struct optional[[T]] {
     var _is_value: bool;
 
     # Optional in the empty state.
-    const EMPTY = (:optional[[T]]){
+    let EMPTY = (:optional[[T]]){
         ._value = uninit,
         ._is_value = false
     };
@@ -137,7 +137,7 @@ struct reader {
     var object: *any;
 
     func init[[T]](object: *T) reader {
-        const itable = (:std::reader_itable){
+        let itable = (:std::reader_itable){
             .read = T::read
         };
         return (:reader){
@@ -170,7 +170,7 @@ struct writer {
     var object: *any;
 
     func init[[T]](object: *T) writer {
-        const itable = (:std::writer_itable){
+        let itable = (:std::writer_itable){
             .write = T::write
         };
         return (:writer){
@@ -201,7 +201,7 @@ struct formatter {
     var object: *any;
 
     func init[[T]](object: *T) formatter {
-        const itable = (:std::formatter_itable){
+        let itable = (:std::formatter_itable){
             .format = T::format
         };
         return (:formatter){
@@ -243,7 +243,7 @@ struct iterator[[T]] {
     var object: *any;
 
     func init[[I]](object: *I) iterator[[T]] {
-        const itable = (:std::iterator_itable[[T]]){
+        let itable = (:std::iterator_itable[[T]]){
             .advance = I::advance,
             .current = I::current
         };
@@ -282,7 +282,7 @@ struct allocator {
     var object: *any;
 
     func init[[T]](object: *T) allocator {
-        const itable = (:std::allocator_itable){
+        let itable = (:std::allocator_itable){
             .allocate = T::allocate,
             .reallocate = T::reallocate,
             .deallocate = T::deallocate
@@ -352,19 +352,19 @@ struct null_allocator {
     }
 
     func the() *null_allocator {
-        const the = (:null_allocator){};
+        let the = (:null_allocator){};
         return &the;
     }
 
-    const ITABLE = (:std::allocator_itable){
+    let ITABLE = (:std::allocator_itable){
         .allocate = null_allocator::allocate,
         .reallocate = null_allocator::reallocate,
         .deallocate = null_allocator::deallocate
     };
 
-    const OBJECT = (:std::null_allocator){};
+    let OBJECT = (:std::null_allocator){};
 
-    const ALLOCATOR = (:std::allocator){
+    let ALLOCATOR = (:std::allocator){
         .itable = &null_allocator::ITABLE,
         .object = &null_allocator::OBJECT
     };
@@ -520,20 +520,20 @@ struct page_allocator {
         }
 
         # NULL addr indicates no address hint.
-        const addr = std::NULL;
+        let addr = std::NULL;
 
         # Give the page(s) read and write permissions.
-        const prot = sys::PROT_READ | sys::PROT_WRITE;
+        let prot = sys::PROT_READ | sys::PROT_WRITE;
 
         # Create a private mapping not backed by a file.
         # The contents of the mapped region are initialized to zero.
-        const flags = sys::MAP_PRIVATE | sys::MAP_ANONYMOUS;
+        let flags = sys::MAP_PRIVATE | sys::MAP_ANONYMOUS;
 
         # Should be -1 when MAP_ANONYMOUS is specified.
-        const fd = (:sys::sint)-1s;
+        let fd = (:sys::sint)-1s;
 
         # Should be 0 when MAP_ANONYMOUS is specified.
-        const off = (:sys::off_t)0u;
+        let off = (:sys::off_t)0u;
 
         var sysret: ssize = sys::mmap(addr, size, prot, flags, fd, off);
         if sysret < 0 {
@@ -607,7 +607,7 @@ struct page_allocator {
     }
 
     func the() *page_allocator {
-        const the = (:page_allocator){};
+        let the = (:page_allocator){};
         return &the;
     }
 }
@@ -790,13 +790,13 @@ struct general_allocator_iterator {
 }
 
 # Generic NULL constant. Equivalent to the C NULL pointer cast as type `*any`.
-const NULL = (:*any)0u;
+let NULL = (:*any)0u;
 
 struct ptr[[T]] { # namespace
     var __namespace__: any;
 
     # Typed NULL constant. Equivalent to the C NULL pointer cast as type `*T`.
-    const NULL = (:*T)0u;
+    let NULL = (:*T)0u;
 
     # Equivalent to the C operation `ptr + n`.
     func add(ptr: *T, n: usize) *T {
@@ -1288,19 +1288,19 @@ struct ascii { # namespace
 
 # Returns the reader interface associated with the standard input stream.
 func input() std::reader {
-    const input = (:std::file){._fd = sys::STDIN_FILENO};
+    let input = (:std::file){._fd = sys::STDIN_FILENO};
     return std::reader::init[[std::file]](&input);
 }
 
 # Returns the writer interface associated with the standard output stream.
 func out() std::writer {
-    const out = (:std::file){._fd = sys::STDOUT_FILENO};
+    let out = (:std::file){._fd = sys::STDOUT_FILENO};
     return std::writer::init[[std::file]](&out);
 }
 
 # Returns the writer interface associated with the standard error stream.
 func err() std::writer {
-    const err = (:std::file){._fd = sys::STDERR_FILENO};
+    let err = (:std::file){._fd = sys::STDERR_FILENO};
     return std::writer::init[[std::file]](&err);
 }
 
@@ -1497,12 +1497,12 @@ func write_format(writer: std::writer, format: []byte, args: []std::formatter) s
     # Walking along the format string accumulating bytes to be written verbatim.
     #   "some{fmt}text"
     #    ^^^^     ^^^^ Walking along either of the byte spans "some" or "text".
-    const STATE_WALKING: ssize = 0;
+    let STATE_WALKING: ssize = 0;
 
     # Inside of a `fmt` string.
     #   "some{fmt}text"
     #         ^^^-- Walking (fmtting) along the text between the '{' '}' bytes.
-    const STATE_FMTTING: ssize = 1;
+    let STATE_FMTTING: ssize = 1;
 
     # Current state.
     var state: ssize = STATE_WALKING;
@@ -1513,7 +1513,7 @@ func write_format(writer: std::writer, format: []byte, args: []std::formatter) s
 
     # Format message passed to `std::panic` when an invalid format string is
     # encountered. This message contains a format specifier for the `fmt` str.
-    const INVALID_FORMAT_STRING_MESSAGE = "invalid format string \"{e}\"\n";
+    let INVALID_FORMAT_STRING_MESSAGE = "invalid format string \"{e}\"\n";
 
     for end < countof(format) {
         if state == STATE_WALKING {
@@ -1746,12 +1746,12 @@ func forward_align(addr: usize, align: usize) usize {
 
 # Returns an object of type `T` with all bytes (including padding) zeroed.
 func zeroed[[T]]() T {
-    const object: T = uninit;
+    let object: T = uninit;
     return object;
 }
 
-const EXIT_SUCCESS: ssize = 0;
-const EXIT_FAILURE: ssize = 1;
+let EXIT_SUCCESS: ssize = 0;
+let EXIT_FAILURE: ssize = 1;
 
 # Discontinue program execution.
 #
@@ -1773,7 +1773,7 @@ func panic(why: []byte) void {
 #
 # This function does not return.
 func panic_format(format: []byte, args: []std::formatter) void {
-    const PANIC_PREAMBLE = "panic: ";
+    let PANIC_PREAMBLE = "panic: ";
     std::write_all(std::err(), PANIC_PREAMBLE);
     std::write_format(std::err(), format, args);
     std::write_all(std::err(), "\n");
@@ -1902,7 +1902,7 @@ struct big_integer {
     var _limbs: []u32;
 
     # Number of bits in each limb of the integer.
-    const _BITS_PER_LIMB = sizeof(u32) * 8;
+    let _BITS_PER_LIMB = sizeof(u32) * 8;
 
     # Initialize a big integer with the value zero.
     func init() big_integer {
@@ -2172,12 +2172,12 @@ struct big_integer {
             return smax::format(&int, writer, fmt);
         }
 
-        const DIGITS_TABLE_COUNT: usize = 16;
-        const DIGITS_TABLE_LOWER = (:[DIGITS_TABLE_COUNT]byte)[
+        let DIGITS_TABLE_COUNT: usize = 16;
+        let DIGITS_TABLE_LOWER = (:[DIGITS_TABLE_COUNT]byte)[
             '0', '1', '2', '3', '4', '5', '6', '7',
             '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'
         ];
-        const DIGITS_TABLE_UPPER = (:[DIGITS_TABLE_COUNT]byte)[
+        let DIGITS_TABLE_UPPER = (:[DIGITS_TABLE_COUNT]byte)[
             '0', '1', '2', '3', '4', '5', '6', '7',
             '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'
         ];
@@ -2467,7 +2467,7 @@ struct big_integer {
         var v = rhs.*._limbs;
         var m = countof(lhs.*._limbs);
         var n = countof(rhs.*._limbs);
-        const b: u64 = (:u64)u32::MAX + 1;
+        let b: u64 = (:u64)u32::MAX + 1;
         for j in n {
             if v[j] == 0 {
                 w[j + m] = 0;
@@ -2936,7 +2936,7 @@ struct vector[[T]] {
         # [A][B][C][D][E]
         # [A][B][C][D][E][ ]
         if self.*._count == self.*._capacity {
-            const GROWTH_FACTOR: usize = 2;
+            let GROWTH_FACTOR: usize = 2;
             self.*.reserve(self.*._capacity * GROWTH_FACTOR);
         }
 
@@ -3003,9 +3003,9 @@ struct key_value_view[[K, V]] {
 }
 
 struct hash_map_element[[K, V]] {
-    const _STATE_NIL: usize = 0;
-    const _STATE_USE: usize = 1;
-    const _STATE_DEL: usize = 2;
+    let _STATE_NIL: usize = 0;
+    let _STATE_USE: usize = 1;
+    let _STATE_DEL: usize = 2;
     var _state: usize;
 
     # The key associated with this element.
@@ -3222,15 +3222,15 @@ struct file {
     var _fd: sys::sint;
 
     # Open a file for reading.
-    const OPEN_READ: usize = 0b001;
+    let OPEN_READ: usize = 0b001;
     # Open a file for writing.
     # The file is created if it does not exist.
     # The file is truncated if it does exist.
-    const OPEN_WRITE: usize = 0b010;
+    let OPEN_WRITE: usize = 0b010;
     # Open a file for writing (appended).
     # The file is created if it does not exist.
     # Data is appended to the end of the file when written.
-    const OPEN_APPEND: usize = 0b100;
+    let OPEN_APPEND: usize = 0b100;
 
     # Open a regular file.
     func open(path: []byte, mode: usize) std::result[[std::file, std::error]] {
@@ -3315,11 +3315,11 @@ struct file {
     }
 
     # Seek from the start of the file.
-    const SEEK_START: usize = (:usize)sys::SEEK_SET;
+    let SEEK_START: usize = (:usize)sys::SEEK_SET;
     # Seek from the current position of the file position indicator.
-    const SEEK_CURRENT: usize = (:usize)sys::SEEK_CUR;
+    let SEEK_CURRENT: usize = (:usize)sys::SEEK_CUR;
     # Seek from the end of the file.
-    const SEEK_END: usize = (:usize)sys::SEEK_END;
+    let SEEK_END: usize = (:usize)sys::SEEK_END;
 
     # Set the file position indicatior of an open file to `offset` bytes
     # relative to the position indicated by `from`.
@@ -3758,7 +3758,7 @@ struct argument_parser {
     }
 }
 
-extend void const VALUE: void = uninit;
+extend void let VALUE: void = uninit;
 extend void func format(self_: *bool, writer: std::writer, fmt: []byte) std::result[[void, std::error]] {
     if countof(fmt) != 0 {
         return std::result[[void, std::error]]::init_error(std::error::INVALID_ARGUMENT);
@@ -3928,11 +3928,11 @@ extend integer func _compare[[T]](lhs: T, rhs: T) ssize {
 #   "x" => hexadecimal (lower)
 #   "X" => hexadecimal (upper)
 extend integer func _format_umax(int: std::umax, writer: std::writer, fmt: []byte) std::result[[void, std::error]] {
-    const DIGITS_TABLE_LOWER = (:[]byte)[
+    let DIGITS_TABLE_LOWER = (:[]byte)[
         '0', '1', '2', '3', '4', '5', '6', '7',
         '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'
     ];
-    const DIGITS_TABLE_UPPER = (:[]byte)[
+    let DIGITS_TABLE_UPPER = (:[]byte)[
         '0', '1', '2', '3', '4', '5', '6', '7',
         '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'
     ];
@@ -3982,7 +3982,7 @@ extend integer func _format_umax(int: std::umax, writer: std::writer, fmt: []byt
         return std::result[[void, std::error]]::init_error(std::error::INVALID_ARGUMENT);
     }
 
-    const OUTPUT_COUNT: usize = countof("0b") + sizeof(usize) * 8;
+    let OUTPUT_COUNT: usize = countof("0b") + sizeof(usize) * 8;
     var output = (:[OUTPUT_COUNT]byte)[0...];
     var output_index: usize = countof(output) - 1;
 
@@ -4047,9 +4047,9 @@ extend integer func _format_smax(int: std::smax, writer: std::writer, fmt: []byt
     return integer::_format_umax(magnitude, writer, fmt);
 }
 
-extend byte const MIN: byte = 0x00;
-extend byte const MAX: byte = 0xFF;
-extend byte const BITS: usize = 8;
+extend byte let MIN: byte = 0x00;
+extend byte let MAX: byte = 0xFF;
+extend byte let BITS: usize = 8;
 extend byte func compare(lhs: *byte, rhs: *byte) ssize {
     return integer::_compare[[std::umax]]((:std::umax)*lhs, (:std::umax)*rhs);
 }
@@ -4061,8 +4061,8 @@ extend byte func format(self: *byte, writer: std::writer, fmt: []byte) std::resu
     return u8::format(&int, writer, fmt);
 }
 
-extend u8 const MIN: u8 = 0x00;
-extend u8 const MAX: u8 = 0xFF;
+extend u8 let MIN: u8 = 0x00;
+extend u8 let MAX: u8 = 0xFF;
 extend u8 func init_from_str(str: []byte, radix: usize) std::result[[u8, std::error]] {
     return integer::_init_uint_from_str[[u8]](str, radix);
 }
@@ -4076,8 +4076,8 @@ extend u8 func format(self: *u8, writer: std::writer, fmt: []byte) std::result[[
     return integer::_format_umax((:std::umax)*self, writer, fmt);
 }
 
-extend u16 const MIN: u16 = 0x0000;
-extend u16 const MAX: u16 = 0xFFFF;
+extend u16 let MIN: u16 = 0x0000;
+extend u16 let MAX: u16 = 0xFFFF;
 extend u16 func init_from_str(str: []byte, radix: usize) std::result[[u16, std::error]] {
     return integer::_init_uint_from_str[[u16]](str, radix);
 }
@@ -4091,8 +4091,8 @@ extend u16 func format(self: *u16, writer: std::writer, fmt: []byte) std::result
     return integer::_format_umax((:std::umax)*self, writer, fmt);
 }
 
-extend u32 const MIN: u32 = 0x00000000;
-extend u32 const MAX: u32 = 0xFFFFFFFF;
+extend u32 let MIN: u32 = 0x00000000;
+extend u32 let MAX: u32 = 0xFFFFFFFF;
 extend u32 func init_from_str(str: []byte, radix: usize) std::result[[u32, std::error]] {
     return integer::_init_uint_from_str[[u32]](str, radix);
 }
@@ -4106,8 +4106,8 @@ extend u32 func format(self: *u32, writer: std::writer, fmt: []byte) std::result
     return integer::_format_umax((:std::umax)*self, writer, fmt);
 }
 
-extend u64 const MIN: u64 = 0x0000000000000000;
-extend u64 const MAX: u64 = 0xFFFFFFFFFFFFFFFF;
+extend u64 let MIN: u64 = 0x0000000000000000;
+extend u64 let MAX: u64 = 0xFFFFFFFFFFFFFFFF;
 extend u64 func init_from_str(str: []byte, radix: usize) std::result[[u64, std::error]] {
     return integer::_init_uint_from_str[[u64]](str, radix);
 }
@@ -4121,8 +4121,8 @@ extend u64 func format(self: *u64, writer: std::writer, fmt: []byte) std::result
     return integer::_format_umax((:std::umax)*self, writer, fmt);
 }
 
-extend usize const MIN: usize = (:usize)u64::MIN;
-extend usize const MAX: usize = (:usize)u64::MAX;
+extend usize let MIN: usize = (:usize)u64::MIN;
+extend usize let MAX: usize = (:usize)u64::MAX;
 extend usize func init_from_str(str: []byte, radix: usize) std::result[[usize, std::error]] {
     return integer::_init_uint_from_str[[usize]](str, radix);
 }
@@ -4136,8 +4136,8 @@ extend usize func format(self: *usize, writer: std::writer, fmt: []byte) std::re
     return integer::_format_umax((:std::umax)*self, writer, fmt);
 }
 
-extend s8 const MIN: s8 = (:s8)0x80u8;
-extend s8 const MAX: s8 = (:s8)0x7Fu8;
+extend s8 let MIN: s8 = (:s8)0x80u8;
+extend s8 let MAX: s8 = (:s8)0x7Fu8;
 extend s8 func init_from_str(str: []byte, radix: usize) std::result[[s8, std::error]] {
     return integer::_init_sint_from_str[[s8]](str, radix);
 }
@@ -4151,8 +4151,8 @@ extend s8 func format(self: *s8, writer: std::writer, fmt: []byte) std::result[[
     return integer::_format_smax((:std::smax)*self, writer, fmt);
 }
 
-extend s16 const MIN: s16 = (:s16)0x8000u16;
-extend s16 const MAX: s16 = (:s16)0x7FFFu16;
+extend s16 let MIN: s16 = (:s16)0x8000u16;
+extend s16 let MAX: s16 = (:s16)0x7FFFu16;
 extend s16 func init_from_str(str: []byte, radix: usize) std::result[[s16, std::error]] {
     return integer::_init_sint_from_str[[s16]](str, radix);
 }
@@ -4166,8 +4166,8 @@ extend s16 func format(self: *s16, writer: std::writer, fmt: []byte) std::result
     return integer::_format_smax((:std::smax)*self, writer, fmt);
 }
 
-extend s32 const MIN: s32 = (:s32)0x80000000u32;
-extend s32 const MAX: s32 = (:s32)0x7FFFFFFFu32;
+extend s32 let MIN: s32 = (:s32)0x80000000u32;
+extend s32 let MAX: s32 = (:s32)0x7FFFFFFFu32;
 extend s32 func init_from_str(str: []byte, radix: usize) std::result[[s32, std::error]] {
     return integer::_init_sint_from_str[[s32]](str, radix);
 }
@@ -4181,8 +4181,8 @@ extend s32 func format(self: *s32, writer: std::writer, fmt: []byte) std::result
     return integer::_format_smax((:std::smax)*self, writer, fmt);
 }
 
-extend s64 const MIN: s64 = (:s64)0x8000000000000000u64;
-extend s64 const MAX: s64 = (:s64)0x7FFFFFFFFFFFFFFFu64;
+extend s64 let MIN: s64 = (:s64)0x8000000000000000u64;
+extend s64 let MAX: s64 = (:s64)0x7FFFFFFFFFFFFFFFu64;
 extend s64 func init_from_str(str: []byte, radix: usize) std::result[[s64, std::error]] {
     return integer::_init_sint_from_str[[s64]](str, radix);
 }
@@ -4196,8 +4196,8 @@ extend s64 func format(self: *s64, writer: std::writer, fmt: []byte) std::result
     return integer::_format_smax((:std::smax)*self, writer, fmt);
 }
 
-extend ssize const MIN: ssize = (:ssize)s64::MIN;
-extend ssize const MAX: ssize = (:ssize)s64::MAX;
+extend ssize let MIN: ssize = (:ssize)s64::MIN;
+extend ssize let MAX: ssize = (:ssize)s64::MAX;
 extend ssize func init_from_str(str: []byte, radix: usize) std::result[[ssize, std::error]] {
     return integer::_init_sint_from_str[[ssize]](str, radix);
 }
@@ -4231,7 +4231,7 @@ extend []byte func hash(self: *[]byte) usize {
     # overflow.
     var hash = 5381u;
     for i in countof(*self) {
-        const MASK = 0b11111u << ((sizeof(usize) * byte::BITS) - 5);
+        let MASK = 0b11111u << ((sizeof(usize) * byte::BITS) - 5);
         hash = (hash & MASK) * 33 + (:usize)self.*[i];
     }
     return hash;
@@ -4293,7 +4293,7 @@ extend []byte func format(self: *[]byte, writer: std::writer, fmt: []byte) std::
                 continue;
             }
             if c < ' ' or c > '~' {
-                const DIGITS = (:[]byte)[
+                let DIGITS = (:[]byte)[
                     '0', '1', '2', '3', '4', '5', '6', '7',
                     '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'
                 ];
@@ -4322,49 +4322,49 @@ extend []byte func format(self: *[]byte, writer: std::writer, fmt: []byte) std::
     return std::result[[void, std::error]]::init_error(std::error::INVALID_ARGUMENT);
 }
 
-extend error const ALLOCATION_FAILURE = &std::_ALLOCATION_FAILURE;
-extend error const BUFFER_FULL = &std::_BUFFER_FULL;
-extend error const PARSE_FAILURE = &std::_PARSE_FAILURE;
-extend error const INVALID_ARGUMENT = &std::_INVALID_ARGUMENT;
-extend error const RESULT_OUT_OF_RANGE = &std::_RESULT_OUT_OF_RANGE;
+extend error let ALLOCATION_FAILURE = &std::_ALLOCATION_FAILURE;
+extend error let BUFFER_FULL = &std::_BUFFER_FULL;
+extend error let PARSE_FAILURE = &std::_PARSE_FAILURE;
+extend error let INVALID_ARGUMENT = &std::_INVALID_ARGUMENT;
+extend error let RESULT_OUT_OF_RANGE = &std::_RESULT_OUT_OF_RANGE;
 
-extend big_integer const ZERO = (:std::big_integer){
+extend big_integer let ZERO = (:std::big_integer){
     ._allocator = std::null_allocator::ALLOCATOR,
     ._sign = 0,
     ._limbs = (:[]u32)[]
 };
 
-extend big_integer const POSITIVE_ONE = (:std::big_integer){
+extend big_integer let POSITIVE_ONE = (:std::big_integer){
     ._allocator = std::null_allocator::ALLOCATOR,
     ._sign = +1,
     ._limbs = (:[]u32)[1]
 };
 
-extend big_integer const NEGATIVE_ONE = (:std::big_integer){
+extend big_integer let NEGATIVE_ONE = (:std::big_integer){
     ._allocator = std::null_allocator::ALLOCATOR,
     ._sign = -1,
     ._limbs = (:[]u32)[1]
 };
 
-extend big_integer const POSITIVE_TWO = (:std::big_integer){
+extend big_integer let POSITIVE_TWO = (:std::big_integer){
     ._allocator = std::null_allocator::ALLOCATOR,
     ._sign = +1,
     ._limbs = (:[]u32)[2]
 };
 
-extend big_integer const NEGATIVE_TWO = (:std::big_integer){
+extend big_integer let NEGATIVE_TWO = (:std::big_integer){
     ._allocator = std::null_allocator::ALLOCATOR,
     ._sign = -1,
     ._limbs = (:[]u32)[2]
 };
 
-extend big_integer const POSITIVE_TEN = (:std::big_integer){
+extend big_integer let POSITIVE_TEN = (:std::big_integer){
     ._allocator = std::null_allocator::ALLOCATOR,
     ._sign = +1,
     ._limbs = (:[]u32)[10]
 };
 
-extend big_integer const NEGATIVE_TEN = (:std::big_integer){
+extend big_integer let NEGATIVE_TEN = (:std::big_integer){
     ._allocator = std::null_allocator::ALLOCATOR,
     ._sign = -1,
     ._limbs = (:[]u32)[10]

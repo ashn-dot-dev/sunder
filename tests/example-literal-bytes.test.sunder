@@ -1,12 +1,12 @@
 import "std";
 
-const hello: []byte = "Hello, world!\n";
-const nul: []byte = ">\0<\n";
-const ht: []byte = ">\t<\n";
-const nl: []byte = ">\n<\n";
-const squote: []byte = ">\'<\n";
-const dquote: []byte = ">\"<\n";
-const bslash: []byte = ">\\<\n";
+let hello: []byte = "Hello, world!\n";
+let nul: []byte = ">\0<\n";
+let ht: []byte = ">\t<\n";
+let nl: []byte = ">\n<\n";
+let squote: []byte = ">\'<\n";
+let dquote: []byte = ">\"<\n";
+let bslash: []byte = ">\\<\n";
 
 func main() void {
     std::print(std::out(), hello);

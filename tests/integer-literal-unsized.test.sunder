@@ -59,7 +59,7 @@ func main() void {
     sys::dump[[s32]](myfunc(0xAB, 0xF00F));
 
     # Right hand side of assignment.
-    const x: s32 = 135;
+    let x: s32 = 135;
     sys::dump[[s32]](x);
     var y: s32 = 123;
     sys::dump[[s32]](y);

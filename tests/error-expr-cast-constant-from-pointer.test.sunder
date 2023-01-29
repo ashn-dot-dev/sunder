@@ -1,0 +1,6 @@
+let x: byte = 0xFFy;
+let y: usize = (:usize)&x;
+################################################################################
+# [error-expr-cast-constant-from-pointer.test.sunder:2] error: constant expression contains cast from pointer type `*byte` to non-pointer type `usize`
+# let y: usize = (:usize)&x;
+#                ^

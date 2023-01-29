@@ -1,12 +1,12 @@
 import "sys";
 
 func main() void {
-    const a = 1u << 0;
-    const b = 1u << 1;
-    const c = 1u << 2;
-    const d = 1u << 8;
-    const e = 1u << 63;
-    const f = 1u << 64;
+    let a = 1u << 0;
+    let b = 1u << 1;
+    let c = 1u << 2;
+    let d = 1u << 8;
+    let e = 1u << 63;
+    let f = 1u << 64;
 
     sys::dump[[usize]](a);
     sys::dump[[usize]](b);

@@ -1,6 +1,6 @@
 func f(x: usize, y: ssize) void { }
-const g = (:func(usize, ssize) usize)f;
+let g = (:func(usize, ssize) usize)f;
 ################################################################################
 # [error-expr-cast-function-to-function-mismatched-return-type.test.sunder:2] error: cannot convert from `func(usize, ssize) void` to `func(usize, ssize) usize` (mismatched return types `void` and `usize`)
-# const g = (:func(usize, ssize) usize)f;
-#           ^
+# let g = (:func(usize, ssize) usize)f;
+#         ^

@@ -1,5 +1,5 @@
-const a: byte = 'abc';
+let a: byte = 'abc';
 ################################################################################
 # [error-invalid-character.test.sunder:1] error: invalid character literal
-# const a: byte = 'abc';
-#                 ^
+# let a: byte = 'abc';
+#               ^

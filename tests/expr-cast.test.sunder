@@ -1,18 +1,18 @@
 import "std";
 import "sys";
 
-const a: u64 = (:u64)true;
-const b: u64 = (:u64)false;
+let a: u64 = (:u64)true;
+let b: u64 = (:u64)false;
 
-const c: u64 = (:u64)0xFFy;
-const d: s64 = (:s64)0xFFy;
+let c: u64 = (:u64)0xFFy;
+let d: s64 = (:s64)0xFFy;
 
-const e: bool = (:bool)0x00y;
-const f: bool = (:bool)0xFFy;
+let e: bool = (:bool)0x00y;
+let f: bool = (:bool)0xFFy;
 
-const g: u64 = (:u64)0xFFFFu16;
-const h: u64 = (:u64)0x7777s16;
-const i: u64 = (:u64)-1s16;
+let g: u64 = (:u64)0xFFFFu16;
+let h: u64 = (:u64)0x7777s16;
+let i: u64 = (:u64)-1s16;
 
 func main() void {
     sys::dump[[u64]](a);
@@ -127,8 +127,8 @@ func main() void {
     # Check constant expression casts.
     # usize -> pointer is allowed
     # pointer -> pointer is allowed
-    const x = (:*byte)0xAABBCCDDAABBCCDDu;
-    const y = (:*bool)x;
+    let x = (:*byte)0xAABBCCDDAABBCCDDu;
+    let y = (:*bool)x;
     sys::dump[[*byte]](x);
     sys::dump[[*bool]](y);
 }

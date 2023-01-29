@@ -10,10 +10,10 @@ func bar() ssize {
 }
 
 func main() void {
-    const t_ge_t: bool = true >= true;
-    const f_ge_f: bool = false >= false;
-    const t_ge_f: bool = true >= false;
-    const f_ge_t: bool = false >= true;
+    let t_ge_t: bool = true >= true;
+    let f_ge_f: bool = false >= false;
+    let t_ge_f: bool = true >= false;
+    let f_ge_t: bool = false >= true;
     sys::dump[[bool]](t_ge_t);
     sys::dump[[bool]](f_ge_f);
     sys::dump[[bool]](t_ge_f);
@@ -25,15 +25,15 @@ func main() void {
 
     std::print(std::err(), "\n");
 
-    const a: ssize = 123s;
-    const b: ssize = 456s;
-    const c: ssize = a;
-    const a_ge_a: bool = a >= a;
-    const b_ge_b: bool = b >= b;
-    const a_ge_b: bool = a >= b;
-    const b_ge_a: bool = b >= a;
-    const a_ge_c: bool = a >= c;
-    const b_ge_c: bool = b >= c;
+    let a: ssize = 123s;
+    let b: ssize = 456s;
+    let c: ssize = a;
+    let a_ge_a: bool = a >= a;
+    let b_ge_b: bool = b >= b;
+    let a_ge_b: bool = a >= b;
+    let b_ge_a: bool = b >= a;
+    let a_ge_c: bool = a >= c;
+    let b_ge_c: bool = b >= c;
     sys::dump[[bool]](a_ge_a);
     sys::dump[[bool]](b_ge_b);
     sys::dump[[bool]](a_ge_b);

@@ -1,0 +1,8 @@
+func main() void {
+    let x: s8 = -128s8;
+    let y: s8 = -x;
+}
+################################################################################
+# [error-expr-unary-neg-integer-out-of-range-constant.test.sunder:3] error: arithmetic operation produces out-of-range result (-(-128) == 128)
+#     let y: s8 = -x;
+#                 ^

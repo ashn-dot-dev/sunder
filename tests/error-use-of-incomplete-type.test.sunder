@@ -1,11 +1,11 @@
 struct baz {
-    const VAL: typeof(qux::VAL) = 123;
+    let VAL: typeof(qux::VAL) = 123;
 }
 
 struct qux {
-    const VAL: typeof(baz::VAL) = 123;
+    let VAL: typeof(baz::VAL) = 123;
 }
 ################################################################################
 # [error-use-of-incomplete-type.test.sunder:6] error: use of incomplete type `baz`
-#     const VAL: typeof(baz::VAL) = 123;
-#                       ^
+#     let VAL: typeof(baz::VAL) = 123;
+#                     ^

@@ -5,13 +5,13 @@ alias i32 = s32;
 var a: i32 = 123;
 
 alias unsigned8 = u8;
-const b = (:unsigned8)123s;
+let b = (:unsigned8)123s;
 
 alias array_of_unsigned8 = [4]unsigned8;
-const c: array_of_unsigned8 = (:array_of_unsigned8)[0xAA, 0xBB, 0xCC...];
+let c: array_of_unsigned8 = (:array_of_unsigned8)[0xAA, 0xBB, 0xCC...];
 
 alias slice_of_unsigned8 = []unsigned8;
-const d: slice_of_unsigned8 = (:slice_of_unsigned8)[0xAA, 0xBB, 0xCC];
+let d: slice_of_unsigned8 = (:slice_of_unsigned8)[0xAA, 0xBB, 0xCC];
 
 alias foo = s64;
 

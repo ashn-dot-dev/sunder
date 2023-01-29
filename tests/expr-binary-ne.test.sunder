@@ -10,10 +10,10 @@ func bar() ssize {
 }
 
 func main() void {
-    const t_ne_t: bool = true != true;
-    const f_ne_f: bool = false != false;
-    const t_ne_f: bool = true != false;
-    const f_ne_t: bool = false != true;
+    let t_ne_t: bool = true != true;
+    let f_ne_f: bool = false != false;
+    let t_ne_f: bool = true != false;
+    let f_ne_t: bool = false != true;
     sys::dump[[bool]](t_ne_t);
     sys::dump[[bool]](f_ne_f);
     sys::dump[[bool]](t_ne_f);
@@ -25,15 +25,15 @@ func main() void {
 
     std::print(std::err(), "\n");
 
-    const a: ssize = 123s;
-    const b: ssize = 456s;
-    const c: ssize = a;
-    const a_ne_a: bool = a != a;
-    const b_ne_b: bool = b != b;
-    const a_ne_b: bool = a != b;
-    const b_ne_a: bool = b != a;
-    const a_ne_c: bool = a != c;
-    const b_ne_c: bool = b != c;
+    let a: ssize = 123s;
+    let b: ssize = 456s;
+    let c: ssize = a;
+    let a_ne_a: bool = a != a;
+    let b_ne_b: bool = b != b;
+    let a_ne_b: bool = a != b;
+    let b_ne_a: bool = b != a;
+    let a_ne_c: bool = a != c;
+    let b_ne_c: bool = b != c;
     sys::dump[[bool]](a_ne_a);
     sys::dump[[bool]](b_ne_b);
     sys::dump[[bool]](a_ne_b);
@@ -43,10 +43,10 @@ func main() void {
 
     std::print(std::err(), "\n");
 
-    const foo_ne_foo: bool = foo != foo;
-    const bar_ne_bar: bool = bar != bar;
-    const foo_ne_bar: bool = foo != bar;
-    const bar_ne_foo: bool = bar != foo;
+    let foo_ne_foo: bool = foo != foo;
+    let bar_ne_bar: bool = bar != bar;
+    let foo_ne_bar: bool = foo != bar;
+    let bar_ne_foo: bool = bar != foo;
     sys::dump[[bool]](foo_ne_foo);
     sys::dump[[bool]](bar_ne_bar);
     sys::dump[[bool]](foo_ne_bar);

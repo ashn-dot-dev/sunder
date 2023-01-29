@@ -1,6 +1,6 @@
 func f(x: usize, y: ssize) void { }
-const g = (:func(usize) void)f;
+let g = (:func(usize) void)f;
 ################################################################################
 # [error-expr-cast-function-to-function-mismatched-parameter-count.test.sunder:2] error: cannot convert from `func(usize, ssize) void` to `func(usize) void` (mismatched parameter count)
-# const g = (:func(usize) void)f;
-#           ^
+# let g = (:func(usize) void)f;
+#         ^

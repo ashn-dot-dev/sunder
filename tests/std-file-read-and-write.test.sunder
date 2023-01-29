@@ -1,7 +1,7 @@
 import "std";
 import "sys/sys.sunder";
 
-const path: []byte = "data.tmp";
+let path: []byte = "data.tmp";
 
 func main() void {
     var result = std::file::open(path, std::file::OPEN_READ | std::file::OPEN_WRITE);

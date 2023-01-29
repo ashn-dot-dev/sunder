@@ -13,11 +13,11 @@ func main() void {
     var vec: std::vector[[u8]] = std::vector[[u8]]::init();
     defer vec.fini();
 
-    const A: u8 = 0xAA;
-    const B: u8 = 0xBB;
-    const C: u8 = 0xCC;
-    const D: u8 = 0xDD;
-    const E: u8 = 0xEE;
+    let A: u8 = 0xAA;
+    let B: u8 = 0xBB;
+    let C: u8 = 0xCC;
+    let D: u8 = 0xDD;
+    let E: u8 = 0xEE;
 
 
     # [A][B][C][D][E]

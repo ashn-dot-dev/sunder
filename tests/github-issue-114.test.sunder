@@ -2,10 +2,10 @@ struct foo {
     var a: usize;
     var b: ssize;
 
-    const c: foo = (:foo) {
+    let c: foo = (:foo) {
     };
 }
 ################################################################################
 # [github-issue-114.test.sunder:5] error: missing initializer for member variable `a`
-#     const c: foo = (:foo) {
-#                    ^
+#     let c: foo = (:foo) {
+#                  ^

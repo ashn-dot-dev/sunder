@@ -24,15 +24,15 @@ var d = (:s3){
 var e = (:[2]s3)[D, D];
 var f = (:[]s3)[D, D];
 
-const A = (:s1){.x = uninit};
-const B = (:s2){.x = uninit, .y = 123};
-const C = (:s2){.x = (:s1){.x = 123}.x, .y = uninit};
-const D = (:s3){
+let A = (:s1){.x = uninit};
+let B = (:s2){.x = uninit, .y = 123};
+let C = (:s2){.x = (:s1){.x = 123}.x, .y = uninit};
+let D = (:s3){
     .u = A,
     .v = (:s2){.x = uninit, .y = uninit}
 };
-const E = (:[2]s3)[D, D];
-const F = (:[]s3)[D, D];
+let E = (:[2]s3)[D, D];
+let F = (:[]s3)[D, D];
 
 func main() void {
     # Uninitialized local variables do not have a defined bit pattern. These

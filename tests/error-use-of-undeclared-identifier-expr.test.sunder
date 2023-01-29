@@ -1,5 +1,5 @@
-const foo: ssize = bar;
+let foo: ssize = bar;
 ################################################################################
 # [error-use-of-undeclared-identifier-expr.test.sunder:1] error: use of undeclared identifier `bar`
-# const foo: ssize = bar;
-#                    ^
+# let foo: ssize = bar;
+#                  ^

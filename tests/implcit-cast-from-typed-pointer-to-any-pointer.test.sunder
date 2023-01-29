@@ -1,10 +1,10 @@
 import "sys";
 
-const a: u16 = 0xBEEF;
-const b: *u16 = &a;
+let a: u16 = 0xBEEF;
+let b: *u16 = &a;
 
 var c: *u16 = &a;
-const d: *any = &a;
+let d: *any = &a;
 
 func f(x: *u16, b: u32) *u16 {
     *x = (:u16)b;

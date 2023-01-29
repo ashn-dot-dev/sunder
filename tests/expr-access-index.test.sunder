@@ -1,16 +1,16 @@
 import "sys";
 
-const a: u16 = (:[3u]u16)[0xAAAAu16, 0xBBBBu16, 0xCCCCu16][1u];
+let a: u16 = (:[3u]u16)[0xAAAAu16, 0xBBBBu16, 0xCCCCu16][1u];
 
-const b: [3u]u16 = (:[3u]u16)[0xAAAAu16, 0xBBBBu16, 0xCCCCu16];
-const c: u16 = b[1u];
+let b: [3u]u16 = (:[3u]u16)[0xAAAAu16, 0xBBBBu16, 0xCCCCu16];
+let c: u16 = b[1u];
 
-const d: [2u][3u]u16 = (:[2u][3u]u16)[
+let d: [2u][3u]u16 = (:[2u][3u]u16)[
     (:[3u]u16)[0xAAAAu16, 0xBBBBu16, 0xCCCCu16],
     (:[3u]u16)[0xDDDDu16, 0xEEEEu16, 0xFFFFu16]
 ];
-const e: [3u]u16 = d[1u];
-const f: u16 = d[1u][2u];
+let e: [3u]u16 = d[1u];
+let f: u16 = d[1u][2u];
 
 var g: [3u]u16 = (:[3u]u16)[0xAAAAu16, 0xBBBBu16, 0xCCCCu16];
 
@@ -43,7 +43,7 @@ func main() void {
     sys::dump[[u16]](h[1u]);
     sys::dump[[u16]](h[2u]);
 
-    const i: [3u]u16 = (:[3u]u16)[0xAAAAu16, 0xBBBBu16, 0xCCCCu16];
+    let i: [3u]u16 = (:[3u]u16)[0xAAAAu16, 0xBBBBu16, 0xCCCCu16];
     sys::dump[[u16]](i[0u]);
     sys::dump[[u16]](i[1u]);
     sys::dump[[u16]](i[2u]);

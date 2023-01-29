@@ -3,7 +3,7 @@
 import "std";
 import "github-issue-77/import.sunder";
 
-const baz = 456s;
+let baz = 456s;
 
 func main() void {
     std::print_format_line(

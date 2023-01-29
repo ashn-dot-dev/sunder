@@ -1,0 +1,9 @@
+let foo: ssize = f() + 1;
+
+func f() ssize {
+    return 123s;
+}
+################################################################################
+# [error-constant-expr-call.test.sunder:1] error: constant expression contains function call
+# let foo: ssize = f() + 1;
+#                   ^

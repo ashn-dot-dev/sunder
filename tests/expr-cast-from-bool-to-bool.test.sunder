@@ -8,7 +8,7 @@ func main() void {
     sys::dump[[bool]]((:bool)x);
     sys::dump[[bool]]((:bool)(:bool)x);
 
-    const y = true;
+    let y = true;
     sys::dump[[bool]]((:bool)y);
     sys::dump[[bool]]((:bool)(:bool)y);
 }

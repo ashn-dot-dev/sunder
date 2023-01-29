@@ -10,7 +10,7 @@ struct foo {
     var object: *any;
 
     func init[[T]](object: *T) foo {
-        const itable = (:foo_itable){
+        let itable = (:foo_itable){
             .aa = T::aa,
             .bb = T::bb
         };
@@ -61,7 +61,7 @@ func main() void {
     (*impl.itable).aa(impl.object);
     (*impl.itable).bb(impl.object);
 
-    const mybaz: baz = (:baz){.x = 0xFBAD, .y = 0xDECA};
+    let mybaz: baz = (:baz){.x = 0xFBAD, .y = 0xDECA};
     mybaz.aa();
     mybaz.bb();
     var impl: foo = foo::init[[baz]](&mybaz);

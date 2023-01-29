@@ -19,7 +19,7 @@ func fib[[T]](n: usize) T {
 
 func can_roundtrip[[A, B]]() bool {
     # Largest value that can be held by a sunder unsigned integer.
-    const largest: u64 = 0xFFFFFFFFFFFFFFFFu64;
+    let largest: u64 = 0xFFFFFFFFFFFFFFFFu64;
 
     # Start with the initial type A.
     var a: A = (:A)largest;

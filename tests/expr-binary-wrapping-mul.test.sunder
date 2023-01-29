@@ -12,38 +12,38 @@ func test_compare_s64[[T]](lhs: T, rhs: T) void {
 }
 
 func main() void {
-    const x = u8::MAX *% 2;
+    let x = u8::MAX *% 2;
     std::print_format_line(std::out(), "{}", (:[]std::formatter)[std::formatter::init[[typeof(x)]](&x)]);
-    const y = s8::MIN *% 2;
+    let y = s8::MIN *% 2;
     std::print_format_line(std::out(), "{}", (:[]std::formatter)[std::formatter::init[[typeof(y)]](&y)]);
-    const z = s8::MAX *% 2;
+    let z = s8::MAX *% 2;
     std::print_format_line(std::out(), "{}", (:[]std::formatter)[std::formatter::init[[typeof(y)]](&z)]);
 
     std::print(std::out(), "\n");
 
-    const x = u16::MAX *% 2;
+    let x = u16::MAX *% 2;
     std::print_format_line(std::out(), "{}", (:[]std::formatter)[std::formatter::init[[typeof(x)]](&x)]);
-    const y = s16::MIN *% 2;
+    let y = s16::MIN *% 2;
     std::print_format_line(std::out(), "{}", (:[]std::formatter)[std::formatter::init[[typeof(y)]](&y)]);
-    const z = s16::MAX *% 2;
+    let z = s16::MAX *% 2;
     std::print_format_line(std::out(), "{}", (:[]std::formatter)[std::formatter::init[[typeof(y)]](&z)]);
 
     std::print(std::out(), "\n");
 
-    const x = u32::MAX *% 2;
+    let x = u32::MAX *% 2;
     std::print_format_line(std::out(), "{}", (:[]std::formatter)[std::formatter::init[[typeof(x)]](&x)]);
-    const y = s32::MIN *% 2;
+    let y = s32::MIN *% 2;
     std::print_format_line(std::out(), "{}", (:[]std::formatter)[std::formatter::init[[typeof(y)]](&y)]);
-    const z = s32::MAX *% 2;
+    let z = s32::MAX *% 2;
     std::print_format_line(std::out(), "{}", (:[]std::formatter)[std::formatter::init[[typeof(y)]](&z)]);
 
     std::print(std::out(), "\n");
 
-    const x = u64::MAX *% 2;
+    let x = u64::MAX *% 2;
     std::print_format_line(std::out(), "{}", (:[]std::formatter)[std::formatter::init[[typeof(x)]](&x)]);
-    const y = s64::MIN *% 2;
+    let y = s64::MIN *% 2;
     std::print_format_line(std::out(), "{}", (:[]std::formatter)[std::formatter::init[[typeof(y)]](&y)]);
-    const z = s64::MAX *% 2;
+    let z = s64::MAX *% 2;
     std::print_format_line(std::out(), "{}", (:[]std::formatter)[std::formatter::init[[typeof(y)]](&z)]);
 
     std::print(std::out(), "\n");

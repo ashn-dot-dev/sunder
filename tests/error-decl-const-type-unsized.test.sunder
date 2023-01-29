@@ -1,5 +1,0 @@
-const x: typeof(123) = 123;
-################################################################################
-# [error-decl-const-type-unsized.test.sunder:1] error: declaration of constant with unsized type `integer`
-# const x: typeof(123) = 123;
-# ^

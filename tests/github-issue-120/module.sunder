@@ -3,10 +3,10 @@ namespace a::b;
 # Scenario encounted during the bug report which produced the error:
 #
 #   [file:line] error: use of undeclared identifier `y`
-#   const x = y;
+#   let x = y;
 #             ^
-const x = y;
-const y = 123s;
+let x = y;
+let y = 123s;
 
 # Scenario encountered while testing potential fixes for GitHub issue 120.
 # The lookup `foo::f` failed with the error:
@@ -22,18 +22,18 @@ struct interface_itable {
     var f: func(*any) ssize;
 }
 
-const itable1 = (:interface_itable){
+let itable1 = (:interface_itable){
     .f = foo::f
 };
 
 # Ensure that we can still do lookups with partially or fully qualified names.
-const itable2 = (:interface_itable){
+let itable2 = (:interface_itable){
     .f = b::foo::f
 };
-const itable3 = (:interface_itable){
+let itable3 = (:interface_itable){
     .f = a::b::foo::f
 };
-const itable4 = (:interface_itable){
+let itable4 = (:interface_itable){
     .f = ::a::b::foo::f
 };
 

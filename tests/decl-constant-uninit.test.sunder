@@ -5,17 +5,17 @@ struct s {
     var bar: u32;
 }
 
-const a: u8 = uninit;
-const b: u16 = uninit;
-const c: u32 = uninit;
-const d: u64 = uninit;
-const e: *byte = uninit;
-const f: []byte = uninit;
-const g: s = uninit;
+let a: u8 = uninit;
+let b: u16 = uninit;
+let c: u32 = uninit;
+let d: u64 = uninit;
+let e: *byte = uninit;
+let f: []byte = uninit;
+let g: s = uninit;
 
 func main() void {
-    const y: u32 = uninit;
-    const z: s = uninit;
+    let y: u32 = uninit;
+    let z: s = uninit;
 
     sys::dump[[u8]](a);
     sys::dump[[u16]](b);

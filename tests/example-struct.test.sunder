@@ -3,7 +3,7 @@ import "sys";
 struct empty { }
 
 var empty_a: empty = (:empty){};
-const empty_b: empty = (:empty){};
+let empty_b: empty = (:empty){};
 
 struct point {
     var x: u32;
@@ -11,14 +11,14 @@ struct point {
 }
 
 var point_a: point = (:point){.x = 0x00112233, .y = 0xAABBCCDD};
-const point_b: point = (:point){.x = 0, .y = 0xFFFFFFFF};
-const point_c: point = (:point){.y = 0xEEEEEEEE, .x = 0};
-const point_d: point = (:point){
+let point_b: point = (:point){.x = 0, .y = 0xFFFFFFFF};
+let point_c: point = (:point){.y = 0xEEEEEEEE, .x = 0};
+let point_d: point = (:point){
     .x = point_b.x + 1,
     .y = point_b.y - 1
 };
-const array: [2u]u32 = (:[2u]u32)[0xDEADBEEF, 0xCAFEF00D];
-const point_e: point = (:point){
+let array: [2u]u32 = (:[2u]u32)[0xDEADBEEF, 0xCAFEF00D];
+let point_e: point = (:point){
     .x = array[0],
     .y = array[1]
 };
@@ -46,7 +46,7 @@ struct bar {
     var r: u8;
     var s: u16;
 }
-const bar_a: bar = (:bar){
+let bar_a: bar = (:bar){
     .w = 0xAA,
     .x = 0xBB,
     .y = 0xCC,
@@ -62,13 +62,13 @@ struct baz {
     var value_a: u8;
     var value_b: u8;
 
-    const CONSTANT_A: u8 = 0xE1;
-    const CONSTANT_B: u8 = CONSTANT_A + 1;
-    const CONSTANT_C: u8 = baz::CONSTANT_B + 1;
+    let CONSTANT_A: u8 = 0xE1;
+    let CONSTANT_B: u8 = CONSTANT_A + 1;
+    let CONSTANT_C: u8 = baz::CONSTANT_B + 1;
 
-    const CONSTANT_D = 0xE1u8;
-    const CONSTANT_E = CONSTANT_D + 1;
-    const CONSTANT_F = baz::CONSTANT_E + 1;
+    let CONSTANT_D = 0xE1u8;
+    let CONSTANT_E = CONSTANT_D + 1;
+    let CONSTANT_F = baz::CONSTANT_E + 1;
 
     func init(value_a: u8, value_b: u8) baz {
         return (:baz){
@@ -85,7 +85,7 @@ struct baz {
         return (:u16)(*self).value_a + (:u16)(*self).value_b;
     }
 }
-const baz_a: baz = (:baz){.value_a = 0xAA, .value_b = 0xBB};
+let baz_a: baz = (:baz){.value_a = 0xAA, .value_b = 0xBB};
 
 func main() void {
     sys::dump[[empty]](empty_a);

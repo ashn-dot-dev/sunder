@@ -1,8 +1,8 @@
 struct foo {
     var x: u16;
 }
-const a: foo = (:foo){.x = 0, .x = 1};
+let a: foo = (:foo){.x = 0, .x = 1};
 ################################################################################
 # [error-struct-duplicate-member-initializer.test.sunder:4] error: duplicate initializer for member variable `x`
-# const a: foo = (:foo){.x = 0, .x = 1};
-#                               ^
+# let a: foo = (:foo){.x = 0, .x = 1};
+#                             ^

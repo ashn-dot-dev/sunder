@@ -1,10 +1,10 @@
 import "sys";
 
 func main() void {
-    const array_c: [5u]u16 = (:[5u]u16)[
+    let array_c: [5u]u16 = (:[5u]u16)[
         0xAAAAu16, 0xBBBBu16, 0xCCCCu16, 0xDDDDu16, 0xEEEEu16
     ];
-    const slice_c: []u16 = array_c[1u:4u];
+    let slice_c: []u16 = array_c[1u:4u];
     sys::dump[[u16]](slice_c[0u]);
     sys::dump[[u16]](slice_c[1u]);
     sys::dump[[u16]](slice_c[2u]);

@@ -1,4 +1,4 @@
-const foo: ssize = 1s;
+let foo: ssize = 1s;
 func main() void {
     foo(3s, 5s);
 }
