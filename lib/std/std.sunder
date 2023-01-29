@@ -585,10 +585,10 @@ struct page_allocator {
         }
 
         if size == 0 {
-            # std::page_allocator::allocate will not perform a call to mmap
-            # when the requested # allocation size is zero. Likewise, munmap
-            # should *not* be called if the current buffer size is zero as
-            # there is nothing to deallocate.
+            # The `std::page_allocator::allocate` call will not perform a call
+            # to mmap when the requested allocation size is zero. Likewise,
+            # munmap should *not* be called if the current buffer size is zero
+            # as there is nothing to deallocate.
             return;
         }
 
