@@ -3177,9 +3177,7 @@ struct hash_map_iterator[[K, V]] {
     }
 }
 
-# Stable sorting algorithm with O(n*log(n)) average time complexity,
-# O(n*log(n)) worst case time complexity, and O(n) space complexity.
-func merge_sort[[T]](slice: []T) void {
+func sort[[T]](slice: []T) void {
     if countof(slice) <= 1 {
         return;
     }
@@ -3193,8 +3191,8 @@ func merge_sort[[T]](slice: []T) void {
     std::slice[[T]]::copy(slice0, slice[0:countof(slice)/2]);
     std::slice[[T]]::copy(slice1, slice[countof(slice)/2:countof(slice)]);
 
-    merge_sort[[T]](slice0);
-    merge_sort[[T]](slice1);
+    sort[[T]](slice0);
+    sort[[T]](slice1);
 
     var i0 = 0u;
     var i1 = 0u;
