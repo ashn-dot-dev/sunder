@@ -1774,9 +1774,9 @@ func panic(why: []byte) void {
 # This function does not return.
 func panic_format(format: []byte, args: []std::formatter) void {
     const PANIC_PREAMBLE = "panic: ";
-    std::print(std::err(), PANIC_PREAMBLE);
-    std::print_format(std::err(), format, args);
-    std::print(std::err(), "\n");
+    std::write_all(std::err(), PANIC_PREAMBLE);
+    std::write_format(std::err(), format, args);
+    std::write_all(std::err(), "\n");
     std::exit(std::EXIT_FAILURE);
 }
 
