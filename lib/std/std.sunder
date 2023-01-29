@@ -1757,7 +1757,7 @@ const EXIT_FAILURE: ssize = 1;
 #
 # This function does not return.
 func exit(status: ssize) void {
-    sys::exit((:s32)status);
+    sys::exit((:sys::sint)status);
 }
 
 # Print the provided string to standard error, followed by a newline, before
