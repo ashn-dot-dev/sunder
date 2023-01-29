@@ -1376,9 +1376,9 @@ func read_all_with_allocator(allocator: std::allocator, reader: std::reader) std
 #   defer std::slice[[byte]]::delete(line);
 #   if countof(line) == 0 {
 #       # The read line consists of a single newline character, "\n", which was
-#       # trimmed within `std::read_line_with_allocator`. Possibly an empty
-#       # line in a text file, or a user hitting Enter/Return without typing
-#       # when reading from standard input.
+#       # trimmed within `std::read_line`. Possibly an empty line in a text
+#       # file, or a user hitting Enter/Return without typing when reading from
+#       # standard input.
 #   }
 func read_line(reader: std::reader) std::result[[std::optional[[[]byte]], std::error]] {
     return std::read_line_with_allocator(std::global_allocator(), reader);
