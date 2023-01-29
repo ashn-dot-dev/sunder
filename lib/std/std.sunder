@@ -1846,6 +1846,46 @@ func max[[T]](x: *T, y: *T) *T {
     return y;
 }
 
+# Stable sort elements of the provided slice.
+func sort[[T]](slice: []T) void {
+    if countof(slice) <= 1 {
+        return;
+    }
+
+    var slice0 = std::slice[[T]]::new(countof(slice)/2);
+    var slice1 = std::slice[[T]]::new(countof(slice) - countof(slice)/2);
+    defer {
+        std::slice[[T]]::delete(slice0);
+        std::slice[[T]]::delete(slice1);
+    }
+    std::slice[[T]]::copy(slice0, slice[0:countof(slice)/2]);
+    std::slice[[T]]::copy(slice1, slice[countof(slice)/2:countof(slice)]);
+
+    sort[[T]](slice0);
+    sort[[T]](slice1);
+
+    var i0 = 0u;
+    var i1 = 0u;
+    for i in countof(slice) {
+        if i0 == countof(slice0) {
+            slice[i] = slice1[i1];
+            i1 = i1 + 1;
+        }
+        elif i1 == countof(slice1) {
+            slice[i] = slice0[i0];
+            i0 = i0 + 1;
+        }
+        elif std::compare[[T]](&slice0[i0], &slice1[i1]) < 0 {
+            slice[i] = slice0[i0];
+            i0 = i0 + 1;
+        }
+        else {
+            slice[i] = slice1[i1];
+            i1 = i1 + 1;
+        }
+    }
+}
+
 # Managed arbitrary precision integer type.
 struct big_integer {
     # Allocator used for limb backing storage.
@@ -3174,45 +3214,6 @@ struct hash_map_iterator[[K, V]] {
             .key = &element.*._key,
             .value = &element.*._value
         };
-    }
-}
-
-func sort[[T]](slice: []T) void {
-    if countof(slice) <= 1 {
-        return;
-    }
-
-    var slice0 = std::slice[[T]]::new(countof(slice)/2);
-    var slice1 = std::slice[[T]]::new(countof(slice) - countof(slice)/2);
-    defer {
-        std::slice[[T]]::delete(slice0);
-        std::slice[[T]]::delete(slice1);
-    }
-    std::slice[[T]]::copy(slice0, slice[0:countof(slice)/2]);
-    std::slice[[T]]::copy(slice1, slice[countof(slice)/2:countof(slice)]);
-
-    sort[[T]](slice0);
-    sort[[T]](slice1);
-
-    var i0 = 0u;
-    var i1 = 0u;
-    for i in countof(slice) {
-        if i0 == countof(slice0) {
-            slice[i] = slice1[i1];
-            i1 = i1 + 1;
-        }
-        elif i1 == countof(slice1) {
-            slice[i] = slice0[i0];
-            i0 = i0 + 1;
-        }
-        elif std::compare[[T]](&slice0[i0], &slice1[i1]) < 0 {
-            slice[i] = slice0[i0];
-            i0 = i0 + 1;
-        }
-        else {
-            slice[i] = slice1[i1];
-            i1 = i1 + 1;
-        }
     }
 }
 
