@@ -2755,6 +2755,7 @@ push_rvalue_binary_add(struct expr const* expr, size_t id)
     assert(expr->data.binary.lhs->type == expr->data.binary.rhs->type);
 
     struct type const* const xhs_type = expr->data.binary.lhs->type;
+    assert(type_is_int(xhs_type));
 
     char const* const lhs_reg = reg_a(xhs_type->size);
     char const* const rhs_reg = reg_b(xhs_type->size);
@@ -2786,6 +2787,7 @@ push_rvalue_binary_add_wrapping(struct expr const* expr, size_t id)
     (void)id;
 
     struct type const* const xhs_type = expr->data.binary.lhs->type;
+    assert(type_is_int(xhs_type));
 
     char const* const lhs_reg = reg_a(xhs_type->size);
     char const* const rhs_reg = reg_b(xhs_type->size);
@@ -2811,6 +2813,7 @@ push_rvalue_binary_sub(struct expr const* expr, size_t id)
     assert(expr->data.binary.lhs->type == expr->data.binary.rhs->type);
 
     struct type const* const xhs_type = expr->data.binary.lhs->type;
+    assert(type_is_int(xhs_type));
 
     char const* const lhs_reg = reg_a(xhs_type->size);
     char const* const rhs_reg = reg_b(xhs_type->size);
@@ -2842,6 +2845,7 @@ push_rvalue_binary_sub_wrapping(struct expr const* expr, size_t id)
     (void)id;
 
     struct type const* const xhs_type = expr->data.binary.lhs->type;
+    assert(type_is_int(xhs_type));
 
     char const* const lhs_reg = reg_a(xhs_type->size);
     char const* const rhs_reg = reg_b(xhs_type->size);
@@ -2867,6 +2871,7 @@ push_rvalue_binary_mul(struct expr const* expr, size_t id)
     assert(expr->data.binary.lhs->type == expr->data.binary.rhs->type);
 
     struct type const* const xhs_type = expr->data.binary.lhs->type;
+    assert(type_is_int(xhs_type));
 
     char const* const rhs_reg = reg_b(xhs_type->size);
     char const* const mul = type_is_sint(xhs_type) ? "imul" : "mul";
@@ -2897,6 +2902,7 @@ push_rvalue_binary_mul_wrapping(struct expr const* expr, size_t id)
     (void)id;
 
     struct type const* const xhs_type = expr->data.binary.lhs->type;
+    assert(type_is_int(xhs_type));
 
     char const* const rhs_reg = reg_b(xhs_type->size);
     char const* const mul = type_is_sint(xhs_type) ? "imul" : "mul";
@@ -2922,6 +2928,7 @@ push_rvalue_binary_divrem(struct expr const* expr, size_t id)
     assert(expr->data.binary.lhs->type == expr->data.binary.rhs->type);
 
     struct type const* const xhs_type = expr->data.binary.lhs->type;
+    assert(type_is_int(xhs_type));
 
     char const* const rhs_reg = reg_b(xhs_type->size);
     char const* const div = type_is_sint(xhs_type) ? "idiv" : "div";
