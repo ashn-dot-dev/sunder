@@ -84,8 +84,8 @@ enum precedence {
     PRECEDENCE_OR, // or
     PRECEDENCE_AND, // and
     PRECEDENCE_COMPARE, // == != < <= > >=
-    PRECEDENCE_SUM, // + - | ^
-    PRECEDENCE_PRODUCT, // * / << >> &
+    PRECEDENCE_SUM, // +% -% + - | ^
+    PRECEDENCE_PRODUCT, // *% * / << >> &
     PRECEDENCE_PREFIX, // +x -x *x &x
     PRECEDENCE_POSTFIX, // foo(bar, 123) foo[42] foo.*
 };
