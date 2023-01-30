@@ -395,7 +395,6 @@ extern struct bigint const* const BIGINT_NEG_ONE; // -1
 struct bigint*
 bigint_new(struct bigint const* othr);
 // Allocate and initialize a bigint to the specified uintmax_t value.
-// The call bigint_new(BIGINT_ZERO) will zero-initialize a bigint.
 struct bigint*
 bigint_new_umax(uintmax_t umax);
 // Allocate and initialize a bigint from a two's complement bit array.
