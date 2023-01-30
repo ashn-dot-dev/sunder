@@ -951,7 +951,7 @@ struct bigint {
 // the natural word size of the target machine. For instance the GMP mp_limb_t
 // type is a typedef of either unsigned int, unsigned long int, or unsigned
 // long long int depending on configuration options and the host environment.
-// The autil arbitrary precision integer implementation uses eight-bit limbs to
+// This arbitrary precision integer implementation uses eight-bit limbs to
 // avoid configuration options, preprocessor checks, and/or bugs that would
 // come about from having multiple potential limb sizes. On every (modern)
 // machine uint8_t and uint16_t values will implicitly cast up to unsigned int
