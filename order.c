@@ -421,36 +421,6 @@ order_typespec(struct orderer* orderer, struct cst_typespec const* typespec)
         return;
     }
     case CST_TYPESPEC_SLICE: {
-        // Pointer and slice type specifiers are unique because the size of
-        // those types will always be the same regardless of the type of their
-        // base element. A pointer will always use one machine word of space (8
-        // bytes on x64) and a slice will always use two machine words of space
-        // (16 bytes on x64). By extension, any data structure that contains a
-        // pointer or slice type will also always have the same size regardless
-        // of the base element type. A struct containing a pointer member will
-        // always use one machine word for that pointer member, an array of
-        // slices will always use two machine words for each array element,
-        // etc. Since pointer and slice base types have a size (and alignment)
-        // that does *not* depend on their base element type, we may skip
-        // ordering the base element type during the ordering phase.
-        //
-        // Not requiring information on a base element type of a pointer type
-        // (or pointer component of a DIY slice type) matches the behavior of
-        // C, as pointer types may be used before their base type definition
-        // has been completed (e.g. in the case of self-referential structs).
-        //
-        //     struct x {
-        //         /* var pointer: *x; */
-        //         struct x* pointer;
-        //     };
-        //
-        //     struct y {
-        //         /* var slice: []y; */
-        //         struct {
-        //             struct y* start;
-        //             size_t count;
-        //         } slice;
-        //     };
         order_typespec(orderer, typespec->data.slice.base);
         return;
     }
