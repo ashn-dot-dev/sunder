@@ -1,5 +1,6 @@
 sunder-compile
 
+examples/big-integer-calculator
 examples/brainfuck
 examples/cat
 examples/custom-sys-asm/custom-sys-asm
@@ -7,7 +8,6 @@ examples/fizzbuzz
 examples/greet
 examples/hello
 examples/ls
-examples/sum-integers
 
 *.out
 *.o
