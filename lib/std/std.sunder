@@ -321,15 +321,16 @@ struct allocator {
     }
 }
 
-# Private instance of the general allocator used by `std::global_allocator`.
-# This variable must only be accessed by the `std::global_allocator` function.
-var _global_allocator: std::general_allocator = uninit;
+# The general allocator used by `std::global_allocator`.
+#
+# This object should be treated as read-only. Any program that mutates this
+# object directly is considered ill-formed.
+var global_general_allocator: std::general_allocator = uninit;
 
-# Returns the global allocator used by the standard library for dynamic memory
-# allocation. The returned allocator is used as the default backing allocator
-# for managed types.
+# The allocator used by the standard library for dynamic memory allocation in
+# scenarios where an allocator is not explicitly provided.
 func global_allocator() std::allocator {
-    return std::allocator::init[[std::general_allocator]](&_global_allocator);
+    return std::allocator::init[[std::general_allocator]](&global_general_allocator);
 }
 
 # Allocator that will never successfully allocate, reallocate, or free memory.
