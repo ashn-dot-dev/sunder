@@ -12,7 +12,7 @@ func main() void {
 
     var optional = result.value();
     if optional.is_empty() or countof(optional.value()) == 0 {
-        std::print_line(std::err(), "error: unexpected empty input");
+        std::print_line(std::err(), "unexpected empty input");
         std::exit(std::EXIT_FAILURE);
     }
 
