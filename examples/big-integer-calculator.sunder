@@ -1,0 +1,568 @@
+# Evaluate expressions using std::big_integer operations.
+# Expressions are parsed using the grammar:
+#
+#   expression = "(" expression ")"
+#              | expression "+" expression
+#              | expression "-" expression
+#              | expression "*" expression
+#              | expression "/" expression
+#              | expression "%" expression
+#              | "+" expression
+#              | "-" expression
+#              | [0-9]+
+#
+# Example:
+#
+#   >>> (+123 + -456) * 789 / 42 % 101 - ((1 + 2 + 3) * 4)
+#   -118
+import "std";
+
+func fatal(message: []byte) void {
+    fatal_format("{}", (:[]std::formatter)[std::formatter::init[[[]byte]](&message)]);
+}
+
+func fatal_format(format: []byte, args: []std::formatter) void {
+    std::print(std::err(), "error: ");
+    std::print_format_line(std::err(), format, args);
+    std::exit(std::EXIT_FAILURE);
+}
+
+struct token {
+    # Symbol
+    let ADD    = "+";
+    let SUB    = "-";
+    let MUL    = "*";
+    let DIV    = "/";
+    let REM    = "%";
+    let LPAREN = "(";
+    let RPAREN = ")";
+
+    # Literal
+    let INT = "integer";
+
+    # Meta
+    let EOL = "end-of-line";
+
+    var kind: []byte;
+    var data: []byte;
+
+    func format(self: *token, writer: std::writer, fmt: []byte) std::result[[void, std::error]] {
+        if countof(fmt) != 0 {
+            return std::result[[void, std::error]]::init_error(std::error::INVALID_ARGUMENT);
+        }
+
+        if std::str::eq(self.*.kind, token::INT) {
+            return std::write_format(
+                writer,
+                "{}({})",
+                (:[]std::formatter)[
+                    std::formatter::init[[[]byte]](&self.*.kind),
+                    std::formatter::init[[[]byte]](&self.*.data)]);
+        }
+
+        return std::write_all(writer, self.*.kind);
+    }
+}
+
+struct tokenizer {
+    var source: []byte;
+    var offset: usize;
+
+    func init(source: []byte) tokenizer {
+        return (:tokenizer){
+            .source = source,
+            .offset = 0
+        };
+    }
+
+    # Returns the next token in the token stream.
+    func next_token(self: *tokenizer) token {
+        # Skip Whitespace
+        for std::ascii::is_whitespace(self.*.current_byte()) {
+            std::assert(self.*.current_byte() != '\n');
+            self.*.offset = self.*.offset + + 1;
+        }
+
+        # Integer
+        if std::ascii::is_digit(self.*.current_byte()) {
+            var start = self.*.offset;
+            for std::ascii::is_digit(self.*.current_byte()) {
+                self.*.offset = self.*.offset + 1;
+            }
+            return (:token){
+                .kind = token::INT,
+                .data = self.*.source[start:self.*.offset]
+            };
+        }
+
+        # Symbol
+        let SYMBOLS = (:[][]byte)[
+            token::ADD,
+            token::SUB,
+            token::MUL,
+            token::DIV,
+            token::REM,
+            token::LPAREN,
+            token::RPAREN
+        ];
+        for i in countof(SYMBOLS) {
+            if std::str::starts_with(self.*.current_data(), SYMBOLS[i]) {
+                var data = self.*.source[self.*.offset : self.*.offset + countof(SYMBOLS[i])];
+                self.*.offset = self.*.offset + countof(SYMBOLS[i]);
+                return (:token){
+                    .kind = SYMBOLS[i],
+                    .data = data
+                };
+            }
+        }
+
+        # End-of-line
+        if self.*.is_eol() {
+            return (:token){
+                .kind = token::EOL,
+                .data = uninit
+            };
+        }
+
+        # Invalid token
+        fatal("invalid token");
+        return std::zeroed[[token]]();
+    }
+
+    # Returns true if the current source offset indicates an end-of-line
+    # condition.
+    func is_eol(self: *tokenizer) bool {
+        return self.*.offset >= countof(self.*.source);
+    }
+
+    # Source byte at the current source offset or a NUL byte if the current
+    # source offset indicates an end-of-line condition.
+    func current_byte(self: *tokenizer) byte {
+        if self.*.is_eol() {
+            return '\0';
+        }
+        return self.*.source[self.*.offset];
+    }
+
+    # Source data at the current source offset or an empty str if the current
+    # source offset indicates an end-of-line condition.
+    func current_data(self: *tokenizer) []byte {
+        if self.*.is_eol() {
+            return "";
+        }
+        return self.*.source[self.*.offset:countof(self.*.source)];
+    }
+}
+
+struct precedence {
+    let LOWEST  = 0u;
+    let SUM     = 1u; # + -
+    let PRODUCT = 2u; # * / %
+    let UNARY   = 3u; # +expression -expression
+    let GROUP   = 4u; # ( expression )
+
+    # Returns the precedence corresponding to the provided token or
+    # `precedence::LOWEST` if no precedence mapping exists.
+    func of_token(token: *token) usize {
+        var kind = token.*.kind;
+
+        if std::str::eq(kind, ::token::ADD)
+        or std::str::eq(kind, ::token::SUB) {
+            return precedence::SUM;
+        }
+
+        if std::str::eq(kind, ::token::MUL)
+        or std::str::eq(kind, ::token::DIV)
+        or std::str::eq(kind, ::token::REM) {
+            return precedence::PRODUCT;
+        }
+
+        if std::str::eq(kind, ::token::LPAREN) {
+            return precedence::GROUP;
+        }
+
+        return precedence::LOWEST;
+    }
+}
+
+struct parser {
+    var tokenizer: *tokenizer;
+    var current: token;
+
+    func init(tokenizer: *tokenizer) parser {
+        return (:parser){
+            .tokenizer = tokenizer,
+            .current = tokenizer.*.next_token()
+        };
+    }
+
+    # Advance the token stream by one token. Returns the current token in the
+    # token stream prior to the advance operation.
+    func advance_token(self: *parser) token {
+        var current = self.*.current;
+        self.*.current = self.*.tokenizer.*.next_token();
+        return current;
+    }
+
+    # Returns true if the current token matches the provided token kind.
+    func check_current(self: *parser, kind: []byte) bool {
+        return std::str::eq(self.*.current.kind, kind);
+    }
+
+    # Produce a fatal error if the current token does match the provided token
+    # kind, then advance the token stream by one token. Returns the current
+    # token in the token stream prior to the advance operation (i.e. the
+    # checked token).
+    func expect_current(self: *parser, kind: []byte) token {
+        if not self.*.check_current(kind) {
+            fatal_format(
+                "expected `{}`, found `{}`",
+                (:[]std::formatter)[
+                    std::formatter::init[[[]byte]](&kind),
+                    std::formatter::init[[token]](&self.*.current)]);
+        }
+
+        var current = self.*.current;
+        self.*.advance_token();
+        return current;
+    }
+
+    func parse_expression(self: *parser, precedence: usize) *expression {
+        var optional = parser::nud(self.*.current.kind);
+        if optional.is_empty() {
+            fatal_format(
+                "unexpected prefix token `{}` in expression",
+                (:[]std::formatter)[std::formatter::init[[token]](&self.*.current)]);
+        }
+        var nud = optional.value();
+
+        var expr = nud(self);
+        for precedence < ::precedence::of_token(&self.*.current) {
+            var optional = parser::led(self.*.current.kind);
+            if optional.is_empty() {
+                return expr;
+            }
+            var led = optional.value();
+            expr = led(self, expr);
+        }
+
+        return expr;
+    }
+
+    func parse_expression_integer(self: *parser) *expression {
+        var token = self.*.expect_current(token::INT);
+        var result = std::big_integer::init_from_str(token.data, 10);
+        return expression::new_int(result.value());
+    }
+
+    func parse_expression_unary(self: *parser) *expression {
+        var operator = self.*.advance_token();
+        var rhs = self.*.parse_expression(precedence::UNARY);
+        if std::str::eq(operator.kind, token::ADD) {
+            return rhs;
+        }
+        if std::str::eq(operator.kind, token::SUB) {
+            return expression::new_neg(rhs);
+        }
+
+        std::panic_format(
+            "unknown unary operator `{}`",
+            (:[]std::formatter)[std::formatter::init[[token]](&operator)]);
+        return std::ptr[[expression]]::NULL;
+    }
+
+    func parse_expression_binary(self: *parser, lhs: *expression) *expression {
+        var operator = self.*.advance_token();
+        var rhs = self.*.parse_expression(precedence::of_token(&operator));
+
+        if std::str::eq(operator.kind, token::ADD) {
+            return expression::new_binary(expression::ADD, lhs, rhs);
+        }
+        if std::str::eq(operator.kind, token::SUB) {
+            return expression::new_binary(expression::SUB, lhs, rhs);
+        }
+        if std::str::eq(operator.kind, token::MUL) {
+            return expression::new_binary(expression::MUL, lhs, rhs);
+        }
+        if std::str::eq(operator.kind, token::DIV) {
+            return expression::new_binary(expression::DIV, lhs, rhs);
+        }
+        if std::str::eq(operator.kind, token::REM) {
+            return expression::new_binary(expression::REM, lhs, rhs);
+        }
+
+        std::panic_format(
+            "unknown binary operator `{}`",
+            (:[]std::formatter)[std::formatter::init[[token]](&operator)]);
+        return std::ptr[[expression]]::NULL;
+    }
+
+    func parse_expression_grouped(self: *parser) *expression {
+        self.*.expect_current(token::LPAREN);
+        var expr = self.*.parse_expression(precedence::LOWEST);
+        self.*.expect_current(token::RPAREN);
+        return expr;
+    }
+
+    # Returns the null denotation associated with the provided token kind or an
+    # empty optional if no such denotation exists.
+    func nud(kind: []byte) std::optional[[func(*parser) *expression]] {
+        alias nud_func = func(*parser) *expression;
+
+        if std::str::eq(kind, token::ADD)
+        or std::str::eq(kind, token::SUB) {
+            return std::optional[[nud_func]]::init_value(parser::parse_expression_unary);
+        }
+
+        if std::str::eq(kind, token::LPAREN) {
+            return std::optional[[nud_func]]::init_value(parser::parse_expression_grouped);
+        }
+
+        if std::str::eq(kind, token::INT) {
+            return std::optional[[nud_func]]::init_value(parser::parse_expression_integer);
+        }
+
+        return std::optional[[nud_func]]::EMPTY;
+    }
+
+    # Returns the left denotation associated with the provided token kind or an
+    # empty optional if no such denotation exists.
+    func led(kind: []byte) std::optional[[func(*parser, *expression) *expression]] {
+        alias led_func = func(*parser, *expression) *expression;
+
+        if std::str::eq(kind, token::ADD)
+        or std::str::eq(kind, token::SUB)
+        or std::str::eq(kind, token::MUL)
+        or std::str::eq(kind, token::DIV)
+        or std::str::eq(kind, token::REM) {
+            return std::optional[[led_func]]::init_value(parser::parse_expression_binary);
+        }
+
+        return std::optional[[led_func]]::EMPTY;
+    }
+}
+
+struct expression {
+    let INT = 0u;
+    let NEG = 1u;
+    let ADD = 2u;
+    let SUB = 3u;
+    let MUL = 4u;
+    let DIV = 5u;
+    let REM = 6u;
+
+    var kind: usize;
+    var int: std::big_integer;
+    var lhs: *expression;
+    var rhs: *expression;
+
+    func new_int(int: std::big_integer) *expression {
+        var self = std::new[[expression]]();
+        *self = (:expression){
+            .kind = expression::INT,
+            .int = int,
+            .lhs = uninit,
+            .rhs = uninit
+        };
+        return self;
+    }
+
+    func new_neg(rhs: *expression) *expression {
+        var self = std::new[[expression]]();
+        *self = (:expression){
+            .kind = expression::NEG,
+            .int = uninit,
+            .lhs = uninit,
+            .rhs = rhs
+        };
+        return self;
+    }
+
+    func new_binary(kind: usize, lhs: *expression, rhs: *expression) *expression {
+        std::assert(expression::ADD <= kind and kind <= expression::REM);
+        var self = std::new[[expression]]();
+        *self = (:expression){
+            .kind = kind,
+            .int = uninit,
+            .lhs = lhs,
+            .rhs = rhs
+        };
+        return self;
+    }
+
+    func del(self: *expression) void {
+        if self.*.kind == expression::INT {
+            self.*.int.fini();
+            std::delete[[expression]](self);
+            return;
+        }
+
+        if self.*.kind == expression::NEG {
+            self.*.rhs.*.del();
+            std::delete[[expression]](self);
+            return;
+        }
+
+        if self.*.kind == expression::ADD
+        or self.*.kind == expression::SUB
+        or self.*.kind == expression::MUL
+        or self.*.kind == expression::DIV
+        or self.*.kind == expression::REM {
+            self.*.lhs.*.del();
+            self.*.rhs.*.del();
+            std::delete[[expression]](self);
+            return;
+        }
+
+        std::panic("unknown expression kind");
+    }
+
+    func format(self: *expression, writer: std::writer, fmt: []byte) std::result[[void, std::error]] {
+        if countof(fmt) != 0 {
+            return std::result[[void, std::error]]::init_error(std::error::INVALID_ARGUMENT);
+        }
+
+        if self.*.kind == expression::INT {
+            return std::write_format(
+                writer,
+                "{}",
+                (:[]std::formatter)[std::formatter::init[[std::big_integer]](&self.*.int)]);
+        }
+
+        if self.*.kind == expression::NEG {
+            return std::write_format(
+                writer,
+                "-{}",
+                (:[]std::formatter)[std::formatter::init[[expression]](self.*.rhs)]);
+        }
+
+        var op: []byte = uninit;
+        if self.*.kind == expression::ADD {
+            op = token::ADD;
+        }
+        elif self.*.kind == expression::SUB {
+            op = token::SUB;
+        }
+        elif self.*.kind == expression::MUL {
+            op = token::MUL;
+        }
+        elif self.*.kind == expression::DIV {
+            op = token::DIV;
+        }
+        elif self.*.kind == expression::REM {
+            op = token::REM;
+        }
+        else {
+            std::panic("unknown expression kind");
+        }
+        return std::write_format(
+            writer,
+            "({} {} {})",
+            (:[]std::formatter)[
+                std::formatter::init[[expression]](self.*.lhs),
+                std::formatter::init[[[]byte]](&op),
+                std::formatter::init[[expression]](self.*.rhs)]);
+    }
+
+    # Returns the integer value produced by evaluating this expression.
+    func evaluate(self: *expression) std::big_integer {
+        if self.*.kind == expression::INT {
+            return std::big_integer::init_from_big_integer(&self.*.int);
+        }
+
+        if self.*.kind == expression::NEG {
+            var int = evaluate(self.*.rhs);
+            std::big_integer::neg(&int, &int);
+            return int;
+        }
+
+        var lhs = evaluate(self.*.lhs);
+        defer lhs.fini();
+        var rhs = evaluate(self.*.rhs);
+        defer rhs.fini();
+        var res = std::big_integer::init();
+
+        if self.*.kind == expression::ADD {
+            std::big_integer::add(&res, &lhs, &rhs);
+            return res;
+        }
+
+        if self.*.kind == expression::SUB {
+            std::big_integer::sub(&res, &lhs, &rhs);
+            return res;
+        }
+
+        if self.*.kind == expression::MUL {
+            std::big_integer::mul(&res, &lhs, &rhs);
+            return res;
+        }
+
+        if self.*.kind == expression::DIV {
+            std::big_integer::div(&res, &lhs, &rhs);
+            return res;
+        }
+
+        if self.*.kind == expression::REM {
+            std::big_integer::rem(&res, &lhs, &rhs);
+            return res;
+        }
+
+        std::panic("unknown expression kind");
+        return std::zeroed[[std::big_integer]]();
+    }
+}
+
+func main() void {
+    var opt_tree = false;
+    var argparser = std::argument_parser::init((:[][]byte)["t", "tree"]);
+    for argparser.advance() {
+        if argparser.check_option("t") or argparser.check_option("tree") {
+            opt_tree = true;
+            continue;
+        }
+
+        var argument = argparser.argument_value();
+        fatal_format(
+            "invalid argument `{}`",
+            (:[]std::formatter)[std::formatter::init[[[]byte]](&argument)]);
+     }
+
+    for true {
+        std::print(std::out(), ">>> ");
+        var result = std::read_line(std::input());
+        if result.is_error() {
+            fatal(result.error().*.data);
+        }
+
+        var optional = result.value();
+        if optional.is_empty() {
+            std::print_line(std::out(), "quit");
+            break; # end-of-file quit
+        }
+
+        var source = optional.value();
+        defer std::slice[[byte]]::delete(source);
+        if std::str::eq(std::ascii::view_trimmed(source), "quit") {
+            break; # command quit
+        }
+
+        var tokenizer = tokenizer::init(source);
+        var parser = parser::init(&tokenizer);
+        var expr = parser.parse_expression(precedence::LOWEST);
+        defer expr.*.del();
+        parser.expect_current(token::EOL);
+
+        var evaluated = expr.*.evaluate();
+        defer evaluated.fini();
+        if opt_tree {
+            std::print_format_line(
+                std::out(),
+                "{}",
+                (:[]std::formatter)[std::formatter::init[[expression]](expr)]);
+        }
+        std::print_format_line(
+            std::out(),
+            "{}",
+            (:[]std::formatter)[std::formatter::init[[std::big_integer]](&evaluated)]);
+    }
+}
