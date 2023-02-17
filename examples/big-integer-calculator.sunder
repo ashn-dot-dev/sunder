@@ -46,12 +46,16 @@ struct token {
     var kind: []byte;
     var data: []byte;
 
+    func is(self: *token, kind: []byte) bool {
+        return std::str::eq(self.*.kind, kind);
+    }
+
     func format(self: *token, writer: std::writer, fmt: []byte) std::result[[void, std::error]] {
         if countof(fmt) != 0 {
             return std::result[[void, std::error]]::init_error(std::error::INVALID_ARGUMENT);
         }
 
-        if std::str::eq(self.*.kind, token::INT) {
+        if self.*.is(token::INT) {
             return std::write_format(
                 writer,
                 "{}({})",
@@ -164,20 +168,19 @@ struct precedence {
     # Returns the precedence corresponding to the provided token or
     # `precedence::LOWEST` if no precedence mapping exists.
     func of_token(token: *token) usize {
-        var kind = token.*.kind;
 
-        if std::str::eq(kind, ::token::ADD)
-        or std::str::eq(kind, ::token::SUB) {
+        if token.*.is(::token::ADD)
+        or token.*.is(::token::SUB) {
             return precedence::SUM;
         }
 
-        if std::str::eq(kind, ::token::MUL)
-        or std::str::eq(kind, ::token::DIV)
-        or std::str::eq(kind, ::token::REM) {
+        if token.*.is(::token::MUL)
+        or token.*.is(::token::DIV)
+        or token.*.is(::token::REM) {
             return precedence::PRODUCT;
         }
 
-        if std::str::eq(kind, ::token::LPAREN) {
+        if token.*.is(::token::LPAREN) {
             return precedence::GROUP;
         }
 
@@ -204,17 +207,12 @@ struct parser {
         return current;
     }
 
-    # Returns true if the current token matches the provided token kind.
-    func check_current(self: *parser, kind: []byte) bool {
-        return std::str::eq(self.*.current.kind, kind);
-    }
-
     # Produce a fatal error if the current token does match the provided token
     # kind, then advance the token stream by one token. Returns the current
     # token in the token stream prior to the advance operation (i.e. the
     # checked token).
     func expect_current(self: *parser, kind: []byte) token {
-        if not self.*.check_current(kind) {
+        if not self.*.current.is(kind) {
             fatal_format(
                 "expected `{}`, found `{}`",
                 (:[]std::formatter)[
@@ -228,7 +226,7 @@ struct parser {
     }
 
     func parse_expression(self: *parser, precedence: usize) *expression {
-        var optional = parser::nud(self.*.current.kind);
+        var optional = parser::nud(&self.*.current);
         if optional.is_empty() {
             fatal_format(
                 "unexpected prefix token `{}` in expression",
@@ -238,7 +236,7 @@ struct parser {
 
         var expr = nud(self);
         for precedence < ::precedence::of_token(&self.*.current) {
-            var optional = parser::led(self.*.current.kind);
+            var optional = parser::led(&self.*.current);
             if optional.is_empty() {
                 return expr;
             }
@@ -258,10 +256,10 @@ struct parser {
     func parse_expression_unary(self: *parser) *expression {
         var operator = self.*.advance_token();
         var rhs = self.*.parse_expression(precedence::UNARY);
-        if std::str::eq(operator.kind, token::ADD) {
+        if operator.is(token::ADD) {
             return rhs;
         }
-        if std::str::eq(operator.kind, token::SUB) {
+        if operator.is(token::SUB) {
             return expression::new_neg(rhs);
         }
 
@@ -275,19 +273,19 @@ struct parser {
         var operator = self.*.advance_token();
         var rhs = self.*.parse_expression(precedence::of_token(&operator));
 
-        if std::str::eq(operator.kind, token::ADD) {
+        if operator.is(token::ADD) {
             return expression::new_binary(expression::ADD, lhs, rhs);
         }
-        if std::str::eq(operator.kind, token::SUB) {
+        if operator.is(token::SUB) {
             return expression::new_binary(expression::SUB, lhs, rhs);
         }
-        if std::str::eq(operator.kind, token::MUL) {
+        if operator.is(token::MUL) {
             return expression::new_binary(expression::MUL, lhs, rhs);
         }
-        if std::str::eq(operator.kind, token::DIV) {
+        if operator.is(token::DIV) {
             return expression::new_binary(expression::DIV, lhs, rhs);
         }
-        if std::str::eq(operator.kind, token::REM) {
+        if operator.is(token::REM) {
             return expression::new_binary(expression::REM, lhs, rhs);
         }
 
@@ -304,37 +302,37 @@ struct parser {
         return expr;
     }
 
-    # Returns the null denotation associated with the provided token kind or an
+    # Returns the null denotation associated with the provided token or an
     # empty optional if no such denotation exists.
-    func nud(kind: []byte) std::optional[[func(*parser) *expression]] {
+    func nud(token: *token) std::optional[[func(*parser) *expression]] {
         alias nud_func = func(*parser) *expression;
 
-        if std::str::eq(kind, token::ADD)
-        or std::str::eq(kind, token::SUB) {
+        if token.*.is(::token::ADD)
+        or token.*.is(::token::SUB) {
             return std::optional[[nud_func]]::init_value(parser::parse_expression_unary);
         }
 
-        if std::str::eq(kind, token::LPAREN) {
+        if token.*.is(::token::LPAREN) {
             return std::optional[[nud_func]]::init_value(parser::parse_expression_grouped);
         }
 
-        if std::str::eq(kind, token::INT) {
+        if token.*.is(::token::INT) {
             return std::optional[[nud_func]]::init_value(parser::parse_expression_integer);
         }
 
         return std::optional[[nud_func]]::EMPTY;
     }
 
-    # Returns the left denotation associated with the provided token kind or an
+    # Returns the left denotation associated with the provided token or an
     # empty optional if no such denotation exists.
-    func led(kind: []byte) std::optional[[func(*parser, *expression) *expression]] {
+    func led(token: *token) std::optional[[func(*parser, *expression) *expression]] {
         alias led_func = func(*parser, *expression) *expression;
 
-        if std::str::eq(kind, token::ADD)
-        or std::str::eq(kind, token::SUB)
-        or std::str::eq(kind, token::MUL)
-        or std::str::eq(kind, token::DIV)
-        or std::str::eq(kind, token::REM) {
+        if token.*.is(::token::ADD)
+        or token.*.is(::token::SUB)
+        or token.*.is(::token::MUL)
+        or token.*.is(::token::DIV)
+        or token.*.is(::token::REM) {
             return std::optional[[led_func]]::init_value(parser::parse_expression_binary);
         }
 
