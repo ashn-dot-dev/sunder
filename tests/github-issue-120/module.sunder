@@ -4,7 +4,7 @@ namespace a::b;
 #
 #   [file:line] error: use of undeclared identifier `y`
 #   let x = y;
-#             ^
+#           ^
 let x = y;
 let y = 123s;
 
