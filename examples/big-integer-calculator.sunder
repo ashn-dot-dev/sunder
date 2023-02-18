@@ -168,7 +168,6 @@ struct precedence {
     # Returns the precedence corresponding to the provided token or
     # `precedence::LOWEST` if no precedence mapping exists.
     func of_token(token: *token) usize {
-
         if token.*.is(::token::ADD)
         or token.*.is(::token::SUB) {
             return precedence::SUM;
@@ -207,10 +206,10 @@ struct parser {
         return current;
     }
 
-    # Produce a fatal error if the current token does match the provided token
-    # kind, then advance the token stream by one token. Returns the current
-    # token in the token stream prior to the advance operation (i.e. the
-    # checked token).
+    # Produce a fatal error if the current token does not match the provided
+    # token kind, then advance the token stream by one token. Returns the
+    # current token in the token stream prior to the advance operation (i.e.
+    # the checked token).
     func expect_current(self: *parser, kind: []byte) token {
         if not self.*.current.is(kind) {
             fatal_format(
@@ -225,7 +224,7 @@ struct parser {
         return current;
     }
 
-    func parse_expression(self: *parser, precedence: usize) *expression {
+    func parse_expression(self: *parser, precedence: usize) expression {
         var optional = parser::nud(&self.*.current);
         if optional.is_empty() {
             fatal_format(
@@ -247,55 +246,32 @@ struct parser {
         return expr;
     }
 
-    func parse_expression_integer(self: *parser) *expression {
+    func parse_integer_expression(self: *parser) expression {
         var token = self.*.expect_current(token::INT);
         var result = std::big_integer::init_from_str(token.data, 10);
-        return expression::new_int(result.value());
+        var object = integer_expression::new(result.value());
+        return expression::init[[integer_expression]](object);
     }
 
-    func parse_expression_unary(self: *parser) *expression {
+    func parse_unary_expression(self: *parser) expression {
         var operator = self.*.advance_token();
         var rhs = self.*.parse_expression(precedence::UNARY);
         if operator.is(token::ADD) {
             return rhs;
         }
-        if operator.is(token::SUB) {
-            return expression::new_neg(rhs);
-        }
 
-        std::panic_format(
-            "unknown unary operator `{}`",
-            (:[]std::formatter)[std::formatter::init[[token]](&operator)]);
-        return std::ptr[[expression]]::NULL;
+        var object = unary_expression::new(operator, rhs);
+        return expression::init[[unary_expression]](object);
     }
 
-    func parse_expression_binary(self: *parser, lhs: *expression) *expression {
+    func parse_binary_expression(self: *parser, lhs: expression) expression {
         var operator = self.*.advance_token();
         var rhs = self.*.parse_expression(precedence::of_token(&operator));
-
-        if operator.is(token::ADD) {
-            return expression::new_binary(expression::ADD, lhs, rhs);
-        }
-        if operator.is(token::SUB) {
-            return expression::new_binary(expression::SUB, lhs, rhs);
-        }
-        if operator.is(token::MUL) {
-            return expression::new_binary(expression::MUL, lhs, rhs);
-        }
-        if operator.is(token::DIV) {
-            return expression::new_binary(expression::DIV, lhs, rhs);
-        }
-        if operator.is(token::REM) {
-            return expression::new_binary(expression::REM, lhs, rhs);
-        }
-
-        std::panic_format(
-            "unknown binary operator `{}`",
-            (:[]std::formatter)[std::formatter::init[[token]](&operator)]);
-        return std::ptr[[expression]]::NULL;
+        var object = binary_expression::new(operator, lhs, rhs);
+        return expression::init[[binary_expression]](object);
     }
 
-    func parse_expression_grouped(self: *parser) *expression {
+    func parse_grouped_expression(self: *parser) expression {
         self.*.expect_current(token::LPAREN);
         var expr = self.*.parse_expression(precedence::LOWEST);
         self.*.expect_current(token::RPAREN);
@@ -304,20 +280,20 @@ struct parser {
 
     # Returns the null denotation associated with the provided token or an
     # empty optional if no such denotation exists.
-    func nud(token: *token) std::optional[[func(*parser) *expression]] {
-        alias nud_func = func(*parser) *expression;
+    func nud(token: *token) std::optional[[func(*parser) expression]] {
+        alias nud_func = func(*parser) expression;
 
         if token.*.is(::token::ADD)
         or token.*.is(::token::SUB) {
-            return std::optional[[nud_func]]::init_value(parser::parse_expression_unary);
+            return std::optional[[nud_func]]::init_value(parser::parse_unary_expression);
         }
 
         if token.*.is(::token::LPAREN) {
-            return std::optional[[nud_func]]::init_value(parser::parse_expression_grouped);
+            return std::optional[[nud_func]]::init_value(parser::parse_grouped_expression);
         }
 
         if token.*.is(::token::INT) {
-            return std::optional[[nud_func]]::init_value(parser::parse_expression_integer);
+            return std::optional[[nud_func]]::init_value(parser::parse_integer_expression);
         }
 
         return std::optional[[nud_func]]::EMPTY;
@@ -325,182 +301,197 @@ struct parser {
 
     # Returns the left denotation associated with the provided token or an
     # empty optional if no such denotation exists.
-    func led(token: *token) std::optional[[func(*parser, *expression) *expression]] {
-        alias led_func = func(*parser, *expression) *expression;
+    func led(token: *token) std::optional[[func(*parser, expression) expression]] {
+        alias led_func = func(*parser, expression) expression;
 
         if token.*.is(::token::ADD)
         or token.*.is(::token::SUB)
         or token.*.is(::token::MUL)
         or token.*.is(::token::DIV)
         or token.*.is(::token::REM) {
-            return std::optional[[led_func]]::init_value(parser::parse_expression_binary);
+            return std::optional[[led_func]]::init_value(parser::parse_binary_expression);
         }
 
         return std::optional[[led_func]]::EMPTY;
     }
 }
 
+struct expression_itable {
+    var del: func(*any) void;
+    var format: func(*any, std::writer, []byte) std::result[[void, std::error]];
+    var evaluate: func(*any) std::big_integer;
+}
+
 struct expression {
-    let INT = 0u;
-    let NEG = 1u;
-    let ADD = 2u;
-    let SUB = 3u;
-    let MUL = 4u;
-    let DIV = 5u;
-    let REM = 6u;
+    var itable: *expression_itable;
+    var object: *any;
 
-    var kind: usize;
-    var int: std::big_integer;
-    var lhs: *expression;
-    var rhs: *expression;
-
-    func new_int(int: std::big_integer) *expression {
-        var self = std::new[[expression]]();
-        *self = (:expression){
-            .kind = expression::INT,
-            .int = int,
-            .lhs = uninit,
-            .rhs = uninit
+    func init[[T]](object: *T) expression {
+        let itable = (:expression_itable){
+            .del = T::del,
+            .format = T::format,
+            .evaluate = T::evaluate
         };
+        return (:expression){
+            .itable = &itable,
+            .object = object
+        };
+    }
+
+    # Finalize and deallocate the underlying object backing this expression.
+    func fini(self: *expression) void {
+        return self.*.itable.*.del(self.*.object);
+    }
+
+    # Write a formatted representation of this expression to the provided writer.
+    func format(self: *expression, writer: std::writer, fmt: []byte) std::result[[void, std::error]] {
+        return self.*.itable.*.format(self.*.object, writer, fmt);
+    }
+
+    # Returns the integer value produced by evaluating this expression.
+    func evaluate(self: *expression) std::big_integer {
+        return self.*.itable.*.evaluate(self.*.object);
+    }
+}
+
+struct integer_expression {
+    var integer: std::big_integer;
+
+    func new(integer: std::big_integer) *integer_expression {
+        var self = std::new[[integer_expression]]();
+        *self = (:integer_expression){.integer = integer};
         return self;
     }
 
-    func new_neg(rhs: *expression) *expression {
-        var self = std::new[[expression]]();
-        *self = (:expression){
-            .kind = expression::NEG,
-            .int = uninit,
-            .lhs = uninit,
+    func del(self: *integer_expression) void {
+        self.*.integer.fini();
+        std::delete[[integer_expression]](self);
+    }
+
+    func format(self: *integer_expression, writer: std::writer, fmt: []byte) std::result[[void, std::error]] {
+        if countof(fmt) != 0 {
+            return std::result[[void, std::error]]::init_error(std::error::INVALID_ARGUMENT);
+        }
+
+        return std::write_format(
+            writer,
+            "{}",
+            (:[]std::formatter)[std::formatter::init[[std::big_integer]](&self.*.integer)]);
+    }
+
+    func evaluate(self: *integer_expression) std::big_integer {
+        return std::big_integer::init_from_big_integer(&self.*.integer);
+    }
+}
+
+struct unary_expression {
+    var operator: token;
+    var rhs: expression;
+
+    func new(operator: token, rhs: expression) *unary_expression {
+        var self = std::new[[unary_expression]]();
+        *self = (:unary_expression){
+            .operator = operator,
             .rhs = rhs
         };
         return self;
     }
 
-    func new_binary(kind: usize, lhs: *expression, rhs: *expression) *expression {
-        std::assert(expression::ADD <= kind and kind <= expression::REM);
-        var self = std::new[[expression]]();
-        *self = (:expression){
-            .kind = kind,
-            .int = uninit,
+    func del(self: *unary_expression) void {
+        self.*.rhs.fini();
+        std::delete[[unary_expression]](self);
+    }
+
+    func format(self: *unary_expression, writer: std::writer, fmt: []byte) std::result[[void, std::error]] {
+        if countof(fmt) != 0 {
+            return std::result[[void, std::error]]::init_error(std::error::INVALID_ARGUMENT);
+        }
+
+        return std::write_format(
+            writer,
+            "{}{}",
+            (:[]std::formatter)[
+                std::formatter::init[[[]byte]](&self.*.operator.kind),
+                std::formatter::init[[expression]](&self.*.rhs)]);
+    }
+
+    func evaluate(self: *unary_expression) std::big_integer {
+        if self.*.operator.is(token::SUB) {
+            var res = self.*.rhs.evaluate();
+            std::big_integer::neg(&res, &res);
+            return res;
+        }
+
+        std::panic("unknown expression kind");
+        return std::zeroed[[std::big_integer]]();
+    }
+}
+
+struct binary_expression {
+    var operator: token;
+    var lhs: expression;
+    var rhs: expression;
+
+    func new(operator: token, lhs: expression, rhs: expression) *binary_expression {
+        var self = std::new[[binary_expression]]();
+        *self = (:binary_expression){
+            .operator = operator,
             .lhs = lhs,
             .rhs = rhs
         };
         return self;
     }
 
-    func del(self: *expression) void {
-        if self.*.kind == expression::INT {
-            self.*.int.fini();
-            std::delete[[expression]](self);
-            return;
-        }
-
-        if self.*.kind == expression::NEG {
-            self.*.rhs.*.del();
-            std::delete[[expression]](self);
-            return;
-        }
-
-        if self.*.kind == expression::ADD
-        or self.*.kind == expression::SUB
-        or self.*.kind == expression::MUL
-        or self.*.kind == expression::DIV
-        or self.*.kind == expression::REM {
-            self.*.lhs.*.del();
-            self.*.rhs.*.del();
-            std::delete[[expression]](self);
-            return;
-        }
-
-        std::panic("unknown expression kind");
+    func del(self: *binary_expression) void {
+        self.*.lhs.fini();
+        self.*.rhs.fini();
+        std::delete[[binary_expression]](self);
     }
 
-    func format(self: *expression, writer: std::writer, fmt: []byte) std::result[[void, std::error]] {
+    func format(self: *binary_expression, writer: std::writer, fmt: []byte) std::result[[void, std::error]] {
         if countof(fmt) != 0 {
             return std::result[[void, std::error]]::init_error(std::error::INVALID_ARGUMENT);
         }
 
-        if self.*.kind == expression::INT {
-            return std::write_format(
-                writer,
-                "{}",
-                (:[]std::formatter)[std::formatter::init[[std::big_integer]](&self.*.int)]);
-        }
-
-        if self.*.kind == expression::NEG {
-            return std::write_format(
-                writer,
-                "-{}",
-                (:[]std::formatter)[std::formatter::init[[expression]](self.*.rhs)]);
-        }
-
-        var op: []byte = uninit;
-        if self.*.kind == expression::ADD {
-            op = token::ADD;
-        }
-        elif self.*.kind == expression::SUB {
-            op = token::SUB;
-        }
-        elif self.*.kind == expression::MUL {
-            op = token::MUL;
-        }
-        elif self.*.kind == expression::DIV {
-            op = token::DIV;
-        }
-        elif self.*.kind == expression::REM {
-            op = token::REM;
-        }
-        else {
-            std::panic("unknown expression kind");
-        }
         return std::write_format(
             writer,
             "({} {} {})",
             (:[]std::formatter)[
-                std::formatter::init[[expression]](self.*.lhs),
-                std::formatter::init[[[]byte]](&op),
-                std::formatter::init[[expression]](self.*.rhs)]);
+                std::formatter::init[[expression]](&self.*.lhs),
+                std::formatter::init[[[]byte]](&self.*.operator.kind),
+                std::formatter::init[[expression]](&self.*.rhs)]);
     }
 
-    # Returns the integer value produced by evaluating this expression.
-    func evaluate(self: *expression) std::big_integer {
-        if self.*.kind == expression::INT {
-            return std::big_integer::init_from_big_integer(&self.*.int);
-        }
-
-        if self.*.kind == expression::NEG {
-            var int = evaluate(self.*.rhs);
-            std::big_integer::neg(&int, &int);
-            return int;
-        }
-
-        var lhs = evaluate(self.*.lhs);
+    func evaluate(self: *binary_expression) std::big_integer {
+        var lhs = self.*.lhs.evaluate();
         defer lhs.fini();
-        var rhs = evaluate(self.*.rhs);
+
+        var rhs = self.*.rhs.evaluate();
         defer rhs.fini();
+
         var res = std::big_integer::init();
 
-        if self.*.kind == expression::ADD {
+        if self.*.operator.is(token::ADD) {
             std::big_integer::add(&res, &lhs, &rhs);
             return res;
         }
 
-        if self.*.kind == expression::SUB {
+        if self.*.operator.is(token::SUB) {
             std::big_integer::sub(&res, &lhs, &rhs);
             return res;
         }
 
-        if self.*.kind == expression::MUL {
+        if self.*.operator.is(token::MUL) {
             std::big_integer::mul(&res, &lhs, &rhs);
             return res;
         }
 
-        if self.*.kind == expression::DIV {
+        if self.*.operator.is(token::DIV) {
             std::big_integer::div(&res, &lhs, &rhs);
             return res;
         }
 
-        if self.*.kind == expression::REM {
+        if self.*.operator.is(token::REM) {
             std::big_integer::rem(&res, &lhs, &rhs);
             return res;
         }
@@ -547,16 +538,16 @@ func main() void {
         var tokenizer = tokenizer::init(source);
         var parser = parser::init(&tokenizer);
         var expr = parser.parse_expression(precedence::LOWEST);
-        defer expr.*.del();
+        defer expr.fini();
         parser.expect_current(token::EOL);
 
-        var evaluated = expr.*.evaluate();
+        var evaluated = expr.evaluate();
         defer evaluated.fini();
         if opt_tree {
             std::print_format_line(
                 std::out(),
                 "{}",
-                (:[]std::formatter)[std::formatter::init[[expression]](expr)]);
+                (:[]std::formatter)[std::formatter::init[[expression]](&expr)]);
         }
         std::print_format_line(
             std::out(),
