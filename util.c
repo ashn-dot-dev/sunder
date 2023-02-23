@@ -2026,7 +2026,7 @@ string_split(
     char const* beg = self->start;
     char const* end = beg;
     while ((size_t)(end_of_string - end) >= separator_size) {
-        if (memcmp(end, separator, separator_size) != 0) {
+        if (safe_memcmp(end, separator, separator_size) != 0) {
             end += 1;
             continue;
         }
