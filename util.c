@@ -2034,7 +2034,7 @@ string_split(
         beg = end + separator_size;
         end = beg;
     }
-    sbuf_push(res, string_new(beg, (size_t)(end - beg)));
+    sbuf_push(res, string_new(beg, (size_t)(end_of_string - beg)));
     return res;
 }
 
