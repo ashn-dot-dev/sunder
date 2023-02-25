@@ -444,7 +444,7 @@ struct interned_element {
 
 // Hash set of interned cstrings.
 static sbuf(struct interned_element) interned;
-// Number of in-use elements within the intern hash set.
+// Number of in-use elements within the interned hash set.
 static size_t interned_count = 0;
 
 void
