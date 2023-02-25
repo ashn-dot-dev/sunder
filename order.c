@@ -76,8 +76,8 @@ orderer_new(struct module* module)
                 module->cst->decls[i]->location,
                 "redeclaration of `%s` previously declared at [%s:%zu]",
                 existing->decl->name,
-                existing->decl->location->path,
-                existing->decl->location->line);
+                existing->decl->location.path,
+                existing->decl->location.line);
         }
 
         sbuf_push(self->tldecls, tldecl);
@@ -135,12 +135,12 @@ order_tldecl(struct orderer* orderer, struct tldecl* tldecl)
         for (size_t i = 0; i < sbuf_count(orderer->dependencies); ++i) {
             size_t j = i + 1 != sbuf_count(orderer->dependencies) ? i + 1 : 0;
             info(
-                NULL,
+                NO_LOCATION,
                 "declaration of `%s` (line %zu) depends on `%s` (line %zu)",
                 orderer->dependencies[i]->name,
-                orderer->dependencies[i]->location->line,
+                orderer->dependencies[i]->location.line,
                 orderer->dependencies[j]->name,
-                orderer->dependencies[j]->location->line);
+                orderer->dependencies[j]->location.line);
         }
         exit(EXIT_FAILURE);
     }

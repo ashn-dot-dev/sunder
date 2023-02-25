@@ -20,11 +20,9 @@ cst_module_new(
 
 struct cst_namespace*
 cst_namespace_new(
-    struct source_location const* location,
+    struct source_location location,
     struct cst_identifier const* const* identifiers)
 {
-    assert(location != NULL);
-
     struct cst_namespace* const self = xalloc(NULL, sizeof(*self));
     memset(self, 0x00, sizeof(*self));
     self->location = location;
@@ -33,9 +31,8 @@ cst_namespace_new(
 }
 
 struct cst_import*
-cst_import_new(struct source_location const* location, char const* path)
+cst_import_new(struct source_location location, char const* path)
 {
-    assert(location != NULL);
     assert(path != NULL);
 
     struct cst_import* const self = xalloc(NULL, sizeof(*self));
@@ -47,12 +44,11 @@ cst_import_new(struct source_location const* location, char const* path)
 
 struct cst_decl*
 cst_decl_new_variable(
-    struct source_location const* location,
+    struct source_location location,
     struct cst_identifier const* identifier,
     struct cst_typespec const* typespec,
     struct cst_expr const* expr)
 {
-    assert(location != NULL);
     assert(identifier != NULL);
 
     struct cst_decl* const self = xalloc(NULL, sizeof(*self));
@@ -68,12 +64,11 @@ cst_decl_new_variable(
 
 struct cst_decl*
 cst_decl_new_constant(
-    struct source_location const* location,
+    struct source_location location,
     struct cst_identifier const* identifier,
     struct cst_typespec const* typespec,
     struct cst_expr const* expr)
 {
-    assert(location != NULL);
     assert(identifier != NULL);
 
     struct cst_decl* const self = xalloc(NULL, sizeof(*self));
@@ -89,14 +84,13 @@ cst_decl_new_constant(
 
 struct cst_decl*
 cst_decl_new_function(
-    struct source_location const* location,
+    struct source_location location,
     struct cst_identifier const* identifier,
     struct cst_identifier const* const* template_parameters,
     struct cst_function_parameter const* const* function_parameters,
     struct cst_typespec const* return_typespec,
     struct cst_block const* body)
 {
-    assert(location != NULL);
     assert(identifier != NULL);
     assert(return_typespec != NULL);
     assert(body != NULL);
@@ -116,12 +110,11 @@ cst_decl_new_function(
 
 struct cst_decl*
 cst_decl_new_struct(
-    struct source_location const* location,
+    struct source_location location,
     struct cst_identifier const* identifier,
     struct cst_identifier const* const* template_parameters,
     struct cst_member const* const* members)
 {
-    assert(location != NULL);
     assert(identifier != NULL);
 
     struct cst_decl* const self = xalloc(NULL, sizeof(*self));
@@ -137,11 +130,10 @@ cst_decl_new_struct(
 
 struct cst_decl*
 cst_decl_new_extend(
-    struct source_location const* location,
+    struct source_location location,
     struct cst_typespec const* typespec,
     struct cst_decl const* decl)
 {
-    assert(location != NULL);
     assert(typespec != NULL);
     assert(decl != NULL);
 
@@ -157,11 +149,10 @@ cst_decl_new_extend(
 
 struct cst_decl*
 cst_decl_new_alias(
-    struct source_location const* location,
+    struct source_location location,
     struct cst_identifier const* identifier,
     struct cst_typespec const* typespec)
 {
-    assert(location != NULL);
     assert(identifier != NULL);
     assert(typespec != NULL);
 
@@ -177,11 +168,10 @@ cst_decl_new_alias(
 
 struct cst_decl*
 cst_decl_new_extern_variable(
-    struct source_location const* location,
+    struct source_location location,
     struct cst_identifier const* identifier,
     struct cst_typespec const* typespec)
 {
-    assert(location != NULL);
     assert(identifier != NULL);
     assert(typespec != NULL);
 
@@ -197,12 +187,11 @@ cst_decl_new_extern_variable(
 
 struct cst_decl*
 cst_decl_new_extern_function(
-    struct source_location const* location,
+    struct source_location location,
     struct cst_identifier const* identifier,
     struct cst_function_parameter const* const* function_parameters,
     struct cst_typespec const* return_typespec)
 {
-    assert(location != NULL);
     assert(identifier != NULL);
     assert(return_typespec != NULL);
 
@@ -218,7 +207,7 @@ cst_decl_new_extern_function(
 }
 
 static struct cst_stmt*
-cst_stmt_new(struct source_location const* location, enum cst_stmt_kind kind)
+cst_stmt_new(struct source_location location, enum cst_stmt_kind kind)
 {
     struct cst_stmt* const self = xalloc(NULL, sizeof(*self));
     memset(self, 0x00, sizeof(*self));
@@ -232,7 +221,7 @@ cst_stmt_new_if(struct cst_conditional const* const* conditionals)
 {
     assert(sbuf_count(conditionals) > 0u);
 
-    struct source_location const* const location = conditionals[0]->location;
+    struct source_location const location = conditionals[0]->location;
     struct cst_stmt* const self = cst_stmt_new(location, CST_STMT_IF);
     self->data.if_.conditionals = conditionals;
     return self;
@@ -240,13 +229,12 @@ cst_stmt_new_if(struct cst_conditional const* const* conditionals)
 
 struct cst_stmt*
 cst_stmt_new_for_range(
-    struct source_location const* location,
+    struct source_location location,
     struct cst_identifier const* identifier,
     struct cst_expr const* begin,
     struct cst_expr const* end,
     struct cst_block const* body)
 {
-    assert(location != NULL);
     assert(identifier != NULL);
     assert(end != NULL);
     assert(body != NULL);
@@ -261,11 +249,10 @@ cst_stmt_new_for_range(
 
 struct cst_stmt*
 cst_stmt_new_for_expr(
-    struct source_location const* location,
+    struct source_location location,
     struct cst_expr const* expr,
     struct cst_block const* body)
 {
-    assert(location != NULL);
     assert(expr != NULL);
     assert(body != NULL);
 
@@ -287,7 +274,7 @@ cst_stmt_new_decl(struct cst_decl const* decl)
 
 struct cst_stmt*
 cst_stmt_new_defer_block(
-    struct source_location const* location, struct cst_block const* block)
+    struct source_location location, struct cst_block const* block)
 {
     assert(block != NULL);
 
@@ -298,7 +285,7 @@ cst_stmt_new_defer_block(
 
 struct cst_stmt*
 cst_stmt_new_defer_expr(
-    struct source_location const* location, struct cst_expr const* expr)
+    struct source_location location, struct cst_expr const* expr)
 {
     assert(expr != NULL);
 
@@ -308,29 +295,23 @@ cst_stmt_new_defer_expr(
 }
 
 struct cst_stmt*
-cst_stmt_new_break(struct source_location const* location)
+cst_stmt_new_break(struct source_location location)
 {
-    assert(location != NULL);
-
     struct cst_stmt* const self = cst_stmt_new(location, CST_STMT_BREAK);
     return self;
 }
 
 struct cst_stmt*
-cst_stmt_new_continue(struct source_location const* location)
+cst_stmt_new_continue(struct source_location location)
 {
-    assert(location != NULL);
-
     struct cst_stmt* const self = cst_stmt_new(location, CST_STMT_CONTINUE);
     return self;
 }
 
 struct cst_stmt*
 cst_stmt_new_return(
-    struct source_location const* location, struct cst_expr const* expr)
+    struct source_location location, struct cst_expr const* expr)
 {
-    assert(location != NULL);
-
     struct cst_stmt* const self = cst_stmt_new(location, CST_STMT_RETURN);
     self->data.return_.expr = expr;
     return self;
@@ -338,11 +319,10 @@ cst_stmt_new_return(
 
 struct cst_stmt*
 cst_stmt_new_assign(
-    struct source_location const* location,
+    struct source_location location,
     struct cst_expr const* lhs,
     struct cst_expr const* rhs)
 {
-    assert(location != NULL);
     assert(lhs != NULL);
     assert(rhs != NULL);
 
@@ -363,7 +343,7 @@ cst_stmt_new_expr(struct cst_expr const* expr)
 }
 
 static struct cst_expr*
-cst_expr_new(struct source_location const* location, enum cst_expr_kind kind)
+cst_expr_new(struct source_location location, enum cst_expr_kind kind)
 {
     struct cst_expr* const self = xalloc(NULL, sizeof(*self));
     memset(self, 0x00, sizeof(*self));
@@ -384,61 +364,55 @@ cst_expr_new_symbol(struct cst_symbol const* symbol)
 }
 
 struct cst_expr*
-cst_expr_new_boolean(struct token const* token)
+cst_expr_new_boolean(struct token token)
 {
-    assert(token != NULL);
-    assert(token->kind == TOKEN_TRUE || token->kind == TOKEN_FALSE);
+    assert(token.kind == TOKEN_TRUE || token.kind == TOKEN_FALSE);
 
     struct cst_expr* const self =
-        cst_expr_new(&token->location, CST_EXPR_BOOLEAN);
+        cst_expr_new(token.location, CST_EXPR_BOOLEAN);
     self->data.boolean = token;
     return self;
 }
 
 struct cst_expr*
-cst_expr_new_integer(struct token const* token)
+cst_expr_new_integer(struct token token)
 {
-    assert(token != NULL);
-    assert(token->kind == TOKEN_INTEGER);
+    assert(token.kind == TOKEN_INTEGER);
 
     struct cst_expr* const self =
-        cst_expr_new(&token->location, CST_EXPR_INTEGER);
+        cst_expr_new(token.location, CST_EXPR_INTEGER);
     self->data.integer = token;
     return self;
 }
 
 struct cst_expr*
-cst_expr_new_character(struct token const* token)
+cst_expr_new_character(struct token token)
 {
-    assert(token != NULL);
-    assert(token->kind == TOKEN_CHARACTER);
+    assert(token.kind == TOKEN_CHARACTER);
 
     struct cst_expr* const self =
-        cst_expr_new(&token->location, CST_EXPR_CHARACTER);
+        cst_expr_new(token.location, CST_EXPR_CHARACTER);
     self->data.character = token;
     return self;
 }
 
 struct cst_expr*
-cst_expr_new_bytes(struct token const* token)
+cst_expr_new_bytes(struct token token)
 {
-    assert(token != NULL);
-    assert(token->kind == TOKEN_BYTES);
+    assert(token.kind == TOKEN_BYTES);
 
-    struct cst_expr* const self =
-        cst_expr_new(&token->location, CST_EXPR_BYTES);
+    struct cst_expr* const self = cst_expr_new(token.location, CST_EXPR_BYTES);
     self->data.bytes = token;
     return self;
 }
 
 struct cst_expr*
 cst_expr_new_list(
-    struct source_location const* location,
+    struct source_location location,
     struct cst_typespec const* typespec,
     struct cst_expr const* const* elements,
     struct cst_expr const* ellipsis)
 {
-    assert(location != NULL);
     assert(typespec != NULL);
 
     struct cst_expr* const self = cst_expr_new(location, CST_EXPR_LIST);
@@ -450,12 +424,11 @@ cst_expr_new_list(
 
 struct cst_expr*
 cst_expr_new_slice(
-    struct source_location const* location,
+    struct source_location location,
     struct cst_typespec const* typespec,
     struct cst_expr const* pointer,
     struct cst_expr const* count)
 {
-    assert(location != NULL);
     assert(typespec != NULL);
     assert(pointer != NULL);
     assert(count != NULL);
@@ -469,11 +442,10 @@ cst_expr_new_slice(
 
 struct cst_expr*
 cst_expr_new_cast(
-    struct source_location const* location,
+    struct source_location location,
     struct cst_typespec const* typespec,
     struct cst_expr const* expr)
 {
-    assert(location != NULL);
     assert(typespec != NULL);
     assert(expr != NULL);
 
@@ -485,12 +457,10 @@ cst_expr_new_cast(
 
 struct cst_expr*
 cst_expr_new_struct(
-    struct source_location const* location,
+    struct source_location location,
     struct cst_typespec const* typespec,
     struct cst_member_initializer const* const* initializers)
 {
-    assert(location != NULL);
-
     struct cst_expr* const self = cst_expr_new(location, CST_EXPR_STRUCT);
     self->data.struct_.typespec = typespec;
     self->data.struct_.initializers = initializers;
@@ -499,7 +469,7 @@ cst_expr_new_struct(
 
 struct cst_expr*
 cst_expr_new_grouped(
-    struct source_location const* location, struct cst_expr const* expr)
+    struct source_location location, struct cst_expr const* expr)
 {
     assert(expr != NULL);
 
@@ -510,7 +480,7 @@ cst_expr_new_grouped(
 
 struct cst_expr*
 cst_expr_new_call(
-    struct source_location const* location,
+    struct source_location location,
     struct cst_expr const* func,
     struct cst_expr const* const* arguments)
 {
@@ -524,11 +494,10 @@ cst_expr_new_call(
 
 struct cst_expr*
 cst_expr_new_access_index(
-    struct source_location const* location,
+    struct source_location location,
     struct cst_expr const* lhs,
     struct cst_expr const* idx)
 {
-    assert(location != NULL);
     assert(lhs != NULL);
     assert(idx != NULL);
 
@@ -540,12 +509,11 @@ cst_expr_new_access_index(
 
 struct cst_expr*
 cst_expr_new_access_slice(
-    struct source_location const* location,
+    struct source_location location,
     struct cst_expr const* lhs,
     struct cst_expr const* begin,
     struct cst_expr const* end)
 {
-    assert(location != NULL);
     assert(lhs != NULL);
     assert(begin != NULL);
     assert(end != NULL);
@@ -559,11 +527,10 @@ cst_expr_new_access_slice(
 
 struct cst_expr*
 cst_expr_new_access_member(
-    struct source_location const* location,
+    struct source_location location,
     struct cst_expr const* lhs,
     struct cst_symbol_element const* member)
 {
-    assert(location != NULL);
     assert(lhs != NULL);
     assert(member != NULL);
 
@@ -576,9 +543,8 @@ cst_expr_new_access_member(
 
 struct cst_expr*
 cst_expr_new_access_dereference(
-    struct source_location const* location, struct cst_expr const* lhs)
+    struct source_location location, struct cst_expr const* lhs)
 {
-    assert(location != NULL);
     assert(lhs != NULL);
 
     struct cst_expr* const self =
@@ -589,9 +555,8 @@ cst_expr_new_access_dereference(
 
 struct cst_expr*
 cst_expr_new_sizeof(
-    struct source_location const* location, struct cst_typespec const* rhs)
+    struct source_location location, struct cst_typespec const* rhs)
 {
-    assert(location != NULL);
     assert(rhs != NULL);
 
     struct cst_expr* const self = cst_expr_new(location, CST_EXPR_SIZEOF);
@@ -601,9 +566,8 @@ cst_expr_new_sizeof(
 
 struct cst_expr*
 cst_expr_new_alignof(
-    struct source_location const* location, struct cst_typespec const* rhs)
+    struct source_location location, struct cst_typespec const* rhs)
 {
-    assert(location != NULL);
     assert(rhs != NULL);
 
     struct cst_expr* const self = cst_expr_new(location, CST_EXPR_ALIGNOF);
@@ -612,12 +576,11 @@ cst_expr_new_alignof(
 }
 
 struct cst_expr*
-cst_expr_new_unary(struct token const* op, struct cst_expr const* rhs)
+cst_expr_new_unary(struct token op, struct cst_expr const* rhs)
 {
-    assert(op != NULL);
     assert(rhs != NULL);
 
-    struct cst_expr* const self = cst_expr_new(&op->location, CST_EXPR_UNARY);
+    struct cst_expr* const self = cst_expr_new(op.location, CST_EXPR_UNARY);
     self->data.unary.op = op;
     self->data.unary.rhs = rhs;
     return self;
@@ -625,15 +588,12 @@ cst_expr_new_unary(struct token const* op, struct cst_expr const* rhs)
 
 struct cst_expr*
 cst_expr_new_binary(
-    struct token const* op,
-    struct cst_expr const* lhs,
-    struct cst_expr const* rhs)
+    struct token op, struct cst_expr const* lhs, struct cst_expr const* rhs)
 {
-    assert(op != NULL);
     assert(lhs != NULL);
     assert(rhs != NULL);
 
-    struct cst_expr* const self = cst_expr_new(&op->location, CST_EXPR_BINARY);
+    struct cst_expr* const self = cst_expr_new(op.location, CST_EXPR_BINARY);
     self->data.binary.op = op;
     self->data.binary.lhs = lhs;
     self->data.binary.rhs = rhs;
@@ -642,11 +602,10 @@ cst_expr_new_binary(
 
 struct cst_conditional*
 cst_conditional_new(
-    struct source_location const* location,
+    struct source_location location,
     struct cst_expr const* condition,
     struct cst_block const* body)
 {
-    assert(location != NULL);
     assert(body != NULL);
 
     struct cst_conditional* const self = xalloc(NULL, sizeof(*self));
@@ -659,10 +618,8 @@ cst_conditional_new(
 
 struct cst_block*
 cst_block_new(
-    struct source_location const* location, struct cst_stmt const* const* stmts)
+    struct source_location location, struct cst_stmt const* const* stmts)
 {
-    assert(location != NULL);
-
     struct cst_block* const self = xalloc(NULL, sizeof(*self));
     memset(self, 0x00, sizeof(*self));
     self->location = location;
@@ -672,11 +629,10 @@ cst_block_new(
 
 struct cst_symbol*
 cst_symbol_new(
-    struct source_location const* location,
+    struct source_location location,
     bool is_from_root,
     struct cst_symbol_element const* const* elements)
 {
-    assert(location != NULL);
     assert(sbuf_count(elements) > 0);
 
     struct cst_symbol* const self = xalloc(NULL, sizeof(*self));
@@ -720,11 +676,10 @@ cst_function_parameter_new(
 
 struct cst_member*
 cst_member_new_variable(
-    struct source_location const* location,
+    struct source_location location,
     struct cst_identifier const* identifier,
     struct cst_typespec const* typespec)
 {
-    assert(location != NULL);
     assert(identifier != NULL);
     assert(typespec != NULL);
 
@@ -770,11 +725,10 @@ cst_member_new_function(struct cst_decl const* decl)
 
 struct cst_member_initializer*
 cst_member_initializer_new(
-    struct source_location const* location,
+    struct source_location location,
     struct cst_identifier const* identifier,
     struct cst_expr const* expr)
 {
-    assert(location != NULL);
     assert(identifier != NULL);
 
     struct cst_member_initializer* const self = xalloc(NULL, sizeof(*self));
@@ -786,11 +740,8 @@ cst_member_initializer_new(
 }
 
 static struct cst_typespec*
-cst_typespec_new(
-    struct source_location const* location, enum cst_typespec_kind kind)
+cst_typespec_new(struct source_location location, enum cst_typespec_kind kind)
 {
-    assert(location != NULL);
-
     struct cst_typespec* const self = xalloc(NULL, sizeof(*self));
     memset(self, 0x00, sizeof(*self));
     self->location = location;
@@ -811,11 +762,10 @@ cst_typespec_new_symbol(struct cst_symbol const* symbol)
 
 struct cst_typespec*
 cst_typespec_new_function(
-    struct source_location const* location,
+    struct source_location location,
     struct cst_typespec const* const* parameter_typespecs,
     struct cst_typespec const* return_typespec)
 {
-    assert(location != NULL);
     assert(return_typespec != NULL);
 
     struct cst_typespec* const self =
@@ -827,9 +777,8 @@ cst_typespec_new_function(
 
 struct cst_typespec*
 cst_typespec_new_pointer(
-    struct source_location const* location, struct cst_typespec const* base)
+    struct source_location location, struct cst_typespec const* base)
 {
-    assert(location != NULL);
     assert(base != NULL);
 
     struct cst_typespec* const self =
@@ -840,11 +789,10 @@ cst_typespec_new_pointer(
 
 struct cst_typespec*
 cst_typespec_new_array(
-    struct source_location const* location,
+    struct source_location location,
     struct cst_expr const* count,
     struct cst_typespec const* base)
 {
-    assert(location != NULL);
     assert(count != NULL);
     assert(base != NULL);
 
@@ -857,9 +805,8 @@ cst_typespec_new_array(
 
 struct cst_typespec*
 cst_typespec_new_slice(
-    struct source_location const* location, struct cst_typespec const* base)
+    struct source_location location, struct cst_typespec const* base)
 {
-    assert(location != NULL);
     assert(base != NULL);
 
     struct cst_typespec* const self =
@@ -870,9 +817,8 @@ cst_typespec_new_slice(
 
 struct cst_typespec*
 cst_typespec_new_typeof(
-    struct source_location const* location, struct cst_expr const* expr)
+    struct source_location location, struct cst_expr const* expr)
 {
-    assert(location != NULL);
     assert(expr != NULL);
 
     struct cst_typespec* const self =
@@ -882,9 +828,8 @@ cst_typespec_new_typeof(
 }
 
 struct cst_identifier*
-cst_identifier_new(struct source_location const* location, char const* name)
+cst_identifier_new(struct source_location location, char const* name)
 {
-    assert(location != NULL);
     assert(name != NULL);
 
     struct cst_identifier* const self = xalloc(NULL, sizeof(*self));

@@ -145,7 +145,7 @@ xalloc(void* ptr, size_t size)
         return NULL;
     }
     if ((ptr = realloc(ptr, size)) == NULL) {
-        error(NULL, "[%s] Out of memory", __func__);
+        error(NO_LOCATION, "[%s] Out of memory", __func__);
         abort();
     }
     return ptr;
@@ -202,7 +202,7 @@ canonical_path(char const* path)
     char resolved_path[PATH_MAX] = {0};
     if (realpath(path, resolved_path) == NULL) {
         fatal(
-            NULL,
+            NO_LOCATION,
             "failed to resolve path '%s' with error '%s'",
             path,
             strerror(errno));
@@ -233,7 +233,7 @@ directory_files(char const* path)
     DIR* const dir = opendir(path);
     if (dir == NULL) {
         fatal(
-            NULL,
+            NO_LOCATION,
             "failed to open directory '%s' with error '%s'",
             path,
             strerror(errno));
@@ -387,7 +387,7 @@ cstr_new_fmt(char const* fmt, ...)
 
     if (len < 0) {
         va_end(args);
-        fatal(NULL, "[%s] Formatting failure", __func__);
+        fatal(NO_LOCATION, "[%s] Formatting failure", __func__);
     }
 
     size_t size = (size_t)len + STR_LITERAL_COUNT("\0");
@@ -674,7 +674,7 @@ bitarr_set(struct bitarr* self, size_t n, int value)
     assert(self != NULL);
 
     if (n >= self->count) {
-        fatal(NULL, "[%s] Index out of bounds (%zu)", __func__, n);
+        fatal(NO_LOCATION, "[%s] Index out of bounds (%zu)", __func__, n);
     }
 
     BITARR__WORD_TYPE_* const pword = &self->words[n / BITARR__WORD_SIZE_];
@@ -689,7 +689,7 @@ bitarr_get(struct bitarr const* self, size_t n)
     assert(self != NULL);
 
     if (n >= self->count) {
-        fatal(NULL, "[%s] Index out of bounds (%zu)", __func__, n);
+        fatal(NO_LOCATION, "[%s] Index out of bounds (%zu)", __func__, n);
     }
 
     BITARR__WORD_TYPE_ const word = self->words[n / BITARR__WORD_SIZE_];
@@ -707,7 +707,7 @@ bitarr_assign(struct bitarr* self, struct bitarr const* othr)
 
     if (self->count != othr->count) {
         fatal(
-            NULL,
+            NO_LOCATION,
             "[%s] Mismatched array counts (%zu, %zu)",
             __func__,
             self->count,
@@ -726,7 +726,7 @@ bitarr_compl(struct bitarr* res, struct bitarr const* rhs)
 
     if (res->count != rhs->count) {
         fatal(
-            NULL,
+            NO_LOCATION,
             "[%s] Mismatched array counts (%zu, %zu)",
             __func__,
             res->count,
@@ -746,7 +746,7 @@ bitarr_twos_complement_neg(struct bitarr* res, struct bitarr* rhs)
 
     if (res->count != rhs->count) {
         fatal(
-            NULL,
+            NO_LOCATION,
             "[%s] Mismatched array counts (%zu, %zu)",
             __func__,
             res->count,
@@ -775,7 +775,7 @@ bitarr_shiftl(struct bitarr* res, struct bitarr const* lhs, size_t nbits)
 
     if (res->count != lhs->count) {
         fatal(
-            NULL,
+            NO_LOCATION,
             "[%s] Mismatched array counts (%zu, %zu)",
             __func__,
             res->count,
@@ -801,7 +801,7 @@ bitarr_shiftr(
 
     if (res->count != lhs->count) {
         fatal(
-            NULL,
+            NO_LOCATION,
             "[%s] Mismatched array counts (%zu, %zu)",
             __func__,
             res->count,
@@ -828,7 +828,7 @@ bitarr_and(
 
     if (res->count != lhs->count || res->count != rhs->count) {
         fatal(
-            NULL,
+            NO_LOCATION,
             "[%s] Mismatched array counts (%zu, %zu, %zu)",
             __func__,
             res->count,
@@ -851,7 +851,7 @@ bitarr_xor(
 
     if (res->count != lhs->count || res->count != rhs->count) {
         fatal(
-            NULL,
+            NO_LOCATION,
             "[%s] Mismatched array counts (%zu, %zu, %zu)",
             __func__,
             res->count,
@@ -874,7 +874,7 @@ bitarr_or(
 
     if (res->count != lhs->count || res->count != rhs->count) {
         fatal(
-            NULL,
+            NO_LOCATION,
             "[%s] Mismatched array counts (%zu, %zu, %zu)",
             __func__,
             res->count,
@@ -1045,7 +1045,7 @@ bigint__shiftr_limbs_(struct bigint* self, size_t nlimbs)
     }
     if (nlimbs > self->count) {
         fatal(
-            NULL,
+            NO_LOCATION,
             "[%s] Attempted right shift of %zu limbs on bigint with %zu limbs",
             __func__,
             nlimbs,
@@ -1521,7 +1521,7 @@ bigint_divrem(
 
     // lhs / 0 == undefined
     if (rhs->sign == 0) {
-        fatal(NULL, "[%s] Divide by zero", __func__);
+        fatal(NO_LOCATION, "[%s] Divide by zero", __func__);
     }
 
     // Binary Long Division Algorithm
@@ -2000,7 +2000,7 @@ string_append_vfmt(struct string* self, char const* fmt, va_list args)
     va_end(copy);
 
     if (len < 0) {
-        fatal(NULL, "[%s] Formatting failure", __func__);
+        fatal(NO_LOCATION, "[%s] Formatting failure", __func__);
     }
 
     size_t size = (size_t)len + STR_LITERAL_COUNT("\0");
@@ -2077,7 +2077,7 @@ read_source(char const* path)
     if (file_read_all(path, &text, &text_size)) {
         struct source_location const location = {path, NO_LINE, NO_PSRC};
         fatal(
-            &location,
+            location,
             "failed to read '%s' with error '%s'",
             path,
             strerror(errno));
@@ -2123,7 +2123,7 @@ source_line_end(char const* ptr)
 static void
 messagev(
     bool show_template_instantiation_stack,
-    struct source_location const* location,
+    struct source_location location,
     char const* level_text,
     char const* level_ansi,
     char const* fmt,
@@ -2133,29 +2133,27 @@ messagev(
     assert(level_ansi != NULL);
     assert(fmt != NULL);
 
-    char const* const path = location != NULL ? location->path : NO_PATH;
-    size_t const line = location != NULL ? location->line : NO_LINE;
-    char const* const psrc = location != NULL ? location->psrc : NO_PSRC;
-
     bool const is_tty = isatty(STDERR_FILENO);
 
-    if (path != NO_PATH || line != NO_LINE) {
+    if (location.path != NO_PATH || location.line != NO_LINE) {
         fprintf(stderr, "[");
 
-        if (path != NO_PATH) {
+        if (location.path != NO_PATH) {
             char const* const path_ansi_beg = is_tty ? ANSI_ESC_CYAN : "";
             char const* const path_ansi_end = is_tty ? ANSI_ESC_DEFAULT : "";
-            fprintf(stderr, "%s%s%s", path_ansi_beg, path, path_ansi_end);
+            fprintf(
+                stderr, "%s%s%s", path_ansi_beg, location.path, path_ansi_end);
         }
 
-        if (path != NO_PATH && line != NO_LINE) {
+        if (location.path != NO_PATH && location.line != NO_LINE) {
             fputc(':', stderr);
         }
 
-        if (line != NO_LINE) {
+        if (location.line != NO_LINE) {
             char const* const line_ansi_beg = is_tty ? ANSI_ESC_CYAN : "";
             char const* const line_ansi_end = is_tty ? ANSI_ESC_DEFAULT : "";
-            fprintf(stderr, "%s%zu%s", line_ansi_beg, line, line_ansi_end);
+            fprintf(
+                stderr, "%s%zu%s", line_ansi_beg, location.line, line_ansi_end);
         }
 
         fprintf(stderr, "] ");
@@ -2168,13 +2166,13 @@ messagev(
     vfprintf(stderr, fmt, args);
     fputs("\n", stderr);
 
-    if (psrc != NO_PSRC && *psrc != '\0') {
-        assert(path != NULL);
-        char const* const line_start = source_line_start(psrc);
-        char const* const line_end = source_line_end(psrc);
+    if (location.psrc != NO_PSRC && *location.psrc != '\0') {
+        assert(location.path != NULL);
+        char const* const line_start = source_line_start(location.psrc);
+        char const* const line_end = source_line_end(location.psrc);
 
         fprintf(stderr, "%.*s\n", (int)(line_end - line_start), line_start);
-        fprintf(stderr, "%*s^\n", (int)(psrc - line_start), "");
+        fprintf(stderr, "%*s^\n", (int)(location.psrc - line_start), "");
     }
 
     if (!show_template_instantiation_stack) {
@@ -2194,7 +2192,7 @@ messagev(
 }
 
 void
-info(struct source_location const* location, char const* fmt, ...)
+info(struct source_location location, char const* fmt, ...)
 {
     va_list args;
     va_start(args, fmt);
@@ -2203,7 +2201,7 @@ info(struct source_location const* location, char const* fmt, ...)
 }
 
 MESSAGEF void
-warning(struct source_location const* location, char const* fmt, ...)
+warning(struct source_location location, char const* fmt, ...)
 {
     va_list args;
     va_start(args, fmt);
@@ -2212,7 +2210,7 @@ warning(struct source_location const* location, char const* fmt, ...)
 }
 
 void
-error(struct source_location const* location, char const* fmt, ...)
+error(struct source_location location, char const* fmt, ...)
 {
     va_list args;
     va_start(args, fmt);
@@ -2221,7 +2219,7 @@ error(struct source_location const* location, char const* fmt, ...)
 }
 
 NORETURN void
-fatal(struct source_location const* location, char const* fmt, ...)
+fatal(struct source_location location, char const* fmt, ...)
 {
     va_list args;
     va_start(args, fmt);
@@ -2264,7 +2262,7 @@ spawnvpw(char const* const* argv)
 
     pid_t const pid = fork();
     if (pid == -1) {
-        fatal(NULL, "failed to fork with error '%s'", strerror(errno));
+        fatal(NO_LOCATION, "failed to fork with error '%s'", strerror(errno));
     }
 
     if (pid == 0) {
@@ -2275,7 +2273,7 @@ spawnvpw(char const* const* argv)
         char* const* argv_ = (char* const*)argv;
         if (execvp(argv[0], argv_) == -1) {
             fatal(
-                NULL,
+                NO_LOCATION,
                 "failed to execvp '%s' with error '%s'",
                 argv[0],
                 strerror(errno));

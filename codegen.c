@@ -49,7 +49,7 @@ appendln(char const* fmt, ...);
 static APPENDF void
 appendli(char const* fmt, ...);
 static APPENDF_LOCATION void
-appendli_location(struct source_location const* location, char const* fmt, ...);
+appendli_location(struct source_location location, char const* fmt, ...);
 static void
 appendch(char ch);
 // Declare NASM Dx data elements forming a static initializer.
@@ -141,15 +141,14 @@ appendli(char const* fmt, ...)
 }
 
 static void
-appendli_location(struct source_location const* location, char const* fmt, ...)
+appendli_location(struct source_location location, char const* fmt, ...)
 {
     assert(out != NULL);
-    assert(location != NULL);
-    assert(location->path != NO_PATH);
-    assert(location->line != NO_LINE);
-    assert(location->psrc != NO_PSRC);
+    assert(location.path != NO_PATH);
+    assert(location.line != NO_LINE);
+    assert(location.psrc != NO_PSRC);
 
-    string_append_fmt(out, "    ; [%s:%zu] ", location->path, location->line);
+    string_append_fmt(out, "    ; [%s:%zu] ", location.path, location.line);
 
     va_list args;
     va_start(args, fmt);
@@ -158,13 +157,13 @@ appendli_location(struct source_location const* location, char const* fmt, ...)
 
     string_append_cstr(out, "\n");
 
-    char const* const line_start = source_line_start(location->psrc);
-    char const* const line_end = source_line_end(location->psrc);
+    char const* const line_start = source_line_start(location.psrc);
+    char const* const line_end = source_line_end(location.psrc);
 
     string_append_fmt(
         out, "    ;%.*s\n", (int)(line_end - line_start), line_start);
     string_append_fmt(
-        out, "    ;%*s^\n", (int)(location->psrc - line_start), "");
+        out, "    ;%*s^\n", (int)(location.psrc - line_start), "");
 }
 
 static void
@@ -814,14 +813,14 @@ load_sysasm(void** buf, size_t* buf_size)
         // Use the default `sys.asm` file, `${SUNDER_HOME}/lib/sys/sys.asm`.
         char const* const SUNDER_HOME = getenv("SUNDER_HOME");
         if (SUNDER_HOME == NULL) {
-            fatal(NULL, "missing environment variable SUNDER_HOME");
+            fatal(NO_LOCATION, "missing environment variable SUNDER_HOME");
         }
         path = string_new_fmt("%s/lib/sys/sys.asm", SUNDER_HOME);
     }
 
     if (file_read_all(string_start(path), buf, buf_size)) {
         fatal(
-            NULL,
+            NO_LOCATION,
             "failed to read '%s' with error '%s'",
             string_start(path),
             strerror(errno));
@@ -840,7 +839,8 @@ codegen_extern_labels(void const* sysasm_buf, size_t sysasm_buf_size)
         bool const is_extern_variable =
             symbol->kind == SYMBOL_VARIABLE && symbol->data.variable->is_extern;
         bool const is_extern_function = symbol->kind == SYMBOL_FUNCTION
-            && symbol_xget_value(NULL, symbol)->data.function->body == NULL;
+            && symbol_xget_value(NO_LOCATION, symbol)->data.function->body
+                == NULL;
         if (!(is_extern_variable || is_extern_function)) {
             continue;
         }
@@ -915,7 +915,8 @@ codegen_global_labels(void)
     for (size_t i = 0; i < sbuf_count(context()->static_symbols); ++i) {
         struct symbol const* const symbol = context()->static_symbols[i];
         bool const is_global_function = symbol->kind == SYMBOL_FUNCTION
-            && symbol_xget_value(NULL, symbol)->data.function->body != NULL;
+            && symbol_xget_value(NO_LOCATION, symbol)->data.function->body
+                != NULL;
         if (is_global_function) {
             struct address const* const address = symbol_xget_address(symbol);
             assert(address->kind == ADDRESS_STATIC);
@@ -1053,7 +1054,7 @@ codegen_static_object(struct symbol const* symbol)
     appendln("$%s:", symbol_xget_address(symbol)->data.static_.name);
     if (symbol->data.variable->value != NULL) {
         // Variable is initialized.
-        append_dx_static_initializer(symbol_xget_value(NULL, symbol));
+        append_dx_static_initializer(symbol_xget_value(NO_LOCATION, symbol));
     }
     else {
         // Variable is uninitialized. The initial state of the object should be
@@ -1076,9 +1077,9 @@ codegen_static_function(struct symbol const* symbol)
     assert(symbol != NULL);
     assert(symbol->kind == SYMBOL_FUNCTION);
 
-    assert(symbol_xget_value(NULL, symbol)->type->kind == TYPE_FUNCTION);
+    assert(symbol_xget_value(NO_LOCATION, symbol)->type->kind == TYPE_FUNCTION);
     struct function const* const function =
-        symbol_xget_value(NULL, symbol)->data.function;
+        symbol_xget_value(NO_LOCATION, symbol)->data.function;
 
     bool const is_extern_function = function->body == NULL;
     if (is_extern_function) {
@@ -3278,7 +3279,7 @@ codegen(
         sbuf_push(backend_argv, (char const*)NULL);
     }
     else {
-        fatal(NULL, "unrecognized backend `%s`", backend);
+        fatal(NO_LOCATION, "unrecognized backend `%s`", backend);
     }
 
     sbuf(char const*) ld_argv = NULL;
@@ -3319,7 +3320,7 @@ codegen(
     if ((err = file_write_all(
              string_start(asm_path), string_start(out), string_count(out)))) {
         error(
-            NULL,
+            NO_LOCATION,
             "unable to write file `%s` with error '%s'",
             string_start(asm_path),
             strerror(errno));

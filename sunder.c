@@ -202,7 +202,7 @@ context_init(void)
         struct type* const type = t;                                           \
         freeze(type);                                                          \
         struct symbol* const symbol =                                          \
-            symbol_new_type(&s_context.builtin.location, type);                \
+            symbol_new_type(s_context.builtin.location, type);                 \
         freeze(symbol);                                                        \
         symbol_table_insert(                                                   \
             s_context.global_symbol_table, symbol->name, symbol, false);       \
@@ -323,7 +323,7 @@ validate_main_is_defined_correctly(void)
     }
 
     if (main_symbol == NULL || main_symbol->kind != SYMBOL_FUNCTION) {
-        fatal(NULL, "main function is not defined");
+        fatal(NO_LOCATION, "main function is not defined");
     }
 
     struct type const* const expected_type =

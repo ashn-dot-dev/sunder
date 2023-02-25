@@ -12,20 +12,20 @@ struct parser {
     struct module* module;
     struct lexer* lexer;
 
-    struct token const* current_token;
-    struct token const* peek_token;
+    struct token current_token;
+    struct token peek_token;
 };
 static struct parser*
 parser_new(struct module* module, struct lexer* lexer);
 static void
 parser_del(struct parser* self);
-static struct token const*
+static struct token
 advance_token(struct parser* parser);
 static bool
 check_current(struct parser const* parser, enum token_kind kind);
 static bool
 check_peek(struct parser const* parser, enum token_kind kind);
-static struct token const*
+static struct token
 expect_current(struct parser* parser, enum token_kind kind);
 
 static struct cst_module const*
@@ -197,14 +197,13 @@ parser_new(struct module* module, struct lexer* lexer)
     assert(lexer != NULL);
 
     struct parser* const self = xalloc(NULL, sizeof(*self));
+    memset(self, 0x00, sizeof(*self));
+
     self->module = module;
     self->lexer = lexer;
-    self->current_token = NULL;
     advance_token(self);
     advance_token(self);
 
-    assert(self->current_token != NULL);
-    assert(self->peek_token != NULL);
     return self;
 }
 
@@ -217,12 +216,12 @@ parser_del(struct parser* self)
     xalloc(self, XALLOC_FREE);
 }
 
-static struct token const*
+static struct token
 advance_token(struct parser* parser)
 {
     assert(parser != NULL);
 
-    struct token const* const current_token = parser->current_token;
+    struct token const current_token = parser->current_token;
     parser->current_token = parser->peek_token;
     parser->peek_token = lexer_next_token(parser->lexer);
     return current_token;
@@ -233,7 +232,7 @@ check_current(struct parser const* parser, enum token_kind kind)
 {
     assert(parser != NULL);
 
-    return parser->current_token->kind == kind;
+    return parser->current_token.kind == kind;
 }
 
 static bool
@@ -241,10 +240,10 @@ check_peek(struct parser const* parser, enum token_kind kind)
 {
     assert(parser != NULL);
 
-    return parser->peek_token->kind == kind;
+    return parser->peek_token.kind == kind;
 }
 
-static struct token const*
+static struct token
 expect_current(struct parser* parser, enum token_kind kind)
 {
     assert(parser != NULL);
@@ -253,7 +252,7 @@ expect_current(struct parser* parser, enum token_kind kind)
         char const* const expected = token_kind_to_cstr(kind);
         char* const found = token_to_new_cstr(parser->current_token);
         fatal(
-            &parser->current_token->location,
+            parser->current_token.location,
             "expected `%s`, found `%s`",
             expected,
             found);
@@ -293,8 +292,8 @@ parse_module(struct parser* parser)
 static struct cst_namespace const*
 parse_namespace(struct parser* parser)
 {
-    struct source_location const* const location =
-        &expect_current(parser, TOKEN_NAMESPACE)->location;
+    struct source_location const location =
+        expect_current(parser, TOKEN_NAMESPACE).location;
 
     sbuf(struct cst_identifier const*) identifiers = NULL;
     sbuf_push(identifiers, parse_identifier(parser));
@@ -315,11 +314,11 @@ parse_namespace(struct parser* parser)
 static struct cst_import const*
 parse_import(struct parser* parser)
 {
-    struct source_location const* const location =
-        &expect_current(parser, TOKEN_IMPORT)->location;
+    struct source_location const location =
+        expect_current(parser, TOKEN_IMPORT).location;
 
     struct string const* const bytes =
-        expect_current(parser, TOKEN_BYTES)->data.bytes;
+        expect_current(parser, TOKEN_BYTES).data.bytes;
     char const* const path = intern_cstr(string_start(bytes));
     expect_current(parser, TOKEN_SEMICOLON);
 
@@ -367,7 +366,7 @@ parse_decl(struct parser* parser)
     }
 
     fatal(
-        &parser->current_token->location,
+        parser->current_token.location,
         "expected declaration, found `%s`",
         token_to_new_cstr(parser->current_token));
     return NULL;
@@ -378,8 +377,8 @@ parse_decl_variable(struct parser* parser)
 {
     assert(parser != NULL);
 
-    struct source_location const* const location =
-        &expect_current(parser, TOKEN_VAR)->location;
+    struct source_location const location =
+        expect_current(parser, TOKEN_VAR).location;
     struct cst_identifier const* const identifier = parse_identifier(parser);
     struct cst_typespec const* typespec = NULL;
     if (check_current(parser, TOKEN_COLON)) {
@@ -414,8 +413,8 @@ parse_decl_constant(struct parser* parser)
 {
     assert(parser != NULL);
 
-    struct source_location const* const location =
-        &expect_current(parser, TOKEN_LET)->location;
+    struct source_location const location =
+        expect_current(parser, TOKEN_LET).location;
     struct cst_identifier const* const identifier = parse_identifier(parser);
     struct cst_typespec const* typespec = NULL;
     if (check_current(parser, TOKEN_COLON)) {
@@ -450,8 +449,8 @@ parse_decl_function(struct parser* parser)
 {
     assert(parser != NULL);
 
-    struct source_location const* const location =
-        &expect_current(parser, TOKEN_FUNC)->location;
+    struct source_location const location =
+        expect_current(parser, TOKEN_FUNC).location;
     struct cst_identifier const* const identifier = parse_identifier(parser);
     sbuf(struct cst_identifier const* const) const template_parameters =
         parse_template_parameter_list(parser);
@@ -479,8 +478,8 @@ parse_decl_struct(struct parser* parser)
 {
     assert(parser != NULL);
 
-    struct source_location const* const location =
-        &expect_current(parser, TOKEN_STRUCT)->location;
+    struct source_location const location =
+        expect_current(parser, TOKEN_STRUCT).location;
     struct cst_identifier const* const identifier = parse_identifier(parser);
     sbuf(struct cst_identifier const* const) const template_parameters =
         parse_template_parameter_list(parser);
@@ -500,8 +499,8 @@ parse_decl_extend(struct parser* parser)
 {
     assert(parser != NULL);
 
-    struct source_location const* const location =
-        &expect_current(parser, TOKEN_EXTEND)->location;
+    struct source_location const location =
+        expect_current(parser, TOKEN_EXTEND).location;
     struct cst_typespec const* const typespec = parse_typespec(parser);
     struct cst_decl const* const decl = parse_decl(parser);
 
@@ -517,8 +516,8 @@ parse_decl_alias(struct parser* parser)
 {
     assert(parser != NULL);
 
-    struct source_location const* const location =
-        &expect_current(parser, TOKEN_ALIAS)->location;
+    struct source_location const location =
+        expect_current(parser, TOKEN_ALIAS).location;
     struct cst_identifier const* const identifier = parse_identifier(parser);
     expect_current(parser, TOKEN_ASSIGN);
     struct cst_typespec const* const typespec = parse_typespec(parser);
@@ -536,8 +535,8 @@ parse_decl_extern_variable(struct parser* parser)
 {
     assert(parser != NULL);
 
-    struct source_location const* const location =
-        &expect_current(parser, TOKEN_EXTERN)->location;
+    struct source_location const location =
+        expect_current(parser, TOKEN_EXTERN).location;
     expect_current(parser, TOKEN_VAR);
     struct cst_identifier const* const identifier = parse_identifier(parser);
     expect_current(parser, TOKEN_COLON);
@@ -556,8 +555,8 @@ parse_decl_extern_function(struct parser* parser)
 {
     assert(parser != NULL);
 
-    struct source_location const* const location =
-        &expect_current(parser, TOKEN_EXTERN)->location;
+    struct source_location const location =
+        expect_current(parser, TOKEN_EXTERN).location;
     expect_current(parser, TOKEN_FUNC);
     struct cst_identifier const* const identifier = parse_identifier(parser);
     expect_current(parser, TOKEN_LPAREN);
@@ -612,8 +611,8 @@ parse_stmt(struct parser* parser)
     struct cst_expr const* const expr = parse_expr(parser);
     if (check_current(parser, TOKEN_ASSIGN)) {
         // <stmt-assign>
-        struct source_location const* const location =
-            &expect_current(parser, TOKEN_ASSIGN)->location;
+        struct source_location const location =
+            expect_current(parser, TOKEN_ASSIGN).location;
         struct cst_expr const* const rhs = parse_expr(parser);
         expect_current(parser, TOKEN_SEMICOLON);
 
@@ -647,8 +646,8 @@ parse_stmt_defer(struct parser* parser)
 {
     assert(parser != NULL);
 
-    struct source_location const* const location =
-        &expect_current(parser, TOKEN_DEFER)->location;
+    struct source_location const location =
+        expect_current(parser, TOKEN_DEFER).location;
 
     if (check_current(parser, TOKEN_LBRACE)) {
         struct cst_block const* block = parse_block(parser);
@@ -676,8 +675,7 @@ parse_stmt_if(struct parser* parser)
 
     sbuf(struct cst_conditional const*) conditionals = NULL;
 
-    struct source_location const* location =
-        &expect_current(parser, TOKEN_IF)->location;
+    struct source_location location = expect_current(parser, TOKEN_IF).location;
     struct cst_expr const* condition = parse_expr(parser);
     struct cst_block const* body = parse_block(parser);
     struct cst_conditional* conditional =
@@ -686,7 +684,7 @@ parse_stmt_if(struct parser* parser)
     sbuf_push(conditionals, conditional);
 
     while (check_current(parser, TOKEN_ELIF)) {
-        location = &advance_token(parser)->location;
+        location = advance_token(parser).location;
         condition = parse_expr(parser);
         body = parse_block(parser);
         conditional = cst_conditional_new(location, condition, body);
@@ -695,7 +693,7 @@ parse_stmt_if(struct parser* parser)
     }
 
     if (check_current(parser, TOKEN_ELSE)) {
-        location = &advance_token(parser)->location;
+        location = advance_token(parser).location;
         body = parse_block(parser);
         conditional = cst_conditional_new(location, NULL, body);
         freeze(conditional);
@@ -715,8 +713,8 @@ parse_stmt_for(struct parser* parser)
     assert(parser != NULL);
     assert(check_current(parser, TOKEN_FOR));
 
-    struct source_location const* const location =
-        &expect_current(parser, TOKEN_FOR)->location;
+    struct source_location const location =
+        expect_current(parser, TOKEN_FOR).location;
 
     // <stmt-for-range>
     if (check_current(parser, TOKEN_IDENTIFIER)
@@ -765,8 +763,8 @@ parse_stmt_break(struct parser* parser)
     assert(parser != NULL);
     assert(check_current(parser, TOKEN_BREAK));
 
-    struct source_location const* const location =
-        &expect_current(parser, TOKEN_BREAK)->location;
+    struct source_location const location =
+        expect_current(parser, TOKEN_BREAK).location;
 
     expect_current(parser, TOKEN_SEMICOLON);
 
@@ -782,8 +780,8 @@ parse_stmt_continue(struct parser* parser)
     assert(parser != NULL);
     assert(check_current(parser, TOKEN_CONTINUE));
 
-    struct source_location const* const location =
-        &expect_current(parser, TOKEN_CONTINUE)->location;
+    struct source_location const location =
+        expect_current(parser, TOKEN_CONTINUE).location;
 
     expect_current(parser, TOKEN_SEMICOLON);
 
@@ -799,8 +797,8 @@ parse_stmt_return(struct parser* parser)
     assert(parser != NULL);
     assert(check_current(parser, TOKEN_RETURN));
 
-    struct source_location const* const location =
-        &expect_current(parser, TOKEN_RETURN)->location;
+    struct source_location const location =
+        expect_current(parser, TOKEN_RETURN).location;
 
     struct cst_expr const* expr = NULL;
     if (!check_current(parser, TOKEN_SEMICOLON)) {
@@ -868,7 +866,7 @@ current_precedence(struct parser* parser)
 {
     assert(parser != NULL);
 
-    return token_kind_precedence(parser->current_token->kind);
+    return token_kind_precedence(parser->current_token.kind);
 }
 
 static parse_nud_fn
@@ -972,19 +970,19 @@ parse_expr_precedence(struct parser* parser, enum precedence precedence)
 {
     assert(parser != NULL);
 
-    struct token const* const nud_token = parser->current_token;
-    parse_nud_fn const parse_nud = token_kind_nud(nud_token->kind);
+    struct token const nud_token = parser->current_token;
+    parse_nud_fn const parse_nud = token_kind_nud(nud_token.kind);
     if (parse_nud == NULL) {
         fatal(
-            &nud_token->location,
+            nud_token.location,
             "unrecognized prefix token `%s` in expression",
-            token_kind_to_cstr(nud_token->kind));
+            token_kind_to_cstr(nud_token.kind));
     }
 
     struct cst_expr const* expr = parse_nud(parser);
     while (precedence < current_precedence(parser)) {
         parse_led_fn const parse_led =
-            token_kind_led(parser->current_token->kind);
+            token_kind_led(parser->current_token.kind);
         if (parse_led == NULL) {
             return expr;
         }
@@ -1023,8 +1021,8 @@ parse_expr_boolean(struct parser* parser)
 {
     assert(parser != NULL);
 
-    struct token const* const token = advance_token(parser);
-    assert(token->kind == TOKEN_TRUE || token->kind == TOKEN_FALSE);
+    struct token const token = advance_token(parser);
+    assert(token.kind == TOKEN_TRUE || token.kind == TOKEN_FALSE);
     struct cst_expr* const product = cst_expr_new_boolean(token);
 
     freeze(product);
@@ -1036,7 +1034,7 @@ parse_expr_integer(struct parser* parser)
 {
     assert(parser != NULL);
 
-    struct token const* const token = expect_current(parser, TOKEN_INTEGER);
+    struct token const token = expect_current(parser, TOKEN_INTEGER);
     struct cst_expr* const product = cst_expr_new_integer(token);
 
     freeze(product);
@@ -1048,7 +1046,7 @@ parse_expr_character(struct parser* parser)
 {
     assert(parser != NULL);
 
-    struct token const* const token = expect_current(parser, TOKEN_CHARACTER);
+    struct token const token = expect_current(parser, TOKEN_CHARACTER);
     struct cst_expr* const product = cst_expr_new_character(token);
 
     freeze(product);
@@ -1060,7 +1058,7 @@ parse_expr_bytes(struct parser* parser)
 {
     assert(parser != NULL);
 
-    struct token const* const token = expect_current(parser, TOKEN_BYTES);
+    struct token const token = expect_current(parser, TOKEN_BYTES);
     struct cst_expr* const product = cst_expr_new_bytes(token);
 
     freeze(product);
@@ -1072,8 +1070,8 @@ parse_expr_lparen(struct parser* parser)
 {
     assert(parser != NULL);
 
-    struct source_location const* const location =
-        &expect_current(parser, TOKEN_LPAREN)->location;
+    struct source_location const location =
+        expect_current(parser, TOKEN_LPAREN).location;
 
     if (!check_current(parser, TOKEN_COLON)) {
         // <expr-grouped>
@@ -1164,8 +1162,8 @@ parse_expr_led_lparen(struct parser* parser, struct cst_expr const* lhs)
     assert(parser != NULL);
     assert(lhs != NULL);
 
-    struct source_location const* const location =
-        &expect_current(parser, TOKEN_LPAREN)->location;
+    struct source_location const location =
+        expect_current(parser, TOKEN_LPAREN).location;
     sbuf(struct cst_expr const*) args = NULL;
     while (!check_current(parser, TOKEN_RPAREN)) {
         if (sbuf_count(args) != 0) {
@@ -1187,8 +1185,8 @@ parse_expr_led_lbracket(struct parser* parser, struct cst_expr const* lhs)
     assert(parser != NULL);
     assert(lhs != NULL);
 
-    struct source_location const* const location =
-        &expect_current(parser, TOKEN_LBRACKET)->location;
+    struct source_location const location =
+        expect_current(parser, TOKEN_LBRACKET).location;
     struct cst_expr const* const idx = parse_expr(parser);
 
     if (check_current(parser, TOKEN_COLON)) {
@@ -1219,8 +1217,8 @@ parse_expr_led_dot_star(struct parser* parser, struct cst_expr const* lhs)
     assert(parser != NULL);
     assert(lhs != NULL);
 
-    struct source_location const* const location =
-        &expect_current(parser, TOKEN_DOT_STAR)->location;
+    struct source_location const location =
+        expect_current(parser, TOKEN_DOT_STAR).location;
 
     struct cst_expr* const product =
         cst_expr_new_access_dereference(location, lhs);
@@ -1235,8 +1233,8 @@ parse_expr_led_dot(struct parser* parser, struct cst_expr const* lhs)
     assert(parser != NULL);
     assert(lhs != NULL);
 
-    struct source_location const* const location =
-        &expect_current(parser, TOKEN_DOT)->location;
+    struct source_location const location =
+        expect_current(parser, TOKEN_DOT).location;
     struct cst_symbol_element const* member = parse_symbol_element(parser);
 
     struct cst_expr* const product =
@@ -1251,8 +1249,8 @@ parse_expr_nud_unary(struct parser* parser)
 {
     assert(parser != NULL);
 
-    struct token const* const op = advance_token(parser);
-    bool const paren = op->kind == TOKEN_STARTOF || op->kind == TOKEN_COUNTOF;
+    struct token const op = advance_token(parser);
+    bool const paren = op.kind == TOKEN_STARTOF || op.kind == TOKEN_COUNTOF;
 
     if (paren) {
         expect_current(parser, TOKEN_LPAREN);
@@ -1274,8 +1272,8 @@ parse_expr_sizeof(struct parser* parser)
 {
     assert(parser != NULL);
 
-    struct source_location const* const location =
-        &expect_current(parser, TOKEN_SIZEOF)->location;
+    struct source_location const location =
+        expect_current(parser, TOKEN_SIZEOF).location;
     expect_current(parser, TOKEN_LPAREN);
     struct cst_typespec const* const rhs = parse_typespec(parser);
     expect_current(parser, TOKEN_RPAREN);
@@ -1291,8 +1289,8 @@ parse_expr_alignof(struct parser* parser)
 {
     assert(parser != NULL);
 
-    struct source_location const* const location =
-        &expect_current(parser, TOKEN_ALIGNOF)->location;
+    struct source_location const location =
+        expect_current(parser, TOKEN_ALIGNOF).location;
     expect_current(parser, TOKEN_LPAREN);
     struct cst_typespec const* const rhs = parse_typespec(parser);
     expect_current(parser, TOKEN_RPAREN);
@@ -1309,9 +1307,9 @@ parse_expr_led_binary(struct parser* parser, struct cst_expr const* lhs)
     assert(parser != NULL);
     assert(lhs != NULL);
 
-    struct token const* const op = advance_token(parser);
+    struct token const op = advance_token(parser);
     struct cst_expr const* const rhs =
-        parse_expr_precedence(parser, token_kind_precedence(op->kind));
+        parse_expr_precedence(parser, token_kind_precedence(op.kind));
     struct cst_expr* const product = cst_expr_new_binary(op, lhs, rhs);
 
     freeze(product);
@@ -1323,8 +1321,8 @@ parse_block(struct parser* parser)
 {
     assert(parser != NULL);
 
-    struct source_location const* const location =
-        &expect_current(parser, TOKEN_LBRACE)->location;
+    struct source_location const location =
+        expect_current(parser, TOKEN_LBRACE).location;
 
     sbuf(struct cst_stmt const*) stmts = NULL;
     while (!check_current(parser, TOKEN_RBRACE)) {
@@ -1344,11 +1342,11 @@ parse_symbol(struct parser* parser)
 {
     assert(parser != NULL);
 
-    struct source_location const* location = NULL;
+    struct source_location location = {0};
     bool is_from_root = false;
     if (check_current(parser, TOKEN_COLON_COLON)) {
         is_from_root = true;
-        location = &expect_current(parser, TOKEN_COLON_COLON)->location;
+        location = expect_current(parser, TOKEN_COLON_COLON).location;
     }
 
     sbuf(struct cst_symbol_element const*) elements = NULL;
@@ -1398,12 +1396,12 @@ parse_template_parameter_list(struct parser* parser)
         return template_parameters;
     }
 
-    struct token const* const lbracket = expect_current(parser, TOKEN_LBRACKET);
+    struct token const lbracket = expect_current(parser, TOKEN_LBRACKET);
     expect_current(parser, TOKEN_LBRACKET);
 
     if (check_current(parser, TOKEN_RBRACKET)) {
         fatal(
-            &lbracket->location,
+            lbracket.location,
             "template parameter list declared with zero parameters");
     }
 
@@ -1425,13 +1423,13 @@ parse_template_argument_list(struct parser* parser)
 {
     assert(parser != NULL);
 
-    struct token const* const lbracket = expect_current(parser, TOKEN_LBRACKET);
+    struct token const lbracket = expect_current(parser, TOKEN_LBRACKET);
     expect_current(parser, TOKEN_LBRACKET);
 
     sbuf(struct cst_typespec const*) template_arguments = NULL;
     if (check_current(parser, TOKEN_RBRACKET)) {
         fatal(
-            &lbracket->location,
+            lbracket.location,
             "template argument list contains zero template arguments");
     }
 
@@ -1516,7 +1514,7 @@ parse_member(struct parser* parser)
     }
 
     fatal(
-        &parser->current_token->location,
+        parser->current_token.location,
         "expected member variable, member constant, or member function, found `%s`",
         token_to_new_cstr(parser->current_token));
     return NULL;
@@ -1527,8 +1525,8 @@ parse_member_variable(struct parser* parser)
 {
     assert(parser != NULL);
 
-    struct source_location const* const location =
-        &expect_current(parser, TOKEN_VAR)->location;
+    struct source_location const location =
+        expect_current(parser, TOKEN_VAR).location;
     struct cst_identifier const* const identifier = parse_identifier(parser);
     expect_current(parser, TOKEN_COLON);
     struct cst_typespec const* const typespec = parse_typespec(parser);
@@ -1592,8 +1590,8 @@ parse_member_initializer(struct parser* parser)
 {
     assert(parser != NULL);
 
-    struct source_location const* const location =
-        &expect_current(parser, TOKEN_DOT)->location;
+    struct source_location const location =
+        expect_current(parser, TOKEN_DOT).location;
     struct cst_identifier const* identifier = parse_identifier(parser);
     expect_current(parser, TOKEN_ASSIGN);
     struct cst_expr const* expr = NULL;
@@ -1638,7 +1636,7 @@ parse_typespec(struct parser* parser)
     }
 
     fatal(
-        &parser->current_token->location,
+        parser->current_token.location,
         "expected type specifier, found `%s`",
         token_to_new_cstr(parser->current_token));
     return NULL;
@@ -1663,8 +1661,8 @@ parse_typespec_function(struct parser* parser)
     assert(parser != NULL);
     assert(check_current(parser, TOKEN_FUNC));
 
-    struct source_location const* const location =
-        &expect_current(parser, TOKEN_FUNC)->location;
+    struct source_location const location =
+        expect_current(parser, TOKEN_FUNC).location;
 
     expect_current(parser, TOKEN_LPAREN);
     sbuf(struct cst_typespec const*) parameter_typespecs = NULL;
@@ -1693,8 +1691,8 @@ parse_typespec_pointer(struct parser* parser)
     assert(parser != NULL);
     assert(check_current(parser, TOKEN_STAR));
 
-    struct source_location const* const location =
-        &expect_current(parser, TOKEN_STAR)->location;
+    struct source_location const location =
+        expect_current(parser, TOKEN_STAR).location;
 
     struct cst_typespec const* const base = parse_typespec(parser);
 
@@ -1711,8 +1709,8 @@ parse_typespec_array_or_slice(struct parser* parser)
     assert(parser != NULL);
     assert(check_current(parser, TOKEN_LBRACKET));
 
-    struct source_location const* const location =
-        &expect_current(parser, TOKEN_LBRACKET)->location;
+    struct source_location const location =
+        expect_current(parser, TOKEN_LBRACKET).location;
 
     if (check_current(parser, TOKEN_RBRACKET)) {
         // <typespec-slice>
@@ -1744,8 +1742,8 @@ parse_typespec_typeof(struct parser* parser)
     assert(parser != NULL);
     assert(check_current(parser, TOKEN_TYPEOF));
 
-    struct source_location const* const location =
-        &expect_current(parser, TOKEN_TYPEOF)->location;
+    struct source_location const location =
+        expect_current(parser, TOKEN_TYPEOF).location;
     expect_current(parser, TOKEN_LPAREN);
     struct cst_expr const* expr = parse_expr(parser);
     expect_current(parser, TOKEN_RPAREN);
@@ -1762,10 +1760,10 @@ parse_identifier(struct parser* parser)
 {
     assert(parser != NULL);
 
-    struct token const* const token = expect_current(parser, TOKEN_IDENTIFIER);
-    struct source_location const* const location = &token->location;
+    struct token const token = expect_current(parser, TOKEN_IDENTIFIER);
+    struct source_location const location = token.location;
     struct cst_identifier* const product =
-        cst_identifier_new(location, token->data.identifier);
+        cst_identifier_new(location, token.data.identifier);
 
     freeze(product);
     return product;

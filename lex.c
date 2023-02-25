@@ -112,19 +112,16 @@ token_kind_to_cstr(enum token_kind kind)
 }
 
 char*
-token_to_new_cstr(struct token const* token)
+token_to_new_cstr(struct token token)
 {
-    assert(token != NULL);
-
-    if (token->kind == TOKEN_IDENTIFIER) {
-        return cstr_new_fmt(
-            "identifier(%.*s)", (int)token->count, token->start);
+    if (token.kind == TOKEN_IDENTIFIER) {
+        return cstr_new_fmt("identifier(%.*s)", (int)token.count, token.start);
     }
-    if (token->kind == TOKEN_INTEGER) {
-        return cstr_new_fmt("integer(%.*s)", (int)token->count, token->start);
+    if (token.kind == TOKEN_INTEGER) {
+        return cstr_new_fmt("integer(%.*s)", (int)token.count, token.start);
     }
 
-    return cstr_new_cstr(token_kind_to_cstr(token->kind));
+    return cstr_new_cstr(token_kind_to_cstr(token.kind));
 }
 
 struct lexer {
@@ -157,8 +154,8 @@ lexer_del(struct lexer* self)
     xalloc(self, XALLOC_FREE);
 }
 
-static struct token*
-token_new(
+static struct token
+token_init(
     char const* start,
     size_t count,
     struct source_location location,
@@ -167,31 +164,27 @@ token_new(
     assert(start != NULL || count == 0);
     assert(count != 0 || kind == TOKEN_EOF);
 
-    struct token* const self = xalloc(NULL, sizeof(*self));
-    memset(self, 0x00, sizeof(*self));
-    self->kind = kind;
-    self->start = start;
-    self->count = count;
-    self->location = location;
-
-    freeze(self);
-    return self;
+    return (struct token){
+        .start = start,
+        .count = count,
+        .location = location,
+        .kind = kind,
+    };
 }
 
-static struct token*
-token_new_identifier(
+static struct token
+token_init_identifier(
     char const* start, size_t count, struct source_location location)
 {
     assert(start != NULL && count != 0);
 
-    struct token* const token =
-        token_new(start, count, location, TOKEN_IDENTIFIER);
-    token->data.identifier = intern(start, count);
+    struct token token = token_init(start, count, location, TOKEN_IDENTIFIER);
+    token.data.identifier = intern(start, count);
     return token;
 }
 
-static struct token*
-token_new_integer(
+static struct token
+token_init_integer(
     char const* start,
     size_t count,
     struct source_location location,
@@ -206,10 +199,9 @@ token_new_integer(
     assert(value != NULL);
     bigint_freeze(value);
 
-    struct token* const token =
-        token_new(start, count, location, TOKEN_INTEGER);
-    token->data.integer.value = value;
-    token->data.integer.suffix = intern(suffix.start, suffix.count);
+    struct token token = token_init(start, count, location, TOKEN_INTEGER);
+    token.data.integer.value = value;
+    token.data.integer.suffix = intern(suffix.start, suffix.count);
     return token;
 }
 
@@ -251,7 +243,7 @@ skip_whitespace_and_comments(struct lexer* self)
     }
 }
 
-static struct token*
+static struct token
 lex_keyword_or_identifier(struct lexer* self, struct source_location location)
 {
     assert(self != NULL);
@@ -267,14 +259,14 @@ lex_keyword_or_identifier(struct lexer* self, struct source_location location)
         struct vstr const* const keyword = &token_kind_vstrs[i];
         if (count == keyword->count
             && safe_memcmp(start, keyword->start, count) == 0) {
-            return token_new(start, count, location, (enum token_kind)i);
+            return token_init(start, count, location, (enum token_kind)i);
         }
     }
 
-    return token_new_identifier(start, count, location);
+    return token_init_identifier(start, count, location);
 }
 
-static struct token*
+static struct token
 lex_integer(struct lexer* self, struct source_location location)
 {
     assert(self != NULL);
@@ -300,7 +292,7 @@ lex_integer(struct lexer* self, struct source_location location)
     if (!radix_isdigit(*self->current)) {
         struct source_location const location = {
             self->module->name, self->current_line, self->current};
-        fatal(&location, "integer literal has no digits");
+        fatal(location, "integer literal has no digits");
     }
     while (radix_isdigit(*self->current)) {
         self->current += 1;
@@ -318,10 +310,8 @@ lex_integer(struct lexer* self, struct source_location location)
     size_t const count = (size_t)(self->current - start);
     struct vstr const number = {number_start, number_count};
     struct vstr const suffix = {suffix_start, suffix_count};
-    struct token* const token =
-        token_new_integer(start, count, location, number, suffix);
 
-    return token;
+    return token_init_integer(start, count, location, number, suffix);
 }
 
 // Read and return one (possibly escaped) character. Invalid characters (i.e.
@@ -341,13 +331,13 @@ advance_character(struct lexer* self, char const* what)
     if (*self->current == '\n') {
         struct source_location const location = {
             self->module->name, self->current_line, self->current};
-        fatal(&location, "end-of-line encountered in %s", what);
+        fatal(location, "end-of-line encountered in %s", what);
     }
     if (!safe_isprint(*self->current)) {
         struct source_location const location = {
             self->module->name, self->current_line, self->current};
         fatal(
-            &location,
+            location,
             "non-printable byte 0x%02x in %s",
             (unsigned char)*self->current,
             what);
@@ -389,7 +379,7 @@ advance_character(struct lexer* self, char const* what)
             || !safe_isxdigit(self->current[3])) {
             struct source_location const location = {
                 self->module->name, self->current_line, self->current};
-            fatal(&location, "invalid hexadecimal escape sequence");
+            fatal(location, "invalid hexadecimal escape sequence");
         }
         int const result =
             ((int)strtol((char[]){(char)self->current[2], '\0'}, NULL, 16) << 4)
@@ -400,7 +390,7 @@ advance_character(struct lexer* self, char const* what)
     default: {
         struct source_location const location = {
             self->module->name, self->current_line, self->current};
-        fatal(&location, "unknown escape sequence");
+        fatal(location, "unknown escape sequence");
     }
     }
 
@@ -408,7 +398,7 @@ advance_character(struct lexer* self, char const* what)
     return 0;
 }
 
-static struct token*
+static struct token
 lex_character(struct lexer* self, struct source_location location)
 {
     assert(self != NULL);
@@ -437,24 +427,24 @@ lex_character(struct lexer* self, struct source_location location)
     if (*self->current == '\n') {
         struct source_location const location = {
             self->module->name, self->current_line, self->current};
-        fatal(&location, "end-of-line encountered in character literal");
+        fatal(location, "end-of-line encountered in character literal");
     }
 
     if (*self->current != '\'') {
         struct source_location const location = {
             self->module->name, self->current_line, start};
-        fatal(&location, "invalid character literal");
+        fatal(location, "invalid character literal");
     }
     self->current += 1;
 
-    struct token* token = token_new(
+    struct token token = token_init(
         start, (size_t)(self->current - start), location, TOKEN_CHARACTER);
-    token->data.character = character;
+    token.data.character = character;
 
     return token;
 }
 
-static struct token*
+static struct token
 lex_bytes(struct lexer* self, struct source_location location)
 {
     assert(self != NULL);
@@ -473,14 +463,14 @@ lex_bytes(struct lexer* self, struct source_location location)
     self->current += 1;
 
     string_freeze(bytes);
-    struct token* token = token_new(
+    struct token token = token_init(
         start, (size_t)(self->current - start), location, TOKEN_BYTES);
-    token->data.bytes = bytes;
+    token.data.bytes = bytes;
 
     return token;
 }
 
-static struct token*
+static struct token
 lex_sigil(struct lexer* self, struct source_location location)
 {
     assert(self != NULL);
@@ -491,7 +481,7 @@ lex_sigil(struct lexer* self, struct source_location location)
         size_t const sigil_count = token_kind_vstrs[i].count;
         if (cstr_starts_with(self->current, sigil_start)) {
             self->current += sigil_count;
-            return token_new(
+            return token_init(
                 sigil_start, sigil_count, location, (enum token_kind)i);
         }
     }
@@ -502,11 +492,11 @@ lex_sigil(struct lexer* self, struct source_location location)
         count += 1;
     }
 
-    fatal(&location, "invalid token `%.*s`", (int)count, start);
-    return NULL;
+    fatal(location, "invalid token `%.*s`", (int)count, start);
+    return (struct token){0};
 }
 
-struct token const*
+struct token
 lexer_next_token(struct lexer* self)
 {
     assert(self != NULL);
@@ -535,9 +525,9 @@ lexer_next_token(struct lexer* self)
         return lex_sigil(self, location);
     }
     if (ch == '\0') {
-        return token_new(self->current, 1u, location, TOKEN_EOF);
+        return token_init(self->current, 1u, location, TOKEN_EOF);
     }
 
-    fatal(&location, "invalid token");
-    return NULL;
+    fatal(location, "invalid token");
+    return (struct token){0};
 }

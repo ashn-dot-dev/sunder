@@ -381,7 +381,7 @@ type_unique_function(
     }
 
     struct symbol* const symbol =
-        symbol_new_type(&context()->builtin.location, type);
+        symbol_new_type(context()->builtin.location, type);
     symbol_table_insert(
         context()->global_symbol_table, symbol->name, symbol, false);
     freeze(type);
@@ -403,7 +403,7 @@ type_unique_pointer(struct type const* base)
     }
 
     struct symbol* const symbol =
-        symbol_new_type(&context()->builtin.location, type);
+        symbol_new_type(context()->builtin.location, type);
     symbol_table_insert(
         context()->global_symbol_table, symbol->name, symbol, false);
     freeze(type);
@@ -413,9 +413,7 @@ type_unique_pointer(struct type const* base)
 
 struct type const*
 type_unique_array(
-    struct source_location const* location,
-    uint64_t count,
-    struct type const* base)
+    struct source_location location, uint64_t count, struct type const* base)
 {
     assert(base != NULL);
 
@@ -434,7 +432,7 @@ type_unique_array(
     }
 
     struct symbol* const symbol =
-        symbol_new_type(&context()->builtin.location, type);
+        symbol_new_type(context()->builtin.location, type);
     symbol_table_insert(
         context()->global_symbol_table, symbol->name, symbol, false);
     freeze(type);
@@ -456,7 +454,7 @@ type_unique_slice(struct type const* base)
     }
 
     struct symbol* const symbol =
-        symbol_new_type(&context()->builtin.location, type);
+        symbol_new_type(context()->builtin.location, type);
     symbol_table_insert(
         context()->global_symbol_table, symbol->name, symbol, false);
     freeze(type);
@@ -603,9 +601,8 @@ symbol_kind_to_cstr(enum symbol_kind kind)
 }
 
 struct symbol*
-symbol_new_type(struct source_location const* location, struct type const* type)
+symbol_new_type(struct source_location location, struct type const* type)
 {
-    assert(location != NULL);
     assert(type != NULL);
 
     struct symbol* const self = xalloc(NULL, sizeof(*self));
@@ -619,11 +616,10 @@ symbol_new_type(struct source_location const* location, struct type const* type)
 
 struct symbol*
 symbol_new_variable(
-    struct source_location const* location,
+    struct source_location location,
     char const* name,
     struct object const* object)
 {
-    assert(location != NULL);
     assert(name != NULL);
     assert(object != NULL);
     assert(!(object->is_extern && object->value != NULL));
@@ -639,11 +635,10 @@ symbol_new_variable(
 
 struct symbol*
 symbol_new_constant(
-    struct source_location const* location,
+    struct source_location location,
     char const* name,
     struct object const* object)
 {
-    assert(location != NULL);
     assert(name != NULL);
     assert(object != NULL);
     assert(!object->is_extern);
@@ -659,11 +654,10 @@ symbol_new_constant(
 
 struct symbol*
 symbol_new_function(
-    struct source_location const* location,
+    struct source_location location,
     char const* name,
     struct function const* function)
 {
-    assert(location != NULL);
     assert(function != NULL);
     assert(function->type->kind == TYPE_FUNCTION);
 
@@ -678,7 +672,7 @@ symbol_new_function(
 
 struct symbol*
 symbol_new_template(
-    struct source_location const* location,
+    struct source_location location,
     char const* name,
     struct cst_decl const* decl,
     char const* symbol_name_prefix,
@@ -686,7 +680,6 @@ symbol_new_template(
     struct symbol_table* parent_symbol_table,
     struct symbol_table* symbols)
 {
-    assert(location != NULL);
     assert(name != NULL);
     assert(decl != NULL);
     assert(symbols != NULL);
@@ -706,11 +699,10 @@ symbol_new_template(
 
 struct symbol*
 symbol_new_namespace(
-    struct source_location const* location,
+    struct source_location location,
     char const* name,
     struct symbol_table* symbols)
 {
-    assert(location != NULL);
     assert(name != NULL);
     assert(symbols != NULL);
 
@@ -789,8 +781,7 @@ symbol_xget_address(struct symbol const* self)
 }
 
 struct value const*
-symbol_xget_value(
-    struct source_location const* location, struct symbol const* self)
+symbol_xget_value(struct source_location location, struct symbol const* self)
 {
     switch (self->kind) {
     case SYMBOL_VARIABLE: {
@@ -862,8 +853,8 @@ symbol_table_insert(
                 symbol->location,
                 "redeclaration of `%s` previously declared at [%s:%zu]",
                 name,
-                local->location->path,
-                local->location->line);
+                local->location.path,
+                local->location.line);
         }
     }
 
@@ -906,7 +897,7 @@ symbol_table_lookup_local(struct symbol_table const* self, char const* name)
 }
 
 static struct stmt*
-stmt_new(struct source_location const* location, enum stmt_kind kind)
+stmt_new(struct source_location location, enum stmt_kind kind)
 {
     struct stmt* const self = xalloc(NULL, sizeof(*self));
     memset(self, 0x00, sizeof(*self));
@@ -917,11 +908,10 @@ stmt_new(struct source_location const* location, enum stmt_kind kind)
 
 struct stmt*
 stmt_new_defer(
-    struct source_location const* location,
+    struct source_location location,
     struct stmt const* prev,
     struct block const* body)
 {
-    assert(location != NULL);
     assert(prev == NULL || prev->kind == STMT_DEFER);
     assert(body != NULL);
 
@@ -943,13 +933,12 @@ stmt_new_if(struct conditional const* const* conditionals)
 
 struct stmt*
 stmt_new_for_range(
-    struct source_location const* location,
+    struct source_location location,
     struct symbol const* loop_variable,
     struct expr const* begin,
     struct expr const* end,
     struct block const* body)
 {
-    assert(location != NULL);
     assert(loop_variable != NULL);
     assert(loop_variable->kind == SYMBOL_VARIABLE);
     assert(symbol_xget_type(loop_variable) == context()->builtin.usize);
@@ -969,11 +958,10 @@ stmt_new_for_range(
 
 struct stmt*
 stmt_new_for_expr(
-    struct source_location const* location,
+    struct source_location location,
     struct expr const* expr,
     struct block const* body)
 {
-    assert(location != NULL);
     assert(expr != NULL);
     assert(body != NULL);
 
@@ -985,11 +973,10 @@ stmt_new_for_expr(
 
 struct stmt*
 stmt_new_break(
-    struct source_location const* location,
+    struct source_location location,
     struct stmt const* defer_begin,
     struct stmt const* defer_end)
 {
-    assert(location != NULL);
     assert(defer_begin == NULL || defer_begin->kind == STMT_DEFER);
     assert(defer_end == NULL || defer_end->kind == STMT_DEFER);
 
@@ -1001,11 +988,10 @@ stmt_new_break(
 
 struct stmt*
 stmt_new_continue(
-    struct source_location const* location,
+    struct source_location location,
     struct stmt const* defer_begin,
     struct stmt const* defer_end)
 {
-    assert(location != NULL);
     assert(defer_begin == NULL || defer_begin->kind == STMT_DEFER);
     assert(defer_end == NULL || defer_end->kind == STMT_DEFER);
 
@@ -1017,12 +1003,10 @@ stmt_new_continue(
 
 struct stmt*
 stmt_new_return(
-    struct source_location const* location,
+    struct source_location location,
     struct expr const* expr,
     struct stmt const* defer)
 {
-    assert(location != NULL);
-
     struct stmt* const self = stmt_new(location, STMT_RETURN);
     self->data.return_.expr = expr;
     self->data.return_.defer = defer;
@@ -1031,11 +1015,10 @@ stmt_new_return(
 
 struct stmt*
 stmt_new_assign(
-    struct source_location const* location,
+    struct source_location location,
     struct expr const* lhs,
     struct expr const* rhs)
 {
-    assert(location != NULL);
     assert(lhs != NULL);
     assert(rhs != NULL);
 
@@ -1046,7 +1029,7 @@ stmt_new_assign(
 }
 
 struct stmt*
-stmt_new_expr(struct source_location const* location, struct expr const* expr)
+stmt_new_expr(struct source_location location, struct expr const* expr)
 {
     assert(expr != NULL);
 
@@ -1057,11 +1040,10 @@ stmt_new_expr(struct source_location const* location, struct expr const* expr)
 
 static struct expr*
 expr_new(
-    struct source_location const* location,
+    struct source_location location,
     struct type const* type,
     enum expr_kind kind)
 {
-    assert(location != NULL);
     assert(type != NULL);
 
     struct expr* const self = xalloc(NULL, sizeof(*self));
@@ -1073,10 +1055,8 @@ expr_new(
 }
 
 struct expr*
-expr_new_symbol(
-    struct source_location const* location, struct symbol const* symbol)
+expr_new_symbol(struct source_location location, struct symbol const* symbol)
 {
-    assert(location != NULL);
     assert(symbol != NULL);
     assert(symbol->kind != SYMBOL_TYPE);
 
@@ -1087,10 +1067,8 @@ expr_new_symbol(
 }
 
 struct expr*
-expr_new_value(
-    struct source_location const* location, struct value const* value)
+expr_new_value(struct source_location location, struct value const* value)
 {
-    assert(location != NULL);
     assert(value != NULL);
 
     struct expr* const self = expr_new(location, value->type, EXPR_VALUE);
@@ -1100,11 +1078,10 @@ expr_new_value(
 
 struct expr*
 expr_new_bytes(
-    struct source_location const* location,
+    struct source_location location,
     struct address const* address,
     size_t count)
 {
-    assert(location != NULL);
     assert(address != NULL);
 
     struct type const* const type = type_unique_slice(context()->builtin.byte);
@@ -1116,12 +1093,11 @@ expr_new_bytes(
 
 struct expr*
 expr_new_array_list(
-    struct source_location const* location,
+    struct source_location location,
     struct type const* type,
     struct expr const* const* elements,
     struct expr const* ellipsis)
 {
-    assert(location != NULL);
     assert(type != NULL);
     assert(type->kind == TYPE_ARRAY);
 
@@ -1133,12 +1109,11 @@ expr_new_array_list(
 
 struct expr*
 expr_new_slice_list(
-    struct source_location const* location,
+    struct source_location location,
     struct type const* type,
     struct symbol const* array_symbol,
     struct expr const* const* elements)
 {
-    assert(location != NULL);
     assert(type != NULL);
     assert(type->kind == TYPE_SLICE);
 
@@ -1150,12 +1125,11 @@ expr_new_slice_list(
 
 struct expr*
 expr_new_slice(
-    struct source_location const* location,
+    struct source_location location,
     struct type const* type,
     struct expr const* pointer,
     struct expr const* count)
 {
-    assert(location != NULL);
     assert(type != NULL);
     assert(type->kind == TYPE_SLICE);
     assert(pointer != NULL);
@@ -1169,11 +1143,10 @@ expr_new_slice(
 
 struct expr*
 expr_new_struct(
-    struct source_location const* location,
+    struct source_location location,
     struct type const* type,
     struct expr const* const* member_variables)
 {
-    assert(location != NULL);
     assert(type != NULL);
     assert(type->kind == TYPE_STRUCT);
 
@@ -1184,11 +1157,10 @@ expr_new_struct(
 
 struct expr*
 expr_new_cast(
-    struct source_location const* location,
+    struct source_location location,
     struct type const* type,
     struct expr const* expr)
 {
-    assert(location != NULL);
     assert(type != NULL);
     assert(expr != NULL);
 
@@ -1199,11 +1171,10 @@ expr_new_cast(
 
 struct expr*
 expr_new_call(
-    struct source_location const* location,
+    struct source_location location,
     struct expr const* function,
     struct expr const* const* arguments)
 {
-    assert(location != NULL);
     assert(function != NULL);
     assert(function->type->kind == TYPE_FUNCTION);
 
@@ -1216,11 +1187,10 @@ expr_new_call(
 
 struct expr*
 expr_new_access_index(
-    struct source_location const* location,
+    struct source_location location,
     struct expr const* lhs,
     struct expr const* idx)
 {
-    assert(location != NULL);
     assert(lhs != NULL);
     assert(lhs->type->kind == TYPE_ARRAY || lhs->type->kind == TYPE_SLICE);
     assert(idx != NULL);
@@ -1247,12 +1217,11 @@ expr_new_access_index(
 
 struct expr*
 expr_new_access_slice(
-    struct source_location const* location,
+    struct source_location location,
     struct expr const* lhs,
     struct expr const* begin,
     struct expr const* end)
 {
-    assert(location != NULL);
     assert(lhs != NULL);
     assert(lhs->type->kind == TYPE_ARRAY || lhs->type->kind == TYPE_SLICE);
     assert(begin != NULL);
@@ -1284,11 +1253,10 @@ expr_new_access_slice(
 
 struct expr*
 expr_new_access_member_variable(
-    struct source_location const* location,
+    struct source_location location,
     struct expr const* lhs,
     struct member_variable const* member_variable)
 {
-    assert(location != NULL);
     assert(lhs != NULL);
     assert(lhs->type->kind == TYPE_STRUCT);
     assert(member_variable != NULL);
@@ -1302,9 +1270,8 @@ expr_new_access_member_variable(
 }
 
 struct expr*
-expr_new_sizeof(struct source_location const* location, struct type const* rhs)
+expr_new_sizeof(struct source_location location, struct type const* rhs)
 {
-    assert(location != NULL);
     assert(rhs != NULL);
 
     struct expr* const self =
@@ -1314,9 +1281,8 @@ expr_new_sizeof(struct source_location const* location, struct type const* rhs)
 }
 
 struct expr*
-expr_new_alignof(struct source_location const* location, struct type const* rhs)
+expr_new_alignof(struct source_location location, struct type const* rhs)
 {
-    assert(location != NULL);
     assert(rhs != NULL);
 
     struct expr* const self =
@@ -1327,12 +1293,11 @@ expr_new_alignof(struct source_location const* location, struct type const* rhs)
 
 struct expr*
 expr_new_unary(
-    struct source_location const* location,
+    struct source_location location,
     struct type const* type,
     enum uop_kind op,
     struct expr const* rhs)
 {
-    assert(location != NULL);
     assert(type != NULL);
     assert(rhs != NULL);
 
@@ -1344,13 +1309,12 @@ expr_new_unary(
 
 struct expr*
 expr_new_binary(
-    struct source_location const* location,
+    struct source_location location,
     struct type const* type,
     enum bop_kind op,
     struct expr const* lhs,
     struct expr const* rhs)
 {
-    assert(location != NULL);
     assert(type != NULL);
     assert(lhs != NULL);
     assert(rhs != NULL);
@@ -1447,7 +1411,7 @@ function_new(struct type const* type, struct address const* address)
 
 struct conditional*
 conditional_new(
-    struct source_location const* location,
+    struct source_location location,
     struct expr const* condition,
     struct block const* body)
 {
@@ -1461,13 +1425,12 @@ conditional_new(
 
 struct block*
 block_new(
-    struct source_location const* location,
+    struct source_location location,
     struct symbol_table* symbol_table,
     struct stmt const* const* stmts,
     struct stmt const* defer_begin,
     struct stmt const* defer_end)
 {
-    assert(location != NULL);
     assert(symbol_table != NULL);
     assert(defer_begin == NULL || defer_begin->kind == STMT_DEFER);
     assert(defer_end == NULL || defer_end->kind == STMT_DEFER);
@@ -1821,9 +1784,7 @@ value_clone(struct value const* self)
 
 struct value const*
 value_get_member_variable(
-    struct source_location const* location,
-    struct value const* self,
-    char const* name)
+    struct source_location location, struct value const* self, char const* name)
 {
     assert(self != NULL);
     assert(name != NULL);
@@ -1838,9 +1799,7 @@ value_get_member_variable(
 
 struct value const*
 value_xget_member_variable(
-    struct source_location const* location,
-    struct value const* self,
-    char const* name)
+    struct source_location location, struct value const* self, char const* name)
 {
     assert(self != NULL);
     assert(name != NULL);
@@ -1867,7 +1826,11 @@ value_set_member(struct value* self, char const* name, struct value* value)
     long const index = type_struct_member_variable_index(self->type, name);
     if (index < 0) {
         // Should never happen.
-        fatal(NULL, "type `%s` has no member `%s`", self->type->name, name);
+        fatal(
+            NO_LOCATION,
+            "type `%s` has no member `%s`",
+            self->type->name,
+            name);
     }
     struct value** const pvalue = self->data.struct_.member_variables + index;
 

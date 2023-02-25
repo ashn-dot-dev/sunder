@@ -123,21 +123,21 @@ xget_symbol(struct resolver* resolver, struct cst_symbol const* target);
 static struct symbol const*
 xget_template_instance(
     struct resolver* resolver,
-    struct source_location const* location,
+    struct source_location location,
     struct symbol const* symbol,
     struct cst_typespec const* const* const template_arguments);
 
 // Fatally exits if the actual type does not exactly match the expected type.
 static void
 verify_type_compatibility(
-    struct source_location const* location,
+    struct source_location location,
     struct type const* actual,
     struct type const* expected);
 // Fatally exits if provided integer-like value is out-of-range for the
 // provided byte or integer type.
 static void
 verify_byte_or_int_in_range(
-    struct source_location const* location,
+    struct source_location location,
     struct type const* type,
     struct bigint const* integer);
 
@@ -148,7 +148,7 @@ verify_byte_or_int_in_range(
 // or may not be the same as the location of casted expression.
 static struct expr const*
 explicit_cast(
-    struct source_location const* location,
+    struct source_location location,
     struct type const* type,
     struct expr const* expr);
 // Returns a newly created and registered expression node of `expr` implicitly
@@ -263,74 +263,74 @@ resolve_expr_unary(struct resolver* resolver, struct cst_expr const* expr);
 static struct expr const*
 resolve_expr_unary_logical(
     struct resolver* resolver,
-    struct token const* op,
+    struct token op,
     enum uop_kind uop,
     struct expr const* rhs);
 static struct expr const*
 resolve_expr_unary_arithmetic(
     struct resolver* resolver,
-    struct token const* op,
+    struct token op,
     enum uop_kind uop,
     struct expr const* rhs);
 static struct expr const*
 resolve_expr_unary_bitwise(
     struct resolver* resolver,
-    struct token const* op,
+    struct token op,
     enum uop_kind uop,
     struct expr const* rhs);
 static struct expr const*
 resolve_expr_unary_dereference(
-    struct resolver* resolver, struct token const* op, struct expr const* rhs);
+    struct resolver* resolver, struct token op, struct expr const* rhs);
 static struct expr const*
 resolve_expr_unary_addressof(
-    struct resolver* resolver, struct token const* op, struct expr const* rhs);
+    struct resolver* resolver, struct token op, struct expr const* rhs);
 static struct expr const*
 resolve_expr_unary_startof(
-    struct resolver* resolver, struct token const* op, struct expr const* rhs);
+    struct resolver* resolver, struct token op, struct expr const* rhs);
 static struct expr const*
 resolve_expr_unary_countof(
-    struct resolver* resolver, struct token const* op, struct expr const* rhs);
+    struct resolver* resolver, struct token op, struct expr const* rhs);
 static struct expr const*
 resolve_expr_binary(struct resolver* resolver, struct cst_expr const* expr);
 static struct expr const*
 resolve_expr_binary_logical(
     struct resolver* resolver,
-    struct token const* op,
+    struct token op,
     enum bop_kind bop,
     struct expr const* lhs,
     struct expr const* rhs);
 static struct expr const*
 resolve_expr_binary_shift(
     struct resolver* resolver,
-    struct token const* op,
+    struct token op,
     enum bop_kind bop,
     struct expr const* lhs,
     struct expr const* rhs);
 static struct expr const*
 resolve_expr_binary_compare_equality(
     struct resolver* resolver,
-    struct token const* op,
+    struct token op,
     enum bop_kind bop,
     struct expr const* lhs,
     struct expr const* rhs);
 static struct expr const*
 resolve_expr_binary_compare_order(
     struct resolver* resolver,
-    struct token const* op,
+    struct token op,
     enum bop_kind bop,
     struct expr const* lhs,
     struct expr const* rhs);
 static struct expr const*
 resolve_expr_binary_arithmetic(
     struct resolver* resolver,
-    struct token const* op,
+    struct token op,
     enum bop_kind bop,
     struct expr const* lhs,
     struct expr const* rhs);
 static struct expr const*
 resolve_expr_binary_bitwise(
     struct resolver* resolver,
-    struct token const* op,
+    struct token op,
     enum bop_kind bop,
     struct expr const* lhs,
     struct expr const* rhs);
@@ -661,12 +661,11 @@ xget_symbol(struct resolver* resolver, struct cst_symbol const* target)
 static struct symbol const*
 xget_template_instance(
     struct resolver* resolver,
-    struct source_location const* location,
+    struct source_location location,
     struct symbol const* symbol,
     struct cst_typespec const* const* const template_arguments)
 {
     assert(resolver != NULL);
-    assert(location != NULL);
     assert(symbol != NULL);
 
     switch (symbol->kind) {
@@ -1009,11 +1008,10 @@ xget_template_instance(
 
 static void
 verify_type_compatibility(
-    struct source_location const* location,
+    struct source_location location,
     struct type const* actual,
     struct type const* expected)
 {
-    assert(location != NULL);
     assert(actual != NULL);
     assert(expected != NULL);
 
@@ -1028,11 +1026,10 @@ verify_type_compatibility(
 
 static void
 verify_byte_or_int_in_range(
-    struct source_location const* location,
+    struct source_location location,
     struct type const* type,
     struct bigint const* integer)
 {
-    assert(location != NULL);
     assert(type != NULL && (type->kind == TYPE_BYTE || type_is_int(type)));
     assert(integer != NULL);
 
@@ -1072,7 +1069,7 @@ verify_byte_or_int_in_range(
 
 static struct expr const*
 explicit_cast(
-    struct source_location const* location,
+    struct source_location location,
     struct type const* type,
     struct expr const* expr)
 {
@@ -1382,7 +1379,7 @@ canonical_import_path(char const* module_path, char const* import_path)
 static void
 resolve_import_file(
     struct resolver* resolver,
-    struct source_location const* location,
+    struct source_location location,
     char const* file_name,
     bool from_directory)
 {
@@ -1411,8 +1408,8 @@ resolve_import_file(
     if (!cstr_ends_with(file_name, ".sunder") && from_directory) {
         // Ignore source files imported via a directory import if they do not
         // end in a `.sunder` extension. This will allow directories containing
-        // non-sunder files to be imported without the compiler producing an
-        // error from trying to load something like `.txt` file as a sunder
+        // non-Sunder files to be imported without the compiler producing an
+        // error from trying to load something like `.txt` file as a Sunder
         // module.
         return;
     }
@@ -1715,7 +1712,7 @@ resolve_decl_function(struct resolver* resolver, struct cst_decl const* decl)
     sbuf(struct symbol const*) symbol_parameters = NULL;
     sbuf_resize(symbol_parameters, sbuf_count(function_parameters));
     for (size_t i = sbuf_count(function_parameters); i--;) {
-        struct source_location const* const location =
+        struct source_location const location =
             function_parameters[i]->location;
         char const* const name = function_parameters[i]->identifier->name;
         struct type const* const type = parameter_types[i];
@@ -1772,12 +1769,12 @@ resolve_decl_function(struct resolver* resolver, struct cst_decl const* decl)
 
     struct incomplete_function* const incomplete =
         xalloc(NULL, sizeof(*incomplete));
-    *incomplete =
-        (struct incomplete_function){decl,
-                                     function_symbol->name,
-                                     function,
-                                     symbol_table,
-                                     context()->template_instantiation_chain};
+    *incomplete = (struct incomplete_function){
+        decl,
+        function_symbol->name,
+        function,
+        symbol_table,
+        context()->template_instantiation_chain};
     freeze(incomplete);
     sbuf_push(resolver->incomplete_functions, incomplete);
 
@@ -2540,7 +2537,7 @@ resolve_stmt_for_range(struct resolver* resolver, struct cst_stmt const* stmt)
     }
 
     int const save_rbp_offset = resolver->current_rbp_offset;
-    struct source_location const* const loop_var_location =
+    struct source_location const loop_var_location =
         stmt->data.for_range.identifier->location;
     char const* const loop_var_name = stmt->data.for_range.identifier->name;
     struct type const* const loop_var_type = context()->builtin.usize;
@@ -2858,8 +2855,8 @@ resolve_expr_boolean(struct resolver* resolver, struct cst_expr const* expr)
     assert(expr->kind == CST_EXPR_BOOLEAN);
     (void)resolver;
 
-    struct token const* const token = expr->data.boolean;
-    struct value* const value = value_new_boolean(token->kind == TOKEN_TRUE);
+    struct token const token = expr->data.boolean;
+    struct value* const value = value_new_boolean(token.kind == TOKEN_TRUE);
     value_freeze(value);
 
     struct expr* const resolved = expr_new_value(expr->location, value);
@@ -2870,7 +2867,7 @@ resolve_expr_boolean(struct resolver* resolver, struct cst_expr const* expr)
 
 static struct type const*
 integer_literal_suffix_to_type(
-    struct source_location const* location, char const* /* interned */ suffix)
+    struct source_location location, char const* /* interned */ suffix)
 {
     assert(suffix != NULL);
 
@@ -2923,12 +2920,12 @@ resolve_expr_integer(struct resolver* resolver, struct cst_expr const* expr)
     assert(expr->kind == CST_EXPR_INTEGER);
     (void)resolver;
 
-    struct token const* const token = expr->data.integer;
+    struct token const token = expr->data.integer;
 
-    struct bigint const* const integer = token->data.integer.value;
+    struct bigint const* const integer = token.data.integer.value;
 
     struct type const* const type = integer_literal_suffix_to_type(
-        expr->location, token->data.integer.suffix);
+        expr->location, token.data.integer.suffix);
 
     verify_byte_or_int_in_range(expr->location, type, integer);
 
@@ -2965,7 +2962,7 @@ resolve_expr_character(struct resolver* resolver, struct cst_expr const* expr)
 
     struct type const* const type = context()->builtin.integer;
 
-    int character = expr->data.character->data.character;
+    int character = expr->data.character.data.character;
     assert(character >= 0);
 
     struct value* const value =
@@ -2988,7 +2985,7 @@ resolve_expr_bytes(struct resolver* resolver, struct cst_expr const* expr)
     struct address const* const address =
         resolver_reserve_storage_static(resolver, "__bytes");
 
-    struct string const* const bytes = expr->data.bytes->data.bytes;
+    struct string const* const bytes = expr->data.bytes.data.bytes;
     size_t const count = string_count(bytes);
     struct type const* const type = type_unique_array(
         expr->location, count + 1 /*NUL*/, context()->builtin.byte);
@@ -3772,14 +3769,14 @@ resolve_expr_unary(struct resolver* resolver, struct cst_expr const* expr)
     // the range of an s8. Here we identify the special case where a + or -
     // token is immediately followed by an integer token and combine the two
     // into a single integer expression.
-    struct token const* const op = expr->data.unary.op;
-    bool const is_sign = (op->kind == TOKEN_PLUS) || (op->kind == TOKEN_DASH);
+    struct token const op = expr->data.unary.op;
+    bool const is_sign = (op.kind == TOKEN_PLUS) || (op.kind == TOKEN_DASH);
     struct cst_expr const* const cst_rhs = expr->data.unary.rhs;
     if (is_sign && cst_rhs->kind == CST_EXPR_INTEGER) {
-        struct token const* const token = cst_rhs->data.integer;
+        struct token const token = cst_rhs->data.integer;
 
-        struct bigint const* integer = token->data.integer.value;
-        if (op->kind == TOKEN_DASH) {
+        struct bigint const* integer = token.data.integer.value;
+        if (op.kind == TOKEN_DASH) {
             struct bigint* const tmp = bigint_new(integer);
             assert(tmp != NULL);
             bigint_neg(tmp, tmp);
@@ -3788,21 +3785,21 @@ resolve_expr_unary(struct resolver* resolver, struct cst_expr const* expr)
         }
 
         struct type const* const type = integer_literal_suffix_to_type(
-            &token->location, token->data.integer.suffix);
+            token.location, token.data.integer.suffix);
 
-        verify_byte_or_int_in_range(&op->location, type, integer);
+        verify_byte_or_int_in_range(op.location, type, integer);
         struct value* const value =
             value_new_integer(type, bigint_new(integer));
         value_freeze(value);
 
-        struct expr* const resolved = expr_new_value(&op->location, value);
+        struct expr* const resolved = expr_new_value(op.location, value);
 
         freeze(resolved);
         return resolved;
     }
 
     struct expr const* const rhs = resolve_expr(resolver, cst_rhs);
-    switch (op->kind) {
+    switch (op.kind) {
     case TOKEN_NOT: {
         return resolve_expr_unary_logical(resolver, op, UOP_NOT, rhs);
     }
@@ -3818,20 +3815,20 @@ resolve_expr_unary(struct resolver* resolver, struct cst_expr const* expr)
     case TOKEN_DASH: {
         if (type_is_uint(rhs->type)) {
             fatal(
-                &op->location,
+                op.location,
                 "invalid argument of type `%s` in unary `%s` expression",
                 rhs->type->name,
-                token_kind_to_cstr(op->kind));
+                token_kind_to_cstr(op.kind));
         }
         return resolve_expr_unary_arithmetic(resolver, op, UOP_NEG, rhs);
     }
     case TOKEN_DASH_PERCENT: {
         if (type_is_uint(rhs->type)) {
             fatal(
-                &op->location,
+                op.location,
                 "invalid argument of type `%s` in unary `%s` expression",
                 rhs->type->name,
-                token_kind_to_cstr(op->kind));
+                token_kind_to_cstr(op.kind));
         }
         return resolve_expr_unary_arithmetic(
             resolver, op, UOP_NEG_WRAPPING, rhs);
@@ -3857,25 +3854,24 @@ resolve_expr_unary(struct resolver* resolver, struct cst_expr const* expr)
 static struct expr const*
 resolve_expr_unary_logical(
     struct resolver* resolver,
-    struct token const* op,
+    struct token op,
     enum uop_kind uop,
     struct expr const* rhs)
 {
     assert(resolver != NULL);
-    assert(op != NULL);
     assert(rhs != NULL);
     (void)resolver;
 
     if (rhs->type->kind != TYPE_BOOL) {
         fatal(
-            &op->location,
+            op.location,
             "invalid argument of type `%s` in unary `%s` expression",
             rhs->type->name,
-            token_kind_to_cstr(op->kind));
+            token_kind_to_cstr(op.kind));
     }
 
     struct expr* const resolved =
-        expr_new_unary(&op->location, rhs->type, uop, rhs);
+        expr_new_unary(op.location, rhs->type, uop, rhs);
 
     freeze(resolved);
     return resolved;
@@ -3884,21 +3880,20 @@ resolve_expr_unary_logical(
 static struct expr const*
 resolve_expr_unary_arithmetic(
     struct resolver* resolver,
-    struct token const* op,
+    struct token op,
     enum uop_kind uop,
     struct expr const* rhs)
 {
     assert(resolver != NULL);
-    assert(op != NULL);
     assert(rhs != NULL);
     (void)resolver;
 
     if (!type_is_int(rhs->type)) {
         fatal(
-            &op->location,
+            op.location,
             "invalid argument of type `%s` in unary `%s` expression",
             rhs->type->name,
-            token_kind_to_cstr(op->kind));
+            token_kind_to_cstr(op.kind));
     }
 
     struct type const* const type = rhs->type;
@@ -3906,13 +3901,13 @@ resolve_expr_unary_arithmetic(
     bool const is_wrapping = uop == UOP_NEG_WRAPPING;
     if (is_wrapping && type->size == SIZEOF_UNSIZED) {
         fatal(
-            &op->location,
+            op.location,
             "invalid argument of type `%s` in wrapping unary `%s` expression",
             type->name,
-            token_kind_to_cstr(op->kind));
+            token_kind_to_cstr(op.kind));
     }
 
-    struct expr* const resolved = expr_new_unary(&op->location, type, uop, rhs);
+    struct expr* const resolved = expr_new_unary(op.location, type, uop, rhs);
 
     freeze(resolved);
     return resolved;
@@ -3921,21 +3916,20 @@ resolve_expr_unary_arithmetic(
 static struct expr const*
 resolve_expr_unary_bitwise(
     struct resolver* resolver,
-    struct token const* op,
+    struct token op,
     enum uop_kind uop,
     struct expr const* rhs)
 {
     assert(resolver != NULL);
-    assert(op != NULL);
     assert(rhs != NULL);
     (void)resolver;
 
     if (rhs->type->size == SIZEOF_UNSIZED) {
         fatal(
-            &op->location,
+            op.location,
             "unsized type `%s` in unary `%s` expression has no bit-representation",
             rhs->type->name,
-            token_kind_to_cstr(op->kind));
+            token_kind_to_cstr(op.kind));
     }
     if (!(rhs->type->kind == TYPE_BYTE || type_is_int(rhs->type))) {
         fatal(
@@ -3944,7 +3938,7 @@ resolve_expr_unary_bitwise(
             rhs->type->name);
     }
     struct expr* const resolved =
-        expr_new_unary(&op->location, rhs->type, uop, rhs);
+        expr_new_unary(op.location, rhs->type, uop, rhs);
 
     freeze(resolved);
     return resolved;
@@ -3952,11 +3946,10 @@ resolve_expr_unary_bitwise(
 
 static struct expr const*
 resolve_expr_unary_dereference(
-    struct resolver* resolver, struct token const* op, struct expr const* rhs)
+    struct resolver* resolver, struct token op, struct expr const* rhs)
 {
     assert(resolver != NULL);
-    assert(op != NULL);
-    assert(op->kind == TOKEN_STAR);
+    assert(op.kind == TOKEN_STAR);
     assert(rhs != NULL);
     (void)resolver;
 
@@ -3967,7 +3960,7 @@ resolve_expr_unary_dereference(
             rhs->type->name);
     }
     struct expr* const resolved = expr_new_unary(
-        &op->location, rhs->type->data.pointer.base, UOP_DEREFERENCE, rhs);
+        op.location, rhs->type->data.pointer.base, UOP_DEREFERENCE, rhs);
 
     freeze(resolved);
     return resolved;
@@ -3975,11 +3968,10 @@ resolve_expr_unary_dereference(
 
 static struct expr const*
 resolve_expr_unary_addressof(
-    struct resolver* resolver, struct token const* op, struct expr const* rhs)
+    struct resolver* resolver, struct token op, struct expr const* rhs)
 {
     assert(resolver != NULL);
-    assert(op != NULL);
-    assert(op->kind == TOKEN_AMPERSAND);
+    assert(op.kind == TOKEN_AMPERSAND);
     assert(rhs != NULL);
     (void)resolver;
 
@@ -3988,7 +3980,7 @@ resolve_expr_unary_addressof(
     }
 
     struct expr* const resolved = expr_new_unary(
-        &op->location, type_unique_pointer(rhs->type), UOP_ADDRESSOF, rhs);
+        op.location, type_unique_pointer(rhs->type), UOP_ADDRESSOF, rhs);
 
     freeze(resolved);
     return resolved;
@@ -3996,11 +3988,10 @@ resolve_expr_unary_addressof(
 
 static struct expr const*
 resolve_expr_unary_startof(
-    struct resolver* resolver, struct token const* op, struct expr const* rhs)
+    struct resolver* resolver, struct token op, struct expr const* rhs)
 {
     assert(resolver != NULL);
-    assert(op != NULL);
-    assert(op->kind == TOKEN_STARTOF);
+    assert(op.kind == TOKEN_STARTOF);
     assert(rhs != NULL);
     (void)resolver;
 
@@ -4012,7 +4003,7 @@ resolve_expr_unary_startof(
     }
 
     struct expr* const resolved = expr_new_unary(
-        &op->location,
+        op.location,
         type_unique_pointer(rhs->type->data.slice.base),
         UOP_STARTOF,
         rhs);
@@ -4023,11 +4014,10 @@ resolve_expr_unary_startof(
 
 static struct expr const*
 resolve_expr_unary_countof(
-    struct resolver* resolver, struct token const* op, struct expr const* rhs)
+    struct resolver* resolver, struct token op, struct expr const* rhs)
 {
     assert(resolver != NULL);
-    assert(op != NULL);
-    assert(op->kind == TOKEN_COUNTOF);
+    assert(op.kind == TOKEN_COUNTOF);
     assert(rhs != NULL);
     (void)resolver;
 
@@ -4038,8 +4028,8 @@ resolve_expr_unary_countof(
             rhs->type->name);
     }
 
-    struct expr* const resolved = expr_new_unary(
-        &op->location, context()->builtin.usize, UOP_COUNTOF, rhs);
+    struct expr* const resolved =
+        expr_new_unary(op.location, context()->builtin.usize, UOP_COUNTOF, rhs);
 
     freeze(resolved);
     return resolved;
@@ -4056,8 +4046,8 @@ resolve_expr_binary(struct resolver* resolver, struct cst_expr const* expr)
         resolve_expr(resolver, expr->data.binary.lhs);
     struct expr const* const rhs =
         resolve_expr(resolver, expr->data.binary.rhs);
-    struct token const* const op = expr->data.binary.op;
-    switch (op->kind) {
+    struct token const op = expr->data.binary.op;
+    switch (op.kind) {
     case TOKEN_OR: {
         return resolve_expr_binary_logical(resolver, op, BOP_OR, lhs, rhs);
     }
@@ -4142,13 +4132,12 @@ resolve_expr_binary(struct resolver* resolver, struct cst_expr const* expr)
 static struct expr const*
 resolve_expr_binary_logical(
     struct resolver* resolver,
-    struct token const* op,
+    struct token op,
     enum bop_kind bop,
     struct expr const* lhs,
     struct expr const* rhs)
 {
     assert(resolver != NULL);
-    assert(op != NULL);
     assert(lhs != NULL);
     assert(rhs != NULL);
     (void)resolver;
@@ -4157,15 +4146,15 @@ resolve_expr_binary_logical(
         && rhs->type->kind == TYPE_BOOL;
     if (!valid) {
         fatal(
-            &op->location,
+            op.location,
             "invalid arguments of types `%s` and `%s` in binary `%s` expression",
             lhs->type->name,
             rhs->type->name,
-            token_kind_to_cstr(op->kind));
+            token_kind_to_cstr(op.kind));
     }
 
     struct type const* const type = context()->builtin.bool_;
-    struct expr* resolved = expr_new_binary(&op->location, type, bop, lhs, rhs);
+    struct expr* resolved = expr_new_binary(op.location, type, bop, lhs, rhs);
     freeze(resolved);
 
     // OPTIMIZATION(constant folding)
@@ -4186,45 +4175,44 @@ resolve_expr_binary_logical(
 static struct expr const*
 resolve_expr_binary_shift(
     struct resolver* resolver,
-    struct token const* op,
+    struct token op,
     enum bop_kind bop,
     struct expr const* lhs,
     struct expr const* rhs)
 {
     assert(resolver != NULL);
-    assert(op != NULL);
     assert(lhs != NULL);
     assert(rhs != NULL);
     (void)resolver;
 
     if (!type_is_int(lhs->type)) {
         fatal(
-            &op->location,
+            op.location,
             "invalid left-hand argument of type `%s` in binary `%s` expression",
             lhs->type->name,
-            token_kind_to_cstr(op->kind));
+            token_kind_to_cstr(op.kind));
     }
     if (lhs->type->size == SIZEOF_UNSIZED) {
         fatal(
-            &op->location,
+            op.location,
             "unsized type `%s` in binary `%s` expression has no bit-representation",
             lhs->type->name,
-            token_kind_to_cstr(op->kind));
+            token_kind_to_cstr(op.kind));
     }
 
     rhs = implicit_cast(context()->builtin.usize, rhs);
     if (rhs->type != context()->builtin.usize) {
         fatal(
-            &op->location,
+            op.location,
             "invalid non-usize right-hand argument of type `%s` in binary `%s` expression",
             rhs->type->name,
-            token_kind_to_cstr(op->kind));
+            token_kind_to_cstr(op.kind));
     }
 
     struct type const* const type = lhs->type;
 
     struct expr* const resolved =
-        expr_new_binary(&op->location, type, bop, lhs, rhs);
+        expr_new_binary(op.location, type, bop, lhs, rhs);
     freeze(resolved);
 
     return resolved;
@@ -4233,13 +4221,12 @@ resolve_expr_binary_shift(
 static struct expr const*
 resolve_expr_binary_compare_equality(
     struct resolver* resolver,
-    struct token const* op,
+    struct token op,
     enum bop_kind bop,
     struct expr const* lhs,
     struct expr const* rhs)
 {
     assert(resolver != NULL);
-    assert(op != NULL);
     assert(lhs != NULL);
     assert(rhs != NULL);
     (void)resolver;
@@ -4249,23 +4236,23 @@ resolve_expr_binary_compare_equality(
 
     if (lhs->type != rhs->type) {
         fatal(
-            &op->location,
+            op.location,
             "invalid arguments of types `%s` and `%s` in binary `%s` expression",
             lhs->type->name,
             rhs->type->name,
-            token_kind_to_cstr(op->kind));
+            token_kind_to_cstr(op.kind));
     }
     struct type const* const xhs_type = lhs->type;
     if (!type_can_compare_equality(xhs_type)) {
         fatal(
-            &op->location,
+            op.location,
             "invalid arguments of type `%s` in binary `%s` expression",
             xhs_type->name,
-            token_kind_to_cstr(op->kind));
+            token_kind_to_cstr(op.kind));
     }
 
     struct expr* resolved =
-        expr_new_binary(&op->location, context()->builtin.bool_, bop, lhs, rhs);
+        expr_new_binary(op.location, context()->builtin.bool_, bop, lhs, rhs);
     freeze(resolved);
 
     // OPTIMIZATION(constant folding)
@@ -4286,13 +4273,12 @@ resolve_expr_binary_compare_equality(
 static struct expr const*
 resolve_expr_binary_compare_order(
     struct resolver* resolver,
-    struct token const* op,
+    struct token op,
     enum bop_kind bop,
     struct expr const* lhs,
     struct expr const* rhs)
 {
     assert(resolver != NULL);
-    assert(op != NULL);
     assert(lhs != NULL);
     assert(rhs != NULL);
     (void)resolver;
@@ -4302,24 +4288,24 @@ resolve_expr_binary_compare_order(
 
     if (lhs->type != rhs->type) {
         fatal(
-            &op->location,
+            op.location,
             "invalid arguments of types `%s` and `%s` in binary `%s` expression",
             lhs->type->name,
             rhs->type->name,
-            token_kind_to_cstr(op->kind));
+            token_kind_to_cstr(op.kind));
     }
 
     struct type const* const xhs_type = lhs->type;
     if (!type_can_compare_order(xhs_type)) {
         fatal(
-            &op->location,
+            op.location,
             "invalid arguments of type `%s` in binary `%s` expression",
             xhs_type->name,
-            token_kind_to_cstr(op->kind));
+            token_kind_to_cstr(op.kind));
     }
 
     struct expr* resolved =
-        expr_new_binary(&op->location, context()->builtin.bool_, bop, lhs, rhs);
+        expr_new_binary(op.location, context()->builtin.bool_, bop, lhs, rhs);
     freeze(resolved);
 
     // OPTIMIZATION(constant folding)
@@ -4340,13 +4326,12 @@ resolve_expr_binary_compare_order(
 static struct expr const*
 resolve_expr_binary_arithmetic(
     struct resolver* resolver,
-    struct token const* op,
+    struct token op,
     enum bop_kind bop,
     struct expr const* lhs,
     struct expr const* rhs)
 {
     assert(resolver != NULL);
-    assert(op != NULL);
     assert(lhs != NULL);
     assert(rhs != NULL);
     (void)resolver;
@@ -4358,11 +4343,11 @@ resolve_expr_binary_arithmetic(
         && type_is_int(rhs->type);
     if (!valid) {
         fatal(
-            &op->location,
+            op.location,
             "invalid arguments of types `%s` and `%s` in binary `%s` expression",
             lhs->type->name,
             rhs->type->name,
-            token_kind_to_cstr(op->kind));
+            token_kind_to_cstr(op.kind));
     }
 
     struct type const* const type = lhs->type; // Arbitrarily use lhs.
@@ -4371,13 +4356,13 @@ resolve_expr_binary_arithmetic(
         || (bop == BOP_SUB_WRAPPING) || (bop == BOP_MUL_WRAPPING);
     if (is_wrapping && type->size == SIZEOF_UNSIZED) {
         fatal(
-            &op->location,
+            op.location,
             "invalid arguments of type `%s` in wrapping binary `%s` expression",
             type->name,
-            token_kind_to_cstr(op->kind));
+            token_kind_to_cstr(op.kind));
     }
 
-    struct expr* resolved = expr_new_binary(&op->location, type, bop, lhs, rhs);
+    struct expr* resolved = expr_new_binary(op.location, type, bop, lhs, rhs);
     freeze(resolved);
 
     // OPTIMIZATION(constant folding)
@@ -4398,13 +4383,12 @@ resolve_expr_binary_arithmetic(
 static struct expr const*
 resolve_expr_binary_bitwise(
     struct resolver* resolver,
-    struct token const* op,
+    struct token op,
     enum bop_kind bop,
     struct expr const* lhs,
     struct expr const* rhs)
 {
     assert(resolver != NULL);
-    assert(op != NULL);
     assert(lhs != NULL);
     assert(rhs != NULL);
     (void)resolver;
@@ -4418,10 +4402,10 @@ resolve_expr_binary_bitwise(
     struct type const* type = lhs->type; // Arbitrarily use lhs.
     if (type->size == SIZEOF_UNSIZED) {
         fatal(
-            &op->location,
+            op.location,
             "unsized types `%s` in binary `%s` expression have no bit-representation",
             type->name,
-            token_kind_to_cstr(op->kind));
+            token_kind_to_cstr(op.kind));
     }
 
     bool const valid =
@@ -4430,7 +4414,7 @@ resolve_expr_binary_bitwise(
         goto invalid_operand_types;
     }
 
-    struct expr* resolved = expr_new_binary(&op->location, type, bop, lhs, rhs);
+    struct expr* resolved = expr_new_binary(op.location, type, bop, lhs, rhs);
     freeze(resolved);
 
     // OPTIMIZATION(constant folding)
@@ -4449,11 +4433,11 @@ resolve_expr_binary_bitwise(
 
 invalid_operand_types:
     fatal(
-        &op->location,
+        op.location,
         "invalid arguments of types `%s` and `%s` in binary `%s` expression",
         lhs->type->name,
         rhs->type->name,
-        token_kind_to_cstr(op->kind));
+        token_kind_to_cstr(op.kind));
     return NULL;
 }
 
@@ -4512,7 +4496,7 @@ resolve_block(
                 symbol_kind_to_cstr(symbol_table->elements[i].symbol->kind),
                 symbol_table->elements[i].name);
             info(
-                NULL,
+                NO_LOCATION,
                 "use %s `%s` in an expression or rename the %s to `%s_`",
                 symbol_kind_to_cstr(symbol_table->elements[i].symbol->kind),
                 symbol_table->elements[i].name,
@@ -4695,8 +4679,7 @@ resolve(struct module* module)
         char const* nsaddr = NULL;
         for (size_t i = 0; i < sbuf_count(identifiers); ++i) {
             char const* const name = identifiers[i]->name;
-            struct source_location const* const location =
-                identifiers[i]->location;
+            struct source_location const location = identifiers[i]->location;
 
             nsname = qualified_name(nsname, name);
             nsaddr = qualified_addr(nsaddr, name);

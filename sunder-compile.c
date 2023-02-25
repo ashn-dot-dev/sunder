@@ -98,13 +98,13 @@ argparse(int argc, char** argv)
 
     for (int i = optind; i < argc; ++i) {
         if (path != NULL) {
-            fatal(NULL, "multiple input files");
+            fatal(NO_LOCATION, "multiple input files");
         }
         path = argv[i];
     }
 
     if (path == NULL) {
-        fatal(NULL, "no input file");
+        fatal(NO_LOCATION, "no input file");
     }
 }
 
