@@ -1930,10 +1930,10 @@ resolve_decl_extern_variable(
     assert(resolver_is_global(resolver));
 
     struct type const* const type =
-        resolve_typespec(resolver, decl->data.variable.typespec);
+        resolve_typespec(resolver, decl->data.extern_variable.typespec);
     if (type->size == SIZEOF_UNSIZED) {
         fatal(
-            decl->data.variable.typespec->location,
+            decl->data.extern_variable.typespec->location,
             "declaration of extern variable with unsized type `%s`",
             type->name);
     }
