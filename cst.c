@@ -12,14 +12,19 @@ cst_identifier_init(struct source_location location, char const* name)
     return (struct cst_identifier){.location = location, .name = name};
 }
 
+struct cst_block
+cst_block_init(
+    struct source_location location, struct cst_stmt const* const* stmts)
+{
+    return (struct cst_block){.location = location, .stmts = stmts};
+}
+
 struct cst_conditional
 cst_conditional_init(
     struct source_location location,
     struct cst_expr const* condition,
-    struct cst_block const* body)
+    struct cst_block body)
 {
-    assert(body != NULL);
-
     return (struct cst_conditional){
         .location = location, .condition = condition, .body = body};
 }
@@ -104,10 +109,9 @@ cst_decl_new_function(
     struct cst_identifier const* template_parameters,
     struct cst_function_parameter const* const* function_parameters,
     struct cst_typespec const* return_typespec,
-    struct cst_block const* body)
+    struct cst_block body)
 {
     assert(return_typespec != NULL);
-    assert(body != NULL);
 
     struct cst_decl* const self = xalloc(NULL, sizeof(*self));
     memset(self, 0x00, sizeof(*self));
@@ -242,10 +246,9 @@ cst_stmt_new_for_range(
     struct cst_identifier identifier,
     struct cst_expr const* begin,
     struct cst_expr const* end,
-    struct cst_block const* body)
+    struct cst_block body)
 {
     assert(end != NULL);
-    assert(body != NULL);
 
     struct cst_stmt* const self = cst_stmt_new(location, CST_STMT_FOR_RANGE);
     self->data.for_range.identifier = identifier;
@@ -259,10 +262,9 @@ struct cst_stmt*
 cst_stmt_new_for_expr(
     struct source_location location,
     struct cst_expr const* expr,
-    struct cst_block const* body)
+    struct cst_block body)
 {
     assert(expr != NULL);
-    assert(body != NULL);
 
     struct cst_stmt* const self = cst_stmt_new(location, CST_STMT_FOR_EXPR);
     self->data.for_expr.expr = expr;
@@ -282,10 +284,8 @@ cst_stmt_new_decl(struct cst_decl const* decl)
 
 struct cst_stmt*
 cst_stmt_new_defer_block(
-    struct source_location location, struct cst_block const* block)
+    struct source_location location, struct cst_block block)
 {
-    assert(block != NULL);
-
     struct cst_stmt* const self = cst_stmt_new(location, CST_STMT_DEFER_BLOCK);
     self->data.defer_block = block;
     return self;
@@ -605,17 +605,6 @@ cst_expr_new_binary(
     self->data.binary.op = op;
     self->data.binary.lhs = lhs;
     self->data.binary.rhs = rhs;
-    return self;
-}
-
-struct cst_block*
-cst_block_new(
-    struct source_location location, struct cst_stmt const* const* stmts)
-{
-    struct cst_block* const self = xalloc(NULL, sizeof(*self));
-    memset(self, 0x00, sizeof(*self));
-    self->location = location;
-    self->stmts = stmts;
     return self;
 }
 

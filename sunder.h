@@ -959,19 +959,27 @@ struct cst_identifier {
 struct cst_identifier
 cst_identifier_init(struct source_location location, char const* name);
 
+// Helper CST node representing a sequence of statements enclosed in braces.
+struct cst_block {
+    struct source_location location;
+    sbuf(struct cst_stmt const* const) stmts;
+};
+struct cst_block
+cst_block_init(
+    struct source_location location, struct cst_stmt const* const* stmts);
+
 // Helper CST node representing a conditional statement (if, elif, etc.)
 // consisting of a conditional expression and block of statements.
 struct cst_conditional {
     struct source_location location;
     struct cst_expr const* condition; // optional (NULL => else)
-    struct cst_block const* body;
+    struct cst_block body;
 };
 struct cst_conditional
 cst_conditional_init(
     struct source_location location,
     struct cst_expr const* condition,
-    struct cst_block const* body);
-
+    struct cst_block body);
 struct cst_module {
     struct cst_namespace const* namespace; // optional
     sbuf(struct cst_import const* const) imports;
@@ -1030,7 +1038,7 @@ struct cst_decl {
             sbuf(struct cst_function_parameter const* const)
                 function_parameters;
             struct cst_typespec const* return_typespec;
-            struct cst_block const* body;
+            struct cst_block body;
         } function;
         struct {
             struct cst_identifier identifier;
@@ -1078,7 +1086,7 @@ cst_decl_new_function(
     struct cst_identifier const* template_parameters,
     struct cst_function_parameter const* const* function_parameters,
     struct cst_typespec const* return_typespec,
-    struct cst_block const* body);
+    struct cst_block body);
 struct cst_decl*
 cst_decl_new_struct(
     struct source_location location,
@@ -1124,7 +1132,7 @@ struct cst_stmt {
     } kind;
     union {
         struct cst_decl const* decl;
-        struct cst_block const* defer_block;
+        struct cst_block defer_block;
         struct cst_expr const* defer_expr;
         struct {
             sbuf(struct cst_conditional const) conditionals;
@@ -1133,11 +1141,11 @@ struct cst_stmt {
             struct cst_identifier identifier;
             struct cst_expr const* begin; // optional
             struct cst_expr const* end;
-            struct cst_block const* body;
+            struct cst_block body;
         } for_range;
         struct {
             struct cst_expr const* expr;
-            struct cst_block const* body;
+            struct cst_block body;
         } for_expr;
         struct {
             struct cst_expr const* expr; // optional
@@ -1153,7 +1161,7 @@ struct cst_stmt*
 cst_stmt_new_decl(struct cst_decl const* decl);
 struct cst_stmt*
 cst_stmt_new_defer_block(
-    struct source_location location, struct cst_block const* block);
+    struct source_location location, struct cst_block block);
 struct cst_stmt*
 cst_stmt_new_defer_expr(
     struct source_location location, struct cst_expr const* expr);
@@ -1165,12 +1173,12 @@ cst_stmt_new_for_range(
     struct cst_identifier identifier,
     struct cst_expr const* begin,
     struct cst_expr const* end,
-    struct cst_block const* body);
+    struct cst_block body);
 struct cst_stmt*
 cst_stmt_new_for_expr(
     struct source_location location,
     struct cst_expr const* expr,
-    struct cst_block const* body);
+    struct cst_block body);
 struct cst_stmt*
 cst_stmt_new_break(struct source_location location);
 struct cst_stmt*
@@ -1347,15 +1355,6 @@ cst_expr_new_unary(struct token op, struct cst_expr const* rhs);
 struct cst_expr*
 cst_expr_new_binary(
     struct token op, struct cst_expr const* lhs, struct cst_expr const* rhs);
-
-// Helper CST node representing a sequence of statements enclosed in braces.
-struct cst_block {
-    struct source_location location;
-    sbuf(struct cst_stmt const* const) stmts;
-};
-struct cst_block*
-cst_block_new(
-    struct source_location location, struct cst_stmt const* const* stmts);
 
 struct cst_symbol {
     struct source_location location;

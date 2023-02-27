@@ -776,7 +776,7 @@ xget_template_instance(
         struct cst_typespec const* const instance_return_typespec =
             decl->data.function.return_typespec;
         // And the body is also unchanged.
-        struct cst_block const* const instance_body = decl->data.function.body;
+        struct cst_block const instance_body = decl->data.function.body;
 
         // Check if a symbol corresponding to these template arguments has
         // already been created. If so then we reuse the cached symbol.
@@ -2234,7 +2234,7 @@ complete_function(
     function->body = resolve_block(
         resolver,
         incomplete->symbol_table,
-        incomplete->decl->data.function.body);
+        &incomplete->decl->data.function.body);
 
     resolver->current_symbol_name_prefix = save_symbol_name_prefix;
     resolver->current_static_addr_prefix = save_static_addr_prefix;
@@ -2402,7 +2402,7 @@ resolve_stmt_defer_block(struct resolver* resolver, struct cst_stmt const* stmt)
     struct symbol_table* const symbol_table =
         symbol_table_new(resolver->current_symbol_table);
     struct block const* const body =
-        resolve_block(resolver, symbol_table, stmt->data.defer_block);
+        resolve_block(resolver, symbol_table, &stmt->data.defer_block);
     symbol_table_freeze(symbol_table);
 
     struct stmt* const resolved =
@@ -2477,7 +2477,7 @@ resolve_stmt_if(struct resolver* resolver, struct cst_stmt const* stmt)
         struct symbol_table* const symbol_table =
             symbol_table_new(resolver->current_symbol_table);
         struct block const* const block =
-            resolve_block(resolver, symbol_table, conditionals[i].body);
+            resolve_block(resolver, symbol_table, &conditionals[i].body);
         // Freeze the symbol table now that the block has been resolved and no
         // new symbols will be added.
         symbol_table_freeze(symbol_table);
@@ -2560,7 +2560,7 @@ resolve_stmt_for_range(struct resolver* resolver, struct cst_stmt const* stmt)
     resolver->is_within_loop = true;
     resolver->current_loop_defer = resolver->current_defer;
     struct block const* const body =
-        resolve_block(resolver, symbol_table, stmt->data.for_range.body);
+        resolve_block(resolver, symbol_table, &stmt->data.for_range.body);
     resolver->current_rbp_offset = save_rbp_offset;
     resolver->is_within_loop = save_is_within_loop;
     resolver->current_loop_defer = save_current_loop_defer;
@@ -2602,7 +2602,7 @@ resolve_stmt_for_expr(struct resolver* resolver, struct cst_stmt const* stmt)
     resolver->is_within_loop = true;
     resolver->current_loop_defer = resolver->current_defer;
     struct block const* const body =
-        resolve_block(resolver, symbol_table, stmt->data.for_expr.body);
+        resolve_block(resolver, symbol_table, &stmt->data.for_expr.body);
     resolver->is_within_loop = save_is_within_loop;
     resolver->current_loop_defer = save_current_loop_defer;
 

@@ -31,6 +31,9 @@ expect_current(struct parser* parser, enum token_kind kind);
 static struct cst_identifier
 parse_identifier(struct parser* parser);
 
+static struct cst_block
+parse_block(struct parser* parser);
+
 static struct cst_module const*
 parse_module(struct parser* parser);
 
@@ -141,9 +144,6 @@ static struct cst_expr const*
 parse_expr_nud_unary(struct parser* parser);
 static struct cst_expr const*
 parse_expr_led_binary(struct parser* parser, struct cst_expr const* lhs);
-
-static struct cst_block const*
-parse_block(struct parser* parser);
 
 static struct cst_symbol*
 parse_symbol(struct parser* parser);
@@ -269,6 +269,26 @@ parse_identifier(struct parser* parser)
     struct source_location const location = token.location;
     struct cst_identifier product =
         cst_identifier_init(location, token.data.identifier);
+
+    return product;
+}
+
+static struct cst_block
+parse_block(struct parser* parser)
+{
+    assert(parser != NULL);
+
+    struct source_location const location =
+        expect_current(parser, TOKEN_LBRACE).location;
+
+    sbuf(struct cst_stmt const*) stmts = NULL;
+    while (!check_current(parser, TOKEN_RBRACE)) {
+        sbuf_push(stmts, parse_stmt(parser));
+    }
+    sbuf_freeze(stmts);
+    expect_current(parser, TOKEN_RBRACE);
+
+    struct cst_block const product = cst_block_init(location, stmts);
 
     return product;
 }
@@ -472,7 +492,7 @@ parse_decl_function(struct parser* parser)
         parse_function_parameter_list(parser);
     expect_current(parser, TOKEN_RPAREN);
     struct cst_typespec const* const return_typespec = parse_typespec(parser);
-    struct cst_block const* const body = parse_block(parser);
+    struct cst_block const body = parse_block(parser);
 
     struct cst_decl* const product = cst_decl_new_function(
         location,
@@ -663,7 +683,7 @@ parse_stmt_defer(struct parser* parser)
         expect_current(parser, TOKEN_DEFER).location;
 
     if (check_current(parser, TOKEN_LBRACE)) {
-        struct cst_block const* block = parse_block(parser);
+        struct cst_block const block = parse_block(parser);
         struct cst_stmt* const product =
             cst_stmt_new_defer_block(location, block);
 
@@ -690,7 +710,7 @@ parse_stmt_if(struct parser* parser)
 
     struct source_location location = expect_current(parser, TOKEN_IF).location;
     struct cst_expr const* condition = parse_expr(parser);
-    struct cst_block const* body = parse_block(parser);
+    struct cst_block body = parse_block(parser);
     struct cst_conditional conditional =
         cst_conditional_init(location, condition, body);
     sbuf_push(conditionals, conditional);
@@ -736,7 +756,7 @@ parse_stmt_for(struct parser* parser)
         if (check_current(parser, TOKEN_COLON)) {
             expect_current(parser, TOKEN_COLON);
             struct cst_expr const* const end = parse_expr(parser);
-            struct cst_block const* const body = parse_block(parser);
+            struct cst_block const body = parse_block(parser);
 
             struct cst_stmt* const product =
                 cst_stmt_new_for_range(location, identifier, begin, end, body);
@@ -746,7 +766,7 @@ parse_stmt_for(struct parser* parser)
         }
 
         struct cst_expr const* const end = begin;
-        struct cst_block const* const body = parse_block(parser);
+        struct cst_block const body = parse_block(parser);
 
         struct cst_stmt* const product =
             cst_stmt_new_for_range(location, identifier, NULL, end, body);
@@ -757,7 +777,7 @@ parse_stmt_for(struct parser* parser)
 
     // <stmt-for-expr>
     struct cst_expr const* const expr = parse_expr(parser);
-    struct cst_block const* const body = parse_block(parser);
+    struct cst_block const body = parse_block(parser);
 
     struct cst_stmt* const product =
         cst_stmt_new_for_expr(location, expr, body);
@@ -1320,27 +1340,6 @@ parse_expr_led_binary(struct parser* parser, struct cst_expr const* lhs)
     struct cst_expr const* const rhs =
         parse_expr_precedence(parser, token_kind_precedence(op.kind));
     struct cst_expr* const product = cst_expr_new_binary(op, lhs, rhs);
-
-    freeze(product);
-    return product;
-}
-
-static struct cst_block const*
-parse_block(struct parser* parser)
-{
-    assert(parser != NULL);
-
-    struct source_location const location =
-        expect_current(parser, TOKEN_LBRACE).location;
-
-    sbuf(struct cst_stmt const*) stmts = NULL;
-    while (!check_current(parser, TOKEN_RBRACE)) {
-        sbuf_push(stmts, parse_stmt(parser));
-    }
-    sbuf_freeze(stmts);
-    expect_current(parser, TOKEN_RBRACE);
-
-    struct cst_block* const product = cst_block_new(location, stmts);
 
     freeze(product);
     return product;
