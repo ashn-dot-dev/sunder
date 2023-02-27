@@ -4,6 +4,14 @@
 #include <string.h>
 #include "sunder.h"
 
+struct cst_identifier
+cst_identifier_init(struct source_location location, char const* name)
+{
+    assert(name != NULL);
+
+    return (struct cst_identifier){.location = location, .name = name};
+}
+
 struct cst_module*
 cst_module_new(
     struct cst_namespace const* namespace,
@@ -20,8 +28,7 @@ cst_module_new(
 
 struct cst_namespace*
 cst_namespace_new(
-    struct source_location location,
-    struct cst_identifier const* const* identifiers)
+    struct source_location location, struct cst_identifier const* identifiers)
 {
     struct cst_namespace* const self = xalloc(NULL, sizeof(*self));
     memset(self, 0x00, sizeof(*self));
@@ -45,17 +52,15 @@ cst_import_new(struct source_location location, char const* path)
 struct cst_decl*
 cst_decl_new_variable(
     struct source_location location,
-    struct cst_identifier const* identifier,
+    struct cst_identifier identifier,
     struct cst_typespec const* typespec,
     struct cst_expr const* expr)
 {
-    assert(identifier != NULL);
-
     struct cst_decl* const self = xalloc(NULL, sizeof(*self));
     memset(self, 0x00, sizeof(*self));
     self->kind = CST_DECL_VARIABLE;
     self->location = location;
-    self->name = identifier->name;
+    self->name = identifier.name;
     self->data.variable.identifier = identifier;
     self->data.variable.typespec = typespec;
     self->data.variable.expr = expr;
@@ -65,17 +70,15 @@ cst_decl_new_variable(
 struct cst_decl*
 cst_decl_new_constant(
     struct source_location location,
-    struct cst_identifier const* identifier,
+    struct cst_identifier identifier,
     struct cst_typespec const* typespec,
     struct cst_expr const* expr)
 {
-    assert(identifier != NULL);
-
     struct cst_decl* const self = xalloc(NULL, sizeof(*self));
     memset(self, 0x00, sizeof(*self));
     self->kind = CST_DECL_CONSTANT;
     self->location = location;
-    self->name = identifier->name;
+    self->name = identifier.name;
     self->data.constant.identifier = identifier;
     self->data.constant.typespec = typespec;
     self->data.constant.expr = expr;
@@ -85,13 +88,12 @@ cst_decl_new_constant(
 struct cst_decl*
 cst_decl_new_function(
     struct source_location location,
-    struct cst_identifier const* identifier,
-    struct cst_identifier const* const* template_parameters,
+    struct cst_identifier identifier,
+    struct cst_identifier const* template_parameters,
     struct cst_function_parameter const* const* function_parameters,
     struct cst_typespec const* return_typespec,
     struct cst_block const* body)
 {
-    assert(identifier != NULL);
     assert(return_typespec != NULL);
     assert(body != NULL);
 
@@ -99,7 +101,7 @@ cst_decl_new_function(
     memset(self, 0x00, sizeof(*self));
     self->kind = CST_DECL_FUNCTION;
     self->location = location;
-    self->name = identifier->name;
+    self->name = identifier.name;
     self->data.function.identifier = identifier;
     self->data.function.template_parameters = template_parameters;
     self->data.function.function_parameters = function_parameters;
@@ -111,17 +113,15 @@ cst_decl_new_function(
 struct cst_decl*
 cst_decl_new_struct(
     struct source_location location,
-    struct cst_identifier const* identifier,
-    struct cst_identifier const* const* template_parameters,
+    struct cst_identifier identifier,
+    struct cst_identifier const* template_parameters,
     struct cst_member const* const* members)
 {
-    assert(identifier != NULL);
-
     struct cst_decl* const self = xalloc(NULL, sizeof(*self));
     memset(self, 0x00, sizeof(*self));
     self->kind = CST_DECL_STRUCT;
     self->location = location;
-    self->name = identifier->name;
+    self->name = identifier.name;
     self->data.struct_.identifier = identifier;
     self->data.struct_.template_parameters = template_parameters;
     self->data.struct_.members = members;
@@ -150,17 +150,16 @@ cst_decl_new_extend(
 struct cst_decl*
 cst_decl_new_alias(
     struct source_location location,
-    struct cst_identifier const* identifier,
+    struct cst_identifier identifier,
     struct cst_typespec const* typespec)
 {
-    assert(identifier != NULL);
     assert(typespec != NULL);
 
     struct cst_decl* const self = xalloc(NULL, sizeof(*self));
     memset(self, 0x00, sizeof(*self));
     self->kind = CST_DECL_ALIAS;
     self->location = location;
-    self->name = identifier->name;
+    self->name = identifier.name;
     self->data.alias.identifier = identifier;
     self->data.alias.typespec = typespec;
     return self;
@@ -169,17 +168,16 @@ cst_decl_new_alias(
 struct cst_decl*
 cst_decl_new_extern_variable(
     struct source_location location,
-    struct cst_identifier const* identifier,
+    struct cst_identifier identifier,
     struct cst_typespec const* typespec)
 {
-    assert(identifier != NULL);
     assert(typespec != NULL);
 
     struct cst_decl* const self = xalloc(NULL, sizeof(*self));
     memset(self, 0x00, sizeof(*self));
     self->kind = CST_DECL_EXTERN_VARIABLE;
     self->location = location;
-    self->name = identifier->name;
+    self->name = identifier.name;
     self->data.extern_variable.identifier = identifier;
     self->data.extern_variable.typespec = typespec;
     return self;
@@ -188,18 +186,17 @@ cst_decl_new_extern_variable(
 struct cst_decl*
 cst_decl_new_extern_function(
     struct source_location location,
-    struct cst_identifier const* identifier,
+    struct cst_identifier identifier,
     struct cst_function_parameter const* const* function_parameters,
     struct cst_typespec const* return_typespec)
 {
-    assert(identifier != NULL);
     assert(return_typespec != NULL);
 
     struct cst_decl* const self = xalloc(NULL, sizeof(*self));
     memset(self, 0x00, sizeof(*self));
     self->kind = CST_DECL_EXTERN_FUNCTION;
     self->location = location;
-    self->name = identifier->name;
+    self->name = identifier.name;
     self->data.extern_function.identifier = identifier;
     self->data.extern_function.function_parameters = function_parameters;
     self->data.extern_function.return_typespec = return_typespec;
@@ -230,12 +227,11 @@ cst_stmt_new_if(struct cst_conditional const* const* conditionals)
 struct cst_stmt*
 cst_stmt_new_for_range(
     struct source_location location,
-    struct cst_identifier const* identifier,
+    struct cst_identifier identifier,
     struct cst_expr const* begin,
     struct cst_expr const* end,
     struct cst_block const* body)
 {
-    assert(identifier != NULL);
     assert(end != NULL);
     assert(body != NULL);
 
@@ -645,14 +641,12 @@ cst_symbol_new(
 
 struct cst_symbol_element*
 cst_symbol_element_new(
-    struct cst_identifier const* identifier,
+    struct cst_identifier identifier,
     struct cst_typespec const* const* template_arguments)
 {
-    assert(identifier != NULL);
-
     struct cst_symbol_element* const self = xalloc(NULL, sizeof(*self));
     memset(self, 0x00, sizeof(*self));
-    self->location = identifier->location;
+    self->location = identifier.location;
     self->identifier = identifier;
     self->template_arguments = template_arguments;
     return self;
@@ -660,15 +654,13 @@ cst_symbol_element_new(
 
 struct cst_function_parameter*
 cst_function_parameter_new(
-    struct cst_identifier const* identifier,
-    struct cst_typespec const* typespec)
+    struct cst_identifier identifier, struct cst_typespec const* typespec)
 {
-    assert(identifier != NULL);
     assert(typespec != NULL);
 
     struct cst_function_parameter* const self = xalloc(NULL, sizeof(*self));
     memset(self, 0x00, sizeof(*self));
-    self->location = identifier->location;
+    self->location = identifier.location;
     self->identifier = identifier;
     self->typespec = typespec;
     return self;
@@ -677,16 +669,15 @@ cst_function_parameter_new(
 struct cst_member*
 cst_member_new_variable(
     struct source_location location,
-    struct cst_identifier const* identifier,
+    struct cst_identifier identifier,
     struct cst_typespec const* typespec)
 {
-    assert(identifier != NULL);
     assert(typespec != NULL);
 
     struct cst_member* const self = xalloc(NULL, sizeof(*self));
     memset(self, 0x00, sizeof(*self));
     self->location = location;
-    self->name = identifier->name;
+    self->name = identifier.name;
     self->kind = CST_MEMBER_VARIABLE;
     self->data.variable.identifier = identifier;
     self->data.variable.typespec = typespec;
@@ -726,11 +717,9 @@ cst_member_new_function(struct cst_decl const* decl)
 struct cst_member_initializer*
 cst_member_initializer_new(
     struct source_location location,
-    struct cst_identifier const* identifier,
+    struct cst_identifier identifier,
     struct cst_expr const* expr)
 {
-    assert(identifier != NULL);
-
     struct cst_member_initializer* const self = xalloc(NULL, sizeof(*self));
     memset(self, 0x00, sizeof(*self));
     self->location = location;
@@ -824,17 +813,5 @@ cst_typespec_new_typeof(
     struct cst_typespec* const self =
         cst_typespec_new(location, CST_TYPESPEC_TYPEOF);
     self->data.typeof_.expr = expr;
-    return self;
-}
-
-struct cst_identifier*
-cst_identifier_new(struct source_location location, char const* name)
-{
-    assert(name != NULL);
-
-    struct cst_identifier* const self = xalloc(NULL, sizeof(*self));
-    memset(self, 0x00, sizeof(*self));
-    self->location = location;
-    self->name = name;
     return self;
 }

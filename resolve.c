@@ -553,7 +553,7 @@ xget_symbol(struct resolver* resolver, struct cst_symbol const* target)
 
     assert(sbuf_count(target->elements) != 0);
     struct cst_symbol_element const* const element = target->elements[0];
-    char const* const name = element->identifier->name;
+    char const* const name = element->identifier.name;
     struct symbol_table const* const symbol_table = target->is_from_root
         ? resolver->module->symbols
         : resolver->current_symbol_table;
@@ -582,7 +582,7 @@ xget_symbol(struct resolver* resolver, struct cst_symbol const* target)
     struct symbol const* symbol = NULL;
     for (size_t i = 1; i < element_count; ++i) {
         struct cst_symbol_element const* const element = target->elements[i];
-        char const* const name = element->identifier->name;
+        char const* const name = element->identifier.name;
 
         if (lhs->kind == SYMBOL_NAMESPACE) {
             struct symbol_table const* const symbols =
@@ -724,7 +724,7 @@ xget_template_instance(
     // templated, so the rest off this function will only cater to these cases.
     assert(decl->kind == CST_DECL_FUNCTION || decl->kind == CST_DECL_STRUCT);
     if (decl->kind == CST_DECL_FUNCTION) {
-        sbuf(struct cst_identifier const* const) const template_parameters =
+        sbuf(struct cst_identifier const) const template_parameters =
             decl->data.function.template_parameters;
         size_t const template_parameters_count =
             sbuf_count(template_parameters);
@@ -760,13 +760,12 @@ xget_template_instance(
         char const* const name_interned =
             intern_cstr(string_start(name_string));
         string_del(name_string);
-        struct cst_identifier* const instance_identifier =
-            cst_identifier_new(location, name_interned);
-        freeze(instance_identifier);
+        struct cst_identifier const instance_identifier =
+            cst_identifier_init(location, name_interned);
         // Replace template parameters. Zero template parameters means this
         // function is no longer a template.
-        sbuf(struct cst_identifier const* const)
-            const instance_template_parameters = NULL;
+        sbuf(struct cst_identifier const) const instance_template_parameters =
+            NULL;
         // Function parameters do not change. When the actual function is
         // resolved it will do so inside a symbol table where a template
         // parameter's name maps to the template instance's chosen type symbol.
@@ -794,11 +793,11 @@ xget_template_instance(
             symbol_table_new(symbol->data.template.parent_symbol_table);
         for (size_t i = 0; i < template_parameters_count; ++i) {
             struct symbol* const symbol = symbol_new_type(
-                template_parameters[i]->location, template_types[i]);
+                template_parameters[i].location, template_types[i]);
             freeze(symbol);
             symbol_table_insert(
                 instance_symbol_table,
-                template_parameters[i]->name,
+                template_parameters[i].name,
                 symbol,
                 false);
         }
@@ -864,7 +863,7 @@ xget_template_instance(
         return resolved_symbol;
     }
     if (decl->kind == CST_DECL_STRUCT) {
-        sbuf(struct cst_identifier const* const) const template_parameters =
+        sbuf(struct cst_identifier const) const template_parameters =
             decl->data.struct_.template_parameters;
         size_t const template_parameters_count =
             sbuf_count(template_parameters);
@@ -900,13 +899,12 @@ xget_template_instance(
         char const* const name_interned =
             intern_cstr(string_start(name_string));
         string_del(name_string);
-        struct cst_identifier* const instance_identifier =
-            cst_identifier_new(location, name_interned);
-        freeze(instance_identifier);
+        struct cst_identifier const instance_identifier =
+            cst_identifier_init(location, name_interned);
         // Replace template parameters. Zero template parameters means this
         // struct is no longer a template.
-        sbuf(struct cst_identifier const* const)
-            const instance_template_parameters = NULL;
+        sbuf(struct cst_identifier const) const instance_template_parameters =
+            NULL;
         // Struct members do not change. When the actual struct is resolved it
         // will do so inside a symbol table where a template parameter's name
         // maps to the template instance's chosen type symbol.
@@ -928,11 +926,11 @@ xget_template_instance(
             symbol_table_new(symbol->data.template.parent_symbol_table);
         for (size_t i = 0; i < template_parameters_count; ++i) {
             struct symbol* const symbol = symbol_new_type(
-                template_parameters[i]->location, template_types[i]);
+                template_parameters[i].location, template_types[i]);
             freeze(symbol);
             symbol_table_insert(
                 instance_symbol_table,
-                template_parameters[i]->name,
+                template_parameters[i].name,
                 symbol,
                 false);
         }
@@ -1541,7 +1539,7 @@ resolve_decl_variable(
 
     if (lhs != NULL) {
         struct expr* const identifier =
-            expr_new_symbol(decl->data.variable.identifier->location, symbol);
+            expr_new_symbol(decl->data.variable.identifier.location, symbol);
         freeze(identifier);
         *lhs = identifier;
     }
@@ -1619,7 +1617,7 @@ resolve_decl_function(struct resolver* resolver, struct cst_decl const* decl)
     assert(decl->kind == CST_DECL_FUNCTION);
 
     // Check for declaration of a template function.
-    sbuf(struct cst_identifier const* const) const template_parameters =
+    sbuf(struct cst_identifier const) const template_parameters =
         decl->data.function.template_parameters;
     if (sbuf_count(template_parameters) != 0) {
         struct symbol_table* const symbols =
@@ -1689,7 +1687,7 @@ resolve_decl_function(struct resolver* resolver, struct cst_decl const* decl)
     // Add the function/value to the symbol table now so that recursive
     // functions may reference themselves.
     struct symbol* const function_symbol = symbol_new_function(
-        decl->location, decl->data.function.identifier->name, function);
+        decl->location, decl->data.function.identifier.name, function);
     freeze(function_symbol);
     symbol_table_insert(
         resolver->current_symbol_table,
@@ -1714,7 +1712,7 @@ resolve_decl_function(struct resolver* resolver, struct cst_decl const* decl)
     for (size_t i = sbuf_count(function_parameters); i--;) {
         struct source_location const location =
             function_parameters[i]->location;
-        char const* const name = function_parameters[i]->identifier->name;
+        char const* const name = function_parameters[i]->identifier.name;
         struct type const* const type = parameter_types[i];
         struct address* const address =
             address_new(address_init_local(rbp_offset));
@@ -1789,7 +1787,7 @@ resolve_decl_struct(struct resolver* resolver, struct cst_decl const* decl)
     assert(decl->kind == CST_DECL_STRUCT);
 
     // Check for declaration of a template function.
-    sbuf(struct cst_identifier const* const) const template_parameters =
+    sbuf(struct cst_identifier const) const template_parameters =
         decl->data.struct_.template_parameters;
     if (sbuf_count(template_parameters) != 0) {
         struct symbol_table* const symbols =
@@ -2009,7 +2007,7 @@ resolve_decl_extern_function(
     function->value = value;
 
     struct symbol* const symbol = symbol_new_function(
-        decl->location, decl->data.extern_function.identifier->name, function);
+        decl->location, decl->data.extern_function.identifier.name, function);
     freeze(symbol);
 
     symbol_table_insert(
@@ -2538,8 +2536,8 @@ resolve_stmt_for_range(struct resolver* resolver, struct cst_stmt const* stmt)
 
     int const save_rbp_offset = resolver->current_rbp_offset;
     struct source_location const loop_var_location =
-        stmt->data.for_range.identifier->location;
-    char const* const loop_var_name = stmt->data.for_range.identifier->name;
+        stmt->data.for_range.identifier.location;
+    char const* const loop_var_name = stmt->data.for_range.identifier.name;
     struct type const* const loop_var_type = context()->builtin.usize;
     struct address const* const loop_var_address =
         resolver_reserve_storage_local(resolver, loop_var_type);
@@ -3268,7 +3266,7 @@ resolve_expr_struct(struct resolver* resolver, struct cst_expr const* expr)
     sbuf_freeze(member_variable_inits);
 
     for (size_t i = 0; i < sbuf_count(initializers); ++i) {
-        char const* const initializer_name = initializers[i]->identifier->name;
+        char const* const initializer_name = initializers[i]->identifier.name;
         bool found = false; // Did we find the member for this initializer?
 
         for (size_t j = 0; j < sbuf_count(member_variable_defs); ++j) {
@@ -3353,7 +3351,7 @@ resolve_expr_call(struct resolver* resolver, struct cst_expr const* expr)
         struct cst_expr const* const dot = expr->data.call.func;
         struct cst_expr const* const lhs = dot->data.access_member.lhs;
         char const* const name =
-            dot->data.access_member.member->identifier->name;
+            dot->data.access_member.member->identifier.name;
         sbuf(struct cst_typespec const* const) const template_arguments =
             dot->data.access_member.member->template_arguments;
 
@@ -3470,7 +3468,7 @@ resolve_expr_call(struct resolver* resolver, struct cst_expr const* expr)
         assert(symbol != NULL);
         assert(symbol->kind == SYMBOL_FUNCTION);
         struct expr* member_expr = expr_new_symbol(
-            dot->data.access_member.member->identifier->location, symbol);
+            dot->data.access_member.member->identifier.location, symbol);
         freeze(member_expr);
 
         struct expr* const resolved =
@@ -3635,7 +3633,7 @@ resolve_expr_access_member(
     }
 
     char const* const member_name =
-        expr->data.access_member.member->identifier->name;
+        expr->data.access_member.member->identifier.name;
 
     struct member_variable const* const member_variable_def =
         type_struct_member_variable(lhs->type, member_name);
@@ -4672,14 +4670,14 @@ resolve(struct module* module)
 
     // Module namespace.
     if (module->cst->namespace != NULL) {
-        sbuf(struct cst_identifier const* const) const identifiers =
+        sbuf(struct cst_identifier const) const identifiers =
             module->cst->namespace->identifiers;
 
         char const* nsname = NULL;
         char const* nsaddr = NULL;
         for (size_t i = 0; i < sbuf_count(identifiers); ++i) {
-            char const* const name = identifiers[i]->name;
-            struct source_location const location = identifiers[i]->location;
+            char const* const name = identifiers[i].name;
+            struct source_location const location = identifiers[i].location;
 
             nsname = qualified_name(nsname, name);
             nsaddr = qualified_addr(nsaddr, name);

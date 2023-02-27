@@ -185,7 +185,7 @@ order_decl(struct orderer* orderer, struct cst_decl const* decl)
         return;
     }
     case CST_DECL_FUNCTION: {
-        sbuf(struct cst_identifier const* const) const template_parameters =
+        sbuf(struct cst_identifier const) const template_parameters =
             decl->data.function.template_parameters;
         if (sbuf_count(template_parameters) != 0) {
             return;
@@ -199,7 +199,7 @@ order_decl(struct orderer* orderer, struct cst_decl const* decl)
         return;
     }
     case CST_DECL_STRUCT: {
-        sbuf(struct cst_identifier const* const) const template_parameters =
+        sbuf(struct cst_identifier const) const template_parameters =
             decl->data.struct_.template_parameters;
         if (sbuf_count(template_parameters) != 0) {
             return;
@@ -443,7 +443,7 @@ order_symbol(struct orderer* orderer, struct cst_symbol const* symbol)
             orderer, symbol->elements[i]->template_arguments);
     }
 
-    char const* const symbol_elem0_name = symbol->elements[0]->identifier->name;
+    char const* const symbol_elem0_name = symbol->elements[0]->identifier.name;
     bool const symbol_elem0_defined_in_current_module =
         orderer_tldecl_lookup(orderer, symbol_elem0_name) != NULL;
     bool const search_qualified_symbol =
@@ -455,8 +455,8 @@ order_symbol(struct orderer* orderer, struct cst_symbol const* symbol)
             namespace != NULL ? sbuf_count(namespace->identifiers) : 0;
         for (size_t i = 0; i < namespace_count; ++i) {
             char const* const element_name =
-                symbol->elements[i]->identifier->name;
-            char const* const namespace_name = namespace->identifiers[i]->name;
+                symbol->elements[i]->identifier.name;
+            char const* const namespace_name = namespace->identifiers[i].name;
             if (element_name == namespace_name) {
                 // Continue matching against the current module namespace.
                 continue;
@@ -470,13 +470,13 @@ order_symbol(struct orderer* orderer, struct cst_symbol const* symbol)
 
         // Perform ordering based on the non-prefix portion of the symbol.
         order_identifier(
-            orderer, symbol->elements[namespace_count]->identifier);
+            orderer, &symbol->elements[namespace_count]->identifier);
         return;
     }
 
     // Perform ordering based on the first element of the symbol.
     assert(!symbol->is_from_root);
-    order_identifier(orderer, symbol->elements[0]->identifier);
+    order_identifier(orderer, &symbol->elements[0]->identifier);
 }
 
 static void

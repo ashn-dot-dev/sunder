@@ -147,7 +147,7 @@ parse_symbol(struct parser* parser);
 static struct cst_symbol_element*
 parse_symbol_element(struct parser* parser);
 
-static struct cst_identifier const* const*
+static struct cst_identifier const*
 parse_template_parameter_list(struct parser* parser);
 
 static struct cst_typespec const* const*
@@ -187,7 +187,7 @@ parse_typespec_array_or_slice(struct parser* parser);
 static struct cst_typespec const*
 parse_typespec_typeof(struct parser* parser);
 
-static struct cst_identifier const*
+static struct cst_identifier
 parse_identifier(struct parser* parser);
 
 static struct parser*
@@ -295,7 +295,7 @@ parse_namespace(struct parser* parser)
     struct source_location const location =
         expect_current(parser, TOKEN_NAMESPACE).location;
 
-    sbuf(struct cst_identifier const*) identifiers = NULL;
+    sbuf(struct cst_identifier) identifiers = NULL;
     sbuf_push(identifiers, parse_identifier(parser));
     while (!check_current(parser, TOKEN_SEMICOLON)) {
         expect_current(parser, TOKEN_COLON_COLON);
@@ -379,7 +379,7 @@ parse_decl_variable(struct parser* parser)
 
     struct source_location const location =
         expect_current(parser, TOKEN_VAR).location;
-    struct cst_identifier const* const identifier = parse_identifier(parser);
+    struct cst_identifier const identifier = parse_identifier(parser);
     struct cst_typespec const* typespec = NULL;
     if (check_current(parser, TOKEN_COLON)) {
         expect_current(parser, TOKEN_COLON);
@@ -391,9 +391,9 @@ parse_decl_variable(struct parser* parser)
         expect_current(parser, TOKEN_UNINIT);
         if (typespec == NULL) {
             fatal(
-                identifier->location,
+                identifier.location,
                 "uninitialized variable `%s` requires a type specifier",
-                identifier->name);
+                identifier.name);
         }
     }
     else {
@@ -415,7 +415,7 @@ parse_decl_constant(struct parser* parser)
 
     struct source_location const location =
         expect_current(parser, TOKEN_LET).location;
-    struct cst_identifier const* const identifier = parse_identifier(parser);
+    struct cst_identifier const identifier = parse_identifier(parser);
     struct cst_typespec const* typespec = NULL;
     if (check_current(parser, TOKEN_COLON)) {
         expect_current(parser, TOKEN_COLON);
@@ -427,9 +427,9 @@ parse_decl_constant(struct parser* parser)
         expect_current(parser, TOKEN_UNINIT);
         if (typespec == NULL) {
             fatal(
-                identifier->location,
+                identifier.location,
                 "uninitialized constant `%s` requires a type specifier",
-                identifier->name);
+                identifier.name);
         }
     }
     else {
@@ -451,8 +451,8 @@ parse_decl_function(struct parser* parser)
 
     struct source_location const location =
         expect_current(parser, TOKEN_FUNC).location;
-    struct cst_identifier const* const identifier = parse_identifier(parser);
-    sbuf(struct cst_identifier const* const) const template_parameters =
+    struct cst_identifier const identifier = parse_identifier(parser);
+    sbuf(struct cst_identifier const) const template_parameters =
         parse_template_parameter_list(parser);
     expect_current(parser, TOKEN_LPAREN);
     sbuf(struct cst_function_parameter const* const) const function_parameters =
@@ -480,8 +480,8 @@ parse_decl_struct(struct parser* parser)
 
     struct source_location const location =
         expect_current(parser, TOKEN_STRUCT).location;
-    struct cst_identifier const* const identifier = parse_identifier(parser);
-    sbuf(struct cst_identifier const* const) const template_parameters =
+    struct cst_identifier const identifier = parse_identifier(parser);
+    sbuf(struct cst_identifier const) const template_parameters =
         parse_template_parameter_list(parser);
     expect_current(parser, TOKEN_LBRACE);
     sbuf(struct cst_member const* const) members = parse_member_list(parser);
@@ -518,7 +518,7 @@ parse_decl_alias(struct parser* parser)
 
     struct source_location const location =
         expect_current(parser, TOKEN_ALIAS).location;
-    struct cst_identifier const* const identifier = parse_identifier(parser);
+    struct cst_identifier const identifier = parse_identifier(parser);
     expect_current(parser, TOKEN_ASSIGN);
     struct cst_typespec const* const typespec = parse_typespec(parser);
     expect_current(parser, TOKEN_SEMICOLON);
@@ -538,7 +538,7 @@ parse_decl_extern_variable(struct parser* parser)
     struct source_location const location =
         expect_current(parser, TOKEN_EXTERN).location;
     expect_current(parser, TOKEN_VAR);
-    struct cst_identifier const* const identifier = parse_identifier(parser);
+    struct cst_identifier const identifier = parse_identifier(parser);
     expect_current(parser, TOKEN_COLON);
     struct cst_typespec const* const typespec = parse_typespec(parser);
     expect_current(parser, TOKEN_SEMICOLON);
@@ -558,7 +558,7 @@ parse_decl_extern_function(struct parser* parser)
     struct source_location const location =
         expect_current(parser, TOKEN_EXTERN).location;
     expect_current(parser, TOKEN_FUNC);
-    struct cst_identifier const* const identifier = parse_identifier(parser);
+    struct cst_identifier const identifier = parse_identifier(parser);
     expect_current(parser, TOKEN_LPAREN);
     sbuf(struct cst_function_parameter const* const) const function_parameters =
         parse_function_parameter_list(parser);
@@ -719,8 +719,7 @@ parse_stmt_for(struct parser* parser)
     // <stmt-for-range>
     if (check_current(parser, TOKEN_IDENTIFIER)
         && check_peek(parser, TOKEN_IN)) {
-        struct cst_identifier const* const identifier =
-            parse_identifier(parser);
+        struct cst_identifier const identifier = parse_identifier(parser);
         expect_current(parser, TOKEN_IN);
 
         struct cst_expr const* begin = parse_expr(parser);
@@ -1372,7 +1371,7 @@ parse_symbol_element(struct parser* parser)
 {
     assert(parser != NULL);
 
-    struct cst_identifier const* const identifier = parse_identifier(parser);
+    struct cst_identifier const identifier = parse_identifier(parser);
     struct cst_typespec const* const* template_arguments = NULL;
     if (check_current(parser, TOKEN_LBRACKET)
         && check_peek(parser, TOKEN_LBRACKET)) {
@@ -1386,12 +1385,12 @@ parse_symbol_element(struct parser* parser)
     return product;
 }
 
-static struct cst_identifier const* const*
+static struct cst_identifier const*
 parse_template_parameter_list(struct parser* parser)
 {
     assert(parser != NULL);
 
-    sbuf(struct cst_identifier const*) template_parameters = NULL;
+    sbuf(struct cst_identifier) template_parameters = NULL;
     if (!check_current(parser, TOKEN_LBRACKET)) {
         return template_parameters;
     }
@@ -1471,7 +1470,7 @@ parse_function_parameter(struct parser* parser)
 {
     assert(parser != NULL);
 
-    struct cst_identifier const* const identifier = parse_identifier(parser);
+    struct cst_identifier const identifier = parse_identifier(parser);
     expect_current(parser, TOKEN_COLON);
     struct cst_typespec const* const typespec = parse_typespec(parser);
 
@@ -1527,7 +1526,7 @@ parse_member_variable(struct parser* parser)
 
     struct source_location const location =
         expect_current(parser, TOKEN_VAR).location;
-    struct cst_identifier const* const identifier = parse_identifier(parser);
+    struct cst_identifier const identifier = parse_identifier(parser);
     expect_current(parser, TOKEN_COLON);
     struct cst_typespec const* const typespec = parse_typespec(parser);
     expect_current(parser, TOKEN_SEMICOLON);
@@ -1592,7 +1591,7 @@ parse_member_initializer(struct parser* parser)
 
     struct source_location const location =
         expect_current(parser, TOKEN_DOT).location;
-    struct cst_identifier const* identifier = parse_identifier(parser);
+    struct cst_identifier identifier = parse_identifier(parser);
     expect_current(parser, TOKEN_ASSIGN);
     struct cst_expr const* expr = NULL;
     if (check_current(parser, TOKEN_UNINIT)) {
@@ -1755,17 +1754,16 @@ parse_typespec_typeof(struct parser* parser)
     return product;
 }
 
-static struct cst_identifier const*
+static struct cst_identifier
 parse_identifier(struct parser* parser)
 {
     assert(parser != NULL);
 
     struct token const token = expect_current(parser, TOKEN_IDENTIFIER);
     struct source_location const location = token.location;
-    struct cst_identifier* const product =
-        cst_identifier_new(location, token.data.identifier);
+    struct cst_identifier product =
+        cst_identifier_init(location, token.data.identifier);
 
-    freeze(product);
     return product;
 }
 

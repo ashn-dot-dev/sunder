@@ -951,6 +951,13 @@ lexer_next_token(struct lexer* self);
 //////// cst.c /////////////////////////////////////////////////////////////////
 // Concrete syntax tree.
 
+struct cst_identifier {
+    struct source_location location;
+    char const* name; // interned
+};
+struct cst_identifier
+cst_identifier_init(struct source_location location, char const* name);
+
 struct cst_module {
     struct cst_namespace const* namespace; // optional
     sbuf(struct cst_import const* const) imports;
@@ -964,12 +971,11 @@ cst_module_new(
 
 struct cst_namespace {
     struct source_location location;
-    sbuf(struct cst_identifier const* const) identifiers;
+    sbuf(struct cst_identifier const) identifiers;
 };
 struct cst_namespace*
 cst_namespace_new(
-    struct source_location location,
-    struct cst_identifier const* const* identifiers);
+    struct source_location location, struct cst_identifier const* identifiers);
 
 struct cst_import {
     struct source_location location;
@@ -993,30 +999,30 @@ struct cst_decl {
     } kind;
     union {
         struct {
-            struct cst_identifier const* identifier;
+            struct cst_identifier identifier;
             struct cst_typespec const* typespec; // optional
             struct cst_expr const* expr; // optional (NULL => uninit)
         } variable;
         struct {
-            struct cst_identifier const* identifier;
+            struct cst_identifier identifier;
             struct cst_typespec const* typespec; // optional
             struct cst_expr const* expr; // optional (NULL => uninit)
         } constant;
         struct {
-            struct cst_identifier const* identifier;
+            struct cst_identifier identifier;
             // A template parameter list with count zero indicates that this
             // function was declared without template parameters.
-            sbuf(struct cst_identifier const* const) template_parameters;
+            sbuf(struct cst_identifier const) template_parameters;
             sbuf(struct cst_function_parameter const* const)
                 function_parameters;
             struct cst_typespec const* return_typespec;
             struct cst_block const* body;
         } function;
         struct {
-            struct cst_identifier const* identifier;
+            struct cst_identifier identifier;
             // A template parameter list with count zero indicates that this
             // struct was declared without template parameters.
-            sbuf(struct cst_identifier const* const) template_parameters;
+            sbuf(struct cst_identifier const) template_parameters;
             sbuf(struct cst_member const* const) members;
         } struct_;
         struct {
@@ -1024,15 +1030,15 @@ struct cst_decl {
             struct cst_decl const* decl;
         } extend;
         struct {
-            struct cst_identifier const* identifier;
+            struct cst_identifier identifier;
             struct cst_typespec const* typespec;
         } alias;
         struct {
-            struct cst_identifier const* identifier;
+            struct cst_identifier identifier;
             struct cst_typespec const* typespec;
         } extern_variable;
         struct {
-            struct cst_identifier const* identifier;
+            struct cst_identifier identifier;
             sbuf(struct cst_function_parameter const* const)
                 function_parameters;
             struct cst_typespec const* return_typespec;
@@ -1042,28 +1048,28 @@ struct cst_decl {
 struct cst_decl*
 cst_decl_new_variable(
     struct source_location location,
-    struct cst_identifier const* identifier,
+    struct cst_identifier identifier,
     struct cst_typespec const* typespec,
     struct cst_expr const* expr);
 struct cst_decl*
 cst_decl_new_constant(
     struct source_location location,
-    struct cst_identifier const* identifier,
+    struct cst_identifier identifier,
     struct cst_typespec const* typespec,
     struct cst_expr const* expr);
 struct cst_decl*
 cst_decl_new_function(
     struct source_location location,
-    struct cst_identifier const* identifier,
-    struct cst_identifier const* const* template_parameters,
+    struct cst_identifier identifier,
+    struct cst_identifier const* template_parameters,
     struct cst_function_parameter const* const* function_parameters,
     struct cst_typespec const* return_typespec,
     struct cst_block const* body);
 struct cst_decl*
 cst_decl_new_struct(
     struct source_location location,
-    struct cst_identifier const* identifier,
-    struct cst_identifier const* const* template_parameters,
+    struct cst_identifier identifier,
+    struct cst_identifier const* template_parameters,
     struct cst_member const* const* members);
 struct cst_decl*
 cst_decl_new_extend(
@@ -1073,17 +1079,17 @@ cst_decl_new_extend(
 struct cst_decl*
 cst_decl_new_alias(
     struct source_location location,
-    struct cst_identifier const* identifier,
+    struct cst_identifier identifier,
     struct cst_typespec const* typespec);
 struct cst_decl*
 cst_decl_new_extern_variable(
     struct source_location location,
-    struct cst_identifier const* identifier,
+    struct cst_identifier identifier,
     struct cst_typespec const* typespec);
 struct cst_decl*
 cst_decl_new_extern_function(
     struct source_location location,
-    struct cst_identifier const* identifier,
+    struct cst_identifier identifier,
     struct cst_function_parameter const* const* function_parameters,
     struct cst_typespec const* return_typespec);
 
@@ -1110,7 +1116,7 @@ struct cst_stmt {
             sbuf(struct cst_conditional const* const) conditionals;
         } if_;
         struct {
-            struct cst_identifier const* identifier;
+            struct cst_identifier identifier;
             struct cst_expr const* begin; // optional
             struct cst_expr const* end;
             struct cst_block const* body;
@@ -1142,7 +1148,7 @@ cst_stmt_new_if(struct cst_conditional const* const* conditionals);
 struct cst_stmt*
 cst_stmt_new_for_range(
     struct source_location location,
-    struct cst_identifier const* identifier,
+    struct cst_identifier identifier,
     struct cst_expr const* begin,
     struct cst_expr const* end,
     struct cst_block const* body);
@@ -1367,25 +1373,24 @@ cst_symbol_new(
 
 struct cst_symbol_element {
     struct source_location location;
-    struct cst_identifier const* identifier;
+    struct cst_identifier identifier;
     // Template argument count of zero indicates that this symbol element has
     // no template arguments.
     sbuf(struct cst_typespec const* const) template_arguments;
 };
 struct cst_symbol_element*
 cst_symbol_element_new(
-    struct cst_identifier const* identifier,
+    struct cst_identifier identifier,
     struct cst_typespec const* const* template_arguments);
 
 struct cst_function_parameter {
     struct source_location location;
-    struct cst_identifier const* identifier;
+    struct cst_identifier identifier;
     struct cst_typespec const* typespec;
 };
 struct cst_function_parameter*
 cst_function_parameter_new(
-    struct cst_identifier const* identifier,
-    struct cst_typespec const* typespec);
+    struct cst_identifier identifier, struct cst_typespec const* typespec);
 
 struct cst_member {
     struct source_location location;
@@ -1397,7 +1402,7 @@ struct cst_member {
     } kind;
     struct {
         struct {
-            struct cst_identifier const* identifier;
+            struct cst_identifier identifier;
             struct cst_typespec const* typespec;
         } variable;
         struct {
@@ -1413,7 +1418,7 @@ struct cst_member {
 struct cst_member*
 cst_member_new_variable(
     struct source_location location,
-    struct cst_identifier const* identifier,
+    struct cst_identifier identifier,
     struct cst_typespec const* typespec);
 struct cst_member*
 cst_member_new_constant(struct cst_decl const* decl);
@@ -1422,13 +1427,13 @@ cst_member_new_function(struct cst_decl const* decl);
 
 struct cst_member_initializer {
     struct source_location location;
-    struct cst_identifier const* identifier;
+    struct cst_identifier identifier;
     struct cst_expr const* expr; // optional (NULL => uninit)
 };
 struct cst_member_initializer*
 cst_member_initializer_new(
     struct source_location location,
-    struct cst_identifier const* identifier,
+    struct cst_identifier identifier,
     struct cst_expr const* expr);
 
 struct cst_typespec {
@@ -1483,13 +1488,6 @@ cst_typespec_new_slice(
 struct cst_typespec*
 cst_typespec_new_typeof(
     struct source_location location, struct cst_expr const* expr);
-
-struct cst_identifier {
-    struct source_location location;
-    char const* name; // interned
-};
-struct cst_identifier*
-cst_identifier_new(struct source_location location, char const* name);
 
 ////////////////////////////////////////////////////////////////////////////////
 //////// parse.c ///////////////////////////////////////////////////////////////
