@@ -951,6 +951,7 @@ lexer_next_token(struct lexer* self);
 //////// cst.c /////////////////////////////////////////////////////////////////
 // Concrete syntax tree.
 
+// Helper CST node representing a Sunder identifier (foo, _bar, qux123).
 struct cst_identifier {
     struct source_location location;
     char const* name; // interned
