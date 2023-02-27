@@ -958,6 +958,19 @@ struct cst_identifier {
 struct cst_identifier
 cst_identifier_init(struct source_location location, char const* name);
 
+// Helper CST node representing a conditional statement (if, elif, etc.)
+// consisting of a conditional expression and block of statements.
+struct cst_conditional {
+    struct source_location location;
+    struct cst_expr const* condition; // optional (NULL => else)
+    struct cst_block const* body;
+};
+struct cst_conditional
+cst_conditional_init(
+    struct source_location location,
+    struct cst_expr const* condition,
+    struct cst_block const* body);
+
 struct cst_module {
     struct cst_namespace const* namespace; // optional
     sbuf(struct cst_import const* const) imports;
@@ -1113,7 +1126,7 @@ struct cst_stmt {
         struct cst_block const* defer_block;
         struct cst_expr const* defer_expr;
         struct {
-            sbuf(struct cst_conditional const* const) conditionals;
+            sbuf(struct cst_conditional const) conditionals;
         } if_;
         struct {
             struct cst_identifier identifier;
@@ -1144,7 +1157,7 @@ struct cst_stmt*
 cst_stmt_new_defer_expr(
     struct source_location location, struct cst_expr const* expr);
 struct cst_stmt*
-cst_stmt_new_if(struct cst_conditional const* const* conditionals);
+cst_stmt_new_if(struct cst_conditional const* conditionals);
 struct cst_stmt*
 cst_stmt_new_for_range(
     struct source_location location,
@@ -1333,19 +1346,6 @@ cst_expr_new_unary(struct token op, struct cst_expr const* rhs);
 struct cst_expr*
 cst_expr_new_binary(
     struct token op, struct cst_expr const* lhs, struct cst_expr const* rhs);
-
-// Helper CST node representing a conditional statement (if, elif, etc.)
-// consisting of a conditional expression and block of statements.
-struct cst_conditional {
-    struct source_location location;
-    struct cst_expr const* condition; // optional (NULL => else)
-    struct cst_block const* body;
-};
-struct cst_conditional*
-cst_conditional_new(
-    struct source_location location,
-    struct cst_expr const* condition,
-    struct cst_block const* body);
 
 // Helper CST node representing a sequence of statements enclosed in braces.
 struct cst_block {

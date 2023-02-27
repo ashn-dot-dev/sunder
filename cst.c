@@ -12,6 +12,18 @@ cst_identifier_init(struct source_location location, char const* name)
     return (struct cst_identifier){.location = location, .name = name};
 }
 
+struct cst_conditional
+cst_conditional_init(
+    struct source_location location,
+    struct cst_expr const* condition,
+    struct cst_block const* body)
+{
+    assert(body != NULL);
+
+    return (struct cst_conditional){
+        .location = location, .condition = condition, .body = body};
+}
+
 struct cst_module*
 cst_module_new(
     struct cst_namespace const* namespace,
@@ -214,11 +226,11 @@ cst_stmt_new(struct source_location location, enum cst_stmt_kind kind)
 }
 
 struct cst_stmt*
-cst_stmt_new_if(struct cst_conditional const* const* conditionals)
+cst_stmt_new_if(struct cst_conditional const* conditionals)
 {
     assert(sbuf_count(conditionals) > 0u);
 
-    struct source_location const location = conditionals[0]->location;
+    struct source_location const location = conditionals[0].location;
     struct cst_stmt* const self = cst_stmt_new(location, CST_STMT_IF);
     self->data.if_.conditionals = conditionals;
     return self;
@@ -593,22 +605,6 @@ cst_expr_new_binary(
     self->data.binary.op = op;
     self->data.binary.lhs = lhs;
     self->data.binary.rhs = rhs;
-    return self;
-}
-
-struct cst_conditional*
-cst_conditional_new(
-    struct source_location location,
-    struct cst_expr const* condition,
-    struct cst_block const* body)
-{
-    assert(body != NULL);
-
-    struct cst_conditional* const self = xalloc(NULL, sizeof(*self));
-    memset(self, 0x00, sizeof(*self));
-    self->location = location;
-    self->condition = condition;
-    self->body = body;
     return self;
 }
 

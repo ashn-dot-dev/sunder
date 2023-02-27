@@ -673,30 +673,27 @@ parse_stmt_if(struct parser* parser)
     assert(parser != NULL);
     assert(check_current(parser, TOKEN_IF));
 
-    sbuf(struct cst_conditional const*) conditionals = NULL;
+    sbuf(struct cst_conditional) conditionals = NULL;
 
     struct source_location location = expect_current(parser, TOKEN_IF).location;
     struct cst_expr const* condition = parse_expr(parser);
     struct cst_block const* body = parse_block(parser);
-    struct cst_conditional* conditional =
-        cst_conditional_new(location, condition, body);
-    freeze(conditional);
+    struct cst_conditional conditional =
+        cst_conditional_init(location, condition, body);
     sbuf_push(conditionals, conditional);
 
     while (check_current(parser, TOKEN_ELIF)) {
         location = advance_token(parser).location;
         condition = parse_expr(parser);
         body = parse_block(parser);
-        conditional = cst_conditional_new(location, condition, body);
-        freeze(conditional);
+        conditional = cst_conditional_init(location, condition, body);
         sbuf_push(conditionals, conditional);
     }
 
     if (check_current(parser, TOKEN_ELSE)) {
         location = advance_token(parser).location;
         body = parse_block(parser);
-        conditional = cst_conditional_new(location, NULL, body);
-        freeze(conditional);
+        conditional = cst_conditional_init(location, NULL, body);
         sbuf_push(conditionals, conditional);
     }
 

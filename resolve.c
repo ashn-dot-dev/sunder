@@ -2454,18 +2454,18 @@ resolve_stmt_if(struct resolver* resolver, struct cst_stmt const* stmt)
     assert(stmt != NULL);
     assert(stmt->kind == CST_STMT_IF);
 
-    sbuf(struct cst_conditional const* const) const conditionals =
+    sbuf(struct cst_conditional const) const conditionals =
         stmt->data.if_.conditionals;
     sbuf(struct conditional const*) resolved_conditionals = NULL;
     sbuf_resize(resolved_conditionals, sbuf_count(conditionals));
     for (size_t i = 0; i < sbuf_count(conditionals); ++i) {
         assert(
-            (conditionals[i]->condition != NULL)
+            (conditionals[i].condition != NULL)
             || (i == (sbuf_count(conditionals) - 1)));
 
         struct expr const* condition = NULL;
-        if (conditionals[i]->condition != NULL) {
-            condition = resolve_expr(resolver, conditionals[i]->condition);
+        if (conditionals[i].condition != NULL) {
+            condition = resolve_expr(resolver, conditionals[i].condition);
             if (condition->type->kind != TYPE_BOOL) {
                 fatal(
                     condition->location,
@@ -2477,13 +2477,13 @@ resolve_stmt_if(struct resolver* resolver, struct cst_stmt const* stmt)
         struct symbol_table* const symbol_table =
             symbol_table_new(resolver->current_symbol_table);
         struct block const* const block =
-            resolve_block(resolver, symbol_table, conditionals[i]->body);
+            resolve_block(resolver, symbol_table, conditionals[i].body);
         // Freeze the symbol table now that the block has been resolved and no
         // new symbols will be added.
         symbol_table_freeze(symbol_table);
 
         struct conditional* const resolved_conditional =
-            conditional_new(conditionals[i]->location, condition, block);
+            conditional_new(conditionals[i].location, condition, block);
         freeze(resolved_conditional);
         resolved_conditionals[i] = resolved_conditional;
     }
