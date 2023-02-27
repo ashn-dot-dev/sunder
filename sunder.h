@@ -980,6 +980,7 @@ cst_conditional_init(
     struct source_location location,
     struct cst_expr const* condition,
     struct cst_block body);
+
 struct cst_module {
     struct cst_namespace const* namespace; // optional
     sbuf(struct cst_import const* const) imports;
