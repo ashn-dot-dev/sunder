@@ -28,6 +28,9 @@ check_peek(struct parser const* parser, enum token_kind kind);
 static struct token
 expect_current(struct parser* parser, enum token_kind kind);
 
+static struct cst_identifier
+parse_identifier(struct parser* parser);
+
 static struct cst_module const*
 parse_module(struct parser* parser);
 
@@ -187,9 +190,6 @@ parse_typespec_array_or_slice(struct parser* parser);
 static struct cst_typespec const*
 parse_typespec_typeof(struct parser* parser);
 
-static struct cst_identifier
-parse_identifier(struct parser* parser);
-
 static struct parser*
 parser_new(struct module* module, struct lexer* lexer)
 {
@@ -258,6 +258,19 @@ expect_current(struct parser* parser, enum token_kind kind)
             found);
     }
     return advance_token(parser);
+}
+
+static struct cst_identifier
+parse_identifier(struct parser* parser)
+{
+    assert(parser != NULL);
+
+    struct token const token = expect_current(parser, TOKEN_IDENTIFIER);
+    struct source_location const location = token.location;
+    struct cst_identifier product =
+        cst_identifier_init(location, token.data.identifier);
+
+    return product;
 }
 
 static struct cst_module const*
@@ -1748,19 +1761,6 @@ parse_typespec_typeof(struct parser* parser)
         cst_typespec_new_typeof(location, expr);
 
     freeze(product);
-    return product;
-}
-
-static struct cst_identifier
-parse_identifier(struct parser* parser)
-{
-    assert(parser != NULL);
-
-    struct token const token = expect_current(parser, TOKEN_IDENTIFIER);
-    struct source_location const location = token.location;
-    struct cst_identifier product =
-        cst_identifier_init(location, token.data.identifier);
-
     return product;
 }
 
