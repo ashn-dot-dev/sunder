@@ -437,6 +437,18 @@ cst_expr_new_slice(
 }
 
 struct cst_expr*
+cst_expr_new_struct(
+    struct source_location location,
+    struct cst_typespec const* typespec,
+    struct cst_member_initializer const* const* initializers)
+{
+    struct cst_expr* const self = cst_expr_new(location, CST_EXPR_STRUCT);
+    self->data.struct_.typespec = typespec;
+    self->data.struct_.initializers = initializers;
+    return self;
+}
+
+struct cst_expr*
 cst_expr_new_cast(
     struct source_location location,
     struct cst_typespec const* typespec,
@@ -448,18 +460,6 @@ cst_expr_new_cast(
     struct cst_expr* const self = cst_expr_new(location, CST_EXPR_CAST);
     self->data.cast.typespec = typespec;
     self->data.cast.expr = expr;
-    return self;
-}
-
-struct cst_expr*
-cst_expr_new_struct(
-    struct source_location location,
-    struct cst_typespec const* typespec,
-    struct cst_member_initializer const* const* initializers)
-{
-    struct cst_expr* const self = cst_expr_new(location, CST_EXPR_STRUCT);
-    self->data.struct_.typespec = typespec;
-    self->data.struct_.initializers = initializers;
     return self;
 }
 
