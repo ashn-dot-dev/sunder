@@ -1586,6 +1586,9 @@ parse_member_initializer_list(struct parser* parser)
     sbuf_push(member_initializers, parse_member_initializer(parser));
     while (check_current(parser, TOKEN_COMMA)) {
         advance_token(parser);
+        if (check_current(parser, TOKEN_RBRACE)) {
+            break;
+        }
         sbuf_push(member_initializers, parse_member_initializer(parser));
     }
 

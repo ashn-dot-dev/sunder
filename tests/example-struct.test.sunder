@@ -149,6 +149,13 @@ func main() void {
     sys::dump[[u8]](baz::CONSTANT_C);
     sys::dump[[u16]](baz::sum(&baz_c));
     sys::dump[[u16]](baz_c.sum());
+
+    # Check that struct member initializer lists can contain a final comma
+    # before the closing brace.
+    (:point){
+        .x = 123,
+        .y = 456,
+    };
 }
 ################################################################################
 #
