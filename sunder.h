@@ -1847,6 +1847,17 @@ block_new(
     struct stmt const* defer_begin,
     struct stmt const* defer_end);
 
+struct conditional {
+    struct source_location location;
+    struct expr const* condition; // optional (NULL => else)
+    struct block body;
+};
+struct conditional*
+conditional_new(
+    struct source_location location,
+    struct expr const* condition,
+    struct block body);
+
 struct stmt {
     struct source_location location;
     enum stmt_kind {
@@ -1868,7 +1879,7 @@ struct stmt {
             struct block body;
         } defer;
         struct {
-            sbuf(struct conditional const* const) conditionals;
+            sbuf(struct conditional const) conditionals;
         } if_;
         struct {
             struct symbol const* loop_variable;
@@ -1905,7 +1916,7 @@ stmt_new_defer(
     struct stmt const* prev,
     struct block body);
 struct stmt*
-stmt_new_if(struct conditional const* const* conditionals);
+stmt_new_if(struct conditional const* conditionals);
 struct stmt*
 stmt_new_for_range(
     struct source_location location,
@@ -2188,17 +2199,6 @@ struct function {
 // The address of the function must be of kind ADDRESS_STATIC.
 struct function*
 function_new(struct type const* type, struct address const* address);
-
-struct conditional {
-    struct source_location location;
-    struct expr const* condition; // optional (NULL => else)
-    struct block body;
-};
-struct conditional*
-conditional_new(
-    struct source_location location,
-    struct expr const* condition,
-    struct block body);
 
 struct value {
     struct type const* type;

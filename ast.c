@@ -918,6 +918,20 @@ block_new(
     return self;
 }
 
+struct conditional*
+conditional_new(
+    struct source_location location,
+    struct expr const* condition,
+    struct block body)
+{
+    struct conditional* const self = xalloc(NULL, sizeof(*self));
+    memset(self, 0x00, sizeof(*self));
+    self->location = location;
+    self->condition = condition;
+    self->body = body;
+    return self;
+}
+
 static struct stmt*
 stmt_new(struct source_location location, enum stmt_kind kind)
 {
@@ -941,11 +955,11 @@ stmt_new_defer(
 }
 
 struct stmt*
-stmt_new_if(struct conditional const* const* conditionals)
+stmt_new_if(struct conditional const* conditionals)
 {
     assert(sbuf_count(conditionals) > 0u);
 
-    struct stmt* const self = stmt_new(conditionals[0]->location, STMT_IF);
+    struct stmt* const self = stmt_new(conditionals[0].location, STMT_IF);
     self->data.if_.conditionals = conditionals;
     return self;
 }
@@ -1421,20 +1435,6 @@ function_new(struct type const* type, struct address const* address)
     memset(self, 0x00, sizeof(*self));
     self->type = type;
     self->address = address;
-    return self;
-}
-
-struct conditional*
-conditional_new(
-    struct source_location location,
-    struct expr const* condition,
-    struct block body)
-{
-    struct conditional* const self = xalloc(NULL, sizeof(*self));
-    memset(self, 0x00, sizeof(*self));
-    self->location = location;
-    self->condition = condition;
-    self->body = body;
     return self;
 }
 

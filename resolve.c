@@ -2527,7 +2527,7 @@ resolve_stmt_if(struct resolver* resolver, struct cst_stmt const* stmt)
 
     sbuf(struct cst_conditional const) const conditionals =
         stmt->data.if_.conditionals;
-    sbuf(struct conditional const*) resolved_conditionals = NULL;
+    sbuf(struct conditional) resolved_conditionals = NULL;
     sbuf_resize(resolved_conditionals, sbuf_count(conditionals));
     for (size_t i = 0; i < sbuf_count(conditionals); ++i) {
         assert(
@@ -2556,7 +2556,7 @@ resolve_stmt_if(struct resolver* resolver, struct cst_stmt const* stmt)
         struct conditional* const resolved_conditional =
             conditional_new(conditionals[i].location, condition, block);
         freeze(resolved_conditional);
-        resolved_conditionals[i] = resolved_conditional;
+        resolved_conditionals[i] = *resolved_conditional;
     }
 
     sbuf_freeze(resolved_conditionals);

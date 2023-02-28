@@ -1174,15 +1174,15 @@ codegen_stmt_if(struct stmt const* stmt, size_t id)
     assert(stmt != NULL);
     assert(stmt->kind == STMT_IF);
 
-    sbuf(struct conditional const* const) const conditionals =
+    sbuf(struct conditional const) const conditionals =
         stmt->data.if_.conditionals;
     for (size_t i = 0; i < sbuf_count(conditionals); ++i) {
         bool const is_last = i == (sbuf_count(conditionals) - 1);
 
-        if (conditionals[i]->condition != NULL) {
+        if (conditionals[i].condition != NULL) {
             appendln("%s%zu_condition_%zu:", LABEL_STMT, id, i);
-            assert(conditionals[i]->condition->type->kind == TYPE_BOOL);
-            push_rvalue(conditionals[i]->condition);
+            assert(conditionals[i].condition->type->kind == TYPE_BOOL);
+            push_rvalue(conditionals[i].condition);
             appendli("pop rax");
             appendli("mov rbx, 0x00");
             appendli("cmp al, bl");
@@ -1199,7 +1199,7 @@ codegen_stmt_if(struct stmt const* stmt, size_t id)
         }
 
         appendln("%s%zu_body_%zu:", LABEL_STMT, id, i);
-        codegen_block(&conditionals[i]->body);
+        codegen_block(&conditionals[i].body);
         appendli("jmp %s%zu_end", LABEL_STMT, id);
     }
 
