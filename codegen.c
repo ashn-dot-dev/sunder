@@ -838,9 +838,8 @@ codegen_extern_labels(void const* sysasm_buf, size_t sysasm_buf_size)
 
         bool const is_extern_variable =
             symbol->kind == SYMBOL_VARIABLE && symbol->data.variable->is_extern;
-        bool const is_extern_function = symbol->kind == SYMBOL_FUNCTION
-            && symbol_xget_value(NO_LOCATION, symbol)->data.function->body
-                == NULL;
+        bool const is_extern_function =
+            symbol->kind == SYMBOL_FUNCTION && symbol->data.function->is_extern;
         if (!(is_extern_variable || is_extern_function)) {
             continue;
         }
@@ -915,8 +914,7 @@ codegen_global_labels(void)
     for (size_t i = 0; i < sbuf_count(context()->static_symbols); ++i) {
         struct symbol const* const symbol = context()->static_symbols[i];
         bool const is_global_function = symbol->kind == SYMBOL_FUNCTION
-            && symbol_xget_value(NO_LOCATION, symbol)->data.function->body
-                != NULL;
+            && !symbol->data.function->is_extern;
         if (is_global_function) {
             struct address const* const address = symbol_xget_address(symbol);
             assert(address->kind == ADDRESS_STATIC);
@@ -1081,8 +1079,7 @@ codegen_static_function(struct symbol const* symbol)
     struct function const* const function =
         symbol_xget_value(NO_LOCATION, symbol)->data.function;
 
-    bool const is_extern_function = function->body == NULL;
-    if (is_extern_function) {
+    if (function->is_extern) {
         // Forward label was already emitted.
         return;
     }
@@ -1112,7 +1109,7 @@ codegen_static_function(struct symbol const* symbol)
 
     assert(current_function == NULL);
     current_function = function;
-    codegen_block(function->body);
+    codegen_block(&function->body);
     current_function = NULL;
 
     if (function->type->data.function.return_type == context()->builtin.void_) {

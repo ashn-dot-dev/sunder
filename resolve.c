@@ -2006,6 +2006,8 @@ resolve_decl_extern_function(
     value_freeze(value);
     function->value = value;
 
+    function->is_extern = true;
+
     struct symbol* const symbol = symbol_new_function(
         decl->location, decl->data.extern_function.identifier.name, function);
     freeze(symbol);
@@ -2231,7 +2233,7 @@ complete_function(
     resolver->current_symbol_name_prefix = incomplete->name;
     resolver->current_static_addr_prefix = function->address->data.static_.name;
     resolver->current_function = function;
-    function->body = resolve_block(
+    function->body = *resolve_block(
         resolver,
         incomplete->symbol_table,
         &incomplete->decl->data.function.body);
@@ -2262,7 +2264,7 @@ complete_function(
     assert(function->type->kind == TYPE_FUNCTION);
     bool func_has_void_return =
         function->type->data.function.return_type->kind == TYPE_VOID;
-    sbuf(struct stmt const* const) const stmts = function->body->stmts;
+    sbuf(struct stmt const* const) const stmts = function->body.stmts;
     bool const non_void_returning_func_does_not_end_with_return =
         !func_has_void_return
         && (sbuf_count(stmts) == 0

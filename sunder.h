@@ -2175,6 +2175,8 @@ struct function {
     // Initially NULL, but set shortly after the allocation and initialization
     // of this object during the resolve phase.
     struct value const* value;
+    // True if this function is defined outside of the Sunder sources.
+    bool is_extern;
 
     // Outermost symbol table containing symbols for function parameters, local
     // variables, and local constants in the outermost scope (i.e. body) of the
@@ -2184,9 +2186,8 @@ struct function {
     sbuf(struct symbol const* const) symbol_parameters;
     // Initialized to NULL on struct creation.
     struct symbol const* symbol_return;
-    // Initialized to NULL on struct creation. Set to non-NULL for non-extern
-    // functions completed during the resolve phase.
-    struct block const* body;
+    // Zero-initialized on struct creation.
+    struct block body;
 
     // Offset required to store all local variables in this function.
     // When the function is entered the stack pointer will be offset by this
