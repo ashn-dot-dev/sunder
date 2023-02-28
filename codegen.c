@@ -1199,7 +1199,7 @@ codegen_stmt_if(struct stmt const* stmt, size_t id)
         }
 
         appendln("%s%zu_body_%zu:", LABEL_STMT, id, i);
-        codegen_block(conditionals[i]->body);
+        codegen_block(&conditionals[i]->body);
         appendli("jmp %s%zu_end", LABEL_STMT, id);
     }
 
@@ -1239,7 +1239,7 @@ codegen_stmt_for_range(struct stmt const* stmt, size_t id)
     appendli("cmp rax, rbx");
     appendli("jnb %s%zu_end", LABEL_STMT, id);
     appendln("%s%zu_body_bgn:", LABEL_STMT, id);
-    codegen_block(stmt->data.for_range.body);
+    codegen_block(&stmt->data.for_range.body);
     appendln("%s%zu_body_end:", LABEL_STMT, id);
     appendli(
         "inc qword [rbp + %d]",
@@ -1268,7 +1268,7 @@ codegen_stmt_for_expr(struct stmt const* stmt, size_t id)
     appendli("cmp al, bl");
     appendli("je %s%zu_end", LABEL_STMT, id);
     appendln("%s%zu_body_bgn:", LABEL_STMT, id);
-    codegen_block(stmt->data.for_expr.body);
+    codegen_block(&stmt->data.for_expr.body);
     appendln("%s%zu_body_end:", LABEL_STMT, id);
     appendli("jmp %s%zu_condition", LABEL_STMT, id);
 
@@ -1409,7 +1409,7 @@ codegen_defers(struct stmt const* begin, struct stmt const* end)
 
     struct stmt const* current = begin;
     while (current != end) {
-        codegen_block(current->data.defer.body);
+        codegen_block(&current->data.defer.body);
         current = current->data.defer.prev;
     }
 }

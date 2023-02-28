@@ -194,6 +194,12 @@ static void
 complete_function(
     struct resolver* resolver, struct incomplete_function const* incomplete);
 
+static struct block const*
+resolve_block(
+    struct resolver* resolver,
+    struct symbol_table* symbol_table,
+    struct cst_block const* block);
+
 static struct stmt const* // optional
 resolve_stmt(struct resolver* resolver, struct cst_stmt const* stmt);
 static struct stmt const* // optional
@@ -334,12 +340,6 @@ resolve_expr_binary_bitwise(
     enum bop_kind bop,
     struct expr const* lhs,
     struct expr const* rhs);
-
-static struct block const*
-resolve_block(
-    struct resolver* resolver,
-    struct symbol_table* symbol_table,
-    struct cst_block const* block);
 
 static struct type const*
 resolve_typespec(
@@ -2276,6 +2276,77 @@ complete_function(
     context()->template_instantiation_chain = save_chain;
 }
 
+static struct block const*
+resolve_block(
+    struct resolver* resolver,
+    struct symbol_table* symbol_table,
+    struct cst_block const* block)
+{
+    assert(resolver->current_function != NULL);
+    assert(symbol_table != NULL);
+
+    struct symbol_table* const save_symbol_table =
+        resolver->current_symbol_table;
+    resolver->current_symbol_table = symbol_table;
+    int const save_rbp_offset = resolver->current_rbp_offset;
+    struct stmt const* save_current_defer = resolver->current_defer;
+
+    sbuf(struct stmt const*) stmts = NULL;
+    for (size_t i = 0; i < sbuf_count(block->stmts); ++i) {
+        struct stmt const* const resolved_stmt =
+            resolve_stmt(resolver, block->stmts[i]);
+        if (resolved_stmt != NULL) {
+            sbuf_push(stmts, resolved_stmt);
+        }
+    }
+    sbuf_freeze(stmts);
+
+    struct block* const resolved = block_new(
+        block->location,
+        symbol_table,
+        stmts,
+        resolver->current_defer,
+        save_current_defer);
+
+    // Produce a warning if any local symbol is unused.
+    for (size_t i = 0; i < sbuf_count(symbol_table->elements); ++i) {
+        if (symbol_table->elements[i].name == context()->interned.return_) {
+            // Ignore the `return` symbol since it is inaccessible.
+            continue;
+        }
+        if (cstr_starts_with(symbol_table->elements[i].name, "__")) {
+            // Ignore any symbol starting with two underscores. This covers the
+            // case of compiler-generated symbols such as `__bytes`.
+            continue;
+        }
+        if (cstr_ends_with(symbol_table->elements[i].name, "_")) {
+            // Ignore any symbol ending with an underscore. This covers the
+            // case of purposefully unused symbols such as `_` or `somevar_`.
+            continue;
+        }
+        if (symbol_table->elements[i].symbol->uses == 0) {
+            warning(
+                symbol_table->elements[i].symbol->location,
+                "unused %s `%s`",
+                symbol_kind_to_cstr(symbol_table->elements[i].symbol->kind),
+                symbol_table->elements[i].name);
+            info(
+                NO_LOCATION,
+                "use %s `%s` in an expression or rename the %s to `%s_`",
+                symbol_kind_to_cstr(symbol_table->elements[i].symbol->kind),
+                symbol_table->elements[i].name,
+                symbol_kind_to_cstr(symbol_table->elements[i].symbol->kind),
+                symbol_table->elements[i].name);
+        }
+    }
+
+    freeze(resolved);
+    resolver->current_symbol_table = save_symbol_table;
+    resolver->current_rbp_offset = save_rbp_offset;
+    resolver->current_defer = save_current_defer;
+    return resolved;
+}
+
 static struct stmt const*
 resolve_stmt(struct resolver* resolver, struct cst_stmt const* stmt)
 {
@@ -2401,8 +2472,8 @@ resolve_stmt_defer_block(struct resolver* resolver, struct cst_stmt const* stmt)
 
     struct symbol_table* const symbol_table =
         symbol_table_new(resolver->current_symbol_table);
-    struct block const* const body =
-        resolve_block(resolver, symbol_table, &stmt->data.defer_block);
+    struct block const body =
+        *resolve_block(resolver, symbol_table, &stmt->data.defer_block);
     symbol_table_freeze(symbol_table);
 
     struct stmt* const resolved =
@@ -2439,7 +2510,7 @@ resolve_stmt_defer_expr(struct resolver* resolver, struct cst_stmt const* stmt)
 
     // Use the implicitly created block as the defer block.
     struct stmt* const resolved =
-        stmt_new_defer(stmt->location, resolver->current_defer, block);
+        stmt_new_defer(stmt->location, resolver->current_defer, *block);
     resolver->current_defer = resolved;
 
     freeze(resolved);
@@ -2476,8 +2547,8 @@ resolve_stmt_if(struct resolver* resolver, struct cst_stmt const* stmt)
 
         struct symbol_table* const symbol_table =
             symbol_table_new(resolver->current_symbol_table);
-        struct block const* const block =
-            resolve_block(resolver, symbol_table, &conditionals[i].body);
+        struct block const block =
+            *resolve_block(resolver, symbol_table, &conditionals[i].body);
         // Freeze the symbol table now that the block has been resolved and no
         // new symbols will be added.
         symbol_table_freeze(symbol_table);
@@ -2559,8 +2630,8 @@ resolve_stmt_for_range(struct resolver* resolver, struct cst_stmt const* stmt)
 
     resolver->is_within_loop = true;
     resolver->current_loop_defer = resolver->current_defer;
-    struct block const* const body =
-        resolve_block(resolver, symbol_table, &stmt->data.for_range.body);
+    struct block const body =
+        *resolve_block(resolver, symbol_table, &stmt->data.for_range.body);
     resolver->current_rbp_offset = save_rbp_offset;
     resolver->is_within_loop = save_is_within_loop;
     resolver->current_loop_defer = save_current_loop_defer;
@@ -2601,8 +2672,8 @@ resolve_stmt_for_expr(struct resolver* resolver, struct cst_stmt const* stmt)
 
     resolver->is_within_loop = true;
     resolver->current_loop_defer = resolver->current_defer;
-    struct block const* const body =
-        resolve_block(resolver, symbol_table, &stmt->data.for_expr.body);
+    struct block const body =
+        *resolve_block(resolver, symbol_table, &stmt->data.for_expr.body);
     resolver->is_within_loop = save_is_within_loop;
     resolver->current_loop_defer = save_current_loop_defer;
 
@@ -4437,77 +4508,6 @@ invalid_operand_types:
         rhs->type->name,
         token_kind_to_cstr(op.kind));
     return NULL;
-}
-
-static struct block const*
-resolve_block(
-    struct resolver* resolver,
-    struct symbol_table* symbol_table,
-    struct cst_block const* block)
-{
-    assert(resolver->current_function != NULL);
-    assert(symbol_table != NULL);
-
-    struct symbol_table* const save_symbol_table =
-        resolver->current_symbol_table;
-    resolver->current_symbol_table = symbol_table;
-    int const save_rbp_offset = resolver->current_rbp_offset;
-    struct stmt const* save_current_defer = resolver->current_defer;
-
-    sbuf(struct stmt const*) stmts = NULL;
-    for (size_t i = 0; i < sbuf_count(block->stmts); ++i) {
-        struct stmt const* const resolved_stmt =
-            resolve_stmt(resolver, block->stmts[i]);
-        if (resolved_stmt != NULL) {
-            sbuf_push(stmts, resolved_stmt);
-        }
-    }
-    sbuf_freeze(stmts);
-
-    struct block* const resolved = block_new(
-        block->location,
-        symbol_table,
-        stmts,
-        resolver->current_defer,
-        save_current_defer);
-
-    // Produce a warning if any local symbol is unused.
-    for (size_t i = 0; i < sbuf_count(symbol_table->elements); ++i) {
-        if (symbol_table->elements[i].name == context()->interned.return_) {
-            // Ignore the `return` symbol since it is inaccessible.
-            continue;
-        }
-        if (cstr_starts_with(symbol_table->elements[i].name, "__")) {
-            // Ignore any symbol starting with two underscores. This covers the
-            // case of compiler-generated symbols such as `__bytes`.
-            continue;
-        }
-        if (cstr_ends_with(symbol_table->elements[i].name, "_")) {
-            // Ignore any symbol ending with an underscore. This covers the
-            // case of purposefully unused symbols such as `_` or `somevar_`.
-            continue;
-        }
-        if (symbol_table->elements[i].symbol->uses == 0) {
-            warning(
-                symbol_table->elements[i].symbol->location,
-                "unused %s `%s`",
-                symbol_kind_to_cstr(symbol_table->elements[i].symbol->kind),
-                symbol_table->elements[i].name);
-            info(
-                NO_LOCATION,
-                "use %s `%s` in an expression or rename the %s to `%s_`",
-                symbol_kind_to_cstr(symbol_table->elements[i].symbol->kind),
-                symbol_table->elements[i].name,
-                symbol_kind_to_cstr(symbol_table->elements[i].symbol->kind),
-                symbol_table->elements[i].name);
-        }
-    }
-
-    freeze(resolved);
-    resolver->current_symbol_table = save_symbol_table;
-    resolver->current_rbp_offset = save_rbp_offset;
-    resolver->current_defer = save_current_defer;
-    return resolved;
 }
 
 static struct type const*

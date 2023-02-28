@@ -896,6 +896,28 @@ symbol_table_lookup_local(struct symbol_table const* self, char const* name)
     return NULL;
 }
 
+struct block*
+block_new(
+    struct source_location location,
+    struct symbol_table* symbol_table,
+    struct stmt const* const* stmts,
+    struct stmt const* defer_begin,
+    struct stmt const* defer_end)
+{
+    assert(symbol_table != NULL);
+    assert(defer_begin == NULL || defer_begin->kind == STMT_DEFER);
+    assert(defer_end == NULL || defer_end->kind == STMT_DEFER);
+
+    struct block* const self = xalloc(NULL, sizeof(*self));
+    memset(self, 0x00, sizeof(*self));
+    self->location = location;
+    self->symbol_table = symbol_table;
+    self->stmts = stmts;
+    self->defer_begin = defer_begin;
+    self->defer_end = defer_end;
+    return self;
+}
+
 static struct stmt*
 stmt_new(struct source_location location, enum stmt_kind kind)
 {
@@ -908,12 +930,9 @@ stmt_new(struct source_location location, enum stmt_kind kind)
 
 struct stmt*
 stmt_new_defer(
-    struct source_location location,
-    struct stmt const* prev,
-    struct block const* body)
+    struct source_location location, struct stmt const* prev, struct block body)
 {
     assert(prev == NULL || prev->kind == STMT_DEFER);
-    assert(body != NULL);
 
     struct stmt* const self = stmt_new(location, STMT_DEFER);
     self->data.defer.prev = prev;
@@ -937,7 +956,7 @@ stmt_new_for_range(
     struct symbol const* loop_variable,
     struct expr const* begin,
     struct expr const* end,
-    struct block const* body)
+    struct block body)
 {
     assert(loop_variable != NULL);
     assert(loop_variable->kind == SYMBOL_VARIABLE);
@@ -946,7 +965,6 @@ stmt_new_for_range(
     assert(begin->type == context()->builtin.usize);
     assert(end != NULL);
     assert(end->type == context()->builtin.usize);
-    assert(body != NULL);
 
     struct stmt* const self = stmt_new(location, STMT_FOR_RANGE);
     self->data.for_range.loop_variable = loop_variable;
@@ -958,12 +976,9 @@ stmt_new_for_range(
 
 struct stmt*
 stmt_new_for_expr(
-    struct source_location location,
-    struct expr const* expr,
-    struct block const* body)
+    struct source_location location, struct expr const* expr, struct block body)
 {
     assert(expr != NULL);
-    assert(body != NULL);
 
     struct stmt* const self = stmt_new(location, STMT_FOR_EXPR);
     self->data.for_expr.expr = expr;
@@ -1413,35 +1428,13 @@ struct conditional*
 conditional_new(
     struct source_location location,
     struct expr const* condition,
-    struct block const* body)
+    struct block body)
 {
     struct conditional* const self = xalloc(NULL, sizeof(*self));
     memset(self, 0x00, sizeof(*self));
     self->location = location;
     self->condition = condition;
     self->body = body;
-    return self;
-}
-
-struct block*
-block_new(
-    struct source_location location,
-    struct symbol_table* symbol_table,
-    struct stmt const* const* stmts,
-    struct stmt const* defer_begin,
-    struct stmt const* defer_end)
-{
-    assert(symbol_table != NULL);
-    assert(defer_begin == NULL || defer_begin->kind == STMT_DEFER);
-    assert(defer_end == NULL || defer_end->kind == STMT_DEFER);
-
-    struct block* const self = xalloc(NULL, sizeof(*self));
-    memset(self, 0x00, sizeof(*self));
-    self->location = location;
-    self->symbol_table = symbol_table;
-    self->stmts = stmts;
-    self->defer_begin = defer_begin;
-    self->defer_end = defer_end;
     return self;
 }
 

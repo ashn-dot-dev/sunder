@@ -1830,6 +1830,23 @@ symbol_table_lookup(struct symbol_table const* self, char const* name);
 struct symbol const*
 symbol_table_lookup_local(struct symbol_table const* self, char const* name);
 
+struct block {
+    struct source_location location;
+    struct symbol_table* symbol_table; // not owned
+    sbuf(struct stmt const* const) stmts;
+    // Defer code generation will start with this defer.
+    struct stmt const* defer_begin; // optional
+    // Defer code generation will stop at this defer.
+    struct stmt const* defer_end; // optional
+};
+struct block*
+block_new(
+    struct source_location location,
+    struct symbol_table* symbol_table,
+    struct stmt const* const* stmts,
+    struct stmt const* defer_begin,
+    struct stmt const* defer_end);
+
 struct stmt {
     struct source_location location;
     enum stmt_kind {
@@ -1848,7 +1865,7 @@ struct stmt {
             // The previous defer statement that should be evaluated after this
             // defer statement is evaluated. Singly-linked list of STMT_DEFER.
             struct stmt const* prev; // optional (NULL => no defer)
-            struct block const* body;
+            struct block body;
         } defer;
         struct {
             sbuf(struct conditional const* const) conditionals;
@@ -1857,11 +1874,11 @@ struct stmt {
             struct symbol const* loop_variable;
             struct expr const* begin;
             struct expr const* end;
-            struct block const* body;
+            struct block body;
         } for_range;
         struct {
             struct expr const* expr;
-            struct block const* body;
+            struct block body;
         } for_expr;
         struct {
             struct stmt const* defer_begin; // optional
@@ -1886,7 +1903,7 @@ struct stmt*
 stmt_new_defer(
     struct source_location location,
     struct stmt const* prev,
-    struct block const* body);
+    struct block body);
 struct stmt*
 stmt_new_if(struct conditional const* const* conditionals);
 struct stmt*
@@ -1895,12 +1912,12 @@ stmt_new_for_range(
     struct symbol const* loop_variable,
     struct expr const* begin,
     struct expr const* end,
-    struct block const* body);
+    struct block body);
 struct stmt*
 stmt_new_for_expr(
     struct source_location location,
     struct expr const* expr,
-    struct block const* body);
+    struct block body);
 struct stmt*
 stmt_new_break(
     struct source_location location,
@@ -2175,30 +2192,13 @@ function_new(struct type const* type, struct address const* address);
 struct conditional {
     struct source_location location;
     struct expr const* condition; // optional (NULL => else)
-    struct block const* body;
+    struct block body;
 };
 struct conditional*
 conditional_new(
     struct source_location location,
     struct expr const* condition,
-    struct block const* body);
-
-struct block {
-    struct source_location location;
-    struct symbol_table* symbol_table; // not owned
-    sbuf(struct stmt const* const) stmts;
-    // Defer code generation will start with this defer.
-    struct stmt const* defer_begin; // optional
-    // Defer code generation will stop at this defer.
-    struct stmt const* defer_end; // optional
-};
-struct block*
-block_new(
-    struct source_location location,
-    struct symbol_table* symbol_table,
-    struct stmt const* const* stmts,
-    struct stmt const* defer_begin,
-    struct stmt const* defer_end);
+    struct block body);
 
 struct value {
     struct type const* type;
