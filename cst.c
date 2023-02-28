@@ -9,14 +9,20 @@ cst_identifier_init(struct source_location location, char const* name)
 {
     assert(name != NULL);
 
-    return (struct cst_identifier){.location = location, .name = name};
+    return (struct cst_identifier){
+        .location = location,
+        .name = name,
+    };
 }
 
 struct cst_block
 cst_block_init(
     struct source_location location, struct cst_stmt const* const* stmts)
 {
-    return (struct cst_block){.location = location, .stmts = stmts};
+    return (struct cst_block){
+        .location = location,
+        .stmts = stmts,
+    };
 }
 
 struct cst_conditional
@@ -26,7 +32,10 @@ cst_conditional_init(
     struct cst_block body)
 {
     return (struct cst_conditional){
-        .location = location, .condition = condition, .body = body};
+        .location = location,
+        .condition = condition,
+        .body = body,
+    };
 }
 
 struct cst_module*
