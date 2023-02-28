@@ -896,8 +896,8 @@ symbol_table_lookup_local(struct symbol_table const* self, char const* name)
     return NULL;
 }
 
-struct block*
-block_new(
+struct block
+block_init(
     struct source_location location,
     struct symbol_table* symbol_table,
     struct stmt const* const* stmts,
@@ -908,14 +908,13 @@ block_new(
     assert(defer_begin == NULL || defer_begin->kind == STMT_DEFER);
     assert(defer_end == NULL || defer_end->kind == STMT_DEFER);
 
-    struct block* const self = xalloc(NULL, sizeof(*self));
-    memset(self, 0x00, sizeof(*self));
-    self->location = location;
-    self->symbol_table = symbol_table;
-    self->stmts = stmts;
-    self->defer_begin = defer_begin;
-    self->defer_end = defer_end;
-    return self;
+    return (struct block){
+        .location = location,
+        .symbol_table = symbol_table,
+        .stmts = stmts,
+        .defer_begin = defer_begin,
+        .defer_end = defer_end,
+    };
 }
 
 struct conditional*

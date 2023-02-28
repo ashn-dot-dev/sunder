@@ -1839,8 +1839,8 @@ struct block {
     // Defer code generation will stop at this defer.
     struct stmt const* defer_end; // optional
 };
-struct block*
-block_new(
+struct block
+block_init(
     struct source_location location,
     struct symbol_table* symbol_table,
     struct stmt const* const* stmts,

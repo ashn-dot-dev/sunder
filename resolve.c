@@ -194,7 +194,7 @@ static void
 complete_function(
     struct resolver* resolver, struct incomplete_function const* incomplete);
 
-static struct block const*
+static struct block
 resolve_block(
     struct resolver* resolver,
     struct symbol_table* symbol_table,
@@ -2233,7 +2233,7 @@ complete_function(
     resolver->current_symbol_name_prefix = incomplete->name;
     resolver->current_static_addr_prefix = function->address->data.static_.name;
     resolver->current_function = function;
-    function->body = *resolve_block(
+    function->body = resolve_block(
         resolver,
         incomplete->symbol_table,
         &incomplete->decl->data.function.body);
@@ -2278,7 +2278,7 @@ complete_function(
     context()->template_instantiation_chain = save_chain;
 }
 
-static struct block const*
+static struct block
 resolve_block(
     struct resolver* resolver,
     struct symbol_table* symbol_table,
@@ -2303,7 +2303,7 @@ resolve_block(
     }
     sbuf_freeze(stmts);
 
-    struct block* const resolved = block_new(
+    struct block const resolved = block_init(
         block->location,
         symbol_table,
         stmts,
@@ -2342,7 +2342,6 @@ resolve_block(
         }
     }
 
-    freeze(resolved);
     resolver->current_symbol_table = save_symbol_table;
     resolver->current_rbp_offset = save_rbp_offset;
     resolver->current_defer = save_current_defer;
@@ -2475,7 +2474,7 @@ resolve_stmt_defer_block(struct resolver* resolver, struct cst_stmt const* stmt)
     struct symbol_table* const symbol_table =
         symbol_table_new(resolver->current_symbol_table);
     struct block const body =
-        *resolve_block(resolver, symbol_table, &stmt->data.defer_block);
+        resolve_block(resolver, symbol_table, &stmt->data.defer_block);
     symbol_table_freeze(symbol_table);
 
     struct stmt* const resolved =
@@ -2502,17 +2501,16 @@ resolve_stmt_defer_expr(struct resolver* resolver, struct cst_stmt const* stmt)
     sbuf(struct stmt const*) stmts = NULL;
     sbuf_push(stmts, expr_stmt);
     sbuf_freeze(stmts);
-    struct block* const block = block_new(
+    struct block const block = block_init(
         stmt->location,
         resolver->current_symbol_table,
         stmts,
         resolver->current_defer,
         resolver->current_defer);
-    freeze(block);
 
     // Use the implicitly created block as the defer block.
     struct stmt* const resolved =
-        stmt_new_defer(stmt->location, resolver->current_defer, *block);
+        stmt_new_defer(stmt->location, resolver->current_defer, block);
     resolver->current_defer = resolved;
 
     freeze(resolved);
@@ -2550,7 +2548,7 @@ resolve_stmt_if(struct resolver* resolver, struct cst_stmt const* stmt)
         struct symbol_table* const symbol_table =
             symbol_table_new(resolver->current_symbol_table);
         struct block const block =
-            *resolve_block(resolver, symbol_table, &conditionals[i].body);
+            resolve_block(resolver, symbol_table, &conditionals[i].body);
         // Freeze the symbol table now that the block has been resolved and no
         // new symbols will be added.
         symbol_table_freeze(symbol_table);
@@ -2633,7 +2631,7 @@ resolve_stmt_for_range(struct resolver* resolver, struct cst_stmt const* stmt)
     resolver->is_within_loop = true;
     resolver->current_loop_defer = resolver->current_defer;
     struct block const body =
-        *resolve_block(resolver, symbol_table, &stmt->data.for_range.body);
+        resolve_block(resolver, symbol_table, &stmt->data.for_range.body);
     resolver->current_rbp_offset = save_rbp_offset;
     resolver->is_within_loop = save_is_within_loop;
     resolver->current_loop_defer = save_current_loop_defer;
@@ -2675,7 +2673,7 @@ resolve_stmt_for_expr(struct resolver* resolver, struct cst_stmt const* stmt)
     resolver->is_within_loop = true;
     resolver->current_loop_defer = resolver->current_defer;
     struct block const body =
-        *resolve_block(resolver, symbol_table, &stmt->data.for_expr.body);
+        resolve_block(resolver, symbol_table, &stmt->data.for_expr.body);
     resolver->is_within_loop = save_is_within_loop;
     resolver->current_loop_defer = save_current_loop_defer;
 
