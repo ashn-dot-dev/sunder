@@ -102,6 +102,20 @@ func main() void {
     var x = (:[3]ssize)[0...];
     var _ = (:[countof(x)]ssize)[0...];
     let _ = (:[countof(x)]ssize)[0...];
+
+    # Check that array lists can contain a final comma before the closing
+    # brace.
+    (:[3]u16)[
+        0xAAAA,
+        0xBBBB,
+        0xCCCC,
+    ];
+    (:[5]u16)[
+        0xAAAA,
+        0xBBBB,
+        0xCCCC,
+        0xDDDD...
+    ];
 }
 
 ################################################################################

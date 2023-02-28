@@ -1126,6 +1126,10 @@ parse_expr_lparen(struct parser* parser)
                 expect_current(parser, TOKEN_COMMA);
             }
 
+            if (check_current(parser, TOKEN_RBRACKET)) {
+                break;
+            }
+
             struct cst_expr const* const expr = parse_expr(parser);
             if (check_current(parser, TOKEN_ELLIPSIS)) {
                 expect_current(parser, TOKEN_ELLIPSIS);

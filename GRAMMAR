@@ -91,7 +91,7 @@
 
 <expr-list> ::= "(" ":" <typespec> ")" "[" "]"
               | "(" ":" <typespec> ")" "[" <expr> "..." "]"
-              | "(" ":" <typespec> ")" "[" <expr> ("," <expr>)* ("," <expr> "...")? "]"
+              | "(" ":" <typespec> ")" "[" <expr> ("," <expr>)* ("," | ("," <expr> "...")?)? "]"
 
 <expr-slice> ::= "(" ":" <typespec-slice> ")" "{" <expr> "," <expr> "}"
 

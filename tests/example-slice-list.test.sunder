@@ -38,6 +38,14 @@ func main() void {
 
     sys::dump[[usize]](countof((:[]u16)[0xDEAD, 0xBEEF]));
     sys::dump[[u16]]((:[]u16)[0xDEAD, 0xBEEF][1]);
+
+    # Check that slice lists can contain a final comma before the closing
+    # brace.
+    (:[]u16)[
+        0xAAAA,
+        0xBBBB,
+        0xCCCC,
+    ];
 }
 ################################################################################
 # 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
