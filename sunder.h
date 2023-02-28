@@ -1852,8 +1852,8 @@ struct conditional {
     struct expr const* condition; // optional (NULL => else)
     struct block body;
 };
-struct conditional*
-conditional_new(
+struct conditional
+conditional_init(
     struct source_location location,
     struct expr const* condition,
     struct block body);

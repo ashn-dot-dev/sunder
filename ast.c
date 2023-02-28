@@ -917,18 +917,17 @@ block_init(
     };
 }
 
-struct conditional*
-conditional_new(
+struct conditional
+conditional_init(
     struct source_location location,
     struct expr const* condition,
     struct block body)
 {
-    struct conditional* const self = xalloc(NULL, sizeof(*self));
-    memset(self, 0x00, sizeof(*self));
-    self->location = location;
-    self->condition = condition;
-    self->body = body;
-    return self;
+    return (struct conditional){
+        .location = location,
+        .condition = condition,
+        .body = body,
+    };
 }
 
 static struct stmt*

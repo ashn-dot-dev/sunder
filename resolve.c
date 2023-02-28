@@ -2553,10 +2553,8 @@ resolve_stmt_if(struct resolver* resolver, struct cst_stmt const* stmt)
         // new symbols will be added.
         symbol_table_freeze(symbol_table);
 
-        struct conditional* const resolved_conditional =
-            conditional_new(conditionals[i].location, condition, block);
-        freeze(resolved_conditional);
-        resolved_conditionals[i] = *resolved_conditional;
+        resolved_conditionals[i] =
+            conditional_init(conditionals[i].location, condition, block);
     }
 
     sbuf_freeze(resolved_conditionals);
