@@ -656,6 +656,12 @@ static void
 codegen_static_function(struct symbol const* symbol);
 
 static void
+codegen_block(struct block const* block);
+
+static void
+codegen_defers(struct stmt const* begin, struct stmt const* end);
+
+static void
 codegen_stmt(struct stmt const* stmt);
 static void
 codegen_stmt_defer(struct stmt const* stmt, size_t id);
@@ -675,12 +681,6 @@ static void
 codegen_stmt_assign(struct stmt const* stmt, size_t id);
 static void
 codegen_stmt_expr(struct stmt const* stmt, size_t id);
-
-static void
-codegen_block(struct block const* block);
-
-static void
-codegen_defers(struct stmt const* begin, struct stmt const* end);
 
 static void
 push_rvalue(struct expr const* expr);
@@ -1122,6 +1122,32 @@ codegen_static_function(struct symbol const* symbol)
 }
 
 static void
+codegen_block(struct block const* block)
+{
+    assert(block != NULL);
+
+    for (size_t i = 0; i < sbuf_count(block->stmts); ++i) {
+        struct stmt const* const stmt = block->stmts[i];
+        codegen_stmt(stmt);
+    }
+
+    codegen_defers(block->defer_begin, block->defer_end);
+}
+
+static void
+codegen_defers(struct stmt const* begin, struct stmt const* end)
+{
+    assert(begin == NULL || begin->kind == STMT_DEFER);
+    assert(end == NULL || end->kind == STMT_DEFER);
+
+    struct stmt const* current = begin;
+    while (current != end) {
+        codegen_block(&current->data.defer.body);
+        current = current->data.defer.prev;
+    }
+}
+
+static void
 codegen_stmt(struct stmt const* stmt)
 {
     assert(stmt != NULL);
@@ -1382,32 +1408,6 @@ codegen_stmt_expr(struct stmt const* stmt, size_t id)
     push_rvalue(stmt->data.expr);
     // Remove the (unused) result from the stack.
     pop(stmt->data.expr->type->size);
-}
-
-static void
-codegen_block(struct block const* block)
-{
-    assert(block != NULL);
-
-    for (size_t i = 0; i < sbuf_count(block->stmts); ++i) {
-        struct stmt const* const stmt = block->stmts[i];
-        codegen_stmt(stmt);
-    }
-
-    codegen_defers(block->defer_begin, block->defer_end);
-}
-
-static void
-codegen_defers(struct stmt const* begin, struct stmt const* end)
-{
-    assert(begin == NULL || begin->kind == STMT_DEFER);
-    assert(end == NULL || end->kind == STMT_DEFER);
-
-    struct stmt const* current = begin;
-    while (current != end) {
-        codegen_block(&current->data.defer.body);
-        current = current->data.defer.prev;
-    }
 }
 
 static void
