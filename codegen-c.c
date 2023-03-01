@@ -1,4 +1,3 @@
-// Copyright 2023 The Sunder Project Authors
 // SPDX-License-Identifier: Apache-2.0
 #include <assert.h>
 #include <errno.h>
