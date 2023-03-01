@@ -386,6 +386,7 @@ type_unique_function(
         context()->global_symbol_table, symbol->name, symbol, false);
     freeze(type);
     freeze(symbol);
+    sbuf_push(context()->types, type);
     return type;
 }
 
@@ -408,6 +409,7 @@ type_unique_pointer(struct type const* base)
         context()->global_symbol_table, symbol->name, symbol, false);
     freeze(type);
     freeze(symbol);
+    sbuf_push(context()->types, type);
     return type;
 }
 
@@ -437,6 +439,7 @@ type_unique_array(
         context()->global_symbol_table, symbol->name, symbol, false);
     freeze(type);
     freeze(symbol);
+    sbuf_push(context()->types, type);
     return type;
 }
 
@@ -459,6 +462,7 @@ type_unique_slice(struct type const* base)
         context()->global_symbol_table, symbol->name, symbol, false);
     freeze(type);
     freeze(symbol);
+    sbuf_push(context()->types, type);
     return type;
 }
 

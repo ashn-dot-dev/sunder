@@ -37,6 +37,7 @@ main(int argc, char** argv)
     if (!opt_c) {
         validate_main_is_defined_correctly();
     }
+
     codegen(opt_c, opt_k, opt_l, opt_o);
 
     return EXIT_SUCCESS;

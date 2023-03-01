@@ -9,6 +9,7 @@ examples/greet
 examples/hello
 examples/ls
 
+a.out*
 *.out
 *.o
 *.asm

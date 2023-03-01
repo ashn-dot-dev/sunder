@@ -22,6 +22,7 @@ GNU_BASE = \
 	-std=c99 -pedantic-errors \
 	-Wall -Wextra \
 	-Werror=conversion \
+	-Werror=format \
 	-Werror=implicit-function-declaration \
 	-Werror=incompatible-pointer-types \
 	-Werror=vla
@@ -45,7 +46,9 @@ SUNDER_COMPILE_OBJS = \
 	ast.o \
 	resolve.o \
 	eval.o \
-	codegen.o
+	codegen.o \
+	codegen-c.o \
+	codegen-nasm.o
 bin/sunder-compile: $(SUNDER_COMPILE_OBJS)
 	$(CC) -o $@ $(CFLAGS) $(SUNDER_COMPILE_OBJS)
 

@@ -2072,6 +2072,9 @@ complete_struct(
             break;
         }
     }
+    if (struct_type->data.struct_.is_complete) {
+        sbuf_push(context()->types, struct_type);
+    }
 
     // Offset of the next member variable that would be added to this struct.
     // Updated every time a member variable is added to the struct.
@@ -2187,6 +2190,7 @@ complete_struct(
             if (struct_type->data.struct_.is_complete) {
                 sbuf_freeze(member_variables);
                 struct_type->data.struct_.member_variables = member_variables;
+                sbuf_push(context()->types, struct_type);
             }
             continue;
         }
@@ -4643,6 +4647,12 @@ resolve_typespec_slice(
 
     struct type const* const base =
         resolve_typespec(resolver, typespec->data.slice.base);
+    // Generate a unique type for the `start` member of the slice, so that type
+    // ordering knows to generate the definition for the slice pointer before
+    // generating the definition for the slice itself. This is important for
+    // the C backend, where a slice type is generated as a struct with a
+    // pointer, usize pair.
+    (void)type_unique_pointer(base);
     return type_unique_slice(base);
 }
 

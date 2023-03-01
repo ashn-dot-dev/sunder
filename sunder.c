@@ -188,6 +188,7 @@ context_init(void)
     s_context.ssize_max = s_context.s64_max;
 #undef INIT_BIGINT_CONSTANT
 
+    s_context.types = NULL;
     s_context.static_symbols = NULL;
     s_context.global_symbol_table = symbol_table_new(NULL);
     s_context.modules = NULL;
@@ -201,6 +202,7 @@ context_init(void)
     {                                                                          \
         struct type* const type = t;                                           \
         freeze(type);                                                          \
+        sbuf_push(s_context.types, type);                                      \
         struct symbol* const symbol =                                          \
             symbol_new_type(s_context.builtin.location, type);                 \
         freeze(symbol);                                                        \
@@ -241,6 +243,7 @@ context_fini(void)
 
     intern_fini();
 
+    sbuf_fini(self->types);
     sbuf_fini(self->static_symbols);
     symbol_table_freeze(self->global_symbol_table);
 

@@ -697,7 +697,7 @@ struct module {
     // Concrete syntax tree for the module. Initialized to NULL and populated
     // during the parse phase.
     struct cst_module const* cst;
-    // List of top level declarations topologically ordered such that
+    // List of top level declarations topologically ordered such that the
     // declaration with index k does not depend on any declaration with index
     // k+n for all n. Initialized to NULL and populated during the order phase.
     sbuf(struct cst_decl const*) ordered;
@@ -777,6 +777,9 @@ struct context {
         struct type const* ssize;
         struct type const* integer;
     } builtin;
+
+    // List of all types instantiated by the compiler.
+    sbuf(struct type const*) types;
 
     // List of all symbols with static storage duration.
     sbuf(struct symbol const*) static_symbols;
@@ -2309,8 +2312,17 @@ eval_lvalue(struct expr const* expr);
 ////////////////////////////////////////////////////////////////////////////////
 //////// codegen.c /////////////////////////////////////////////////////////////
 
+char const* // interned
+backend(void);
+
 void
 codegen(
+    bool opt_c, bool opt_k, char const* const* opt_l, char const* const opt_o);
+void
+codegen_c(
+    bool opt_c, bool opt_k, char const* const* opt_l, char const* const opt_o);
+void
+codegen_nasm(
     bool opt_c, bool opt_k, char const* const* opt_l, char const* const opt_o);
 
 #endif // SUNDER_H_INCLUDED
