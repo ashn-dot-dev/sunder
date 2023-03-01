@@ -1522,6 +1522,13 @@ order(struct module* module);
 // since UINT64_MAX is reserved for SIZEOF_UNSIZED.
 STATIC_ASSERT(sunder_max_sizeof_fits_in_sunder_usize, SIZEOF_MAX < UINT64_MAX);
 
+// Helper struct representing a member variable within a composite type.
+struct member_variable {
+    char const* name; // interned
+    struct type const* type;
+    uint64_t offset;
+};
+
 struct type {
     char const* name; // Canonical human-readable type-name (interned)
     uint64_t size; // sizeof
@@ -1583,11 +1590,7 @@ struct type {
             bool is_complete;
             // List of member variables within the struct ordered by offset
             // into the struct (i.e. their declaration order).
-            struct member_variable {
-                char const* name; // interned
-                struct type const* type;
-                uint64_t offset;
-            }* member_variables; // sbuf
+            sbuf(struct member_variable) member_variables;
         } struct_;
     } data;
 };

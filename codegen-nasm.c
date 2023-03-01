@@ -1330,10 +1330,10 @@ codegen_stmt_return(struct stmt const* stmt, size_t id)
     (void)id;
 
     if (stmt->data.return_.expr != NULL) {
-        // Compute result.
+        // Compute the expression result.
         push_rvalue(stmt->data.return_.expr);
 
-        // Store in return address.
+        // Store in the return address.
         struct symbol const* const return_symbol = symbol_table_lookup(
             current_function->symbol_table, context()->interned.return_);
         // rbx := destination
@@ -1760,7 +1760,7 @@ push_rvalue_call(struct expr const* expr, size_t id)
     appendli("; push space for return value of type `%s`", return_type->name);
     push(return_type->size);
 
-    // Evaluate & push arguments from left to right.
+    // Evaluate and push arguments from left to right.
     struct expr const* const* const arguments = expr->data.call.arguments;
     for (size_t i = 0; i < sbuf_count(arguments); ++i) {
         appendli(

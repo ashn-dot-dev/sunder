@@ -10,6 +10,7 @@
 
 static struct string* out = NULL;
 static unsigned indent = 0u;
+static struct function const* current_function = NULL;
 
 static char const* // interned
 mangle(char const* cstr);
@@ -17,6 +18,8 @@ static char const* // interned
 mangle_name(char const* name);
 static char const* // interned
 mangle_type(struct type const* type);
+static char const* // interned
+mangle_local_symbol_name(struct symbol const* symbol);
 
 static void
 indent_incr(void);
@@ -34,8 +37,6 @@ indent_decr(void);
 static APPENDF void
 append(char const* fmt, ...);
 static APPENDF void
-appendin(char const* fmt, ...);
-static APPENDF void
 appendln(char const* fmt, ...);
 static APPENDF void
 appendli(char const* fmt, ...);
@@ -49,10 +50,10 @@ codegen_static_object(struct symbol const* symbol);
 static void
 codegen_static_function(struct symbol const* symbol, bool prototype);
 
-static void
-codegen_value(struct value const* value);
-static void
-codegen_uninit(struct type const* type);
+static char const* // interned
+strgen_value(struct value const* value);
+static char const* // interned
+strgen_uninit(struct type const* type);
 
 static void
 codegen_block(struct block const* block);
@@ -82,6 +83,12 @@ static void
 codegen_stmt_expr(struct stmt const* stmt);
 
 static char const* // interned
+strgen_rvalue(struct expr const* expr);
+
+static char const* // interned
+strgen_lvalue(struct expr const* expr);
+
+static char const*
 mangle(char const* cstr)
 {
     assert(cstr != NULL);
@@ -102,7 +109,7 @@ mangle(char const* cstr)
     return interned;
 }
 
-static char const* // interned
+static char const*
 mangle_name(char const* name)
 {
     assert(name != NULL);
@@ -110,7 +117,7 @@ mangle_name(char const* name)
     return intern_fmt("__sunder_%s", mangle(name));
 }
 
-static char const* // interned
+static char const*
 mangle_type_recursive(struct type const* type)
 {
     assert(type != NULL);
@@ -168,7 +175,7 @@ mangle_type_recursive(struct type const* type)
     return mangle(type->name);
 }
 
-char const* // interned
+static char const*
 mangle_type(struct type const* type)
 {
     assert(type != NULL);
@@ -182,6 +189,16 @@ mangle_type(struct type const* type)
     }
 
     return mangle_name(mangle_type_recursive(type));
+}
+
+static char const*
+mangle_local_symbol_name(struct symbol const* symbol)
+{
+    assert(symbol != NULL);
+
+    struct address const* const address = symbol_xget_address(symbol);
+    assert(address->kind == ADDRESS_LOCAL);
+    return mangle_name(address->data.local.name);
 }
 
 static void
@@ -203,22 +220,6 @@ append(char const* fmt, ...)
 {
     assert(out != NULL);
     assert(fmt != NULL);
-
-    va_list args;
-    va_start(args, fmt);
-    string_append_vfmt(out, fmt, args);
-    va_end(args);
-}
-
-static void
-appendin(char const* fmt, ...)
-{
-    assert(out != NULL);
-    assert(fmt != NULL);
-
-    for (unsigned i = 0; i < indent; ++i) {
-        string_append_cstr(out, "    ");
-    }
 
     va_list args;
     va_start(args, fmt);
@@ -340,9 +341,7 @@ codegen_static_object(struct symbol const* symbol)
         return;
     }
 
-    append(" = ");
-    codegen_value(symbol_xget_value(NO_LOCATION, symbol));
-    appendln(";");
+    appendln(" = %s;", strgen_value(symbol_xget_value(NO_LOCATION, symbol)));
 }
 
 static void
@@ -390,24 +389,32 @@ codegen_static_function(struct symbol const* symbol, bool prototype)
     }
 
     appendch('\n');
+    assert(current_function == NULL);
+    current_function = function;
     codegen_block(&function->body);
+    current_function = NULL;
 }
 
-static void
-codegen_value(struct value const* value)
+static char const*
+strgen_value(struct value const* value)
 {
+    assert(value != NULL);
+
+    struct string* const s = string_new(NULL, 0);
+
     switch (value->type->kind) {
     case TYPE_ANY: /* fallthrough */
     case TYPE_VOID: {
         UNREACHABLE();
     }
     case TYPE_BOOL: {
-        append("%s", mangle_name(value->data.boolean ? "true" : "false"));
-        return;
+        char const* const identifier = value->data.boolean ? "true" : "false";
+        string_append_cstr(s, mangle_name(identifier));
+        break;
     }
     case TYPE_BYTE: {
-        append("0x%02x", value->data.byte);
-        return;
+        string_append_fmt(s, "0x%02x", value->data.byte);
+        break;
     }
     case TYPE_U8: /* fallthrough */
     case TYPE_U16: /* fallthrough */
@@ -415,9 +422,9 @@ codegen_value(struct value const* value)
     case TYPE_U64: /* fallthrough */
     case TYPE_USIZE: {
         char* const cstr = bigint_to_new_cstr(value->data.integer);
-        append("(%s)%sULL", mangle_type(value->type), cstr);
+        string_append_fmt(s, "(%s)%sULL", mangle_type(value->type), cstr);
         xalloc(cstr, XALLOC_FREE);
-        return;
+        break;
     }
     case TYPE_S8: /* fallthrough */
     case TYPE_S16: /* fallthrough */
@@ -429,16 +436,21 @@ codegen_value(struct value const* value)
         if (bigint_cmp(value->data.integer, min) == 0) {
             struct bigint* const tmp = bigint_new(value->data.integer);
             bigint_add(tmp, tmp, BIGINT_POS_ONE);
-            char* const s = bigint_to_new_cstr(tmp);
-            append("/* %s */((%s)%sLL - 1)", cstr, mangle_type(value->type), s);
-            xalloc(s, XALLOC_FREE);
+            char* const tmp_cstr = bigint_to_new_cstr(tmp);
+            string_append_fmt(
+                s,
+                "/* %s */((%s)%sLL - 1)",
+                cstr,
+                mangle_type(value->type),
+                tmp_cstr);
+            xalloc(tmp_cstr, XALLOC_FREE);
             bigint_del(tmp);
         }
         else {
-            append("(%s)%sLL", mangle_type(value->type), cstr);
+            string_append_fmt(s, "(%s)%sLL", mangle_type(value->type), cstr);
         }
         xalloc(cstr, XALLOC_FREE);
-        return;
+        break;
     }
     case TYPE_INTEGER: {
         UNREACHABLE();
@@ -452,19 +464,20 @@ codegen_value(struct value const* value)
         //
         // This particular form of casting should be well behaved on POSIX
         // platforms, as function<->pointer casts are used in dlsym.
-        append("(void*)%s", mangle_name(address->data.static_.name));
-        return;
+        string_append_fmt(
+            s, "(void*)%s", mangle_name(address->data.static_.name));
+        break;
     }
     case TYPE_POINTER: {
         struct address const* const address = &value->data.pointer;
         if (value->type->data.pointer.base->size == 0) {
-            append("0");
-            return;
+            string_append_cstr(s, "0");
+            break;
         }
 
         switch (address->kind) {
         case ADDRESS_ABSOLUTE: {
-            append("%" PRIu64, address->data.absolute);
+            string_append_fmt(s, "%" PRIu64, address->data.absolute);
             break;
         }
         case ADDRESS_STATIC: {
@@ -493,15 +506,16 @@ codegen_value(struct value const* value)
                     // non-NULL address.
                     break;
                 }
-                append("(void*)0");
-                return;
+                string_append_fmt(s, "(void*)0");
+                break;
             }
 
             if (address->data.static_.offset == 0) {
-                append("(void*)%s", base);
+                string_append_fmt(s, "(void*)%s", base);
             }
             else {
-                append(
+                string_append_fmt(
+                    s,
                     "(void*)((char*)%s + %" PRIu64 ")",
                     base,
                     address->data.static_.offset);
@@ -513,35 +527,35 @@ codegen_value(struct value const* value)
         }
         }
 
-        return;
+        break;
     }
     case TYPE_ARRAY: {
         sbuf(struct value*) const elements = value->data.array.elements;
         struct value const* const ellipsis = value->data.array.ellipsis;
         uint64_t const count = value->type->data.array.count;
-        append("{.elements = {");
+        string_append_fmt(s, "{.elements = {");
         for (size_t i = 0; i < count; ++i) {
             if (i != 0) {
-                append(", ");
+                string_append_cstr(s, ", ");
             }
             if (i < sbuf_count(elements)) {
-                codegen_value(elements[i]);
+                string_append_cstr(s, strgen_value(elements[i]));
             }
             else {
                 assert(ellipsis != NULL);
-                codegen_value(ellipsis);
+                string_append_cstr(s, strgen_value(ellipsis));
             }
         }
-        append("}}");
-        return;
+        string_append_cstr(s, "}}");
+        break;
     }
     case TYPE_SLICE: {
-        append("{.start = ");
-        codegen_value(value->data.slice.pointer);
-        append(", .count = ");
-        codegen_value(value->data.slice.count);
-        append("}");
-        return;
+        string_append_cstr(s, "{.start = ");
+        string_append_cstr(s, strgen_value(value->data.slice.pointer));
+        string_append_cstr(s, ", .count = ");
+        string_append_cstr(s, strgen_value(value->data.slice.count));
+        string_append_cstr(s, "}");
+        break;
     }
     case TYPE_STRUCT: {
         sbuf(struct member_variable) const member_variable_defs =
@@ -558,29 +572,38 @@ codegen_value(struct value const* value)
         size_t const member_variable_count = member_variable_vals_count;
         (void)member_variable_defs_count;
 
-        append("{");
+        string_append_cstr(s, "{");
         for (size_t i = 0; i < member_variable_count; ++i) {
             if (i != 0) {
-                append(", ");
+                string_append_cstr(s, ", ");
             }
 
             if (member_variable_vals[i] != NULL) {
-                codegen_value(member_variable_vals[i]);
+                string_append_cstr(s, strgen_value(member_variable_vals[i]));
             }
             else {
-                codegen_uninit(member_variable_defs[i].type);
+                string_append_cstr(
+                    s, strgen_uninit(member_variable_defs[i].type));
             }
         }
-        append("}");
+        string_append_cstr(s, "}");
 
-        return;
+        break;
     }
     }
+
+    char const* const result = intern(string_start(s), string_count(s));
+    string_del(s);
+    return result;
 }
 
-static void
-codegen_uninit(struct type const* type)
+static char const*
+strgen_uninit(struct type const* type)
 {
+    assert(type != NULL);
+
+    struct string* const s = string_new(NULL, 0);
+
     switch (type->kind) {
     case TYPE_ANY: /* fallthrough */
     case TYPE_VOID: {
@@ -598,24 +621,28 @@ codegen_uninit(struct type const* type)
     case TYPE_S64: /* fallthrough */
     case TYPE_USIZE: /* fallthrough */
     case TYPE_SSIZE: {
-        append("0");
-        return;
+        string_append_cstr(s, "0");
+        break;
     }
     case TYPE_INTEGER: {
         UNREACHABLE();
     }
     case TYPE_FUNCTION: /* fallthrough */
     case TYPE_POINTER: {
-        append("0");
-        return;
+        string_append_cstr(s, "0");
+        break;
     }
     case TYPE_ARRAY: /* fallthrough */
     case TYPE_SLICE: /* fallthrough */
     case TYPE_STRUCT: {
-        append("{0}");
-        return;
+        string_append_cstr(s, "{0}");
+        break;
     }
     }
+
+    char const* const result = intern(string_start(s), string_count(s));
+    string_del(s);
+    return result;
 }
 
 static void
@@ -646,12 +673,11 @@ codegen_block(struct block const* block)
         }
 
         appendli("// %s: %s", locals[i].name, type->name);
-        appendin(
-            "%s %s = ",
+        appendli(
+            "%s %s = %s;",
             mangle_type(type),
-            mangle_name(address->data.local.name));
-        codegen_uninit(type);
-        appendln(";");
+            mangle_name(address->data.local.name),
+            strgen_uninit(type));
     }
 
     // Generate statements.
@@ -708,7 +734,21 @@ codegen_stmt_if(struct stmt const* stmt)
     assert(stmt != NULL);
     assert(stmt->kind == STMT_IF);
 
-    appendli("/* TODO */");
+    sbuf(struct conditional const) const conditionals =
+        stmt->data.if_.conditionals;
+    for (size_t i = 0; i < sbuf_count(conditionals); ++i) {
+        if (conditionals[i].condition != NULL) {
+            assert(conditionals[i].condition->type->kind == TYPE_BOOL);
+            appendli(
+                "%s (%s)",
+                i == 0 ? "if" : "else if",
+                strgen_rvalue(conditionals[i].condition));
+        }
+        else {
+            appendli("else");
+        }
+        codegen_block(&conditionals[i].body);
+    }
 }
 
 static void
@@ -717,7 +757,16 @@ codegen_stmt_for_range(struct stmt const* stmt)
     assert(stmt != NULL);
     assert(stmt->kind == STMT_FOR_RANGE);
 
-    appendli("/* TODO */");
+    struct symbol const* const variable = stmt->data.for_range.loop_variable;
+    appendli(
+        "for (%s %s = %s; %s < %s; ++%s)",
+        mangle_type(context()->builtin.usize),
+        mangle_local_symbol_name(variable),
+        strgen_rvalue(stmt->data.for_range.begin),
+        mangle_local_symbol_name(variable),
+        strgen_rvalue(stmt->data.for_range.end),
+        mangle_local_symbol_name(variable));
+    codegen_block(&stmt->data.for_range.body);
 }
 
 static void
@@ -726,7 +775,8 @@ codegen_stmt_for_expr(struct stmt const* stmt)
     assert(stmt != NULL);
     assert(stmt->kind == STMT_FOR_EXPR);
 
-    appendli("/* TODO */");
+    appendli("while (%s)", strgen_rvalue(stmt->data.for_expr.expr));
+    codegen_block(&stmt->data.for_expr.body);
 }
 
 static void
@@ -735,7 +785,7 @@ codegen_stmt_break(struct stmt const* stmt)
     assert(stmt != NULL);
     assert(stmt->kind == STMT_BREAK);
 
-    appendli("/* TODO */");
+    appendli("break;");
 }
 
 static void
@@ -744,7 +794,7 @@ codegen_stmt_continue(struct stmt const* stmt)
     assert(stmt != NULL);
     assert(stmt->kind == STMT_CONTINUE);
 
-    appendli("/* TODO */");
+    appendli("continue;");
 }
 
 static void
@@ -753,7 +803,23 @@ codegen_stmt_return(struct stmt const* stmt)
     assert(stmt != NULL);
     assert(stmt->kind == STMT_RETURN);
 
-    appendli("/* TODO */");
+    struct expr const* const expr = stmt->data.return_.expr;
+    if (expr != NULL && expr->type->size != 0) {
+        // Compute and store the expression result.
+        appendli(
+            "%s = %s;",
+            mangle_name("return"),
+            strgen_rvalue(stmt->data.return_.expr));
+    }
+
+    codegen_defers(stmt->data.return_.defer, NULL);
+
+    if (symbol_xget_type(current_function->symbol_return)->size != 0) {
+        appendli("return %s;", mangle_name("return"));
+    }
+    else {
+        appendli("return;");
+    }
 }
 
 static void
@@ -762,7 +828,10 @@ codegen_stmt_assign(struct stmt const* stmt)
     assert(stmt != NULL);
     assert(stmt->kind == STMT_ASSIGN);
 
-    appendli("/* TODO */");
+    appendli(
+        "*(%s) = %s;",
+        strgen_lvalue(stmt->data.assign.lhs),
+        strgen_rvalue(stmt->data.assign.rhs));
 }
 
 static void
@@ -771,7 +840,29 @@ codegen_stmt_expr(struct stmt const* stmt)
     assert(stmt != NULL);
     assert(stmt->kind == STMT_EXPR);
 
-    appendli("/* TODO */");
+    appendli("%s;", strgen_rvalue(stmt->data.expr));
+}
+
+static char const*
+strgen_rvalue(struct expr const* expr)
+{
+    assert(expr != NULL);
+
+    return intern_fmt(
+        "/* TODO: %s */(%s)%s",
+        __func__,
+        mangle_type(expr->type),
+        strgen_uninit(expr->type));
+}
+
+static char const*
+strgen_lvalue(struct expr const* expr)
+{
+    assert(expr != NULL);
+    assert(expr_is_lvalue(expr));
+
+    return intern_fmt(
+        "/* TODO: %s */(%s*)0", __func__, mangle_type(expr->type));
 }
 
 static void
@@ -817,6 +908,12 @@ codegen_c(
     // Workaround for a GCC bug where the universal struct zero-initializer for
     // types with nested struct objects produces a missing braces warning.
     sbuf_push(backend_argv, "-Wno-missing-braces");
+    // Enforced by sunder-compile warnings in the resolve phase.
+    sbuf_push(backend_argv, "-Wno-unused-variable");
+    // Enforced by sunder-compile warnings in the resolve phase.
+    sbuf_push(backend_argv, "-Wno-unused-parameter");
+    // Sunder allows for expressions that are always true or always false.
+    sbuf_push(backend_argv, "-Wno-type-limits");
     // Ideally, we would enable -pedantic-errors and require that generate C
     // conform to the ISO specification. However, constructs such as
     // function-to-function casting are not supported in ISO C.
@@ -960,12 +1057,12 @@ codegen_c(
                 "_Static_assert(sizeof(%s) == %" PRId64 ", \"sizeof(%s)\");",
                 typename,
                 type->size,
-                typename);
+                type->name);
             appendln(
                 "_Static_assert(_Alignof(%s) == %" PRId64 ", \"alignof(%s)\");",
                 typename,
                 type->align,
-                typename);
+                type->name);
         }
     }
     appendch('\n');
@@ -1002,6 +1099,7 @@ codegen_c(
     appendln("main(void)");
     appendln("{");
     indent_incr();
+    appendli("%s();", mangle_name(context()->interned.main));
     appendli("return 0;");
     indent_decr();
     appendln("}");
