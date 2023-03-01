@@ -1587,7 +1587,7 @@ struct type {
                 char const* name; // interned
                 struct type const* type;
                 uint64_t offset;
-            } /*sbuf*/ * member_variables;
+            }* member_variables; // sbuf
         } struct_;
     } data;
 };
@@ -1702,7 +1702,13 @@ struct address {
             uint64_t offset;
         } static_;
         struct {
+            // Name uniquely identifying the local.
+            char const* name; // interned
+            // Base pointer offset of the local (x86-64).
             int rbp_offset;
+            // True if this local corresponds to a function parameter.
+            // Initialized to false within `address_init_local`.
+            bool is_parameter;
         } local;
     } data;
 };
@@ -1711,7 +1717,7 @@ address_init_absolute(uint64_t absolute);
 struct address
 address_init_static(char const* name, uint64_t offset);
 struct address
-address_init_local(int rbp_offset);
+address_init_local(char const* name, int rbp_offset);
 struct address*
 address_new(struct address from);
 

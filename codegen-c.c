@@ -34,6 +34,8 @@ indent_decr(void);
 static APPENDF void
 append(char const* fmt, ...);
 static APPENDF void
+appendin(char const* fmt, ...);
+static APPENDF void
 appendln(char const* fmt, ...);
 static APPENDF void
 appendli(char const* fmt, ...);
@@ -209,6 +211,22 @@ append(char const* fmt, ...)
 }
 
 static void
+appendin(char const* fmt, ...)
+{
+    assert(out != NULL);
+    assert(fmt != NULL);
+
+    for (unsigned i = 0; i < indent; ++i) {
+        string_append_cstr(out, "    ");
+    }
+
+    va_list args;
+    va_start(args, fmt);
+    string_append_vfmt(out, fmt, args);
+    va_end(args);
+}
+
+static void
 appendln(char const* fmt, ...)
 {
     assert(out != NULL);
@@ -371,11 +389,8 @@ codegen_static_function(struct symbol const* symbol, bool prototype)
         return;
     }
 
-    appendln("{");
-    indent_incr();
+    appendch('\n');
     codegen_block(&function->body);
-    indent_decr();
-    appendln("}");
 }
 
 static void
@@ -608,12 +623,47 @@ codegen_block(struct block const* block)
 {
     assert(block != NULL);
 
+    appendli("{");
+    indent_incr();
+
+    // Declare local variables.
+    sbuf(struct symbol_table_element) locals = block->symbol_table->elements;
+    for (size_t i = 0; i < sbuf_count(locals); ++i) {
+        if (locals[i].symbol->kind != SYMBOL_VARIABLE) {
+            continue;
+        }
+
+        struct address const* const address =
+            symbol_xget_address(locals[i].symbol);
+        assert(address->kind == ADDRESS_LOCAL);
+        if (address->data.local.is_parameter) {
+            continue;
+        }
+
+        struct type const* const type = symbol_xget_type(locals[i].symbol);
+        if (type->size == 0) {
+            continue;
+        }
+
+        appendli("// %s: %s", locals[i].name, type->name);
+        appendin(
+            "%s %s = ",
+            mangle_type(type),
+            mangle_name(address->data.local.name));
+        codegen_uninit(type);
+        appendln(";");
+    }
+
+    // Generate statements.
     for (size_t i = 0; i < sbuf_count(block->stmts); ++i) {
         struct stmt const* const stmt = block->stmts[i];
         codegen_stmt(stmt);
     }
 
     codegen_defers(block->defer_begin, block->defer_end);
+
+    indent_decr();
+    appendli("}");
 }
 
 static void
