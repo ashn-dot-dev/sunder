@@ -37,6 +37,8 @@ static APPENDF void
 appendln(char const* fmt, ...);
 static APPENDF void
 appendli(char const* fmt, ...);
+static APPENDF_LOCATION void
+appendli_location(struct source_location location, char const* fmt, ...);
 static void
 appendch(char ch);
 
@@ -49,6 +51,33 @@ static void
 codegen_value(struct value const* value);
 static void
 codegen_uninit(struct type const* type);
+
+static void
+codegen_block(struct block const* block);
+
+static void
+codegen_defers(struct stmt const* begin, struct stmt const* end);
+
+static void
+codegen_stmt(struct stmt const* stmt);
+static void
+codegen_stmt_defer(struct stmt const* stmt);
+static void
+codegen_stmt_if(struct stmt const* stmt);
+static void
+codegen_stmt_for_range(struct stmt const* stmt);
+static void
+codegen_stmt_for_expr(struct stmt const* stmt);
+static void
+codegen_stmt_break(struct stmt const* stmt);
+static void
+codegen_stmt_continue(struct stmt const* stmt);
+static void
+codegen_stmt_return(struct stmt const* stmt);
+static void
+codegen_stmt_assign(struct stmt const* stmt);
+static void
+codegen_stmt_expr(struct stmt const* stmt);
 
 static char const* // interned
 mangle(char const* cstr)
@@ -212,6 +241,43 @@ appendli(char const* fmt, ...)
 }
 
 static void
+appendli_location(struct source_location location, char const* fmt, ...)
+{
+    assert(out != NULL);
+    assert(location.path != NO_PATH);
+    assert(location.line != NO_LINE);
+    assert(location.psrc != NO_PSRC);
+
+    for (unsigned i = 0; i < indent; ++i) {
+        string_append_cstr(out, "    ");
+    }
+
+    string_append_fmt(out, "/// [%s:%zu] ", location.path, location.line);
+
+    va_list args;
+    va_start(args, fmt);
+    string_append_vfmt(out, fmt, args);
+    va_end(args);
+
+    string_append_cstr(out, "\n");
+
+    char const* const line_start = source_line_start(location.psrc);
+    char const* const line_end = source_line_end(location.psrc);
+
+    for (unsigned i = 0; i < indent; ++i) {
+        string_append_cstr(out, "    ");
+    }
+    string_append_fmt(
+        out, "/// %.*s\n", (int)(line_end - line_start), line_start);
+
+    for (unsigned i = 0; i < indent; ++i) {
+        string_append_cstr(out, "    ");
+    }
+    string_append_fmt(
+        out, "/// %*s^\n", (int)(location.psrc - line_start), "");
+}
+
+static void
 appendch(char ch)
 {
     assert(out != NULL);
@@ -308,7 +374,7 @@ codegen_static_function(struct symbol const* symbol, bool prototype)
 
     appendln("{");
     indent_incr();
-    appendli("/* TODO */");
+    codegen_block(&function->body);
     indent_decr();
     appendln("}");
 }
@@ -496,16 +562,6 @@ codegen_value(struct value const* value)
         return;
     }
     }
-    //indent_incr();
-    //for (size_t i = 0; i < symbol->data.variable->type->size; ++i) {
-    //    appendli(
-    //        "db %#x ; (uninitialized) `%s` byte %zu",
-    //        0,
-    //        symbol->data.variable->type->name,
-    //        i);
-    //}
-    //indent_decr();
-    //appendli("};");
 }
 
 static void
@@ -545,6 +601,140 @@ codegen_uninit(struct type const* type)
         append("{0}");
         return;
     }
+    }
+}
+
+static void
+codegen_block(struct block const* block)
+{
+    assert(block != NULL);
+
+    for (size_t i = 0; i < sbuf_count(block->stmts); ++i) {
+        struct stmt const* const stmt = block->stmts[i];
+        codegen_stmt(stmt);
+    }
+
+    codegen_defers(block->defer_begin, block->defer_end);
+}
+
+static void
+codegen_stmt(struct stmt const* stmt)
+{
+    static struct {
+        char const* kind_cstr;
+        void (*codegen_fn)(struct stmt const*);
+    } const table[] = {
+#define TABLE_ENTRY(kind, fn) [kind] = {#kind, fn}
+        TABLE_ENTRY(STMT_DEFER, codegen_stmt_defer),
+        TABLE_ENTRY(STMT_IF, codegen_stmt_if),
+        TABLE_ENTRY(STMT_FOR_RANGE, codegen_stmt_for_range),
+        TABLE_ENTRY(STMT_FOR_EXPR, codegen_stmt_for_expr),
+        TABLE_ENTRY(STMT_BREAK, codegen_stmt_break),
+        TABLE_ENTRY(STMT_CONTINUE, codegen_stmt_continue),
+        TABLE_ENTRY(STMT_RETURN, codegen_stmt_return),
+        TABLE_ENTRY(STMT_ASSIGN, codegen_stmt_assign),
+        TABLE_ENTRY(STMT_EXPR, codegen_stmt_expr),
+#undef TABLE_ENTRY
+    };
+
+    char const* const cstr = table[stmt->kind].kind_cstr;
+    appendli_location(stmt->location, "%s", cstr);
+    table[stmt->kind].codegen_fn(stmt);
+}
+
+static void
+codegen_stmt_defer(struct stmt const* stmt)
+{
+    assert(stmt != NULL);
+    assert(stmt->kind == STMT_DEFER);
+
+    // No code generation is performed for defer statements as defers are
+    // generated as equivalent lowered statements by other codegen functions.
+    return;
+}
+
+static void
+codegen_stmt_if(struct stmt const* stmt)
+{
+    assert(stmt != NULL);
+    assert(stmt->kind == STMT_IF);
+
+    appendli("/* TODO */");
+}
+
+static void
+codegen_stmt_for_range(struct stmt const* stmt)
+{
+    assert(stmt != NULL);
+    assert(stmt->kind == STMT_FOR_RANGE);
+
+    appendli("/* TODO */");
+}
+
+static void
+codegen_stmt_for_expr(struct stmt const* stmt)
+{
+    assert(stmt != NULL);
+    assert(stmt->kind == STMT_FOR_EXPR);
+
+    appendli("/* TODO */");
+}
+
+static void
+codegen_stmt_break(struct stmt const* stmt)
+{
+    assert(stmt != NULL);
+    assert(stmt->kind == STMT_BREAK);
+
+    appendli("/* TODO */");
+}
+
+static void
+codegen_stmt_continue(struct stmt const* stmt)
+{
+    assert(stmt != NULL);
+    assert(stmt->kind == STMT_CONTINUE);
+
+    appendli("/* TODO */");
+}
+
+static void
+codegen_stmt_return(struct stmt const* stmt)
+{
+    assert(stmt != NULL);
+    assert(stmt->kind == STMT_RETURN);
+
+    appendli("/* TODO */");
+}
+
+static void
+codegen_stmt_assign(struct stmt const* stmt)
+{
+    assert(stmt != NULL);
+    assert(stmt->kind == STMT_ASSIGN);
+
+    appendli("/* TODO */");
+}
+
+static void
+codegen_stmt_expr(struct stmt const* stmt)
+{
+    assert(stmt != NULL);
+    assert(stmt->kind == STMT_EXPR);
+
+    appendli("/* TODO */");
+}
+
+static void
+codegen_defers(struct stmt const* begin, struct stmt const* end)
+{
+    assert(begin == NULL || begin->kind == STMT_DEFER);
+    assert(end == NULL || end->kind == STMT_DEFER);
+
+    struct stmt const* current = begin;
+    while (current != end) {
+        codegen_block(&current->data.defer.body);
+        current = current->data.defer.prev;
     }
 }
 
