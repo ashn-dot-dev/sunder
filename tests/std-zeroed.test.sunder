@@ -6,6 +6,7 @@ struct foo {
                   # 7 bytes padding
     var y: usize; # 8 bytes
     var z: u16;   # 2 bytes
+                  # 6 bytes padding
 }
 
 func main() void {
@@ -22,4 +23,4 @@ func main() void {
 # 00 00 00 00
 # 00 00 00 00 00 00 00 00
 # 00 00 00 00 00 00 00 00
-# 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+# 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00

@@ -2152,11 +2152,9 @@ complete_struct(
             };
             sbuf_push(member_variables, m);
 
-            // Adjust the struct alignment to match the alignment of the first
-            // non-zero-sized non-zero-aligned member. This case should only
-            // ever occur if the size and alignment are both zero.
-            assert((struct_type->size == 0) == (struct_type->align == 0));
-            if (struct_type->align == 0) {
+            // Adjust the struct alignment to match the greatest alignment of
+            // the struct's member variables.
+            if (member_type->align >= struct_type->align) {
                 struct_type->align = member_type->align;
             }
 

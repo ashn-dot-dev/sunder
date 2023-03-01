@@ -1,4 +1,3 @@
-#define __SUNDER_STATIC_ASSERT(expr) enum {__SUNDER_STATIC_ASSERT_ ## __LINE__ = 1/!!(expr)}
 typedef void               __sunder_void;
 typedef _Bool              __sunder_bool;
 typedef unsigned char      __sunder_byte;

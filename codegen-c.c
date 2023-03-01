@@ -273,8 +273,7 @@ appendli_location(struct source_location location, char const* fmt, ...)
     for (unsigned i = 0; i < indent; ++i) {
         string_append_cstr(out, "    ");
     }
-    string_append_fmt(
-        out, "/// %*s^\n", (int)(location.psrc - line_start), "");
+    string_append_fmt(out, "/// %*s^\n", (int)(location.psrc - line_start), "");
 }
 
 static void
@@ -762,6 +761,7 @@ codegen_c(
     sbuf_push(backend_argv, "-g");
     sbuf_push(backend_argv, "-c");
     sbuf_push(backend_argv, intern_fmt("-I%s/lib/sys", SUNDER_HOME));
+    sbuf_push(backend_argv, "-std=c11");
     sbuf_push(backend_argv, "-Wall");
     sbuf_push(backend_argv, "-Wextra");
     // Workaround for a GCC bug where the universal struct zero-initializer for
@@ -903,6 +903,20 @@ codegen_c(
             break;
         }
         }
+
+        if (type->size != 0 && type->size != SIZEOF_UNSIZED) {
+            char const* const typename = mangle_type(type);
+            appendln(
+                "_Static_assert(sizeof(%s) == %" PRId64 ", \"sizeof(%s)\");",
+                typename,
+                type->size,
+                typename);
+            appendln(
+                "_Static_assert(_Alignof(%s) == %" PRId64 ", \"alignof(%s)\");",
+                typename,
+                type->align,
+                typename);
+        }
     }
     appendch('\n');
     // Generate static function prototypes.
@@ -933,7 +947,6 @@ codegen_c(
         }
         codegen_static_function(symbol, false);
     }
-    appendch('\n');
     appendch('\n');
     appendln("int");
     appendln("main(void)");
