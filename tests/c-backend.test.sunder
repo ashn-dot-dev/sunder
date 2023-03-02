@@ -30,6 +30,9 @@ var int_constant = 456s;
 var str_variable = "ABC";
 let str_constant = "DEF";
 
+var int_variable_pointer = &int_variable;
+var int_constant_pointer = &int_constant;
+
 func stmt_return_integer() ssize {
     return 123;
 }
@@ -120,6 +123,10 @@ func rvalue_array_list() void {
 
 func rvalue_slice_list() void {
     (:[]ssize)[1, 2, 3, 4, 5];
+}
+
+func rvalue_slice() void {
+    (:[]ssize){int_constant_pointer, 1u};
 }
 
 func main() void {

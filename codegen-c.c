@@ -99,8 +99,8 @@ static char const* // interned
 strgen_rvalue_array_list(struct expr const* expr);
 static char const* // interned
 strgen_rvalue_slice_list(struct expr const* expr);
-//static char const* // interned
-//strgen_rvalue_slice(struct expr const* expr);
+static char const* // interned
+strgen_rvalue_slice(struct expr const* expr);
 //static char const* // interned
 //strgen_rvalue_struct(struct expr const* expr);
 //static char const* // interned
@@ -1012,7 +1012,7 @@ strgen_rvalue(struct expr const* expr)
         TABLE_ENTRY(EXPR_BYTES, strgen_rvalue_bytes),
         TABLE_ENTRY(EXPR_ARRAY_LIST, strgen_rvalue_array_list),
         TABLE_ENTRY(EXPR_SLICE_LIST, strgen_rvalue_slice_list),
-        TABLE_ENTRY(EXPR_SLICE, NULL),//strgen_rvalue_slice),
+        TABLE_ENTRY(EXPR_SLICE, strgen_rvalue_slice),
         TABLE_ENTRY(EXPR_STRUCT, NULL),//strgen_rvalue_struct),
         TABLE_ENTRY(EXPR_CAST, NULL),//strgen_rvalue_cast),
         TABLE_ENTRY(EXPR_CALL, NULL),//strgen_rvalue_call),
@@ -1143,6 +1143,20 @@ strgen_rvalue_slice_list(struct expr const* expr)
     char const* const interned = intern(string_start(s), string_count(s));
     string_del(s);
     return interned;
+}
+
+static char const*
+strgen_rvalue_slice(struct expr const* expr)
+{
+    assert(expr != NULL);
+    assert(expr->kind == EXPR_SLICE);
+    assert(expr->type->kind == TYPE_SLICE);
+
+    return intern_fmt(
+        "(%s){.start = %s, .count = %s}",
+        mangle_type(expr->type),
+        strgen_rvalue(expr->data.slice.pointer),
+        strgen_rvalue(expr->data.slice.count));
 }
 
 static char const*
