@@ -2164,6 +2164,7 @@ expr_new_binary(
 bool
 expr_is_lvalue(struct expr const* self);
 
+// Helper struct representing a variable or constant.
 struct object {
     struct type const* type;
     struct address const* address;

@@ -10,6 +10,7 @@
 static struct string* out = NULL;
 static unsigned indent = 0u;
 static struct function const* current_function = NULL;
+static struct stmt const* current_for_range_loop = NULL;
 
 static char const* // interned
 mangle(char const* cstr);
@@ -820,6 +821,16 @@ codegen_block(struct block const* block)
             continue;
         }
 
+        if (current_for_range_loop != NULL) {
+            // The loop variable is initialized and updated in the loop header,
+            // and should *not* be zero-initialized at the start of this block.
+            struct symbol const* const loop_variable =
+                current_for_range_loop->data.for_range.loop_variable;
+            if (locals[i].symbol == loop_variable) {
+                continue;
+            }
+        }
+
         struct type const* const type = symbol_xget_type(locals[i].symbol);
         if (type->size == 0) {
             continue;
@@ -910,6 +921,10 @@ codegen_stmt_for_range(struct stmt const* stmt)
     assert(stmt != NULL);
     assert(stmt->kind == STMT_FOR_RANGE);
 
+    struct stmt const* const save_current_for_range_loop =
+        current_for_range_loop;
+    current_for_range_loop = stmt;
+
     struct symbol const* const variable = stmt->data.for_range.loop_variable;
     appendli(
         "for (%s %s = %s; %s < %s; ++%s)",
@@ -920,6 +935,7 @@ codegen_stmt_for_range(struct stmt const* stmt)
         strgen_rvalue(stmt->data.for_range.end),
         mangle_local_symbol_name(variable));
     codegen_block(&stmt->data.for_range.body);
+    current_for_range_loop = save_current_for_range_loop;
 }
 
 static void
@@ -1173,21 +1189,17 @@ strgen_rvalue_struct(struct expr const* expr)
     assert(
         sbuf_count(member_variable_defs) == sbuf_count(member_variable_exprs));
 
-    struct string* const s = string_new_fmt(
-        "(%s){",
-        mangle_type(expr->type));
+    struct string* const s = string_new_fmt("(%s){", mangle_type(expr->type));
     for (size_t i = 0; i < sbuf_count(member_variable_defs); ++i) {
         if (i != 0) {
             string_append_cstr(s, ", ");
         }
         if (member_variable_exprs[i] == NULL) {
             // Uninitialized member variable.
-            string_append_cstr(
-                s, strgen_uninit(member_variable_defs[i].type));
+            string_append_cstr(s, strgen_uninit(member_variable_defs[i].type));
             continue;
         }
-        string_append_cstr(
-            s, strgen_rvalue(member_variable_exprs[i]));
+        string_append_cstr(s, strgen_rvalue(member_variable_exprs[i]));
     }
     string_append_cstr(s, "}");
 
@@ -1202,7 +1214,8 @@ strgen_rvalue_cast(struct expr const* expr)
     assert(expr != NULL);
     assert(expr->kind == EXPR_CAST);
 
-    return intern_fmt("(%s)%s", mangle_type(expr->type), strgen_rvalue(expr->data.cast.expr));
+    return intern_fmt(
+        "(%s)%s", mangle_type(expr->type), strgen_rvalue(expr->data.cast.expr));
 }
 
 static char const*
