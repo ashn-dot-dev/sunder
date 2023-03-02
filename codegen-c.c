@@ -18,7 +18,11 @@ mangle_name(char const* name);
 static char const* // interned
 mangle_type(struct type const* type);
 static char const* // interned
+mangle_address(struct address const* address);
+static char const* // interned
 mangle_local_symbol_name(struct symbol const* symbol);
+static char const* // interned
+mangle_symbol(struct symbol const* symbol);
 
 static void
 indent_incr(void);
@@ -83,6 +87,106 @@ codegen_stmt_expr(struct stmt const* stmt);
 
 static char const* // interned
 strgen_rvalue(struct expr const* expr);
+static char const* // interned
+strgen_rvalue(struct expr const* expr);
+static char const* // interned
+strgen_rvalue_symbol(struct expr const* expr);
+static char const* // interned
+strgen_rvalue_value(struct expr const* expr);
+static char const* // interned
+strgen_rvalue_bytes(struct expr const* expr);
+static char const* // interned
+strgen_rvalue_array_list(struct expr const* expr);
+static char const* // interned
+strgen_rvalue_slice_list(struct expr const* expr);
+//static char const* // interned
+//strgen_rvalue_slice(struct expr const* expr);
+//static char const* // interned
+//strgen_rvalue_struct(struct expr const* expr);
+//static char const* // interned
+//strgen_rvalue_cast(struct expr const* expr);
+//static char const* // interned
+//strgen_rvalue_call(struct expr const* expr);
+//static char const* // interned
+//strgen_rvalue_access_index(struct expr const* expr);
+//static char const* // interned
+//strgen_rvalue_access_index_lhs_array(struct expr const* expr);
+//static char const* // interned
+//strgen_rvalue_access_index_lhs_slice(struct expr const* expr);
+//static char const* // interned
+//strgen_rvalue_access_slice(struct expr const* expr);
+//static char const* // interned
+//strgen_rvalue_access_slice_lhs_array(struct expr const* expr);
+//static char const* // interned
+//strgen_rvalue_access_slice_lhs_slice(struct expr const* expr);
+//static char const* // interned
+//strgen_rvalue_access_member_variable(struct expr const* expr);
+//static char const* // interned
+//strgen_rvalue_sizeof(struct expr const* expr);
+//static char const* // interned
+//strgen_rvalue_alignof(struct expr const* expr);
+//static char const* // interned
+//strgen_rvalue_unary(struct expr const* expr);
+//static char const* // interned
+//strgen_rvalue_unary_not(struct expr const* expr);
+//static char const* // interned
+//strgen_rvalue_unary_pos(struct expr const* expr);
+//static char const* // interned
+//strgen_rvalue_unary_neg(struct expr const* expr);
+//static char const* // interned
+//strgen_rvalue_unary_neg_wrapping(struct expr const* expr);
+//static char const* // interned
+//strgen_rvalue_unary_bitnot(struct expr const* expr);
+//static char const* // interned
+//strgen_rvalue_unary_dereference(struct expr const* expr);
+//static char const* // interned
+//strgen_rvalue_unary_addressof(struct expr const* expr);
+//static char const* // interned
+//strgen_rvalue_unary_startof(struct expr const* expr);
+//static char const* // interned
+//strgen_rvalue_unary_countof(struct expr const* expr);
+//static char const* // interned
+//strgen_rvalue_binary(struct expr const* expr);
+//static char const* // interned
+//strgen_rvalue_binary_or(struct expr const* expr);
+//static char const* // interned
+//strgen_rvalue_binary_and(struct expr const* expr);
+//static char const* // interned
+//strgen_rvalue_binary_shl(struct expr const* expr);
+//static char const* // interned
+//strgen_rvalue_binary_shr(struct expr const* expr);
+//static char const* // interned
+//strgen_rvalue_binary_eq(struct expr const* expr);
+//static char const* // interned
+//strgen_rvalue_binary_ne(struct expr const* expr);
+//static char const* // interned
+//strgen_rvalue_binary_le(struct expr const* expr);
+//static char const* // interned
+//strgen_rvalue_binary_lt(struct expr const* expr);
+//static char const* // interned
+//strgen_rvalue_binary_ge(struct expr const* expr);
+//static char const* // interned
+//strgen_rvalue_binary_gt(struct expr const* expr);
+//static char const* // interned
+//strgen_rvalue_binary_add(struct expr const* expr);
+//static char const* // interned
+//strgen_rvalue_binary_add_wrapping(struct expr const* expr);
+//static char const* // interned
+//strgen_rvalue_binary_sub(struct expr const* expr);
+//static char const* // interned
+//strgen_rvalue_binary_sub_wrapping(struct expr const* expr);
+//static char const* // interned
+//strgen_rvalue_binary_mul(struct expr const* expr);
+//static char const* // interned
+//strgen_rvalue_binary_mul_wrapping(struct expr const* expr);
+//static char const* // interned
+//strgen_rvalue_binary_divrem(struct expr const* expr);
+//static char const* // interned
+//strgen_rvalue_binary_bitor(struct expr const* expr);
+//static char const* // interned
+//strgen_rvalue_binary_bitxor(struct expr const* expr);
+//static char const* // interned
+//strgen_rvalue_binary_bitand(struct expr const* expr);
 
 static char const* // interned
 strgen_lvalue(struct expr const* expr);
@@ -191,6 +295,34 @@ mangle_type(struct type const* type)
 }
 
 static char const*
+mangle_address(struct address const* address)
+{
+    assert(address != NULL);
+
+    switch (address->kind) {
+    case ADDRESS_ABSOLUTE: {
+        return intern_fmt("(void*)%" PRIu64, address->data.absolute);
+    }
+    case ADDRESS_STATIC: {
+        char const* const base =
+            intern_fmt("(void*)&%s", mangle_name(address->data.static_.name));
+        if (address->data.static_.offset == 0) {
+            return base;
+        }
+        return intern_fmt(
+            "(void*)((char*)%s + %" PRIu64 ")",
+            base,
+            address->data.static_.offset);
+    }
+    case ADDRESS_LOCAL: {
+        return intern_fmt("(void*)&%s", mangle_name(address->data.local.name));
+    }
+    }
+
+    UNREACHABLE();
+}
+
+static char const*
 mangle_local_symbol_name(struct symbol const* symbol)
 {
     assert(symbol != NULL);
@@ -198,6 +330,28 @@ mangle_local_symbol_name(struct symbol const* symbol)
     struct address const* const address = symbol_xget_address(symbol);
     assert(address->kind == ADDRESS_LOCAL);
     return mangle_name(address->data.local.name);
+}
+
+static char const*
+mangle_symbol(struct symbol const* symbol)
+{
+    assert(symbol != NULL);
+
+    struct address const* const address = symbol_xget_address(symbol);
+    switch (address->kind) {
+    case ADDRESS_ABSOLUTE: {
+        UNREACHABLE();
+    }
+    case ADDRESS_STATIC: {
+        assert(address->data.static_.offset == 0);
+        return mangle_name(address->data.static_.name);
+    }
+    case ADDRESS_LOCAL: {
+        return mangle_name(address->data.local.name);
+    }
+    }
+
+    UNREACHABLE();
 }
 
 static void
@@ -847,11 +1001,148 @@ strgen_rvalue(struct expr const* expr)
 {
     assert(expr != NULL);
 
+    // clang-format off
+    static struct {
+        char const* kind_cstr;
+        char const* (*function)(struct expr const*);
+    } const table[] = {
+#define TABLE_ENTRY(kind, fn) [kind] = {#kind, fn}
+        TABLE_ENTRY(EXPR_SYMBOL, strgen_rvalue_symbol),
+        TABLE_ENTRY(EXPR_VALUE, strgen_rvalue_value),
+        TABLE_ENTRY(EXPR_BYTES, strgen_rvalue_bytes),
+        TABLE_ENTRY(EXPR_ARRAY_LIST, strgen_rvalue_array_list),
+        TABLE_ENTRY(EXPR_SLICE_LIST, strgen_rvalue_slice_list),
+        TABLE_ENTRY(EXPR_SLICE, NULL),//strgen_rvalue_slice),
+        TABLE_ENTRY(EXPR_STRUCT, NULL),//strgen_rvalue_struct),
+        TABLE_ENTRY(EXPR_CAST, NULL),//strgen_rvalue_cast),
+        TABLE_ENTRY(EXPR_CALL, NULL),//strgen_rvalue_call),
+        TABLE_ENTRY(EXPR_ACCESS_INDEX, NULL),//strgen_rvalue_access_index),
+        TABLE_ENTRY(EXPR_ACCESS_SLICE, NULL),//strgen_rvalue_access_slice),
+        TABLE_ENTRY(EXPR_ACCESS_MEMBER_VARIABLE, NULL),//strgen_rvalue_access_member_variable),
+        TABLE_ENTRY(EXPR_SIZEOF, NULL),//strgen_rvalue_sizeof),
+        TABLE_ENTRY(EXPR_ALIGNOF, NULL),//strgen_rvalue_alignof),
+        TABLE_ENTRY(EXPR_UNARY, NULL),//strgen_rvalue_unary),
+        TABLE_ENTRY(EXPR_BINARY, NULL),//strgen_rvalue_binary),
+#undef TABLE_ENTRY
+    };
+    // clang-format on
+
+    if (table[expr->kind].function) { // implemented
+        char const* const cstr = table[expr->kind].kind_cstr;
+        appendli_location(expr->location, "%s", cstr);
+        return table[expr->kind].function(expr);
+    }
+    else { // not implemented
+        return intern_fmt(
+            "/* TODO: %s %s */(%s)%s",
+            __func__,
+            table[expr->kind].kind_cstr,
+            mangle_type(expr->type),
+            strgen_uninit(expr->type));
+    }
+}
+
+static char const*
+strgen_rvalue_symbol(struct expr const* expr)
+{
+    assert(expr != NULL);
+    assert(expr->kind == EXPR_SYMBOL);
+
+    return mangle_symbol(expr->data.symbol);
+}
+
+static char const*
+strgen_rvalue_value(struct expr const* expr)
+{
+    assert(expr != NULL);
+    assert(expr->kind == EXPR_VALUE);
+
     return intern_fmt(
-        "/* TODO: %s */(%s)%s",
-        __func__,
+        "(%s)%s",
+        mangle_type(expr->data.value->type),
+        strgen_value(expr->data.value));
+}
+
+static char const*
+strgen_rvalue_bytes(struct expr const* expr)
+{
+    assert(expr != NULL);
+    assert(expr->kind == EXPR_BYTES);
+    assert(expr->type->kind == TYPE_SLICE);
+
+    return intern_fmt(
+        "(%s){.start = %s, .count = %zu}",
         mangle_type(expr->type),
-        strgen_uninit(expr->type));
+        mangle_address(expr->data.bytes.address),
+        expr->data.bytes.count);
+}
+
+static char const*
+strgen_rvalue_array_list(struct expr const* expr)
+{
+    assert(expr != NULL);
+    assert(expr->kind == EXPR_ARRAY_LIST);
+    assert(expr->type->kind == TYPE_ARRAY);
+
+    struct string* const s = string_new_fmt("(%s){", mangle_type(expr->type));
+
+    sbuf(struct expr const* const) const elements =
+        expr->data.array_list.elements;
+    struct type const* const element_type = expr->type->data.array.base;
+    for (size_t i = 0; i < sbuf_count(elements); ++i) {
+        assert(elements[i]->type == element_type);
+        if (i != 0) {
+            string_append_cstr(s, ", ");
+        }
+        string_append_fmt(s, "%s", strgen_rvalue(elements[i]));
+    }
+
+    uint64_t const count = expr->type->data.array.count;
+    struct expr const* const ellipsis = expr->data.array_list.ellipsis;
+    assert(sbuf_count(elements) == count || ellipsis != NULL);
+    for (size_t i = sbuf_count(elements); i < count; ++i) {
+        if (i != 0) {
+            string_append_cstr(s, ", ");
+        }
+        string_append_fmt(s, "%s", strgen_rvalue(ellipsis));
+    }
+
+    string_append_cstr(s, "}");
+
+    char const* const interned = intern(string_start(s), string_count(s));
+    string_del(s);
+    return interned;
+}
+
+static char const*
+strgen_rvalue_slice_list(struct expr const* expr)
+{
+    assert(expr != NULL);
+    assert(expr->kind == EXPR_SLICE_LIST);
+    assert(expr->type->kind == TYPE_SLICE);
+
+    struct type const* const element_type = expr->type->data.slice.base;
+
+    struct string* const s = string_new_fmt(
+        "(%s){.start = (%s[]){",
+        mangle_type(expr->type),
+        mangle_type(element_type));
+
+    sbuf(struct expr const* const) const elements =
+        expr->data.slice_list.elements;
+    for (size_t i = 0; i < sbuf_count(elements); ++i) {
+        assert(elements[i]->type == element_type);
+        if (i != 0) {
+            string_append_cstr(s, ", ");
+        }
+        string_append_fmt(s, "%s", strgen_rvalue(elements[i]));
+    }
+
+    string_append_fmt(s, "}, .count = %zu}", sbuf_count(elements));
+
+    char const* const interned = intern(string_start(s), string_count(s));
+    string_del(s);
+    return interned;
 }
 
 static char const*
@@ -911,6 +1202,8 @@ codegen_c(
     sbuf_push(backend_argv, "-Wno-unused-variable");
     // Enforced by sunder-compile warnings in the resolve phase.
     sbuf_push(backend_argv, "-Wno-unused-parameter");
+    // Sunder allows unused expressions.
+    sbuf_push(backend_argv, "-Wno-unused-value");
     // Sunder allows for expressions that are always true or always false.
     sbuf_push(backend_argv, "-Wno-type-limits");
     // Ideally, we would enable -pedantic-errors and require that generate C

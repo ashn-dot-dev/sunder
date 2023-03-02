@@ -1,0 +1,126 @@
+# Sunder source file used to develop the C backend.
+
+struct empty {
+    func init() empty {
+        return (:empty){};
+    }
+}
+
+struct point {
+    var x: ssize;
+    var y: ssize;
+
+    let ZERO = (:point){.x = 0, .y = uninit};
+
+    let SLICE = (:[]point)[
+        (:point){.x = 0x123, .y = 0x456},
+        (:point){.x = 0xABC, .y = 0xDEF},
+    ];
+
+    func init(x: ssize, y: ssize) point {
+        return (:point){
+            .x = x,
+            .y = y,
+        };
+    }
+}
+
+var int_variable = 123s;
+var int_constant = 456s;
+var str_variable = "ABC";
+let str_constant = "DEF";
+
+func stmt_return_integer() ssize {
+    return 123;
+}
+
+func stmt_return_pointer() *byte {
+    let x: byte = 'x';
+    return &x;
+}
+
+func stmt_return_array() [3]byte {
+    return (:[3]byte)[0x00...];
+}
+
+func stmt_return_slice() []byte {
+    return (:[]byte)[];
+}
+
+func stmt_defer() ssize {
+    defer {
+        return 456;
+    }
+    return 123;
+}
+
+func stmt_if_elif_else() ssize {
+    if false {
+        return 123;
+    }
+    elif true {
+        return 456;
+    }
+    else {
+        return 789;
+    }
+    return 0;
+}
+
+func stmt_for_range() void {
+    for _ in 3 {
+    }
+    for _ in 1:5 {
+    }
+}
+
+func stmt_for_expr() void {
+    for true {
+    }
+    for false {
+    }
+}
+
+func stmt_break_and_continue() void {
+    for true {
+        break;
+    }
+    for false {
+        continue;
+    }
+}
+
+func stmt_assign() void {
+    var _: ssize = 123;
+}
+
+func stmt_expr() void {
+    123s;
+}
+
+func rvalue_symbol() void {
+    str_variable;
+    str_constant;
+}
+
+func rvalue_value() void {
+    123u8;
+    0xAAy;
+    true;
+}
+
+func rvalue_bytes() void {
+    "abc123";
+}
+
+func rvalue_array_list() void {
+    (:[5]ssize)[1, 2, 3, 4, 5];
+    (:[5]ssize)[1, 2, 3...];
+}
+
+func rvalue_slice_list() void {
+    (:[]ssize)[1, 2, 3, 4, 5];
+}
+
+func main() void {
+}

@@ -775,6 +775,8 @@ struct context {
         struct type const* usize;
         struct type const* ssize;
         struct type const* integer;
+        struct type const* pointer_to_byte;
+        struct type const* slice_of_byte;
     } builtin;
 
     // List of all types instantiated by the compiler.
