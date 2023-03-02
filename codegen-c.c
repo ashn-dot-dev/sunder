@@ -101,8 +101,8 @@ static char const* // interned
 strgen_rvalue_slice_list(struct expr const* expr);
 static char const* // interned
 strgen_rvalue_slice(struct expr const* expr);
-//static char const* // interned
-//strgen_rvalue_struct(struct expr const* expr);
+static char const* // interned
+strgen_rvalue_struct(struct expr const* expr);
 //static char const* // interned
 //strgen_rvalue_cast(struct expr const* expr);
 //static char const* // interned
@@ -1013,7 +1013,7 @@ strgen_rvalue(struct expr const* expr)
         TABLE_ENTRY(EXPR_ARRAY_LIST, strgen_rvalue_array_list),
         TABLE_ENTRY(EXPR_SLICE_LIST, strgen_rvalue_slice_list),
         TABLE_ENTRY(EXPR_SLICE, strgen_rvalue_slice),
-        TABLE_ENTRY(EXPR_STRUCT, NULL),//strgen_rvalue_struct),
+        TABLE_ENTRY(EXPR_STRUCT, strgen_rvalue_struct),
         TABLE_ENTRY(EXPR_CAST, NULL),//strgen_rvalue_cast),
         TABLE_ENTRY(EXPR_CALL, NULL),//strgen_rvalue_call),
         TABLE_ENTRY(EXPR_ACCESS_INDEX, NULL),//strgen_rvalue_access_index),
@@ -1157,6 +1157,43 @@ strgen_rvalue_slice(struct expr const* expr)
         mangle_type(expr->type),
         strgen_rvalue(expr->data.slice.pointer),
         strgen_rvalue(expr->data.slice.count));
+}
+
+static char const*
+strgen_rvalue_struct(struct expr const* expr)
+{
+    assert(expr != NULL);
+    assert(expr->kind == EXPR_STRUCT);
+    assert(expr->type->kind == TYPE_STRUCT);
+
+    sbuf(struct member_variable) const member_variable_defs =
+        expr->type->data.struct_.member_variables;
+    sbuf(struct expr const* const) const member_variable_exprs =
+        expr->data.struct_.member_variables;
+    assert(
+        sbuf_count(member_variable_defs) == sbuf_count(member_variable_exprs));
+
+    struct string* const s = string_new_fmt(
+        "(%s){",
+        mangle_type(expr->type));
+    for (size_t i = 0; i < sbuf_count(member_variable_defs); ++i) {
+        if (i != 0) {
+            string_append_cstr(s, ", ");
+        }
+        if (member_variable_exprs[i] == NULL) {
+            // Uninitialized member variable.
+            string_append_cstr(
+                s, strgen_uninit(member_variable_defs[i].type));
+            continue;
+        }
+        string_append_cstr(
+            s, strgen_rvalue(member_variable_exprs[i]));
+    }
+    string_append_cstr(s, "}");
+
+    char const* const interned = intern(string_start(s), string_count(s));
+    string_del(s);
+    return interned;
 }
 
 static char const*

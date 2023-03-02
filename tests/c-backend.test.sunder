@@ -129,5 +129,10 @@ func rvalue_slice() void {
     (:[]ssize){int_constant_pointer, 1u};
 }
 
+func rvalue_struct() void {
+    # TODO: (:empty){};
+    (:point){.x = 123, .y = uninit};
+}
+
 func main() void {
 }
