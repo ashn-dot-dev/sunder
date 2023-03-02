@@ -23,6 +23,10 @@ struct point {
             .y = y,
         };
     }
+
+    func clone(self: *point) point {
+        return *self;
+    }
 }
 
 var int_variable = 123s;
@@ -132,6 +136,22 @@ func rvalue_slice() void {
 func rvalue_struct() void {
     # TODO: (:empty){};
     (:point){.x = 123, .y = uninit};
+}
+
+func rvalue_cast() void {
+    (:u8)int_constant;
+    (:u16)int_constant;
+    (:u32)int_constant;
+    (:u64)int_constant;
+    (:usize)int_constant;
+    (:s8)int_constant;
+    (:s16)int_constant;
+    (:s32)int_constant;
+    (:s64)int_constant;
+    (:ssize)int_constant;
+
+    (:usize)int_constant_pointer;
+    (:func (*any) point)point::clone;
 }
 
 func main() void {

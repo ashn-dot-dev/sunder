@@ -103,8 +103,8 @@ static char const* // interned
 strgen_rvalue_slice(struct expr const* expr);
 static char const* // interned
 strgen_rvalue_struct(struct expr const* expr);
-//static char const* // interned
-//strgen_rvalue_cast(struct expr const* expr);
+static char const* // interned
+strgen_rvalue_cast(struct expr const* expr);
 //static char const* // interned
 //strgen_rvalue_call(struct expr const* expr);
 //static char const* // interned
@@ -1014,7 +1014,7 @@ strgen_rvalue(struct expr const* expr)
         TABLE_ENTRY(EXPR_SLICE_LIST, strgen_rvalue_slice_list),
         TABLE_ENTRY(EXPR_SLICE, strgen_rvalue_slice),
         TABLE_ENTRY(EXPR_STRUCT, strgen_rvalue_struct),
-        TABLE_ENTRY(EXPR_CAST, NULL),//strgen_rvalue_cast),
+        TABLE_ENTRY(EXPR_CAST, strgen_rvalue_cast),
         TABLE_ENTRY(EXPR_CALL, NULL),//strgen_rvalue_call),
         TABLE_ENTRY(EXPR_ACCESS_INDEX, NULL),//strgen_rvalue_access_index),
         TABLE_ENTRY(EXPR_ACCESS_SLICE, NULL),//strgen_rvalue_access_slice),
@@ -1194,6 +1194,15 @@ strgen_rvalue_struct(struct expr const* expr)
     char const* const interned = intern(string_start(s), string_count(s));
     string_del(s);
     return interned;
+}
+
+static char const*
+strgen_rvalue_cast(struct expr const* expr)
+{
+    assert(expr != NULL);
+    assert(expr->kind == EXPR_CAST);
+
+    return intern_fmt("(%s)%s", mangle_type(expr->type), strgen_rvalue(expr->data.cast.expr));
 }
 
 static char const*
