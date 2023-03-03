@@ -43,6 +43,10 @@ struct point {
     }
 }
 
+var bool_variable_true = true;
+var bool_variable_false = false;
+let bool_constant_true = true;
+let bool_constant_false = false;
 var int_variable = 123s;
 var int_constant = 456s;
 var str_variable = "ABC";
@@ -54,6 +58,10 @@ let slice_constant = (:[]ssize)[123, 456, 789];
 
 func add_one[[T]](x: T) T {
     return x + 1;
+}
+
+func stmt_return_bool() bool {
+    return true;
 }
 
 func stmt_return_integer() ssize {
@@ -274,6 +282,14 @@ func rvalue_unary_countof() void {
 
     countof((:[]ssize)[123, 456, 789]);
     countof(slice_constant);
+}
+
+func rvalue_binary_or() void {
+    bool_constant_true or bool_constant_true;
+    bool_constant_true or bool_constant_false;
+    bool_constant_false or bool_constant_true;
+    bool_constant_false or bool_constant_false;
+    true or stmt_return_bool();
 }
 
 func main() void {

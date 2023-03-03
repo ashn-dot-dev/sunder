@@ -89,8 +89,6 @@ codegen_stmt_expr(struct stmt const* stmt);
 static char const* // interned
 strgen_rvalue(struct expr const* expr);
 static char const* // interned
-strgen_rvalue(struct expr const* expr);
-static char const* // interned
 strgen_rvalue_symbol(struct expr const* expr);
 static char const* // interned
 strgen_rvalue_value(struct expr const* expr);
@@ -138,10 +136,10 @@ static char const* // interned
 strgen_rvalue_unary_startof(struct expr const* expr);
 static char const* // interned
 strgen_rvalue_unary_countof(struct expr const* expr);
-//static char const* // interned
-//strgen_rvalue_binary(struct expr const* expr);
-//static char const* // interned
-//strgen_rvalue_binary_or(struct expr const* expr);
+static char const* // interned
+strgen_rvalue_binary(struct expr const* expr);
+static char const* // interned
+strgen_rvalue_binary_or(struct expr const* expr);
 //static char const* // interned
 //strgen_rvalue_binary_and(struct expr const* expr);
 //static char const* // interned
@@ -173,7 +171,9 @@ strgen_rvalue_unary_countof(struct expr const* expr);
 //static char const* // interned
 //strgen_rvalue_binary_mul_wrapping(struct expr const* expr);
 //static char const* // interned
-//strgen_rvalue_binary_divrem(struct expr const* expr);
+//strgen_rvalue_binary_div(struct expr const* expr);
+//static char const* // interned
+//strgen_rvalue_binary_div(struct expr const* expr);
 //static char const* // interned
 //strgen_rvalue_binary_bitor(struct expr const* expr);
 //static char const* // interned
@@ -1030,24 +1030,14 @@ strgen_rvalue(struct expr const* expr)
         TABLE_ENTRY(EXPR_SIZEOF, strgen_rvalue_sizeof),
         TABLE_ENTRY(EXPR_ALIGNOF, strgen_rvalue_alignof),
         TABLE_ENTRY(EXPR_UNARY, strgen_rvalue_unary),
-        TABLE_ENTRY(EXPR_BINARY, NULL),//strgen_rvalue_binary),
+        TABLE_ENTRY(EXPR_BINARY, strgen_rvalue_binary),
 #undef TABLE_ENTRY
     };
     // clang-format on
 
-    if (table[expr->kind].function) { // implemented
-        char const* const cstr = table[expr->kind].kind_cstr;
-        appendli_location(expr->location, "%s", cstr);
-        return table[expr->kind].function(expr);
-    }
-    else { // not implemented
-        return intern_fmt(
-            "/* TODO: %s %s */(%s)%s",
-            __func__,
-            table[expr->kind].kind_cstr,
-            mangle_type(expr->type),
-            strgen_uninit(expr->type));
-    }
+    char const* const cstr = table[expr->kind].kind_cstr;
+    appendli_location(expr->location, "%s", cstr);
+    return table[expr->kind].function(expr);
 }
 
 static char const*
@@ -1550,6 +1540,93 @@ strgen_rvalue_unary_countof(struct expr const* expr)
     }
 
     UNREACHABLE();
+}
+
+static char const*
+strgen_rvalue_binary(struct expr const* expr)
+{
+    assert(expr != NULL);
+    assert(expr->kind == EXPR_BINARY);
+
+    switch (expr->data.binary.op) {
+    case BOP_OR: {
+        return strgen_rvalue_binary_or(expr);
+    }
+    case BOP_AND: {
+        return intern_fmt("/* TODO %s */(%s)%s", __func__, mangle_type(expr->type), strgen_uninit(expr->type));//strgen_rvalue_binary_and(expr);
+    }
+    case BOP_SHL: {
+        return intern_fmt("/* TODO %s */(%s)%s", __func__, mangle_type(expr->type), strgen_uninit(expr->type));//strgen_rvalue_binary_shl(expr);
+    }
+    case BOP_SHR: {
+        return intern_fmt("/* TODO %s */(%s)%s", __func__, mangle_type(expr->type), strgen_uninit(expr->type));//strgen_rvalue_binary_shr(expr);
+    }
+    case BOP_EQ: {
+        return intern_fmt("/* TODO %s */(%s)%s", __func__, mangle_type(expr->type), strgen_uninit(expr->type));//strgen_rvalue_binary_eq(expr);
+    }
+    case BOP_NE: {
+        return intern_fmt("/* TODO %s */(%s)%s", __func__, mangle_type(expr->type), strgen_uninit(expr->type));//strgen_rvalue_binary_ne(expr);
+    }
+    case BOP_LE: {
+        return intern_fmt("/* TODO %s */(%s)%s", __func__, mangle_type(expr->type), strgen_uninit(expr->type));//strgen_rvalue_binary_le(expr);
+    }
+    case BOP_LT: {
+        return intern_fmt("/* TODO %s */(%s)%s", __func__, mangle_type(expr->type), strgen_uninit(expr->type));//strgen_rvalue_binary_lt(expr);
+    }
+    case BOP_GE: {
+        return intern_fmt("/* TODO %s */(%s)%s", __func__, mangle_type(expr->type), strgen_uninit(expr->type));//strgen_rvalue_binary_ge(expr);
+    }
+    case BOP_GT: {
+        return intern_fmt("/* TODO %s */(%s)%s", __func__, mangle_type(expr->type), strgen_uninit(expr->type));//strgen_rvalue_binary_gt(expr);
+    }
+    case BOP_ADD: {
+        return intern_fmt("/* TODO %s */(%s)%s", __func__, mangle_type(expr->type), strgen_uninit(expr->type));//strgen_rvalue_binary_add(expr);
+    }
+    case BOP_ADD_WRAPPING: {
+        return intern_fmt("/* TODO %s */(%s)%s", __func__, mangle_type(expr->type), strgen_uninit(expr->type));//strgen_rvalue_binary_add_wrapping(expr);
+    }
+    case BOP_SUB: {
+        return intern_fmt("/* TODO %s */(%s)%s", __func__, mangle_type(expr->type), strgen_uninit(expr->type));//strgen_rvalue_binary_sub(expr);
+    }
+    case BOP_SUB_WRAPPING: {
+        return intern_fmt("/* TODO %s */(%s)%s", __func__, mangle_type(expr->type), strgen_uninit(expr->type));//strgen_rvalue_binary_sub_wrapping(expr);
+    }
+    case BOP_MUL: {
+        return intern_fmt("/* TODO %s */(%s)%s", __func__, mangle_type(expr->type), strgen_uninit(expr->type));//strgen_rvalue_binary_mul(expr);
+    }
+    case BOP_MUL_WRAPPING: {
+        return intern_fmt("/* TODO %s */(%s)%s", __func__, mangle_type(expr->type), strgen_uninit(expr->type));//strgen_rvalue_binary_mul_wrapping(expr);
+    }
+    case BOP_DIV: {
+        return intern_fmt("/* TODO %s */(%s)%s", __func__, mangle_type(expr->type), strgen_uninit(expr->type));//strgen_rvalue_binary_div(expr);
+    }
+    case BOP_REM: {
+        return intern_fmt("/* TODO %s */(%s)%s", __func__, mangle_type(expr->type), strgen_uninit(expr->type));//strgen_rvalue_binary_rem(expr);
+    }
+    case BOP_BITOR: {
+        return intern_fmt("/* TODO %s */(%s)%s", __func__, mangle_type(expr->type), strgen_uninit(expr->type));//strgen_rvalue_binary_bitor(expr);
+    }
+    case BOP_BITXOR: {
+        return intern_fmt("/* TODO %s */(%s)%s", __func__, mangle_type(expr->type), strgen_uninit(expr->type));//strgen_rvalue_binary_bitxor(expr);
+    }
+    case BOP_BITAND: {
+        return intern_fmt("/* TODO %s */(%s)%s", __func__, mangle_type(expr->type), strgen_uninit(expr->type));//strgen_rvalue_binary_bitand(expr);
+    }
+    }
+
+    UNREACHABLE();
+}
+
+static char const*
+strgen_rvalue_binary_or(struct expr const* expr)
+{
+    assert(expr != NULL);
+    assert(expr->kind == EXPR_BINARY);
+    assert(expr->data.binary.op == BOP_OR);
+    assert(expr->data.binary.lhs->type->kind == TYPE_BOOL);
+    assert(expr->data.binary.rhs->type->kind == TYPE_BOOL);
+
+    return intern_fmt("((%s) || (%s))", strgen_rvalue(expr->data.binary.lhs), strgen_rvalue(expr->data.binary.rhs));
 }
 
 static char const*
