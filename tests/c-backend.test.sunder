@@ -47,12 +47,10 @@ var int_variable = 123s;
 var int_constant = 456s;
 var str_variable = "ABC";
 let str_constant = "DEF";
-
-let array = (:[3]ssize)[123, 456, 789];
-let slice = (:[]ssize)[123, 456, 789];
-
-var int_variable_pointer = &int_variable;
-var int_constant_pointer = &int_constant;
+let int_variable_pointer = &int_variable;
+let int_constant_pointer = &int_constant;
+let array_constant = (:[3]ssize)[123, 456, 789];
+let slice_constant = (:[]ssize)[123, 456, 789];
 
 func add_one[[T]](x: T) T {
     return x + 1;
@@ -200,15 +198,15 @@ func rvalue_access_index() void {
     (:[3]ssize)[123, 456, 789][1];
     (:[]ssize)[123, 456, 789][1];
 
-    array[1];
-    slice[1];
+    array_constant[1];
+    slice_constant[1];
 }
 
 func rvalue_access_slice() void {
     (:[]ssize)[123, 456, 789][1:3];
 
-    array[1:3];
-    slice[1:3];
+    array_constant[1:3];
+    slice_constant[1:3];
 }
 
 func rvalue_access_member_variable() void {
@@ -230,6 +228,52 @@ func rvalue_alignof() void {
     alignof(s64);
     alignof(point);
     alignof(typeof((:point){.x = 123, .y = 456}));
+}
+
+func rvalue_unary_not() void {
+    not true;
+    not false;
+}
+
+func rvalue_unary_pos() void {
+    +int_constant;
+}
+
+func rvalue_unary_neg() void {
+    -int_constant;
+}
+
+func rvalue_unary_neg_wrapping() void {
+    -%int_constant;
+}
+
+func rvalue_unary_bitnot() void {
+    ~int_constant;
+}
+
+func rvalue_unary_dereference() void {
+    *int_variable_pointer;
+    *int_constant_pointer;
+    int_variable_pointer.*;
+    int_constant_pointer.*;
+}
+
+func rvalue_unary_addressof() void {
+    &int_variable_pointer;
+    &int_constant_pointer;
+}
+
+func rvalue_unary_startof() void {
+    startof((:[]ssize)[123, 456, 789]);
+    startof(slice_constant);
+}
+
+func rvalue_unary_countof() void {
+    countof((:[3]ssize)[123, 456, 789]);
+    countof(array_constant);
+
+    countof((:[]ssize)[123, 456, 789]);
+    countof(slice_constant);
 }
 
 func main() void {

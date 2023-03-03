@@ -118,26 +118,26 @@ static char const* // interned
 strgen_rvalue_sizeof(struct expr const* expr);
 static char const* // interned
 strgen_rvalue_alignof(struct expr const* expr);
-//static char const* // interned
-//strgen_rvalue_unary(struct expr const* expr);
-//static char const* // interned
-//strgen_rvalue_unary_not(struct expr const* expr);
-//static char const* // interned
-//strgen_rvalue_unary_pos(struct expr const* expr);
-//static char const* // interned
-//strgen_rvalue_unary_neg(struct expr const* expr);
-//static char const* // interned
-//strgen_rvalue_unary_neg_wrapping(struct expr const* expr);
-//static char const* // interned
-//strgen_rvalue_unary_bitnot(struct expr const* expr);
-//static char const* // interned
-//strgen_rvalue_unary_dereference(struct expr const* expr);
-//static char const* // interned
-//strgen_rvalue_unary_addressof(struct expr const* expr);
-//static char const* // interned
-//strgen_rvalue_unary_startof(struct expr const* expr);
-//static char const* // interned
-//strgen_rvalue_unary_countof(struct expr const* expr);
+static char const* // interned
+strgen_rvalue_unary(struct expr const* expr);
+static char const* // interned
+strgen_rvalue_unary_not(struct expr const* expr);
+static char const* // interned
+strgen_rvalue_unary_pos(struct expr const* expr);
+static char const* // interned
+strgen_rvalue_unary_neg(struct expr const* expr);
+static char const* // interned
+strgen_rvalue_unary_neg_wrapping(struct expr const* expr);
+static char const* // interned
+strgen_rvalue_unary_bitnot(struct expr const* expr);
+static char const* // interned
+strgen_rvalue_unary_dereference(struct expr const* expr);
+static char const* // interned
+strgen_rvalue_unary_addressof(struct expr const* expr);
+static char const* // interned
+strgen_rvalue_unary_startof(struct expr const* expr);
+static char const* // interned
+strgen_rvalue_unary_countof(struct expr const* expr);
 //static char const* // interned
 //strgen_rvalue_binary(struct expr const* expr);
 //static char const* // interned
@@ -1029,7 +1029,7 @@ strgen_rvalue(struct expr const* expr)
         TABLE_ENTRY(EXPR_ACCESS_MEMBER_VARIABLE, strgen_rvalue_access_member_variable),
         TABLE_ENTRY(EXPR_SIZEOF, strgen_rvalue_sizeof),
         TABLE_ENTRY(EXPR_ALIGNOF, strgen_rvalue_alignof),
-        TABLE_ENTRY(EXPR_UNARY, NULL),//strgen_rvalue_unary),
+        TABLE_ENTRY(EXPR_UNARY, strgen_rvalue_unary),
         TABLE_ENTRY(EXPR_BINARY, NULL),//strgen_rvalue_binary),
 #undef TABLE_ENTRY
     };
@@ -1407,6 +1407,149 @@ strgen_rvalue_alignof(struct expr const* expr)
     assert(expr->kind == EXPR_ALIGNOF);
 
     return intern_fmt("%" PRId64, expr->data.alignof_.rhs->align);
+}
+
+static char const*
+strgen_rvalue_unary(struct expr const* expr)
+{
+    assert(expr != NULL);
+    assert(expr->kind == EXPR_UNARY);
+
+    switch (expr->data.unary.op) {
+    case UOP_NOT: {
+        return strgen_rvalue_unary_not(expr);
+    }
+    case UOP_POS: {
+        return strgen_rvalue_unary_pos(expr);
+    }
+    case UOP_NEG: {
+        return strgen_rvalue_unary_neg(expr);
+    }
+    case UOP_NEG_WRAPPING: {
+        return strgen_rvalue_unary_neg_wrapping(expr);
+    }
+    case UOP_BITNOT: {
+        return strgen_rvalue_unary_bitnot(expr);
+    }
+    case UOP_DEREFERENCE: {
+        return strgen_rvalue_unary_dereference(expr);
+    }
+    case UOP_ADDRESSOF: {
+        return strgen_rvalue_unary_addressof(expr);
+    }
+    case UOP_STARTOF: {
+        return strgen_rvalue_unary_startof(expr);
+    }
+    case UOP_COUNTOF: {
+        return strgen_rvalue_unary_countof(expr);
+    }
+    }
+
+    UNREACHABLE();
+}
+
+static char const*
+strgen_rvalue_unary_not(struct expr const* expr)
+{
+    assert(expr != NULL);
+    assert(expr->kind == EXPR_UNARY);
+    assert(expr->data.unary.op == UOP_NOT);
+
+    return intern_fmt("!(%s)", strgen_rvalue(expr->data.unary.rhs));
+}
+
+static char const*
+strgen_rvalue_unary_pos(struct expr const* expr)
+{
+    assert(expr != NULL);
+    assert(expr->kind == EXPR_UNARY);
+    assert(expr->data.unary.op == UOP_POS);
+
+    return intern_fmt("+(%s)", strgen_rvalue(expr->data.unary.rhs));
+}
+
+static char const*
+strgen_rvalue_unary_neg(struct expr const* expr)
+{
+    assert(expr != NULL);
+    assert(expr->kind == EXPR_UNARY);
+    assert(expr->data.unary.op == UOP_NEG);
+
+    // TODO: Handle integer out of range.
+
+    return intern_fmt("-(%s)", strgen_rvalue(expr->data.unary.rhs));
+}
+
+static char const*
+strgen_rvalue_unary_neg_wrapping(struct expr const* expr)
+{
+    assert(expr != NULL);
+    assert(expr->kind == EXPR_UNARY);
+    assert(expr->data.unary.op == UOP_NEG_WRAPPING);
+
+    return intern_fmt("-(%s)", strgen_rvalue(expr->data.unary.rhs));
+}
+
+static char const*
+strgen_rvalue_unary_bitnot(struct expr const* expr)
+{
+    assert(expr != NULL);
+    assert(expr->kind == EXPR_UNARY);
+    assert(expr->data.unary.op == UOP_BITNOT);
+
+    return intern_fmt("~(%s)", strgen_rvalue(expr->data.unary.rhs));
+}
+
+static char const*
+strgen_rvalue_unary_dereference(struct expr const* expr)
+{
+    assert(expr != NULL);
+    assert(expr->kind == EXPR_UNARY);
+    assert(expr->data.unary.op == UOP_DEREFERENCE);
+    assert(expr->data.unary.rhs->type->kind == TYPE_POINTER);
+
+    // TODO: Handle NULL pointer dereference.
+
+    return intern_fmt("*(%s)", strgen_rvalue(expr->data.unary.rhs));
+}
+
+static char const*
+strgen_rvalue_unary_addressof(struct expr const* expr)
+{
+    assert(expr != NULL);
+    assert(expr->kind == EXPR_UNARY);
+    assert(expr->data.unary.op == UOP_ADDRESSOF);
+
+    return intern_fmt("&(%s)", strgen_rvalue(expr->data.unary.rhs));
+}
+
+static char const*
+strgen_rvalue_unary_startof(struct expr const* expr)
+{
+    assert(expr != NULL);
+    assert(expr->kind == EXPR_UNARY);
+    assert(expr->data.unary.op == UOP_STARTOF);
+    assert(expr->data.unary.rhs->type->kind == TYPE_SLICE);
+
+    return intern_fmt("(%s).start", strgen_rvalue(expr->data.unary.rhs));
+}
+
+static char const*
+strgen_rvalue_unary_countof(struct expr const* expr)
+{
+    assert(expr != NULL);
+    assert(expr->kind == EXPR_UNARY);
+    assert(expr->data.unary.op == UOP_COUNTOF);
+
+    if (expr->data.unary.rhs->type->kind == TYPE_ARRAY) {
+        return intern_fmt("%" PRIu64, expr->data.unary.rhs->type->data.array.count);
+    }
+
+    if (expr->data.unary.rhs->type->kind == TYPE_SLICE) {
+        return intern_fmt("(%s).count", strgen_rvalue(expr->data.unary.rhs));
+    }
+
+    UNREACHABLE();
 }
 
 static char const*
