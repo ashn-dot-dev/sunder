@@ -1681,6 +1681,9 @@ type_is_uint(struct type const* self);
 // Returns true if self is a signed integer type.
 bool
 type_is_sint(struct type const* self);
+// Returns true if self is a compount type (type made from other types).
+bool
+type_is_compound(struct type const* self);
 // Returns true if the type may be compared with the == or != operators.
 bool
 type_can_compare_equality(struct type const* self);

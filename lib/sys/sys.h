@@ -12,5 +12,5 @@ typedef   signed long long __sunder_s64;
 typedef unsigned long      __sunder_usize;
 typedef   signed long      __sunder_ssize;
 
-_Bool const __sunder_true = 1;
-_Bool const __sunder_false = 0;
+#define __sunder_true  ((_Bool)1)
+#define __sunder_false ((_Bool)0)

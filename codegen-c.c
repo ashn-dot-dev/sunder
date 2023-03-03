@@ -106,26 +106,18 @@ static char const* // interned
 strgen_rvalue_struct(struct expr const* expr);
 static char const* // interned
 strgen_rvalue_cast(struct expr const* expr);
-//static char const* // interned
-//strgen_rvalue_call(struct expr const* expr);
-//static char const* // interned
-//strgen_rvalue_access_index(struct expr const* expr);
-//static char const* // interned
-//strgen_rvalue_access_index_lhs_array(struct expr const* expr);
-//static char const* // interned
-//strgen_rvalue_access_index_lhs_slice(struct expr const* expr);
-//static char const* // interned
-//strgen_rvalue_access_slice(struct expr const* expr);
-//static char const* // interned
-//strgen_rvalue_access_slice_lhs_array(struct expr const* expr);
-//static char const* // interned
-//strgen_rvalue_access_slice_lhs_slice(struct expr const* expr);
-//static char const* // interned
-//strgen_rvalue_access_member_variable(struct expr const* expr);
-//static char const* // interned
-//strgen_rvalue_sizeof(struct expr const* expr);
-//static char const* // interned
-//strgen_rvalue_alignof(struct expr const* expr);
+static char const* // interned
+strgen_rvalue_call(struct expr const* expr);
+static char const* // interned
+strgen_rvalue_access_index(struct expr const* expr);
+static char const* // interned
+strgen_rvalue_access_slice(struct expr const* expr);
+static char const* // interned
+strgen_rvalue_access_member_variable(struct expr const* expr);
+static char const* // interned
+strgen_rvalue_sizeof(struct expr const* expr);
+static char const* // interned
+strgen_rvalue_alignof(struct expr const* expr);
 //static char const* // interned
 //strgen_rvalue_unary(struct expr const* expr);
 //static char const* // interned
@@ -775,7 +767,7 @@ strgen_uninit(struct type const* type)
     case TYPE_S64: /* fallthrough */
     case TYPE_USIZE: /* fallthrough */
     case TYPE_SSIZE: {
-        string_append_cstr(s, "0");
+        string_append_cstr(s, "/* uninit */0");
         break;
     }
     case TYPE_INTEGER: {
@@ -783,13 +775,13 @@ strgen_uninit(struct type const* type)
     }
     case TYPE_FUNCTION: /* fallthrough */
     case TYPE_POINTER: {
-        string_append_cstr(s, "0");
+        string_append_cstr(s, "/* uninit */0");
         break;
     }
     case TYPE_ARRAY: /* fallthrough */
     case TYPE_SLICE: /* fallthrough */
     case TYPE_STRUCT: {
-        string_append_cstr(s, "{0}");
+        string_append_cstr(s, "{/*uninit*/0}");
         break;
     }
     }
@@ -1031,12 +1023,12 @@ strgen_rvalue(struct expr const* expr)
         TABLE_ENTRY(EXPR_SLICE, strgen_rvalue_slice),
         TABLE_ENTRY(EXPR_STRUCT, strgen_rvalue_struct),
         TABLE_ENTRY(EXPR_CAST, strgen_rvalue_cast),
-        TABLE_ENTRY(EXPR_CALL, NULL),//strgen_rvalue_call),
-        TABLE_ENTRY(EXPR_ACCESS_INDEX, NULL),//strgen_rvalue_access_index),
-        TABLE_ENTRY(EXPR_ACCESS_SLICE, NULL),//strgen_rvalue_access_slice),
-        TABLE_ENTRY(EXPR_ACCESS_MEMBER_VARIABLE, NULL),//strgen_rvalue_access_member_variable),
-        TABLE_ENTRY(EXPR_SIZEOF, NULL),//strgen_rvalue_sizeof),
-        TABLE_ENTRY(EXPR_ALIGNOF, NULL),//strgen_rvalue_alignof),
+        TABLE_ENTRY(EXPR_CALL, strgen_rvalue_call),
+        TABLE_ENTRY(EXPR_ACCESS_INDEX, strgen_rvalue_access_index),
+        TABLE_ENTRY(EXPR_ACCESS_SLICE, strgen_rvalue_access_slice),
+        TABLE_ENTRY(EXPR_ACCESS_MEMBER_VARIABLE, strgen_rvalue_access_member_variable),
+        TABLE_ENTRY(EXPR_SIZEOF, strgen_rvalue_sizeof),
+        TABLE_ENTRY(EXPR_ALIGNOF, strgen_rvalue_alignof),
         TABLE_ENTRY(EXPR_UNARY, NULL),//strgen_rvalue_unary),
         TABLE_ENTRY(EXPR_BINARY, NULL),//strgen_rvalue_binary),
 #undef TABLE_ENTRY
@@ -1073,10 +1065,14 @@ strgen_rvalue_value(struct expr const* expr)
     assert(expr != NULL);
     assert(expr->kind == EXPR_VALUE);
 
-    return intern_fmt(
-        "(%s)%s",
-        mangle_type(expr->data.value->type),
-        strgen_value(expr->data.value));
+    if (type_is_compound(expr->type)) {
+        return intern_fmt(
+            "(%s)%s",
+            mangle_type(expr->data.value->type),
+            strgen_value(expr->data.value));
+    }
+
+    return strgen_value(expr->data.value);
 }
 
 static char const*
@@ -1189,20 +1185,54 @@ strgen_rvalue_struct(struct expr const* expr)
     assert(
         sbuf_count(member_variable_defs) == sbuf_count(member_variable_exprs));
 
-    struct string* const s = string_new_fmt("(%s){", mangle_type(expr->type));
+    struct string* const s = string_new_fmt("({");
     for (size_t i = 0; i < sbuf_count(member_variable_defs); ++i) {
-        if (i != 0) {
-            string_append_cstr(s, ", ");
-        }
-        if (member_variable_exprs[i] == NULL) {
-            // Uninitialized member variable.
-            string_append_cstr(s, strgen_uninit(member_variable_defs[i].type));
+        char const* const local =
+            intern_fmt("__member_%zu_%s", i, member_variable_defs[i].name);
+        char const* const initname = mangle_name(local);
+        char const* const typename = mangle_type(member_variable_defs[i].type);
+
+        if (member_variable_defs[i].type->size == 0) {
+            char const* const valuestr = member_variable_exprs[i] != NULL
+                ? strgen_rvalue(member_variable_exprs[i])
+                : "/* uninit */0";
+            string_append_fmt(
+                s,
+                "int %s = /* zero-sized member */({%s; 0;}); ",
+                initname,
+                valuestr);
             continue;
         }
-        string_append_cstr(s, strgen_rvalue(member_variable_exprs[i]));
-    }
-    string_append_cstr(s, "}");
 
+        char const* const valuestr = member_variable_exprs[i] != NULL
+            ? strgen_rvalue(member_variable_exprs[i])
+            : strgen_uninit(member_variable_defs[i].type);
+        string_append_fmt(s, "%s %s = %s; ", typename, initname, valuestr);
+    }
+
+    if (expr->type->size == 0) {
+        string_append_cstr(s, "/* zero-sized struct */0;");
+        goto done;
+    }
+
+    string_append_fmt(s, "(%s){", mangle_type(expr->type));
+    size_t members_written = 0;
+    for (size_t i = 0; i < sbuf_count(member_variable_defs); ++i) {
+        if (member_variable_defs[i].type->size == 0) {
+            continue;
+        }
+        if (members_written != 0) {
+            string_append_cstr(s, ", ");
+        }
+        char const* const local =
+            intern_fmt("__member_%zu_%s", i, member_variable_defs[i].name);
+        string_append_cstr(s, mangle_name(local));
+        members_written += 1;
+    }
+    string_append_cstr(s, "};");
+
+done:
+    string_append_cstr(s, "})");
     char const* const interned = intern(string_start(s), string_count(s));
     string_del(s);
     return interned;
@@ -1216,6 +1246,167 @@ strgen_rvalue_cast(struct expr const* expr)
 
     return intern_fmt(
         "(%s)%s", mangle_type(expr->type), strgen_rvalue(expr->data.cast.expr));
+}
+
+static char const*
+strgen_rvalue_call(struct expr const* expr)
+{
+    assert(expr != NULL);
+    assert(expr->kind == EXPR_CALL);
+
+    struct expr const* const function = expr->data.call.function;
+    sbuf(struct expr const* const) const arguments = expr->data.call.arguments;
+
+    struct string* const s = string_new_fmt("({");
+    for (size_t i = 0; i < sbuf_count(arguments); ++i) {
+        if (arguments[i]->type->size == 0) {
+            continue;
+        }
+
+        char const* const local = intern_fmt("__argument_%zu", i);
+        char const* const initname = mangle_name(local);
+        char const* const typename = mangle_type(arguments[i]->type);
+        char const* const valuestr = strgen_rvalue(arguments[i]);
+
+        string_append_fmt(s, "%s %s = %s; ", typename, initname, valuestr);
+    }
+
+    string_append_fmt(s, "%s(", strgen_rvalue(function));
+    size_t arguments_written = 0;
+    for (size_t i = 0; i < sbuf_count(arguments); ++i) {
+        if (arguments[i]->type->size == 0) {
+            continue;
+        }
+        if (arguments_written != 0) {
+            string_append_cstr(s, ", ");
+        }
+
+        char const* const local = intern_fmt("__argument_%zu", i);
+        char const* const initname = mangle_name(local);
+        string_append_cstr(s, initname);
+
+        arguments_written += 1;
+    }
+    assert(function->type->kind == TYPE_FUNCTION);
+    if (function->type->data.function.return_type->size == 0) {
+        string_append_cstr(s, "), /* zero-sized return */0;");
+    }
+    else {
+        string_append_cstr(s, ");");
+    }
+    string_append_cstr(s, "})");
+
+    char const* const interned = intern(string_start(s), string_count(s));
+    string_del(s);
+    return interned;
+}
+
+static char const*
+strgen_rvalue_access_index(struct expr const* expr)
+{
+    assert(expr != NULL);
+    assert(expr->kind == EXPR_ACCESS_INDEX);
+
+    // TODO: Handle index out of bounds.
+
+    if (expr->data.access_index.lhs->type->kind == TYPE_ARRAY) {
+        return intern_fmt(
+            "(%s).elements[%s]",
+            strgen_rvalue(expr->data.access_index.lhs),
+            strgen_rvalue(expr->data.access_index.idx));
+    }
+
+    if (expr->data.access_index.lhs->type->kind == TYPE_SLICE) {
+        return intern_fmt(
+            "(%s).start[%s]",
+            strgen_rvalue(expr->data.access_index.lhs),
+            strgen_rvalue(expr->data.access_index.idx));
+    }
+
+    UNREACHABLE();
+}
+
+static char const*
+strgen_rvalue_access_slice(struct expr const* expr)
+{
+    assert(expr != NULL);
+    assert(expr->kind == EXPR_ACCESS_SLICE);
+
+    // TODO: Handle index out of bounds.
+
+    char const* const btype = mangle_name("usize");
+    char const* const bname = mangle_name("__b");
+    char const* const bexpr = strgen_rvalue(expr->data.access_slice.begin);
+    char const* const etype = mangle_name("usize");
+    char const* const ename = mangle_name("__e");
+    char const* const eexpr = strgen_rvalue(expr->data.access_slice.end);
+    char const* const tname = mangle_type(expr->type);
+    char const* const lexpr = strgen_rvalue(expr->data.access_slice.lhs);
+
+    if (expr->data.access_slice.lhs->type->kind == TYPE_ARRAY) {
+        return intern_fmt(
+            "({%s %s = %s; %s %s = %s; (%s){.start = (%s).elements + %s, .count = %s - %s};})",
+            btype,
+            bname,
+            bexpr,
+            etype,
+            ename,
+            eexpr,
+            tname,
+            lexpr,
+            bname,
+            ename,
+            bname);
+    }
+
+    if (expr->data.access_slice.lhs->type->kind == TYPE_SLICE) {
+        return intern_fmt(
+            "({%s %s = %s; %s %s = %s; (%s){.start = (%s).start + %s, .count = %s - %s};})",
+            btype,
+            bname,
+            bexpr,
+            etype,
+            ename,
+            eexpr,
+            tname,
+            lexpr,
+            bname,
+            ename,
+            bname);
+    }
+
+    UNREACHABLE();
+}
+
+static char const*
+strgen_rvalue_access_member_variable(struct expr const* expr)
+{
+    assert(expr != NULL);
+    assert(expr->kind == EXPR_ACCESS_MEMBER_VARIABLE);
+    assert(expr->data.access_member_variable.lhs->type->kind == TYPE_STRUCT);
+
+    return intern_fmt(
+        "(%s).%s",
+        strgen_rvalue(expr->data.access_member_variable.lhs),
+        expr->data.access_member_variable.member_variable->name);
+}
+
+static char const*
+strgen_rvalue_sizeof(struct expr const* expr)
+{
+    assert(expr != NULL);
+    assert(expr->kind == EXPR_SIZEOF);
+
+    return intern_fmt("%" PRId64, expr->data.sizeof_.rhs->size);
+}
+
+static char const*
+strgen_rvalue_alignof(struct expr const* expr)
+{
+    assert(expr != NULL);
+    assert(expr->kind == EXPR_ALIGNOF);
+
+    return intern_fmt("%" PRId64, expr->data.alignof_.rhs->align);
 }
 
 static char const*
@@ -1271,6 +1462,8 @@ codegen_c(
     // Workaround for a GCC bug where the universal struct zero-initializer for
     // types with nested struct objects produces a missing braces warning.
     sbuf_push(backend_argv, "-Wno-missing-braces");
+    // Sunder does not have type qualifiers.
+    sbuf_push(backend_argv, "-Wno-discarded-qualifiers");
     // Enforced by sunder-compile warnings in the resolve phase.
     sbuf_push(backend_argv, "-Wno-unused-variable");
     // Enforced by sunder-compile warnings in the resolve phase.

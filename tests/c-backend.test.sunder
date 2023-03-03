@@ -1,9 +1,23 @@
 # Sunder source file used to develop the C backend.
 
-struct empty {
-    func init() empty {
-        return (:empty){};
+struct struct_with_no_members {
+    func init() struct_with_no_members {
+        return (:struct_with_no_members){};
     }
+}
+
+struct struct_with_zero_sized_members {
+    var a: void;
+    var b: struct_with_no_members;
+}
+
+struct struct_with_zero_and_non_zero_sized_members {
+    var a: void;
+    var b: s32;
+    var c: struct_with_no_members;
+    var d: struct_with_zero_sized_members;
+    var e: usize;
+    var f: point;
 }
 
 struct point {
@@ -34,8 +48,15 @@ var int_constant = 456s;
 var str_variable = "ABC";
 let str_constant = "DEF";
 
+let array = (:[3]ssize)[123, 456, 789];
+let slice = (:[]ssize)[123, 456, 789];
+
 var int_variable_pointer = &int_variable;
 var int_constant_pointer = &int_constant;
+
+func add_one[[T]](x: T) T {
+    return x + 1;
+}
 
 func stmt_return_integer() ssize {
     return 123;
@@ -134,8 +155,23 @@ func rvalue_slice() void {
 }
 
 func rvalue_struct() void {
-    # TODO: (:empty){};
-    (:point){.x = 123, .y = uninit};
+    (:struct_with_no_members){};
+    (:struct_with_zero_sized_members){
+        .a = uninit,
+        .b = uninit,
+    };
+    (:struct_with_zero_and_non_zero_sized_members){
+        .a = uninit,
+        .b = 123,
+        .c = uninit,
+        .d = uninit,
+        .e = 456,
+        .f = (:point){.x = uninit, .y = 789},
+    };
+    (:point){
+        .x = 123,
+        .y = uninit
+    };
 }
 
 func rvalue_cast() void {
@@ -152,6 +188,48 @@ func rvalue_cast() void {
 
     (:usize)int_constant_pointer;
     (:func (*any) point)point::clone;
+}
+
+func rvalue_call() void {
+    add_one[[ssize]](123);
+    struct_with_no_members::init();
+    point::init(123, 456);
+}
+
+func rvalue_access_index() void {
+    (:[3]ssize)[123, 456, 789][1];
+    (:[]ssize)[123, 456, 789][1];
+
+    array[1];
+    slice[1];
+}
+
+func rvalue_access_slice() void {
+    (:[]ssize)[123, 456, 789][1:3];
+
+    array[1:3];
+    slice[1:3];
+}
+
+func rvalue_access_member_variable() void {
+    (:point){.x = 123, .y = 456}.x;
+
+    let p = (:point){.x = 123, .y = 456};
+    p.x;
+}
+
+func rvalue_sizeof() void {
+    sizeof(s32);
+    sizeof(s64);
+    sizeof(point);
+    sizeof(typeof((:point){.x = 123, .y = 456}));
+}
+
+func rvalue_alignof() void {
+    alignof(s32);
+    alignof(s64);
+    alignof(point);
+    alignof(typeof((:point){.x = 123, .y = 456}));
 }
 
 func main() void {

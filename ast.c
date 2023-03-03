@@ -524,6 +524,16 @@ type_is_sint(struct type const* self)
 }
 
 bool
+type_is_compound(struct type const* self)
+{
+    assert(self != NULL);
+
+    enum type_kind const kind = self->kind;
+    return kind == TYPE_POINTER || kind == TYPE_ARRAY || kind == TYPE_SLICE
+        || kind == TYPE_STRUCT;
+}
+
+bool
 type_can_compare_equality(struct type const* self)
 {
     assert(self != NULL);
