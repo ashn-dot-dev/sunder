@@ -1336,20 +1336,44 @@ strgen_rvalue_access_index(struct expr const* expr)
     assert(expr != NULL);
     assert(expr->kind == EXPR_ACCESS_INDEX);
 
-    // TODO: Handle index out of bounds.
-
     if (expr->data.access_index.lhs->type->kind == TYPE_ARRAY) {
         return intern_fmt(
-            "(%s).elements[%s]",
+            // clang-format off
+            "({%s %s = %s; %s %s = %s; if (%s >= %" PRId64 "){%s();}; %s.elements[%s];})",
+            // clang-format on
+            mangle_type(expr->data.access_index.lhs->type),
+            mangle_name("__lhs"),
             strgen_rvalue(expr->data.access_index.lhs),
-            strgen_rvalue(expr->data.access_index.idx));
+
+            mangle_type(expr->data.access_index.idx->type),
+            mangle_name("__idx"),
+            strgen_rvalue(expr->data.access_index.idx),
+
+            mangle_name("__idx"),
+            expr->data.access_index.lhs->type->data.array.count,
+            mangle_name("__fatal_index_out_of_bounds"),
+
+            mangle_name("__lhs"),
+            mangle_name("__idx"));
     }
 
     if (expr->data.access_index.lhs->type->kind == TYPE_SLICE) {
         return intern_fmt(
-            "(%s).start[%s]",
+            "({%s %s = %s; %s %s = %s; if (%s >= %s.count){%s();}; %s.start[%s];})",
+            mangle_type(expr->data.access_index.lhs->type),
+            mangle_name("__lhs"),
             strgen_rvalue(expr->data.access_index.lhs),
-            strgen_rvalue(expr->data.access_index.idx));
+
+            mangle_type(expr->data.access_index.idx->type),
+            mangle_name("__idx"),
+            strgen_rvalue(expr->data.access_index.idx),
+
+            mangle_name("__idx"),
+            mangle_name("__lhs"),
+            mangle_name("__fatal_index_out_of_bounds"),
+
+            mangle_name("__lhs"),
+            mangle_name("__idx"));
     }
 
     UNREACHABLE();
@@ -1554,7 +1578,7 @@ strgen_rvalue_unary_addressof(struct expr const* expr)
         return intern_cstr("0");
     }
 
-    return intern_fmt("&(%s)", strgen_rvalue(expr->data.unary.rhs));
+    return strgen_lvalue(expr->data.unary.rhs);
 }
 
 static char const*
@@ -2055,16 +2079,42 @@ strgen_lvalue_access_index(struct expr const* expr)
 
     if (expr->data.access_index.lhs->type->kind == TYPE_ARRAY) {
         return intern_fmt(
-            "((%s)->elements + (%s))",
+            // clang-format off
+            "({%s* %s = %s; %s %s = %s; if (%s >= %" PRId64 "){%s();}; %s->elements + %s;})",
+            // clang-format on
+            mangle_type(expr->data.access_index.lhs->type),
+            mangle_name("__lhs"),
             strgen_lvalue(expr->data.access_index.lhs),
-            strgen_rvalue(expr->data.access_index.idx));
+
+            mangle_type(expr->data.access_index.idx->type),
+            mangle_name("__idx"),
+            strgen_rvalue(expr->data.access_index.idx),
+
+            mangle_name("__idx"),
+            expr->data.access_index.lhs->type->data.array.count,
+            mangle_name("__fatal_index_out_of_bounds"),
+
+            mangle_name("__lhs"),
+            mangle_name("__idx"));
     }
 
     if (expr->data.access_index.lhs->type->kind == TYPE_SLICE) {
         return intern_fmt(
-            "((%s).start + (%s))",
+            "({%s %s = %s; %s %s = %s; if (%s >= %s.count){%s();}; %s.start + %s;})",
+            mangle_type(expr->data.access_index.lhs->type),
+            mangle_name("__lhs"),
             strgen_rvalue(expr->data.access_index.lhs),
-            strgen_rvalue(expr->data.access_index.idx));
+
+            mangle_type(expr->data.access_index.idx->type),
+            mangle_name("__idx"),
+            strgen_rvalue(expr->data.access_index.idx),
+
+            mangle_name("__idx"),
+            mangle_name("__lhs"),
+            mangle_name("__fatal_index_out_of_bounds"),
+
+            mangle_name("__lhs"),
+            mangle_name("__idx"));
     }
 
     UNREACHABLE();

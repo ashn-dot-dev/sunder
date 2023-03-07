@@ -46,6 +46,12 @@ __sunder___fatal_integer_out_of_range(void)
     __sunder___fatal("arithmetic operation produces out-of-range result");
 }
 
+static _Noreturn void
+__sunder___fatal_index_out_of_bounds(void)
+{
+    __sunder___fatal("index out-of-bounds");
+}
+
 static __sunder_ssize
 __sunder_sys_read(signed int fd, __sunder_byte* buf, size_t count)
 {
