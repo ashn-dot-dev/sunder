@@ -1,4 +1,5 @@
 #define _DEFAULT_SOURCE /* syscall */
+#include <limits.h> /* LLONG_MIN */
 #include <alloca.h> /* alloca */
 #include <errno.h> /* errno */
 #include <fcntl.h> /* open */

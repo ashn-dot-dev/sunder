@@ -3072,7 +3072,6 @@ push_lvalue(struct expr const* expr)
         void (*codegen_fn)(struct expr const*, size_t);
     } const table[] = {
 #define TABLE_ENTRY(kind, fn) [kind] = {#kind, fn}
-        // clang format off
         TABLE_ENTRY(EXPR_SYMBOL, push_lvalue_symbol),
         TABLE_ENTRY(EXPR_ACCESS_INDEX, push_lvalue_access_index),
         TABLE_ENTRY(EXPR_ACCESS_MEMBER_VARIABLE, push_lvalue_access_member_variable),

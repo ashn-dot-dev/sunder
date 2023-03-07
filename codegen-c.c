@@ -1527,10 +1527,20 @@ strgen_rvalue_unary_neg(struct expr const* expr)
     assert(expr != NULL);
     assert(expr->kind == EXPR_UNARY);
     assert(expr->data.unary.op == UOP_NEG);
+    assert(type_is_sint(expr->data.unary.rhs->type));
 
-    // TODO: Handle integer out of range.
+    return intern_fmt(
+        "({%s %s = %s; if (%s == ((%s)(LLONG_MIN >> ((sizeof(long long) - sizeof(%s))*8)))){%s();}; -(%s);})",
+        mangle_type(expr->data.unary.rhs->type),
+        mangle_name("__rhs"),
+        strgen_rvalue(expr->data.unary.rhs),
 
-    return intern_fmt("-(%s)", strgen_rvalue(expr->data.unary.rhs));
+        mangle_name("__rhs"),
+        mangle_type(expr->data.unary.rhs->type),
+        mangle_type(expr->data.unary.rhs->type),
+        mangle_name("__fatal_integer_out_of_range"),
+
+        mangle_name("__rhs"));
 }
 
 static char const*
@@ -1539,6 +1549,7 @@ strgen_rvalue_unary_neg_wrapping(struct expr const* expr)
     assert(expr != NULL);
     assert(expr->kind == EXPR_UNARY);
     assert(expr->data.unary.op == UOP_NEG_WRAPPING);
+    assert(type_is_sint(expr->data.unary.rhs->type));
 
     return intern_fmt("-(%s)", strgen_rvalue(expr->data.unary.rhs));
 }
@@ -2041,7 +2052,6 @@ strgen_lvalue(struct expr const* expr)
         char const* (*function)(struct expr const*);
     } const table[] = {
 #define TABLE_ENTRY(kind, fn) [kind] = {#kind, fn}
-        // clang format off
         TABLE_ENTRY(EXPR_SYMBOL, strgen_lvalue_symbol),
         TABLE_ENTRY(EXPR_ACCESS_INDEX, strgen_lvalue_access_index),
         TABLE_ENTRY(EXPR_ACCESS_MEMBER_VARIABLE, strgen_lvalue_access_member_variable),
