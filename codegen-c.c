@@ -908,7 +908,7 @@ codegen_stmt(struct stmt const* stmt)
     };
 
     char const* const cstr = table[stmt->kind].kind_cstr;
-    appendli_location(stmt->location, "STATEMENT %s", cstr);
+    //appendli_location(stmt->location, "STATEMENT %s", cstr);
     table[stmt->kind].codegen_fn(stmt);
 }
 
@@ -1075,7 +1075,7 @@ strgen_rvalue(struct expr const* expr)
     // clang-format on
 
     char const* const cstr = table[expr->kind].kind_cstr;
-    appendli_location(expr->location, "RVALUE EXPRESSION %s", cstr);
+    //appendli_location(expr->location, "RVALUE EXPRESSION %s", cstr);
     return table[expr->kind].function(expr);
 }
 
@@ -2027,7 +2027,7 @@ strgen_lvalue(struct expr const* expr)
     // clang-format on
 
     char const* const cstr = table[expr->kind].kind_cstr;
-    appendli_location(expr->location, "LVALUE EXPRESSION %s", cstr);
+    //appendli_location(expr->location, "LVALUE EXPRESSION %s", cstr);
     return table[expr->kind].function(expr);
 }
 
@@ -2344,9 +2344,12 @@ codegen_c(
     }
     appendch('\n');
     appendln("int");
-    appendln("main(void)");
+    appendln("main(int argc, char** argv, char** envp)");
     appendln("{");
     indent_incr();
+    appendli("%s = argc;", mangle_name("sys.argc"));
+    appendli("%s = (void*)argv;", mangle_name("sys.argv"));
+    appendli("%s = (void*)envp;", mangle_name("sys.envp"));
     appendli("%s();", mangle_name(context()->interned.main));
     appendli("return 0;");
     indent_decr();
