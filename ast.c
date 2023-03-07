@@ -319,8 +319,13 @@ type_new_slice(struct type const* base)
         symbol_table_new(context()->global_symbol_table);
     sbuf_push(context()->chilling_symbol_tables, symbols);
 
+    // Instantiate the pointer type associated with the start word of the slice
+    // to guarantee that the pointer type will appear before the slice type
+    // within the types list.
+    (void)type_unique_pointer(base);
+
     struct type* const self = type_new(name, 8u * 2u, 8u, symbols, TYPE_SLICE);
-    self->data.pointer.base = base;
+    self->data.slice.base = base;
     return self;
 }
 

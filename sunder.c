@@ -225,10 +225,10 @@ context_init(void)
     INIT_BUILTIN_TYPE(s_context.builtin.ssize, type_new_ssize());
     INIT_BUILTIN_TYPE(s_context.builtin.integer, type_new_integer());
 #undef INIT_BUILTIN_TYPE
-    // Initialize `*byte` and `[]byte` types. These types are not builtins in
+    // Instantiate `*byte` and `[]byte` types. These types are not builtins in
     // the traditional sense, but they are types relating to string literals,
     // which are a primitive part of the Sunder language. By creating these
-    // types here with the `type_unique_*` functions, we guarentee that these
+    // types here with the `type_unique_*` functions, we guarantee that these
     // types will appear just after the other builtins within the types list.
     struct type const* const byte = s_context.builtin.byte;
     s_context.builtin.pointer_to_byte = type_unique_pointer(byte);
