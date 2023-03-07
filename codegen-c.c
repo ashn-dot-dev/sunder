@@ -1125,6 +1125,10 @@ strgen_rvalue_array_list(struct expr const* expr)
     assert(expr->kind == EXPR_ARRAY_LIST);
     assert(expr->type->kind == TYPE_ARRAY);
 
+    if (expr->type->size == 0) {
+        return intern_fmt("/* %s */0", expr->type->name);
+    }
+
     struct string* const s = string_new_fmt("(%s){", mangle_type(expr->type));
 
     sbuf(struct expr const* const) const elements =
