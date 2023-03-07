@@ -1027,6 +1027,18 @@ codegen_stmt_assign(struct stmt const* stmt)
 {
     assert(stmt != NULL);
     assert(stmt->kind == STMT_ASSIGN);
+    assert(stmt->data.assign.lhs->type == stmt->data.assign.rhs->type);
+
+    if (stmt->data.assign.lhs->type->size == 0) {
+        // The left and right hand sides of the assignment are evaluated, since
+        // they might have side effects. However, no C assignment operation is
+        // performed since there is nothing to assign.
+        appendli(
+            "%s; /* zero-sized assignment*/; %s;",
+            strgen_lvalue(stmt->data.assign.lhs),
+            strgen_rvalue(stmt->data.assign.rhs));
+        return;
+    }
 
     appendli(
         "*(%s) = %s;",
@@ -1084,6 +1096,10 @@ strgen_rvalue_symbol(struct expr const* expr)
 {
     assert(expr != NULL);
     assert(expr->kind == EXPR_SYMBOL);
+
+    if (expr->type->size == 0) {
+        return intern_fmt("/*zero-sized symbol*/(0)");
+    }
 
     return mangle_symbol(expr->data.symbol);
 }
@@ -2074,6 +2090,11 @@ strgen_lvalue_symbol(struct expr const* expr)
 {
     assert(expr != NULL);
     assert(expr->kind == EXPR_SYMBOL);
+
+    if (expr->type->size == 0) {
+        return intern_fmt(
+            "/*zero-sized symbol*/((%s*)0)", mangle_type(expr->type));
+    }
 
     return intern_fmt("&%s", mangle_symbol(expr->data.symbol));
 }

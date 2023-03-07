@@ -1360,6 +1360,7 @@ codegen_stmt_assign(struct stmt const* stmt, size_t id)
 {
     assert(stmt != NULL);
     assert(stmt->kind == STMT_ASSIGN);
+    assert(stmt->data.assign.lhs->type == stmt->data.assign.rhs->type);
     (void)id;
 
     if (stmt->data.assign.lhs->type->size == 0) {

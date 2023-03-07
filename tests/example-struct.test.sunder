@@ -5,6 +5,13 @@ struct empty { }
 var empty_a: empty = (:empty){};
 let empty_b: empty = (:empty){};
 
+struct contains_empty {
+    var e: empty;
+}
+
+var contains_empty_a: contains_empty = (:contains_empty){.e = empty_b};
+let contains_empty_b: contains_empty = (:contains_empty){.e = empty_b};
+
 struct point {
     var x: u32;
     var y: u32;
@@ -93,6 +100,11 @@ func main() void {
     empty_a = empty_b;
     sys::dump[[empty]](empty_a);
 
+    sys::dump[[contains_empty]](contains_empty_a);
+    sys::dump[[contains_empty]](contains_empty_b);
+    contains_empty_a = contains_empty_b;
+    sys::dump[[contains_empty]](contains_empty_a);
+
     sys::dump[[point]](point_a);
     sys::dump[[u32]](point_a.x);
     sys::dump[[u32]](point_a.y);
@@ -158,6 +170,9 @@ func main() void {
     };
 }
 ################################################################################
+#
+#
+#
 #
 #
 #
