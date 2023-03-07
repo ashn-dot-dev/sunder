@@ -183,6 +183,14 @@ strgen_rvalue_binary_bitand(struct expr const* expr);
 
 static char const* // interned
 strgen_lvalue(struct expr const* expr);
+static char const* // interned
+strgen_lvalue_symbol(struct expr const* expr);
+static char const* // interned
+strgen_lvalue_access_index(struct expr const* expr);
+static char const* // interned
+strgen_lvalue_access_member_variable(struct expr const* expr);
+static char const* // interned
+strgen_lvalue_unary(struct expr const* expr);
 
 static char const*
 mangle(char const* cstr)
@@ -507,26 +515,47 @@ codegen_static_function(struct symbol const* symbol, bool prototype)
 
     struct string* params = string_new(NULL, 0);
     size_t params_written = 0;
-    sbuf(struct symbol const* const) parameters = function->symbol_parameters;
-    for (size_t i = 0; i < sbuf_count(parameters); ++i) {
-        if (symbol_xget_type(parameters[i])->size == 0) {
-            continue;
+    // XXX: function->symbol_parameters is never set for extern functions, and
+    // the `if (prototype)` branching behavior here is used as a workaround
+    // since extern functions will only ever have their prototypes generated.
+    if (prototype) {
+        sbuf(struct type const* const) const parameter_types =
+            function->type->data.function.parameter_types;
+        for (size_t i = 0; i < sbuf_count(parameter_types); ++i) {
+            struct type const* const type = parameter_types[i];
+            if (type->size == 0) {
+                continue;
+            }
+            if (params_written != 0) {
+                string_append_cstr(params, ", ");
+            }
+            string_append_cstr(params, mangle_type(type));
+            params_written += 1;
         }
-        if (params_written != 0) {
-            string_append_cstr(params, ", ");
+    }
+    else {
+        sbuf(struct symbol const* const) parameters =
+            function->symbol_parameters;
+        for (size_t i = 0; i < sbuf_count(parameters); ++i) {
+            if (symbol_xget_type(parameters[i])->size == 0) {
+                continue;
+            }
+            if (params_written != 0) {
+                string_append_cstr(params, ", ");
+            }
+            string_append_cstr(
+                params, mangle_type(symbol_xget_type(parameters[i])));
+            string_append_cstr(params, " ");
+            string_append_cstr(params, mangle_name(parameters[i]->name));
+            params_written += 1;
         }
-        string_append_cstr(
-            params, mangle_type(symbol_xget_type(parameters[i])));
-        string_append_cstr(params, " ");
-        string_append_cstr(params, mangle_name(parameters[i]->name));
-        params_written += 1;
     }
 
     append(
         "%s %s(%s)",
         mangle_type(function->type->data.function.return_type),
         mangle_name(function->address->data.static_.name),
-        string_count(params) != 0 ? string_start(params) : "void");
+        params_written != 0 ? string_start(params) : "void");
     string_del(params);
 
     if (prototype) {
@@ -633,6 +662,7 @@ strgen_value(struct value const* value)
             // XXX: Hack so we can detect static objects of size zero and emit
             // a NULL pointer for them instead of attempting to take the
             // address of a zero-sized object that was never defined.
+            bool found = false;
             for (size_t i = 0; i < sbuf_count(context()->static_symbols); ++i) {
                 struct address const* const object_address =
                     symbol_xget_address(context()->static_symbols[i]);
@@ -653,6 +683,10 @@ strgen_value(struct value const* value)
                     break;
                 }
                 string_append_fmt(s, "(void*)0");
+                found = true;
+                break;
+            }
+            if (found) {
                 break;
             }
 
@@ -806,9 +840,19 @@ codegen_block(struct block const* block)
             continue;
         }
 
+        struct type const* const type = symbol_xget_type(locals[i].symbol);
         struct address const* const address =
             symbol_xget_address(locals[i].symbol);
         assert(address->kind == ADDRESS_LOCAL);
+
+        if (type->size == 0) {
+            appendli("// %s: %s", locals[i].name, type->name);
+            appendli(
+                "int %s = /* zero-sized local */0;",
+                mangle_name(address->data.local.name));
+            continue;
+        }
+
         if (address->data.local.is_parameter) {
             continue;
         }
@@ -821,11 +865,6 @@ codegen_block(struct block const* block)
             if (locals[i].symbol == loop_variable) {
                 continue;
             }
-        }
-
-        struct type const* const type = symbol_xget_type(locals[i].symbol);
-        if (type->size == 0) {
-            continue;
         }
 
         appendli("// %s: %s", locals[i].name, type->name);
@@ -869,7 +908,7 @@ codegen_stmt(struct stmt const* stmt)
     };
 
     char const* const cstr = table[stmt->kind].kind_cstr;
-    appendli_location(stmt->location, "%s", cstr);
+    appendli_location(stmt->location, "STATEMENT %s", cstr);
     table[stmt->kind].codegen_fn(stmt);
 }
 
@@ -1036,7 +1075,7 @@ strgen_rvalue(struct expr const* expr)
     // clang-format on
 
     char const* const cstr = table[expr->kind].kind_cstr;
-    appendli_location(expr->location, "%s", cstr);
+    appendli_location(expr->location, "RVALUE EXPRESSION %s", cstr);
     return table[expr->kind].function(expr);
 }
 
@@ -1253,7 +1292,7 @@ strgen_rvalue_call(struct expr const* expr)
             continue;
         }
 
-        char const* const local = intern_fmt("__argument_%zu", i);
+        char const* const local = intern_fmt("__argument_%zu", i + 1);
         char const* const initname = mangle_name(local);
         char const* const typename = mangle_type(arguments[i]->type);
         char const* const valuestr = strgen_rvalue(arguments[i]);
@@ -1271,7 +1310,7 @@ strgen_rvalue_call(struct expr const* expr)
             string_append_cstr(s, ", ");
         }
 
-        char const* const local = intern_fmt("__argument_%zu", i);
+        char const* const local = intern_fmt("__argument_%zu", i + 1);
         char const* const initname = mangle_name(local);
         string_append_cstr(s, initname);
 
@@ -1509,6 +1548,11 @@ strgen_rvalue_unary_addressof(struct expr const* expr)
     assert(expr != NULL);
     assert(expr->kind == EXPR_UNARY);
     assert(expr->data.unary.op == UOP_ADDRESSOF);
+
+    if (expr->data.unary.rhs->type->size == 0) {
+        // Zero-sized objects take up zero space.
+        return intern_cstr("0");
+    }
 
     return intern_fmt("&(%s)", strgen_rvalue(expr->data.unary.rhs));
 }
@@ -1967,8 +2011,102 @@ strgen_lvalue(struct expr const* expr)
     assert(expr != NULL);
     assert(expr_is_lvalue(expr));
 
+    // clang-format off
+    static struct {
+        char const* kind_cstr;
+        char const* (*function)(struct expr const*);
+    } const table[] = {
+#define TABLE_ENTRY(kind, fn) [kind] = {#kind, fn}
+        // clang format off
+        TABLE_ENTRY(EXPR_SYMBOL, strgen_lvalue_symbol),
+        TABLE_ENTRY(EXPR_ACCESS_INDEX, strgen_lvalue_access_index),
+        TABLE_ENTRY(EXPR_ACCESS_MEMBER_VARIABLE, strgen_lvalue_access_member_variable),
+        TABLE_ENTRY(EXPR_UNARY, strgen_lvalue_unary),
+#undef TABLE_ENTRY
+    };
+    // clang-format on
+
+    char const* const cstr = table[expr->kind].kind_cstr;
+    appendli_location(expr->location, "LVALUE EXPRESSION %s", cstr);
+    return table[expr->kind].function(expr);
+}
+
+static char const*
+strgen_lvalue_symbol(struct expr const* expr)
+{
+    assert(expr != NULL);
+    assert(expr->kind == EXPR_SYMBOL);
+
+    if (expr->type->size == 0) {
+        // Zero-sized objects take up zero space.
+        return intern_cstr("0");
+    }
+
+    return intern_fmt("&%s", mangle_symbol(expr->data.symbol));
+}
+
+static char const*
+strgen_lvalue_access_index(struct expr const* expr)
+{
+    assert(expr != NULL);
+    assert(expr->kind == EXPR_ACCESS_INDEX);
+
+    // TODO: Handle index out of bounds.
+
+    if (expr->data.access_index.lhs->type->kind == TYPE_ARRAY) {
+        return intern_fmt(
+            "((%s)->elements + (%s))",
+            strgen_lvalue(expr->data.access_index.lhs),
+            strgen_rvalue(expr->data.access_index.idx));
+    }
+
+    if (expr->data.access_index.lhs->type->kind == TYPE_SLICE) {
+        return intern_fmt(
+            "((%s).start + (%s))",
+            strgen_rvalue(expr->data.access_index.lhs),
+            strgen_rvalue(expr->data.access_index.idx));
+    }
+
+    UNREACHABLE();
+}
+
+static char const*
+strgen_lvalue_access_member_variable(struct expr const* expr)
+{
+    assert(expr != NULL);
+    assert(expr->kind == EXPR_ACCESS_MEMBER_VARIABLE);
+    assert(expr->data.access_member_variable.lhs->type->kind == TYPE_STRUCT);
+
     return intern_fmt(
-        "/* TODO: %s */(%s*)0", __func__, mangle_type(expr->type));
+        "(&(%s)->%s)",
+        strgen_lvalue(expr->data.access_member_variable.lhs),
+        expr->data.access_member_variable.member_variable->name);
+}
+
+static char const*
+strgen_lvalue_unary(struct expr const* expr)
+{
+    assert(expr != NULL);
+    assert(expr_is_lvalue(expr));
+
+    switch (expr->data.unary.op) {
+    case UOP_DEREFERENCE: {
+        assert(expr->data.unary.rhs->type->kind == TYPE_POINTER);
+        return strgen_rvalue(expr->data.unary.rhs);
+    }
+    case UOP_NOT: /* fallthrough */
+    case UOP_POS: /* fallthrough */
+    case UOP_NEG: /* fallthrough */
+    case UOP_NEG_WRAPPING: /* fallthrough */
+    case UOP_BITNOT: /* fallthrough */
+    case UOP_ADDRESSOF: /* fallthrough */
+    case UOP_STARTOF: /* fallthrough */
+    case UOP_COUNTOF: {
+        UNREACHABLE();
+    }
+    }
+
+    UNREACHABLE();
 }
 
 static void
@@ -2214,7 +2352,7 @@ codegen_c(
     indent_decr();
     appendln("}");
 
-    printf("%s", string_start(out));
+    //printf("%s", string_start(out));
 
     int err = 0;
     if ((err = file_write_all(

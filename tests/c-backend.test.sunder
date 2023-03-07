@@ -445,5 +445,25 @@ func rvalue_binary_bitxor() void {
     int_constant ^ stmt_return_integer();
 }
 
+func lvalue_symbol() void {
+    &int_variable;
+    &int_constant;
+}
+
+func lvalue_access_index() void {
+    &array_constant[1];
+    &slice_constant[1];
+}
+
+func lvalue_access_member_variable() void {
+    let p = (:point){.x = 123, .y = 456};
+    &p.x;
+}
+
+func lvalue_unary_dereference() void {
+    &*int_constant_pointer;
+    &int_constant_pointer.*;
+}
+
 func main() void {
 }
