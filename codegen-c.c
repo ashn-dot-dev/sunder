@@ -2071,11 +2071,6 @@ strgen_lvalue_symbol(struct expr const* expr)
     assert(expr != NULL);
     assert(expr->kind == EXPR_SYMBOL);
 
-    if (expr->type->size == 0) {
-        // Zero-sized objects take up zero space.
-        return intern_cstr("0");
-    }
-
     return intern_fmt("&%s", mangle_symbol(expr->data.symbol));
 }
 
