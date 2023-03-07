@@ -908,7 +908,7 @@ codegen_stmt(struct stmt const* stmt)
     };
 
     char const* const cstr = table[stmt->kind].kind_cstr;
-    //appendli_location(stmt->location, "STATEMENT %s", cstr);
+    appendli_location(stmt->location, "STATEMENT %s", cstr);
     table[stmt->kind].codegen_fn(stmt);
 }
 
@@ -1075,7 +1075,7 @@ strgen_rvalue(struct expr const* expr)
     // clang-format on
 
     char const* const cstr = table[expr->kind].kind_cstr;
-    //appendli_location(expr->location, "RVALUE EXPRESSION %s", cstr);
+    appendli_location(expr->location, "RVALUE EXPRESSION %s", cstr);
     return table[expr->kind].function(expr);
 }
 
@@ -2027,7 +2027,7 @@ strgen_lvalue(struct expr const* expr)
     // clang-format on
 
     char const* const cstr = table[expr->kind].kind_cstr;
-    //appendli_location(expr->location, "LVALUE EXPRESSION %s", cstr);
+    appendli_location(expr->location, "LVALUE EXPRESSION %s", cstr);
     return table[expr->kind].function(expr);
 }
 
