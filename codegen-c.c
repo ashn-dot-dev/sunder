@@ -2156,6 +2156,8 @@ codegen_c(
     sbuf_push(backend_argv, "-Wno-discarded-qualifiers");
     // Enforced by sunder-compile warnings in the resolve phase.
     sbuf_push(backend_argv, "-Wno-unused-variable");
+    // Unused functions are allowed in Sunder code.
+    sbuf_push(backend_argv, "-Wno-unused-function");
     // Enforced by sunder-compile warnings in the resolve phase.
     sbuf_push(backend_argv, "-Wno-unused-parameter");
     // Sunder allows unused expressions.

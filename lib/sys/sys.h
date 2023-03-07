@@ -1,12 +1,17 @@
 #define _DEFAULT_SOURCE /* syscall */
+#include <errno.h> /* errno */
+#include <fcntl.h> /* open */
 #include <stdio.h> /* fprintf */
 #include <stdlib.h> /* exit */
+#include <sys/mman.h> /* mmap, munmap */
+#include <sys/stat.h> /* mkdir */
+#include <sys/syscall.h> /* SYS_* constants */
 #include <sys/types.h> /* mode_t, off_t, size_t */
-#include <unistd.h> /* syscall */
+#include <unistd.h> /* syscall, close, _exit, lseek, read, rmdir, write, unlink */
 
 typedef void               __sunder_void;
 typedef _Bool              __sunder_bool;
-typedef unsigned char      __sunder_byte;
+typedef          char      __sunder_byte;
 typedef unsigned char      __sunder_u8;
 typedef   signed char      __sunder_s8;
 typedef unsigned short     __sunder_u16;
@@ -43,86 +48,119 @@ __sunder___fatal_integer_out_of_range(void)
 static __sunder_ssize
 __sunder_sys_read(signed int fd, __sunder_byte* buf, size_t count)
 {
-    long const SYS_READ = 0;
-    return syscall(SYS_READ, fd, buf, count);
+    ssize_t result = read(fd, buf, count);
+    if (result == -1) {
+        return -errno;
+    }
+    return result;
 }
 
 static __sunder_ssize
 __sunder_sys_write(signed int fd, __sunder_byte* buf, size_t count)
 {
-    long const SYS_WRITE = 1;
-    return syscall(SYS_WRITE, fd, buf, count);
+    ssize_t result = write(fd, buf, count);
+    if (result == -1) {
+        return -errno;
+    }
+    return result;
 }
 
 static __sunder_ssize
 __sunder_sys_open(__sunder_byte* filename, signed int flags, mode_t mode)
 {
-    long const SYS_OPEN = 2;
-    return syscall(SYS_OPEN, filename, flags, mode);
+    int result = open(filename, flags, mode);
+    if (result == -1) {
+        return -errno;
+    }
+    return result;
 }
 
 static __sunder_ssize
 __sunder_sys_close(signed int fd)
 {
-    long const SYS_CLOSE = 3;
-    return syscall(SYS_CLOSE, fd);
+    int result = close(fd);
+    if (result == -1) {
+        return -errno;
+    }
+    return result;
 }
 
 static __sunder_ssize
 __sunder_sys_lseek(signed int fd, off_t offset, unsigned int whence)
 {
-    long const SYS_LSEEK = 8;
-    return syscall(SYS_LSEEK, fd, offset, whence);
+    off_t result = lseek(fd, offset, whence);
+    if (result == (off_t)-1) {
+        return -errno;
+    }
+    return result;
 }
 
 static __sunder_ssize
 __sunder_sys_mmap(void* addr, size_t len, signed int prot, signed int flags, signed int fd, off_t off)
 {
-    long const SYS_MMAP = 9;
-    return syscall(SYS_MMAP, addr, len, prot, flags, fd, off);
+    void* result = mmap(addr, len, prot, flags, fd, off);
+    if (result == (void*)-1) {
+        return -errno;
+    }
+    return (__sunder_ssize)result;
 }
 
 static __sunder_ssize
 __sunder_sys_munmap(void* addr, size_t len)
 {
-    long const SYS_MUNMAP = 11;
-    return syscall(SYS_MUNMAP, addr, len);
+    int result = munmap(addr, len);
+    if (result == -1) {
+        return -errno;
+    }
+    return result;
 }
 
 static void
 __sunder_sys_exit(signed int error_code)
 {
-    long const SYS_EXIT = 60;
-    syscall(SYS_EXIT, error_code);
+    _exit(error_code);
 }
 
 struct __sunder_sys__dirent;
 static __sunder_ssize
 __sunder_sys_getdents(signed int fd, struct __sunder_sys__dirent* dirent, unsigned int count)
 {
-    long const SYS_GETDENTS = 78;
-    return syscall(SYS_GETDENTS, fd, dirent, count);
+    // XXX: Pretty sure this is wrong... should be getdents and not getdents64.
+    long result = syscall(SYS_getdents64, fd, dirent, count);
+    if (result == -1) {
+        return -errno;
+    }
+    return result;
 }
 
 static __sunder_ssize
 __sunder_sys_mkdir(__sunder_byte* pathname, mode_t mode)
 {
-    long const SYS_MKDIR = 83;
-    return syscall(SYS_MKDIR, pathname, mode);
+    int result = mkdir(pathname, mode);
+    if (result == -1) {
+        return -errno;
+    }
+    return result;
 }
 
 static __sunder_ssize
 __sunder_sys_rmdir(__sunder_byte* pathname)
 {
-    long const SYS_RMDIR = 84;
-    return syscall(SYS_RMDIR, pathname);
+    int result = rmdir(pathname);
+    if (result == -1) {
+        return -errno;
+    }
+    return result;
 }
 
 static __sunder_ssize
 __sunder_sys_unlink(__sunder_byte* pathname)
 {
-    long const SYS_UNLINK = 87;
-    return syscall(SYS_UNLINK, pathname);
+    int result = unlink(pathname);
+    if (result == -1) {
+        return -errno;
+    }
+    return result;
 }
 
 __sunder_usize __sunder_sys_argc;
