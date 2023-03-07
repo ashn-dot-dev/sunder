@@ -873,6 +873,10 @@ codegen_block(struct block const* block)
             mangle_type(type),
             mangle_name(address->data.local.name),
             strgen_uninit(type));
+        appendli(
+            "/* zero pading */memset(&%s, 0x00, sizeof(%s));",
+            mangle_name(address->data.local.name),
+            mangle_name(address->data.local.name));
     }
 
     // Generate statements.
@@ -1264,21 +1268,27 @@ strgen_rvalue_struct(struct expr const* expr)
         goto done;
     }
 
-    string_append_fmt(s, "(%s){", mangle_type(expr->type));
-    size_t members_written = 0;
+    string_append_fmt(
+        s,
+        "%s %s = (%s)%s; ",
+        mangle_type(expr->type),
+        mangle_name("__result"),
+        mangle_type(expr->type),
+        strgen_uninit(expr->type));
+    string_append_fmt(
+        s,
+        "/* zero padding */memset(&%s, 0x00, sizeof(%s)); ",
+        mangle_name("__result"),
+        mangle_name("__result"));
     for (size_t i = 0; i < sbuf_count(member_variable_defs); ++i) {
         if (member_variable_defs[i].type->size == 0) {
             continue;
         }
-        if (members_written != 0) {
-            string_append_cstr(s, ", ");
-        }
         char const* const local =
             intern_fmt("__member_%zu_%s", i, member_variable_defs[i].name);
-        string_append_cstr(s, mangle_name(local));
-        members_written += 1;
+        string_append_fmt(s, "%s.%s = %s; ", mangle_name("__result"), member_variable_defs[i].name, mangle_name(local));
     }
-    string_append_cstr(s, "};");
+    string_append_fmt(s, "%s; ", mangle_name("__result"));
 
 done:
     string_append_cstr(s, "})");

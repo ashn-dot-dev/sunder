@@ -5,6 +5,7 @@
 #include <fcntl.h> /* open */
 #include <stdio.h> /* fprintf */
 #include <stdlib.h> /* exit */
+#include <string.h> /* memset */
 #include <sys/mman.h> /* mmap, munmap */
 #include <sys/stat.h> /* mkdir */
 #include <sys/syscall.h> /* SYS_* constants */
