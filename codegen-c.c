@@ -2223,6 +2223,8 @@ codegen_c(
     sbuf_push(backend_argv, "-Wno-unused-value");
     // Sunder allows for expressions that are always true or always false.
     sbuf_push(backend_argv, "-Wno-type-limits");
+    // Sunder allows for expressions that are always true or always false.
+    sbuf_push(backend_argv, "-Wno-tautological-compare");
     // Ideally, we would enable -pedantic-errors and require that generate C
     // conform to the ISO specification. However, constructs such as
     // function-to-function casting are not supported in ISO C.
