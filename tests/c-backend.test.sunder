@@ -292,5 +292,158 @@ func rvalue_binary_or() void {
     true or stmt_return_bool();
 }
 
+func rvalue_binary_and() void {
+    bool_constant_true and bool_constant_true;
+    bool_constant_true and bool_constant_false;
+    bool_constant_false and bool_constant_true;
+    bool_constant_false and bool_constant_false;
+    true and stmt_return_bool();
+}
+
+func rvalue_binary_shl() void {
+    int_constant << 0u;
+    int_constant << 1u;
+    int_constant << 2u;
+    int_constant << 2u;
+    int_constant << 63u;
+    int_constant << 64u;
+    int_constant << 100u;
+
+    var x = 0xDEADBEEFu32;
+    x << 0u;
+    x << 1u;
+    x << 2u;
+    x << 2u;
+    x << 63u;
+    x << 64u;
+    x << 100u;
+}
+
+func rvalue_binary_shr() void {
+    int_constant >> 0u;
+    int_constant >> 1u;
+    int_constant >> 2u;
+    int_constant >> 2u;
+    int_constant >> 63u;
+    int_constant >> 64u;
+    int_constant >> 100u;
+
+    var x = 0xDEADBEEFu32;
+    x >> 0u;
+    x >> 1u;
+    x >> 2u;
+    x >> 2u;
+    x >> 63u;
+    x >> 64u;
+    x >> 100u;
+}
+
+func rvalue_binary_eq() void {
+    bool_variable_true == bool_constant_true;
+    bool_variable_true == bool_constant_false;
+    int_variable == int_constant;
+    int_variable_pointer == int_constant_pointer;
+}
+
+func rvalue_binary_ne() void {
+    bool_variable_true != bool_constant_true;
+    bool_variable_true != bool_constant_false;
+    int_variable != int_constant;
+    int_variable_pointer != int_constant_pointer;
+}
+
+func rvalue_binary_le() void {
+    int_variable <= int_constant;
+    int_variable_pointer <= int_constant_pointer;
+}
+
+func rvalue_binary_lt() void {
+    int_variable < int_constant;
+    int_variable_pointer < int_constant_pointer;
+}
+
+func rvalue_binary_ge() void {
+    int_variable >= int_constant;
+    int_variable_pointer >= int_constant_pointer;
+}
+
+func rvalue_binary_gt() void {
+    int_variable > int_constant;
+    int_variable_pointer > int_constant_pointer;
+}
+
+func rvalue_binary_add() void {
+    int_variable + int_constant;
+    int_variable + stmt_return_integer();
+}
+
+func rvalue_binary_add_wrapping() void {
+    int_variable +% int_constant;
+    int_variable +% stmt_return_integer();
+}
+
+func rvalue_binary_sub() void {
+    int_variable - int_constant;
+    int_variable - stmt_return_integer();
+}
+
+func rvalue_binary_sub_wrapping() void {
+    int_variable -% int_constant;
+    int_variable -% stmt_return_integer();
+}
+
+func rvalue_binary_mul() void {
+    int_variable * int_constant;
+    int_variable * stmt_return_integer();
+}
+
+func rvalue_binary_mul_wrapping() void {
+    int_variable *% int_constant;
+    int_variable *% stmt_return_integer();
+}
+
+func rvalue_binary_div() void {
+    int_variable / int_constant;
+    int_constant / int_variable;
+}
+
+func rvalue_binary_rem() void {
+    int_variable % int_constant;
+    int_constant % int_variable;
+}
+
+func rvalue_binary_bitor() void {
+    bool_constant_true | bool_constant_true;
+    bool_constant_true | bool_constant_false;
+    bool_constant_false | bool_constant_true;
+    bool_constant_false | bool_constant_false;
+    true | stmt_return_bool();
+    int_variable | int_constant;
+    int_constant | int_variable;
+    int_constant | stmt_return_integer();
+}
+
+func rvalue_binary_bitand() void {
+    bool_constant_true & bool_constant_true;
+    bool_constant_true & bool_constant_false;
+    bool_constant_false & bool_constant_true;
+    bool_constant_false & bool_constant_false;
+    true & stmt_return_bool();
+    int_variable & int_constant;
+    int_constant & int_variable;
+    int_constant & stmt_return_integer();
+}
+
+func rvalue_binary_bitxor() void {
+    bool_constant_true ^ bool_constant_true;
+    bool_constant_true ^ bool_constant_false;
+    bool_constant_false ^ bool_constant_true;
+    bool_constant_false ^ bool_constant_false;
+    true ^ stmt_return_bool();
+    int_variable ^ int_constant;
+    int_constant ^ int_variable;
+    int_constant ^ stmt_return_integer();
+}
+
 func main() void {
 }

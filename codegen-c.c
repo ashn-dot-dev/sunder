@@ -140,46 +140,46 @@ static char const* // interned
 strgen_rvalue_binary(struct expr const* expr);
 static char const* // interned
 strgen_rvalue_binary_or(struct expr const* expr);
-//static char const* // interned
-//strgen_rvalue_binary_and(struct expr const* expr);
-//static char const* // interned
-//strgen_rvalue_binary_shl(struct expr const* expr);
-//static char const* // interned
-//strgen_rvalue_binary_shr(struct expr const* expr);
-//static char const* // interned
-//strgen_rvalue_binary_eq(struct expr const* expr);
-//static char const* // interned
-//strgen_rvalue_binary_ne(struct expr const* expr);
-//static char const* // interned
-//strgen_rvalue_binary_le(struct expr const* expr);
-//static char const* // interned
-//strgen_rvalue_binary_lt(struct expr const* expr);
-//static char const* // interned
-//strgen_rvalue_binary_ge(struct expr const* expr);
-//static char const* // interned
-//strgen_rvalue_binary_gt(struct expr const* expr);
-//static char const* // interned
-//strgen_rvalue_binary_add(struct expr const* expr);
-//static char const* // interned
-//strgen_rvalue_binary_add_wrapping(struct expr const* expr);
-//static char const* // interned
-//strgen_rvalue_binary_sub(struct expr const* expr);
-//static char const* // interned
-//strgen_rvalue_binary_sub_wrapping(struct expr const* expr);
-//static char const* // interned
-//strgen_rvalue_binary_mul(struct expr const* expr);
-//static char const* // interned
-//strgen_rvalue_binary_mul_wrapping(struct expr const* expr);
-//static char const* // interned
-//strgen_rvalue_binary_div(struct expr const* expr);
-//static char const* // interned
-//strgen_rvalue_binary_div(struct expr const* expr);
-//static char const* // interned
-//strgen_rvalue_binary_bitor(struct expr const* expr);
-//static char const* // interned
-//strgen_rvalue_binary_bitxor(struct expr const* expr);
-//static char const* // interned
-//strgen_rvalue_binary_bitand(struct expr const* expr);
+static char const* // interned
+strgen_rvalue_binary_and(struct expr const* expr);
+static char const* // interned
+strgen_rvalue_binary_shl(struct expr const* expr);
+static char const* // interned
+strgen_rvalue_binary_shr(struct expr const* expr);
+static char const* // interned
+strgen_rvalue_binary_eq(struct expr const* expr);
+static char const* // interned
+strgen_rvalue_binary_ne(struct expr const* expr);
+static char const* // interned
+strgen_rvalue_binary_le(struct expr const* expr);
+static char const* // interned
+strgen_rvalue_binary_lt(struct expr const* expr);
+static char const* // interned
+strgen_rvalue_binary_ge(struct expr const* expr);
+static char const* // interned
+strgen_rvalue_binary_gt(struct expr const* expr);
+static char const* // interned
+strgen_rvalue_binary_add(struct expr const* expr);
+static char const* // interned
+strgen_rvalue_binary_add_wrapping(struct expr const* expr);
+static char const* // interned
+strgen_rvalue_binary_sub(struct expr const* expr);
+static char const* // interned
+strgen_rvalue_binary_sub_wrapping(struct expr const* expr);
+static char const* // interned
+strgen_rvalue_binary_mul(struct expr const* expr);
+static char const* // interned
+strgen_rvalue_binary_mul_wrapping(struct expr const* expr);
+static char const* // interned
+strgen_rvalue_binary_div(struct expr const* expr);
+static char const* // interned
+strgen_rvalue_binary_rem(struct expr const* expr);
+static char const* // interned
+strgen_rvalue_binary_bitor(struct expr const* expr);
+static char const* // interned
+strgen_rvalue_binary_bitxor(struct expr const* expr);
+static char const* // interned
+strgen_rvalue_binary_bitand(struct expr const* expr);
 
 static char const* // interned
 strgen_lvalue(struct expr const* expr);
@@ -1532,7 +1532,8 @@ strgen_rvalue_unary_countof(struct expr const* expr)
     assert(expr->data.unary.op == UOP_COUNTOF);
 
     if (expr->data.unary.rhs->type->kind == TYPE_ARRAY) {
-        return intern_fmt("%" PRIu64, expr->data.unary.rhs->type->data.array.count);
+        return intern_fmt(
+            "%" PRIu64, expr->data.unary.rhs->type->data.array.count);
     }
 
     if (expr->data.unary.rhs->type->kind == TYPE_SLICE) {
@@ -1553,64 +1554,64 @@ strgen_rvalue_binary(struct expr const* expr)
         return strgen_rvalue_binary_or(expr);
     }
     case BOP_AND: {
-        return intern_fmt("/* TODO %s */(%s)%s", __func__, mangle_type(expr->type), strgen_uninit(expr->type));//strgen_rvalue_binary_and(expr);
+        return strgen_rvalue_binary_and(expr);
     }
     case BOP_SHL: {
-        return intern_fmt("/* TODO %s */(%s)%s", __func__, mangle_type(expr->type), strgen_uninit(expr->type));//strgen_rvalue_binary_shl(expr);
+        return strgen_rvalue_binary_shl(expr);
     }
     case BOP_SHR: {
-        return intern_fmt("/* TODO %s */(%s)%s", __func__, mangle_type(expr->type), strgen_uninit(expr->type));//strgen_rvalue_binary_shr(expr);
+        return strgen_rvalue_binary_shr(expr);
     }
     case BOP_EQ: {
-        return intern_fmt("/* TODO %s */(%s)%s", __func__, mangle_type(expr->type), strgen_uninit(expr->type));//strgen_rvalue_binary_eq(expr);
+        return strgen_rvalue_binary_eq(expr);
     }
     case BOP_NE: {
-        return intern_fmt("/* TODO %s */(%s)%s", __func__, mangle_type(expr->type), strgen_uninit(expr->type));//strgen_rvalue_binary_ne(expr);
+        return strgen_rvalue_binary_ne(expr);
     }
     case BOP_LE: {
-        return intern_fmt("/* TODO %s */(%s)%s", __func__, mangle_type(expr->type), strgen_uninit(expr->type));//strgen_rvalue_binary_le(expr);
+        return strgen_rvalue_binary_le(expr);
     }
     case BOP_LT: {
-        return intern_fmt("/* TODO %s */(%s)%s", __func__, mangle_type(expr->type), strgen_uninit(expr->type));//strgen_rvalue_binary_lt(expr);
+        return strgen_rvalue_binary_lt(expr);
     }
     case BOP_GE: {
-        return intern_fmt("/* TODO %s */(%s)%s", __func__, mangle_type(expr->type), strgen_uninit(expr->type));//strgen_rvalue_binary_ge(expr);
+        return strgen_rvalue_binary_ge(expr);
     }
     case BOP_GT: {
-        return intern_fmt("/* TODO %s */(%s)%s", __func__, mangle_type(expr->type), strgen_uninit(expr->type));//strgen_rvalue_binary_gt(expr);
+        return strgen_rvalue_binary_gt(expr);
     }
     case BOP_ADD: {
-        return intern_fmt("/* TODO %s */(%s)%s", __func__, mangle_type(expr->type), strgen_uninit(expr->type));//strgen_rvalue_binary_add(expr);
+        return strgen_rvalue_binary_add(expr);
     }
     case BOP_ADD_WRAPPING: {
-        return intern_fmt("/* TODO %s */(%s)%s", __func__, mangle_type(expr->type), strgen_uninit(expr->type));//strgen_rvalue_binary_add_wrapping(expr);
+        return strgen_rvalue_binary_add_wrapping(expr);
     }
     case BOP_SUB: {
-        return intern_fmt("/* TODO %s */(%s)%s", __func__, mangle_type(expr->type), strgen_uninit(expr->type));//strgen_rvalue_binary_sub(expr);
+        return strgen_rvalue_binary_sub(expr);
     }
     case BOP_SUB_WRAPPING: {
-        return intern_fmt("/* TODO %s */(%s)%s", __func__, mangle_type(expr->type), strgen_uninit(expr->type));//strgen_rvalue_binary_sub_wrapping(expr);
+        return strgen_rvalue_binary_sub_wrapping(expr);
     }
     case BOP_MUL: {
-        return intern_fmt("/* TODO %s */(%s)%s", __func__, mangle_type(expr->type), strgen_uninit(expr->type));//strgen_rvalue_binary_mul(expr);
+        return strgen_rvalue_binary_mul(expr);
     }
     case BOP_MUL_WRAPPING: {
-        return intern_fmt("/* TODO %s */(%s)%s", __func__, mangle_type(expr->type), strgen_uninit(expr->type));//strgen_rvalue_binary_mul_wrapping(expr);
+        return strgen_rvalue_binary_mul_wrapping(expr);
     }
     case BOP_DIV: {
-        return intern_fmt("/* TODO %s */(%s)%s", __func__, mangle_type(expr->type), strgen_uninit(expr->type));//strgen_rvalue_binary_div(expr);
+        return strgen_rvalue_binary_div(expr);
     }
     case BOP_REM: {
-        return intern_fmt("/* TODO %s */(%s)%s", __func__, mangle_type(expr->type), strgen_uninit(expr->type));//strgen_rvalue_binary_rem(expr);
+        return strgen_rvalue_binary_rem(expr);
     }
     case BOP_BITOR: {
-        return intern_fmt("/* TODO %s */(%s)%s", __func__, mangle_type(expr->type), strgen_uninit(expr->type));//strgen_rvalue_binary_bitor(expr);
+        return strgen_rvalue_binary_bitor(expr);
     }
     case BOP_BITXOR: {
-        return intern_fmt("/* TODO %s */(%s)%s", __func__, mangle_type(expr->type), strgen_uninit(expr->type));//strgen_rvalue_binary_bitxor(expr);
+        return strgen_rvalue_binary_bitxor(expr);
     }
     case BOP_BITAND: {
-        return intern_fmt("/* TODO %s */(%s)%s", __func__, mangle_type(expr->type), strgen_uninit(expr->type));//strgen_rvalue_binary_bitand(expr);
+        return strgen_rvalue_binary_bitand(expr);
     }
     }
 
@@ -1626,7 +1627,338 @@ strgen_rvalue_binary_or(struct expr const* expr)
     assert(expr->data.binary.lhs->type->kind == TYPE_BOOL);
     assert(expr->data.binary.rhs->type->kind == TYPE_BOOL);
 
-    return intern_fmt("((%s) || (%s))", strgen_rvalue(expr->data.binary.lhs), strgen_rvalue(expr->data.binary.rhs));
+    return intern_fmt(
+        "((%s) || (%s))",
+        strgen_rvalue(expr->data.binary.lhs),
+        strgen_rvalue(expr->data.binary.rhs));
+}
+
+static char const*
+strgen_rvalue_binary_and(struct expr const* expr)
+{
+    assert(expr != NULL);
+    assert(expr->kind == EXPR_BINARY);
+    assert(expr->data.binary.op == BOP_AND);
+    assert(expr->data.binary.lhs->type->kind == TYPE_BOOL);
+    assert(expr->data.binary.rhs->type->kind == TYPE_BOOL);
+
+    return intern_fmt(
+        "((%s) && (%s))",
+        strgen_rvalue(expr->data.binary.lhs),
+        strgen_rvalue(expr->data.binary.rhs));
+}
+
+static char const*
+strgen_rvalue_binary_shl(struct expr const* expr)
+{
+    assert(expr != NULL);
+    assert(expr->kind == EXPR_BINARY);
+    assert(expr->data.binary.op == BOP_SHL);
+    assert(type_is_int(expr->data.binary.lhs->type));
+    assert(expr->data.binary.rhs->type->kind == TYPE_USIZE);
+
+    return intern_fmt(
+        "((%s) << ((%s) & (sizeof(%s)*8-1)))",
+        strgen_rvalue(expr->data.binary.lhs),
+        strgen_rvalue(expr->data.binary.rhs),
+        mangle_type(expr->data.binary.lhs->type));
+}
+
+static char const*
+strgen_rvalue_binary_shr(struct expr const* expr)
+{
+    assert(expr != NULL);
+    assert(expr->kind == EXPR_BINARY);
+    assert(expr->data.binary.op == BOP_SHR);
+    assert(type_is_int(expr->data.binary.lhs->type));
+    assert(expr->data.binary.rhs->type->kind == TYPE_USIZE);
+
+    return intern_fmt(
+        "((%s) >> ((%s) & (sizeof(%s)*8-1)))",
+        strgen_rvalue(expr->data.binary.lhs),
+        strgen_rvalue(expr->data.binary.rhs),
+        mangle_type(expr->data.binary.lhs->type));
+}
+
+static char const*
+strgen_rvalue_binary_eq(struct expr const* expr)
+{
+    assert(expr != NULL);
+    assert(expr->kind == EXPR_BINARY);
+    assert(expr->data.binary.op == BOP_EQ);
+    assert(expr->data.binary.lhs->type == expr->data.binary.rhs->type);
+
+    return intern_fmt(
+        "((%s) == (%s))",
+        strgen_rvalue(expr->data.binary.lhs),
+        strgen_rvalue(expr->data.binary.rhs));
+}
+
+static char const*
+strgen_rvalue_binary_ne(struct expr const* expr)
+{
+    assert(expr != NULL);
+    assert(expr->kind == EXPR_BINARY);
+    assert(expr->data.binary.op == BOP_NE);
+    assert(expr->data.binary.lhs->type == expr->data.binary.rhs->type);
+
+    return intern_fmt(
+        "((%s) != (%s))",
+        strgen_rvalue(expr->data.binary.lhs),
+        strgen_rvalue(expr->data.binary.rhs));
+}
+
+static char const*
+strgen_rvalue_binary_le(struct expr const* expr)
+{
+    assert(expr != NULL);
+    assert(expr->kind == EXPR_BINARY);
+    assert(expr->data.binary.op == BOP_LE);
+    assert(expr->data.binary.lhs->type == expr->data.binary.rhs->type);
+
+    return intern_fmt(
+        "((%s) <= (%s))",
+        strgen_rvalue(expr->data.binary.lhs),
+        strgen_rvalue(expr->data.binary.rhs));
+}
+
+static char const*
+strgen_rvalue_binary_lt(struct expr const* expr)
+{
+    assert(expr != NULL);
+    assert(expr->kind == EXPR_BINARY);
+    assert(expr->data.binary.op == BOP_LT);
+    assert(expr->data.binary.lhs->type == expr->data.binary.rhs->type);
+
+    return intern_fmt(
+        "((%s) < (%s))",
+        strgen_rvalue(expr->data.binary.lhs),
+        strgen_rvalue(expr->data.binary.rhs));
+}
+
+static char const*
+strgen_rvalue_binary_ge(struct expr const* expr)
+{
+    assert(expr != NULL);
+    assert(expr->kind == EXPR_BINARY);
+    assert(expr->data.binary.op == BOP_GE);
+    assert(expr->data.binary.lhs->type == expr->data.binary.rhs->type);
+
+    return intern_fmt(
+        "((%s) >= (%s))",
+        strgen_rvalue(expr->data.binary.lhs),
+        strgen_rvalue(expr->data.binary.rhs));
+}
+
+static char const*
+strgen_rvalue_binary_gt(struct expr const* expr)
+{
+    assert(expr != NULL);
+    assert(expr->kind == EXPR_BINARY);
+    assert(expr->data.binary.op == BOP_GT);
+    assert(expr->data.binary.lhs->type == expr->data.binary.rhs->type);
+
+    return intern_fmt(
+        "((%s) > (%s))",
+        strgen_rvalue(expr->data.binary.lhs),
+        strgen_rvalue(expr->data.binary.rhs));
+}
+
+static char const*
+strgen_rvalue_binary_add(struct expr const* expr)
+{
+    assert(expr != NULL);
+    assert(expr->kind == EXPR_BINARY);
+    assert(expr->data.binary.op == BOP_ADD);
+    assert(expr->data.binary.lhs->type == expr->data.binary.rhs->type);
+
+    return intern_fmt(
+        "({%s %s; if (__builtin_add_overflow(%s, %s, &%s)){%s();}; %s;})",
+        mangle_type(expr->data.binary.lhs->type),
+        mangle_name("__result"),
+        strgen_rvalue(expr->data.binary.lhs),
+        strgen_rvalue(expr->data.binary.rhs),
+        mangle_name("__result"),
+        mangle_name("__fatal_integer_out_of_range"),
+        mangle_name("__result"));
+}
+
+static char const*
+strgen_rvalue_binary_add_wrapping(struct expr const* expr)
+{
+    assert(expr != NULL);
+    assert(expr->kind == EXPR_BINARY);
+    assert(expr->data.binary.op == BOP_ADD_WRAPPING);
+    assert(expr->data.binary.lhs->type == expr->data.binary.rhs->type);
+
+    return intern_fmt(
+        "({%s %s; __builtin_add_overflow(%s, %s, &%s); %s;})",
+        mangle_type(expr->data.binary.lhs->type),
+        mangle_name("__result"),
+        strgen_rvalue(expr->data.binary.lhs),
+        strgen_rvalue(expr->data.binary.rhs),
+        mangle_name("__result"),
+        mangle_name("__result"));
+}
+
+static char const*
+strgen_rvalue_binary_sub(struct expr const* expr)
+{
+    assert(expr != NULL);
+    assert(expr->kind == EXPR_BINARY);
+    assert(expr->data.binary.op == BOP_SUB);
+    assert(expr->data.binary.lhs->type == expr->data.binary.rhs->type);
+
+    return intern_fmt(
+        "({%s %s; if (__builtin_sub_overflow(%s, %s, &%s)){%s();}; %s;})",
+        mangle_type(expr->data.binary.lhs->type),
+        mangle_name("__result"),
+        strgen_rvalue(expr->data.binary.lhs),
+        strgen_rvalue(expr->data.binary.rhs),
+        mangle_name("__result"),
+        mangle_name("__fatal_integer_out_of_range"),
+        mangle_name("__result"));
+}
+
+static char const*
+strgen_rvalue_binary_sub_wrapping(struct expr const* expr)
+{
+    assert(expr != NULL);
+    assert(expr->kind == EXPR_BINARY);
+    assert(expr->data.binary.op == BOP_SUB_WRAPPING);
+    assert(expr->data.binary.lhs->type == expr->data.binary.rhs->type);
+
+    return intern_fmt(
+        "({%s %s; __builtin_sub_overflow(%s, %s, &%s); %s;})",
+        mangle_type(expr->data.binary.lhs->type),
+        mangle_name("__result"),
+        strgen_rvalue(expr->data.binary.lhs),
+        strgen_rvalue(expr->data.binary.rhs),
+        mangle_name("__result"),
+        mangle_name("__result"));
+}
+
+static char const*
+strgen_rvalue_binary_mul(struct expr const* expr)
+{
+    assert(expr != NULL);
+    assert(expr->kind == EXPR_BINARY);
+    assert(expr->data.binary.op == BOP_MUL);
+    assert(expr->data.binary.lhs->type == expr->data.binary.rhs->type);
+
+    return intern_fmt(
+        "({%s %s; if (__builtin_mul_overflow(%s, %s, &%s)){%s();}; %s;})",
+        mangle_type(expr->data.binary.lhs->type),
+        mangle_name("__result"),
+        strgen_rvalue(expr->data.binary.lhs),
+        strgen_rvalue(expr->data.binary.rhs),
+        mangle_name("__result"),
+        mangle_name("__fatal_integer_out_of_range"),
+        mangle_name("__result"));
+}
+
+static char const*
+strgen_rvalue_binary_mul_wrapping(struct expr const* expr)
+{
+    assert(expr != NULL);
+    assert(expr->kind == EXPR_BINARY);
+    assert(expr->data.binary.op == BOP_MUL_WRAPPING);
+    assert(expr->data.binary.lhs->type == expr->data.binary.rhs->type);
+
+    return intern_fmt(
+        "({%s %s; __builtin_mul_overflow(%s, %s, &%s); %s;})",
+        mangle_type(expr->data.binary.lhs->type),
+        mangle_name("__result"),
+        strgen_rvalue(expr->data.binary.lhs),
+        strgen_rvalue(expr->data.binary.rhs),
+        mangle_name("__result"),
+        mangle_name("__result"));
+}
+
+static char const*
+strgen_rvalue_binary_div(struct expr const* expr)
+{
+    assert(expr != NULL);
+    assert(expr->kind == EXPR_BINARY);
+    assert(expr->data.binary.op == BOP_DIV);
+    assert(expr->data.binary.lhs->type == expr->data.binary.rhs->type);
+
+    return intern_fmt(
+        "({%s %s = %s; %s %s = %s; if (%s == 0){%s();}; %s / %s;})",
+        mangle_type(expr->data.binary.lhs->type),
+        mangle_name("__lhs"),
+        strgen_rvalue(expr->data.binary.lhs),
+        mangle_type(expr->data.binary.rhs->type),
+        mangle_name("__rhs"),
+        strgen_rvalue(expr->data.binary.rhs),
+        mangle_name("__rhs"),
+        mangle_name("__fatal_integer_divide_by_zero"),
+        mangle_name("__lhs"),
+        mangle_name("__rhs"));
+}
+
+static char const*
+strgen_rvalue_binary_rem(struct expr const* expr)
+{
+    assert(expr != NULL);
+    assert(expr->kind == EXPR_BINARY);
+    assert(expr->data.binary.op == BOP_REM);
+    assert(expr->data.binary.lhs->type == expr->data.binary.rhs->type);
+
+    return intern_fmt(
+        "({%s %s = %s; %s %s = %s; if (%s == 0){%s();}; %s %% %s;})",
+        mangle_type(expr->data.binary.lhs->type),
+        mangle_name("__lhs"),
+        strgen_rvalue(expr->data.binary.lhs),
+        mangle_type(expr->data.binary.rhs->type),
+        mangle_name("__rhs"),
+        strgen_rvalue(expr->data.binary.rhs),
+        mangle_name("__rhs"),
+        mangle_name("__fatal_integer_divide_by_zero"),
+        mangle_name("__lhs"),
+        mangle_name("__rhs"));
+}
+
+static char const*
+strgen_rvalue_binary_bitor(struct expr const* expr)
+{
+    assert(expr != NULL);
+    assert(expr->kind == EXPR_BINARY);
+    assert(expr->data.binary.op == BOP_BITOR);
+    assert(expr->data.binary.lhs->type == expr->data.binary.rhs->type);
+
+    return intern_fmt(
+        "((%s) | (%s))",
+        strgen_rvalue(expr->data.binary.lhs),
+        strgen_rvalue(expr->data.binary.rhs));
+}
+
+static char const*
+strgen_rvalue_binary_bitxor(struct expr const* expr)
+{
+    assert(expr != NULL);
+    assert(expr->kind == EXPR_BINARY);
+    assert(expr->data.binary.op == BOP_BITXOR);
+    assert(expr->data.binary.lhs->type == expr->data.binary.rhs->type);
+
+    return intern_fmt(
+        "((%s) ^ (%s))",
+        strgen_rvalue(expr->data.binary.lhs),
+        strgen_rvalue(expr->data.binary.rhs));
+}
+
+static char const*
+strgen_rvalue_binary_bitand(struct expr const* expr)
+{
+    assert(expr != NULL);
+    assert(expr->kind == EXPR_BINARY);
+    assert(expr->data.binary.op == BOP_BITAND);
+    assert(expr->data.binary.lhs->type == expr->data.binary.rhs->type);
+
+    return intern_fmt(
+        "((%s) & (%s))",
+        strgen_rvalue(expr->data.binary.lhs),
+        strgen_rvalue(expr->data.binary.rhs));
 }
 
 static char const*
