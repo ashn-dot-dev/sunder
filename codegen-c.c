@@ -998,6 +998,7 @@ codegen_stmt_break(struct stmt const* stmt)
     assert(stmt != NULL);
     assert(stmt->kind == STMT_BREAK);
 
+    codegen_defers(stmt->data.break_.defer_begin, stmt->data.break_.defer_end);
     appendli("break;");
 }
 
@@ -1007,6 +1008,7 @@ codegen_stmt_continue(struct stmt const* stmt)
     assert(stmt != NULL);
     assert(stmt->kind == STMT_CONTINUE);
 
+    codegen_defers(stmt->data.break_.defer_begin, stmt->data.break_.defer_end);
     appendli("continue;");
 }
 
