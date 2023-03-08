@@ -2303,8 +2303,8 @@ push_rvalue_unary_countof(struct expr const* expr, size_t id)
 
     if (expr->data.unary.rhs->type->kind == TYPE_ARRAY) {
         // If possible evaluate the left hand side of the expression as an
-        // lvalue so that we do not push the entire contents of the array
-        // onto the stack.
+        // lvalue so that we do not push the entire contents of the array onto
+        // the stack.
         if (expr_is_lvalue(expr->data.unary.rhs)) {
             push_lvalue(expr->data.unary.rhs);
             appendli("pop rax ; discard array lvalue");

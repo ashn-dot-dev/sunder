@@ -1661,8 +1661,20 @@ strgen_rvalue_unary_countof(struct expr const* expr)
     assert(expr->data.unary.op == UOP_COUNTOF);
 
     if (expr->data.unary.rhs->type->kind == TYPE_ARRAY) {
+        // If possible, evaluate the left hand side of the expression as an
+        // lvalue so that we do not place the entire contents of the array on
+        // the stack.
+        if (expr_is_lvalue(expr->data.unary.rhs)) {
+            return intern_fmt(
+                "({%s; %" PRIu64 ";})",
+                strgen_lvalue(expr->data.unary.rhs),
+                expr->data.unary.rhs->type->data.array.count);
+        }
+
         return intern_fmt(
-            "%" PRIu64, expr->data.unary.rhs->type->data.array.count);
+            "({%s; %" PRIu64 ";})",
+            strgen_rvalue(expr->data.unary.rhs),
+            expr->data.unary.rhs->type->data.array.count);
     }
 
     if (expr->data.unary.rhs->type->kind == TYPE_SLICE) {
