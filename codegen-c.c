@@ -1784,9 +1784,19 @@ strgen_rvalue_binary_shl(struct expr const* expr)
     assert(expr->data.binary.rhs->type->kind == TYPE_USIZE);
 
     return intern_fmt(
-        "((%s) << ((%s) & (sizeof(%s)*8-1)))",
+        "({%s %s = %s; %s %s = %s; %s < sizeof(%s)*8 ? (%s << %s) : (%s)0;})",
+        mangle_type(expr->data.binary.lhs->type),
+        mangle_name("__lhs"),
         strgen_rvalue(expr->data.binary.lhs),
+
+        mangle_type(expr->data.binary.rhs->type),
+        mangle_name("__rhs"),
         strgen_rvalue(expr->data.binary.rhs),
+
+        mangle_name("__rhs"),
+        mangle_type(expr->data.binary.lhs->type),
+        mangle_name("__lhs"),
+        mangle_name("__rhs"),
         mangle_type(expr->data.binary.lhs->type));
 }
 
