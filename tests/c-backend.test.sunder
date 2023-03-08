@@ -93,7 +93,14 @@ func stmt_return_slice() []byte {
     return (:[]byte)[];
 }
 
-func stmt_defer() ssize {
+func stmt_defer_single_return() ssize {
+    defer {
+        var _: ssize = 456;
+    }
+    return 123;
+}
+
+func stmt_defer_double_return() ssize {
     defer {
         return 456;
     }

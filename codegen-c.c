@@ -2317,11 +2317,17 @@ codegen_c(
 
     sbuf(char const*) backend_argv = NULL;
     sbuf_push(backend_argv, "gcc");
-    sbuf_push(backend_argv, "-o");
-    sbuf_push(backend_argv, string_start(obj_path));
+    if (opt_c) {
+        sbuf_push(backend_argv, "-c");
+        sbuf_push(backend_argv, "-o");
+        sbuf_push(backend_argv, string_start(obj_path));
+    }
+    else {
+        sbuf_push(backend_argv, "-o");
+        sbuf_push(backend_argv, opt_o);
+    }
     sbuf_push(backend_argv, "-O0");
     sbuf_push(backend_argv, "-g");
-    sbuf_push(backend_argv, "-c");
     sbuf_push(backend_argv, intern_fmt("-I%s/lib/sys", SUNDER_HOME));
     sbuf_push(backend_argv, "-std=c11");
     sbuf_push(backend_argv, "-Wall");
@@ -2348,18 +2354,20 @@ codegen_c(
     // function-to-function casting are not supported in ISO C.
     /* sbuf_push(backend_argv, "-pedantic-errors"); */
     sbuf_push(backend_argv, "-fmax-errors=1");
+    // Uncomment the `-fsanitize` flags when debugging memory issues and
+    // undefined behavior issues within generated C code.
+    /*
+    sbuf_push(backend_argv, "-fsanitize=address");
+    sbuf_push(backend_argv, "-fsanitize=leak");
+    sbuf_push(backend_argv, "-fsanitize=undefined");
+    */
     sbuf_push(backend_argv, string_start(src_path));
-    sbuf_push(backend_argv, (char const*)NULL);
-
-    sbuf(char const*) ld_argv = NULL;
-    sbuf_push(ld_argv, "gcc");
-    sbuf_push(ld_argv, "-o");
-    sbuf_push(ld_argv, opt_o);
-    sbuf_push(ld_argv, string_start(obj_path));
-    for (size_t i = 0; i < sbuf_count(opt_l); ++i) {
-        sbuf_push(backend_argv, intern_fmt("-l%s", opt_l[i]));
+    if (!opt_c) {
+        for (size_t i = 0; i < sbuf_count(opt_l); ++i) {
+            sbuf_push(backend_argv, intern_fmt("-l%s", opt_l[i]));
+        }
     }
-    sbuf_push(ld_argv, (char const*)NULL);
+    sbuf_push(backend_argv, (char const*)NULL);
 
     appendln("#include \"sys.h\"");
     appendch('\n');
@@ -2563,10 +2571,6 @@ codegen_c(
         goto cleanup;
     }
 
-    if (!opt_c && (err = spawnvpw(ld_argv))) {
-        goto cleanup;
-    }
-
 cleanup:
     if (!opt_k) {
         (void)remove(string_start(src_path));
@@ -2575,7 +2579,6 @@ cleanup:
         (void)remove(string_start(obj_path));
     }
     sbuf_fini(backend_argv);
-    sbuf_fini(ld_argv);
     string_del(src_path);
     string_del(obj_path);
     string_del(out);
