@@ -1809,11 +1809,27 @@ strgen_rvalue_binary_shr(struct expr const* expr)
     assert(type_is_int(expr->data.binary.lhs->type));
     assert(expr->data.binary.rhs->type->kind == TYPE_USIZE);
 
+    char const* const overshift = type_is_sint(expr->data.binary.lhs->type)
+        ? intern_fmt("((%s < 0) ? -1 : 0)", mangle_name("__lhs"))
+        : "0";
     return intern_fmt(
-        "((%s) >> ((%s) & (sizeof(%s)*8-1)))",
+        // clang-format off
+        "({%s %s = %s; %s %s = %s; %s < sizeof(%s)*8 ? (%s >> %s) : (%s)%s;})",
+        // clang-format on
+        mangle_type(expr->data.binary.lhs->type),
+        mangle_name("__lhs"),
         strgen_rvalue(expr->data.binary.lhs),
+
+        mangle_type(expr->data.binary.rhs->type),
+        mangle_name("__rhs"),
         strgen_rvalue(expr->data.binary.rhs),
-        mangle_type(expr->data.binary.lhs->type));
+
+        mangle_name("__rhs"),
+        mangle_type(expr->data.binary.lhs->type),
+        mangle_name("__lhs"),
+        mangle_name("__rhs"),
+        mangle_type(expr->data.binary.lhs->type),
+        overshift);
 }
 
 static char const*
