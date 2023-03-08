@@ -56,6 +56,8 @@ let int_constant_pointer = &int_constant;
 let array_constant = (:[3]ssize)[123, 456, 789];
 let slice_constant = (:[]ssize)[123, 456, 789];
 
+let pointer_from_usize = (:*byte)0xAABBCCDDAABBCCDDu;
+
 func add_one[[T]](x: T) T {
     return x + 1;
 }

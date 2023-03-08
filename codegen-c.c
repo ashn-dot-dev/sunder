@@ -655,7 +655,7 @@ strgen_value(struct value const* value)
 
         switch (address->kind) {
         case ADDRESS_ABSOLUTE: {
-            string_append_fmt(s, "%" PRIu64, address->data.absolute);
+            string_append_fmt(s, "%" PRIu64 "UL", address->data.absolute);
             break;
         }
         case ADDRESS_STATIC: {
