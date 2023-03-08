@@ -1380,12 +1380,21 @@ strgen_rvalue_access_index(struct expr const* expr)
     assert(expr != NULL);
     assert(expr->kind == EXPR_ACCESS_INDEX);
 
+    bool const lhs_is_zero_sized = expr->data.access_index.lhs->type->size == 0;
+
     if (expr->data.access_index.lhs->type->kind == TYPE_ARRAY) {
+        char const* const lhs_type = lhs_is_zero_sized
+            ? "int"
+            : mangle_type(expr->data.access_index.lhs->type);
+        char const* const elements = lhs_is_zero_sized
+            ? intern_fmt(
+                "((%s)0)", mangle_type(type_unique_pointer(expr->type)))
+            : intern_fmt("%s.elements", mangle_name("__lhs"));
         return intern_fmt(
             // clang-format off
-            "({%s %s = %s; %s %s = %s; if (%s >= %" PRId64 "){%s();}; %s.elements[%s];})",
+            "({%s %s = %s; %s %s = %s; if (%s >= %" PRId64 "){%s();}; %s[%s];})",
             // clang-format on
-            mangle_type(expr->data.access_index.lhs->type),
+            lhs_type,
             mangle_name("__lhs"),
             strgen_rvalue(expr->data.access_index.lhs),
 
@@ -1397,11 +1406,12 @@ strgen_rvalue_access_index(struct expr const* expr)
             expr->data.access_index.lhs->type->data.array.count,
             mangle_name("__fatal_index_out_of_bounds"),
 
-            mangle_name("__lhs"),
+            elements,
             mangle_name("__idx"));
     }
 
     if (expr->data.access_index.lhs->type->kind == TYPE_SLICE) {
+        assert(!lhs_is_zero_sized);
         return intern_fmt(
             "({%s %s = %s; %s %s = %s; if (%s >= %s.count){%s();}; %s.start[%s];})",
             mangle_type(expr->data.access_index.lhs->type),
@@ -1439,32 +1449,43 @@ strgen_rvalue_access_slice(struct expr const* expr)
     char const* const eexpr = strgen_rvalue(expr->data.access_slice.end);
     char const* const tname = mangle_type(expr->type);
     char const* const lexpr = strgen_rvalue(expr->data.access_slice.lhs);
+    bool const lhs_is_zero_sized = expr->data.access_slice.lhs->type->size == 0;
 
     if (expr->data.access_slice.lhs->type->kind == TYPE_ARRAY) {
+        char const* const start = lhs_is_zero_sized
+            ? intern_fmt(
+                "(%s)0 + %s",
+                mangle_type(type_unique_pointer(expr->type->data.slice.base)),
+                bname)
+            : intern_fmt("(%s).elements + %s", lexpr, bname);
+        char const* const count = intern_fmt("%s - %s", ename, bname);
         return intern_fmt(
-            "({%s %s = %s; %s %s = %s; (%s){.start = (%s).elements + %s, .count = %s - %s};})",
+            "({%s %s = %s; %s %s = %s; (%s){.start = %s, .count = %s};})",
             btype,
             bname,
             bexpr,
+
             etype,
             ename,
             eexpr,
+
             tname,
-            lexpr,
-            bname,
-            ename,
-            bname);
+            start,
+            count);
     }
 
     if (expr->data.access_slice.lhs->type->kind == TYPE_SLICE) {
+        assert(!lhs_is_zero_sized);
         return intern_fmt(
             "({%s %s = %s; %s %s = %s; (%s){.start = (%s).start + %s, .count = %s - %s};})",
             btype,
             bname,
             bexpr,
+
             etype,
             ename,
             eexpr,
+
             tname,
             lexpr,
             bname,
