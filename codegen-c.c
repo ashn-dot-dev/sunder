@@ -495,7 +495,10 @@ codegen_static_object(struct symbol const* symbol)
         return;
     }
 
-    appendln(" = %s;", strgen_value(symbol_xget_value(NO_LOCATION, symbol)));
+    appendln(
+        " = (%s)%s;",
+        mangle_type(symbol_xget_type(symbol)),
+        strgen_value(symbol_xget_value(NO_LOCATION, symbol)));
 }
 
 static void
