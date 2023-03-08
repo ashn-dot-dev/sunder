@@ -104,6 +104,7 @@ func main() void {
     sys::dump[[contains_empty]](contains_empty_b);
     contains_empty_a = contains_empty_b;
     sys::dump[[contains_empty]](contains_empty_a);
+    contains_empty_a.e = (:empty){};
 
     sys::dump[[point]](point_a);
     sys::dump[[u32]](point_a.x);

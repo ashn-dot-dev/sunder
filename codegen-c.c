@@ -753,8 +753,13 @@ strgen_value(struct value const* value)
         (void)member_variable_defs_count;
 
         string_append_cstr(s, "{");
+        size_t members_written = 0;
         for (size_t i = 0; i < member_variable_count; ++i) {
-            if (i != 0) {
+            if (member_variable_defs[i].type->size == 0) {
+                continue;
+            }
+
+            if (members_written != 0) {
                 string_append_cstr(s, ", ");
             }
 
@@ -765,6 +770,7 @@ strgen_value(struct value const* value)
                 string_append_cstr(
                     s, strgen_uninit(member_variable_defs[i].type));
             }
+            members_written += 1;
         }
         string_append_cstr(s, "}");
 
@@ -1286,9 +1292,14 @@ strgen_rvalue_struct(struct expr const* expr)
         }
         char const* const local =
             intern_fmt("__member_%zu_%s", i, member_variable_defs[i].name);
-        string_append_fmt(s, "%s.%s = %s; ", mangle_name("__result"), member_variable_defs[i].name, mangle_name(local));
+        string_append_fmt(
+            s,
+            "%s.%s = %s; ",
+            mangle_name("__result"),
+            member_variable_defs[i].name,
+            mangle_name(local));
     }
-    string_append_fmt(s, "%s; ", mangle_name("__result"));
+    string_append_fmt(s, "%s;", mangle_name("__result"));
 
 done:
     string_append_cstr(s, "})");
@@ -1467,6 +1478,12 @@ strgen_rvalue_access_member_variable(struct expr const* expr)
     assert(expr != NULL);
     assert(expr->kind == EXPR_ACCESS_MEMBER_VARIABLE);
     assert(expr->data.access_member_variable.lhs->type->kind == TYPE_STRUCT);
+
+    if (expr->type->size == 0) {
+        return intern_fmt(
+            "({/* zero-sized member*/(%s); 0;})",
+            strgen_rvalue(expr->data.access_member_variable.lhs));
+    }
 
     return intern_fmt(
         "(%s).%s",
@@ -2166,6 +2183,12 @@ strgen_lvalue_access_member_variable(struct expr const* expr)
     assert(expr != NULL);
     assert(expr->kind == EXPR_ACCESS_MEMBER_VARIABLE);
     assert(expr->data.access_member_variable.lhs->type->kind == TYPE_STRUCT);
+
+    if (expr->type->size == 0) {
+        return intern_fmt(
+            "({/* zero-sized member*/(%s); 0;})",
+            strgen_lvalue(expr->data.access_member_variable.lhs));
+    }
 
     return intern_fmt(
         "(&(%s)->%s)",
