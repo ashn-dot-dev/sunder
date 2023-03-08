@@ -2399,6 +2399,16 @@ codegen_c(
             break;
         }
         case TYPE_POINTER: {
+            // If the base type of this pointer is unrepresentable as a
+            // standalone type in C, then we use `char*` so that dereferencing
+            // this type is valid. The Sunder type `*any` replaces traditional
+            // use of `void*` and `void const*` in C, and since the `any` type
+            // is unsized, this check will not mess with `*any` types.
+            if (type->data.pointer.base->size == 0) {
+                char const* const typename = mangle_type(type);
+                appendln("typedef char* %s; // %s", typename, type->name);
+                break;
+            }
             char const* const basename = mangle_type(type->data.pointer.base);
             char const* const typename = mangle_type(type);
             appendln("typedef %s* %s; // %s", basename, typename, type->name);

@@ -58,6 +58,14 @@ let slice_constant = (:[]ssize)[123, 456, 789];
 
 let pointer_from_usize = (:*byte)0xAABBCCDDAABBCCDDu;
 
+let zero_sized_object_a = (:struct_with_no_members){};
+let zero_sized_object_b = (:struct_with_zero_sized_members){
+    .a = uninit,
+    .b = uninit,
+};
+let pointer_to_zero_sized_object_a = &zero_sized_object_a;
+let pointer_to_zero_sized_object_b = &zero_sized_object_b;
+
 func add_one[[T]](x: T) T {
     return x + 1;
 }
@@ -467,5 +475,22 @@ func lvalue_unary_dereference() void {
     &int_constant_pointer.*;
 }
 
+func function_taking_and_returning_zero_sized_types(x: void, y: struct_with_no_members, z: struct_with_zero_sized_members) struct_with_no_members {
+    x;
+    y;
+    z;
+    return y;
+}
+
+func function_taking_and_returning_pointers_to_zero_sized_types(x: *void, y: *struct_with_no_members, z: *struct_with_zero_sized_members) *struct_with_no_members {
+    *x;
+    *y;
+    *z;
+    return y;
+}
+
 func main() void {
+    var v: void = uninit;
+    var _ = function_taking_and_returning_zero_sized_types(v, zero_sized_object_a, zero_sized_object_b);
+    var _ = function_taking_and_returning_pointers_to_zero_sized_types(&v, &zero_sized_object_a, &zero_sized_object_b);
 }
