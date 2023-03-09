@@ -7,7 +7,7 @@ func main() void {
     var result = general_allocator.allocate(8, 512);
     var result = general_allocator.reallocate(result.value(), 8, 512, 8192);
     var result = general_allocator.reallocate(result.value(), 8, 8192, 0);
-    general_allocator.deallocate(result.value(), 8, 8192);
+    general_allocator.deallocate(result.value(), 8, 0);
 
     # Non-power-of-two alignment.
     var result = general_allocator.allocate(17, 512);
