@@ -1466,14 +1466,34 @@ strgen_rvalue_access_slice(struct expr const* expr)
     char const* const tname = mangle_type(expr->type);
     char const* const lexpr = strgen_rvalue(expr->data.access_slice.lhs);
     bool const lhs_is_zero_sized = expr->data.access_slice.lhs->type->size == 0;
+    uint64_t const base_size = expr->type->data.slice.base->size;
+
+    // According to the C standard, performing pointer arithmetic on a NULL
+    // pointer has undefined behavior, since a NULL pointer does not point
+    // to a valid object. Pointer addition is manually performed with
+    // uintptr_t to avoid this undefined behavior.
 
     if (expr->data.access_slice.lhs->type->kind == TYPE_ARRAY) {
-        char const* const start = lhs_is_zero_sized
-            ? intern_fmt(
-                "(%s)0 + %s",
+        char const* start = NULL;
+        if (lhs_is_zero_sized) {
+            start = intern_fmt(
+                // clang-format off
+                "(%s)((uintptr_t)%s * %" PRId64 ")",
+                // clang-format on
                 mangle_type(type_unique_pointer(expr->type->data.slice.base)),
-                bname)
-            : intern_fmt("(%s).elements + %s", lexpr, bname);
+                bname,
+                base_size);
+        }
+        else {
+            start = intern_fmt(
+                // clang-format off
+                "(%s)((uintptr_t)(%s).elements + ((uintptr_t)%s * %" PRId64 "))",
+                // clang-format on
+                mangle_type(type_unique_pointer(expr->type->data.slice.base)),
+                lexpr,
+                bname,
+                base_size);
+        }
         char const* const count = intern_fmt("%s - %s", ename, bname);
         return intern_fmt(
             "({%s %s = %s; %s %s = %s; (%s){.start = %s, .count = %s};})",
@@ -1492,8 +1512,15 @@ strgen_rvalue_access_slice(struct expr const* expr)
 
     if (expr->data.access_slice.lhs->type->kind == TYPE_SLICE) {
         assert(!lhs_is_zero_sized);
+        char const* const start = intern_fmt(
+            "(%s)((uintptr_t)(%s).start + ((uintptr_t)%s * %" PRId64 "))",
+            mangle_type(type_unique_pointer(expr->type->data.slice.base)),
+            lexpr,
+            bname,
+            base_size);
+        char const* const count = intern_fmt("%s - %s", ename, bname);
         return intern_fmt(
-            "({%s %s = %s; %s %s = %s; (%s){.start = (%s).start + %s, .count = %s - %s};})",
+            "({%s %s = %s; %s %s = %s; (%s){.start = %s, .count = %s};})",
             btype,
             bname,
             bexpr,
@@ -1503,10 +1530,8 @@ strgen_rvalue_access_slice(struct expr const* expr)
             eexpr,
 
             tname,
-            lexpr,
-            bname,
-            ename,
-            bname);
+            start,
+            count);
     }
 
     UNREACHABLE();
@@ -2372,9 +2397,11 @@ codegen_c(
     /* sbuf_push(backend_argv, "-fmax-errors=1"); */
     // Clang-specific max errors.
     /* sbuf_push(backend_argv, "-ferror-limit=1"); */
-    // Disabled by default. Enable the `-fsanitize` flags when debugging memory
-    // issues and undefined behavior issues within generated C code.
-#if 0
+    // Sanitizer flags are enabled by default as the C backend is not stable
+    // and has not be thoroughly tested. Eventually the `-fsanitize` flags
+    // should be disabled by default, and optionally enabled when debugging
+    // memory issues and undefined behavior issues within generated C code.
+#if 1
     sbuf_push(backend_argv, "-fsanitize=address");
     sbuf_push(backend_argv, "-fsanitize=leak");
     sbuf_push(backend_argv, "-fsanitize=undefined");

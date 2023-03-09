@@ -67,6 +67,8 @@ let zero_sized_object_b = (:struct_with_zero_sized_members){
 };
 let pointer_to_zero_sized_object_a = &zero_sized_object_a;
 let pointer_to_zero_sized_object_b = &zero_sized_object_b;
+let array_of_zero_sized_object_a = (:[3]typeof(zero_sized_object_a))[zero_sized_object_a...];
+let array_of_zero_sized_object_b = (:[3]typeof(zero_sized_object_b))[zero_sized_object_b...];
 
 func add_one[[T]](x: T) T {
     return x + 1;
@@ -230,6 +232,8 @@ func rvalue_access_index() void {
 
     var zero_sized_array = (:[3]void)[void_constant...];
     zero_sized_array[1];
+    array_of_zero_sized_object_a[1];
+    array_of_zero_sized_object_b[1];
 }
 
 func rvalue_access_slice() void {
@@ -480,6 +484,8 @@ func lvalue_symbol() void {
 func lvalue_access_index() void {
     &array_constant[1];
     &slice_constant[1];
+    &array_of_zero_sized_object_a[1];
+    &array_of_zero_sized_object_b[1];
 }
 
 func lvalue_access_member_variable() void {
