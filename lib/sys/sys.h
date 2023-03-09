@@ -134,8 +134,7 @@ struct __sunder_sys__dirent;
 static __sunder_ssize
 __sunder_sys_getdents(signed int fd, struct __sunder_sys__dirent* dirent, unsigned int count)
 {
-    // XXX: Pretty sure this is wrong... should be getdents and not getdents64.
-    long result = syscall(SYS_getdents64, fd, dirent, count);
+    long result = syscall(SYS_getdents, fd, dirent, count);
     if (result == -1) {
         return -errno;
     }

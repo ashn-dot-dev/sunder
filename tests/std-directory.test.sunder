@@ -15,6 +15,9 @@ func bubble_sort[[T]](slice: []T) void {
 
 func main() void {
     var result = std::directory::open("util");
+    if result.is_error() {
+        std::print_line(std::err(), result.error().*.data);
+    }
     var dir = result.value();
     defer dir.close();
 
