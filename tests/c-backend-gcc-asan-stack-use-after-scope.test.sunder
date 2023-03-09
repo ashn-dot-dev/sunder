@@ -1,0 +1,39 @@
+# Compiling the test suite at commit ef4184d with the C backend using GCC will
+# produce the following Address Sanitizer error when invoking the standard
+# library function std::big_integer::init_from_str:
+#
+#   ==23001==ERROR: AddressSanitizer: stack-use-after-scope on address 0x7ffcef0b2250 at pc 0x564f9fbd137b bp 0x7ffcef0b0dc0 sp 0x7ffcef0b0db0
+#   READ of size 4 at 0x7ffcef0b2250 thread T0
+#       #0 0x564f9fbd137a in __sunder_std_slice__u32___copy /home/ashn/sources/sunder/a.out.c:111421
+#       #1 0x564f9fb88acd in __sunder_std_big_integer_assign /home/ashn/sources/sunder/a.out.c:26289
+#       #2 0x564f9fb8e235 in __sunder_std_big_integer_add /home/ashn/sources/sunder/a.out.c:28347
+#       #3 0x564f9fb87d3f in __sunder_std_big_integer_init_from_str_with_allocator /home/ashn/sources/sunder/a.out.c:26040
+#       #4 0x564f9fb83faf in __sunder_std_big_integer_init_from_str /home/ashn/sources/sunder/a.out.c:24991
+#       #5 0x564f9fbe027a in __sunder_main /home/ashn/sources/sunder/a.out.c:115692
+#       #6 0x564f9fbe033b in main /home/ashn/sources/sunder/a.out.c:115701
+#       #7 0x7f756bdaad8f in __libc_start_call_main ../sysdeps/nptl/libc_start_call_main.h:58
+#       #8 0x7f756bdaae3f in __libc_start_main_impl ../csu/libc-start.c:392
+#       #9 0x564f9fb5c7c4 in _start (/home/ashn/sources/sunder/a.out+0x4b7c4)
+#
+#   Address 0x7ffcef0b2250 is located in stack of thread T0 at offset 2528 in frame
+#       #0 0x564f9fb84113 in __sunder_std_big_integer_init_from_str_with_allocator /home/ashn/sources/sunder/a.out.c:24996
+#
+# Stepping through the code in question was difficult due to the way the rvalue
+# and lvalue expressions are all generated on one line using GNUC statement
+# expressions, but even when pre-formatted with clang-format and recompiled
+# with GCC+ASan, the line where the ASan error is hit did not stand out as
+# obviously wrong. Looking at the GCC Bugzilla there seem to be a couple of
+# reports of stack-use-after-scope false positives over the years, but it seems
+# much more likely that the generated C code is erroneous, not the compiler.
+#
+# Compiling this same code using Clang+ASan does *not* produce a similar ASan
+# error, further complicating the investigation. Clang was able to find some
+# undefined behavior being expressed in other tests, so until all of the
+# instances of UB are eliminated elsewhere it is worth noting the behavior seen
+# with this test with the intention to address it later.
+
+import "std";
+
+func main() void {
+    std::big_integer::init_from_str("0xDEADBEEFDEADBEEF", 0);
+}

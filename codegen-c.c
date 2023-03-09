@@ -481,7 +481,7 @@ codegen_static_object(struct symbol const* symbol)
     }
 
     if (symbol->kind == SYMBOL_CONSTANT) {
-        append("const ");
+        append("__attribute__((section (\"rodata\"))) ");
     }
 
     assert(symbol_xget_address(symbol)->data.static_.offset == 0);
@@ -2330,7 +2330,7 @@ codegen_c(
     }
 
     sbuf(char const*) backend_argv = NULL;
-    sbuf_push(backend_argv, "gcc");
+    sbuf_push(backend_argv, "clang");
     if (opt_c) {
         sbuf_push(backend_argv, "-c");
         sbuf_push(backend_argv, "-o");
@@ -2349,8 +2349,11 @@ codegen_c(
     // Workaround for a GCC bug where the universal struct zero-initializer for
     // types with nested struct objects produces a missing braces warning.
     sbuf_push(backend_argv, "-Wno-missing-braces");
+    // Not useful for auto-generated C code.
+    sbuf_push(backend_argv, "-Wno-parentheses-equality");
     // Sunder does not have type qualifiers.
-    sbuf_push(backend_argv, "-Wno-discarded-qualifiers");
+    // GCC-specific flag.
+    /* sbuf_push(backend_argv, "-Wno-discarded-qualifiers"); */
     // Enforced by sunder-compile warnings in the resolve phase.
     sbuf_push(backend_argv, "-Wno-unused-variable");
     // Unused functions are allowed in Sunder code.
@@ -2367,7 +2370,10 @@ codegen_c(
     // conform to the ISO specification. However, constructs such as
     // function-to-function casting are not supported in ISO C.
     /* sbuf_push(backend_argv, "-pedantic-errors"); */
-    sbuf_push(backend_argv, "-fmax-errors=1");
+    // GCC-specific max errors
+    /* sbuf_push(backend_argv, "-fmax-errors=1"); */
+    // Clang-specific max errors.
+    /* sbuf_push(backend_argv, "-ferror-limit=1"); */
     // Disabled by default. Enable the `-fsanitize` flags when debugging memory
     // issues and undefined behavior issues within generated C code.
 #if 0

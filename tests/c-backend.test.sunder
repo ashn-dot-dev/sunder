@@ -500,9 +500,9 @@ func function_taking_and_returning_zero_sized_types(x: void, y: struct_with_no_m
 }
 
 func function_taking_and_returning_pointers_to_zero_sized_types(x: *void, y: *struct_with_no_members, z: *struct_with_zero_sized_members) *struct_with_no_members {
-    *x;
-    *y;
-    *z;
+    x;
+    y;
+    z;
     return y;
 }
 

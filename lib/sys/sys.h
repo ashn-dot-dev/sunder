@@ -5,6 +5,7 @@
 #include <errno.h> /* errno */
 #include <fcntl.h> /* open */
 #include <limits.h> /* LLONG_MIN */
+#include <stdint.h> /* uintptr_t */
 #include <stdio.h> /* fprintf */
 #include <stdlib.h> /* exit */
 #include <string.h> /* memset */
