@@ -369,6 +369,26 @@ struct dirent {
     var d_name: byte;
 }
 
+# include/linux/dirent.h:
+### struct linux_dirent64 {
+###     uint64_t       d_ino;
+###     int64_t        d_off;
+###     unsigned short d_reclen;
+###     unsigned char  d_type;
+###     char           d_name[];
+### };
+struct dirent64 {
+    var d_ino: u64;
+    var d_off: s64;
+    var d_reclen: ushort;
+    var d_type: uchar;
+    # Flexible array members do not exist in Sunder, so the d_name member is
+    # pseudo-emulated using an array of size one. This dirent64 structure will
+    # not exactly match the size and layout of the linux_dirent64 struct
+    # definition due to this difference.
+    var d_name: char;
+}
+
 extern func read(fd: sint, buf: *char, count: size_t) ssize;
 extern func write(fd: sint, buf: *char, count: size_t) ssize;
 extern func open(filename: *char, flags: sint, mode: mode_t) ssize;
@@ -381,6 +401,7 @@ extern func getdents(fd: sint, dirent: *dirent, count: uint) ssize;
 extern func mkdir(pathname: *byte, mode: mode_t) ssize;
 extern func rmdir(pathname: *byte) ssize;
 extern func unlink(pathname: *byte) ssize;
+extern func getdents64(fd: sint, dirent: *dirent64, count: uint) ssize;
 
 extern var argc: usize;
 extern var argv: **byte;

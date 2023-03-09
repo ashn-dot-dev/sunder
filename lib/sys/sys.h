@@ -134,7 +134,23 @@ struct __sunder_sys__dirent;
 static __sunder_ssize
 __sunder_sys_getdents(signed int fd, struct __sunder_sys__dirent* dirent, unsigned int count)
 {
+#ifdef SYS_getdents
     long result = syscall(SYS_getdents, fd, dirent, count);
+    if (result == -1) {
+        return -errno;
+    }
+    return result;
+#else
+    // The getdents system call is not supported.
+    return -EBADF;
+#endif
+}
+
+struct __sunder_sys__dirent64;
+static __sunder_ssize
+__sunder_sys_getdents64(signed int fd, struct __sunder_sys__dirent64* dirent, unsigned int count)
+{
+    long result = syscall(SYS_getdents64, fd, dirent, count);
     if (result == -1) {
         return -errno;
     }
