@@ -842,6 +842,11 @@ codegen_block(struct block const* block)
     appendli("{");
     indent_incr();
 
+    // Used to generate a final return statement for C functions that return a
+    // value, so that stantic analysis of the C source does not report that
+    // control reaches the end of a non-void function.
+    bool generate_final_return = false;
+
     // Declare local variables.
     sbuf(struct symbol_table_element) locals = block->symbol_table->elements;
     for (size_t i = 0; i < sbuf_count(locals); ++i) {
@@ -876,6 +881,11 @@ codegen_block(struct block const* block)
             }
         }
 
+        if (locals[i].name == context()->interned.return_) {
+            assert(!generate_final_return);
+            generate_final_return = true;
+        }
+
         appendli("// %s: %s", locals[i].name, type->name);
         appendli(
             "%s %s = %s;",
@@ -893,8 +903,12 @@ codegen_block(struct block const* block)
         struct stmt const* const stmt = block->stmts[i];
         codegen_stmt(stmt);
     }
-
+    // Generate final defers.
     codegen_defers(block->defer_begin, block->defer_end);
+    // Generate final return.
+    if (generate_final_return) {
+        appendli("return %s;", mangle_name("return"));
+    }
 
     indent_decr();
     appendli("}");
@@ -2354,13 +2368,13 @@ codegen_c(
     // function-to-function casting are not supported in ISO C.
     /* sbuf_push(backend_argv, "-pedantic-errors"); */
     sbuf_push(backend_argv, "-fmax-errors=1");
-    // Uncomment the `-fsanitize` flags when debugging memory issues and
-    // undefined behavior issues within generated C code.
-    /*
+    // Disabled by default. Enable the `-fsanitize` flags when debugging memory
+    // issues and undefined behavior issues within generated C code.
+#if 0
     sbuf_push(backend_argv, "-fsanitize=address");
     sbuf_push(backend_argv, "-fsanitize=leak");
     sbuf_push(backend_argv, "-fsanitize=undefined");
-    */
+#endif
     sbuf_push(backend_argv, string_start(src_path));
     if (!opt_c) {
         for (size_t i = 0; i < sbuf_count(opt_l); ++i) {
