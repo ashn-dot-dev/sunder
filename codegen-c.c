@@ -2210,8 +2210,6 @@ strgen_lvalue_access_index(struct expr const* expr)
     assert(expr != NULL);
     assert(expr->kind == EXPR_ACCESS_INDEX);
 
-    // TODO: Handle index out of bounds.
-
     if (expr->data.access_index.lhs->type->kind == TYPE_ARRAY) {
         return intern_fmt(
             // clang-format off
