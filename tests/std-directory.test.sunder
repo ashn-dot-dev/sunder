@@ -17,6 +17,7 @@ func main() void {
     var result = std::directory::open("util");
     if result.is_error() {
         std::print_line(std::err(), result.error().*.data);
+        std::exit(std::EXIT_FAILURE);
     }
     var dir = result.value();
     defer dir.close();

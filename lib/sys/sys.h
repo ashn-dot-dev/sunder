@@ -1,15 +1,17 @@
 #define _DEFAULT_SOURCE /* syscall */
-#include <limits.h> /* LLONG_MIN */
+#define _GNU_SOURCE /* getddents64 */
 #include <alloca.h> /* alloca */
+#include <dirent.h> /* getdents64 */
 #include <errno.h> /* errno */
 #include <fcntl.h> /* open */
+#include <limits.h> /* LLONG_MIN */
 #include <stdio.h> /* fprintf */
 #include <stdlib.h> /* exit */
 #include <string.h> /* memset */
 #include <sys/mman.h> /* mmap, munmap */
 #include <sys/stat.h> /* mkdir */
 #include <sys/syscall.h> /* SYS_* constants */
-#include <sys/types.h> /* mode_t, off_t, size_t */
+#include <sys/types.h> /* mode_t, off_t, size_t, ssize_t */
 #include <unistd.h> /* syscall, close, _exit, lseek, read, rmdir, write, unlink */
 
 typedef void               __sunder_void;
@@ -150,7 +152,7 @@ struct __sunder_sys__dirent64;
 static __sunder_ssize
 __sunder_sys_getdents64(signed int fd, struct __sunder_sys__dirent64* dirent, unsigned int count)
 {
-    long result = syscall(SYS_getdents64, fd, dirent, count);
+    ssize_t result = getdents64(fd, dirent, count);
     if (result == -1) {
         return -errno;
     }
