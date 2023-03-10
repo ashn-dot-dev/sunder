@@ -1,4 +1,4 @@
-# Linux Kernel x86-64 System Interface
+# Linux Kernel ARM64 System Interface
 namespace sys;
 
 # C Type             | Size | Alignment | Sunder Type
@@ -16,10 +16,10 @@ namespace sys;
 # unsigned long long | 8    | 8         | u64
 #
 # POSIX types obtainted through GDB:
-# mode_t  : type = unsigned int
-# off_t   : type = long int
-# size_t  : type = long unsigned int
-# ssize_t : type = long int
+# mode_t      : type = unsigned int
+# off_t       : type = long int
+# size_t      : type = long unsigned int
+# ssize_t     : type = long int
 
 alias smax = s64;
 alias umax = u64;
@@ -330,7 +330,7 @@ let O_CREAT:     sint = 0x00000040;
 let O_TRUNC:     sint = 0x00000200;
 let O_APPEND:    sint = 0x00000400;
 let O_CLOEXEC:   sint = 0x00080000;
-let O_DIRECTORY: sint = 0x00010000;
+let O_DIRECTORY: sint = 0x00004000;
 
 let SEEK_SET: uint = 0x0;
 let SEEK_CUR: uint = 0x1;

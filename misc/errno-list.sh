@@ -52,12 +52,12 @@ for i in $(seq "${MIN}" "${MAX}"); do
     OUTPUT=$(errno "${i}")
     SYMBOL=$(echo "${OUTPUT}" | cut -d ' ' -f 1)
     NUMBER=$(echo "${OUTPUT}" | cut -d ' ' -f 2)
-    printf "const %-${SYMBOL_WIDTH}s ssize = ${NUMBER};\n" "${SYMBOL}:"
+    printf "let %-${SYMBOL_WIDTH}s ssize = ${NUMBER};\n" "${SYMBOL}:"
 done
 
 printf '\n'
 
-echo "const ERRORS = (:[][]byte)["
+echo "let ERRORS = (:[][]byte)["
 for i in $(seq 0 "${MAX}"); do
     COMMA=','
     if [ "${i}" = "${MAX}" ]; then

@@ -2,11 +2,23 @@ import "std";
 
 func main() void {
     var result = std::directory::create("some-directory.tmp");
-    std::assert(result.is_value());
+    if result.is_error() {
+        std::print_format_line(std::err(), "std::directory::create: {}", (:[]std::formatter)[std::formatter::init[[[]byte]](&result.error().*.data)]);
+        std::exit(std::EXIT_FAILURE);
+    }
+
     var result = std::directory::open("some-directory.tmp");
-    std::assert(result.is_value());
+    if result.is_error() {
+        std::print_format_line(std::err(), "std::directory::open: {}", (:[]std::formatter)[std::formatter::init[[[]byte]](&result.error().*.data)]);
+        std::exit(std::EXIT_FAILURE);
+    }
+
     var result = std::directory::remove("some-directory.tmp");
-    std::assert(result.is_value());
+    if result.is_error() {
+        std::print_format_line(std::err(), "std::directory::remove: {}", (:[]std::formatter)[std::formatter::init[[[]byte]](&result.error().*.data)]);
+        std::exit(std::EXIT_FAILURE);
+    }
+
     var result = std::directory::open("some-directory.tmp");
     std::assert(result.is_error());
 }

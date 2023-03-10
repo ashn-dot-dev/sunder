@@ -3,16 +3,30 @@
 // Used for inspecting the layout of POSIX types in GDB to produce the
 // definitions in lib/sys/sys.sunder.
 
+#define _XOPEN_SOURCE 700
+
 #include <sys/resource.h>
 #include <sys/time.h>
 #include <sys/types.h>
 
+#include <stdint.h>
 #include <stdlib.h>
 #include <time.h>
 
 int main()
 {
-    malloc(0); /* GDB needs malloc for printf */
+    void* const unused = malloc(0); /* GDB needs malloc for printf */
+    (void)unused;
+
+    uint8_t  uint8_t_value;
+    uint16_t uint16_t_value;
+    uint32_t uint32_t_value;
+    uint64_t uint64_t_value;
+
+    int8_t  int8_t_value;
+    int16_t int16_t_value;
+    int32_t int32_t_value;
+    int64_t int64_t_value;
 
     /* POSIX-2017 sys/resource.h */
     struct rusage rusage_value;

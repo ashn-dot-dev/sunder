@@ -96,7 +96,7 @@ main(void)
     fputc('\n', stdout);
 
 #define PRINT_PROT_VALUE(prot_value) \
-    printf("let %-11s ulong = 0x%01x;\n", #prot_value ":", prot_value)
+    printf("let %-11s sint = 0x%01x;\n", #prot_value ":", prot_value)
     // The parameter prot determines whether read, write, execute, or some combination of accesses are permitted to the data being mapped. The prot shall be either PROT_NONE or the bitwise-inclusive OR of one or more of the other flags in the following table, defined in the <sys/mman.h> header.
     PRINT_PROT_VALUE(PROT_NONE);  // Data cannot be accessed.
     PRINT_PROT_VALUE(PROT_READ);  // Data can be read.
@@ -107,7 +107,7 @@ main(void)
     fputc('\n', stdout);
 
 #define PRINT_MAP_VALUE(map_value) \
-    printf("let %-14s ulong = 0x%02x;\n", #map_value ":", map_value)
+    printf("let %-14s sint = 0x%02x;\n", #map_value ":", map_value)
     // The parameter flags provides other information about the handling of the mapped data. The value of flags is the bitwise-inclusive OR of these options, defined in <sys/mman.h>:
     PRINT_MAP_VALUE(MAP_SHARED);  // Changes are shared.
     PRINT_MAP_VALUE(MAP_PRIVATE); // Changes are private.
@@ -116,4 +116,8 @@ main(void)
     // Descriptions have been taken from man pages.
     PRINT_MAP_VALUE(MAP_ANONYMOUS); // The mapping is not backed by any file; its contents are initialized to zero.  The fd argument is ignored; however, some implementations require fd to be -1 if  MAP_ANONYMOUS  (or MAP_ANON) is specified, and portable applications should ensure this.  The offset argument should be zero.  The use of MAP_ANONYMOUS in conjunction with MAP_SHARED is supported on Linux only since kernel 2.4.
 #undef PRINT_MAP_VALUE
+
+    fputc('\n', stdout);
+
+    printf("let PAGE_SIZE: usize = %ld;\n", sysconf(_SC_PAGESIZE));
 }
