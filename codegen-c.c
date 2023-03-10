@@ -1546,7 +1546,7 @@ strgen_rvalue_access_member_variable(struct expr const* expr)
 
     if (expr->type->size == 0) {
         return intern_fmt(
-            "({/* zero-sized member*/(%s); 0;})",
+            "({/* zero-sized member */(%s); 0;})",
             strgen_rvalue(expr->data.access_member_variable.lhs));
     }
 
@@ -1686,6 +1686,11 @@ strgen_rvalue_unary_dereference(struct expr const* expr)
 
     // TODO: Handle NULL pointer dereference.
 
+    if (expr->type->size == 0) {
+        return intern_fmt(
+            "({/* dereference pointer to zero-sized type */(%s); 0;})",
+            strgen_rvalue(expr->data.unary.rhs));
+    }
     return intern_fmt("*(%s)", strgen_rvalue(expr->data.unary.rhs));
 }
 
