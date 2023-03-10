@@ -1663,7 +1663,20 @@ strgen_rvalue_unary_neg_wrapping(struct expr const* expr)
     assert(expr->data.unary.op == UOP_NEG_WRAPPING);
     assert(type_is_sint(expr->data.unary.rhs->type));
 
-    return intern_fmt("-(%s)", strgen_rvalue(expr->data.unary.rhs));
+    // Negating a negative number that can not be represented as a positive
+    // number (e.g. T::MIN for signed integer type T) is undefined behavior in
+    // C, so implement negation "manually" using two's complement negation.
+    return intern_fmt(
+        "({%s %s = ~(%s); __builtin_add_overflow(%s, (%s)1, &%s); %s;})",
+        mangle_type(expr->type),
+        mangle_name("__result"),
+        strgen_rvalue(expr->data.unary.rhs),
+
+        mangle_name("__result"),
+        mangle_type(expr->type),
+        mangle_name("__result"),
+
+        mangle_name("__result"));
 }
 
 static char const*
