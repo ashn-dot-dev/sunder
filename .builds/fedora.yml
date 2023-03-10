@@ -8,12 +8,15 @@ packages:
 sources:
   - https://git.sr.ht/~ashn/sunder
 tasks:
-  - c99-debug-yasm: |
+  - c99-debug-yasm-backend: |
       cd sunder
       make clean check examples CFLAGS='$(C99_DBG)' SUNDER_DEFAULT_BACKEND=yasm
-  - c99-debug-nasm: |
+  - c99-debug-nasm-backend: |
       cd sunder
       make clean check examples CFLAGS='$(C99_DBG)' SUNDER_DEFAULT_BACKEND=nasm
+  - c99-debug-c-backend: |
+      cd sunder
+      make clean check examples CFLAGS='$(C99_DBG)' SUNDER_DEFAULT_BACKEND=C
   - c99-release: |
       cd sunder
       make clean check examples CFLAGS='$(C99_REL)'
