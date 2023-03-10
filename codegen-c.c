@@ -494,7 +494,7 @@ codegen_static_object(struct symbol const* symbol)
     }
 
     if (symbol->kind == SYMBOL_CONSTANT) {
-        append("__attribute__((section (\"rodata\"))) ");
+        append("__attribute__((section(\"rodata\"))) ");
     }
 
     assert(symbol_xget_address(symbol)->data.static_.offset == 0);
