@@ -324,7 +324,7 @@ sys.envp: dq 0 ; extern var envp: **byte;
 ; r12 := object_end
 ; r13 := buffer_ptr
 section .text
-sys._dump:
+sys.dump_bytes:
     push rbp
     mov rbp, rsp
 

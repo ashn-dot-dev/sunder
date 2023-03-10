@@ -573,7 +573,7 @@ codegen_static_function(struct symbol const* symbol, bool prototype)
             mangle_name(function->address->data.static_.name),
             mangle(function->address->data.static_.name));
         append(
-            "%s %s(%s);",
+            "%s %s(%s)",
             mangle_type(function->type->data.function.return_type),
             mangle(function->address->data.static_.name),
             params_written != 0 ? string_start(params) : "void");

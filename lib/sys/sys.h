@@ -194,7 +194,7 @@ __sunder_usize sys_argc;
 __sunder_byte** sys_argv;
 __sunder_byte** sys_envp;
 
-static char const __sunder_dump_lookup_table[256u*2u] = {
+static char const sys_dump_bytes_lookup_table[256u*2u] = {
 '0', '0', '0', '1', '0', '2', '0', '3', '0', '4', '0', '5', '0', '6', '0', '7',
 '0', '8', '0', '9', '0', 'A', '0', 'B', '0', 'C', '0', 'D', '0', 'E', '0', 'F',
 '1', '0', '1', '1', '1', '2', '1', '3', '1', '4', '1', '5', '1', '6', '1', '7',
@@ -229,8 +229,8 @@ static char const __sunder_dump_lookup_table[256u*2u] = {
 'F', '8', 'F', '9', 'F', 'A', 'F', 'B', 'F', 'C', 'F', 'D', 'F', 'E', 'F', 'F',
 };
 
-static void
-__sunder_dump(void const* pobj, size_t size)
+__sunder_void
+sys_dump_bytes(void* addr, __sunder_usize size)
 {
     if (size == 0) {
         fputc('\n', stderr);
@@ -244,10 +244,10 @@ __sunder_dump(void const* pobj, size_t size)
     char* const buf = alloca(size * 3u); // Locally allocated buffer.
     char* ptr = buf; // Write pointer into the locally allocated buffer.
 
-    unsigned char const* cur = pobj;
-    unsigned char const* const end = (unsigned char const*)pobj + size;
+    unsigned char const* cur = addr;
+    unsigned char const* const end = (unsigned char const*)addr + size;
     while (cur != end) {
-        char const* const repr = __sunder_dump_lookup_table + (*cur * 2u);
+        char const* const repr = sys_dump_bytes_lookup_table + (*cur * 2u);
         ptr[0u] = repr[0u];
         ptr[1u] = repr[1u];
         ptr[2u] = ' ';
@@ -255,13 +255,6 @@ __sunder_dump(void const* pobj, size_t size)
         cur += 1u;
     }
 
-    // .write
     ptr[-1] = '\n';
     fprintf(stderr, "%.*s", (int)(size * 3u), buf);
-}
-
-__sunder_void
-sys__dump(void* object_addr, __sunder_usize object_size)
-{
-    __sunder_dump(object_addr, object_size);
 }
