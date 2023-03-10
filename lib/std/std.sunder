@@ -3374,6 +3374,7 @@ struct file {
 # Type and associated filesystem operations for a directory.
 struct directory {
     var _fd: sys::sint;
+    var _pad: [alignof(sys::dirent64)-alignof(sys::sint)]byte; # align _buf
     var _buf: [1024]byte;
     var _buf_idx: usize;
     var _buf_end: usize;
@@ -3396,6 +3397,7 @@ struct directory {
 
         var directory = (:std::directory){
             ._fd = (:sys::sint)sysret,
+            ._pad = uninit,
             ._buf = (:[1024]byte)[0...],
             ._buf_idx = 0,
             ._buf_end = 0,
