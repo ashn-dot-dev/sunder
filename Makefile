@@ -35,6 +35,8 @@ CFLAGS = $(C99_REL)
 
 all: build
 
+build: bin/sunder-compile lib/sys/sys.sunder
+
 SUNDER_COMPILE_OBJS = \
 	sunder-compile.o \
 	util.o \
@@ -52,7 +54,10 @@ SUNDER_COMPILE_OBJS = \
 bin/sunder-compile: $(SUNDER_COMPILE_OBJS)
 	$(CC) -o $@ $(CFLAGS) $(SUNDER_COMPILE_OBJS)
 
-build: bin/sunder-compile
+lib/sys/sys.sunder:
+	@if [ ! -L lib/sys/sys.sunder -a $$(uname -m) = "x86_64"  ]; then (cd lib/sys && ln -s sys.sunder.amd64 sys.sunder); fi
+	@if [ ! -L lib/sys/sys.sunder -a $$(uname -m) = "aarch64" ]; then (cd lib/sys && ln -s sys.sunder.arm64 sys.sunder); fi
+
 
 check: build
 	SUNDER_HOME="$(realpath .)" \
@@ -72,6 +77,7 @@ format:
 	clang-format -i *.h *.c
 
 clean:
+	unlink lib/sys/sys.sunder 2>/dev/null || true
 	rm -f bin/sunder-compile
 	rm -f $$(find . -type f -name 'a.out*')
 	rm -f $$(find . -type f -name '*.out')

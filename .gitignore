@@ -1,4 +1,5 @@
 sunder-compile
+lib/sys/sys.sunder
 
 examples/big-integer-calculator
 examples/brainfuck
