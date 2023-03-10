@@ -199,12 +199,21 @@ mangle(char const* cstr)
 
     struct string* const s = string_new(NULL, 0);
 
-    for (char const* cur = cstr; *cur != '\0'; ++cur) {
-        if (!safe_isalnum(*cur)) {
+    for (char const* cur = cstr; *cur != '\0';) {
+        if (cstr_starts_with(cur, "::")) {
             string_append_cstr(s, "_");
+            cur += 2;
             continue;
         }
+
+        if (!safe_isalnum(*cur)) {
+            string_append_cstr(s, "_");
+            cur += 1;
+            continue;
+        }
+
         string_append_fmt(s, "%c", *cur);
+        cur += 1;
     }
 
     char const* const interned = intern(string_start(s), string_count(s));
