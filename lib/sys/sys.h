@@ -58,7 +58,7 @@ __sunder___fatal_index_out_of_bounds(void)
 }
 
 static __sunder_ssize
-__sunder_sys_read(signed int fd, __sunder_byte* buf, size_t count)
+sys_read(signed int fd, __sunder_byte* buf, size_t count)
 {
     ssize_t result = read(fd, buf, count);
     if (result == -1) {
@@ -68,7 +68,7 @@ __sunder_sys_read(signed int fd, __sunder_byte* buf, size_t count)
 }
 
 static __sunder_ssize
-__sunder_sys_write(signed int fd, __sunder_byte* buf, size_t count)
+sys_write(signed int fd, __sunder_byte* buf, size_t count)
 {
     ssize_t result = write(fd, buf, count);
     if (result == -1) {
@@ -78,7 +78,7 @@ __sunder_sys_write(signed int fd, __sunder_byte* buf, size_t count)
 }
 
 static __sunder_ssize
-__sunder_sys_open(__sunder_byte* filename, signed int flags, mode_t mode)
+sys_open(__sunder_byte* filename, signed int flags, mode_t mode)
 {
     int result = open(filename, flags, mode);
     if (result == -1) {
@@ -88,7 +88,7 @@ __sunder_sys_open(__sunder_byte* filename, signed int flags, mode_t mode)
 }
 
 static __sunder_ssize
-__sunder_sys_close(signed int fd)
+sys_close(signed int fd)
 {
     int result = close(fd);
     if (result == -1) {
@@ -98,7 +98,7 @@ __sunder_sys_close(signed int fd)
 }
 
 static __sunder_ssize
-__sunder_sys_lseek(signed int fd, off_t offset, unsigned int whence)
+sys_lseek(signed int fd, off_t offset, unsigned int whence)
 {
     off_t result = lseek(fd, offset, whence);
     if (result == (off_t)-1) {
@@ -108,7 +108,7 @@ __sunder_sys_lseek(signed int fd, off_t offset, unsigned int whence)
 }
 
 static __sunder_ssize
-__sunder_sys_mmap(void* addr, size_t len, signed int prot, signed int flags, signed int fd, off_t off)
+sys_mmap(void* addr, size_t len, signed int prot, signed int flags, signed int fd, off_t off)
 {
     void* result = mmap(addr, len, prot, flags, fd, off);
     if (result == (void*)-1) {
@@ -118,7 +118,7 @@ __sunder_sys_mmap(void* addr, size_t len, signed int prot, signed int flags, sig
 }
 
 static __sunder_ssize
-__sunder_sys_munmap(void* addr, size_t len)
+sys_munmap(void* addr, size_t len)
 {
     int result = munmap(addr, len);
     if (result == -1) {
@@ -128,14 +128,14 @@ __sunder_sys_munmap(void* addr, size_t len)
 }
 
 static void
-__sunder_sys_exit(signed int error_code)
+sys_exit(signed int error_code)
 {
     _exit(error_code);
 }
 
 struct __sunder_sys__dirent;
 static __sunder_ssize
-__sunder_sys_getdents(signed int fd, struct __sunder_sys__dirent* dirent, unsigned int count)
+sys_getdents(signed int fd, struct __sunder_sys__dirent* dirent, unsigned int count)
 {
 #ifdef SYS_getdents
     long result = syscall(SYS_getdents, fd, dirent, count);
@@ -151,7 +151,7 @@ __sunder_sys_getdents(signed int fd, struct __sunder_sys__dirent* dirent, unsign
 
 struct __sunder_sys__dirent64;
 static __sunder_ssize
-__sunder_sys_getdents64(signed int fd, struct __sunder_sys__dirent64* dirent, unsigned int count)
+sys_getdents64(signed int fd, struct __sunder_sys__dirent64* dirent, unsigned int count)
 {
     ssize_t result = getdents64(fd, dirent, count);
     if (result == -1) {
@@ -161,7 +161,7 @@ __sunder_sys_getdents64(signed int fd, struct __sunder_sys__dirent64* dirent, un
 }
 
 static __sunder_ssize
-__sunder_sys_mkdir(__sunder_byte* pathname, mode_t mode)
+sys_mkdir(__sunder_byte* pathname, mode_t mode)
 {
     int result = mkdir(pathname, mode);
     if (result == -1) {
@@ -171,7 +171,7 @@ __sunder_sys_mkdir(__sunder_byte* pathname, mode_t mode)
 }
 
 static __sunder_ssize
-__sunder_sys_rmdir(__sunder_byte* pathname)
+sys_rmdir(__sunder_byte* pathname)
 {
     int result = rmdir(pathname);
     if (result == -1) {
@@ -181,7 +181,7 @@ __sunder_sys_rmdir(__sunder_byte* pathname)
 }
 
 static __sunder_ssize
-__sunder_sys_unlink(__sunder_byte* pathname)
+sys_unlink(__sunder_byte* pathname)
 {
     int result = unlink(pathname);
     if (result == -1) {
@@ -261,7 +261,7 @@ __sunder_dump(void const* pobj, size_t size)
 }
 
 __sunder_void
-__sunder_sys__dump(void* object_addr, __sunder_usize object_size)
+sys__dump(void* object_addr, __sunder_usize object_size)
 {
     __sunder_dump(object_addr, object_size);
 }

@@ -467,13 +467,13 @@ codegen_static_object(struct symbol const* symbol)
     bool const is_extern_variable =
         symbol->kind == SYMBOL_VARIABLE && symbol->data.variable->is_extern;
     if (is_extern_variable) {
-        appendli(
-            "extern %s %s;",
-            mangle_type(symbol_xget_type(symbol)),
-            mangle(symbol_xget_address(symbol)->data.static_.name));
-        appendli(
+        appendln(
             "#define %s %s",
             mangle_name(symbol_xget_address(symbol)->data.static_.name),
+            mangle(symbol_xget_address(symbol)->data.static_.name));
+        appendln(
+            "extern %s %s;",
+            mangle_type(symbol_xget_type(symbol)),
             mangle(symbol_xget_address(symbol)->data.static_.name));
         return;
     }
@@ -558,11 +558,25 @@ codegen_static_function(struct symbol const* symbol, bool prototype)
         }
     }
 
-    append(
-        "%s %s(%s)",
-        mangle_type(function->type->data.function.return_type),
-        mangle_name(function->address->data.static_.name),
-        params_written != 0 ? string_start(params) : "void");
+    if (function->is_extern) {
+        appendln(
+            "#define %s %s",
+            mangle_name(function->address->data.static_.name),
+            mangle(function->address->data.static_.name));
+        append(
+            "%s %s(%s);",
+            mangle_type(function->type->data.function.return_type),
+            mangle(function->address->data.static_.name),
+            params_written != 0 ? string_start(params) : "void");
+    }
+    else {
+        append(
+            "%s %s(%s)",
+            mangle_type(function->type->data.function.return_type),
+            mangle_name(function->address->data.static_.name),
+            params_written != 0 ? string_start(params) : "void");
+    }
+
     string_del(params);
 
     if (prototype) {
