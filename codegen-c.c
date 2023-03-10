@@ -2379,6 +2379,11 @@ codegen_c(
     }
 
     sbuf(char const*) backend_argv = NULL;
+    // Currently using Clang as the C compiler as GCC produces an ASan error
+    // when executing code generated for std::big_integer::init_from_str, which
+    // may or may not be a false positive. Clang does not produce this error.
+    // See tests/c-backend-gcc-asan-stack-use-after-scope.test.sunder for
+    // additional details.
     sbuf_push(backend_argv, "clang");
     if (opt_c) {
         sbuf_push(backend_argv, "-c");
