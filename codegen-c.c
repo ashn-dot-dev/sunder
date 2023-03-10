@@ -2455,11 +2455,7 @@ codegen_c(
     /* sbuf_push(backend_argv, "-fmax-errors=1"); */
     // Clang-specific max errors.
     /* sbuf_push(backend_argv, "-ferror-limit=1"); */
-    // Sanitizer flags are enabled by default as the C backend is not stable
-    // and has not be thoroughly tested. Eventually the `-fsanitize` flags
-    // should be disabled by default, and optionally enabled when debugging
-    // memory issues and undefined behavior issues within generated C code.
-#if 1
+#if 0
     sbuf_push(backend_argv, "-fsanitize=address");
     sbuf_push(backend_argv, "-fsanitize=leak");
     sbuf_push(backend_argv, "-fsanitize=undefined");
