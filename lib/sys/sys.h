@@ -190,9 +190,9 @@ __sunder_sys_unlink(__sunder_byte* pathname)
     return result;
 }
 
-__sunder_usize __sunder_sys_argc;
-__sunder_byte** __sunder_sys_argv;
-__sunder_byte** __sunder_sys_envp;
+__sunder_usize sys_argc;
+__sunder_byte** sys_argv;
+__sunder_byte** sys_envp;
 
 static char const __sunder_dump_lookup_table[256u*2u] = {
 '0', '0', '0', '1', '0', '2', '0', '3', '0', '4', '0', '5', '0', '6', '0', '7',

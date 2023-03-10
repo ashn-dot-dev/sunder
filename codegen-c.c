@@ -470,7 +470,11 @@ codegen_static_object(struct symbol const* symbol)
         appendli(
             "extern %s %s;",
             mangle_type(symbol_xget_type(symbol)),
-            mangle_name(symbol_xget_address(symbol)->data.static_.name));
+            mangle(symbol_xget_address(symbol)->data.static_.name));
+        appendli(
+            "#define %s %s",
+            mangle_name(symbol_xget_address(symbol)->data.static_.name),
+            mangle(symbol_xget_address(symbol)->data.static_.name));
         return;
     }
 
@@ -2622,9 +2626,9 @@ codegen_c(
     appendln("main(int argc, char** argv, char** envp)");
     appendln("{");
     indent_incr();
-    appendli("%s = argc;", mangle_name("sys.argc"));
-    appendli("%s = (void*)argv;", mangle_name("sys.argv"));
-    appendli("%s = (void*)envp;", mangle_name("sys.envp"));
+    appendli("%s = argc;", mangle("sys.argc"));
+    appendli("%s = (void*)argv;", mangle("sys.argv"));
+    appendli("%s = (void*)envp;", mangle("sys.envp"));
     appendli("%s();", mangle_name(context()->interned.main));
     appendli("return 0;");
     indent_decr();
