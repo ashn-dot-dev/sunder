@@ -1865,8 +1865,12 @@ strgen_rvalue_binary_shl(struct expr const* expr)
     assert(type_is_int(expr->data.binary.lhs->type));
     assert(expr->data.binary.rhs->type->kind == TYPE_USIZE);
 
+    // Left shift of a negative number is undefined behavior in C, even though
+    // the behavior is well defined in Sunder (-1s8 << 1u == -2s8). Always
+    // perform left shifts using unsigned values and then cast back to the
+    // correct type to avoid undefined behavior.
     return intern_fmt(
-        "({%s %s = %s; %s %s = %s; %s < sizeof(%s)*8 ? (%s << %s) : (%s)0;})",
+        "({%s %s = %s; %s %s = %s; %s < sizeof(%s)*8 ? (%s)((%s)%s << %s) : (%s)0;})",
         mangle_type(expr->data.binary.lhs->type),
         mangle_name("__lhs"),
         strgen_rvalue(expr->data.binary.lhs),
@@ -1877,8 +1881,12 @@ strgen_rvalue_binary_shl(struct expr const* expr)
 
         mangle_name("__rhs"),
         mangle_type(expr->data.binary.lhs->type),
+
+        mangle_type(expr->data.binary.lhs->type),
+        mangle_type(expr->data.binary.rhs->type),
         mangle_name("__lhs"),
         mangle_name("__rhs"),
+
         mangle_type(expr->data.binary.lhs->type));
 }
 
