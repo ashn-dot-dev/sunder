@@ -50,6 +50,10 @@ static void
 appendch(char ch);
 
 static void
+codegen_type_declaration(struct type const* type);
+static void
+codegen_type_definition(struct type const* type);
+static void
 codegen_static_object(struct symbol const* symbol);
 static void
 codegen_static_function(struct symbol const* symbol, bool prototype);
@@ -464,6 +468,147 @@ appendch(char ch)
     assert(out != NULL);
 
     string_append(out, &ch, 1u);
+}
+
+static void
+codegen_type_declaration(struct type const* type)
+{
+    if (type->kind != TYPE_STRUCT) {
+        return;
+    }
+    if (type->size == 0 || type->size == SIZEOF_UNSIZED) {
+        return;
+    }
+    char const* const typename = mangle_type(type);
+    appendln("typedef struct %s %s; // %s", typename, typename, type->name);
+}
+
+static void
+codegen_type_definition(struct type const* type)
+{
+    switch (type->kind) {
+    case TYPE_ANY: /* fallthrough */
+    case TYPE_VOID: /* fallthrough */
+    case TYPE_BOOL: /* fallthrough */
+    case TYPE_BYTE: /* fallthrough */
+    case TYPE_U8: /* fallthrough */
+    case TYPE_S8: /* fallthrough */
+    case TYPE_U16: /* fallthrough */
+    case TYPE_S16: /* fallthrough */
+    case TYPE_U32: /* fallthrough */
+    case TYPE_S32: /* fallthrough */
+    case TYPE_U64: /* fallthrough */
+    case TYPE_S64: /* fallthrough */
+    case TYPE_USIZE: /* fallthrough */
+    case TYPE_SSIZE: /* fallthrough */
+    case TYPE_INTEGER: {
+        break;
+    }
+    case TYPE_FUNCTION: {
+        struct string* params = string_new(NULL, 0);
+        size_t params_written = 0;
+        sbuf(struct type const* const) parameter_types =
+            type->data.function.parameter_types;
+        for (size_t i = 0; i < sbuf_count(parameter_types); ++i) {
+            if (parameter_types[i]->size == 0) {
+                continue;
+            }
+            if (params_written != 0) {
+                string_append_cstr(params, ", ");
+            }
+            string_append_cstr(params, mangle_type(parameter_types[i]));
+            params_written += 1;
+        }
+        appendln(
+            "typedef %s (*%s)(%s); // %s",
+            mangle_type(type->data.function.return_type),
+            mangle_type(type),
+            string_count(params) != 0 ? string_start(params) : "void",
+            type->name);
+        string_del(params);
+        break;
+    }
+    case TYPE_POINTER: {
+        // If the base type of this pointer is unrepresentable as a standalone
+        // type in C, then we use `char*` so that dereferencing this type is
+        // valid. The Sunder type `*any` replaces traditional use of `void*`
+        // and `void const*` in C, and since the `any` type is unsized, this
+        // check will not mess with `*any` types.
+        if (type->data.pointer.base->size == 0) {
+            char const* const typename = mangle_type(type);
+            appendln("typedef char* %s; // %s", typename, type->name);
+            break;
+        }
+        char const* const basename = mangle_type(type->data.pointer.base);
+        char const* const typename = mangle_type(type);
+        appendln("typedef %s* %s; // %s", basename, typename, type->name);
+        break;
+    }
+    case TYPE_ARRAY: {
+        if (type->size == 0 || type->size == SIZEOF_UNSIZED) {
+            return;
+        }
+        char const* const basename = mangle_type(type->data.array.base);
+        char const* const typename = mangle_type(type);
+        appendln(
+            "typedef struct {%s elements[%" PRIu64 "];} %s; // %s",
+            basename,
+            type->data.array.count,
+            typename,
+            type->name);
+        break;
+    }
+    case TYPE_SLICE: {
+        struct type* const starttype = type_new_pointer(type->data.slice.base);
+        char const* const startname = mangle_type(starttype);
+        xalloc(starttype, XALLOC_FREE);
+        char const* const countname = mangle_type(context()->builtin.usize);
+        char const* const typename = mangle_type(type);
+
+        appendln(
+            "typedef struct {%s start; %s count;} %s; // %s",
+            startname,
+            countname,
+            typename,
+            type->name);
+        break;
+    }
+    case TYPE_STRUCT: {
+        if (type->size == 0 || type->size == SIZEOF_UNSIZED) {
+            return;
+        }
+        char const* const typename = mangle_type(type);
+        appendln("struct %s", typename);
+        appendli("{");
+        indent_incr();
+        sbuf(struct member_variable const) const mvars =
+            type->data.struct_.member_variables;
+        for (size_t i = 0; i < sbuf_count(mvars); ++i) {
+            if (mvars[i].type->size == 0
+                || mvars[i].type->size == SIZEOF_UNSIZED) {
+                continue;
+            }
+            appendli("%s %s;", mangle_type(mvars[i].type), mvars[i].name);
+        }
+        indent_decr();
+        appendli("};");
+        break;
+    }
+    }
+
+    if (type->size != 0 && type->size != SIZEOF_UNSIZED) {
+        char const* const typename = mangle_type(type);
+        appendln(
+            "_Static_assert(sizeof(%s) == %" PRId64 ", \"sizeof(%s)\");",
+            typename,
+            type->size,
+            type->name);
+        appendln(
+            "_Static_assert(_Alignof(%s) == %" PRId64 ", \"alignof(%s)\");",
+            typename,
+            type->align,
+            type->name);
+    }
 }
 
 static void
@@ -2470,146 +2615,15 @@ codegen_c(
 
     appendln("#include \"sys.h\"");
     appendch('\n');
-    // Forward-declare structs.
+    // Generate forward type declarations.
     for (size_t i = 0; i < sbuf_count(context()->types); ++i) {
         struct type const* const type = context()->types[i];
-        if (type->kind != TYPE_STRUCT) {
-            continue;
-        }
-        if (type->size == 0 || type->size == SIZEOF_UNSIZED) {
-            continue;
-        }
-        char const* const typename = mangle_type(type);
-        appendln("typedef struct %s %s; // %s", typename, typename, type->name);
+        codegen_type_declaration(type);
     }
-    // Generate composite type definitions.
+    // Generate type definitions.
     for (size_t i = 0; i < sbuf_count(context()->types); ++i) {
         struct type const* const type = context()->types[i];
-
-        switch (type->kind) {
-        case TYPE_ANY: /* fallthrough */
-        case TYPE_VOID: /* fallthrough */
-        case TYPE_BOOL: /* fallthrough */
-        case TYPE_BYTE: /* fallthrough */
-        case TYPE_U8: /* fallthrough */
-        case TYPE_S8: /* fallthrough */
-        case TYPE_U16: /* fallthrough */
-        case TYPE_S16: /* fallthrough */
-        case TYPE_U32: /* fallthrough */
-        case TYPE_S32: /* fallthrough */
-        case TYPE_U64: /* fallthrough */
-        case TYPE_S64: /* fallthrough */
-        case TYPE_USIZE: /* fallthrough */
-        case TYPE_SSIZE: /* fallthrough */
-        case TYPE_INTEGER: {
-            break;
-        }
-        case TYPE_FUNCTION: {
-            struct string* params = string_new(NULL, 0);
-            size_t params_written = 0;
-            sbuf(struct type const* const) parameter_types =
-                type->data.function.parameter_types;
-            for (size_t i = 0; i < sbuf_count(parameter_types); ++i) {
-                if (parameter_types[i]->size == 0) {
-                    continue;
-                }
-                if (params_written != 0) {
-                    string_append_cstr(params, ", ");
-                }
-                string_append_cstr(params, mangle_type(parameter_types[i]));
-                params_written += 1;
-            }
-            appendln(
-                "typedef %s (*%s)(%s); // %s",
-                mangle_type(type->data.function.return_type),
-                mangle_type(type),
-                string_count(params) != 0 ? string_start(params) : "void",
-                type->name);
-            string_del(params);
-            break;
-        }
-        case TYPE_POINTER: {
-            // If the base type of this pointer is unrepresentable as a
-            // standalone type in C, then we use `char*` so that dereferencing
-            // this type is valid. The Sunder type `*any` replaces traditional
-            // use of `void*` and `void const*` in C, and since the `any` type
-            // is unsized, this check will not mess with `*any` types.
-            if (type->data.pointer.base->size == 0) {
-                char const* const typename = mangle_type(type);
-                appendln("typedef char* %s; // %s", typename, type->name);
-                break;
-            }
-            char const* const basename = mangle_type(type->data.pointer.base);
-            char const* const typename = mangle_type(type);
-            appendln("typedef %s* %s; // %s", basename, typename, type->name);
-            break;
-        }
-        case TYPE_ARRAY: {
-            if (type->size == 0 || type->size == SIZEOF_UNSIZED) {
-                continue;
-            }
-            char const* const basename = mangle_type(type->data.array.base);
-            char const* const typename = mangle_type(type);
-            appendln(
-                "typedef struct {%s elements[%" PRIu64 "];} %s; // %s",
-                basename,
-                type->data.array.count,
-                typename,
-                type->name);
-            break;
-        }
-        case TYPE_SLICE: {
-            struct type* const starttype =
-                type_new_pointer(type->data.slice.base);
-            char const* const startname = mangle_type(starttype);
-            xalloc(starttype, XALLOC_FREE);
-            char const* const countname = mangle_type(context()->builtin.usize);
-            char const* const typename = mangle_type(type);
-
-            appendln(
-                "typedef struct {%s start; %s count;} %s; // %s",
-                startname,
-                countname,
-                typename,
-                type->name);
-            break;
-        }
-        case TYPE_STRUCT: {
-            if (type->size == 0 || type->size == SIZEOF_UNSIZED) {
-                continue;
-            }
-            char const* const typename = mangle_type(type);
-            appendln("struct %s", typename);
-            appendli("{");
-            indent_incr();
-            sbuf(struct member_variable const) const mvars =
-                type->data.struct_.member_variables;
-            for (size_t i = 0; i < sbuf_count(mvars); ++i) {
-                if (mvars[i].type->size == 0
-                    || mvars[i].type->size == SIZEOF_UNSIZED) {
-                    continue;
-                }
-                appendli("%s %s;", mangle_type(mvars[i].type), mvars[i].name);
-            }
-            indent_decr();
-            appendli("};");
-            break;
-        }
-        }
-
-        if (type->size != 0 && type->size != SIZEOF_UNSIZED) {
-            char const* const typename = mangle_type(type);
-            appendln(
-                "_Static_assert(sizeof(%s) == %" PRId64 ", \"sizeof(%s)\");",
-                typename,
-                type->size,
-                type->name);
-            appendln(
-                "_Static_assert(_Alignof(%s) == %" PRId64 ", \"alignof(%s)\");",
-                typename,
-                type->align,
-                type->name);
-        }
+        codegen_type_definition(type);
     }
     appendch('\n');
     // Generate static function prototypes.
@@ -2625,8 +2639,9 @@ codegen_c(
     for (size_t i = 0; i < sbuf_count(context()->static_symbols); ++i) {
         struct symbol const* const symbol = context()->static_symbols[i];
         assert(symbol_xget_address(symbol)->kind == ADDRESS_STATIC);
-        if (symbol->kind != SYMBOL_VARIABLE
-            && symbol->kind != SYMBOL_CONSTANT) {
+        bool const is_static_object =
+            symbol->kind == SYMBOL_VARIABLE || symbol->kind == SYMBOL_CONSTANT;
+        if (!is_static_object) {
             continue;
         }
         codegen_static_object(symbol);
@@ -2645,15 +2660,13 @@ codegen_c(
     appendln("main(int argc, char** argv, char** envp)");
     appendln("{");
     indent_incr();
-    appendli("%s = argc;", mangle("sys.argc"));
-    appendli("%s = (void*)argv;", mangle("sys.argv"));
-    appendli("%s = (void*)envp;", mangle("sys.envp"));
+    appendli("sys_argc = argc;");
+    appendli("sys_argv = argv;");
+    appendli("sys_envp = envp;");
     appendli("%s();", mangle_name(context()->interned.main));
     appendli("return 0;");
     indent_decr();
     appendln("}");
-
-    //printf("%s", string_start(out));
 
     int err = 0;
     if ((err = file_write_all(
