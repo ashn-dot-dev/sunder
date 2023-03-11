@@ -300,23 +300,6 @@ sys_exit(signed int error_code)
     _exit(error_code);
 }
 
-struct __sunder_sys_dirent;
-static __sunder_ssize
-sys_getdents(
-    signed int fd, struct __sunder_sys_dirent* dirent, unsigned int count)
-{
-#ifdef SYS_getdents
-    long result = syscall(SYS_getdents, fd, dirent, count);
-    if (result == -1) {
-        return -errno;
-    }
-    return result;
-#else
-    // The getdents system call is not supported.
-    return -EBADF;
-#endif
-}
-
 struct __sunder_sys_dirent64;
 static __sunder_ssize
 sys_getdents64(
