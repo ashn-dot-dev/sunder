@@ -15,6 +15,7 @@
 #include <sys/types.h> /* mode_t, off_t, size_t, ssize_t */
 #include <unistd.h> /* syscall, close, _exit, lseek, read, rmdir, write, unlink */
 
+// clang-format off
 typedef void               __sunder_void;
 typedef _Bool              __sunder_bool;
 typedef          char      __sunder_byte;
@@ -28,8 +29,9 @@ typedef unsigned long long __sunder_u64;
 typedef   signed long long __sunder_s64;
 typedef unsigned long      __sunder_usize;
 typedef   signed long      __sunder_ssize;
+// clang-format on
 
-#define __sunder_true  ((_Bool)1)
+#define __sunder_true ((_Bool)1)
 #define __sunder_false ((_Bool)0)
 
 static inline _Noreturn void
@@ -56,6 +58,146 @@ __sunder___fatal_index_out_of_bounds(void)
 {
     __sunder___fatal("index out-of-bounds");
 }
+
+#define __SUNDER_ADD_DEFINITION(T)                                             \
+    static T __sunder___add_##T(T lhs, T rhs)                                  \
+    {                                                                          \
+        T result;                                                              \
+        if (__builtin_add_overflow(lhs, rhs, &result)) {                       \
+            __sunder___fatal_integer_out_of_range();                           \
+        }                                                                      \
+        return result;                                                         \
+    }
+
+__SUNDER_ADD_DEFINITION(__sunder_u8)
+__SUNDER_ADD_DEFINITION(__sunder_s8)
+__SUNDER_ADD_DEFINITION(__sunder_u16)
+__SUNDER_ADD_DEFINITION(__sunder_s16)
+__SUNDER_ADD_DEFINITION(__sunder_u32)
+__SUNDER_ADD_DEFINITION(__sunder_s32)
+__SUNDER_ADD_DEFINITION(__sunder_u64)
+__SUNDER_ADD_DEFINITION(__sunder_s64)
+__SUNDER_ADD_DEFINITION(__sunder_usize)
+__SUNDER_ADD_DEFINITION(__sunder_ssize)
+
+#define __SUNDER_ADD_WRAPPING_DEFINITION(T)                                    \
+    static T __sunder___add_wrapping_##T(T lhs, T rhs)                         \
+    {                                                                          \
+        T result;                                                              \
+        __builtin_add_overflow(lhs, rhs, &result);                             \
+        return result;                                                         \
+    }
+
+__SUNDER_ADD_WRAPPING_DEFINITION(__sunder_u8)
+__SUNDER_ADD_WRAPPING_DEFINITION(__sunder_s8)
+__SUNDER_ADD_WRAPPING_DEFINITION(__sunder_u16)
+__SUNDER_ADD_WRAPPING_DEFINITION(__sunder_s16)
+__SUNDER_ADD_WRAPPING_DEFINITION(__sunder_u32)
+__SUNDER_ADD_WRAPPING_DEFINITION(__sunder_s32)
+__SUNDER_ADD_WRAPPING_DEFINITION(__sunder_u64)
+__SUNDER_ADD_WRAPPING_DEFINITION(__sunder_s64)
+__SUNDER_ADD_WRAPPING_DEFINITION(__sunder_usize)
+__SUNDER_ADD_WRAPPING_DEFINITION(__sunder_ssize)
+
+#define __SUNDER_SUB_DEFINITION(T)                                             \
+    static T __sunder___sub_##T(T lhs, T rhs)                                  \
+    {                                                                          \
+        T result;                                                              \
+        if (__builtin_sub_overflow(lhs, rhs, &result)) {                       \
+            __sunder___fatal_integer_out_of_range();                           \
+        }                                                                      \
+        return result;                                                         \
+    }
+
+__SUNDER_SUB_DEFINITION(__sunder_u8)
+__SUNDER_SUB_DEFINITION(__sunder_s8)
+__SUNDER_SUB_DEFINITION(__sunder_u16)
+__SUNDER_SUB_DEFINITION(__sunder_s16)
+__SUNDER_SUB_DEFINITION(__sunder_u32)
+__SUNDER_SUB_DEFINITION(__sunder_s32)
+__SUNDER_SUB_DEFINITION(__sunder_u64)
+__SUNDER_SUB_DEFINITION(__sunder_s64)
+__SUNDER_SUB_DEFINITION(__sunder_usize)
+__SUNDER_SUB_DEFINITION(__sunder_ssize)
+
+#define __SUNDER_SUB_WRAPPING_DEFINITION(T)                                    \
+    static T __sunder___sub_wrapping_##T(T lhs, T rhs)                         \
+    {                                                                          \
+        T result;                                                              \
+        __builtin_sub_overflow(lhs, rhs, &result);                             \
+        return result;                                                         \
+    }
+
+__SUNDER_SUB_WRAPPING_DEFINITION(__sunder_u8)
+__SUNDER_SUB_WRAPPING_DEFINITION(__sunder_s8)
+__SUNDER_SUB_WRAPPING_DEFINITION(__sunder_u16)
+__SUNDER_SUB_WRAPPING_DEFINITION(__sunder_s16)
+__SUNDER_SUB_WRAPPING_DEFINITION(__sunder_u32)
+__SUNDER_SUB_WRAPPING_DEFINITION(__sunder_s32)
+__SUNDER_SUB_WRAPPING_DEFINITION(__sunder_u64)
+__SUNDER_SUB_WRAPPING_DEFINITION(__sunder_s64)
+__SUNDER_SUB_WRAPPING_DEFINITION(__sunder_usize)
+__SUNDER_SUB_WRAPPING_DEFINITION(__sunder_ssize)
+
+#define __SUNDER_MUL_DEFINITION(T)                                             \
+    static T __sunder___mul_##T(T lhs, T rhs)                                  \
+    {                                                                          \
+        T result;                                                              \
+        if (__builtin_mul_overflow(lhs, rhs, &result)) {                       \
+            __sunder___fatal_integer_out_of_range();                           \
+        }                                                                      \
+        return result;                                                         \
+    }
+
+__SUNDER_MUL_DEFINITION(__sunder_u8)
+__SUNDER_MUL_DEFINITION(__sunder_s8)
+__SUNDER_MUL_DEFINITION(__sunder_u16)
+__SUNDER_MUL_DEFINITION(__sunder_s16)
+__SUNDER_MUL_DEFINITION(__sunder_u32)
+__SUNDER_MUL_DEFINITION(__sunder_s32)
+__SUNDER_MUL_DEFINITION(__sunder_u64)
+__SUNDER_MUL_DEFINITION(__sunder_s64)
+__SUNDER_MUL_DEFINITION(__sunder_usize)
+__SUNDER_MUL_DEFINITION(__sunder_ssize)
+
+#define __SUNDER_MUL_WRAPPING_DEFINITION(T)                                    \
+    static T __sunder___mul_wrapping_##T(T lhs, T rhs)                         \
+    {                                                                          \
+        T result;                                                              \
+        __builtin_mul_overflow(lhs, rhs, &result);                             \
+        return result;                                                         \
+    }
+
+__SUNDER_MUL_WRAPPING_DEFINITION(__sunder_u8)
+__SUNDER_MUL_WRAPPING_DEFINITION(__sunder_s8)
+__SUNDER_MUL_WRAPPING_DEFINITION(__sunder_u16)
+__SUNDER_MUL_WRAPPING_DEFINITION(__sunder_s16)
+__SUNDER_MUL_WRAPPING_DEFINITION(__sunder_u32)
+__SUNDER_MUL_WRAPPING_DEFINITION(__sunder_s32)
+__SUNDER_MUL_WRAPPING_DEFINITION(__sunder_u64)
+__SUNDER_MUL_WRAPPING_DEFINITION(__sunder_s64)
+__SUNDER_MUL_WRAPPING_DEFINITION(__sunder_usize)
+__SUNDER_MUL_WRAPPING_DEFINITION(__sunder_ssize)
+
+#define __SUNDER_DIV_DEFINITION(T)                                             \
+    static T __sunder___div_##T(T lhs, T rhs)                                  \
+    {                                                                          \
+        if (rhs == 0) {                                                        \
+            __sunder___fatal_integer_divide_by_zero();                         \
+        }                                                                      \
+        return lhs / rhs;                                                      \
+    }
+
+__SUNDER_DIV_DEFINITION(__sunder_u8)
+__SUNDER_DIV_DEFINITION(__sunder_s8)
+__SUNDER_DIV_DEFINITION(__sunder_u16)
+__SUNDER_DIV_DEFINITION(__sunder_s16)
+__SUNDER_DIV_DEFINITION(__sunder_u32)
+__SUNDER_DIV_DEFINITION(__sunder_s32)
+__SUNDER_DIV_DEFINITION(__sunder_u64)
+__SUNDER_DIV_DEFINITION(__sunder_s64)
+__SUNDER_DIV_DEFINITION(__sunder_usize)
+__SUNDER_DIV_DEFINITION(__sunder_ssize)
 
 static __sunder_ssize
 sys_read(signed int fd, __sunder_byte* buf, size_t count)
@@ -108,7 +250,13 @@ sys_lseek(signed int fd, off_t offset, unsigned int whence)
 }
 
 static __sunder_ssize
-sys_mmap(void* addr, size_t len, signed int prot, signed int flags, signed int fd, off_t off)
+sys_mmap(
+    void* addr,
+    size_t len,
+    signed int prot,
+    signed int flags,
+    signed int fd,
+    off_t off)
 {
     void* result = mmap(addr, len, prot, flags, fd, off);
     if (result == (void*)-1) {
@@ -135,7 +283,8 @@ sys_exit(signed int error_code)
 
 struct __sunder_sys_dirent;
 static __sunder_ssize
-sys_getdents(signed int fd, struct __sunder_sys_dirent* dirent, unsigned int count)
+sys_getdents(
+    signed int fd, struct __sunder_sys_dirent* dirent, unsigned int count)
 {
 #ifdef SYS_getdents
     long result = syscall(SYS_getdents, fd, dirent, count);
@@ -151,7 +300,8 @@ sys_getdents(signed int fd, struct __sunder_sys_dirent* dirent, unsigned int cou
 
 struct __sunder_sys_dirent64;
 static __sunder_ssize
-sys_getdents64(signed int fd, struct __sunder_sys_dirent64* dirent, unsigned int count)
+sys_getdents64(
+    signed int fd, struct __sunder_sys_dirent64* dirent, unsigned int count)
 {
     ssize_t result = getdents64(fd, dirent, count);
     if (result == -1) {
@@ -194,39 +344,42 @@ __sunder_usize sys_argc;
 __sunder_byte** sys_argv;
 __sunder_byte** sys_envp;
 
-static char const sys_dump_bytes_lookup_table[256u*2u] = {
-'0', '0', '0', '1', '0', '2', '0', '3', '0', '4', '0', '5', '0', '6', '0', '7',
-'0', '8', '0', '9', '0', 'A', '0', 'B', '0', 'C', '0', 'D', '0', 'E', '0', 'F',
-'1', '0', '1', '1', '1', '2', '1', '3', '1', '4', '1', '5', '1', '6', '1', '7',
-'1', '8', '1', '9', '1', 'A', '1', 'B', '1', 'C', '1', 'D', '1', 'E', '1', 'F',
-'2', '0', '2', '1', '2', '2', '2', '3', '2', '4', '2', '5', '2', '6', '2', '7',
-'2', '8', '2', '9', '2', 'A', '2', 'B', '2', 'C', '2', 'D', '2', 'E', '2', 'F',
-'3', '0', '3', '1', '3', '2', '3', '3', '3', '4', '3', '5', '3', '6', '3', '7',
-'3', '8', '3', '9', '3', 'A', '3', 'B', '3', 'C', '3', 'D', '3', 'E', '3', 'F',
-'4', '0', '4', '1', '4', '2', '4', '3', '4', '4', '4', '5', '4', '6', '4', '7',
-'4', '8', '4', '9', '4', 'A', '4', 'B', '4', 'C', '4', 'D', '4', 'E', '4', 'F',
-'5', '0', '5', '1', '5', '2', '5', '3', '5', '4', '5', '5', '5', '6', '5', '7',
-'5', '8', '5', '9', '5', 'A', '5', 'B', '5', 'C', '5', 'D', '5', 'E', '5', 'F',
-'6', '0', '6', '1', '6', '2', '6', '3', '6', '4', '6', '5', '6', '6', '6', '7',
-'6', '8', '6', '9', '6', 'A', '6', 'B', '6', 'C', '6', 'D', '6', 'E', '6', 'F',
-'7', '0', '7', '1', '7', '2', '7', '3', '7', '4', '7', '5', '7', '6', '7', '7',
-'7', '8', '7', '9', '7', 'A', '7', 'B', '7', 'C', '7', 'D', '7', 'E', '7', 'F',
-'8', '0', '8', '1', '8', '2', '8', '3', '8', '4', '8', '5', '8', '6', '8', '7',
-'8', '8', '8', '9', '8', 'A', '8', 'B', '8', 'C', '8', 'D', '8', 'E', '8', 'F',
-'9', '0', '9', '1', '9', '2', '9', '3', '9', '4', '9', '5', '9', '6', '9', '7',
-'9', '8', '9', '9', '9', 'A', '9', 'B', '9', 'C', '9', 'D', '9', 'E', '9', 'F',
-'A', '0', 'A', '1', 'A', '2', 'A', '3', 'A', '4', 'A', '5', 'A', '6', 'A', '7',
-'A', '8', 'A', '9', 'A', 'A', 'A', 'B', 'A', 'C', 'A', 'D', 'A', 'E', 'A', 'F',
-'B', '0', 'B', '1', 'B', '2', 'B', '3', 'B', '4', 'B', '5', 'B', '6', 'B', '7',
-'B', '8', 'B', '9', 'B', 'A', 'B', 'B', 'B', 'C', 'B', 'D', 'B', 'E', 'B', 'F',
-'C', '0', 'C', '1', 'C', '2', 'C', '3', 'C', '4', 'C', '5', 'C', '6', 'C', '7',
-'C', '8', 'C', '9', 'C', 'A', 'C', 'B', 'C', 'C', 'C', 'D', 'C', 'E', 'C', 'F',
-'D', '0', 'D', '1', 'D', '2', 'D', '3', 'D', '4', 'D', '5', 'D', '6', 'D', '7',
-'D', '8', 'D', '9', 'D', 'A', 'D', 'B', 'D', 'C', 'D', 'D', 'D', 'E', 'D', 'F',
-'E', '0', 'E', '1', 'E', '2', 'E', '3', 'E', '4', 'E', '5', 'E', '6', 'E', '7',
-'E', '8', 'E', '9', 'E', 'A', 'E', 'B', 'E', 'C', 'E', 'D', 'E', 'E', 'E', 'F',
-'F', '0', 'F', '1', 'F', '2', 'F', '3', 'F', '4', 'F', '5', 'F', '6', 'F', '7',
-'F', '8', 'F', '9', 'F', 'A', 'F', 'B', 'F', 'C', 'F', 'D', 'F', 'E', 'F', 'F',
+static char const sys_dump_bytes_lookup_table[256u * 2u] = {
+    '0', '0', '0', '1', '0', '2', '0', '3', '0', '4', '0', '5', '0', '6', '0',
+    '7', '0', '8', '0', '9', '0', 'A', '0', 'B', '0', 'C', '0', 'D', '0', 'E',
+    '0', 'F', '1', '0', '1', '1', '1', '2', '1', '3', '1', '4', '1', '5', '1',
+    '6', '1', '7', '1', '8', '1', '9', '1', 'A', '1', 'B', '1', 'C', '1', 'D',
+    '1', 'E', '1', 'F', '2', '0', '2', '1', '2', '2', '2', '3', '2', '4', '2',
+    '5', '2', '6', '2', '7', '2', '8', '2', '9', '2', 'A', '2', 'B', '2', 'C',
+    '2', 'D', '2', 'E', '2', 'F', '3', '0', '3', '1', '3', '2', '3', '3', '3',
+    '4', '3', '5', '3', '6', '3', '7', '3', '8', '3', '9', '3', 'A', '3', 'B',
+    '3', 'C', '3', 'D', '3', 'E', '3', 'F', '4', '0', '4', '1', '4', '2', '4',
+    '3', '4', '4', '4', '5', '4', '6', '4', '7', '4', '8', '4', '9', '4', 'A',
+    '4', 'B', '4', 'C', '4', 'D', '4', 'E', '4', 'F', '5', '0', '5', '1', '5',
+    '2', '5', '3', '5', '4', '5', '5', '5', '6', '5', '7', '5', '8', '5', '9',
+    '5', 'A', '5', 'B', '5', 'C', '5', 'D', '5', 'E', '5', 'F', '6', '0', '6',
+    '1', '6', '2', '6', '3', '6', '4', '6', '5', '6', '6', '6', '7', '6', '8',
+    '6', '9', '6', 'A', '6', 'B', '6', 'C', '6', 'D', '6', 'E', '6', 'F', '7',
+    '0', '7', '1', '7', '2', '7', '3', '7', '4', '7', '5', '7', '6', '7', '7',
+    '7', '8', '7', '9', '7', 'A', '7', 'B', '7', 'C', '7', 'D', '7', 'E', '7',
+    'F', '8', '0', '8', '1', '8', '2', '8', '3', '8', '4', '8', '5', '8', '6',
+    '8', '7', '8', '8', '8', '9', '8', 'A', '8', 'B', '8', 'C', '8', 'D', '8',
+    'E', '8', 'F', '9', '0', '9', '1', '9', '2', '9', '3', '9', '4', '9', '5',
+    '9', '6', '9', '7', '9', '8', '9', '9', '9', 'A', '9', 'B', '9', 'C', '9',
+    'D', '9', 'E', '9', 'F', 'A', '0', 'A', '1', 'A', '2', 'A', '3', 'A', '4',
+    'A', '5', 'A', '6', 'A', '7', 'A', '8', 'A', '9', 'A', 'A', 'A', 'B', 'A',
+    'C', 'A', 'D', 'A', 'E', 'A', 'F', 'B', '0', 'B', '1', 'B', '2', 'B', '3',
+    'B', '4', 'B', '5', 'B', '6', 'B', '7', 'B', '8', 'B', '9', 'B', 'A', 'B',
+    'B', 'B', 'C', 'B', 'D', 'B', 'E', 'B', 'F', 'C', '0', 'C', '1', 'C', '2',
+    'C', '3', 'C', '4', 'C', '5', 'C', '6', 'C', '7', 'C', '8', 'C', '9', 'C',
+    'A', 'C', 'B', 'C', 'C', 'C', 'D', 'C', 'E', 'C', 'F', 'D', '0', 'D', '1',
+    'D', '2', 'D', '3', 'D', '4', 'D', '5', 'D', '6', 'D', '7', 'D', '8', 'D',
+    '9', 'D', 'A', 'D', 'B', 'D', 'C', 'D', 'D', 'D', 'E', 'D', 'F', 'E', '0',
+    'E', '1', 'E', '2', 'E', '3', 'E', '4', 'E', '5', 'E', '6', 'E', '7', 'E',
+    '8', 'E', '9', 'E', 'A', 'E', 'B', 'E', 'C', 'E', 'D', 'E', 'E', 'E', 'F',
+    'F', '0', 'F', '1', 'F', '2', 'F', '3', 'F', '4', 'F', '5', 'F', '6', 'F',
+    '7', 'F', '8', 'F', '9', 'F', 'A', 'F', 'B', 'F', 'C', 'F', 'D', 'F', 'E',
+    'F', 'F',
 };
 
 __sunder_void

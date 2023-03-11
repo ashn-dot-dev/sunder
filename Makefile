@@ -74,7 +74,8 @@ install: build
 	cp env "$(SUNDER_HOME)"
 
 format:
-	clang-format -i *.h *.c
+	clang-format -i $$(find . -type f -name '*.h')
+	clang-format -i $$(find . -type f -name '*.c')
 
 clean:
 	unlink lib/sys/sys.sunder 2>/dev/null || true

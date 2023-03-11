@@ -2200,14 +2200,11 @@ strgen_rvalue_binary_add(struct expr const* expr)
     assert(expr->data.binary.lhs->type == expr->data.binary.rhs->type);
 
     return intern_fmt(
-        "({%s %s; if (__builtin_add_overflow(%s, %s, &%s)){%s();}; %s;})",
+        "%s_%s(%s, %s)",
+        mangle_name("__add"),
         mangle_type(expr->data.binary.lhs->type),
-        mangle_name("__result"),
         strgen_rvalue(expr->data.binary.lhs),
-        strgen_rvalue(expr->data.binary.rhs),
-        mangle_name("__result"),
-        mangle_name("__fatal_integer_out_of_range"),
-        mangle_name("__result"));
+        strgen_rvalue(expr->data.binary.rhs));
 }
 
 static char const*
@@ -2219,13 +2216,11 @@ strgen_rvalue_binary_add_wrapping(struct expr const* expr)
     assert(expr->data.binary.lhs->type == expr->data.binary.rhs->type);
 
     return intern_fmt(
-        "({%s %s; __builtin_add_overflow(%s, %s, &%s); %s;})",
+        "%s_%s(%s, %s)",
+        mangle_name("__add_wrapping"),
         mangle_type(expr->data.binary.lhs->type),
-        mangle_name("__result"),
         strgen_rvalue(expr->data.binary.lhs),
-        strgen_rvalue(expr->data.binary.rhs),
-        mangle_name("__result"),
-        mangle_name("__result"));
+        strgen_rvalue(expr->data.binary.rhs));
 }
 
 static char const*
@@ -2237,14 +2232,11 @@ strgen_rvalue_binary_sub(struct expr const* expr)
     assert(expr->data.binary.lhs->type == expr->data.binary.rhs->type);
 
     return intern_fmt(
-        "({%s %s; if (__builtin_sub_overflow(%s, %s, &%s)){%s();}; %s;})",
+        "%s_%s(%s, %s)",
+        mangle_name("__sub"),
         mangle_type(expr->data.binary.lhs->type),
-        mangle_name("__result"),
         strgen_rvalue(expr->data.binary.lhs),
-        strgen_rvalue(expr->data.binary.rhs),
-        mangle_name("__result"),
-        mangle_name("__fatal_integer_out_of_range"),
-        mangle_name("__result"));
+        strgen_rvalue(expr->data.binary.rhs));
 }
 
 static char const*
@@ -2256,13 +2248,11 @@ strgen_rvalue_binary_sub_wrapping(struct expr const* expr)
     assert(expr->data.binary.lhs->type == expr->data.binary.rhs->type);
 
     return intern_fmt(
-        "({%s %s; __builtin_sub_overflow(%s, %s, &%s); %s;})",
+        "%s_%s(%s, %s)",
+        mangle_name("__sub_wrapping"),
         mangle_type(expr->data.binary.lhs->type),
-        mangle_name("__result"),
         strgen_rvalue(expr->data.binary.lhs),
-        strgen_rvalue(expr->data.binary.rhs),
-        mangle_name("__result"),
-        mangle_name("__result"));
+        strgen_rvalue(expr->data.binary.rhs));
 }
 
 static char const*
@@ -2274,14 +2264,11 @@ strgen_rvalue_binary_mul(struct expr const* expr)
     assert(expr->data.binary.lhs->type == expr->data.binary.rhs->type);
 
     return intern_fmt(
-        "({%s %s; if (__builtin_mul_overflow(%s, %s, &%s)){%s();}; %s;})",
+        "%s_%s(%s, %s)",
+        mangle_name("__mul"),
         mangle_type(expr->data.binary.lhs->type),
-        mangle_name("__result"),
         strgen_rvalue(expr->data.binary.lhs),
-        strgen_rvalue(expr->data.binary.rhs),
-        mangle_name("__result"),
-        mangle_name("__fatal_integer_out_of_range"),
-        mangle_name("__result"));
+        strgen_rvalue(expr->data.binary.rhs));
 }
 
 static char const*
@@ -2293,13 +2280,11 @@ strgen_rvalue_binary_mul_wrapping(struct expr const* expr)
     assert(expr->data.binary.lhs->type == expr->data.binary.rhs->type);
 
     return intern_fmt(
-        "({%s %s; __builtin_mul_overflow(%s, %s, &%s); %s;})",
+        "%s_%s(%s, %s)",
+        mangle_name("__mul_wrapping"),
         mangle_type(expr->data.binary.lhs->type),
-        mangle_name("__result"),
         strgen_rvalue(expr->data.binary.lhs),
-        strgen_rvalue(expr->data.binary.rhs),
-        mangle_name("__result"),
-        mangle_name("__result"));
+        strgen_rvalue(expr->data.binary.rhs));
 }
 
 static char const*
