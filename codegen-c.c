@@ -2296,17 +2296,11 @@ strgen_rvalue_binary_div(struct expr const* expr)
     assert(expr->data.binary.lhs->type == expr->data.binary.rhs->type);
 
     return intern_fmt(
-        "({%s %s = %s; %s %s = %s; if (%s == 0){%s();}; %s / %s;})",
+        "%s_%s(%s, %s)",
+        mangle_name("__div"),
         mangle_type(expr->data.binary.lhs->type),
-        mangle_name("__lhs"),
         strgen_rvalue(expr->data.binary.lhs),
-        mangle_type(expr->data.binary.rhs->type),
-        mangle_name("__rhs"),
-        strgen_rvalue(expr->data.binary.rhs),
-        mangle_name("__rhs"),
-        mangle_name("__fatal_integer_divide_by_zero"),
-        mangle_name("__lhs"),
-        mangle_name("__rhs"));
+        strgen_rvalue(expr->data.binary.rhs));
 }
 
 static char const*

@@ -7,7 +7,6 @@
 #include <limits.h> /* LLONG_MIN */
 #include <stdint.h> /* uintptr_t */
 #include <stdio.h> /* fprintf */
-#include <stdlib.h> /* exit */
 #include <string.h> /* memset */
 #include <sys/mman.h> /* mmap, munmap */
 #include <sys/stat.h> /* mkdir */
@@ -38,7 +37,7 @@ static inline _Noreturn void
 __sunder___fatal(char const* message)
 {
     fprintf(stderr, "fatal: %s\n", message);
-    exit(1);
+    _exit(1);
 }
 
 static _Noreturn void
@@ -198,6 +197,26 @@ __SUNDER_DIV_DEFINITION(__sunder_u64)
 __SUNDER_DIV_DEFINITION(__sunder_s64)
 __SUNDER_DIV_DEFINITION(__sunder_usize)
 __SUNDER_DIV_DEFINITION(__sunder_ssize)
+
+#define __SUNDER_REM_DEFINITION(T)                                             \
+    static T __sunder___rem_##T(T lhs, T rhs)                                  \
+    {                                                                          \
+        if (rhs == 0) {                                                        \
+            __sunder___fatal_integer_divide_by_zero();                         \
+        }                                                                      \
+        return lhs % rhs;                                                      \
+    }
+
+__SUNDER_REM_DEFINITION(__sunder_u8)
+__SUNDER_REM_DEFINITION(__sunder_s8)
+__SUNDER_REM_DEFINITION(__sunder_u16)
+__SUNDER_REM_DEFINITION(__sunder_s16)
+__SUNDER_REM_DEFINITION(__sunder_u32)
+__SUNDER_REM_DEFINITION(__sunder_s32)
+__SUNDER_REM_DEFINITION(__sunder_u64)
+__SUNDER_REM_DEFINITION(__sunder_s64)
+__SUNDER_REM_DEFINITION(__sunder_usize)
+__SUNDER_REM_DEFINITION(__sunder_ssize)
 
 static __sunder_ssize
 sys_read(signed int fd, __sunder_byte* buf, size_t count)
