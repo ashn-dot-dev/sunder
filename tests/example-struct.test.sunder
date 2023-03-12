@@ -94,11 +94,18 @@ struct baz {
 }
 let baz_a: baz = (:baz){.value_a = 0xAA, .value_b = 0xBB};
 
-struct zero_sized_member_offsets {
-    var w: void; # zero sized
+struct zero_sized_member_offsets_a {
+    var w: void; # zero-sized
     var x: s32;
-    var y: [0]u8;
+    var y: [0]u8; # zero-sized
     var z: u64;
+}
+
+struct zero_sized_member_offsets_b {
+    var w: s32;
+    var x: void; # zero-sized
+    var y: u64;
+    var z: [0]u8; # zero-sized
 }
 
 func main() void {
@@ -179,13 +186,20 @@ func main() void {
 
     # Check that a pointer to the zero-sized members within a struct will
     # produce a pointer that still points within the struct instance.
-    var object: zero_sized_member_offsets = uninit;
+    var object: zero_sized_member_offsets_a = uninit;
     sys::dump[[bool]](sizeof(typeof(object.w)) == 0);
     sys::dump[[bool]](sizeof(typeof(object.x)) != 0);
     sys::dump[[bool]]((:usize)&object.w == (:usize)&object.x);
     sys::dump[[bool]](sizeof(typeof(object.y)) == 0);
     sys::dump[[bool]](sizeof(typeof(object.z)) != 0);
     sys::dump[[bool]]((:usize)&object.y >  (:usize)&object.x);
+    sys::dump[[bool]]((:usize)&object.y <= (:usize)&object.z);
+    var object: zero_sized_member_offsets_b = uninit;
+    sys::dump[[bool]](sizeof(typeof(object.w)) != 0);
+    sys::dump[[bool]](sizeof(typeof(object.x)) == 0);
+    sys::dump[[bool]]((:usize)&object.w <= (:usize)&object.x);
+    sys::dump[[bool]](sizeof(typeof(object.y)) != 0);
+    sys::dump[[bool]](sizeof(typeof(object.z)) == 0);
     sys::dump[[bool]]((:usize)&object.y <= (:usize)&object.z);
 }
 
@@ -219,6 +233,12 @@ func main() void {
 # E3
 # A9 01
 # A9 01
+# 01
+# 01
+# 01
+# 01
+# 01
+# 01
 # 01
 # 01
 # 01
