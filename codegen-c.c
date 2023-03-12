@@ -1570,6 +1570,9 @@ strgen_rvalue_access_index(struct expr const* expr)
 
     bool const lhs_is_zero_sized = expr->data.access_index.lhs->type->size == 0;
 
+    // TODO: Use uintptr_t arithmetic for indexing to avoid UB when performing
+    // pointer arithmetic on a NULL pointer.
+
     if (expr->data.access_index.lhs->type->kind == TYPE_ARRAY) {
         char const* const lhs_type = lhs_is_zero_sized
             ? "int"
@@ -1640,9 +1643,8 @@ strgen_rvalue_access_slice(struct expr const* expr)
     uint64_t const base_size = expr->type->data.slice.base->size;
 
     // According to the C standard, performing pointer arithmetic on a NULL
-    // pointer has undefined behavior, since a NULL pointer does not point
-    // to a valid object. Pointer addition is manually performed with
-    // uintptr_t to avoid this undefined behavior.
+    // pointer has undefined behavior. Pointer addition is manually performed
+    // with uintptr_t to avoid this undefined behavior.
 
     if (expr->data.access_slice.lhs->type->kind == TYPE_ARRAY) {
         char const* start = NULL;
@@ -2407,6 +2409,9 @@ strgen_lvalue_access_index(struct expr const* expr)
     assert(expr->kind == EXPR_ACCESS_INDEX);
 
     bool const lhs_is_zero_sized = expr->data.access_index.lhs->type->size == 0;
+
+    // TODO: Use uintptr_t arithmetic for indexing to avoid UB when performing
+    // pointer arithmetic on a NULL pointer.
 
     if (expr->data.access_index.lhs->type->kind == TYPE_ARRAY) {
         char const* const lhs_type = lhs_is_zero_sized
