@@ -1299,7 +1299,7 @@ strgen_rvalue_symbol(struct expr const* expr)
     assert(expr->kind == EXPR_SYMBOL);
 
     if (expr->type->size == 0) {
-        return intern_fmt("/*zero-sized symbol*/(0)");
+        return intern_fmt("/* zero-sized symbol */(0)");
     }
 
     return mangle_symbol(expr->data.symbol);
@@ -1575,8 +1575,7 @@ strgen_rvalue_access_index(struct expr const* expr)
             ? "int"
             : mangle_type(expr->data.access_index.lhs->type);
         char const* const elements = lhs_is_zero_sized
-            ? intern_fmt(
-                "((%s)0)", mangle_type(type_unique_pointer(expr->type)))
+            ? intern_fmt("((%s*)0)", mangle_type(expr->type))
             : intern_fmt("%s.elements", mangle_name("__lhs"));
         return intern_fmt(
             // clang-format off
@@ -1650,18 +1649,18 @@ strgen_rvalue_access_slice(struct expr const* expr)
         if (lhs_is_zero_sized) {
             start = intern_fmt(
                 // clang-format off
-                "(%s)((uintptr_t)%s * %" PRId64 ")",
+                "(%s*)((uintptr_t)%s * %" PRId64 ")",
                 // clang-format on
-                mangle_type(type_unique_pointer(expr->type->data.slice.base)),
+                mangle_type(expr->type->data.slice.base),
                 bname,
                 base_size);
         }
         else {
             start = intern_fmt(
                 // clang-format off
-                "(%s)((uintptr_t)(%s).elements + ((uintptr_t)%s * %" PRId64 "))",
+                "(%s*)((uintptr_t)(%s).elements + ((uintptr_t)%s * %" PRId64 "))",
                 // clang-format on
-                mangle_type(type_unique_pointer(expr->type->data.slice.base)),
+                mangle_type(expr->type->data.slice.base),
                 lexpr,
                 bname,
                 base_size);
@@ -1685,8 +1684,8 @@ strgen_rvalue_access_slice(struct expr const* expr)
     if (expr->data.access_slice.lhs->type->kind == TYPE_SLICE) {
         assert(!lhs_is_zero_sized);
         char const* const start = intern_fmt(
-            "(%s)((uintptr_t)(%s).start + ((uintptr_t)%s * %" PRId64 "))",
-            mangle_type(type_unique_pointer(expr->type->data.slice.base)),
+            "(%s*)((uintptr_t)(%s).start + ((uintptr_t)%s * %" PRId64 "))",
+            mangle_type(expr->type->data.slice.base),
             lexpr,
             bname,
             base_size);
@@ -1885,11 +1884,6 @@ strgen_rvalue_unary_addressof(struct expr const* expr)
     assert(expr != NULL);
     assert(expr->kind == EXPR_UNARY);
     assert(expr->data.unary.op == UOP_ADDRESSOF);
-
-    if (expr->data.unary.rhs->type->size == 0) {
-        // Zero-sized objects take up zero space.
-        return intern_cstr("0");
-    }
 
     return strgen_lvalue(expr->data.unary.rhs);
 }
@@ -2400,7 +2394,7 @@ strgen_lvalue_symbol(struct expr const* expr)
 
     if (expr->type->size == 0) {
         return intern_fmt(
-            "/*zero-sized symbol*/((%s*)0)", mangle_type(expr->type));
+            "/* zero-sized symbol */((%s*)0)", mangle_type(expr->type));
     }
 
     return intern_fmt("&%s", mangle_symbol(expr->data.symbol));
@@ -2412,12 +2406,20 @@ strgen_lvalue_access_index(struct expr const* expr)
     assert(expr != NULL);
     assert(expr->kind == EXPR_ACCESS_INDEX);
 
+    bool const lhs_is_zero_sized = expr->data.access_index.lhs->type->size == 0;
+
     if (expr->data.access_index.lhs->type->kind == TYPE_ARRAY) {
+        char const* const lhs_type = lhs_is_zero_sized
+            ? "int"
+            : mangle_type(expr->data.access_index.lhs->type);
+        char const* const elements = lhs_is_zero_sized
+            ? intern_fmt("((%s*)0)", mangle_type(expr->type))
+            : intern_fmt("%s->elements", mangle_name("__lhs"));
         return intern_fmt(
             // clang-format off
-            "({%s* %s = %s; %s %s = %s; if (%s >= %" PRId64 "){%s();}; %s->elements + %s;})",
+            "({%s* %s = %s; %s %s = %s; if (%s >= %" PRId64 "){%s();}; &%s[%s];})",
             // clang-format on
-            mangle_type(expr->data.access_index.lhs->type),
+            lhs_type,
             mangle_name("__lhs"),
             strgen_lvalue(expr->data.access_index.lhs),
 
@@ -2429,7 +2431,7 @@ strgen_lvalue_access_index(struct expr const* expr)
             expr->data.access_index.lhs->type->data.array.count,
             mangle_name("__fatal_index_out_of_bounds"),
 
-            mangle_name("__lhs"),
+            elements,
             mangle_name("__idx"));
     }
 
@@ -2462,16 +2464,14 @@ strgen_lvalue_access_member_variable(struct expr const* expr)
     assert(expr->kind == EXPR_ACCESS_MEMBER_VARIABLE);
     assert(expr->data.access_member_variable.lhs->type->kind == TYPE_STRUCT);
 
-    if (expr->type->size == 0) {
-        return intern_fmt(
-            "({/* zero-sized member*/(%s); 0;})",
-            strgen_lvalue(expr->data.access_member_variable.lhs));
-    }
+    char const* const lexpr =
+        strgen_lvalue(expr->data.access_member_variable.lhs);
 
     return intern_fmt(
-        "(&(%s)->%s)",
-        strgen_lvalue(expr->data.access_member_variable.lhs),
-        expr->data.access_member_variable.member_variable->name);
+        "(%s*)(/* object */(uintptr_t)(%s) + /* offset */%" PRId64 ")",
+        mangle_type(expr->type),
+        lexpr,
+        expr->data.access_member_variable.member_variable->offset);
 }
 
 static char const*

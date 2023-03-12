@@ -3435,7 +3435,7 @@ struct directory {
         }
 
         var dirent = (:*sys::dirent64)&self.*._buf[self.*._buf_idx];
-        var result = std::result[[[]byte, std::error]]::init_value(std::cstr::data(&dirent.*.d_name));
+        var result = std::result[[[]byte, std::error]]::init_value(std::cstr::data((:*byte)&dirent.*.d_name));
         self.*._current = std::optional[[std::result[[[]byte, std::error]]]]::init_value(result);
         self.*._buf_idx = self.*._buf_idx + (:usize)dirent.*.d_reclen;
         return true;

@@ -365,11 +365,7 @@ struct dirent64 {
     var d_off: s64;
     var d_reclen: ushort;
     var d_type: uchar;
-    # Flexible array members do not exist in Sunder, so the d_name member is
-    # pseudo-emulated using an array of size one. This dirent64 structure will
-    # not exactly match the size and layout of the linux_dirent64 struct
-    # definition due to this difference.
-    var d_name: char;
+    var d_name: [0]char;
 }
 
 extern func read(fd: sint, buf: *char, count: size_t) ssize;

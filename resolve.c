@@ -2130,6 +2130,23 @@ complete_struct(
                     member_type->name);
             }
 
+            // Increase the offset into the struct until the start of the added
+            // member variable is aligned to a valid byte boundary. The offset
+            // is increased, even when a zero-sized member is being added in
+            // order to preserve the property that (i)th member of a struct
+            // will always have an address that is less than or equal to the
+            // (i+1)th member of a struct.
+            //
+            // TODO: Ensure that this behavior matches the SystemV ABI for
+            // structs with flexible array members (declared using an array of
+            // size zero in Sunder) so that the size and alignment of structs
+            // with flexible array members is consistent between C and Sunder.
+            if (member_type->align != 0) {
+                while (next_offset % member_type->align != 0) {
+                    next_offset += 1;
+                }
+            }
+
             // Member variables with size zero are part of the struct, but do
             // not contribute to the size or alignment of the struct.
             if (member_type->size == 0) {
@@ -2144,12 +2161,6 @@ complete_struct(
 
             assert(member_type->size != 0);
             assert(member_type->align != 0);
-
-            // Increase the offset into the struct until the start of the added
-            // member variable is aligned to a valid byte boundary.
-            while (next_offset % member_type->align != 0) {
-                next_offset += 1;
-            }
 
             // Push the added member variable onto the back of the struct's
             // list of members (ordered by offset).

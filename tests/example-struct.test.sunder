@@ -94,6 +94,13 @@ struct baz {
 }
 let baz_a: baz = (:baz){.value_a = 0xAA, .value_b = 0xBB};
 
+struct zero_sized_member_offsets {
+    var w: void; # zero sized
+    var x: s32;
+    var y: [0]u8;
+    var z: u64;
+}
+
 func main() void {
     sys::dump[[empty]](empty_a);
     sys::dump[[empty]](empty_b);
@@ -169,7 +176,19 @@ func main() void {
         .x = 123,
         .y = 456,
     };
+
+    # Check that a pointer to the zero-sized members within a struct will
+    # produce a pointer that still points within the struct instance.
+    var object: zero_sized_member_offsets = uninit;
+    sys::dump[[bool]](sizeof(typeof(object.w)) == 0);
+    sys::dump[[bool]](sizeof(typeof(object.x)) != 0);
+    sys::dump[[bool]]((:usize)&object.w == (:usize)&object.x);
+    sys::dump[[bool]](sizeof(typeof(object.y)) == 0);
+    sys::dump[[bool]](sizeof(typeof(object.z)) != 0);
+    sys::dump[[bool]]((:usize)&object.y >  (:usize)&object.x);
+    sys::dump[[bool]]((:usize)&object.y <= (:usize)&object.z);
 }
+
 ################################################################################
 #
 #
@@ -200,3 +219,10 @@ func main() void {
 # E3
 # A9 01
 # A9 01
+# 01
+# 01
+# 01
+# 01
+# 01
+# 01
+# 01
