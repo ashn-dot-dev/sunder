@@ -1570,10 +1570,13 @@ strgen_rvalue_access_index(struct expr const* expr)
 
     bool const lhs_is_zero_sized = expr->data.access_index.lhs->type->size == 0;
 
-    // TODO: Use uintptr_t arithmetic for indexing to avoid UB when performing
-    // pointer arithmetic on a NULL pointer.
+    // According to the C standard, performing pointer arithmetic on a NULL
+    // pointer has undefined behavior. Pointer addition is manually performed
+    // with uintptr_t to avoid this undefined behavior.
 
     if (expr->data.access_index.lhs->type->kind == TYPE_ARRAY) {
+        uint64_t const base_size =
+            expr->data.access_index.lhs->type->data.array.base->size;
         char const* const lhs_type = lhs_is_zero_sized
             ? "int"
             : mangle_type(expr->data.access_index.lhs->type);
@@ -1582,7 +1585,7 @@ strgen_rvalue_access_index(struct expr const* expr)
             : intern_fmt("%s.elements", mangle_name("__lhs"));
         return intern_fmt(
             // clang-format off
-            "({%s %s = %s; %s %s = %s; if (%s >= %" PRId64 "){%s();}; %s[%s];})",
+            "({%s %s = %s; %s %s = %s; if (%s >= %" PRId64 "){%s();}; *(%s*)((uintptr_t)%s + (%s * %" PRId64 "));})",
             // clang-format on
             lhs_type,
             mangle_name("__lhs"),
@@ -1596,14 +1599,20 @@ strgen_rvalue_access_index(struct expr const* expr)
             expr->data.access_index.lhs->type->data.array.count,
             mangle_name("__fatal_index_out_of_bounds"),
 
+            mangle_type(expr->type),
             elements,
-            mangle_name("__idx"));
+            mangle_name("__idx"),
+            base_size);
     }
 
     if (expr->data.access_index.lhs->type->kind == TYPE_SLICE) {
         assert(!lhs_is_zero_sized);
+        uint64_t const base_size =
+            expr->data.access_index.lhs->type->data.slice.base->size;
         return intern_fmt(
-            "({%s %s = %s; %s %s = %s; if (%s >= %s.count){%s();}; %s.start[%s];})",
+            // clang-format off
+            "({%s %s = %s; %s %s = %s; if (%s >= %s.count){%s();}; *(%s*)((uintptr_t)%s.start + (%s * %" PRId64 "));})",
+            // clang-format on
             mangle_type(expr->data.access_index.lhs->type),
             mangle_name("__lhs"),
             strgen_rvalue(expr->data.access_index.lhs),
@@ -1616,8 +1625,10 @@ strgen_rvalue_access_index(struct expr const* expr)
             mangle_name("__lhs"),
             mangle_name("__fatal_index_out_of_bounds"),
 
+            mangle_type(expr->type),
             mangle_name("__lhs"),
-            mangle_name("__idx"));
+            mangle_name("__idx"),
+            base_size);
     }
 
     UNREACHABLE();
@@ -2492,10 +2503,13 @@ strgen_lvalue_access_index(struct expr const* expr)
 
     bool const lhs_is_zero_sized = expr->data.access_index.lhs->type->size == 0;
 
-    // TODO: Use uintptr_t arithmetic for indexing to avoid UB when performing
-    // pointer arithmetic on a NULL pointer.
+    // According to the C standard, performing pointer arithmetic on a NULL
+    // pointer has undefined behavior. Pointer addition is manually performed
+    // with uintptr_t to avoid this undefined behavior.
 
     if (expr->data.access_index.lhs->type->kind == TYPE_ARRAY) {
+        uint64_t const base_size =
+            expr->data.access_index.lhs->type->data.array.base->size;
         char const* const lhs_type = lhs_is_zero_sized
             ? "int"
             : mangle_type(expr->data.access_index.lhs->type);
@@ -2504,7 +2518,7 @@ strgen_lvalue_access_index(struct expr const* expr)
             : intern_fmt("%s->elements", mangle_name("__lhs"));
         return intern_fmt(
             // clang-format off
-            "({%s* %s = %s; %s %s = %s; if (%s >= %" PRId64 "){%s();}; &%s[%s];})",
+            "({%s* %s = %s; %s %s = %s; if (%s >= %" PRId64 "){%s();}; (%s*)((uintptr_t)%s + (%s * %" PRId64 "));})",
             // clang-format on
             lhs_type,
             mangle_name("__lhs"),
@@ -2518,13 +2532,19 @@ strgen_lvalue_access_index(struct expr const* expr)
             expr->data.access_index.lhs->type->data.array.count,
             mangle_name("__fatal_index_out_of_bounds"),
 
+            mangle_type(expr->type),
             elements,
-            mangle_name("__idx"));
+            mangle_name("__idx"),
+            base_size);
     }
 
     if (expr->data.access_index.lhs->type->kind == TYPE_SLICE) {
+        uint64_t const base_size =
+            expr->data.access_index.lhs->type->data.slice.base->size;
         return intern_fmt(
-            "({%s %s = %s; %s %s = %s; if (%s >= %s.count){%s();}; %s.start + %s;})",
+            // clang-format off
+            "({%s %s = %s; %s %s = %s; if (%s >= %s.count){%s();}; (%s*)((uintptr_t)%s.start + (%s * %" PRId64 "));})",
+            // clang-format on
             mangle_type(expr->data.access_index.lhs->type),
             mangle_name("__lhs"),
             strgen_rvalue(expr->data.access_index.lhs),
@@ -2537,8 +2557,10 @@ strgen_lvalue_access_index(struct expr const* expr)
             mangle_name("__lhs"),
             mangle_name("__fatal_index_out_of_bounds"),
 
+            mangle_type(expr->type),
             mangle_name("__lhs"),
-            mangle_name("__idx"));
+            mangle_name("__idx"),
+            base_size);
     }
 
     UNREACHABLE();
