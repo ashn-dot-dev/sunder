@@ -2222,11 +2222,19 @@ strgen_rvalue_binary_add(struct expr const* expr)
     assert(expr->data.binary.lhs->type == expr->data.binary.rhs->type);
 
     return intern_fmt(
-        "%s_%s(%s, %s)",
+        "({%s %s = %s; %s %s = %s; %s_%s(%s, %s);})",
+        mangle_type(expr->data.binary.lhs->type),
+        mangle_name("__lhs"),
+        strgen_rvalue(expr->data.binary.lhs),
+
+        mangle_type(expr->data.binary.rhs->type),
+        mangle_name("__rhs"),
+        strgen_rvalue(expr->data.binary.rhs),
+
         mangle_name("__add"),
         mangle_type(expr->data.binary.lhs->type),
-        strgen_rvalue(expr->data.binary.lhs),
-        strgen_rvalue(expr->data.binary.rhs));
+        mangle_name("__lhs"),
+        mangle_name("__rhs"));
 }
 
 static char const*
@@ -2238,11 +2246,19 @@ strgen_rvalue_binary_add_wrapping(struct expr const* expr)
     assert(expr->data.binary.lhs->type == expr->data.binary.rhs->type);
 
     return intern_fmt(
-        "%s_%s(%s, %s)",
+        "({%s %s = %s; %s %s = %s; %s_%s(%s, %s);})",
+        mangle_type(expr->data.binary.lhs->type),
+        mangle_name("__lhs"),
+        strgen_rvalue(expr->data.binary.lhs),
+
+        mangle_type(expr->data.binary.rhs->type),
+        mangle_name("__rhs"),
+        strgen_rvalue(expr->data.binary.rhs),
+
         mangle_name("__add_wrapping"),
         mangle_type(expr->data.binary.lhs->type),
-        strgen_rvalue(expr->data.binary.lhs),
-        strgen_rvalue(expr->data.binary.rhs));
+        mangle_name("__lhs"),
+        mangle_name("__rhs"));
 }
 
 static char const*
@@ -2254,11 +2270,19 @@ strgen_rvalue_binary_sub(struct expr const* expr)
     assert(expr->data.binary.lhs->type == expr->data.binary.rhs->type);
 
     return intern_fmt(
-        "%s_%s(%s, %s)",
+        "({%s %s = %s; %s %s = %s; %s_%s(%s, %s);})",
+        mangle_type(expr->data.binary.lhs->type),
+        mangle_name("__lhs"),
+        strgen_rvalue(expr->data.binary.lhs),
+
+        mangle_type(expr->data.binary.rhs->type),
+        mangle_name("__rhs"),
+        strgen_rvalue(expr->data.binary.rhs),
+
         mangle_name("__sub"),
         mangle_type(expr->data.binary.lhs->type),
-        strgen_rvalue(expr->data.binary.lhs),
-        strgen_rvalue(expr->data.binary.rhs));
+        mangle_name("__lhs"),
+        mangle_name("__rhs"));
 }
 
 static char const*
@@ -2270,11 +2294,19 @@ strgen_rvalue_binary_sub_wrapping(struct expr const* expr)
     assert(expr->data.binary.lhs->type == expr->data.binary.rhs->type);
 
     return intern_fmt(
-        "%s_%s(%s, %s)",
+        "({%s %s = %s; %s %s = %s; %s_%s(%s, %s);})",
+        mangle_type(expr->data.binary.lhs->type),
+        mangle_name("__lhs"),
+        strgen_rvalue(expr->data.binary.lhs),
+
+        mangle_type(expr->data.binary.rhs->type),
+        mangle_name("__rhs"),
+        strgen_rvalue(expr->data.binary.rhs),
+
         mangle_name("__sub_wrapping"),
         mangle_type(expr->data.binary.lhs->type),
-        strgen_rvalue(expr->data.binary.lhs),
-        strgen_rvalue(expr->data.binary.rhs));
+        mangle_name("__lhs"),
+        mangle_name("__rhs"));
 }
 
 static char const*
@@ -2286,11 +2318,19 @@ strgen_rvalue_binary_mul(struct expr const* expr)
     assert(expr->data.binary.lhs->type == expr->data.binary.rhs->type);
 
     return intern_fmt(
-        "%s_%s(%s, %s)",
+        "({%s %s = %s; %s %s = %s; %s_%s(%s, %s);})",
+        mangle_type(expr->data.binary.lhs->type),
+        mangle_name("__lhs"),
+        strgen_rvalue(expr->data.binary.lhs),
+
+        mangle_type(expr->data.binary.rhs->type),
+        mangle_name("__rhs"),
+        strgen_rvalue(expr->data.binary.rhs),
+
         mangle_name("__mul"),
         mangle_type(expr->data.binary.lhs->type),
-        strgen_rvalue(expr->data.binary.lhs),
-        strgen_rvalue(expr->data.binary.rhs));
+        mangle_name("__lhs"),
+        mangle_name("__rhs"));
 }
 
 static char const*
@@ -2302,11 +2342,19 @@ strgen_rvalue_binary_mul_wrapping(struct expr const* expr)
     assert(expr->data.binary.lhs->type == expr->data.binary.rhs->type);
 
     return intern_fmt(
-        "%s_%s(%s, %s)",
+        "({%s %s = %s; %s %s = %s; %s_%s(%s, %s);})",
+        mangle_type(expr->data.binary.lhs->type),
+        mangle_name("__lhs"),
+        strgen_rvalue(expr->data.binary.lhs),
+
+        mangle_type(expr->data.binary.rhs->type),
+        mangle_name("__rhs"),
+        strgen_rvalue(expr->data.binary.rhs),
+
         mangle_name("__mul_wrapping"),
         mangle_type(expr->data.binary.lhs->type),
-        strgen_rvalue(expr->data.binary.lhs),
-        strgen_rvalue(expr->data.binary.rhs));
+        mangle_name("__lhs"),
+        mangle_name("__rhs"));
 }
 
 static char const*
@@ -2318,11 +2366,19 @@ strgen_rvalue_binary_div(struct expr const* expr)
     assert(expr->data.binary.lhs->type == expr->data.binary.rhs->type);
 
     return intern_fmt(
-        "%s_%s(%s, %s)",
+        "({%s %s = %s; %s %s = %s; %s_%s(%s, %s);})",
+        mangle_type(expr->data.binary.lhs->type),
+        mangle_name("__lhs"),
+        strgen_rvalue(expr->data.binary.lhs),
+
+        mangle_type(expr->data.binary.rhs->type),
+        mangle_name("__rhs"),
+        strgen_rvalue(expr->data.binary.rhs),
+
         mangle_name("__div"),
         mangle_type(expr->data.binary.lhs->type),
-        strgen_rvalue(expr->data.binary.lhs),
-        strgen_rvalue(expr->data.binary.rhs));
+        mangle_name("__lhs"),
+        mangle_name("__rhs"));
 }
 
 static char const*
@@ -2334,15 +2390,17 @@ strgen_rvalue_binary_rem(struct expr const* expr)
     assert(expr->data.binary.lhs->type == expr->data.binary.rhs->type);
 
     return intern_fmt(
-        "({%s %s = %s; %s %s = %s; if (%s == 0){%s();}; %s %% %s;})",
+        "({%s %s = %s; %s %s = %s; %s_%s(%s, %s);})",
         mangle_type(expr->data.binary.lhs->type),
         mangle_name("__lhs"),
         strgen_rvalue(expr->data.binary.lhs),
+
         mangle_type(expr->data.binary.rhs->type),
         mangle_name("__rhs"),
         strgen_rvalue(expr->data.binary.rhs),
-        mangle_name("__rhs"),
-        mangle_name("__fatal_integer_divide_by_zero"),
+
+        mangle_name("__rem"),
+        mangle_type(expr->data.binary.lhs->type),
         mangle_name("__lhs"),
         mangle_name("__rhs"));
 }
