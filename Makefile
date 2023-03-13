@@ -58,7 +58,6 @@ lib/sys/sys.sunder:
 	@if [ ! -L lib/sys/sys.sunder -a $$(uname -m) = "x86_64"  ]; then (cd lib/sys && ln -s sys.sunder.amd64 sys.sunder); fi
 	@if [ ! -L lib/sys/sys.sunder -a $$(uname -m) = "aarch64" ]; then (cd lib/sys && ln -s sys.sunder.arm64 sys.sunder); fi
 
-
 check: build
 	SUNDER_HOME="$(realpath .)" \
 	SUNDER_IMPORT_PATH="$(realpath .)/lib" \
