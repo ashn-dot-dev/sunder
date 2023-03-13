@@ -1,5 +1,4 @@
 #define const /* nothing */
-#define _DEFAULT_SOURCE /* syscall */
 #define _GNU_SOURCE /* getddents64 */
 #include <alloca.h> /* alloca */
 #include <dirent.h> /* getdents64 */
@@ -11,9 +10,8 @@
 #include <string.h> /* memset */
 #include <sys/mman.h> /* mmap, munmap */
 #include <sys/stat.h> /* mkdir */
-#include <sys/syscall.h> /* SYS_* constants */
 #include <sys/types.h> /* mode_t, off_t, size_t, ssize_t */
-#include <unistd.h> /* syscall, close, _exit, lseek, read, rmdir, write, unlink */
+#include <unistd.h> /* close, _exit, lseek, read, rmdir, write, unlink */
 
 // clang-format off
 typedef void               __sunder_void;
@@ -29,13 +27,13 @@ typedef unsigned long long __sunder_u64;
 typedef   signed long long __sunder_s64;
 typedef unsigned long      __sunder_usize;
 typedef   signed long      __sunder_ssize;
+
+#define __sunder_true  ((_Bool)1)
+#define __sunder_false ((_Bool)0)
 // clang-format on
 
-#define __sunder_true ((_Bool)1)
-#define __sunder_false ((_Bool)0)
-
 static inline _Noreturn void
-__sunder___fatal(char const* message)
+__sunder___fatal(char* message)
 {
     fprintf(stderr, "fatal: %s\n", message);
     _exit(1);
@@ -347,7 +345,9 @@ __sunder_usize sys_argc;
 __sunder_byte** sys_argv;
 __sunder_byte** sys_envp;
 
-static char const sys_dump_bytes_lookup_table[256u * 2u] = {
+// clang-format off
+__attribute__((section("rodata")))
+static char sys_dump_bytes_lookup_table[256u * 2u] = {
     '0', '0', '0', '1', '0', '2', '0', '3', '0', '4', '0', '5', '0', '6', '0',
     '7', '0', '8', '0', '9', '0', 'A', '0', 'B', '0', 'C', '0', 'D', '0', 'E',
     '0', 'F', '1', '0', '1', '1', '1', '2', '1', '3', '1', '4', '1', '5', '1',
@@ -384,6 +384,7 @@ static char const sys_dump_bytes_lookup_table[256u * 2u] = {
     '7', 'F', '8', 'F', '9', 'F', 'A', 'F', 'B', 'F', 'C', 'F', 'D', 'F', 'E',
     'F', 'F',
 };
+// clang-format on
 
 __sunder_void
 sys_dump_bytes(void* addr, __sunder_usize size)
@@ -397,13 +398,13 @@ sys_dump_bytes(void* addr, __sunder_usize size)
     // triples. For each three-byte triple, x, bytes x[0:1] will contain the
     // two-byte hex representation of a single byte of obj, and byte x[2] will
     // contain a whitespace separator (either ' ' or '\n').
-    char* const buf = alloca(size * 3u); // Locally allocated buffer.
+    char* buf = alloca(size * 3u); // Locally allocated buffer.
     char* ptr = buf; // Write pointer into the locally allocated buffer.
 
-    unsigned char const* cur = addr;
-    unsigned char const* const end = (unsigned char const*)addr + size;
+    unsigned char* cur = addr;
+    unsigned char* end = (unsigned char*)addr + size;
     while (cur != end) {
-        char const* const repr = sys_dump_bytes_lookup_table + (*cur * 2u);
+        char* repr = sys_dump_bytes_lookup_table + (*cur * 2u);
         ptr[0u] = repr[0u];
         ptr[1u] = repr[1u];
         ptr[2u] = ' ';
