@@ -1,3 +1,4 @@
+#define const /* nothing */
 #define _DEFAULT_SOURCE /* syscall */
 #define _GNU_SOURCE /* getddents64 */
 #include <alloca.h> /* alloca */

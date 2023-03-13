@@ -1,0 +1,6 @@
+import "std";
+
+func println(start: *byte, count: usize) void {
+    var str = (:[]byte){start, count};
+    std::print_line(std::out(), str);
+}

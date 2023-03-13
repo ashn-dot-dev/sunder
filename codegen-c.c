@@ -2743,18 +2743,20 @@ codegen_c(
         }
         codegen_static_function(symbol, false);
     }
-    appendch('\n');
-    appendln("int");
-    appendln("main(int argc, char** argv, char** envp)");
-    appendln("{");
-    indent_incr();
-    appendli("sys_argc = argc;");
-    appendli("sys_argv = argv;");
-    appendli("sys_envp = envp;");
-    appendli("%s();", mangle_name(context()->interned.main));
-    appendli("return 0;");
-    indent_decr();
-    appendln("}");
+    if (!opt_c) {
+        appendch('\n');
+        appendln("int");
+        appendln("main(int argc, char** argv, char** envp)");
+        appendln("{");
+        indent_incr();
+        appendli("sys_argc = argc;");
+        appendli("sys_argv = argv;");
+        appendli("sys_envp = envp;");
+        appendli("%s();", mangle_name(context()->interned.main));
+        appendli("return 0;");
+        indent_decr();
+        appendln("}");
+    }
 
     int err = 0;
     if ((err = file_write_all(

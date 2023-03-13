@@ -4,11 +4,13 @@ lib/sys/sys.sunder
 examples/big-integer-calculator
 examples/brainfuck
 examples/cat
-examples/custom-sys-asm/custom-sys-asm
 examples/fizzbuzz
 examples/greet
 examples/hello
 examples/ls
+examples/custom-sys-asm/custom-sys-asm
+examples/ffi/calling-c-from-sunder
+examples/ffi/calling-sunder-from-c
 
 a.out*
 *.out

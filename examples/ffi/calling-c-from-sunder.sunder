@@ -1,0 +1,7 @@
+import "sys";
+
+extern func puts(str: *sys::char) sys::sint;
+
+func main() void {
+    puts(startof("HELLO\0"));
+}
