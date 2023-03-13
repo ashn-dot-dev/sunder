@@ -1896,8 +1896,6 @@ strgen_rvalue_unary_dereference(struct expr const* expr)
     assert(expr->data.unary.op == UOP_DEREFERENCE);
     assert(expr->data.unary.rhs->type->kind == TYPE_POINTER);
 
-    // TODO: Handle NULL pointer dereference.
-
     if (expr->type->size == 0) {
         return intern_fmt(
             "({/* dereference pointer to zero-sized type */(%s); 0;})",
