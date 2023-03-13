@@ -1629,16 +1629,20 @@ strgen_rvalue_access_slice(struct expr const* expr)
     assert(expr != NULL);
     assert(expr->kind == EXPR_ACCESS_SLICE);
 
-    // TODO: Handle index out of bounds.
+    char const* const ltype = mangle_type(expr->data.access_slice.lhs->type);
+    char const* const lname = mangle_name("__lhs");
+    char const* const lexpr = strgen_rvalue(expr->data.access_slice.lhs);
 
     char const* const btype = mangle_name("usize");
     char const* const bname = mangle_name("__b");
     char const* const bexpr = strgen_rvalue(expr->data.access_slice.begin);
+
     char const* const etype = mangle_name("usize");
     char const* const ename = mangle_name("__e");
     char const* const eexpr = strgen_rvalue(expr->data.access_slice.end);
+
     char const* const tname = mangle_type(expr->type);
-    char const* const lexpr = strgen_rvalue(expr->data.access_slice.lhs);
+
     bool const lhs_is_zero_sized = expr->data.access_slice.lhs->type->size == 0;
     uint64_t const base_size = expr->type->data.slice.base->size;
 
@@ -1669,7 +1673,9 @@ strgen_rvalue_access_slice(struct expr const* expr)
         }
         char const* const count = intern_fmt("%s - %s", ename, bname);
         return intern_fmt(
-            "({%s %s = %s; %s %s = %s; (%s){.start = %s, .count = %s};})",
+            // clang-format off
+            "({%s %s = %s; %s %s = %s; if ((%s > %s) || (%s > %" PRId64 ") || (%s > %" PRId64 ")){%s();}; (%s){.start = %s, .count = %s};})",
+            // clang-format on
             btype,
             bname,
             bexpr,
@@ -1677,6 +1683,14 @@ strgen_rvalue_access_slice(struct expr const* expr)
             etype,
             ename,
             eexpr,
+
+            bname,
+            ename,
+            bname,
+            expr->data.access_slice.lhs->type->data.array.count,
+            ename,
+            expr->data.access_slice.lhs->type->data.array.count,
+            mangle_name("__fatal_index_out_of_bounds"),
 
             tname,
             start,
@@ -1686,14 +1700,18 @@ strgen_rvalue_access_slice(struct expr const* expr)
     if (expr->data.access_slice.lhs->type->kind == TYPE_SLICE) {
         assert(!lhs_is_zero_sized);
         char const* const start = intern_fmt(
-            "(%s*)((uintptr_t)(%s).start + ((uintptr_t)%s * %" PRId64 "))",
+            "(%s*)((uintptr_t)%s.start + ((uintptr_t)%s * %" PRId64 "))",
             mangle_type(expr->type->data.slice.base),
-            lexpr,
+            lname,
             bname,
             base_size);
         char const* const count = intern_fmt("%s - %s", ename, bname);
         return intern_fmt(
-            "({%s %s = %s; %s %s = %s; (%s){.start = %s, .count = %s};})",
+            "({%s %s = %s; %s %s = %s; %s %s = %s; if ((%s > %s) || (%s > %s.count) || (%s > %s.count)){%s();}; (%s){.start = %s, .count = %s};})",
+            ltype,
+            lname,
+            lexpr,
+
             btype,
             bname,
             bexpr,
@@ -1701,6 +1719,14 @@ strgen_rvalue_access_slice(struct expr const* expr)
             etype,
             ename,
             eexpr,
+
+            bname,
+            ename,
+            bname,
+            lname,
+            ename,
+            lname,
+            mangle_name("__fatal_index_out_of_bounds"),
 
             tname,
             start,
