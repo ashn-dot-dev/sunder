@@ -3352,7 +3352,12 @@ codegen_nasm(
     if (0 == strcmp(backend(), "nasm")) {
         sbuf_push(backend_argv, "nasm");
         sbuf_push(backend_argv, "-o");
-        sbuf_push(backend_argv, string_start(obj_path));
+        if (opt_c) {
+            sbuf_push(backend_argv, opt_o);
+        }
+        else {
+            sbuf_push(backend_argv, string_start(obj_path));
+        }
         sbuf_push(backend_argv, "-w+error=all");
         sbuf_push(backend_argv, "-f");
         sbuf_push(backend_argv, "elf64");
@@ -3364,7 +3369,12 @@ codegen_nasm(
     if (0 == strcmp(backend(), "yasm")) {
         sbuf_push(backend_argv, "yasm");
         sbuf_push(backend_argv, "-o");
-        sbuf_push(backend_argv, string_start(obj_path));
+        if (opt_c) {
+            sbuf_push(backend_argv, opt_o);
+        }
+        else {
+            sbuf_push(backend_argv, string_start(obj_path));
+        }
         sbuf_push(backend_argv, "-w+error=all");
         sbuf_push(backend_argv, "-f");
         sbuf_push(backend_argv, "elf64");

@@ -16,11 +16,17 @@ echo $CMD
 eval $CMD
 
 if command -v clang >/dev/null; then
-    CMD="SUNDER_BACKEND=C ${SUNDER_HOME}/bin/sunder-compile -o ffi/calling-c-from-sunder ffi/calling-c-from-sunder.sunder"
+    CMD="clang -c -o ffi/c-code.o ffi/calling-c-from-sunder.c"
+    echo $CMD
+    eval $CMD
+    CMD="SUNDER_BACKEND=C ${SUNDER_HOME}/bin/sunder-compile -c -o ffi/calling-c-from-sunder.o ffi/calling-c-from-sunder.sunder"
+    echo $CMD
+    eval $CMD
+    CMD="clang -o ffi/calling-c-from-sunder ffi/calling-c-from-sunder.o ffi/c-code.o"
     echo $CMD
     eval $CMD
 
-    CMD="SUNDER_BACKEND=C ${SUNDER_HOME}/bin/sunder-compile -c -o ffi/sunder-code ffi/calling-sunder-from-c.sunder"
+    CMD="SUNDER_BACKEND=C ${SUNDER_HOME}/bin/sunder-compile -c -o ffi/sunder-code.o ffi/calling-sunder-from-c.sunder"
     echo $CMD
     eval $CMD
     CMD="clang -o ffi/calling-sunder-from-c ffi/calling-sunder-from-c.c ffi/sunder-code.o"

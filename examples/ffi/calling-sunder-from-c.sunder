@@ -1,6 +1,9 @@
 namespace mylib;
 import "std";
 
+var x = 100s32;
+let y = 200s32;
+
 func println(start: *byte, count: usize) void {
     var str = (:[]byte){start, count};
     std::print_line(std::out(), str);

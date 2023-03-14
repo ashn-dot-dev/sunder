@@ -2708,7 +2708,7 @@ codegen_c(
     if (opt_c) {
         sbuf_push(backend_argv, "-c");
         sbuf_push(backend_argv, "-o");
-        sbuf_push(backend_argv, string_start(obj_path));
+        sbuf_push(backend_argv, opt_o);
     }
     else {
         sbuf_push(backend_argv, "-o");

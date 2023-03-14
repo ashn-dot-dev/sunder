@@ -1,7 +1,17 @@
+import "std";
 import "sys";
 
+extern var x: sys::sint;
+extern var y: sys::sint; # const
 extern func puts(str: *sys::char) sys::sint;
 
 func main() void {
     puts(startof("HELLO\0"));
+
+    x = x + 1;
+    var sum = x + y;
+    std::print_format_line(
+        std::out(),
+        "x + y = {}",
+        (:[]std::formatter)[std::formatter::init[[sys::sint]](&sum)]);
 }
