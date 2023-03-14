@@ -501,7 +501,9 @@ codegen_type_definition(struct type const* type)
     case TYPE_S64: /* fallthrough */
     case TYPE_USIZE: /* fallthrough */
     case TYPE_SSIZE: /* fallthrough */
-    case TYPE_INTEGER: {
+    case TYPE_INTEGER: /* fallthrough */
+    case TYPE_F32: /* fallthrough */
+    case TYPE_F64: {
         break;
     }
     case TYPE_FUNCTION: {
@@ -805,6 +807,14 @@ strgen_value(struct value const* value)
     case TYPE_INTEGER: {
         UNREACHABLE();
     }
+    case TYPE_F32: {
+        double const ieee754 = (double)value->data.f32;
+        return intern_fmt("%.*ff", IEEE754_FLT_DECIMAL_DIG, ieee754);
+    }
+    case TYPE_F64: {
+        double const ieee754 = value->data.f64;
+        return intern_fmt("%.*f", IEEE754_DBL_DECIMAL_DIG, ieee754);
+    }
     case TYPE_FUNCTION: {
         struct address const* const address = value->data.function->address;
         assert(address->kind == ADDRESS_STATIC);
@@ -987,6 +997,14 @@ strgen_uninit(struct type const* type)
     }
     case TYPE_INTEGER: {
         UNREACHABLE();
+    }
+    case TYPE_F32: {
+        string_append_cstr(s, "/* uninit */0.0f");
+        break;
+    }
+    case TYPE_F64: {
+        string_append_cstr(s, "/* uninit */0.0");
+        break;
     }
     case TYPE_FUNCTION: /* fallthrough */
     case TYPE_POINTER: {
@@ -1504,6 +1522,15 @@ strgen_rvalue_cast(struct expr const* expr)
 {
     assert(expr != NULL);
     assert(expr->kind == EXPR_CAST);
+
+    if (type_is_int(expr->type)
+        && type_is_ieee754(expr->data.cast.expr->type)) {
+        return intern_fmt(
+            "__sunder___cast_%s_to_%s(%s)",
+            mangle_type(expr->data.cast.expr->type),
+            mangle_type(expr->type),
+            strgen_rvalue(expr->data.cast.expr));
+    }
 
     return intern_fmt(
         "(%s)%s", mangle_type(expr->type), strgen_rvalue(expr->data.cast.expr));
@@ -2230,6 +2257,14 @@ strgen_rvalue_binary_add(struct expr const* expr)
     assert(expr->data.binary.op == BOP_ADD);
     assert(expr->data.binary.lhs->type == expr->data.binary.rhs->type);
 
+    if (type_is_ieee754(expr->type)) {
+        return intern_fmt(
+            "(%s + %s)",
+            strgen_rvalue(expr->data.binary.lhs),
+            strgen_rvalue(expr->data.binary.rhs));
+    }
+
+    assert(type_is_int(expr->type) && expr->type->size != SIZEOF_UNSIZED);
     return intern_fmt(
         "({%s %s = %s; %s %s = %s; %s_%s(%s, %s);})",
         mangle_type(expr->data.binary.lhs->type),
@@ -2253,6 +2288,7 @@ strgen_rvalue_binary_add_wrapping(struct expr const* expr)
     assert(expr->kind == EXPR_BINARY);
     assert(expr->data.binary.op == BOP_ADD_WRAPPING);
     assert(expr->data.binary.lhs->type == expr->data.binary.rhs->type);
+    assert(type_is_int(expr->type) && expr->type->size != SIZEOF_UNSIZED);
 
     return intern_fmt(
         "({%s %s = %s; %s %s = %s; %s_%s(%s, %s);})",
@@ -2278,6 +2314,14 @@ strgen_rvalue_binary_sub(struct expr const* expr)
     assert(expr->data.binary.op == BOP_SUB);
     assert(expr->data.binary.lhs->type == expr->data.binary.rhs->type);
 
+    if (type_is_ieee754(expr->type)) {
+        return intern_fmt(
+            "(%s - %s)",
+            strgen_rvalue(expr->data.binary.lhs),
+            strgen_rvalue(expr->data.binary.rhs));
+    }
+
+    assert(type_is_int(expr->type) && expr->type->size != SIZEOF_UNSIZED);
     return intern_fmt(
         "({%s %s = %s; %s %s = %s; %s_%s(%s, %s);})",
         mangle_type(expr->data.binary.lhs->type),
@@ -2301,6 +2345,7 @@ strgen_rvalue_binary_sub_wrapping(struct expr const* expr)
     assert(expr->kind == EXPR_BINARY);
     assert(expr->data.binary.op == BOP_SUB_WRAPPING);
     assert(expr->data.binary.lhs->type == expr->data.binary.rhs->type);
+    assert(type_is_int(expr->type) && expr->type->size != SIZEOF_UNSIZED);
 
     return intern_fmt(
         "({%s %s = %s; %s %s = %s; %s_%s(%s, %s);})",
@@ -2326,6 +2371,14 @@ strgen_rvalue_binary_mul(struct expr const* expr)
     assert(expr->data.binary.op == BOP_MUL);
     assert(expr->data.binary.lhs->type == expr->data.binary.rhs->type);
 
+    if (type_is_ieee754(expr->type)) {
+        return intern_fmt(
+            "(%s * %s)",
+            strgen_rvalue(expr->data.binary.lhs),
+            strgen_rvalue(expr->data.binary.rhs));
+    }
+
+    assert(type_is_int(expr->type) && expr->type->size != SIZEOF_UNSIZED);
     return intern_fmt(
         "({%s %s = %s; %s %s = %s; %s_%s(%s, %s);})",
         mangle_type(expr->data.binary.lhs->type),
@@ -2349,6 +2402,7 @@ strgen_rvalue_binary_mul_wrapping(struct expr const* expr)
     assert(expr->kind == EXPR_BINARY);
     assert(expr->data.binary.op == BOP_MUL_WRAPPING);
     assert(expr->data.binary.lhs->type == expr->data.binary.rhs->type);
+    assert(type_is_int(expr->type) && expr->type->size != SIZEOF_UNSIZED);
 
     return intern_fmt(
         "({%s %s = %s; %s %s = %s; %s_%s(%s, %s);})",
@@ -2397,6 +2451,7 @@ strgen_rvalue_binary_rem(struct expr const* expr)
     assert(expr->kind == EXPR_BINARY);
     assert(expr->data.binary.op == BOP_REM);
     assert(expr->data.binary.lhs->type == expr->data.binary.rhs->type);
+    assert(type_is_int(expr->type) && expr->type->size != SIZEOF_UNSIZED);
 
     return intern_fmt(
         "({%s %s = %s; %s %s = %s; %s_%s(%s, %s);})",
@@ -2695,6 +2750,7 @@ codegen_c(
 #endif
     sbuf_push(backend_argv, string_start(src_path));
     if (!opt_c) {
+        sbuf_push(backend_argv, "-lm");
         for (size_t i = 0; i < sbuf_count(opt_l); ++i) {
             sbuf_push(backend_argv, intern_fmt("-l%s", opt_l[i]));
         }

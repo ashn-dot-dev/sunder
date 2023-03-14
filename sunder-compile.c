@@ -17,6 +17,8 @@ static char const*       opt_o = "a.out";
 // clang-format on
 
 static void
+env(void);
+static void
 usage(void);
 static void
 argparse(int argc, char** argv);
@@ -27,10 +29,10 @@ int
 main(int argc, char** argv)
 {
     atexit(fini);
-    argparse(argc, argv);
-
     context_init();
     atexit(context_fini);
+
+    argparse(argc, argv);
 
     load_module(path, canonical_path(path));
     if (!opt_c) {
@@ -43,6 +45,34 @@ main(int argc, char** argv)
 }
 
 static void
+env(void)
+{
+    // SUNDER_HOME
+    printf("SUNDER_HOME=%s\n", getenv_with_default("SUNDER_HOME", ""));
+    // SUNDER_BACKEND
+    printf(
+        "SUNDER_BACKEND=%s\n",
+        getenv_with_default(
+            "SUNDER_BACKEND", STRINGIFY(SUNDER_DEFAULT_BACKEND)));
+    // SUNDER_IMPORT_PATH
+    printf(
+        "SUNDER_IMPORT_PATH=%s\n",
+        getenv_with_default("SUNDER_IMPORT_PATH", ""));
+    // SUNDER_SYSASM_PATH
+    if (getenv("SUNDER_SYSASM_PATH") != NULL) {
+        printf("SUNDER_SYSASM_PATH=%s\n", getenv("SUNDER_SYSASM_PATH"));
+    }
+    else if (getenv("SUNDER_HOME") != NULL) {
+        printf(
+            "SUNDER_SYSASM_PATH=%s\n",
+            intern_fmt("%s/lib/sys/sys.asm", getenv("SUNDER_HOME")));
+    }
+    else {
+        printf("SUNDER_SYSASM_PATH=\n");
+    }
+}
+
+static void
 usage(void)
 {
     // clang-format off
@@ -51,6 +81,7 @@ usage(void)
    "",
    "Options:",
    "  -c        Compile and assemble, but do not link.",
+   "  -e        Display the Sunder environment and exit.",
    "  -k        Keep intermediate files (.o and .asm).",
    "  -l OPT    Pass OPT directly to the linker.",
    "  -o OUT    Write output executable to OUT (default a.out).",
@@ -66,10 +97,15 @@ static void
 argparse(int argc, char** argv)
 {
     int c = 0;
-    while ((c = getopt(argc, argv, "ckl:o:h")) != -1) {
+    while ((c = getopt(argc, argv, "cekl:o:h")) != -1) {
         switch (c) {
         case 'c': {
             opt_c = true;
+            break;
+        }
+        case 'e': {
+            env();
+            exit(EXIT_SUCCESS);
             break;
         }
         case 'k': {

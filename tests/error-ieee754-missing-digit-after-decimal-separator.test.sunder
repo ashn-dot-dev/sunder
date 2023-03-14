@@ -1,0 +1,6 @@
+let x = 123.f32;
+################################################################################
+# [error-ieee754-missing-digit-after-decimal-separator.test.sunder:1] error: floating point literal requires at least one digit after the decimal separator
+# let x = 123.f32;
+#         ^
+

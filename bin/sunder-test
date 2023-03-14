@@ -1,5 +1,5 @@
 #!/bin/sh
-set -eu
+set -e
 
 PROGNAME=$(basename "$0")
 usage() {
@@ -25,10 +25,28 @@ done
 TESTSRUN=0
 FAILURES=0
 
+contains() {
+    CONTAINS_STR="$1" # input string
+    CONTAINS_SUB="$2" # target substring
+    if [ "${CONTAINS_STR#*${CONTAINS_SUB}}" != "${CONTAINS_STR}" ]; then
+        return 0 # Input string contains target substring.
+    fi
+    return 1 # Input string does not contain target substring.
+}
+
 test() {
     TEST="$1"
 
     echo "[= TEST ${TEST} =]"
+
+    # XXX: Hack that allows conditionally skipping tests that would fail when
+    # compiled with a backend that does not support features exercised by that
+    # particular test.
+    if >/dev/null grep -i '#.*only SUNDER_BACKEND=C' "${TEST}" \
+    && ! sunder-compile -e | >/dev/null grep -i 'SUNDER_BACKEND=C'; then
+        echo '[= SKIP =]'
+        return 0
+    fi
 
     set +e
     RECEIVED=$(\

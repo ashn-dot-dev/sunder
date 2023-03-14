@@ -308,6 +308,8 @@ eval_rvalue_cast(struct expr const* expr)
         case TYPE_S64: /* fallthrough */
         case TYPE_SSIZE: /* fallthrough */
         case TYPE_INTEGER: /* fallthrough */
+        case TYPE_F32: /* fallthrough */
+        case TYPE_F64: /* fallthrough */
         case TYPE_POINTER: /* fallthrough */
         case TYPE_ARRAY: /* fallthrough */
         case TYPE_SLICE: /* fallthrough */
@@ -392,6 +394,26 @@ eval_rvalue_cast(struct expr const* expr)
         return result;
     }
 
+    // Currently casts to and from floating point types are disallowed at
+    // compile time as it is not clear whether casts should error if the
+    // casted-from value cannot be exactly represented by the casted-to type or
+    // if the casted-from value should be truncated/rounded when converted to
+    // the casted-to type.
+    if (type_is_ieee754(expr->type) && type_is_int(from->type)) {
+        fatal(
+            expr->location,
+            "constant expression contains cast from integer type `%s` to floating point type `%s`",
+            from->type->name,
+            expr->type->name);
+    }
+    if (type_is_int(expr->type) && type_is_ieee754(from->type)) {
+        fatal(
+            expr->location,
+            "constant expression contains cast from floating point type `%s` to integer type `%s`",
+            from->type->name,
+            expr->type->name);
+    }
+
     // Cases casting from sized types with a defined byte representation.
     sbuf(uint8_t) bytes = value_to_new_bytes(from);
     struct value* res = NULL;
@@ -447,6 +469,8 @@ eval_rvalue_cast(struct expr const* expr)
     case TYPE_ANY: /* fallthrough */
     case TYPE_VOID: /* fallthrough */
     case TYPE_INTEGER: /* fallthrough */
+    case TYPE_F32: /* fallthrough */
+    case TYPE_F64: /* fallthrough */
     case TYPE_FUNCTION: /* fallthrough */
     case TYPE_POINTER: /* fallthrough */
     case TYPE_ARRAY: /* fallthrough */
@@ -873,6 +897,16 @@ eval_rvalue_binary(struct expr const* expr)
         break;
     }
     case BOP_ADD: {
+        assert(lhs->type == rhs->type);
+        if (lhs->type->kind == TYPE_F32) {
+            res = value_new_f32(lhs->data.f32 + rhs->data.f32);
+            break;
+        }
+        if (lhs->type->kind == TYPE_F64) {
+            res = value_new_f64(lhs->data.f64 + rhs->data.f64);
+            break;
+        }
+
         assert(type_is_int(lhs->type));
         assert(type_is_int(rhs->type));
         struct bigint* const integer = bigint_new(BIGINT_ZERO);
@@ -910,6 +944,16 @@ eval_rvalue_binary(struct expr const* expr)
         break;
     }
     case BOP_SUB: {
+        assert(lhs->type == rhs->type);
+        if (lhs->type->kind == TYPE_F32) {
+            res = value_new_f32(lhs->data.f32 - rhs->data.f32);
+            break;
+        }
+        if (lhs->type->kind == TYPE_F64) {
+            res = value_new_f64(lhs->data.f64 - rhs->data.f64);
+            break;
+        }
+
         assert(type_is_int(lhs->type));
         assert(type_is_int(rhs->type));
         struct bigint* const integer = bigint_new(BIGINT_ZERO);
@@ -947,6 +991,16 @@ eval_rvalue_binary(struct expr const* expr)
         break;
     }
     case BOP_MUL: {
+        assert(lhs->type == rhs->type);
+        if (lhs->type->kind == TYPE_F32) {
+            res = value_new_f32(lhs->data.f32 * rhs->data.f32);
+            break;
+        }
+        if (lhs->type->kind == TYPE_F64) {
+            res = value_new_f64(lhs->data.f64 * rhs->data.f64);
+            break;
+        }
+
         assert(type_is_int(lhs->type));
         assert(type_is_int(rhs->type));
         struct bigint* const integer = bigint_new(BIGINT_ZERO);
@@ -984,6 +1038,34 @@ eval_rvalue_binary(struct expr const* expr)
         break;
     }
     case BOP_DIV: {
+        assert(lhs->type == rhs->type);
+        if (lhs->type->kind == TYPE_F32) {
+            if (rhs->data.f32 == 0) {
+                fatal(
+                    expr->location,
+                    "divide by zero (%.*f / %.*f)",
+                    IEEE754_FLT_DECIMAL_DIG,
+                    (double)lhs->data.f32,
+                    IEEE754_FLT_DECIMAL_DIG,
+                    (double)rhs->data.f32);
+            }
+            res = value_new_f32(lhs->data.f32 / rhs->data.f32);
+            break;
+        }
+        if (lhs->type->kind == TYPE_F64) {
+            if (rhs->data.f64 == 0) {
+                fatal(
+                    expr->location,
+                    "divide by zero (%.*f / %.*f)",
+                    IEEE754_DBL_DECIMAL_DIG,
+                    lhs->data.f64,
+                    IEEE754_DBL_DECIMAL_DIG,
+                    rhs->data.f64);
+            }
+            res = value_new_f64(lhs->data.f64 / rhs->data.f64);
+            break;
+        }
+
         assert(type_is_int(lhs->type));
         assert(type_is_int(rhs->type));
         if (bigint_cmp(rhs->data.integer, BIGINT_ZERO) == 0) {

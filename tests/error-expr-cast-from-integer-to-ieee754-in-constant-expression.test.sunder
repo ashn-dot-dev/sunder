@@ -1,0 +1,5 @@
+let x = (:f32)123u;
+################################################################################
+# [error-expr-cast-from-integer-to-ieee754-in-constant-expression.test.sunder:1] error: constant expression contains cast from integer type `usize` to floating point type `f32`
+# let x = (:f32)123u;
+#         ^

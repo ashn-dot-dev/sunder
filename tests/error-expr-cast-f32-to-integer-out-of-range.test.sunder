@@ -1,0 +1,7 @@
+# only SUNDER_BACKEND=C
+func main() void {
+    let a = 256.0f32;
+    (:u8)a;
+}
+################################################################################
+# fatal: arithmetic operation produces out-of-range result

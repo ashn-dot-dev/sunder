@@ -1,5 +1,0 @@
-let x: ssize = 123s / 0s;
-################################################################################
-# [error-expr-binary-div-divide-by-zero-constant.test.sunder:1] error: divide by zero (123 / 0)
-# let x: ssize = 123s / 0s;
-#                     ^

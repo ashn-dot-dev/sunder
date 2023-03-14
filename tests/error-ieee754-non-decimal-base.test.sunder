@@ -1,0 +1,5 @@
+let x = 0x123.0f32;
+################################################################################
+# [error-ieee754-non-decimal-base.test.sunder:1] error: floating point literal has non-decimal base
+# let x = 0x123.0f32;
+#         ^

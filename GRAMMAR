@@ -68,6 +68,7 @@
 <expr> ::= <symbol>
          | <boolean>
          | <integer>
+         | <ieee754>
          | <expr-character>
          | <expr-bytes>
          | <expr-list>
@@ -206,6 +207,8 @@
               | ? printable ASCII character ?
 
 <letter> ::= "A" .. "Z" | "a" .. "z" | "_"
+
+<ieee754> ::= ("+" | "-")? <integer-number-dec> "." <integer-number-dec>
 
 <integer> ::= ("+" | "-")? <integer-number> <integer-suffix>?
 

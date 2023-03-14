@@ -1,0 +1,5 @@
+let x = 123s / 0s;
+################################################################################
+# [error-expr-binary-div-divide-by-zero-constant-integer.test.sunder:1] error: divide by zero (123 / 0)
+# let x = 123s / 0s;
+#              ^

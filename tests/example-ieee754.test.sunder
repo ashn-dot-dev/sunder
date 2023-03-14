@@ -1,0 +1,174 @@
+# only SUNDER_BACKEND=C
+import "sys";
+import "std";
+
+let f32_constant = 123.456f32;
+let f64_constant = 123.456f64;
+
+func display[[T]](value: T) void {
+    std::print_format_line(
+        std::out(),
+        "{}",
+        (:[]std::formatter)[std::formatter::init[[T]](&value)]);
+}
+
+func main() void {
+    std::print_line(std::out(), "f32 literals");
+    display[[f32]](0.0f32);
+    display[[f32]](+0.5f32);
+    display[[f32]](-0.5f32);
+    display[[f32]](+1.0f32);
+    display[[f32]](-1.0f32);
+    display[[f32]](+123.456f32);
+    display[[f32]](-123.456f32);
+
+    std::print_line(std::out(), "f64 literals");
+    display[[f64]](0.0f64);
+    display[[f64]](+0.5f64);
+    display[[f64]](-0.5f64);
+    display[[f64]](+1.0f64);
+    display[[f64]](-1.0f64);
+    display[[f64]](+123.456f64);
+    display[[f64]](-123.456f64);
+
+    std::print_line(std::out(), "f32 compile-time arithmetic");
+    display[[f32]](0.50f32 + 0.25f32);
+    display[[f32]](0.50f32 - 0.25f32);
+    display[[f32]](0.50f32 * 0.25f32);
+    display[[f32]](0.50f32 / 0.25f32);
+
+    std::print_line(std::out(), "f32 run-time arithmetic");
+    var x = 0.50f32;
+    var y = 0.25f32;
+    display[[f32]](x + y);
+    display[[f32]](x - y);
+    display[[f32]](x * y);
+    display[[f32]](x / y);
+
+    std::print_line(std::out(), "f64 compile-time arithmetic");
+    display[[f64]](0.50f64 + 0.25f64);
+    display[[f64]](0.50f64 - 0.25f64);
+    display[[f64]](0.50f64 * 0.25f64);
+    display[[f64]](0.50f64 / 0.25f64);
+
+    std::print_line(std::out(), "f64 run-time arithmetic");
+    var x = 0.50f64;
+    var y = 0.25f64;
+    display[[f64]](x + y);
+    display[[f64]](x - y);
+    display[[f64]](x * y);
+    display[[f64]](x / y);
+
+    std::print_line(std::out(), "f32-to-integer casts");
+    display[[u8]]((:u8)0.0f32);
+    display[[u8]]((:u8)+123.456f32);
+    display[[s8]]((:s8)-123.456f32);
+    display[[s8]]((:s8)+123.456f32);
+    display[[usize]]((:usize)0.0f32);
+    display[[usize]]((:usize)+123.456f32);
+    display[[ssize]]((:ssize)-123.456f32);
+    display[[ssize]]((:ssize)+123.456f32);
+
+    std::print_line(std::out(), "f64-to-integer casts");
+    display[[u8]]((:u8)0.0f64);
+    display[[u8]]((:u8)+123.456f64);
+    display[[s8]]((:s8)-123.456f64);
+    display[[s8]]((:s8)+123.456f64);
+    display[[usize]]((:usize)0.0f64);
+    display[[usize]]((:usize)+123.456f64);
+    display[[ssize]]((:ssize)-123.456f64);
+    display[[ssize]]((:ssize)+123.456f64);
+
+    std::print_line(std::out(), "integer-to-f32 casts");
+    display[[f32]]((:f32)u8::MIN);
+    display[[f32]]((:f32)u8::MAX);
+    display[[f32]]((:f32)s8::MIN);
+    display[[f32]]((:f32)s8::MAX);
+    display[[f32]]((:f32)usize::MIN);
+    display[[f32]]((:f32)usize::MAX);
+    display[[f32]]((:f32)ssize::MIN);
+    display[[f32]]((:f32)ssize::MAX);
+
+    std::print_line(std::out(), "integer-to-f64 casts");
+    display[[f64]]((:f64)u8::MIN);
+    display[[f64]]((:f64)u8::MAX);
+    display[[f64]]((:f64)s8::MIN);
+    display[[f64]]((:f64)s8::MAX);
+    display[[f64]]((:f64)usize::MIN);
+    display[[f64]]((:f64)usize::MAX);
+    display[[f64]]((:f64)ssize::MIN);
+    display[[f64]]((:f64)ssize::MAX);
+}
+################################################################################
+# f32 literals
+# 0.000000000
+# 0.500000000
+# -0.500000000
+# 1.000000000
+# -1.000000000
+# 123.456001282
+# -123.456001282
+# f64 literals
+# 0.00000000000000000
+# 0.50000000000000000
+# -0.50000000000000000
+# 1.00000000000000000
+# -1.00000000000000000
+# 123.45600000000000307
+# -123.45600000000000307
+# f32 compile-time arithmetic
+# 0.750000000
+# 0.250000000
+# 0.125000000
+# 2.000000000
+# f32 run-time arithmetic
+# 0.750000000
+# 0.250000000
+# 0.125000000
+# 2.000000000
+# f64 compile-time arithmetic
+# 0.75000000000000000
+# 0.25000000000000000
+# 0.12500000000000000
+# 2.00000000000000000
+# f64 run-time arithmetic
+# 0.75000000000000000
+# 0.25000000000000000
+# 0.12500000000000000
+# 2.00000000000000000
+# f32-to-integer casts
+# 0
+# 123
+# -123
+# 123
+# 0
+# 123
+# -123
+# 123
+# f64-to-integer casts
+# 0
+# 123
+# -123
+# 123
+# 0
+# 123
+# -123
+# 123
+# integer-to-f32 casts
+# 0.000000000
+# 255.000000000
+# -128.000000000
+# 127.000000000
+# 0.000000000
+# 18446744073709551616.000000000
+# -9223372036854775808.000000000
+# 9223372036854775808.000000000
+# integer-to-f64 casts
+# 0.00000000000000000
+# 255.00000000000000000
+# -128.00000000000000000
+# 127.00000000000000000
+# 0.00000000000000000
+# 18446744073709551616.00000000000000000
+# -9223372036854775808.00000000000000000
+# 9223372036854775808.00000000000000000

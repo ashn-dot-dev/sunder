@@ -113,6 +113,18 @@ module_new(char const* name, char const* path)
         symbol_table_lookup(
             context()->global_symbol_table, context()->interned.integer),
         false);
+    symbol_table_insert(
+        self->symbols,
+        context()->interned.f32,
+        symbol_table_lookup(
+            context()->global_symbol_table, context()->interned.f32),
+        false);
+    symbol_table_insert(
+        self->symbols,
+        context()->interned.f64,
+        symbol_table_lookup(
+            context()->global_symbol_table, context()->interned.f64),
+        false);
 
     self->exports = symbol_table_new(NULL);
 
@@ -160,6 +172,8 @@ context_init(void)
     s_context.interned.y = intern_cstr("y");
     s_context.interned.u = intern_cstr("u");
     s_context.interned.s = intern_cstr("s");
+    s_context.interned.f32 = intern_cstr("f32");
+    s_context.interned.f64 = intern_cstr("f64");
 
 #define INIT_BIGINT_CONSTANT(ident, str_literal)                               \
     struct bigint* const ident = bigint_new_cstr(str_literal);                 \
@@ -224,6 +238,8 @@ context_init(void)
     INIT_BUILTIN_TYPE(s_context.builtin.usize, type_new_usize());
     INIT_BUILTIN_TYPE(s_context.builtin.ssize, type_new_ssize());
     INIT_BUILTIN_TYPE(s_context.builtin.integer, type_new_integer());
+    INIT_BUILTIN_TYPE(s_context.builtin.f32, type_new_f32());
+    INIT_BUILTIN_TYPE(s_context.builtin.f64, type_new_f64());
 #undef INIT_BUILTIN_TYPE
     // Instantiate `*byte` and `[]byte` types. These types are not builtins in
     // the traditional sense, but they are types relating to string literals,

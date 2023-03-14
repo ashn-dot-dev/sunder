@@ -230,6 +230,30 @@ type_new_integer(void)
 }
 
 struct type*
+type_new_f32(void)
+{
+    struct symbol_table* const symbols =
+        symbol_table_new(context()->global_symbol_table);
+    sbuf_push(context()->chilling_symbol_tables, symbols);
+
+    struct type* const self =
+        type_new(context()->interned.f32, 4, 4, symbols, TYPE_F32);
+    return self;
+}
+
+struct type*
+type_new_f64(void)
+{
+    struct symbol_table* const symbols =
+        symbol_table_new(context()->global_symbol_table);
+    sbuf_push(context()->chilling_symbol_tables, symbols);
+
+    struct type* const self =
+        type_new(context()->interned.f64, 8, 8, symbols, TYPE_F64);
+    return self;
+}
+
+struct type*
 type_new_function(
     struct type const* const* parameter_types, struct type const* return_type)
 {
@@ -526,6 +550,15 @@ type_is_sint(struct type const* self)
     enum type_kind const kind = self->kind;
     return kind == TYPE_S8 || kind == TYPE_S16 || kind == TYPE_S32
         || kind == TYPE_S64 || kind == TYPE_SSIZE;
+}
+
+bool
+type_is_ieee754(struct type const* self)
+{
+    assert(self != NULL);
+
+    enum type_kind const kind = self->kind;
+    return kind == TYPE_F32 || kind == TYPE_F64;
 }
 
 bool
@@ -1503,6 +1536,24 @@ value_new_integer(struct type const* type, struct bigint* integer)
 }
 
 struct value*
+value_new_f32(float f32)
+{
+    struct type const* const type = context()->builtin.f32;
+    struct value* self = value_new(type);
+    self->data.f32 = f32;
+    return self;
+}
+
+struct value*
+value_new_f64(double f64)
+{
+    struct type const* const type = context()->builtin.f64;
+    struct value* self = value_new(type);
+    self->data.f64 = f64;
+    return self;
+}
+
+struct value*
 value_new_function(struct function const* function)
 {
     assert(function != NULL);
@@ -1611,6 +1662,10 @@ value_del(struct value* self)
         bigint_del(self->data.integer);
         break;
     }
+    case TYPE_F32: /* fallthrough */
+    case TYPE_F64: {
+        break;
+    }
     case TYPE_FUNCTION: {
         break;
     }
@@ -1684,6 +1739,10 @@ value_freeze(struct value* self)
         bigint_freeze(self->data.integer);
         return;
     }
+    case TYPE_F32: /* fallthrough */
+    case TYPE_F64: {
+        return;
+    }
     case TYPE_FUNCTION: {
         return;
     }
@@ -1752,6 +1811,12 @@ value_clone(struct value const* self)
     case TYPE_SSIZE: /* fallthrough */
     case TYPE_INTEGER: {
         return value_new_integer(self->type, bigint_new(self->data.integer));
+    }
+    case TYPE_F32: {
+        return value_new_f32(self->data.f32);
+    }
+    case TYPE_F64: {
+        return value_new_f64(self->data.f64);
     }
     case TYPE_FUNCTION: {
         return value_new_function(self->data.function);
@@ -1888,6 +1953,12 @@ value_eq(struct value const* lhs, struct value const* rhs)
     case TYPE_INTEGER: {
         return bigint_cmp(lhs->data.integer, rhs->data.integer) == 0;
     }
+    case TYPE_F32: {
+        return lhs->data.f32 == rhs->data.f32;
+    }
+    case TYPE_F64: {
+        return lhs->data.f64 == rhs->data.f64;
+    }
     case TYPE_FUNCTION: {
         return lhs->data.function == rhs->data.function;
     }
@@ -1946,6 +2017,12 @@ value_lt(struct value const* lhs, struct value const* rhs)
     case TYPE_INTEGER: {
         return bigint_cmp(lhs->data.integer, rhs->data.integer) < 0;
     }
+    case TYPE_F32: {
+        return lhs->data.f32 < rhs->data.f32;
+    }
+    case TYPE_F64: {
+        return lhs->data.f64 < rhs->data.f64;
+    }
     case TYPE_POINTER: {
         UNREACHABLE(); // illegal (see comment in value_eq)
     }
@@ -1994,6 +2071,12 @@ value_gt(struct value const* lhs, struct value const* rhs)
     case TYPE_SSIZE: /* fallthrough */
     case TYPE_INTEGER: {
         return bigint_cmp(lhs->data.integer, rhs->data.integer) > 0;
+    }
+    case TYPE_F32: {
+        return lhs->data.f32 > rhs->data.f32;
+    }
+    case TYPE_F64: {
+        return lhs->data.f64 > rhs->data.f64;
     }
     case TYPE_POINTER: {
         UNREACHABLE(); // illegal (see comment in value_eq)
@@ -2068,6 +2151,32 @@ value_to_new_bytes(struct value const* value)
     case TYPE_INTEGER: {
         // Arbitrary precision integers have no meaningful byte representation.
         UNREACHABLE();
+    }
+    case TYPE_F32: {
+        union {
+            float f32;
+            uint8_t bytes[sizeof(float)];
+        } u;
+        u.f32 = value->data.f32;
+
+        assert(sbuf_count(bytes) == ARRAY_COUNT(u.bytes));
+        for (size_t i = 0; i < sbuf_count(bytes); ++i) {
+            bytes[i] = u.bytes[i];
+        }
+        return bytes;
+    }
+    case TYPE_F64: {
+        union {
+            double f64;
+            uint8_t bytes[sizeof(double)];
+        } u;
+        u.f64 = value->data.f64;
+
+        assert(sbuf_count(bytes) == ARRAY_COUNT(u.bytes));
+        for (size_t i = 0; i < sbuf_count(bytes); ++i) {
+            bytes[i] = u.bytes[i];
+        }
+        return bytes;
     }
     case TYPE_FUNCTION: {
         // Functions are an abstract concept with an address that is chosen by

@@ -1,0 +1,9 @@
+# only SUNDER_BACKEND=C
+func main() void {
+    var a = 1.0f32;
+    var b = 0.0f32;
+    a / b;
+}
+################################################################################
+# fatal: divide by zero
+

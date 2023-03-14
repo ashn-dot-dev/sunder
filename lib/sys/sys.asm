@@ -450,6 +450,12 @@ sys._dump_lookup_table: db \
     'F0', 'F1', 'F2', 'F3', 'F4', 'F5', 'F6', 'F7', \
     'F8', 'F9', 'FA', 'FB', 'FC', 'FD', 'FE', 'FF'
 
+section .text
+sys.str_to_f32: call __fatal_unimplemented
+sys.str_to_f64: call __fatal_unimplemented
+sys.f32_to_str: call __fatal_unimplemented
+sys.f64_to_str: call __fatal_unimplemented
+
 ; PROGRAM ENTRY POINT
 ; ===================
 %ifdef __entry

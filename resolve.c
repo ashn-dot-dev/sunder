@@ -238,6 +238,8 @@ resolve_expr_boolean(struct resolver* resolver, struct cst_expr const* expr);
 static struct expr const*
 resolve_expr_integer(struct resolver* resolver, struct cst_expr const* expr);
 static struct expr const*
+resolve_expr_ieee754(struct resolver* resolver, struct cst_expr const* expr);
+static struct expr const*
 resolve_expr_character(struct resolver* resolver, struct cst_expr const* expr);
 static struct expr const*
 resolve_expr_bytes(struct resolver* resolver, struct cst_expr const* expr);
@@ -1107,6 +1109,9 @@ explicit_cast(
     bool const valid = (type_is_int(type) && type_is_int(expr->type))
         || (type_is_int(type) && expr->type->kind == TYPE_BOOL)
         || (type_is_int(type) && expr->type->kind == TYPE_BYTE)
+        || (type_is_int(type) && type_is_ieee754(expr->type))
+        || (type_is_ieee754(type) && type_is_int(expr->type))
+        || (type_is_ieee754(type) && type_is_ieee754(expr->type))
         || (type->kind == TYPE_BOOL && expr->type->kind == TYPE_BOOL)
         || (type->kind == TYPE_BOOL && expr->type->kind == TYPE_BYTE)
         || (type->kind == TYPE_BOOL && type_is_int(expr->type))
@@ -1188,6 +1193,13 @@ explicit_cast(
         resolved = expr_new_cast(location, type, expr);
 
         freeze(resolved);
+        return resolved;
+    }
+
+    // Skip constant evaluation for floating point typea. See comments in
+    // eval_rvalue_cast relating to the difficulties in choosing behavior for
+    // compile-time casting with floating point types.
+    if (type_is_ieee754(type) || type_is_ieee754(expr->type)) {
         return resolved;
     }
 
@@ -2846,6 +2858,9 @@ resolve_expr(struct resolver* resolver, struct cst_expr const* expr)
     case CST_EXPR_INTEGER: {
         return resolve_expr_integer(resolver, expr);
     }
+    case CST_EXPR_IEEE754: {
+        return resolve_expr_ieee754(resolver, expr);
+    }
     case CST_EXPR_CHARACTER: {
         return resolve_expr_character(resolver, expr);
     }
@@ -3039,6 +3054,60 @@ resolve_expr_integer(struct resolver* resolver, struct cst_expr const* expr)
 
     struct value* const value = value_new_integer(type, bigint_new(integer));
     value_freeze(value);
+
+    struct expr* const resolved = expr_new_value(expr->location, value);
+
+    freeze(resolved);
+    return resolved;
+}
+
+static struct type const*
+ieee754_literal_suffix_to_type(
+    struct source_location location, char const* /* interned */ suffix)
+{
+    assert(suffix != NULL);
+
+    if (suffix == context()->interned.empty) {
+        fatal(
+            location,
+            "floating point literal requires the type suffix `f32` or `f64`");
+    }
+    if (suffix == context()->interned.f32) {
+        return context()->builtin.f32;
+    }
+    if (suffix == context()->interned.f64) {
+        return context()->builtin.f64;
+    }
+
+    fatal(location, "unknown floating point literal suffix `%s`", suffix);
+    return NULL;
+}
+
+static struct expr const*
+resolve_expr_ieee754(struct resolver* resolver, struct cst_expr const* expr)
+{
+    assert(resolver != NULL);
+    assert(expr != NULL);
+    assert(expr->kind == CST_EXPR_IEEE754);
+    (void)resolver;
+
+    struct token const token = expr->data.ieee754;
+
+    double const ieee754 = token.data.ieee754.value;
+
+    struct type const* const type = ieee754_literal_suffix_to_type(
+        expr->location, token.data.ieee754.suffix);
+
+    assert(type->kind == TYPE_F32 || type->kind == TYPE_F64);
+    struct value* value = NULL;
+    if (type->kind == TYPE_F32) {
+        value = value_new_f32((float)ieee754);
+        value_freeze(value);
+    }
+    if (type->kind == TYPE_F64) {
+        value = value_new_f64(ieee754);
+        value_freeze(value);
+    }
 
     struct expr* const resolved = expr_new_value(expr->location, value);
 
@@ -3892,6 +3961,37 @@ resolve_expr_unary(struct resolver* resolver, struct cst_expr const* expr)
         return resolved;
     }
 
+    // Similarly we identify the special case where a + or - token is
+    // immediately followed by an IEEE754 token and combine the two into a
+    // single IEEE754 expression.
+    if (is_sign && cst_rhs->kind == CST_EXPR_IEEE754) {
+        struct token const token = cst_rhs->data.ieee754;
+        double ieee754 = token.data.ieee754.value;
+
+        if (op.kind == TOKEN_DASH) {
+            ieee754 = -ieee754;
+        }
+
+        struct type const* const type = ieee754_literal_suffix_to_type(
+            token.location, token.data.ieee754.suffix);
+
+        assert(type->kind == TYPE_F32 || type->kind == TYPE_F64);
+        struct value* value = NULL;
+        if (type->kind == TYPE_F32) {
+            value = value_new_f32((float)ieee754);
+            value_freeze(value);
+        }
+        if (type->kind == TYPE_F64) {
+            value = value_new_f64(ieee754);
+            value_freeze(value);
+        }
+
+        struct expr* const resolved = expr_new_value(op.location, value);
+
+        freeze(resolved);
+        return resolved;
+    }
+
     struct expr const* const rhs = resolve_expr(resolver, cst_rhs);
     switch (op.kind) {
     case TOKEN_NOT: {
@@ -4236,9 +4336,9 @@ resolve_expr_binary_logical(
     assert(rhs != NULL);
     (void)resolver;
 
-    bool const valid = lhs->type == rhs->type && lhs->type->kind == TYPE_BOOL
-        && rhs->type->kind == TYPE_BOOL;
-    if (!valid) {
+    bool const types_are_valid =
+        lhs->type == rhs->type && lhs->type->kind == TYPE_BOOL;
+    if (!types_are_valid) {
         fatal(
             op.location,
             "invalid arguments of types `%s` and `%s` in binary `%s` expression",
@@ -4433,9 +4533,9 @@ resolve_expr_binary_arithmetic(
     lhs = implicit_cast(rhs->type, lhs);
     rhs = implicit_cast(lhs->type, rhs);
 
-    bool const valid = lhs->type == rhs->type && type_is_int(lhs->type)
-        && type_is_int(rhs->type);
-    if (!valid) {
+    bool const types_are_valid = lhs->type == rhs->type
+        && (type_is_int(lhs->type) || type_is_ieee754(rhs->type));
+    if (!types_are_valid) {
         fatal(
             op.location,
             "invalid arguments of types `%s` and `%s` in binary `%s` expression",
@@ -4446,12 +4546,26 @@ resolve_expr_binary_arithmetic(
 
     struct type const* const type = lhs->type; // Arbitrarily use lhs.
 
+    // Wrapping binary expressions are only supported for sized integer types.
     bool const is_wrapping = (bop == BOP_ADD_WRAPPING)
         || (bop == BOP_SUB_WRAPPING) || (bop == BOP_MUL_WRAPPING);
-    if (is_wrapping && type->size == SIZEOF_UNSIZED) {
+    bool const allow_wrapping = type_is_uint(type) || type_is_sint(type);
+    if (is_wrapping && !allow_wrapping) {
         fatal(
             op.location,
             "invalid arguments of type `%s` in wrapping binary `%s` expression",
+            type->name,
+            token_kind_to_cstr(op.kind));
+    }
+
+    // Remainder binary expressions are only supported for sized integer types.
+    bool const is_rem = bop == BOP_REM;
+    bool const allow_rem = type_is_uint(type) || type_is_sint(type);
+    if (is_rem && !allow_rem) {
+        assert(type->size != SIZEOF_UNSIZED);
+        fatal(
+            op.location,
+            "invalid arguments of type `%s` in binary `%s` expression",
             type->name,
             token_kind_to_cstr(op.kind));
     }

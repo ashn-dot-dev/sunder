@@ -219,6 +219,32 @@ append_dx_static_initializer(struct value const* value)
     case TYPE_INTEGER: {
         UNREACHABLE();
     }
+    case TYPE_F32: {
+        union {
+            float f32;
+            uint32_t u32;
+        } u;
+        u.f32 = value->data.f32;
+        appendli(
+            "dd %" PRId32 " ; (%.*f as an integer)",
+            u.u32,
+            IEEE754_FLT_DECIMAL_DIG,
+            (double)u.f32);
+        return;
+    }
+    case TYPE_F64: {
+        union {
+            double f64;
+            uint64_t u64;
+        } u;
+        u.f64 = value->data.f64;
+        appendli(
+            "dq %" PRId64 " ; (%.*f as an integer)",
+            u.u64,
+            IEEE754_DBL_DECIMAL_DIG,
+            u.f64);
+        return;
+    }
     case TYPE_FUNCTION: {
         struct address const* const address = value->data.function->address;
         assert(address->kind == ADDRESS_STATIC);
@@ -624,6 +650,8 @@ mov_rax_reg_a_with_zero_or_sign_extend(struct type const* type)
     case TYPE_ANY: /* fallthrough */
     case TYPE_VOID: /* fallthrough */
     case TYPE_INTEGER: /* fallthrough */
+    case TYPE_F32: /* fallthrough */
+    case TYPE_F64: /* fallthrough */
     case TYPE_ARRAY: /* fallthrough */
     case TYPE_SLICE: /* fallthrough */
     case TYPE_STRUCT: {
@@ -981,6 +1009,19 @@ codegen_fatals(void)
     // to allow for addresses in the full 64-bit address space.
 
     // clang-format off
+    // Builtin unimplemented handler.
+    appendln("section .text");
+    appendln("__fatal_unimplemented:");
+    appendln("    lea rax, [__fatal_unimplemented_msg_start]");
+    appendln("    push rax");
+    appendln("    push __fatal_unimplemented_msg_count");
+    appendln("    call __fatal");
+    appendch('\n');
+    appendln("section .rodata");
+    appendln("__fatal_unimplemented_msg_start: db \"unimplemented\", 0x0A");
+    appendln("__fatal_unimplemented_msg_count: equ $ - __fatal_unimplemented_msg_start");
+    appendch('\n');
+
     // Builtin integer divide by zero handler.
     appendln("section .text");
     appendln("__fatal_integer_divide_by_zero:");
@@ -1518,6 +1559,34 @@ push_rvalue_value(struct expr const* expr, size_t id)
         xalloc(cstr, XALLOC_FREE);
         return;
     }
+    case TYPE_F32: {
+        union {
+            float f32;
+            uint32_t u32;
+        } u;
+        u.f32 = value->data.f32;
+        appendli(
+            "mov rax, %" PRId32 " ; (%.*f as an integer)",
+            u.u32,
+            IEEE754_FLT_DECIMAL_DIG,
+            (double)u.f32);
+        appendli("push rax");
+        return;
+    }
+    case TYPE_F64: {
+        union {
+            double f64;
+            uint64_t u64;
+        } u;
+        u.f64 = value->data.f64;
+        appendli(
+            "mov rax, %" PRId64 " ; (%.*f as an integer)",
+            u.u64,
+            IEEE754_DBL_DECIMAL_DIG,
+            u.f64);
+        appendli("push rax");
+        return;
+    }
     case TYPE_VOID: /* fallthrough */
     case TYPE_FUNCTION: /* fallthrough */
     case TYPE_POINTER: /* fallthrough */
@@ -1724,6 +1793,13 @@ push_rvalue_cast(struct expr const* expr, size_t id)
     assert(expr->type->size >= 1u);
     assert(expr->type->size <= 8u);
     (void)id;
+
+    if (type_is_int(expr->type)
+        && type_is_ieee754(expr->data.cast.expr->type)) {
+        push_rvalue(expr->data.cast.expr);
+        appendli("call __fatal_unimplemented");
+        return;
+    }
 
     struct expr const* const from = expr->data.cast.expr;
     assert(from->type->size >= 1u);
@@ -2752,6 +2828,13 @@ push_rvalue_binary_add(struct expr const* expr, size_t id)
     assert(expr->data.binary.lhs->type == expr->data.binary.rhs->type);
 
     struct type const* const xhs_type = expr->data.binary.lhs->type;
+    if (type_is_ieee754(xhs_type)) {
+        push_rvalue(expr->data.binary.lhs);
+        push_rvalue(expr->data.binary.rhs);
+        appendli("call __fatal_unimplemented");
+        return;
+    }
+
     assert(type_is_int(xhs_type));
 
     char const* const lhs_reg = reg_a(xhs_type->size);
@@ -2810,6 +2893,13 @@ push_rvalue_binary_sub(struct expr const* expr, size_t id)
     assert(expr->data.binary.lhs->type == expr->data.binary.rhs->type);
 
     struct type const* const xhs_type = expr->data.binary.lhs->type;
+    if (type_is_ieee754(xhs_type)) {
+        push_rvalue(expr->data.binary.lhs);
+        push_rvalue(expr->data.binary.rhs);
+        appendli("call __fatal_unimplemented");
+        return;
+    }
+
     assert(type_is_int(xhs_type));
 
     char const* const lhs_reg = reg_a(xhs_type->size);
@@ -2868,6 +2958,13 @@ push_rvalue_binary_mul(struct expr const* expr, size_t id)
     assert(expr->data.binary.lhs->type == expr->data.binary.rhs->type);
 
     struct type const* const xhs_type = expr->data.binary.lhs->type;
+    if (type_is_ieee754(xhs_type)) {
+        push_rvalue(expr->data.binary.lhs);
+        push_rvalue(expr->data.binary.rhs);
+        appendli("call __fatal_unimplemented");
+        return;
+    }
+
     assert(type_is_int(xhs_type));
 
     char const* const rhs_reg = reg_b(xhs_type->size);
@@ -2925,6 +3022,13 @@ push_rvalue_binary_divrem(struct expr const* expr, size_t id)
     assert(expr->data.binary.lhs->type == expr->data.binary.rhs->type);
 
     struct type const* const xhs_type = expr->data.binary.lhs->type;
+    if (type_is_ieee754(xhs_type)) {
+        push_rvalue(expr->data.binary.lhs);
+        push_rvalue(expr->data.binary.rhs);
+        appendli("call __fatal_unimplemented");
+        return;
+    }
+
     assert(type_is_int(xhs_type));
 
     char const* const rhs_reg = reg_b(xhs_type->size);

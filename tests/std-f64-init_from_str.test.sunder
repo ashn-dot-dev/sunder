@@ -1,0 +1,44 @@
+# only SUNDER_BACKEND=C
+import "std";
+
+func test(str: []byte) void {
+    var result = f64::init_from_str(str);
+    if result.is_value() {
+        var value = result.value();
+        std::print_format_line(
+            std::out(),
+            "{}",
+            (:[]std::formatter)[
+                std::formatter::init[[f64]](&value)]);
+    }
+    else {
+        std::print_format_line(
+            std::out(),
+            "{}",
+            (:[]std::formatter)[
+                std::formatter::init[[[]byte]](&result.error().*.data)]);
+    }
+}
+
+func main() void {
+    test("123");
+    test("+123.5");
+    test("-123.5");
+
+    test("infinity");
+    test("not a number");
+    test(" +123.5");
+    test(" -123.5");
+    test("+123.5 ");
+    test("-123.5 ");
+}
+################################################################################
+# 123.00000000000000000
+# 123.50000000000000000
+# -123.50000000000000000
+# invalid argument
+# invalid argument
+# invalid argument
+# invalid argument
+# invalid argument
+# invalid argument

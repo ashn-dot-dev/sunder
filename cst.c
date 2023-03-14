@@ -402,6 +402,17 @@ cst_expr_new_integer(struct token token)
 }
 
 struct cst_expr*
+cst_expr_new_ieee754(struct token token)
+{
+    assert(token.kind == TOKEN_IEEE754);
+
+    struct cst_expr* const self =
+        cst_expr_new(token.location, CST_EXPR_IEEE754);
+    self->data.ieee754 = token;
+    return self;
+}
+
+struct cst_expr*
 cst_expr_new_character(struct token token)
 {
     assert(token.kind == TOKEN_CHARACTER);

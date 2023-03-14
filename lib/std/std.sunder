@@ -4214,6 +4214,40 @@ extend ssize func format(self: *ssize, writer: std::writer, fmt: []byte) std::re
     return integer::_format_smax((:std::smax)*self, writer, fmt);
 }
 
+extend f32 func init_from_str(str: []byte) std::result[[f32, std::error]] {
+    var out: f32 = uninit;
+    if not sys::str_to_f32(&out, startof(str), countof(str)) {
+        return std::result[[f32, std::error]]::init_error(std::error::INVALID_ARGUMENT);
+    }
+    return std::result[[f32, std::error]]::init_value(out);
+}
+
+extend f32 func format(self: *f32, writer: std::writer, fmt: []byte) std::result[[void, std::error]] {
+    if countof(fmt) != 0 {
+        return std::result[[void, std::error]]::init_error(std::error::INVALID_ARGUMENT);
+    }
+    var buf = (:[64]byte)[0...]; # More than enough space.
+    sys::f32_to_str(&buf[0], *self);
+    return std::write_all(writer, std::cstr::data(&buf[0]));
+}
+
+extend f64 func init_from_str(str: []byte) std::result[[f64, std::error]] {
+    var out: f64 = uninit;
+    if not sys::str_to_f64(&out, startof(str), countof(str)) {
+        return std::result[[f64, std::error]]::init_error(std::error::INVALID_ARGUMENT);
+    }
+    return std::result[[f64, std::error]]::init_value(out);
+}
+
+extend f64 func format(self: *f64, writer: std::writer, fmt: []byte) std::result[[void, std::error]] {
+    if countof(fmt) != 0 {
+        return std::result[[void, std::error]]::init_error(std::error::INVALID_ARGUMENT);
+    }
+    var buf = (:[64]byte)[0...]; # More than enough space.
+    sys::f64_to_str(&buf[0], *self);
+    return std::write_all(writer, std::cstr::data(&buf[0]));
+}
+
 extend []byte func compare(lhs: *[]byte, rhs: *[]byte) ssize {
     var lhs_data = *lhs;
     var rhs_data = *rhs;

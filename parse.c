@@ -122,6 +122,8 @@ parse_expr_boolean(struct parser* parser);
 static struct cst_expr const*
 parse_expr_integer(struct parser* parser);
 static struct cst_expr const*
+parse_expr_ieee754(struct parser* parser);
+static struct cst_expr const*
 parse_expr_character(struct parser* parser);
 static struct cst_expr const*
 parse_expr_bytes(struct parser* parser);
@@ -912,6 +914,9 @@ token_kind_nud(enum token_kind kind)
     case TOKEN_INTEGER: {
         return parse_expr_integer;
     }
+    case TOKEN_IEEE754: {
+        return parse_expr_ieee754;
+    }
     case TOKEN_CHARACTER: {
         return parse_expr_character;
     }
@@ -1064,6 +1069,18 @@ parse_expr_integer(struct parser* parser)
 
     struct token const token = expect_current(parser, TOKEN_INTEGER);
     struct cst_expr* const product = cst_expr_new_integer(token);
+
+    freeze(product);
+    return product;
+}
+
+static struct cst_expr const*
+parse_expr_ieee754(struct parser* parser)
+{
+    assert(parser != NULL);
+
+    struct token const token = expect_current(parser, TOKEN_IEEE754);
+    struct cst_expr* const product = cst_expr_new_ieee754(token);
 
     freeze(product);
     return product;

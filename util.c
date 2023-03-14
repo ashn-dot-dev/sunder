@@ -18,6 +18,9 @@
 #include "sunder.h"
 
 STATIC_ASSERT(CHAR_BIT_IS_8, CHAR_BIT == 8);
+#ifndef __STDC_IEC_559__
+#    error "IEEE-754 floating point is not fully supported"
+#endif
 
 static int
 cstr_vpcmp(void const* lhs, void const* rhs)
@@ -2292,4 +2295,14 @@ xspawnvpw(char const* const* argv)
     if (spawnvpw(argv) != 0) {
         exit(EXIT_FAILURE);
     }
+}
+
+char const*
+getenv_with_default(char const* name, char const* default_)
+{
+    char const* s = getenv(name);
+    if (s == NULL) {
+        return intern_cstr(default_);
+    }
+    return intern_cstr(s);
 }

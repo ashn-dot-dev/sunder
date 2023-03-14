@@ -22,6 +22,7 @@ GNU_BASE = \
 	-std=c99 -pedantic-errors \
 	-Wall -Wextra \
 	-Werror=conversion \
+	-Werror=double-promotion \
 	-Werror=format \
 	-Werror=implicit-function-declaration \
 	-Werror=incompatible-pointer-types \

@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 #include <assert.h>
+#include <errno.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -97,6 +98,7 @@ static struct vstr token_kind_vstrs[TOKEN_EOF + 1u] = {
     // Identifiers and Non-Keyword Literals
     [TOKEN_IDENTIFIER] = VSTR_INIT_STR_LITERAL("identifier"),
     [TOKEN_INTEGER] = VSTR_INIT_STR_LITERAL("integer"),
+    [TOKEN_IEEE754] = VSTR_INIT_STR_LITERAL("floating point number"),
     [TOKEN_CHARACTER] = VSTR_INIT_STR_LITERAL("character"),
     [TOKEN_BYTES] = VSTR_INIT_STR_LITERAL("bytes"),
     // Meta
@@ -204,6 +206,37 @@ token_init_integer(
     return token;
 }
 
+static struct token
+token_init_ieee754(
+    char const* start,
+    size_t count,
+    struct source_location location,
+    struct vstr number,
+    struct vstr suffix)
+{
+    assert(start != NULL && count != 0);
+    assert(number.start != NULL && number.count != 0);
+    assert(suffix.start != NULL || suffix.count == 0);
+
+    char* const tmp = cstr_new(number.start, number.count);
+    errno = 0;
+    double value = strtod(tmp, NULL);
+    if (errno != 0) {
+        fatal(
+            location,
+            "failed to parse floating point number `%.*s` with error '%s'",
+            (int)number.count,
+            number.start,
+            strerror(errno));
+    }
+    xalloc(tmp, XALLOC_FREE);
+
+    struct token token = token_init(start, count, location, TOKEN_IEEE754);
+    token.data.ieee754.value = value;
+    token.data.ieee754.suffix = intern(suffix.start, suffix.count);
+    return token;
+}
+
 static void
 skip_whitespace(struct lexer* self)
 {
@@ -266,7 +299,7 @@ lex_keyword_or_identifier(struct lexer* self, struct source_location location)
 }
 
 static struct token
-lex_integer(struct lexer* self, struct source_location location)
+lex_number(struct lexer* self, struct source_location location)
 {
     assert(self != NULL);
     assert(safe_isdigit(*self->current));
@@ -296,6 +329,25 @@ lex_integer(struct lexer* self, struct source_location location)
     while (radix_isdigit(*self->current)) {
         self->current += 1;
     }
+
+    // Digits (fractional component)
+    bool is_ieee754 =
+        self->current[0] == '.' && !safe_ispunct(self->current[1]);
+    if (is_ieee754) {
+        if (radix_isdigit != safe_isdigit) {
+            fatal(location, "floating point literal has non-decimal base");
+        }
+        self->current += 1; // Skip the '.' character.
+        while (radix_isdigit(*self->current)) {
+            self->current += 1;
+        }
+    }
+    if (self->current[-1] == '.') {
+        fatal(
+            location,
+            "floating point literal requires at least one digit after the decimal separator");
+    }
+
     size_t const number_count = (size_t)(self->current - number_start);
 
     // Suffix
@@ -310,7 +362,9 @@ lex_integer(struct lexer* self, struct source_location location)
     struct vstr const number = {number_start, number_count};
     struct vstr const suffix = {suffix_start, suffix_count};
 
-    return token_init_integer(start, count, location, number, suffix);
+    return is_ieee754
+        ? token_init_ieee754(start, count, location, number, suffix)
+        : token_init_integer(start, count, location, number, suffix);
 }
 
 // Read and return one (possibly escaped) character. Invalid characters (i.e.
@@ -512,7 +566,7 @@ lexer_next_token(struct lexer* self)
         return lex_keyword_or_identifier(self, location);
     }
     if (safe_isdigit(ch)) {
-        return lex_integer(self, location);
+        return lex_number(self, location);
     }
     if (ch == '\'') {
         return lex_character(self, location);

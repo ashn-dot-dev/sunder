@@ -284,6 +284,7 @@ order_expr(struct orderer* orderer, struct cst_expr const* expr)
     }
     case CST_EXPR_BOOLEAN: /* fallthrough */
     case CST_EXPR_INTEGER: /* fallthrough */
+    case CST_EXPR_IEEE754: /* fallthrough */
     case CST_EXPR_CHARACTER: /* fallthrough */
     case CST_EXPR_BYTES: {
         return;

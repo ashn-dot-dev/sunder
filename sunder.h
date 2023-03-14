@@ -42,6 +42,10 @@ typedef union {
 } max_align_type;
 // clang-format on
 
+// C99 compatible DECIMAL_DIG constants for IEEE-754 floating point numbers.
+#define IEEE754_FLT_DECIMAL_DIG 9
+#define IEEE754_DBL_DECIMAL_DIG 17
+
 // Number of elements in an array.
 #define ARRAY_COUNT(array) (sizeof(array) / sizeof((array)[0]))
 // Number of characters in a string literal, excluding the NUL-terminator.
@@ -665,6 +669,9 @@ spawnvpw(char const* const* argv);
 void
 xspawnvpw(char const* const* argv);
 
+char const* // interned
+getenv_with_default(char const* name, char const* default_);
+
 ////////////////////////////////////////////////////////////////////////////////
 //////// sunder.c //////////////////////////////////////////////////////////////
 // Global compiler state.
@@ -732,6 +739,8 @@ struct context {
         char const* y;       // "y"
         char const* u;       // "u"
         char const* s;       // "s"
+        char const* f32;     // "f32"
+        char const* f64;     // "f64"
         // clang-format on
     } interned;
 
@@ -775,6 +784,8 @@ struct context {
         struct type const* usize;
         struct type const* ssize;
         struct type const* integer;
+        struct type const* f32;
+        struct type const* f64;
         struct type const* pointer_to_byte;
         struct type const* slice_of_byte;
     } builtin;
@@ -913,6 +924,7 @@ enum token_kind {
     // Identifiers and Non-Keyword Literals
     TOKEN_IDENTIFIER,
     TOKEN_INTEGER,
+    TOKEN_IEEE754,
     TOKEN_CHARACTER,
     TOKEN_BYTES,
     // Meta
@@ -930,11 +942,16 @@ struct token {
     enum token_kind kind;
     union {
         char const* identifier; // interned
-        // Contains the integer value and type-suffix of the integer literal.
+        // Contains the value and type-suffix of the integer literal.
         struct {
             struct bigint const* value;
             char const* suffix; // interned
         } integer;
+        // Contains the value and type-suffix of the floating point literal.
+        struct {
+            double value;
+            char const* suffix; // interned
+        } ieee754;
         // Contains the value of the character literal.
         int character;
         // Contains the un-escaped contents of the bytes literal.
@@ -1206,6 +1223,7 @@ struct cst_expr {
         CST_EXPR_SYMBOL,
         CST_EXPR_BOOLEAN,
         CST_EXPR_INTEGER,
+        CST_EXPR_IEEE754,
         CST_EXPR_CHARACTER,
         CST_EXPR_BYTES,
         CST_EXPR_LIST,
@@ -1230,6 +1248,7 @@ struct cst_expr {
         struct cst_symbol const* symbol;
         struct token boolean; // TOKEN_TRUE or TOKEN_FALSE
         struct token integer; // TOKEN_INTEGER
+        struct token ieee754; // TOKEN_IEEE754
         struct token character; // TOKEN_CHARACTER
         struct token bytes; // TOKEN_BYTES
         struct {
@@ -1296,6 +1315,8 @@ struct cst_expr*
 cst_expr_new_boolean(struct token token);
 struct cst_expr*
 cst_expr_new_integer(struct token token);
+struct cst_expr*
+cst_expr_new_ieee754(struct token token);
 struct cst_expr*
 cst_expr_new_character(struct token token);
 struct cst_expr*
@@ -1555,6 +1576,8 @@ struct type {
         TYPE_USIZE, /* integer */
         TYPE_SSIZE, /* integer */
         TYPE_INTEGER, /* integer */
+        TYPE_F32,
+        TYPE_F64,
         TYPE_FUNCTION,
         TYPE_POINTER,
         TYPE_ARRAY,
@@ -1626,6 +1649,10 @@ type_new_ssize(void);
 struct type*
 type_new_integer(void);
 struct type*
+type_new_f32(void);
+struct type*
+type_new_f64(void);
+struct type*
 type_new_function(
     struct type const* const* parameter_types, struct type const* return_type);
 struct type*
@@ -1681,6 +1708,9 @@ type_is_uint(struct type const* self);
 // Returns true if self is a signed integer type.
 bool
 type_is_sint(struct type const* self);
+// Returns true if self is a IEEE-754 floating point type.
+bool
+type_is_ieee754(struct type const* self);
 // Returns true if self is a compount type (type made from other types).
 bool
 type_is_compound(struct type const* self);
@@ -2224,6 +2254,8 @@ struct value {
         bool boolean;
         uint8_t byte;
         struct bigint* integer;
+        float f32;
+        double f64;
         struct function const* function;
         struct address pointer;
         struct {
@@ -2261,6 +2293,10 @@ struct value*
 value_new_byte(uint8_t byte);
 struct value*
 value_new_integer(struct type const* type, struct bigint* integer);
+struct value*
+value_new_f32(float f32);
+struct value*
+value_new_f64(double f64);
 struct value*
 value_new_function(struct function const* function);
 struct value*
