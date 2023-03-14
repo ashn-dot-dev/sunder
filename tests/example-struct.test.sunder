@@ -108,6 +108,13 @@ struct zero_sized_member_offsets_b {
     var z: [0]u8; # zero-sized
 }
 
+# Contains members with identifiers that are C keywords.
+struct c_keywords {
+    var int: ssize;
+    let register: ssize = 123;
+    func auto() void { }
+}
+
 func main() void {
     sys::dump[[empty]](empty_a);
     sys::dump[[empty]](empty_b);
@@ -201,6 +208,10 @@ func main() void {
     sys::dump[[bool]](sizeof(typeof(object.y)) != 0);
     sys::dump[[bool]](sizeof(typeof(object.z)) == 0);
     sys::dump[[bool]]((:usize)&object.y <= (:usize)&object.z);
+
+    var _ = (:c_keywords){.int = 0xDEADBEEF};
+    c_keywords::register;
+    c_keywords::auto();
 }
 
 ################################################################################

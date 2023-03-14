@@ -590,7 +590,10 @@ codegen_type_definition(struct type const* type)
                 || mvars[i].type->size == SIZEOF_UNSIZED) {
                 continue;
             }
-            appendli("%s %s;", mangle_type(mvars[i].type), mvars[i].name);
+            appendli(
+                "%s %s;",
+                mangle_type(mvars[i].type),
+                mangle_name(mvars[i].name));
         }
         indent_decr();
         appendli("};");
@@ -1505,7 +1508,7 @@ strgen_rvalue_struct(struct expr const* expr)
             s,
             "%s.%s = %s; ",
             mangle_name("__result"),
-            member_variable_defs[i].name,
+            mangle_name(member_variable_defs[i].name),
             mangle_name(local));
     }
     string_append_fmt(s, "%s;", mangle_name("__result"));
@@ -1790,7 +1793,7 @@ strgen_rvalue_access_member_variable(struct expr const* expr)
     return intern_fmt(
         "(%s).%s",
         strgen_rvalue(expr->data.access_member_variable.lhs),
-        expr->data.access_member_variable.member_variable->name);
+        mangle_name(expr->data.access_member_variable.member_variable->name));
 }
 
 static char const*
