@@ -10,10 +10,12 @@ for f in *.sunder; do
     eval $CMD
 done
 
-export SUNDER_SYSASM_PATH=custom-sys-asm/sys.asm
-CMD="${SUNDER_HOME}/bin/sunder-compile -o custom-sys-asm/custom-sys-asm custom-sys-asm/main.sunder"
-echo $CMD
-eval $CMD
+if command -v nasm >/dev/null; then
+    export SUNDER_SYSASM_PATH=custom-sys-asm/sys.asm
+    CMD="SUNDER_BACKEND=nasm ${SUNDER_HOME}/bin/sunder-compile -o custom-sys-asm/custom-sys-asm custom-sys-asm/main.sunder"
+    echo $CMD
+    eval $CMD
+fi
 
 if command -v clang >/dev/null; then
     CMD="clang -c -o ffi/c-code.o ffi/calling-c-from-sunder.c"
