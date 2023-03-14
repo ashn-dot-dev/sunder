@@ -2,6 +2,6 @@ func main() void {
     let x: s8 = -128s8 - 1s8;
 }
 ################################################################################
-# [error-expr-binary-sub-integer-out-of-range-constant.test.sunder:2] error: arithmetic operation produces out-of-range result (-128 - 1 == -129)
+# [error-expr-binary-sub-integer-out-of-range-constant.test.sunder:2] error: operation produces out-of-range result (-128 - 1 == -129)
 #     let x: s8 = -128s8 - 1s8;
 #                        ^

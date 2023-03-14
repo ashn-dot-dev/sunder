@@ -1024,28 +1024,15 @@ codegen_fatals(void)
 
     // Builtin integer divide by zero handler.
     appendln("section .text");
-    appendln("__fatal_integer_divide_by_zero:");
-    appendln("    lea rax, [__fatal_integer_divide_by_zero_msg_start]");
+    appendln("__fatal_divide_by_zero:");
+    appendln("    lea rax, [__fatal_divide_by_zero_msg_start]");
     appendln("    push rax");
-    appendln("    push __fatal_integer_divide_by_zero_msg_count");
+    appendln("    push __fatal_divide_by_zero_msg_count");
     appendln("    call __fatal");
     appendch('\n');
     appendln("section .rodata");
-    appendln("__fatal_integer_divide_by_zero_msg_start: db \"divide by zero\", 0x0A");
-    appendln("__fatal_integer_divide_by_zero_msg_count: equ $ - __fatal_integer_divide_by_zero_msg_start");
-    appendch('\n');
-
-    // Builtin integer out-of-range handler.
-    appendln("section .text");
-    appendln("__fatal_integer_out_of_range:");
-    appendln("    lea rax, [__fatal_integer_out_of_range_msg_start]");
-    appendln("    push rax");
-    appendln("    push __fatal_integer_out_of_range_msg_count");
-    appendln("    call __fatal");
-    appendch('\n');
-    appendln("section .rodata");
-    appendln("__fatal_integer_out_of_range_msg_start: db \"arithmetic operation produces out-of-range result\", 0x0A");
-    appendln("__fatal_integer_out_of_range_msg_count: equ $ - __fatal_integer_out_of_range_msg_start");
+    appendln("__fatal_divide_by_zero_msg_start: db \"divide by zero\", 0x0A");
+    appendln("__fatal_divide_by_zero_msg_count: equ $ - __fatal_divide_by_zero_msg_start");
     appendch('\n');
 
     // Builtin index out-of-bounds handler.
@@ -1059,6 +1046,19 @@ codegen_fatals(void)
     appendln("section .rodata");
     appendln("__fatal_index_out_of_bounds_msg_start: db \"index out-of-bounds\", 0x0A");
     appendln("__fatal_index_out_of_bounds_msg_count: equ $ - __fatal_index_out_of_bounds_msg_start");
+
+    // Builtin operation out-of-range handler.
+    appendln("section .text");
+    appendln("__fatal_out_of_range:");
+    appendln("    lea rax, [__fatal_out_of_range_msg_start]");
+    appendln("    push rax");
+    appendln("    push __fatal_out_of_range_msg_count");
+    appendln("    call __fatal");
+    appendch('\n');
+    appendln("section .rodata");
+    appendln("__fatal_out_of_range_msg_start: db \"operation produces out-of-range result\", 0x0A");
+    appendln("__fatal_out_of_range_msg_count: equ $ - __fatal_out_of_range_msg_start");
+    appendch('\n');
     // clang-format on
 }
 
@@ -2284,7 +2284,7 @@ push_rvalue_unary_neg(struct expr const* expr, size_t id)
     xalloc(min_cstr, XALLOC_FREE);
     appendli("cmp %s, %s", rhs_reg, reg_b(expr->data.unary.rhs->type->size));
     appendli("jne %s%zu_op", LABEL_EXPR, id);
-    appendli("call __fatal_integer_out_of_range");
+    appendli("call __fatal_out_of_range");
     appendln("%s%zu_op:", LABEL_EXPR, id);
     appendli("neg %s", reg_a(expr->type->size));
     appendli("push rax");
@@ -2848,7 +2848,7 @@ push_rvalue_binary_add(struct expr const* expr, size_t id)
     appendli("add %s, %s", lhs_reg, rhs_reg);
     appendli("push rax");
     appendli("%s %s%zu_end", jmp_not_overflow, LABEL_EXPR, id);
-    appendli("call __fatal_integer_out_of_range");
+    appendli("call __fatal_out_of_range");
 
     appendln("%s%zu_end:", LABEL_EXPR, id);
 }
@@ -2913,7 +2913,7 @@ push_rvalue_binary_sub(struct expr const* expr, size_t id)
     appendli("sub %s, %s", lhs_reg, rhs_reg);
     appendli("push rax");
     appendli("%s %s%zu_end", jmp_not_overflow, LABEL_EXPR, id);
-    appendli("call __fatal_integer_out_of_range");
+    appendli("call __fatal_out_of_range");
 
     appendln("%s%zu_end:", LABEL_EXPR, id);
 }
@@ -2977,7 +2977,7 @@ push_rvalue_binary_mul(struct expr const* expr, size_t id)
     appendli("%s %s", mul, rhs_reg);
     appendli("push rax");
     appendli("jno %s%zu_end", LABEL_EXPR, id);
-    appendli("call __fatal_integer_out_of_range");
+    appendli("call __fatal_out_of_range");
 
     appendln("%s%zu_end:", LABEL_EXPR, id);
 }
@@ -3072,7 +3072,7 @@ push_rvalue_binary_divrem(struct expr const* expr, size_t id)
         rhs_reg,
         reg_c(xhs_type->size)); // divide-by-zero check
     appendli("jne %s%zu_op", LABEL_EXPR, id);
-    appendli("call __fatal_integer_divide_by_zero");
+    appendli("call __fatal_divide_by_zero");
     appendli("%s%zu_op:", LABEL_EXPR, id);
     appendli("%s %s", div, rhs_reg);
 

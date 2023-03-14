@@ -78,15 +78,15 @@ __sunder___fatal_divide_by_zero(void)
 }
 
 static _Noreturn void
-__sunder___fatal_integer_out_of_range(void)
-{
-    __sunder___fatal("arithmetic operation produces out-of-range result");
-}
-
-static _Noreturn void
 __sunder___fatal_index_out_of_bounds(void)
 {
     __sunder___fatal("index out-of-bounds");
+}
+
+static _Noreturn void
+__sunder___fatal_out_of_range(void)
+{
+    __sunder___fatal("operation produces out-of-range result");
 }
 
 #define __SUNDER_INTEGER_ADD_DEFINITION(T)                                     \
@@ -94,7 +94,7 @@ __sunder___fatal_index_out_of_bounds(void)
     {                                                                          \
         T result;                                                              \
         if (__builtin_add_overflow(lhs, rhs, &result)) {                       \
-            __sunder___fatal_integer_out_of_range();                           \
+            __sunder___fatal_out_of_range();                                   \
         }                                                                      \
         return result;                                                         \
     }
@@ -134,7 +134,7 @@ __SUNDER_INTEGER_ADD_WRAPPING_DEFINITION(__sunder_ssize)
     {                                                                          \
         T result;                                                              \
         if (__builtin_sub_overflow(lhs, rhs, &result)) {                       \
-            __sunder___fatal_integer_out_of_range();                           \
+            __sunder___fatal_out_of_range();                                   \
         }                                                                      \
         return result;                                                         \
     }
@@ -174,7 +174,7 @@ __SUNDER_INTEGER_SUB_WRAPPING_DEFINITION(__sunder_ssize)
     {                                                                          \
         T result;                                                              \
         if (__builtin_mul_overflow(lhs, rhs, &result)) {                       \
-            __sunder___fatal_integer_out_of_range();                           \
+            __sunder___fatal_out_of_range();                                   \
         }                                                                      \
         return result;                                                         \
     }
@@ -255,7 +255,7 @@ __SUNDER_INTEGER_REM_DEFINITION(__sunder_ssize)
     static I __sunder___cast_##F##_to_##I(F f)                                 \
     {                                                                          \
         if (!isfinite(f) || f < (F)I##___MIN || (F)I##___MAX < f) {            \
-            __sunder___fatal_integer_out_of_range();                           \
+            __sunder___fatal_out_of_range();                                   \
         }                                                                      \
         return (I)f;                                                           \
     }

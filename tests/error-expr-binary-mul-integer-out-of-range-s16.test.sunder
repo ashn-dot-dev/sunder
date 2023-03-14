@@ -4,4 +4,4 @@ func main() void {
     a * b;
 }
 ################################################################################
-# fatal: arithmetic operation produces out-of-range result
+# fatal: operation produces out-of-range result

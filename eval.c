@@ -693,7 +693,7 @@ eval_rvalue_unary(struct expr const* expr)
         if (integer_is_out_of_range(expr->type, integer)) {
             fatal(
                 expr->location,
-                "arithmetic operation produces out-of-range result (-(%s) == %s)",
+                "operation produces out-of-range result (-(%s) == %s)",
                 bigint_to_new_cstr(rhs->data.integer),
                 bigint_to_new_cstr(integer));
         }
@@ -914,7 +914,7 @@ eval_rvalue_binary(struct expr const* expr)
         if (integer_is_out_of_range(expr->type, integer)) {
             fatal(
                 expr->location,
-                "arithmetic operation produces out-of-range result (%s + %s == %s)",
+                "operation produces out-of-range result (%s + %s == %s)",
                 bigint_to_new_cstr(lhs->data.integer),
                 bigint_to_new_cstr(rhs->data.integer),
                 bigint_to_new_cstr(integer));
@@ -961,7 +961,7 @@ eval_rvalue_binary(struct expr const* expr)
         if (integer_is_out_of_range(expr->type, integer)) {
             fatal(
                 expr->location,
-                "arithmetic operation produces out-of-range result (%s - %s == %s)",
+                "operation produces out-of-range result (%s - %s == %s)",
                 bigint_to_new_cstr(lhs->data.integer),
                 bigint_to_new_cstr(rhs->data.integer),
                 bigint_to_new_cstr(integer));
@@ -1008,7 +1008,7 @@ eval_rvalue_binary(struct expr const* expr)
         if (integer_is_out_of_range(expr->type, integer)) {
             fatal(
                 expr->location,
-                "arithmetic operation produces out-of-range result (%s * %s == %s)",
+                "operation produces out-of-range result (%s * %s == %s)",
                 bigint_to_new_cstr(lhs->data.integer),
                 bigint_to_new_cstr(rhs->data.integer),
                 bigint_to_new_cstr(integer));

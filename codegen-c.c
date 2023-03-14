@@ -1887,7 +1887,7 @@ strgen_rvalue_unary_neg(struct expr const* expr)
         mangle_name("__rhs"),
         mangle_type(expr->data.unary.rhs->type),
         mangle_type(expr->data.unary.rhs->type),
-        mangle_name("__fatal_integer_out_of_range"),
+        mangle_name("__fatal_out_of_range"),
 
         mangle_name("__rhs"));
 }

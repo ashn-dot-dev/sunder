@@ -3,6 +3,6 @@ func main() void {
     let y: s8 = -x;
 }
 ################################################################################
-# [error-expr-unary-neg-integer-out-of-range-constant.test.sunder:3] error: arithmetic operation produces out-of-range result (-(-128) == 128)
+# [error-expr-unary-neg-integer-out-of-range-constant.test.sunder:3] error: operation produces out-of-range result (-(-128) == 128)
 #     let y: s8 = -x;
 #                 ^
