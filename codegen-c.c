@@ -623,21 +623,16 @@ codegen_static_object(struct symbol const* symbol)
     assert(symbol->kind == SYMBOL_VARIABLE || symbol->kind == SYMBOL_CONSTANT);
     assert(symbol_xget_address(symbol)->kind == ADDRESS_STATIC);
 
+    char const* const name = symbol_xget_address(symbol)->data.static_.name;
+    struct type const* const type = symbol_xget_type(symbol);
     bool const is_extern_variable =
         symbol->kind == SYMBOL_VARIABLE && symbol->data.variable->is_extern;
     if (is_extern_variable) {
-        appendln(
-            "#define %s %s",
-            mangle_name(symbol_xget_address(symbol)->data.static_.name),
-            mangle(symbol_xget_address(symbol)->data.static_.name));
-        appendln(
-            "extern %s %s;",
-            mangle_type(symbol_xget_type(symbol)),
-            mangle(symbol_xget_address(symbol)->data.static_.name));
+        appendln("#define %s %s", mangle_name(name), mangle(name));
+        appendln("extern %s %s;", mangle_type(type), mangle(name));
         return;
     }
 
-    struct type const* const type = symbol_xget_type(symbol);
     if (type->size == 0) {
         // Zero-sized objects take up zero space.
         return;
@@ -649,9 +644,10 @@ codegen_static_object(struct symbol const* symbol)
 
     assert(symbol_xget_address(symbol)->data.static_.offset == 0);
     append(
-        "%s %s",
-        mangle_type(symbol_xget_type(symbol)),
-        mangle_name(symbol_xget_address(symbol)->data.static_.name));
+        "%s %s __asm__(\"%s\")",
+        mangle_type(type),
+        mangle_name(name),
+        mangle(name));
     if (symbol->data.variable->value == NULL) {
         // Global data without an initializer is zero-initialized.
         appendln(";");
@@ -739,6 +735,12 @@ codegen_static_function(struct symbol const* symbol, bool prototype)
     string_del(params);
 
     if (prototype) {
+        char const* const name = function->address->data.static_.name;
+        bool const use_unmagled_symbol =
+            !function->is_extern && name != context()->interned.main;
+        if (use_unmagled_symbol) {
+            append(" __asm__(\"%s\")", mangle(name));
+        }
         appendln(";");
         return;
     }

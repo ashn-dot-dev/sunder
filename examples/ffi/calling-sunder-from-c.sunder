@@ -1,3 +1,4 @@
+namespace mylib;
 import "std";
 
 func println(start: *byte, count: usize) void {
