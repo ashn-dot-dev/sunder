@@ -3345,8 +3345,8 @@ codegen_nasm(
     assert(0 == strcmp(backend(), "nasm") || 0 == strcmp(backend(), "yasm"));
 
     out = string_new(NULL, 0u);
-    struct string* const asm_path = string_new_fmt("%s.asm", opt_o);
-    struct string* const obj_path = string_new_fmt("%s.o", opt_o);
+    struct string* const asm_path = string_new_fmt("%s.tmp.asm", opt_o);
+    struct string* const obj_path = string_new_fmt("%s.tmp.o", opt_o);
 
     sbuf(char const*) backend_argv = NULL;
     if (0 == strcmp(backend(), "nasm")) {

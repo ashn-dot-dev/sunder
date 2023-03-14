@@ -2690,8 +2690,8 @@ codegen_c(
     assert(0 == strcmp(backend(), "C") || 0 == strcmp(backend(), "c"));
 
     out = string_new(NULL, 0u);
-    struct string* const src_path = string_new_fmt("%s.c", opt_o);
-    struct string* const obj_path = string_new_fmt("%s.o", opt_o);
+    struct string* const src_path = string_new_fmt("%s.tmp.c", opt_o);
+    struct string* const obj_path = string_new_fmt("%s.tmp.o", opt_o);
 
     char const* const SUNDER_HOME = getenv("SUNDER_HOME");
     if (SUNDER_HOME == NULL) {

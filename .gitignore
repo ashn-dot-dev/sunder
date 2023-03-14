@@ -12,6 +12,7 @@ examples/custom-sys-asm/custom-sys-asm
 examples/ffi/calling-c-from-sunder
 examples/ffi/calling-sunder-from-c
 
+*.tmp*
 a.out*
 *.out
 *.o

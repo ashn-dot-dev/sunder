@@ -105,10 +105,11 @@ The `-o OUT` option may be used to specify the name of the output executable.
 If this option is not provided then the output executable will default to the
 name `a.out`.
 
-The intermediate files `OUT.asm` and `OUT.o` (output executable name plus
-`.asm` and `.o` extensions) are generated during compilation and subsequently
-removed after the output executable has been created. The `-k` flag will
-instruct the compiler *not* to remove these files (useful for debugging).
+The intermediate files `OUT.tmp.asm` and `OUT.tmp.o` (output executable name
+plus `tmp.asm` and `tmp.o` extensions) are generated during compilation and
+subsequently removed after the output executable has been created. The `-k`
+flag will instruct the compiler *not* to remove these files (useful for
+debugging).
 
 ```sh
 $ sunder-compile -k -o hello examples/hello.sunder
