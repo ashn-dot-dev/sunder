@@ -2684,7 +2684,11 @@ codegen_defers(struct stmt const* begin, struct stmt const* end)
 
 void
 codegen_c(
-    bool opt_c, bool opt_k, char const* const* opt_l, char const* const opt_o)
+    bool opt_c,
+    bool opt_k,
+    char const* const* opt_L,
+    char const* const* opt_l,
+    char const* const opt_o)
 {
     assert(opt_o != NULL);
     assert(0 == strcmp(backend(), "C") || 0 == strcmp(backend(), "c"));
@@ -2755,6 +2759,9 @@ codegen_c(
 #endif
     sbuf_push(backend_argv, string_start(src_path));
     if (!opt_c) {
+        for (size_t i = 0; i < sbuf_count(opt_L); ++i) {
+            sbuf_push(backend_argv, intern_fmt("-L%s", opt_L[i]));
+        }
         sbuf_push(backend_argv, "-lm");
         for (size_t i = 0; i < sbuf_count(opt_l); ++i) {
             sbuf_push(backend_argv, intern_fmt("-l%s", opt_l[i]));

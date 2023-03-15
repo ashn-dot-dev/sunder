@@ -19,17 +19,21 @@ backend(void)
 
 void
 codegen(
-    bool opt_c, bool opt_k, char const* const* opt_l, char const* const opt_o)
+    bool opt_c,
+    bool opt_k,
+    char const* const* opt_L,
+    char const* const* opt_l,
+    char const* const opt_o)
 {
     assert(opt_o != NULL);
 
     if (0 == strcmp(backend(), "C") || 0 == strcmp(backend(), "c")) {
-        codegen_c(opt_c, opt_k, opt_l, opt_o);
+        codegen_c(opt_c, opt_k, opt_L, opt_l, opt_o);
         return;
     }
 
     if (0 == strcmp(backend(), "nasm") || 0 == strcmp(backend(), "yasm")) {
-        codegen_nasm(opt_c, opt_k, opt_l, opt_o);
+        codegen_nasm(opt_c, opt_k, opt_L, opt_l, opt_o);
         return;
     }
 

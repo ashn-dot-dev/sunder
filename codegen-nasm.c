@@ -3339,7 +3339,11 @@ push_lvalue_unary(struct expr const* expr, size_t id)
 
 void
 codegen_nasm(
-    bool opt_c, bool opt_k, char const* const* opt_l, char const* const opt_o)
+    bool opt_c,
+    bool opt_k,
+    char const* const* opt_L,
+    char const* const* opt_l,
+    char const* const opt_o)
 {
     assert(opt_o != NULL);
     assert(0 == strcmp(backend(), "nasm") || 0 == strcmp(backend(), "yasm"));
@@ -3389,6 +3393,9 @@ codegen_nasm(
     sbuf_push(ld_argv, "-o");
     sbuf_push(ld_argv, opt_o);
     sbuf_push(ld_argv, string_start(obj_path));
+    for (size_t i = 0; i < sbuf_count(opt_L); ++i) {
+        sbuf_push(ld_argv, intern_fmt("-L%s", opt_L[i]));
+    }
     for (size_t i = 0; i < sbuf_count(opt_l); ++i) {
         sbuf_push(ld_argv, opt_l[i]);
     }

@@ -2367,12 +2367,24 @@ backend(void);
 
 void
 codegen(
-    bool opt_c, bool opt_k, char const* const* opt_l, char const* const opt_o);
+    bool opt_c,
+    bool opt_k,
+    char const* const* opt_L,
+    char const* const* opt_l,
+    char const* const opt_o);
 void
 codegen_c(
-    bool opt_c, bool opt_k, char const* const* opt_l, char const* const opt_o);
+    bool opt_c,
+    bool opt_k,
+    char const* const* opt_L,
+    char const* const* opt_l,
+    char const* const opt_o);
 void
 codegen_nasm(
-    bool opt_c, bool opt_k, char const* const* opt_l, char const* const opt_o);
+    bool opt_c,
+    bool opt_k,
+    char const* const* opt_L,
+    char const* const* opt_l,
+    char const* const opt_o);
 
 #endif // SUNDER_H_INCLUDED
