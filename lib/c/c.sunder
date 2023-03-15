@@ -1,0 +1,20 @@
+import "sys";
+
+alias char = sys::char;
+alias uchar = sys::uchar;
+alias schar = sys::schar;
+
+alias ushort = sys::ushort;
+alias sshort = sys::sshort;
+
+alias uint = sys::uint;
+alias sint = sys::sint;
+
+alias ulong = sys::ulong;
+alias slong = sys::slong;
+
+alias slonglong = sys::slonglong;
+alias ulonglong = sys::slonglong;
+
+alias size_t = usize;
+alias ssize_t = ssize;
