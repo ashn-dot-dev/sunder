@@ -4231,6 +4231,16 @@ extend f32 func format(self: *f32, writer: std::writer, fmt: []byte) std::result
     return std::write_all(writer, std::cstr::data(&buf[0]));
 }
 
+extend f32 let PI = 3.14159265358979323846f32;
+
+extend f32 func degrees_to_radians(degrees: f32) f32 {
+    return degrees * (f32::PI / 180.0f32);
+}
+
+extend f32 func radians_to_degrees(radians: f32) f32 {
+    return radians * (180.0f32 / f32::PI);
+}
+
 extend f32 func sqrt(x: f32) f32 { return sys::f32_sqrt(x); }
 extend f32 func cbrt(x: f32) f32 { return sys::f32_cbrt(x); }
 extend f32 func hypot(x: f32, y: f32) f32 { return sys::f32_hypot(x, y); }
@@ -4266,6 +4276,16 @@ extend f64 func format(self: *f64, writer: std::writer, fmt: []byte) std::result
     var buf: [4096]byte = uninit; # More than enough space.
     sys::f64_to_str(&buf[0], *self);
     return std::write_all(writer, std::cstr::data(&buf[0]));
+}
+
+extend f64 let PI = 3.14159265358979323846f64;
+
+extend f64 func degrees_to_radians(degrees: f64) f64 {
+    return degrees * (f64::PI / 180.0f64);
+}
+
+extend f64 func radians_to_degrees(radians: f64) f64 {
+    return radians * (180.0f64 / f64::PI);
 }
 
 extend f64 func sqrt(x: f64) f64 { return sys::f64_sqrt(x); }
