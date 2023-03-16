@@ -531,6 +531,9 @@ sys_str_to_f64(__sunder_f64* out, __sunder_byte* start, __sunder_usize count)
 __sunder_bool
 sys_f32_to_str(__sunder_byte* buf, __sunder_f32 f)
 {
+    if (isnan(f)) {
+        return sprintf(buf, "NaN");
+    }
     if (isinf(f) && f < 0) {
         return sprintf(buf, "-infinity");
     }
@@ -543,6 +546,9 @@ sys_f32_to_str(__sunder_byte* buf, __sunder_f32 f)
 __sunder_bool
 sys_f64_to_str(__sunder_byte* buf, __sunder_f64 f)
 {
+    if (isnan(f)) {
+        return sprintf(buf, "NaN");
+    }
     if (isinf(f) && f < 0) {
         return sprintf(buf, "-infinity");
     }

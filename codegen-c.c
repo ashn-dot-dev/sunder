@@ -815,6 +815,9 @@ strgen_value(struct value const* value)
     }
     case TYPE_F32: {
         double const ieee754 = (double)value->data.f32;
+        if (isnan(ieee754)) {
+            return intern_fmt("(float)NAN");
+        }
         if (isinf(ieee754) && ieee754 < 0) {
             return intern_fmt("(float)-INFINITY");
         }
@@ -825,6 +828,9 @@ strgen_value(struct value const* value)
     }
     case TYPE_F64: {
         double const ieee754 = value->data.f64;
+        if (isnan(ieee754)) {
+            return intern_fmt("(double)NAN");
+        }
         if (isinf(ieee754) && ieee754 < 0) {
             return intern_fmt("(double)-INFINITY");
         }
