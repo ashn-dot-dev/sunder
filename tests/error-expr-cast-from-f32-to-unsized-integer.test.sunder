@@ -1,0 +1,7 @@
+func main() void {
+    (:integer)123.456f32;
+}
+################################################################################
+# [error-expr-cast-from-f32-to-unsized-integer.test.sunder:2] error: invalid cast to unsized type `integer` from `f32`
+#     (:integer)123.456f32;
+#     ^

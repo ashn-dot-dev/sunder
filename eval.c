@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 #include <assert.h>
 #include <inttypes.h>
+#include <math.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -394,24 +395,107 @@ eval_rvalue_cast(struct expr const* expr)
         return result;
     }
 
-    // Currently casts to and from floating point types are disallowed at
-    // compile time as it is not clear whether casts should error if the
-    // casted-from value cannot be exactly represented by the casted-to type or
-    // if the casted-from value should be truncated/rounded when converted to
-    // the casted-to type.
+    // Cases casting between integer and IEEE754 floating point types.
     if (type_is_ieee754(expr->type) && type_is_int(from->type)) {
-        fatal(
-            expr->location,
-            "constant expression contains cast from integer type `%s` to floating point type `%s`",
-            from->type->name,
-            expr->type->name);
+        assert(expr->type->kind == TYPE_F32 || expr->type->kind == TYPE_F64);
+
+        struct bigint const* const integer = from->data.integer;
+        if (from->type->kind == TYPE_INTEGER) {
+            struct bigint const* const min = expr->type->kind == TYPE_F64
+                ? context()->f64_integer_min
+                : context()->f32_integer_min;
+            struct bigint const* const max = expr->type->kind == TYPE_F64
+                ? context()->f64_integer_max
+                : context()->f32_integer_max;
+            bool const integer_ge_min = bigint_cmp(integer, min) >= 0;
+            bool const integer_le_max = bigint_cmp(integer, max) <= 0;
+            bool const is_representable = integer_ge_min && integer_le_max;
+            if (!is_representable) {
+                fatal(
+                    expr->location,
+                    "constant expression contains cast from integer type `%s` to floating point type `%s` with unrepresentable value %s",
+                    from->type->name,
+                    expr->type->name,
+                    bigint_to_new_cstr(integer));
+            }
+        }
+
+        intmax_t smax = 0;
+        if (bigint_to_smax(&smax, integer)) {
+            UNREACHABLE();
+        }
+
+        struct value* const result = expr->type->kind == TYPE_F64
+            ? value_new_f64((double)smax)
+            : value_new_f32((float)smax);
+        value_del(from);
+        return result;
     }
     if (type_is_int(expr->type) && type_is_ieee754(from->type)) {
-        fatal(
-            expr->location,
-            "constant expression contains cast from floating point type `%s` to integer type `%s`",
-            from->type->name,
-            expr->type->name);
+        assert(expr->type->kind != TYPE_INTEGER);
+        assert(from->type->kind == TYPE_F32 || from->type->kind == TYPE_F64);
+        double const from_as_double = from->type->kind == TYPE_F64
+            ? from->data.f64
+            : (double)from->data.f32;
+        bool const is_finite_f32 =
+            (from->type->kind == TYPE_F32 && isfinite(from->data.f32));
+        bool const is_finite_f64 =
+            (from->type->kind == TYPE_F64 && isfinite(from->data.f64));
+        bool const is_finite = is_finite_f32 || is_finite_f64;
+        if (!is_finite) {
+            fatal(
+                expr->location,
+                "constant expression contains cast from floating point type `%s` to integer type `%s` with unrepresentable value %f",
+                from->type->name,
+                expr->type->name,
+                from_as_double);
+        }
+
+        assert(expr->type->data.integer.min != NULL);
+        assert(expr->type->data.integer.max != NULL);
+        if (type_is_uint(expr->type)) {
+            uintmax_t min_as_umax = 0;
+            uintmax_t max_as_umax = 0;
+            if (bigint_to_umax(&min_as_umax, expr->type->data.integer.min)) {
+                UNREACHABLE();
+            }
+            if (bigint_to_umax(&max_as_umax, expr->type->data.integer.max)) {
+                UNREACHABLE();
+            }
+            uintmax_t from_as_umax = (uintmax_t)from_as_double;
+            if (from_as_umax < min_as_umax || max_as_umax < from_as_umax) {
+                fatal(
+                    expr->location,
+                    "operation produces out-of-range result");
+            }
+
+            struct bigint* const integer = bigint_new_umax(from_as_umax);
+            struct value* const result = value_new_integer(expr->type, integer);
+            value_del(from);
+            return result;
+        }
+        if (type_is_sint(expr->type)) {
+            intmax_t min_as_smax = 0;
+            intmax_t max_as_smax = 0;
+            if (bigint_to_smax(&min_as_smax, expr->type->data.integer.min)) {
+                UNREACHABLE();
+            }
+            if (bigint_to_smax(&max_as_smax, expr->type->data.integer.max)) {
+                UNREACHABLE();
+            }
+            intmax_t from_as_smax = (intmax_t)from_as_double;
+            if (from_as_smax < min_as_smax || max_as_smax < from_as_smax) {
+                fatal(
+                    expr->location,
+                    "operation produces out-of-range result");
+            }
+
+            struct bigint* const integer = bigint_new_smax(from_as_smax);
+            struct value* const result = value_new_integer(expr->type, integer);
+            value_del(from);
+            return result;
+        }
+        UNREACHABLE();
     }
 
     // Cases casting from sized types with a defined byte representation.

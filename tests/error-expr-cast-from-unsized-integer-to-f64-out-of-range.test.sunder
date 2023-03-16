@@ -1,0 +1,5 @@
+let x = (:f64)0xBEEFBEEFBEEFBEEF;
+################################################################################
+# [error-expr-cast-from-unsized-integer-to-f64-out-of-range.test.sunder:1] error: constant expression contains cast from integer type `integer` to floating point type `f64` with unrepresentable value 13758425323549998831
+# let x = (:f64)0xBEEFBEEFBEEFBEEF;
+#         ^

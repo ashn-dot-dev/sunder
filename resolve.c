@@ -1196,13 +1196,6 @@ explicit_cast(
         return resolved;
     }
 
-    // Skip constant evaluation for floating point typea. See comments in
-    // eval_rvalue_cast relating to the difficulties in choosing behavior for
-    // compile-time casting with floating point types.
-    if (type_is_ieee754(type) || type_is_ieee754(expr->type)) {
-        return resolved;
-    }
-
     // OPTIMIZATION(constant folding)
     if (type->kind == TYPE_BOOL && expr->kind == EXPR_VALUE) {
         struct value* const value = eval_rvalue(resolved);
@@ -1233,6 +1226,18 @@ explicit_cast(
         value_freeze(value);
 
         assert(type_is_int(value->type));
+        resolved = expr_new_value(resolved->location, value);
+
+        freeze(resolved);
+        return resolved;
+    }
+
+    // OPTIMIZATION(constant folding)
+    if (type_is_ieee754(type) && expr->kind == EXPR_VALUE) {
+        struct value* const value = eval_rvalue(resolved);
+        value_freeze(value);
+
+        assert(type_is_ieee754(type));
         resolved = expr_new_value(resolved->location, value);
 
         freeze(resolved);

@@ -1,6 +1,0 @@
-# only SUNDER_BACKEND=C
-let x = (:usize)123.0f32;
-################################################################################
-# [error-expr-cast-from-ieee754-to-integer-in-constant-expression.test.sunder:2] error: constant expression contains cast from floating point type `f32` to integer type `usize`
-# let x = (:usize)123.0f32;
-#         ^

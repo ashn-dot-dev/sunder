@@ -18,6 +18,8 @@
 #include "sunder.h"
 
 STATIC_ASSERT(CHAR_BIT_IS_8, CHAR_BIT == 8);
+STATIC_ASSERT(UMAX_WIDTH, UINTMAX_MAX >= UINT64_MAX);
+STATIC_ASSERT(SMAX_WITDH, INTMAX_MIN <= INT64_MIN && INTMAX_MAX >= INT64_MAX);
 #ifndef __STDC_IEC_559__
 #    error "IEEE-754 floating point is not fully supported"
 #endif
@@ -1075,7 +1077,18 @@ bigint_new_umax(uintmax_t umax)
 {
     char buf[255] = {0};
     int const written = snprintf(buf, sizeof(buf), "%ju", umax);
-    assert(written < (int)sizeof(buf));
+    assert(written >= 0 && written < (int)sizeof(buf));
+    (void)written;
+
+    return bigint_new_text(buf, strlen(buf));
+}
+
+struct bigint*
+bigint_new_smax(intmax_t smax)
+{
+    char buf[255] = {0};
+    int const written = snprintf(buf, sizeof(buf), "%jd", smax);
+    assert(written >= 0 && written < (int)sizeof(buf));
     (void)written;
 
     return bigint_new_text(buf, strlen(buf));
@@ -1770,6 +1783,26 @@ bigint_to_umax(uintmax_t* res, struct bigint const* bigint)
     }
 
     *res = umax;
+    return 0;
+}
+
+int
+bigint_to_smax(intmax_t* res, struct bigint const* bigint)
+{
+    assert(res != NULL);
+    assert(bigint != NULL);
+
+    char* const cstr = bigint_to_new_cstr(bigint);
+    errno = 0;
+    intmax_t smax = strtoimax(cstr, NULL, 0);
+    int const err = errno; // save errno
+    xalloc(cstr, XALLOC_FREE);
+    assert(err == 0 || err == ERANGE);
+    if (err == ERANGE) {
+        return -1;
+    }
+
+    *res = smax;
     return 0;
 }
 

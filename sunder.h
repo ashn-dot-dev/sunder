@@ -45,6 +45,11 @@ typedef union {
 // C99 compatible DECIMAL_DIG constants for IEEE-754 floating point numbers.
 #define IEEE754_FLT_DECIMAL_DIG 9
 #define IEEE754_DBL_DECIMAL_DIG 17
+// Exact integer representation limits for IEEE-754 floating point numbers.
+#define IEEE754_FLT_INTEGER_MIN -16777216 // -2**24
+#define IEEE754_FLT_INTEGER_MAX +16777216 // +2**24
+#define IEEE754_DBL_INTEGER_MIN -9007199254740992 // -2**53
+#define IEEE754_DBL_INTEGER_MAX +9007199254740992 // +2**53
 
 // Number of elements in an array.
 #define ARRAY_COUNT(array) (sizeof(array) / sizeof((array)[0]))
@@ -400,6 +405,9 @@ bigint_new(struct bigint const* othr);
 // Allocate and initialize a bigint to the specified uintmax_t value.
 struct bigint*
 bigint_new_umax(uintmax_t umax);
+// Allocate and initialize a bigint to the specified intmax_t value.
+struct bigint*
+bigint_new_smax(intmax_t smax);
 // Allocate and initialize a bigint from a two's complement bit array.
 struct bigint*
 bigint_new_bitarr(struct bitarr const* bitarr, bool is_signed);
@@ -522,6 +530,12 @@ bigint_to_uz(size_t* res, struct bigint const* bigint);
 // is left unmodified.
 int
 bigint_to_umax(uintmax_t* res, struct bigint const* bigint);
+// Convert a bigint to an intmax_t.
+// Returns zero on success.
+// Returns non-zero if the provided bigint is out-of-range, in which case *res
+// is left unmodified.
+int
+bigint_to_smax(intmax_t* res, struct bigint const* bigint);
 // Convert a bigint to a two's complement bit array.
 // Returns zero on success.
 // Returns non-zero if the provided bigint is out-of-range would require more
@@ -765,6 +779,10 @@ struct context {
     struct bigint const* usize_max;
     struct bigint const* ssize_min;
     struct bigint const* ssize_max;
+    struct bigint const* f32_integer_min;
+    struct bigint const* f32_integer_max;
+    struct bigint const* f64_integer_min;
+    struct bigint const* f64_integer_max;
 
     // Language builtins.
     struct {

@@ -1,0 +1,71 @@
+import "std";
+
+var a_f32 = (:f32)+123;
+var b_f32 = (:f32)-123;
+var c_f32 = (:f32)+123s;
+var d_f32 = (:f32)-123s;
+
+var a_f64 = (:f64)+123;
+var b_f64 = (:f64)-123;
+var c_f64 = (:f64)+123s;
+var d_f64 = (:f64)-123s;
+
+func display[[T]](value: T) void {
+    std::print_format_line(
+        std::out(),
+        "{}",
+        (:[]std::formatter)[std::formatter::init[[T]](&value)]);
+}
+
+func main() void {
+    std::print_line(std::out(), "COMPILE-TIME KNOWN");
+    display[[f32]](a_f32);
+    display[[f32]](b_f32);
+    display[[f32]](c_f32);
+    display[[f32]](d_f32);
+
+    display[[f64]](a_f64);
+    display[[f64]](b_f64);
+    display[[f64]](c_f64);
+    display[[f64]](d_f64);
+
+    std::print_line(std::out(), "RUN-TIME KNOWN");
+    var a_f32 = (:f32)+123;
+    var b_f32 = (:f32)-123;
+    var c_f32 = (:f32)+123s;
+    var d_f32 = (:f32)-123s;
+
+    var a_f64 = (:f64)+123;
+    var b_f64 = (:f64)-123;
+    var c_f64 = (:f64)+123s;
+    var d_f64 = (:f64)-123s;
+
+    display[[f32]](a_f32);
+    display[[f32]](b_f32);
+    display[[f32]](c_f32);
+    display[[f32]](d_f32);
+
+    display[[f64]](a_f64);
+    display[[f64]](b_f64);
+    display[[f64]](c_f64);
+    display[[f64]](d_f64);
+}
+################################################################################
+# COMPILE-TIME KNOWN
+# 123.000000000
+# -123.000000000
+# 123.000000000
+# -123.000000000
+# 123.00000000000000000
+# -123.00000000000000000
+# 123.00000000000000000
+# -123.00000000000000000
+# RUN-TIME KNOWN
+# 123.000000000
+# -123.000000000
+# 123.000000000
+# -123.000000000
+# 123.00000000000000000
+# -123.00000000000000000
+# 123.00000000000000000
+# -123.00000000000000000

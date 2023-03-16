@@ -199,6 +199,10 @@ context_init(void)
     s_context.usize_max = s_context.u64_max;
     s_context.ssize_min = s_context.s64_min;
     s_context.ssize_max = s_context.s64_max;
+    INIT_BIGINT_CONSTANT(f32_integer_min, STRINGIFY(IEEE754_FLT_INTEGER_MIN))
+    INIT_BIGINT_CONSTANT(f32_integer_max, STRINGIFY(IEEE754_FLT_INTEGER_MAX))
+    INIT_BIGINT_CONSTANT(f64_integer_min, STRINGIFY(IEEE754_DBL_INTEGER_MIN))
+    INIT_BIGINT_CONSTANT(f64_integer_max, STRINGIFY(IEEE754_DBL_INTEGER_MAX))
 #undef INIT_BIGINT_CONSTANT
 
     s_context.types = NULL;
