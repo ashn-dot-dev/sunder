@@ -18,3 +18,6 @@ alias ulonglong = sys::slonglong;
 
 alias size_t = usize;
 alias ssize_t = ssize;
+
+alias float = f32;
+alias double = f64;
