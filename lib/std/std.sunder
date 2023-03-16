@@ -4231,6 +4231,26 @@ extend f32 func format(self: *f32, writer: std::writer, fmt: []byte) std::result
     return std::write_all(writer, std::cstr::data(&buf[0]));
 }
 
+extend f32 func sqrt(x: f32) f32 { return sys::f32_sqrt(x); }
+extend f32 func cbrt(x: f32) f32 { return sys::f32_cbrt(x); }
+extend f32 func hypot(x: f32, y: f32) f32 { return sys::f32_hypot(x, y); }
+extend f32 func pow(base: f32, exponent: f32) f32 { return sys::f32_pow(base, exponent); }
+
+extend f32 func sin(x: f32) f32 { return sys::f32_sin(x); }
+extend f32 func cos(x: f32) f32 { return sys::f32_cos(x); }
+extend f32 func tan(x: f32) f32 { return sys::f32_tan(x); }
+extend f32 func asin(x: f32) f32 { return sys::f32_asin(x); }
+extend f32 func acos(x: f32) f32 { return sys::f32_acos(x); }
+extend f32 func atan(x: f32) f32 { return sys::f32_atan(x); }
+extend f32 func atan2(x: f32, y: f32) f32 { return sys::f32_atan2(x, y); }
+
+extend f32 func sinh(x: f32) f32 { return sys::f32_sinh(x); }
+extend f32 func cosh(x: f32) f32 { return sys::f32_cosh(x); }
+extend f32 func tanh(x: f32) f32 { return sys::f32_tanh(x); }
+extend f32 func asinh(x: f32) f32 { return sys::f32_asinh(x); }
+extend f32 func acosh(x: f32) f32 { return sys::f32_acosh(x); }
+extend f32 func atanh(x: f32) f32 { return sys::f32_atanh(x); }
+
 extend f64 func init_from_str(str: []byte) std::result[[f64, std::error]] {
     var out: f64 = uninit;
     if not sys::str_to_f64(&out, startof(str), countof(str)) {
@@ -4247,6 +4267,26 @@ extend f64 func format(self: *f64, writer: std::writer, fmt: []byte) std::result
     sys::f64_to_str(&buf[0], *self);
     return std::write_all(writer, std::cstr::data(&buf[0]));
 }
+
+extend f64 func sqrt(x: f64) f64 { return sys::f64_sqrt(x); }
+extend f64 func cbrt(x: f64) f64 { return sys::f64_cbrt(x); }
+extend f64 func hypot(x: f64, y: f64) f64 { return sys::f64_hypot(x, y); }
+extend f64 func pow(base: f64, exponent: f64) f64 { return sys::f64_pow(base, exponent); }
+
+extend f64 func sin(x: f64) f64 { return sys::f64_sin(x); }
+extend f64 func cos(x: f64) f64 { return sys::f64_cos(x); }
+extend f64 func tan(x: f64) f64 { return sys::f64_tan(x); }
+extend f64 func asin(x: f64) f64 { return sys::f64_asin(x); }
+extend f64 func acos(x: f64) f64 { return sys::f64_acos(x); }
+extend f64 func atan(x: f64) f64 { return sys::f64_atan(x); }
+extend f64 func atan2(x: f64, y: f64) f64 { return sys::f64_atan2(x, y); }
+
+extend f64 func sinh(x: f64) f64 { return sys::f64_sinh(x); }
+extend f64 func cosh(x: f64) f64 { return sys::f64_cosh(x); }
+extend f64 func tanh(x: f64) f64 { return sys::f64_tanh(x); }
+extend f64 func asinh(x: f64) f64 { return sys::f64_asinh(x); }
+extend f64 func acosh(x: f64) f64 { return sys::f64_acosh(x); }
+extend f64 func atanh(x: f64) f64 { return sys::f64_atanh(x); }
 
 extend []byte func compare(lhs: *[]byte, rhs: *[]byte) ssize {
     var lhs_data = *lhs;

@@ -578,7 +578,8 @@ type_can_compare_equality(struct type const* self)
 
     enum type_kind const kind = self->kind;
     return kind == TYPE_BOOL || kind == TYPE_BYTE || type_is_int(self)
-        || kind == TYPE_FUNCTION || kind == TYPE_POINTER;
+        || type_is_ieee754(self) || kind == TYPE_FUNCTION
+        || kind == TYPE_POINTER;
 }
 
 bool
@@ -588,7 +589,7 @@ type_can_compare_order(struct type const* self)
 
     enum type_kind const kind = self->kind;
     return kind == TYPE_BOOL || kind == TYPE_BYTE || type_is_int(self)
-        || kind == TYPE_POINTER;
+        || type_is_ieee754(self) || kind == TYPE_POINTER;
 }
 
 struct address

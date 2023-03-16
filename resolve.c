@@ -4087,7 +4087,9 @@ resolve_expr_unary_arithmetic(
     assert(rhs != NULL);
     (void)resolver;
 
-    if (!type_is_int(rhs->type)) {
+    bool const type_is_valid =
+        type_is_int(rhs->type) || type_is_ieee754(rhs->type);
+    if (!type_is_valid) {
         fatal(
             op.location,
             "invalid argument of type `%s` in unary `%s` expression",
@@ -4097,8 +4099,10 @@ resolve_expr_unary_arithmetic(
 
     struct type const* const type = rhs->type;
 
+    // Wrapping unary expressions are only supported for sized integer types.
     bool const is_wrapping = uop == UOP_NEG_WRAPPING;
-    if (is_wrapping && type->size == SIZEOF_UNSIZED) {
+    bool const allow_wrapping = type_is_uint(type) || type_is_sint(type);
+    if (is_wrapping && !allow_wrapping) {
         fatal(
             op.location,
             "invalid argument of type `%s` in wrapping unary `%s` expression",
@@ -4539,7 +4543,7 @@ resolve_expr_binary_arithmetic(
     rhs = implicit_cast(lhs->type, rhs);
 
     bool const types_are_valid = lhs->type == rhs->type
-        && (type_is_int(lhs->type) || type_is_ieee754(rhs->type));
+        && (type_is_int(lhs->type) || type_is_ieee754(lhs->type));
     if (!types_are_valid) {
         fatal(
             op.location,

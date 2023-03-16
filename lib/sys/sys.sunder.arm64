@@ -1,4 +1,4 @@
-# Linux Kernel ARM64 System Interface
+# Linux ARM64 System Interface
 namespace sys;
 
 # C Type             | Size | Alignment | Sunder Type
@@ -16,10 +16,10 @@ namespace sys;
 # unsigned long long | 8    | 8         | u64
 #
 # POSIX types obtainted through GDB:
-# mode_t      : type = unsigned int
-# off_t       : type = long int
-# size_t      : type = long unsigned int
-# ssize_t     : type = long int
+# mode_t  : type = unsigned int
+# off_t   : type = long int
+# size_t  : type = long unsigned int
+# ssize_t : type = long int
 
 alias smax = s64;
 alias umax = u64;
@@ -392,5 +392,49 @@ func dump[[T]](object: T) void {
 
 extern func str_to_f32(out: *f32, start: *byte, count: usize) bool;
 extern func str_to_f64(out: *f64, start: *byte, count: usize) bool;
+
 extern func f32_to_str(buf: *byte, f: f32) bool;
 extern func f64_to_str(buf: *byte, f: f64) bool;
+
+# Power Functions
+extern func f32_sqrt(x: f32) f32;
+extern func f32_cbrt(x: f32) f32;
+extern func f32_hypot(x: f32, y: f32) f32;
+extern func f32_pow(base: f32, exponent: f32) f32;
+
+extern func f64_sqrt(x: f64) f64;
+extern func f64_cbrt(x: f64) f64;
+extern func f64_hypot(x: f64, y: f64) f64;
+extern func f64_pow(base: f64, exponent: f64) f64;
+
+# Trigonometric Functions
+extern func f32_sin(x: f32) f32;
+extern func f32_cos(x: f32) f32;
+extern func f32_tan(x: f32) f32;
+extern func f32_asin(x: f32) f32;
+extern func f32_acos(x: f32) f32;
+extern func f32_atan(x: f32) f32;
+extern func f32_atan2(y: f32, x: f32) f32;
+
+extern func f64_sin(x: f64) f64;
+extern func f64_cos(x: f64) f64;
+extern func f64_tan(x: f64) f64;
+extern func f64_asin(x: f64) f64;
+extern func f64_acos(x: f64) f64;
+extern func f64_atan(x: f64) f64;
+extern func f64_atan2(y: f64, x: f64) f64;
+
+# Hyperbolic Functions
+extern func f32_sinh(x: f32) f32;
+extern func f32_cosh(x: f32) f32;
+extern func f32_tanh(x: f32) f32;
+extern func f32_asinh(x: f32) f32;
+extern func f32_acosh(x: f32) f32;
+extern func f32_atanh(x: f32) f32;
+
+extern func f64_sinh(x: f64) f64;
+extern func f64_cosh(x: f64) f64;
+extern func f64_tanh(x: f64) f64;
+extern func f64_asinh(x: f64) f64;
+extern func f64_acosh(x: f64) f64;
+extern func f64_atanh(x: f64) f64;

@@ -767,6 +767,16 @@ eval_rvalue_unary(struct expr const* expr)
     }
     case UOP_NEG: {
         struct value* const rhs = eval_rvalue(expr->data.unary.rhs);
+
+        if (rhs->type->kind == TYPE_F32) {
+            rhs->data.f32 = -rhs->data.f32;
+            return rhs;
+        }
+        if (rhs->type->kind == TYPE_F64) {
+            rhs->data.f64 = -rhs->data.f64;
+            return rhs;
+        }
+
         assert(type_is_sint(rhs->type));
         struct bigint* const integer = bigint_new(BIGINT_ZERO);
         bigint_neg(integer, rhs->data.integer);

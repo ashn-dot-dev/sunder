@@ -2273,6 +2273,12 @@ push_rvalue_unary_neg(struct expr const* expr, size_t id)
 
     struct expr const* const rhs = expr->data.unary.rhs;
 
+    if (type_is_ieee754(rhs->type)) {
+        push_rvalue(expr->data.unary.rhs);
+        appendli("call __fatal_unimplemented");
+        return;
+    }
+
     assert(type_is_sint(rhs->type));
     assert(rhs->type->size <= 8u);
     push_rvalue(expr->data.unary.rhs);
@@ -2661,6 +2667,14 @@ push_rvalue_binary_eq(struct expr const* expr, size_t id)
     push_rvalue(expr->data.binary.lhs);
     push_rvalue(expr->data.binary.rhs);
 
+    struct type const* const xhs_type = expr->data.binary.lhs->type;
+    if (type_is_ieee754(xhs_type)) {
+        appendli("call __fatal_unimplemented");
+        return;
+    }
+
+    assert(type_is_int(xhs_type));
+
     char const* lhs_reg = reg_a(expr->data.binary.lhs->type->size);
     char const* rhs_reg = reg_b(expr->data.binary.rhs->type->size);
     appendli("pop rbx");
@@ -2687,6 +2701,14 @@ push_rvalue_binary_ne(struct expr const* expr, size_t id)
 
     push_rvalue(expr->data.binary.lhs);
     push_rvalue(expr->data.binary.rhs);
+
+    struct type const* const xhs_type = expr->data.binary.lhs->type;
+    if (type_is_ieee754(xhs_type)) {
+        appendli("call __fatal_unimplemented");
+        return;
+    }
+
+    assert(type_is_int(xhs_type));
 
     char const* lhs_reg = reg_a(expr->data.binary.lhs->type->size);
     char const* rhs_reg = reg_b(expr->data.binary.rhs->type->size);
@@ -2717,6 +2739,13 @@ push_rvalue_binary_le(struct expr const* expr, size_t id)
     push_rvalue(expr->data.binary.lhs);
     push_rvalue(expr->data.binary.rhs);
 
+    if (type_is_ieee754(xhs_type)) {
+        appendli("call __fatal_unimplemented");
+        return;
+    }
+
+    assert(type_is_int(xhs_type));
+
     char const* lhs_reg = reg_a(expr->data.binary.lhs->type->size);
     char const* rhs_reg = reg_b(expr->data.binary.rhs->type->size);
     appendli("pop rbx");
@@ -2745,6 +2774,13 @@ push_rvalue_binary_lt(struct expr const* expr, size_t id)
 
     push_rvalue(expr->data.binary.lhs);
     push_rvalue(expr->data.binary.rhs);
+
+    if (type_is_ieee754(xhs_type)) {
+        appendli("call __fatal_unimplemented");
+        return;
+    }
+
+    assert(type_is_int(xhs_type));
 
     char const* lhs_reg = reg_a(expr->data.binary.lhs->type->size);
     char const* rhs_reg = reg_b(expr->data.binary.rhs->type->size);
@@ -2775,6 +2811,13 @@ push_rvalue_binary_ge(struct expr const* expr, size_t id)
     push_rvalue(expr->data.binary.lhs);
     push_rvalue(expr->data.binary.rhs);
 
+    if (type_is_ieee754(xhs_type)) {
+        appendli("call __fatal_unimplemented");
+        return;
+    }
+
+    assert(type_is_int(xhs_type));
+
     char const* lhs_reg = reg_a(expr->data.binary.lhs->type->size);
     char const* rhs_reg = reg_b(expr->data.binary.rhs->type->size);
     appendli("pop rbx");
@@ -2803,6 +2846,13 @@ push_rvalue_binary_gt(struct expr const* expr, size_t id)
 
     push_rvalue(expr->data.binary.lhs);
     push_rvalue(expr->data.binary.rhs);
+
+    if (type_is_ieee754(xhs_type)) {
+        appendli("call __fatal_unimplemented");
+        return;
+    }
+
+    assert(type_is_int(xhs_type));
 
     char const* lhs_reg = reg_a(expr->data.binary.lhs->type->size);
     char const* rhs_reg = reg_b(expr->data.binary.rhs->type->size);

@@ -453,8 +453,46 @@ sys._dump_lookup_table: db \
 section .text
 sys.str_to_f32: call __fatal_unimplemented
 sys.str_to_f64: call __fatal_unimplemented
+
 sys.f32_to_str: call __fatal_unimplemented
 sys.f64_to_str: call __fatal_unimplemented
+
+sys.f32_sqrt: call __fatal_unimplemented
+sys.f64_sqrt: call __fatal_unimplemented
+sys.f32_cbrt: call __fatal_unimplemented
+sys.f64_cbrt: call __fatal_unimplemented
+sys.f32_hypot: call __fatal_unimplemented
+sys.f64_hypot: call __fatal_unimplemented
+sys.f32_pow: call __fatal_unimplemented
+sys.f64_pow: call __fatal_unimplemented
+
+sys.f32_sin: call __fatal_unimplemented
+sys.f64_sin: call __fatal_unimplemented
+sys.f32_cos: call __fatal_unimplemented
+sys.f64_cos: call __fatal_unimplemented
+sys.f32_tan: call __fatal_unimplemented
+sys.f64_tan: call __fatal_unimplemented
+sys.f32_asin: call __fatal_unimplemented
+sys.f64_asin: call __fatal_unimplemented
+sys.f32_acos: call __fatal_unimplemented
+sys.f64_acos: call __fatal_unimplemented
+sys.f32_atan: call __fatal_unimplemented
+sys.f64_atan: call __fatal_unimplemented
+sys.f32_atan2: call __fatal_unimplemented
+sys.f64_atan2: call __fatal_unimplemented
+
+sys.f32_sinh: call __fatal_unimplemented
+sys.f64_sinh: call __fatal_unimplemented
+sys.f32_cosh: call __fatal_unimplemented
+sys.f64_cosh: call __fatal_unimplemented
+sys.f32_tanh: call __fatal_unimplemented
+sys.f64_tanh: call __fatal_unimplemented
+sys.f32_asinh: call __fatal_unimplemented
+sys.f64_asinh: call __fatal_unimplemented
+sys.f32_acosh: call __fatal_unimplemented
+sys.f64_acosh: call __fatal_unimplemented
+sys.f32_atanh: call __fatal_unimplemented
+sys.f64_atanh: call __fatal_unimplemented
 
 ; PROGRAM ENTRY POINT
 ; ===================

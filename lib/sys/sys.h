@@ -7,7 +7,7 @@
 #include <fcntl.h> /* open */
 #include <float.h> /* DBL_DECIMAL_DIG, FLT_DECIMAL_DIG */
 #include <limits.h> /* CHAR_BIT, *_MIN, *_MAX */
-#include <math.h> /* INFINITY, NAN, isfinite, isinf, isnan */
+#include <math.h> /* INFINITY, NAN, isfinite, isinf, isnan, math functions */
 #include <stdint.h> /* uintptr_t */
 #include <stdio.h> /* EOF, fprintf, sscanf */
 #include <string.h> /* memset */
@@ -557,3 +557,43 @@ sys_f64_to_str(__sunder_byte* buf, __sunder_f64 f)
     }
     return sprintf(buf, "%.*f", DBL_DECIMAL_DIG, f) >= 0;
 }
+
+#define __SUNDER_IEEE754_MATH_DEFINITIONS(function)                            \
+    __sunder_f32 sys_f32_##function(__sunder_f32 f)                            \
+    {                                                                          \
+        return function##f(f);                                                 \
+    }                                                                          \
+    __sunder_f64 sys_f64_##function(__sunder_f64 f)                            \
+    {                                                                          \
+        return function(f);                                                    \
+    }
+
+#define __SUNDER_IEEE754_MATH_DEFINITIONS2(function)                           \
+    __sunder_f32 sys_f32_##function(__sunder_f32 f1, __sunder_f32 f2)          \
+    {                                                                          \
+        return function##f(f1, f2);                                            \
+    }                                                                          \
+    __sunder_f64 sys_f64_##function(__sunder_f64 f1, __sunder_f64 f2)          \
+    {                                                                          \
+        return function(f1, f2);                                               \
+    }
+
+__SUNDER_IEEE754_MATH_DEFINITIONS(sqrt)
+__SUNDER_IEEE754_MATH_DEFINITIONS(cbrt)
+__SUNDER_IEEE754_MATH_DEFINITIONS2(hypot)
+__SUNDER_IEEE754_MATH_DEFINITIONS2(pow)
+
+__SUNDER_IEEE754_MATH_DEFINITIONS(sin)
+__SUNDER_IEEE754_MATH_DEFINITIONS(cos)
+__SUNDER_IEEE754_MATH_DEFINITIONS(tan)
+__SUNDER_IEEE754_MATH_DEFINITIONS(asin)
+__SUNDER_IEEE754_MATH_DEFINITIONS(acos)
+__SUNDER_IEEE754_MATH_DEFINITIONS(atan)
+__SUNDER_IEEE754_MATH_DEFINITIONS2(atan2)
+
+__SUNDER_IEEE754_MATH_DEFINITIONS(sinh)
+__SUNDER_IEEE754_MATH_DEFINITIONS(cosh)
+__SUNDER_IEEE754_MATH_DEFINITIONS(tanh)
+__SUNDER_IEEE754_MATH_DEFINITIONS(asinh)
+__SUNDER_IEEE754_MATH_DEFINITIONS(acosh)
+__SUNDER_IEEE754_MATH_DEFINITIONS(atanh)

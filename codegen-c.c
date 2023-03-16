@@ -1900,8 +1900,12 @@ strgen_rvalue_unary_neg(struct expr const* expr)
     assert(expr != NULL);
     assert(expr->kind == EXPR_UNARY);
     assert(expr->data.unary.op == UOP_NEG);
-    assert(type_is_sint(expr->data.unary.rhs->type));
 
+    if (type_is_ieee754(expr->type)) {
+        return intern_fmt("-(%s)", strgen_rvalue(expr->data.unary.rhs));
+    }
+
+    assert(type_is_sint(expr->data.unary.rhs->type));
     return intern_fmt(
         "({%s %s = %s; if (%s == ((%s)(LLONG_MIN >> ((sizeof(long long) - sizeof(%s))*8)))){%s();}; -(%s);})",
         mangle_type(expr->data.unary.rhs->type),

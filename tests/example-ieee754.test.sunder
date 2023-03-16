@@ -5,6 +5,11 @@ import "std";
 let f32_constant = 123.456f32;
 let f64_constant = 123.456f64;
 
+let f32_INF = 1.0f32 / 0.0f32;
+let f64_INF = 1.0f64 / 0.0f64;
+let f32_NAN = 0.0f32 / 0.0f32;
+let f64_NAN = 0.0f64 / 0.0f64;
+
 func display[[T]](value: T) void {
     std::print_format_line(
         std::out(),
@@ -32,6 +37,9 @@ func main() void {
     display[[f64]](-123.456f64);
 
     std::print_line(std::out(), "f32 compile-time arithmetic");
+    let x = 0.50f32;
+    let x = -x;
+    display[[f32]](x);
     display[[f32]](0.50f32 + 0.25f32);
     display[[f32]](0.50f32 - 0.25f32);
     display[[f32]](0.50f32 * 0.25f32);
@@ -40,12 +48,16 @@ func main() void {
     std::print_line(std::out(), "f32 run-time arithmetic");
     var x = 0.50f32;
     var y = 0.25f32;
+    display[[f32]](-x);
     display[[f32]](x + y);
     display[[f32]](x - y);
     display[[f32]](x * y);
     display[[f32]](x / y);
 
     std::print_line(std::out(), "f64 compile-time arithmetic");
+    let x = 0.50f64;
+    let x = -x;
+    display[[f64]](x);
     display[[f64]](0.50f64 + 0.25f64);
     display[[f64]](0.50f64 - 0.25f64);
     display[[f64]](0.50f64 * 0.25f64);
@@ -54,6 +66,7 @@ func main() void {
     std::print_line(std::out(), "f64 run-time arithmetic");
     var x = 0.50f64;
     var y = 0.25f64;
+    display[[f64]](-x);
     display[[f64]](x + y);
     display[[f64]](x - y);
     display[[f64]](x * y);
@@ -98,6 +111,46 @@ func main() void {
     display[[f64]]((:f64)usize::MAX);
     display[[f64]]((:f64)ssize::MIN);
     display[[f64]]((:f64)ssize::MAX);
+
+    std::print_line(std::out(), "f32 compile-time comparisons");
+    display[[bool]](0.50f32 == 0.25f32);
+    display[[bool]](0.50f32 != 0.25f32);
+    display[[bool]](0.50f32 < 0.25f32);
+    display[[bool]](0.50f32 <= 0.25f32);
+    display[[bool]](0.50f32 > 0.25f32);
+    display[[bool]](0.50f32 >= 0.25f32);
+    display[[bool]](f32_INF == f32_INF);
+    display[[bool]](f32_NAN == f32_NAN);
+
+    std::print_line(std::out(), "f32 run-time comparisons");
+    var x = 0.50f32;
+    var y = 0.25f32;
+    display[[bool]](x == y);
+    display[[bool]](x != y);
+    display[[bool]](x < y);
+    display[[bool]](x <= y);
+    display[[bool]](x > y);
+    display[[bool]](x >= y);
+
+    std::print_line(std::out(), "f64 compile-time comparisons");
+    display[[bool]](0.50f64 == 0.25f64);
+    display[[bool]](0.50f64 != 0.25f64);
+    display[[bool]](0.50f64 < 0.25f64);
+    display[[bool]](0.50f64 <= 0.25f64);
+    display[[bool]](0.50f64 > 0.25f64);
+    display[[bool]](0.50f64 >= 0.25f64);
+    display[[bool]](f64_INF == f64_INF);
+    display[[bool]](f64_NAN == f64_NAN);
+
+    std::print_line(std::out(), "f64 run-time comparisons");
+    var x = 0.50f64;
+    var y = 0.25f64;
+    display[[bool]](x == y);
+    display[[bool]](x != y);
+    display[[bool]](x < y);
+    display[[bool]](x <= y);
+    display[[bool]](x > y);
+    display[[bool]](x >= y);
 }
 ################################################################################
 # f32 literals
@@ -117,21 +170,25 @@ func main() void {
 # 123.45600000000000307
 # -123.45600000000000307
 # f32 compile-time arithmetic
+# -0.500000000
 # 0.750000000
 # 0.250000000
 # 0.125000000
 # 2.000000000
 # f32 run-time arithmetic
+# -0.500000000
 # 0.750000000
 # 0.250000000
 # 0.125000000
 # 2.000000000
 # f64 compile-time arithmetic
+# -0.50000000000000000
 # 0.75000000000000000
 # 0.25000000000000000
 # 0.12500000000000000
 # 2.00000000000000000
 # f64 run-time arithmetic
+# -0.50000000000000000
 # 0.75000000000000000
 # 0.25000000000000000
 # 0.12500000000000000
@@ -172,3 +229,35 @@ func main() void {
 # 18446744073709551616.00000000000000000
 # -9223372036854775808.00000000000000000
 # 9223372036854775808.00000000000000000
+# f32 compile-time comparisons
+# false
+# true
+# false
+# false
+# true
+# true
+# true
+# false
+# f32 run-time comparisons
+# false
+# true
+# false
+# false
+# true
+# true
+# f64 compile-time comparisons
+# false
+# true
+# false
+# false
+# true
+# true
+# true
+# false
+# f64 run-time comparisons
+# false
+# true
+# false
+# false
+# true
+# true
