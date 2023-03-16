@@ -1,0 +1,13 @@
+import "std";
+
+let x = -1.0f32 / 0.0f32;
+
+func main() void {
+    var ptr = &x;
+    var ftr = std::formatter::init[[typeof(x)]](ptr);
+    var slc = (:[]std::formatter)[ftr];
+    var out = std::out();
+    std::print_format_line(out, "{}", slc);
+}
+################################################################################
+# -infinity

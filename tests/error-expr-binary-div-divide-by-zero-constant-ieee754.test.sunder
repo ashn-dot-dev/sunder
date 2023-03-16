@@ -1,6 +1,0 @@
-# only SUNDER_BACKEND=C
-let x = 0.5f32 / 0.0f32;
-################################################################################
-# [error-expr-binary-div-divide-by-zero-constant-ieee754.test.sunder:2] error: divide by zero (0.500000000 / 0.000000000)
-# let x = 0.5f32 / 0.0f32;
-#                ^

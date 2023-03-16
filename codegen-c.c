@@ -3,6 +3,7 @@
 #include <errno.h>
 #include <inttypes.h>
 #include <limits.h>
+#include <math.h>
 #include <stdlib.h>
 #include <string.h>
 #include "sunder.h"
@@ -814,10 +815,22 @@ strgen_value(struct value const* value)
     }
     case TYPE_F32: {
         double const ieee754 = (double)value->data.f32;
+        if (isinf(ieee754) && ieee754 < 0) {
+            return intern_fmt("(float)-INFINITY");
+        }
+        if (isinf(ieee754) && ieee754 > 0) {
+            return intern_fmt("(float)+INFINITY");
+        }
         return intern_fmt("%.*ff", IEEE754_FLT_DECIMAL_DIG, ieee754);
     }
     case TYPE_F64: {
         double const ieee754 = value->data.f64;
+        if (isinf(ieee754) && ieee754 < 0) {
+            return intern_fmt("(double)-INFINITY");
+        }
+        if (isinf(ieee754) && ieee754 > 0) {
+            return intern_fmt("(double)+INFINITY");
+        }
         return intern_fmt("%.*f", IEEE754_DBL_DECIMAL_DIG, ieee754);
     }
     case TYPE_FUNCTION: {
@@ -2433,6 +2446,14 @@ strgen_rvalue_binary_div(struct expr const* expr)
     assert(expr->data.binary.op == BOP_DIV);
     assert(expr->data.binary.lhs->type == expr->data.binary.rhs->type);
 
+    if (type_is_ieee754(expr->type)) {
+        return intern_fmt(
+            "(%s / %s)",
+            strgen_rvalue(expr->data.binary.lhs),
+            strgen_rvalue(expr->data.binary.rhs));
+    }
+
+    assert(type_is_int(expr->type) && expr->type->size != SIZEOF_UNSIZED);
     return intern_fmt(
         "({%s %s = %s; %s %s = %s; %s_%s(%s, %s);})",
         mangle_type(expr->data.binary.lhs->type),

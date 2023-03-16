@@ -464,9 +464,7 @@ eval_rvalue_cast(struct expr const* expr)
             }
             uintmax_t from_as_umax = (uintmax_t)from_as_double;
             if (from_as_umax < min_as_umax || max_as_umax < from_as_umax) {
-                fatal(
-                    expr->location,
-                    "operation produces out-of-range result");
+                fatal(expr->location, "operation produces out-of-range result");
             }
 
             struct bigint* const integer = bigint_new_umax(from_as_umax);
@@ -485,9 +483,7 @@ eval_rvalue_cast(struct expr const* expr)
             }
             intmax_t from_as_smax = (intmax_t)from_as_double;
             if (from_as_smax < min_as_smax || max_as_smax < from_as_smax) {
-                fatal(
-                    expr->location,
-                    "operation produces out-of-range result");
+                fatal(expr->location, "operation produces out-of-range result");
             }
 
             struct bigint* const integer = bigint_new_smax(from_as_smax);
@@ -1124,28 +1120,10 @@ eval_rvalue_binary(struct expr const* expr)
     case BOP_DIV: {
         assert(lhs->type == rhs->type);
         if (lhs->type->kind == TYPE_F32) {
-            if (rhs->data.f32 == 0) {
-                fatal(
-                    expr->location,
-                    "divide by zero (%.*f / %.*f)",
-                    IEEE754_FLT_DECIMAL_DIG,
-                    (double)lhs->data.f32,
-                    IEEE754_FLT_DECIMAL_DIG,
-                    (double)rhs->data.f32);
-            }
             res = value_new_f32(lhs->data.f32 / rhs->data.f32);
             break;
         }
         if (lhs->type->kind == TYPE_F64) {
-            if (rhs->data.f64 == 0) {
-                fatal(
-                    expr->location,
-                    "divide by zero (%.*f / %.*f)",
-                    IEEE754_DBL_DECIMAL_DIG,
-                    lhs->data.f64,
-                    IEEE754_DBL_DECIMAL_DIG,
-                    rhs->data.f64);
-            }
             res = value_new_f64(lhs->data.f64 / rhs->data.f64);
             break;
         }

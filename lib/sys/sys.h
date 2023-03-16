@@ -7,7 +7,7 @@
 #include <fcntl.h> /* open */
 #include <float.h> /* DBL_DECIMAL_DIG, FLT_DECIMAL_DIG */
 #include <limits.h> /* CHAR_BIT, *_MIN, *_MAX */
-#include <math.h> /* isfinite */
+#include <math.h> /* INFINITY, NAN, isfinite, isinf, isnan */
 #include <stdint.h> /* uintptr_t */
 #include <stdio.h> /* EOF, fprintf, sscanf */
 #include <string.h> /* memset */
@@ -209,7 +209,7 @@ __SUNDER_INTEGER_MUL_WRAPPING_DEFINITION(__sunder_s64)
 __SUNDER_INTEGER_MUL_WRAPPING_DEFINITION(__sunder_usize)
 __SUNDER_INTEGER_MUL_WRAPPING_DEFINITION(__sunder_ssize)
 
-#define __SUNDER_DIV_DEFINITION(T)                                             \
+#define __SUNDER_INTEGER_DIV_DEFINITION(T)                                     \
     static T __sunder___div_##T(T lhs, T rhs)                                  \
     {                                                                          \
         if (rhs == 0) {                                                        \
@@ -218,18 +218,18 @@ __SUNDER_INTEGER_MUL_WRAPPING_DEFINITION(__sunder_ssize)
         return lhs / rhs;                                                      \
     }
 
-__SUNDER_DIV_DEFINITION(__sunder_u8)
-__SUNDER_DIV_DEFINITION(__sunder_s8)
-__SUNDER_DIV_DEFINITION(__sunder_u16)
-__SUNDER_DIV_DEFINITION(__sunder_s16)
-__SUNDER_DIV_DEFINITION(__sunder_u32)
-__SUNDER_DIV_DEFINITION(__sunder_s32)
-__SUNDER_DIV_DEFINITION(__sunder_u64)
-__SUNDER_DIV_DEFINITION(__sunder_s64)
-__SUNDER_DIV_DEFINITION(__sunder_usize)
-__SUNDER_DIV_DEFINITION(__sunder_ssize)
-__SUNDER_DIV_DEFINITION(__sunder_f32)
-__SUNDER_DIV_DEFINITION(__sunder_f64)
+__SUNDER_INTEGER_DIV_DEFINITION(__sunder_u8)
+__SUNDER_INTEGER_DIV_DEFINITION(__sunder_s8)
+__SUNDER_INTEGER_DIV_DEFINITION(__sunder_u16)
+__SUNDER_INTEGER_DIV_DEFINITION(__sunder_s16)
+__SUNDER_INTEGER_DIV_DEFINITION(__sunder_u32)
+__SUNDER_INTEGER_DIV_DEFINITION(__sunder_s32)
+__SUNDER_INTEGER_DIV_DEFINITION(__sunder_u64)
+__SUNDER_INTEGER_DIV_DEFINITION(__sunder_s64)
+__SUNDER_INTEGER_DIV_DEFINITION(__sunder_usize)
+__SUNDER_INTEGER_DIV_DEFINITION(__sunder_ssize)
+__SUNDER_INTEGER_DIV_DEFINITION(__sunder_f32)
+__SUNDER_INTEGER_DIV_DEFINITION(__sunder_f64)
 
 #define __SUNDER_INTEGER_REM_DEFINITION(T)                                     \
     static T __sunder___rem_##T(T lhs, T rhs)                                  \
@@ -531,11 +531,23 @@ sys_str_to_f64(__sunder_f64* out, __sunder_byte* start, __sunder_usize count)
 __sunder_bool
 sys_f32_to_str(__sunder_byte* buf, __sunder_f32 f)
 {
+    if (isinf(f) && f < 0) {
+        return sprintf(buf, "-infinity");
+    }
+    if (isinf(f) && f > 0) {
+        return sprintf(buf, "infinity");
+    }
     return sprintf(buf, "%.*f", FLT_DECIMAL_DIG, (double)f) >= 0;
 }
 
 __sunder_bool
 sys_f64_to_str(__sunder_byte* buf, __sunder_f64 f)
 {
+    if (isinf(f) && f < 0) {
+        return sprintf(buf, "-infinity");
+    }
+    if (isinf(f) && f > 0) {
+        return sprintf(buf, "infinity");
+    }
     return sprintf(buf, "%.*f", DBL_DECIMAL_DIG, f) >= 0;
 }
