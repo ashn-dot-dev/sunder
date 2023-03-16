@@ -1,3 +1,4 @@
+# only SUNDER_BACKEND=C
 import "std";
 
 var a_f32 = (:f32)+123;

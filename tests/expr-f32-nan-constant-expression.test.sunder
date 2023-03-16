@@ -1,3 +1,4 @@
+# only SUNDER_BACKEND=C
 import "std";
 
 let x = 0.0f32 / 0.0f32;
