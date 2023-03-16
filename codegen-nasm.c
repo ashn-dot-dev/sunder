@@ -2673,8 +2673,6 @@ push_rvalue_binary_eq(struct expr const* expr, size_t id)
         return;
     }
 
-    assert(type_is_int(xhs_type));
-
     char const* lhs_reg = reg_a(expr->data.binary.lhs->type->size);
     char const* rhs_reg = reg_b(expr->data.binary.rhs->type->size);
     appendli("pop rbx");
@@ -2707,8 +2705,6 @@ push_rvalue_binary_ne(struct expr const* expr, size_t id)
         appendli("call __fatal_unimplemented");
         return;
     }
-
-    assert(type_is_int(xhs_type));
 
     char const* lhs_reg = reg_a(expr->data.binary.lhs->type->size);
     char const* rhs_reg = reg_b(expr->data.binary.rhs->type->size);
@@ -2744,8 +2740,6 @@ push_rvalue_binary_le(struct expr const* expr, size_t id)
         return;
     }
 
-    assert(type_is_int(xhs_type));
-
     char const* lhs_reg = reg_a(expr->data.binary.lhs->type->size);
     char const* rhs_reg = reg_b(expr->data.binary.rhs->type->size);
     appendli("pop rbx");
@@ -2779,8 +2773,6 @@ push_rvalue_binary_lt(struct expr const* expr, size_t id)
         appendli("call __fatal_unimplemented");
         return;
     }
-
-    assert(type_is_int(xhs_type));
 
     char const* lhs_reg = reg_a(expr->data.binary.lhs->type->size);
     char const* rhs_reg = reg_b(expr->data.binary.rhs->type->size);
@@ -2816,8 +2808,6 @@ push_rvalue_binary_ge(struct expr const* expr, size_t id)
         return;
     }
 
-    assert(type_is_int(xhs_type));
-
     char const* lhs_reg = reg_a(expr->data.binary.lhs->type->size);
     char const* rhs_reg = reg_b(expr->data.binary.rhs->type->size);
     appendli("pop rbx");
@@ -2851,8 +2841,6 @@ push_rvalue_binary_gt(struct expr const* expr, size_t id)
         appendli("call __fatal_unimplemented");
         return;
     }
-
-    assert(type_is_int(xhs_type));
 
     char const* lhs_reg = reg_a(expr->data.binary.lhs->type->size);
     char const* rhs_reg = reg_b(expr->data.binary.rhs->type->size);
