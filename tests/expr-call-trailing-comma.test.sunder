@@ -1,0 +1,23 @@
+func f(a_: usize) void {
+}
+
+func g(a_: usize, b_: usize) void {
+}
+
+func h(a_: usize, b_: usize, c_: usize) void {
+}
+
+func main() void {
+    f(123,);
+    g(123, 456,);
+    g(
+        123,
+        456,
+    );
+    h(123, 456, 789,);
+    h(
+        123,
+        456,
+        789,
+    );
+}

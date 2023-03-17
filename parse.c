@@ -1217,6 +1217,9 @@ parse_expr_led_lparen(struct parser* parser, struct cst_expr const* lhs)
     while (!check_current(parser, TOKEN_RPAREN)) {
         if (sbuf_count(args) != 0) {
             expect_current(parser, TOKEN_COMMA);
+            if (check_current(parser, TOKEN_RPAREN)) {
+                break;
+            }
         }
         sbuf_push(args, parse_expr(parser));
     }

@@ -102,7 +102,7 @@
 
 <expr-grouped> ::= "(" <expr> ")"
 
-<expr-call> ::= <expr> "(" (<expr> ("," <expr>)*)? ")"
+<expr-call> ::= <expr> "(" (<expr> ("," <expr>)* ","?)? ")"
 
 <expr-access-index> ::= <expr> "[" <expr> "]"
 
@@ -175,7 +175,7 @@
 
 <member-function> ::=  <decl-function>
 
-<member-initializer-list> ::= ( <member-initializer> ("," <member-initializer>)* ","? )?
+<member-initializer-list> ::= (<member-initializer> ("," <member-initializer>)* ","?)?
 
 <member-initializer> ::= "." <identifier> "=" (<expr> | "uninit")
 
