@@ -1421,7 +1421,9 @@ resolve_import_file(
                 string_new_fmt("%s/%s", file_name, dir_contents[i]);
             char const* const interned = intern_cstr(string_start(string));
             string_del(string);
-            resolve_import_file(resolver, location, interned, true);
+            if (!file_is_directory(interned)) {
+                resolve_import_file(resolver, location, interned, true);
+            }
         }
         sbuf_fini(dir_contents);
         return;

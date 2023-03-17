@@ -1,6 +1,7 @@
 import "std";
 import "sys";
 import "import";
+import "import/c";
 
 func main() void {
     sys::dump[[u16]](a);
