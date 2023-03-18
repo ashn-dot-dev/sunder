@@ -254,6 +254,22 @@ type_new_f64(void)
 }
 
 struct type*
+type_new_real(void)
+{
+    struct symbol_table* const symbols =
+        symbol_table_new(context()->global_symbol_table);
+    sbuf_push(context()->chilling_symbol_tables, symbols);
+
+    struct type* const self = type_new(
+        context()->interned.real,
+        SIZEOF_UNSIZED,
+        ALIGNOF_UNSIZED,
+        symbols,
+        TYPE_REAL);
+    return self;
+}
+
+struct type*
 type_new_function(
     struct type const* const* parameter_types, struct type const* return_type)
 {
@@ -558,7 +574,7 @@ type_is_ieee754(struct type const* self)
     assert(self != NULL);
 
     enum type_kind const kind = self->kind;
-    return kind == TYPE_F32 || kind == TYPE_F64;
+    return kind == TYPE_F32 || kind == TYPE_F64 || kind == TYPE_REAL;
 }
 
 bool
@@ -1555,6 +1571,15 @@ value_new_f64(double f64)
 }
 
 struct value*
+value_new_real(double real)
+{
+    struct type const* const type = context()->builtin.real;
+    struct value* self = value_new(type);
+    self->data.real = real;
+    return self;
+}
+
+struct value*
 value_new_function(struct function const* function)
 {
     assert(function != NULL);
@@ -1664,7 +1689,8 @@ value_del(struct value* self)
         break;
     }
     case TYPE_F32: /* fallthrough */
-    case TYPE_F64: {
+    case TYPE_F64: /* fallthrough */
+    case TYPE_REAL: {
         break;
     }
     case TYPE_FUNCTION: {
@@ -1741,7 +1767,8 @@ value_freeze(struct value* self)
         return;
     }
     case TYPE_F32: /* fallthrough */
-    case TYPE_F64: {
+    case TYPE_F64: /* fallthrough */
+    case TYPE_REAL: {
         return;
     }
     case TYPE_FUNCTION: {
@@ -1818,6 +1845,9 @@ value_clone(struct value const* self)
     }
     case TYPE_F64: {
         return value_new_f64(self->data.f64);
+    }
+    case TYPE_REAL: {
+        return value_new_real(self->data.real);
     }
     case TYPE_FUNCTION: {
         return value_new_function(self->data.function);
@@ -1960,6 +1990,9 @@ value_eq(struct value const* lhs, struct value const* rhs)
     case TYPE_F64: {
         return lhs->data.f64 == rhs->data.f64;
     }
+    case TYPE_REAL: {
+        return lhs->data.real == rhs->data.real;
+    }
     case TYPE_FUNCTION: {
         return lhs->data.function == rhs->data.function;
     }
@@ -2024,6 +2057,9 @@ value_lt(struct value const* lhs, struct value const* rhs)
     case TYPE_F64: {
         return lhs->data.f64 < rhs->data.f64;
     }
+    case TYPE_REAL: {
+        return lhs->data.real < rhs->data.real;
+    }
     case TYPE_POINTER: {
         UNREACHABLE(); // illegal (see comment in value_eq)
     }
@@ -2078,6 +2114,9 @@ value_gt(struct value const* lhs, struct value const* rhs)
     }
     case TYPE_F64: {
         return lhs->data.f64 > rhs->data.f64;
+    }
+    case TYPE_REAL: {
+        return lhs->data.real > rhs->data.real;
     }
     case TYPE_POINTER: {
         UNREACHABLE(); // illegal (see comment in value_eq)
@@ -2172,6 +2211,19 @@ value_to_new_bytes(struct value const* value)
             uint8_t bytes[sizeof(double)];
         } u;
         u.f64 = value->data.f64;
+
+        assert(sbuf_count(bytes) == ARRAY_COUNT(u.bytes));
+        for (size_t i = 0; i < sbuf_count(bytes); ++i) {
+            bytes[i] = u.bytes[i];
+        }
+        return bytes;
+    }
+    case TYPE_REAL: {
+        union {
+            double real;
+            uint8_t bytes[sizeof(double)];
+        } u;
+        u.real = value->data.real;
 
         assert(sbuf_count(bytes) == ARRAY_COUNT(u.bytes));
         for (size_t i = 0; i < sbuf_count(bytes); ++i) {

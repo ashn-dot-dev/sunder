@@ -245,6 +245,9 @@ append_dx_static_initializer(struct value const* value)
             u.f64);
         return;
     }
+    case TYPE_REAL: {
+        UNREACHABLE();
+    }
     case TYPE_FUNCTION: {
         struct address const* const address = value->data.function->address;
         assert(address->kind == ADDRESS_STATIC);
@@ -652,6 +655,7 @@ mov_rax_reg_a_with_zero_or_sign_extend(struct type const* type)
     case TYPE_INTEGER: /* fallthrough */
     case TYPE_F32: /* fallthrough */
     case TYPE_F64: /* fallthrough */
+    case TYPE_REAL: /* fallthrough */
     case TYPE_ARRAY: /* fallthrough */
     case TYPE_SLICE: /* fallthrough */
     case TYPE_STRUCT: {
@@ -1597,7 +1601,8 @@ push_rvalue_value(struct expr const* expr, size_t id)
         UNREACHABLE();
     }
     case TYPE_ANY: /* fallthrough */
-    case TYPE_INTEGER: {
+    case TYPE_INTEGER: /* fallthrough */
+    case TYPE_REAL: {
         // Unsized types should never reach the code generation phase.
         UNREACHABLE();
     }

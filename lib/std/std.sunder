@@ -4214,6 +4214,10 @@ extend ssize func format(self: *ssize, writer: std::writer, fmt: []byte) std::re
     return integer::_format_smax((:std::smax)*self, writer, fmt);
 }
 
+extend real let PI: f64 = 3.14159265358979323846;
+
+extend f32 let PI = (:f32)real::PI;
+
 extend f32 func init_from_str(str: []byte) std::result[[f32, std::error]] {
     var out: f32 = uninit;
     if not sys::str_to_f32(&out, startof(str), countof(str)) {
@@ -4230,8 +4234,6 @@ extend f32 func format(self: *f32, writer: std::writer, fmt: []byte) std::result
     sys::f32_to_str(&buf[0], *self);
     return std::write_all(writer, std::cstr::data(&buf[0]));
 }
-
-extend f32 let PI = 3.14159265358979323846f32;
 
 extend f32 func degrees_to_radians(degrees: f32) f32 {
     return degrees * (f32::PI / 180.0f32);
@@ -4261,6 +4263,8 @@ extend f32 func asinh(x: f32) f32 { return sys::f32_asinh(x); }
 extend f32 func acosh(x: f32) f32 { return sys::f32_acosh(x); }
 extend f32 func atanh(x: f32) f32 { return sys::f32_atanh(x); }
 
+extend f64 let PI = (:f64)real::PI;
+
 extend f64 func init_from_str(str: []byte) std::result[[f64, std::error]] {
     var out: f64 = uninit;
     if not sys::str_to_f64(&out, startof(str), countof(str)) {
@@ -4277,8 +4281,6 @@ extend f64 func format(self: *f64, writer: std::writer, fmt: []byte) std::result
     sys::f64_to_str(&buf[0], *self);
     return std::write_all(writer, std::cstr::data(&buf[0]));
 }
-
-extend f64 let PI = 3.14159265358979323846f64;
 
 extend f64 func degrees_to_radians(degrees: f64) f64 {
     return degrees * (f64::PI / 180.0f64);

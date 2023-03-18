@@ -1083,8 +1083,8 @@ explicit_cast(
     assert(type != NULL);
     assert(expr != NULL);
 
-    // Casts from non-integer unsized types are always disallowed.
-    if (expr->type->kind != TYPE_INTEGER
+    // Casts from non-integer-non-real unsized types are always disallowed.
+    if ((expr->type->kind != TYPE_INTEGER && expr->type->kind != TYPE_REAL)
         && expr->type->size == SIZEOF_UNSIZED) {
         fatal(
             location,
@@ -1109,8 +1109,10 @@ explicit_cast(
     bool const valid = (type_is_int(type) && type_is_int(expr->type))
         || (type_is_int(type) && expr->type->kind == TYPE_BOOL)
         || (type_is_int(type) && expr->type->kind == TYPE_BYTE)
-        || (type_is_int(type) && type_is_ieee754(expr->type))
-        || (type_is_ieee754(type) && type_is_int(expr->type))
+        || (type_is_int(type) && expr->type->kind == TYPE_F32)
+        || (type_is_int(type) && expr->type->kind == TYPE_F64)
+        || (type->kind == TYPE_F32 && type_is_int(expr->type))
+        || (type->kind == TYPE_F64 && type_is_int(expr->type))
         || (type_is_ieee754(type) && type_is_ieee754(expr->type))
         || (type->kind == TYPE_BOOL && expr->type->kind == TYPE_BOOL)
         || (type->kind == TYPE_BOOL && expr->type->kind == TYPE_BYTE)
@@ -1260,13 +1262,18 @@ implicit_cast(struct type const* type, struct expr const* expr)
         return expr;
     }
 
-    // FROM untyped integer TO byte.
+    // FROM sized integer TO byte.
     if (type->kind == TYPE_BYTE && from->kind == TYPE_INTEGER) {
         return explicit_cast(expr->location, type, expr);
     }
 
-    // FROM untyped integer TO typed integer.
+    // FROM unsized integer TO sized integer.
     if (type_is_int(type) && from->kind == TYPE_INTEGER) {
+        return explicit_cast(expr->location, type, expr);
+    }
+
+    // FROM unsized floating point TO sized floating point.
+    if (type_is_ieee754(type) && from->kind == TYPE_REAL) {
         return explicit_cast(expr->location, type, expr);
     }
 
@@ -3075,9 +3082,7 @@ ieee754_literal_suffix_to_type(
     assert(suffix != NULL);
 
     if (suffix == context()->interned.empty) {
-        fatal(
-            location,
-            "floating point literal requires the type suffix `f32` or `f64`");
+        return context()->builtin.real;
     }
     if (suffix == context()->interned.f32) {
         return context()->builtin.f32;
@@ -3105,7 +3110,7 @@ resolve_expr_ieee754(struct resolver* resolver, struct cst_expr const* expr)
     struct type const* const type = ieee754_literal_suffix_to_type(
         expr->location, token.data.ieee754.suffix);
 
-    assert(type->kind == TYPE_F32 || type->kind == TYPE_F64);
+    assert(type_is_ieee754(type));
     struct value* value = NULL;
     if (type->kind == TYPE_F32) {
         value = value_new_f32((float)ieee754);
@@ -3115,7 +3120,12 @@ resolve_expr_ieee754(struct resolver* resolver, struct cst_expr const* expr)
         value = value_new_f64(ieee754);
         value_freeze(value);
     }
+    if (type->kind == TYPE_REAL) {
+        value = value_new_real(ieee754);
+        value_freeze(value);
+    }
 
+    assert(value != NULL);
     struct expr* const resolved = expr_new_value(expr->location, value);
 
     freeze(resolved);
@@ -3982,7 +3992,7 @@ resolve_expr_unary(struct resolver* resolver, struct cst_expr const* expr)
         struct type const* const type = ieee754_literal_suffix_to_type(
             token.location, token.data.ieee754.suffix);
 
-        assert(type->kind == TYPE_F32 || type->kind == TYPE_F64);
+        assert(type_is_ieee754(type));
         struct value* value = NULL;
         if (type->kind == TYPE_F32) {
             value = value_new_f32((float)ieee754);
@@ -3992,7 +4002,12 @@ resolve_expr_unary(struct resolver* resolver, struct cst_expr const* expr)
             value = value_new_f64(ieee754);
             value_freeze(value);
         }
+        if (type->kind == TYPE_REAL) {
+            value = value_new_real(ieee754);
+            value_freeze(value);
+        }
 
+        assert(value != NULL);
         struct expr* const resolved = expr_new_value(op.location, value);
 
         freeze(resolved);

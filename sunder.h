@@ -755,6 +755,7 @@ struct context {
         char const* s;       // "s"
         char const* f32;     // "f32"
         char const* f64;     // "f64"
+        char const* real;    // "real"
         // clang-format on
     } interned;
 
@@ -804,6 +805,7 @@ struct context {
         struct type const* integer;
         struct type const* f32;
         struct type const* f64;
+        struct type const* real;
         struct type const* pointer_to_byte;
         struct type const* slice_of_byte;
     } builtin;
@@ -1596,6 +1598,7 @@ struct type {
         TYPE_INTEGER, /* integer */
         TYPE_F32,
         TYPE_F64,
+        TYPE_REAL,
         TYPE_FUNCTION,
         TYPE_POINTER,
         TYPE_ARRAY,
@@ -1670,6 +1673,8 @@ struct type*
 type_new_f32(void);
 struct type*
 type_new_f64(void);
+struct type*
+type_new_real(void);
 struct type*
 type_new_function(
     struct type const* const* parameter_types, struct type const* return_type);
@@ -2274,6 +2279,11 @@ struct value {
         struct bigint* integer;
         float f32;
         double f64;
+        // Using a double to store the value of a real instead of a long double
+        // since the width and semantics of a long double are not as well
+        // standardized across platforms (64-bit double vs 80-bit extended
+        // precision vs 128-bit IEEE-754) as the float and double types.
+        double real;
         struct function const* function;
         struct address pointer;
         struct {
@@ -2315,6 +2325,8 @@ struct value*
 value_new_f32(float f32);
 struct value*
 value_new_f64(double f64);
+struct value*
+value_new_real(double real);
 struct value*
 value_new_function(struct function const* function);
 struct value*

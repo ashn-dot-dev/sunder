@@ -10,6 +10,21 @@ let f64_INF = 1.0f64 / 0.0f64;
 let f32_NAN = 0.0f32 / 0.0f32;
 let f64_NAN = 0.0f64 / 0.0f64;
 
+let implicit_cast_real_to_f32: f32 = 123.456;
+let implicit_cast_real_to_f64: f64 = 123.456;
+
+let explicit_cast_integer_to_f32 = (:f32)123;
+let explicit_cast_integer_to_f64 = (:f32)123;
+
+let explicit_cast_f32_to_f64 = (:f64)123.456f32;
+let explicit_cast_f64_to_f32 = (:f32)123.456f64;
+
+let real_neg = (:f64)(-(123.0));
+let real_add = (:f64)(123.0 + 456.0);
+let real_sub = (:f64)(123.0 - 456.0);
+let real_mul = (:f64)(123.0 * 456.0);
+let real_div = (:f64)(123.0 / 456.0);
+
 func display[[T]](value: T) void {
     std::print_format_line(
         std::out(),

@@ -311,6 +311,7 @@ eval_rvalue_cast(struct expr const* expr)
         case TYPE_INTEGER: /* fallthrough */
         case TYPE_F32: /* fallthrough */
         case TYPE_F64: /* fallthrough */
+        case TYPE_REAL: /* fallthrough */
         case TYPE_POINTER: /* fallthrough */
         case TYPE_ARRAY: /* fallthrough */
         case TYPE_SLICE: /* fallthrough */
@@ -395,7 +396,7 @@ eval_rvalue_cast(struct expr const* expr)
         return result;
     }
 
-    // Cases casting between integer and IEEE754 floating point types.
+    // Cases casting between integer and IEEE-754 floating point types.
     if (type_is_ieee754(expr->type) && type_is_int(from->type)) {
         assert(expr->type->kind == TYPE_F32 || expr->type->kind == TYPE_F64);
 
@@ -494,7 +495,32 @@ eval_rvalue_cast(struct expr const* expr)
         UNREACHABLE();
     }
 
+    // Cases casting between sized IEEE-754 floating point types.
+    if (expr->type->kind == TYPE_F32 && from->type->kind == TYPE_F64) {
+        struct value* const result = value_new_f32((float)from->data.f64);
+        value_del(from);
+        return result;
+    }
+    if (expr->type->kind == TYPE_F64 && from->type->kind == TYPE_F32) {
+        struct value* const result = value_new_f64((double)from->data.f32);
+        value_del(from);
+        return result;
+    }
+
+    // Special cases when casting from unsized IEEE-754 values.
+    if (expr->type->kind == TYPE_F32 && from->type->kind == TYPE_REAL) {
+        struct value* const result = value_new_f32((float)from->data.real);
+        value_del(from);
+        return result;
+    }
+    if (expr->type->kind == TYPE_F64 && from->type->kind == TYPE_REAL) {
+        struct value* const result = value_new_f64(from->data.real);
+        value_del(from);
+        return result;
+    }
+
     // Cases casting from sized types with a defined byte representation.
+    assert(from->type->size != SIZEOF_UNSIZED);
     sbuf(uint8_t) bytes = value_to_new_bytes(from);
     struct value* res = NULL;
     switch (expr->type->kind) {
@@ -551,6 +577,7 @@ eval_rvalue_cast(struct expr const* expr)
     case TYPE_INTEGER: /* fallthrough */
     case TYPE_F32: /* fallthrough */
     case TYPE_F64: /* fallthrough */
+    case TYPE_REAL: /* fallthrough */
     case TYPE_FUNCTION: /* fallthrough */
     case TYPE_POINTER: /* fallthrough */
     case TYPE_ARRAY: /* fallthrough */
@@ -776,6 +803,10 @@ eval_rvalue_unary(struct expr const* expr)
             rhs->data.f64 = -rhs->data.f64;
             return rhs;
         }
+        if (rhs->type->kind == TYPE_REAL) {
+            rhs->data.real = -rhs->data.real;
+            return rhs;
+        }
 
         assert(type_is_sint(rhs->type));
         struct bigint* const integer = bigint_new(BIGINT_ZERO);
@@ -996,6 +1027,10 @@ eval_rvalue_binary(struct expr const* expr)
             res = value_new_f64(lhs->data.f64 + rhs->data.f64);
             break;
         }
+        if (lhs->type->kind == TYPE_REAL) {
+            res = value_new_real(lhs->data.real + rhs->data.real);
+            break;
+        }
 
         assert(type_is_int(lhs->type));
         assert(type_is_int(rhs->type));
@@ -1041,6 +1076,10 @@ eval_rvalue_binary(struct expr const* expr)
         }
         if (lhs->type->kind == TYPE_F64) {
             res = value_new_f64(lhs->data.f64 - rhs->data.f64);
+            break;
+        }
+        if (lhs->type->kind == TYPE_REAL) {
+            res = value_new_real(lhs->data.real - rhs->data.real);
             break;
         }
 
@@ -1090,6 +1129,10 @@ eval_rvalue_binary(struct expr const* expr)
             res = value_new_f64(lhs->data.f64 * rhs->data.f64);
             break;
         }
+        if (lhs->type->kind == TYPE_REAL) {
+            res = value_new_real(lhs->data.real * rhs->data.real);
+            break;
+        }
 
         assert(type_is_int(lhs->type));
         assert(type_is_int(rhs->type));
@@ -1135,6 +1178,10 @@ eval_rvalue_binary(struct expr const* expr)
         }
         if (lhs->type->kind == TYPE_F64) {
             res = value_new_f64(lhs->data.f64 / rhs->data.f64);
+            break;
+        }
+        if (lhs->type->kind == TYPE_REAL) {
+            res = value_new_real(lhs->data.real / rhs->data.real);
             break;
         }
 

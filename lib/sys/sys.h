@@ -1,4 +1,5 @@
 #define const /* nothing */
+#define restrict /* nothing */
 #define _GNU_SOURCE /* getddents64 */
 #include <alloca.h> /* alloca */
 #include <ctype.h> /* isdigit */

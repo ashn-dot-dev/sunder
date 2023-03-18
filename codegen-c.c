@@ -504,7 +504,8 @@ codegen_type_definition(struct type const* type)
     case TYPE_SSIZE: /* fallthrough */
     case TYPE_INTEGER: /* fallthrough */
     case TYPE_F32: /* fallthrough */
-    case TYPE_F64: {
+    case TYPE_F64: /* fallthrough */
+    case TYPE_REAL: {
         break;
     }
     case TYPE_FUNCTION: {
@@ -839,6 +840,9 @@ strgen_value(struct value const* value)
         }
         return intern_fmt("%.*f", IEEE754_DBL_DECIMAL_DIG, ieee754);
     }
+    case TYPE_REAL: {
+        UNREACHABLE();
+    }
     case TYPE_FUNCTION: {
         struct address const* const address = value->data.function->address;
         assert(address->kind == ADDRESS_STATIC);
@@ -1029,6 +1033,9 @@ strgen_uninit(struct type const* type)
     case TYPE_F64: {
         string_append_cstr(s, "/* uninit */0.0");
         break;
+    }
+    case TYPE_REAL: {
+        UNREACHABLE();
     }
     case TYPE_FUNCTION: /* fallthrough */
     case TYPE_POINTER: {

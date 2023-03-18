@@ -208,7 +208,10 @@
 
 <letter> ::= "A" .. "Z" | "a" .. "z" | "_"
 
-<ieee754> ::= ("+" | "-")? <integer-number-dec> "." <integer-number-dec>
+<ieee754> ::= ("+" | "-")? <integer-number-dec> "." <integer-number-dec> <ieee-754-suffix>?
+
+<ieee754-suffix> ::= "f32"
+                   | "f64"
 
 <integer> ::= ("+" | "-")? <integer-number> <integer-suffix>?
 
