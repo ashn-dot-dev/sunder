@@ -9,7 +9,8 @@ following dependencies:
 + Supported toolchain containing:
   + C99 compiler (POSIX `c99`, `clang`, `gcc`, etc.)
   + `ld`
-+ [`nasm`](https://www.nasm.us/) or [`yasm`](https://yasm.tortall.net/)
++ [`clang`](https://clang.llvm.org/) (C backend only)
++ [`nasm`](https://www.nasm.us/) or [`yasm`](https://yasm.tortall.net/) (NASM backend only)
 + `clang-format` (development only)
 
 The top-level Dockerfile defines a Debian image with all development
@@ -52,12 +53,22 @@ $ make <targets> CC=clang CFLAGS='$(GNU_REL)'              # clang/gcc (release)
 
 The compiler is built with `SUNDER_DEFAULT_BACKEND=yasm` by default, indicating
 that `yasm` should be used if `SUNDER_BACKEND` (explained below) is not set
-when the compiler is invoked. To use `nasm` as the default compiler backend,
-override `SUNDER_DEFAULT_BACKEND` with `nasm` when executing targets:
+when the compiler is invoked.
+
+To use `nasm` as the default compiler backend, override
+`SUNDER_DEFAULT_BACKEND` with `nasm` when executing targets:
 
 ```sh
 $ make <targets> SUNDER_DEFAULT_BACKEND=nasm
 ```
+
+To use the C backend as the default compiler backend, override
+`SUNDER_DEFAULT_BACKEND` with `C` when executing targets:
+
+```sh
+$ make <targets> SUNDER_DEFAULT_BACKEND=C
+```
+
 
 ## Installing
 The `install` target will install the Sunder toolchain into the directory
@@ -120,15 +131,16 @@ hello  hello.asm  hello.o
 The following environment variables affect compiler behavior:
 
 + `SUNDER_BACKEND` => Selects the backend to be used for object file
-  generation. Currently, `SUNDER_BACKEND=nasm` and `SUNDER_BACKEND=yasm` are
-  supported. If this environment variable is not set, then the default backend
-  is used.
+  generation. Currently, `SUNDER_BACKEND=C` (experimental),
+  `SUNDER_BACKEND=nasm`, and `SUNDER_BACKEND=yasm`, are supported. If this
+  environment variable is not set, then the default backend is used.
 + `SUNDER_IMPORT_PATH` => Colon-separated list of directories specifying the
   module search path for `import` statements.
 + `SUNDER_SYSASM_PATH` => Location of the platform specific `sys.asm` file that
   defines the program entry point as well as low-level operating system and
-  hardware abstractions. If this environment variable is not set, then the
-  default path, `$SUNDER_HOME/lib/sys/sys.asm`, is used.
+  hardware abstractions for when using the NASM backend. If this environment
+  variable is not set, then the default path, `$SUNDER_HOME/lib/sys/sys.asm`,
+  is used.
 
 ## Using Sunder as a Scripting Language
 Sunder can be used for scripting by adding `#!/usr/bin/env sunder-run` (or
