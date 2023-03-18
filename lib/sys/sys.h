@@ -85,6 +85,12 @@ __sunder___fatal_index_out_of_bounds(void)
 }
 
 static _Noreturn void
+__sunder___fatal_null_pointer_dereference(void)
+{
+    __sunder___fatal("null pointer dereference");
+}
+
+static _Noreturn void
 __sunder___fatal_out_of_range(void)
 {
     __sunder___fatal("operation produces out-of-range result");

@@ -1051,6 +1051,19 @@ codegen_fatals(void)
     appendln("__fatal_index_out_of_bounds_msg_start: db \"index out-of-bounds\", 0x0A");
     appendln("__fatal_index_out_of_bounds_msg_count: equ $ - __fatal_index_out_of_bounds_msg_start");
 
+    // Builtin null pointer dereference handler.
+    appendln("section .text");
+    appendln("__fatal_null_pointer_dereference:");
+    appendln("    lea rax, [__fatal_null_pointer_dereference_msg_start]");
+    appendln("    push rax");
+    appendln("    push __fatal_null_pointer_dereference_msg_count");
+    appendln("    call __fatal");
+    appendch('\n');
+    appendln("section .rodata");
+    appendln("__fatal_null_pointer_dereference_msg_start: db \"null pointer dereference\", 0x0A");
+    appendln("__fatal_null_pointer_dereference_msg_count: equ $ - __fatal_null_pointer_dereference_msg_start");
+    appendch('\n');
+
     // Builtin operation out-of-range handler.
     appendln("section .text");
     appendln("__fatal_out_of_range:");
@@ -2349,6 +2362,11 @@ push_rvalue_unary_dereference(struct expr const* expr, size_t id)
     }
     push_rvalue(expr->data.unary.rhs);
     appendli("pop rax ; pointer object being dereferenced");
+    appendli("mov rbx, 0x00 ; nil");
+    appendli("cmp rax, rbx");
+    appendli("jne %s%zu_copy", LABEL_EXPR, id);
+    appendli("call __fatal_null_pointer_dereference");
+    appendln("%s%zu_copy:", LABEL_EXPR, id);
     uint64_t const size = expr->type->size;
     push(size);
     copy_rax_rsp_via_rcx(size);

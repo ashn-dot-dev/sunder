@@ -1974,7 +1974,20 @@ strgen_rvalue_unary_dereference(struct expr const* expr)
             "({/* dereference pointer to zero-sized type */(%s); 0;})",
             strgen_rvalue(expr->data.unary.rhs));
     }
-    return intern_fmt("*(%s)", strgen_rvalue(expr->data.unary.rhs));
+
+    // A NULL pointer check is added to avoid undefined behavior from C
+    // compilers assuming that NULL pointers are never dereferenced in
+    // well-formed code.
+    return intern_fmt(
+        "({%s %s = %s; if (%s == 0){%s();}; *%s;})",
+        mangle_type(expr->data.unary.rhs->type),
+        mangle_name("__ptr"),
+        strgen_rvalue(expr->data.unary.rhs),
+
+        mangle_name("__ptr"),
+        mangle_name("__fatal_null_pointer_dereference"),
+
+        mangle_name("__ptr"));
 }
 
 static char const*
