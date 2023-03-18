@@ -4217,6 +4217,8 @@ extend ssize func format(self: *ssize, writer: std::writer, fmt: []byte) std::re
 extend real let PI: f64 = 3.14159265358979323846;
 
 extend f32 let PI = (:f32)real::PI;
+extend f32 let INFINITY = 1.0f32 / 0.0f32;
+extend f32 let NAN = 0.0f32 / 0.0f32;
 
 extend f32 func init_from_str(str: []byte) std::result[[f32, std::error]] {
     var out: f32 = uninit;
@@ -4264,6 +4266,8 @@ extend f32 func acosh(x: f32) f32 { return sys::f32_acosh(x); }
 extend f32 func atanh(x: f32) f32 { return sys::f32_atanh(x); }
 
 extend f64 let PI = (:f64)real::PI;
+extend f64 let INFINITY = 1.0f64 / 0.0f64;
+extend f64 let NAN = 0.0f64 / 0.0f64;
 
 extend f64 func init_from_str(str: []byte) std::result[[f64, std::error]] {
     var out: f64 = uninit;

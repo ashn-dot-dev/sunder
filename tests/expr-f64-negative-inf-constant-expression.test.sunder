@@ -1,14 +1,19 @@
 # only SUNDER_BACKEND=C
 import "std";
 
-let x = -1.0f32 / 0.0f32;
+let x = -1.0f64 / 0.0f64;
 
 func main() void {
-    var ptr = &x;
-    var ftr = std::formatter::init[[typeof(x)]](ptr);
-    var slc = (:[]std::formatter)[ftr];
-    var out = std::out();
-    std::print_format_line(out, "{}", slc);
+    std::print_format_line(
+        std::out(),
+        "{}",
+        (:[]std::formatter)[std::formatter::init[[f64]](&x)]);
+    var neg_inf = -f64::INFINITY;
+    std::print_format_line(
+        std::out(),
+        "{}",
+        (:[]std::formatter)[std::formatter::init[[f64]](&neg_inf)]);
 }
 ################################################################################
+# -infinity
 # -infinity

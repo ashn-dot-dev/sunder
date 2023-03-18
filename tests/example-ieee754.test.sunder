@@ -5,10 +5,10 @@ import "std";
 let f32_constant = 123.456f32;
 let f64_constant = 123.456f64;
 
-let f32_INF = 1.0f32 / 0.0f32;
-let f64_INF = 1.0f64 / 0.0f64;
-let f32_NAN = 0.0f32 / 0.0f32;
-let f64_NAN = 0.0f64 / 0.0f64;
+let INF32 = 1.0f32 / 0.0f32;
+let INF64 = 1.0f64 / 0.0f64;
+let NAN32 = 0.0f32 / 0.0f32;
+let NAN64 = 0.0f64 / 0.0f64;
 
 let implicit_cast_real_to_f32: f32 = 123.456;
 let implicit_cast_real_to_f64: f64 = 123.456;
@@ -134,8 +134,8 @@ func main() void {
     display[[bool]](0.50f32 <= 0.25f32);
     display[[bool]](0.50f32 > 0.25f32);
     display[[bool]](0.50f32 >= 0.25f32);
-    display[[bool]](f32_INF == f32_INF);
-    display[[bool]](f32_NAN == f32_NAN);
+    display[[bool]](INF32 == INF32);
+    display[[bool]](NAN32 == NAN32);
 
     std::print_line(std::out(), "f32 run-time comparisons");
     var x = 0.50f32;
@@ -154,8 +154,8 @@ func main() void {
     display[[bool]](0.50f64 <= 0.25f64);
     display[[bool]](0.50f64 > 0.25f64);
     display[[bool]](0.50f64 >= 0.25f64);
-    display[[bool]](f64_INF == f64_INF);
-    display[[bool]](f64_NAN == f64_NAN);
+    display[[bool]](INF64 == INF64);
+    display[[bool]](NAN64 == NAN64);
 
     std::print_line(std::out(), "f64 run-time comparisons");
     var x = 0.50f64;

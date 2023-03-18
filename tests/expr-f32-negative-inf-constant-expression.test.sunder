@@ -7,7 +7,13 @@ func main() void {
     std::print_format_line(
         std::out(),
         "{}",
-        (:[]std::formatter)[std::formatter::init[[typeof(x)]](&x)]);
+        (:[]std::formatter)[std::formatter::init[[f32]](&x)]);
+    var neg_inf = -f32::INFINITY;
+    std::print_format_line(
+        std::out(),
+        "{}",
+        (:[]std::formatter)[std::formatter::init[[f32]](&neg_inf)]);
 }
 ################################################################################
+# -infinity
 # -infinity
