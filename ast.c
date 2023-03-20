@@ -1242,13 +1242,18 @@ struct expr*
 expr_new_struct(
     struct source_location location,
     struct type const* type,
-    struct expr const* const* member_variables)
+    struct member_variable_initializer const* initializers)
 {
     assert(type != NULL);
     assert(type->kind == TYPE_STRUCT);
 
+    size_t const member_variables_count =
+        sbuf_count(type->data.struct_.member_variables);
+    (void)member_variables_count;
+    assert(sbuf_count(initializers) == member_variables_count);
+
     struct expr* const self = expr_new(location, type, EXPR_STRUCT);
-    self->data.struct_.member_variables = member_variables;
+    self->data.struct_.initializers = initializers;
     return self;
 }
 
@@ -1927,6 +1932,7 @@ void
 value_set_member(struct value* self, char const* name, struct value* value)
 {
     assert(self != NULL);
+    assert(self->type->kind == TYPE_STRUCT);
     assert(name != NULL);
     assert(value != NULL);
 
@@ -1938,6 +1944,17 @@ value_set_member(struct value* self, char const* name, struct value* value)
             "type `%s` has no member `%s`",
             self->type->name,
             name);
+    }
+
+    struct type const* const type =
+        self->type->data.struct_.member_variables[index].type;
+    if (type != value->type) {
+        fatal(
+            NO_LOCATION,
+            "Attempted to set member variable `%s` of type `%s` to a value of type `%s`.",
+            name,
+            type->name,
+            value->type->name);
     }
     struct value** const pvalue = self->data.struct_.member_variables + index;
 

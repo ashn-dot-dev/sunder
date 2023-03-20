@@ -231,15 +231,19 @@ eval_rvalue_struct(struct expr const* expr)
 
     sbuf(struct member_variable) const defs =
         expr->type->data.struct_.member_variables;
-    sbuf(struct expr const* const) const exprs =
-        expr->data.struct_.member_variables;
 
-    assert(sbuf_count(defs) == sbuf_count(exprs));
-    for (size_t i = 0; i < sbuf_count(exprs); ++i) {
-        if (exprs[i] == NULL) {
+    sbuf(struct member_variable_initializer const) initializers =
+        expr->data.struct_.initializers;
+
+    assert(sbuf_count(defs) == sbuf_count(initializers));
+    for (size_t i = 0; i < sbuf_count(initializers); ++i) {
+        if (initializers[i].expr == NULL) {
             continue;
         }
-        value_set_member(value, defs[i].name, eval_rvalue(exprs[i]));
+        value_set_member(
+            value,
+            initializers[i].variable->name,
+            eval_rvalue(initializers[i].expr));
     }
 
     return value;
@@ -263,6 +267,10 @@ eval_rvalue_cast(struct expr const* expr)
     assert(from->type->kind != TYPE_SLICE);
     assert(from->type->kind != TYPE_STRUCT);
     if (from->type->kind == expr->type->kind) {
+        // Setting the type of `from` to the type of the `expr` to cover cases
+        // such as function-to-function conversions where the type kind is the
+        // same, but the actual type is different.
+        from->type = expr->type;
         return from;
     }
 

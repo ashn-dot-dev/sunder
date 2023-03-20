@@ -1571,6 +1571,12 @@ struct member_variable {
     uint64_t offset;
 };
 
+// Helper struct representing a member variable initializer.
+struct member_variable_initializer {
+    struct member_variable const* variable;
+    struct expr const* expr;
+};
+
 struct type {
     char const* name; // Canonical human-readable type-name (interned)
     uint64_t size; // sizeof
@@ -2062,10 +2068,9 @@ struct expr {
             struct expr const* count;
         } slice;
         struct {
-            // List of elements corresponding to the member variables defined
-            // by the struct type. Each element is optional, with NULL implying
-            // the value of the nth member is uninitialized.
-            sbuf(struct expr const* const) member_variables;
+            // Initializers (name, expr) for each member variable in the order
+            // that they appear within the struct member initializer list.
+            sbuf(struct member_variable_initializer const) initializers;
         } struct_;
         struct {
             struct expr const* expr;
@@ -2171,7 +2176,7 @@ struct expr*
 expr_new_struct(
     struct source_location location,
     struct type const* type,
-    struct expr const* const* member_variables);
+    struct member_variable_initializer const* initializers);
 struct expr*
 expr_new_cast(
     struct source_location location,

@@ -1771,28 +1771,26 @@ push_rvalue_struct(struct expr const* expr, size_t id)
         appendli("add rbx, 8");
     }
 
-    // One by one evaluate the member variables for the elements of the struct.
-    // Each member variable will be at the top of the stack after being
-    // evaluated, so the member variable is manually memcpy-ed into the correct
-    // position on the stack.
+    // One by one evaluate the member variable initializers of the struct. Each
+    // member variable will be at the top of the stack after being evaluated,
+    // so the member variable is manually memcpy-ed into the correct position
+    // on the stack.
     sbuf(struct member_variable) const member_variable_defs =
         expr->type->data.struct_.member_variables;
-    sbuf(struct expr const* const) const member_variable_exprs =
-        expr->data.struct_.member_variables;
-    assert(
-        sbuf_count(member_variable_defs) == sbuf_count(member_variable_exprs));
-    for (size_t i = 0; i < sbuf_count(member_variable_defs); ++i) {
-        if (member_variable_exprs[i] == NULL) {
+    sbuf(struct member_variable_initializer const) initializers =
+        expr->data.struct_.initializers;
+    assert(sbuf_count(member_variable_defs) == sbuf_count(initializers));
+    for (size_t i = 0; i < sbuf_count(initializers); ++i) {
+        if (initializers[i].expr == NULL) {
             // Uninitialized member variable.
             continue;
         }
 
-        assert(member_variable_exprs[i]->type == member_variable_defs[i].type);
-        push_rvalue(member_variable_exprs[i]);
+        push_rvalue(initializers[i].expr);
 
-        struct type const* const type = member_variable_exprs[i]->type;
+        struct type const* const type = initializers[i].variable->type;
         uint64_t const size = type->size;
-        uint64_t const offset = member_variable_defs[i].offset;
+        uint64_t const offset = initializers[i].variable->offset;
 
         appendli("mov rbx, rsp");
         appendli("add rbx, %" PRIu64, ceil8u64(size)); // struct start

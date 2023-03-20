@@ -1,0 +1,42 @@
+import "std";
+
+struct s {
+    var x: ssize;
+    var y: ssize;
+    var z: ssize;
+}
+
+func f(name: []byte) ssize {
+    std::print_line(std::out(), name);
+    return 123;
+}
+
+func main() void {
+    (:s){
+        .x = f("x"),
+        .y = f("y"),
+        .z = f("z"),
+    };
+
+    (:s){
+        .z = f("z"),
+        .y = f("y"),
+        .x = f("x"),
+    };
+
+    (:s){
+        .y = f("y"),
+        .z = f("z"),
+        .x = f("x"),
+    };
+}
+################################################################################
+# x
+# y
+# z
+# z
+# y
+# x
+# y
+# z
+# x

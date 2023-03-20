@@ -3500,8 +3500,27 @@ resolve_expr_struct(struct resolver* resolver, struct cst_expr const* expr)
         }
     }
 
+    sbuf(struct member_variable_initializer) initializer_list = NULL;
+    assert(sbuf_count(member_variable_defs) == sbuf_count(initializers));
+    for (size_t i = 0; i < sbuf_count(initializers); ++i) {
+        for (size_t m = 0; m < sbuf_count(member_variable_defs); ++m) {
+            struct member_variable const* const v = &member_variable_defs[m];
+            if (initializers[i]->identifier.name != v->name) {
+                continue;
+            }
+
+            struct expr const* const e = member_variable_exprs[m];
+            struct member_variable_initializer const initializer = {
+                .variable = v,
+                .expr = e,
+            };
+            sbuf_push(initializer_list, initializer);
+        }
+    }
+    sbuf_freeze(initializer_list);
+
     struct expr* const resolved =
-        expr_new_struct(expr->location, type, member_variable_exprs);
+        expr_new_struct(expr->location, type, initializer_list);
 
     freeze(resolved);
     return resolved;

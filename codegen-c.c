@@ -968,7 +968,8 @@ strgen_value(struct value const* value)
         string_append_cstr(s, "{");
         size_t members_written = 0;
         for (size_t i = 0; i < member_variable_count; ++i) {
-            if (member_variable_defs[i].type->size == 0) {
+            struct type const* const type = member_variable_defs[i].type;
+            if (type->size == 0) {
                 continue;
             }
 
@@ -977,11 +978,11 @@ strgen_value(struct value const* value)
             }
 
             if (member_variable_vals[i] != NULL) {
+                assert(member_variable_vals[i]->type == type);
                 string_append_cstr(s, strgen_value(member_variable_vals[i]));
             }
             else {
-                string_append_cstr(
-                    s, strgen_uninit(member_variable_defs[i].type));
+                string_append_cstr(s, strgen_uninit(type));
             }
             members_written += 1;
         }
@@ -1479,21 +1480,21 @@ strgen_rvalue_struct(struct expr const* expr)
 
     sbuf(struct member_variable) const member_variable_defs =
         expr->type->data.struct_.member_variables;
-    sbuf(struct expr const* const) const member_variable_exprs =
-        expr->data.struct_.member_variables;
-    assert(
-        sbuf_count(member_variable_defs) == sbuf_count(member_variable_exprs));
+    sbuf(struct member_variable_initializer const) initializers =
+        expr->data.struct_.initializers;
+    assert(sbuf_count(member_variable_defs) == sbuf_count(initializers));
 
     struct string* const s = string_new_fmt("({");
-    for (size_t i = 0; i < sbuf_count(member_variable_defs); ++i) {
+    for (size_t i = 0; i < sbuf_count(initializers); ++i) {
         char const* const local =
-            intern_fmt("__member_%zu_%s", i, member_variable_defs[i].name);
+            intern_fmt("__initializer_%s", initializers[i].variable->name);
         char const* const initname = mangle_name(local);
-        char const* const typename = mangle_type(member_variable_defs[i].type);
+        char const* const typename =
+            mangle_type(initializers[i].variable->type);
 
-        if (member_variable_defs[i].type->size == 0) {
-            char const* const valuestr = member_variable_exprs[i] != NULL
-                ? strgen_rvalue(member_variable_exprs[i])
+        if (initializers[i].variable->type->size == 0) {
+            char const* const valuestr = initializers[i].expr != NULL
+                ? strgen_rvalue(initializers[i].expr)
                 : "/* uninit */0";
             string_append_fmt(
                 s,
@@ -1503,9 +1504,9 @@ strgen_rvalue_struct(struct expr const* expr)
             continue;
         }
 
-        char const* const valuestr = member_variable_exprs[i] != NULL
-            ? strgen_rvalue(member_variable_exprs[i])
-            : strgen_uninit(member_variable_defs[i].type);
+        char const* const valuestr = initializers[i].expr != NULL
+            ? strgen_rvalue(initializers[i].expr)
+            : strgen_uninit(initializers[i].variable->type);
         string_append_fmt(s, "%s %s = %s; ", typename, initname, valuestr);
     }
 
@@ -1531,7 +1532,7 @@ strgen_rvalue_struct(struct expr const* expr)
             continue;
         }
         char const* const local =
-            intern_fmt("__member_%zu_%s", i, member_variable_defs[i].name);
+            intern_fmt("__initializer_%s", member_variable_defs[i].name);
         string_append_fmt(
             s,
             "%s.%s = %s; ",
