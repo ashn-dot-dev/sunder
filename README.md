@@ -51,9 +51,9 @@ $ make <targets> CC=clang CFLAGS='$(GNU_DBG) $(SANITIZE)'  # clang/gcc (debug wi
 $ make <targets> CC=clang CFLAGS='$(GNU_REL)'              # clang/gcc (release)
 ```
 
-The compiler is built with `SUNDER_DEFAULT_BACKEND=yasm` by default, indicating
-that `yasm` should be used if `SUNDER_BACKEND` (explained below) is not set
-when the compiler is invoked.
+The compiler is built with `SUNDER_DEFAULT_BACKEND=C` by default, indicating
+that the C backend should be used if `SUNDER_BACKEND` (explained below) is not
+set when the compiler is invoked.
 
 To use `nasm` as the default compiler backend, override
 `SUNDER_DEFAULT_BACKEND` with `nasm` when executing targets:
@@ -62,13 +62,12 @@ To use `nasm` as the default compiler backend, override
 $ make <targets> SUNDER_DEFAULT_BACKEND=nasm
 ```
 
-To use the C backend as the default compiler backend, override
-`SUNDER_DEFAULT_BACKEND` with `C` when executing targets:
+To use `yasm` as the default compiler backend, override
+`SUNDER_DEFAULT_BACKEND` with `yasm` when executing targets:
 
 ```sh
-$ make <targets> SUNDER_DEFAULT_BACKEND=C
+$ make <targets> SUNDER_DEFAULT_BACKEND=yasm
 ```
-
 
 ## Installing
 The `install` target will install the Sunder toolchain into the directory
@@ -131,8 +130,8 @@ hello  hello.asm  hello.o
 The following environment variables affect compiler behavior:
 
 + `SUNDER_BACKEND` => Selects the backend to be used for object file
-  generation. Currently, `SUNDER_BACKEND=C` (experimental),
-  `SUNDER_BACKEND=nasm`, and `SUNDER_BACKEND=yasm`, are supported. If this
+  generation. Currently, `SUNDER_BACKEND=C`, `SUNDER_BACKEND=nasm`, and
+  `SUNDER_BACKEND=yasm`, are supported. If this
   environment variable is not set, then the default backend is used.
 + `SUNDER_IMPORT_PATH` => Colon-separated list of directories specifying the
   module search path for `import` statements.
