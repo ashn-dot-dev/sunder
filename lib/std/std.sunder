@@ -4233,7 +4233,7 @@ extend f32 func format(self: *f32, writer: std::writer, fmt: []byte) std::result
         return std::result[[void, std::error]]::init_error(std::error::INVALID_ARGUMENT);
     }
     var buf: [4096]byte = uninit; # More than enough space.
-    sys::f32_to_str(&buf[0], *self);
+    std::assert(sys::f32_to_str(&buf[0], *self));
     return std::write_all(writer, std::cstr::data(&buf[0]));
 }
 
@@ -4287,7 +4287,7 @@ extend f64 func format(self: *f64, writer: std::writer, fmt: []byte) std::result
         return std::result[[void, std::error]]::init_error(std::error::INVALID_ARGUMENT);
     }
     var buf: [4096]byte = uninit; # More than enough space.
-    sys::f64_to_str(&buf[0], *self);
+    std::assert(sys::f64_to_str(&buf[0], *self));
     return std::write_all(writer, std::cstr::data(&buf[0]));
 }
 
