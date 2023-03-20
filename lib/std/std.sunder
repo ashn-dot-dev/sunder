@@ -4265,6 +4265,11 @@ extend f32 func asinh(x: f32) f32 { return sys::f32_asinh(x); }
 extend f32 func acosh(x: f32) f32 { return sys::f32_acosh(x); }
 extend f32 func atanh(x: f32) f32 { return sys::f32_atanh(x); }
 
+extend f32 func ceil(x: f32) f32 { return sys::f32_ceil(x); }
+extend f32 func floor(x: f32) f32 { return sys::f32_floor(x); }
+extend f32 func trunc(x: f32) f32 { return sys::f32_trunc(x); }
+extend f32 func round(x: f32) f32 { return sys::f32_round(x); }
+
 extend f64 let PI = (:f64)real::PI;
 extend f64 let INFINITY = 1.0f64 / 0.0f64;
 extend f64 let NAN = 0.0f64 / 0.0f64;
@@ -4313,6 +4318,11 @@ extend f64 func tanh(x: f64) f64 { return sys::f64_tanh(x); }
 extend f64 func asinh(x: f64) f64 { return sys::f64_asinh(x); }
 extend f64 func acosh(x: f64) f64 { return sys::f64_acosh(x); }
 extend f64 func atanh(x: f64) f64 { return sys::f64_atanh(x); }
+
+extend f64 func ceil(x: f64) f64 { return sys::f64_ceil(x); }
+extend f64 func floor(x: f64) f64 { return sys::f64_floor(x); }
+extend f64 func trunc(x: f64) f64 { return sys::f64_trunc(x); }
+extend f64 func round(x: f64) f64 { return sys::f64_round(x); }
 
 extend []byte func compare(lhs: *[]byte, rhs: *[]byte) ssize {
     var lhs_data = *lhs;

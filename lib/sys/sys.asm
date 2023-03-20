@@ -494,6 +494,15 @@ sys.f64_acosh: call __fatal_unimplemented
 sys.f32_atanh: call __fatal_unimplemented
 sys.f64_atanh: call __fatal_unimplemented
 
+sys.f32_ceil: call __fatal_unimplemented
+sys.f64_ceil: call __fatal_unimplemented
+sys.f32_floor: call __fatal_unimplemented
+sys.f64_floor: call __fatal_unimplemented
+sys.f32_trunc: call __fatal_unimplemented
+sys.f64_trunc: call __fatal_unimplemented
+sys.f32_round: call __fatal_unimplemented
+sys.f64_round: call __fatal_unimplemented
+
 ; PROGRAM ENTRY POINT
 ; ===================
 %ifdef __entry

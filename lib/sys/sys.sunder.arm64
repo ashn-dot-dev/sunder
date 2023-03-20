@@ -438,3 +438,14 @@ extern func f64_tanh(x: f64) f64;
 extern func f64_asinh(x: f64) f64;
 extern func f64_acosh(x: f64) f64;
 extern func f64_atanh(x: f64) f64;
+
+# Rounding Functions
+extern func f32_ceil(x: f32) f32;
+extern func f32_floor(x: f32) f32;
+extern func f32_trunc(x: f32) f32;
+extern func f32_round(x: f32) f32;
+
+extern func f64_ceil(x: f64) f64;
+extern func f64_floor(x: f64) f64;
+extern func f64_trunc(x: f64) f64;
+extern func f64_round(x: f64) f64;
