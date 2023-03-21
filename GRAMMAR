@@ -123,6 +123,7 @@
                | "~" <expr>
                | "*" <expr>
                | "&" <expr>
+               | "startof" "(" <expr> ")"
                | "countof" "(" <expr> ")"
 
 <expr-binary> ::= <expr> "or" <expr>
