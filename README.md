@@ -9,7 +9,7 @@ following dependencies:
 + Supported toolchain containing:
   + C99 compiler (POSIX `c99`, `clang`, `gcc`, etc.)
   + `ld`
-+ [`clang`](https://clang.llvm.org/) (C backend only)
++ [`clang`](https://clang.llvm.org/) or [`gcc`](https://gcc.gnu.org/) (C backend only)
 + [`nasm`](https://www.nasm.us/) or [`yasm`](https://yasm.tortall.net/) (NASM backend only)
 + `clang-format` (development only)
 
@@ -51,9 +51,10 @@ $ make <targets> CC=clang CFLAGS='$(GNU_DBG) $(SANITIZE)'  # clang/gcc (debug wi
 $ make <targets> CC=clang CFLAGS='$(GNU_REL)'              # clang/gcc (release)
 ```
 
-The compiler is built with `SUNDER_DEFAULT_BACKEND=C` by default, indicating
-that the C backend should be used if `SUNDER_BACKEND` (explained below) is not
-set when the compiler is invoked.
+The compiler is built with `SUNDER_DEFAULT_BACKEND=C` and
+`SUNDER_DEFAULT_CC=clang` by default, indicating that the C backend should be
+used with `clang` if `SUNDER_BACKEND` and/or `SUNDER_CC` (explained below) are
+not set when the compiler is invoked.
 
 To use `nasm` as the default compiler backend, override
 `SUNDER_DEFAULT_BACKEND` with `nasm` when executing targets:
@@ -131,8 +132,8 @@ The following environment variables affect compiler behavior:
 
 + `SUNDER_BACKEND` => Selects the backend to be used for object file
   generation. Currently, `SUNDER_BACKEND=C`, `SUNDER_BACKEND=nasm`, and
-  `SUNDER_BACKEND=yasm`, are supported. If this
-  environment variable is not set, then the default backend is used.
+  `SUNDER_BACKEND=yasm`, are supported. If this environment variable is not
+  set, then the default backend is used.
 + `SUNDER_IMPORT_PATH` => Colon-separated list of directories specifying the
   module search path for `import` statements.
 + `SUNDER_SYSASM_PATH` => Location of the platform specific `sys.asm` file that
@@ -140,10 +141,15 @@ The following environment variables affect compiler behavior:
   hardware abstractions for when using the NASM backend. If this environment
   variable is not set, then the default path, `$SUNDER_HOME/lib/sys/sys.asm`,
   is used.
++ `SUNDER_CC` => Selects the C compiler to be used when compiling with the C
+  backend. Currently, `SUNDER_CC=clang` and `SUNDER_CC=gcc` are supported. If
+  this environment variable is not set, then the default C compiler is used.
 
 ## Using Sunder as a Scripting Language
 Sunder can be used for scripting by adding `#!/usr/bin/env sunder-run` (or
-equivalent) as the first line of a Sunder source file.
+equivalent) as the first line of a Sunder source file. If this environment
+  variable is not set, then the default path, `$SUNDER_HOME/lib/sys/sys.asm`,
+  is used.
 
 ```sunder
 #!/usr/bin/env sunder-run

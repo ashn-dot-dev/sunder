@@ -862,6 +862,7 @@ struct context {
         char const* SUNDER_BACKEND;
         char const* SUNDER_IMPORT_PATH;
         char const* SUNDER_SYSASM_PATH;
+        char const* SUNDER_CC;
     } env;
 };
 void

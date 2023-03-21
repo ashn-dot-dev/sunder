@@ -2826,9 +2826,7 @@ codegen_c(
     }
 
     sbuf(char const*) backend_argv = NULL;
-    // Currently using Clang as the C compiler, but eventually the user should
-    // be able to choose the backing C compiler and CFLAGS.
-    sbuf_push(backend_argv, "clang");
+    sbuf_push(backend_argv, context()->env.SUNDER_CC);
     if (opt_c) {
         sbuf_push(backend_argv, "-c");
         sbuf_push(backend_argv, "-o");

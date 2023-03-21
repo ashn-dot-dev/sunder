@@ -8,9 +8,12 @@ packages:
 sources:
   - https://git.sr.ht/~ashn/sunder
 tasks:
-  - c99-debug-c-backend: |
+  - c99-debug-c-backend-clang: |
       cd sunder
-      make clean check examples CFLAGS='$(C99_DBG)' SUNDER_DEFAULT_BACKEND=C
+      make clean check examples CFLAGS='$(C99_DBG)' SUNDER_DEFAULT_BACKEND=C SUNDER_DEFAULT_CC=clang
+  - c99-debug-c-backend-gcc: |
+      cd sunder
+      make clean check examples CFLAGS='$(C99_DBG)' SUNDER_DEFAULT_BACKEND=C SUNDER_DEFAULT_CC=gcc
   - c99-debug-nasm-backend: |
       cd sunder
       make clean check examples CFLAGS='$(C99_DBG)' SUNDER_DEFAULT_BACKEND=nasm
