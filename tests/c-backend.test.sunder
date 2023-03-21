@@ -169,11 +169,14 @@ func rvalue_bytes() void {
 }
 
 func rvalue_array_list() void {
+    (:[3]void)[void_constant, void_constant, void_constant];
+    (:[3]void)[void_constant...];
     (:[5]ssize)[1, 2, 3, 4, 5];
     (:[5]ssize)[1, 2, 3...];
 }
 
 func rvalue_slice_list() void {
+    (:[]void)[void_constant, void_constant, void_constant];
     (:[]ssize)[1, 2, 3, 4, 5];
 }
 
@@ -230,10 +233,13 @@ func rvalue_access_index() void {
     array_constant[1];
     slice_constant[1];
 
-    var zero_sized_array = (:[3]void)[void_constant...];
-    zero_sized_array[1];
+    var array_of_zero_sized = (:[3]void)[void_constant...];
+    array_of_zero_sized[1];
     array_of_zero_sized_object_a[1];
     array_of_zero_sized_object_b[1];
+
+    var slice_of_zero_sized = (:[]void)[void_constant, void_constant];
+    slice_of_zero_sized[1];
 }
 
 func rvalue_access_slice() void {
