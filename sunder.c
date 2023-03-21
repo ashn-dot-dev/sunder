@@ -277,8 +277,8 @@ context_init(void)
     else {
         s_context.env.SUNDER_SYSASM_PATH = "";
     }
-    s_context.env.SUNDER_CC = getenv_with_default(
-        "SUNDER_CC", STRINGIFY(SUNDER_DEFAULT_CC));
+    s_context.env.SUNDER_CC =
+        getenv_with_default("SUNDER_CC", STRINGIFY(SUNDER_DEFAULT_CC));
 }
 
 /* util.c */
