@@ -1464,7 +1464,7 @@ strgen_rvalue_slice_list(struct expr const* expr)
         }
 
         char const* const output = intern_fmt(
-            "({ %s; /* slice of zero-sized type */(%s){.start = 0, .count = %zu}; })",
+            "({%s; /* slice of zero-sized type */(%s){.start = 0, .count = %zu};})",
             string_start(element_exprs),
             mangle_type(expr->type),
             sbuf_count(elements));
@@ -1473,20 +1473,39 @@ strgen_rvalue_slice_list(struct expr const* expr)
         return output;
     }
 
-    struct string* const s = string_new_fmt(
-        "(%s){.start = (%s[]){",
-        mangle_type(expr->type),
-        mangle_type(element_type));
+    struct address const* const array_addr =
+        symbol_xget_address(expr->data.slice_list.array_symbol);
+    assert(array_addr->kind == ADDRESS_LOCAL);
+    char const* const array_name = array_addr->data.local.name;
+    struct type const* const array_type =
+        symbol_xget_type(expr->data.slice_list.array_symbol);
+    size_t const array_size = array_type->size;
 
+    struct string* const s = string_new_cstr("({");
     for (size_t i = 0; i < sbuf_count(elements); ++i) {
         assert(elements[i]->type == element_type);
-        if (i != 0) {
-            string_append_cstr(s, ", ");
+        if (array_size == 0) {
+            string_append_fmt(s, "%s; ", strgen_rvalue(elements[i]));
+            continue;
         }
-        string_append_fmt(s, "%s", strgen_rvalue(elements[i]));
+
+        string_append_fmt(
+            s,
+            "%s.elements[%zu] = %s; ",
+            mangle_name(array_name),
+            i,
+            strgen_rvalue(elements[i]));
     }
 
-    string_append_fmt(s, "}, .count = %zu}", sbuf_count(elements));
+    char const* const start = array_size != 0
+        ? intern_fmt("%s.elements", mangle_name(array_name))
+        : "/* zero-sized array */0";
+    string_append_fmt(
+        s,
+        "(%s){.start = %s, .count = %zu};})",
+        mangle_type(expr->type),
+        start,
+        sbuf_count(elements));
 
     char const* const output = intern(string_start(s), string_count(s));
     string_del(s);
@@ -2807,11 +2826,8 @@ codegen_c(
     }
 
     sbuf(char const*) backend_argv = NULL;
-    // Currently using Clang as the C compiler as GCC produces an ASan error
-    // when executing code generated for std::big_integer::init_from_str, which
-    // may or may not be a false positive. Clang does not produce this error.
-    // See tests/c-backend-gcc-asan-stack-use-after-scope.test.sunder for
-    // additional details.
+    // Currently using Clang as the C compiler, but eventually the user should
+    // be able to choose the backing C compiler and CFLAGS.
     sbuf_push(backend_argv, "clang");
     if (opt_c) {
         sbuf_push(backend_argv, "-c");
