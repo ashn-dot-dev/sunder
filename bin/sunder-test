@@ -11,8 +11,8 @@ Options:
 EOF
 }
 
-for _ in "$@"; do
-case "$1" in
+for arg in "$@"; do
+case "${arg}" in
     -h)
         usage
         exit 0
