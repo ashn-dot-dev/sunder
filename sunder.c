@@ -261,6 +261,22 @@ context_init(void)
     struct type const* const byte = s_context.builtin.byte;
     s_context.builtin.pointer_to_byte = type_unique_pointer(byte);
     s_context.builtin.slice_of_byte = type_unique_slice(byte);
+
+    s_context.env.SUNDER_HOME = getenv_with_default("SUNDER_HOME", "");
+    s_context.env.SUNDER_BACKEND = getenv_with_default(
+        "SUNDER_BACKEND", STRINGIFY(SUNDER_DEFAULT_BACKEND));
+    s_context.env.SUNDER_IMPORT_PATH =
+        getenv_with_default("SUNDER_IMPORT_PATH", "");
+    if (getenv("SUNDER_SYSASM_PATH") != NULL) {
+        s_context.env.SUNDER_SYSASM_PATH = getenv("SUNDER_SYSASM_PATH");
+    }
+    else if (getenv("SUNDER_HOME") != NULL) {
+        s_context.env.SUNDER_SYSASM_PATH =
+            intern_fmt("%s/lib/sys/sys.asm", getenv("SUNDER_HOME"));
+    }
+    else {
+        s_context.env.SUNDER_SYSASM_PATH = "";
+    }
 }
 
 /* util.c */

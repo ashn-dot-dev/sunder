@@ -855,6 +855,14 @@ struct context {
         // Location where the instantiation occurred.
         struct source_location location;
     } const* template_instantiation_chain;
+
+    // Environment variables used by the compiler.
+    struct {
+        char const* SUNDER_HOME;
+        char const* SUNDER_BACKEND;
+        char const* SUNDER_IMPORT_PATH;
+        char const* SUNDER_SYSASM_PATH;
+    } env;
 };
 void
 context_init(void);

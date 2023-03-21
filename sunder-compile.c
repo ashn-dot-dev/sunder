@@ -48,29 +48,10 @@ main(int argc, char** argv)
 static void
 env(void)
 {
-    // SUNDER_HOME
-    printf("SUNDER_HOME=%s\n", getenv_with_default("SUNDER_HOME", ""));
-    // SUNDER_BACKEND
-    printf(
-        "SUNDER_BACKEND=%s\n",
-        getenv_with_default(
-            "SUNDER_BACKEND", STRINGIFY(SUNDER_DEFAULT_BACKEND)));
-    // SUNDER_IMPORT_PATH
-    printf(
-        "SUNDER_IMPORT_PATH=%s\n",
-        getenv_with_default("SUNDER_IMPORT_PATH", ""));
-    // SUNDER_SYSASM_PATH
-    if (getenv("SUNDER_SYSASM_PATH") != NULL) {
-        printf("SUNDER_SYSASM_PATH=%s\n", getenv("SUNDER_SYSASM_PATH"));
-    }
-    else if (getenv("SUNDER_HOME") != NULL) {
-        printf(
-            "SUNDER_SYSASM_PATH=%s\n",
-            intern_fmt("%s/lib/sys/sys.asm", getenv("SUNDER_HOME")));
-    }
-    else {
-        printf("SUNDER_SYSASM_PATH=\n");
-    }
+    printf("SUNDER_HOME=%s\n", context()->env.SUNDER_HOME);
+    printf("SUNDER_BACKEND=%s\n", context()->env.SUNDER_BACKEND);
+    printf("SUNDER_IMPORT_PATH=%s\n", context()->env.SUNDER_IMPORT_PATH);
+    printf("SUNDER_SYSASM_PATH=%s\n", context()->env.SUNDER_SYSASM_PATH);
 }
 
 static void
