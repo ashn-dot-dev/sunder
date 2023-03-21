@@ -1523,7 +1523,7 @@ strgen_rvalue_slice(struct expr const* expr)
     return intern_fmt(
         "(%s){.start = %s, .count = %s}",
         mangle_type(expr->type),
-        strgen_rvalue(expr->data.slice.pointer),
+        strgen_rvalue(expr->data.slice.start),
         strgen_rvalue(expr->data.slice.count));
 }
 

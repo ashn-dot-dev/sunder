@@ -1224,16 +1224,16 @@ struct expr*
 expr_new_slice(
     struct source_location location,
     struct type const* type,
-    struct expr const* pointer,
+    struct expr const* start,
     struct expr const* count)
 {
     assert(type != NULL);
     assert(type->kind == TYPE_SLICE);
-    assert(pointer != NULL);
+    assert(start != NULL);
     assert(count != NULL);
 
     struct expr* const self = expr_new(location, type, EXPR_SLICE);
-    self->data.slice.pointer = pointer;
+    self->data.slice.start = start;
     self->data.slice.count = count;
     return self;
 }

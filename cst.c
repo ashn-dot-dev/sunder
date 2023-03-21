@@ -453,16 +453,16 @@ struct cst_expr*
 cst_expr_new_slice(
     struct source_location location,
     struct cst_typespec const* typespec,
-    struct cst_expr const* pointer,
+    struct cst_expr const* start,
     struct cst_expr const* count)
 {
     assert(typespec != NULL);
-    assert(pointer != NULL);
+    assert(start != NULL);
     assert(count != NULL);
 
     struct cst_expr* const self = cst_expr_new(location, CST_EXPR_SLICE);
     self->data.slice.typespec = typespec;
-    self->data.slice.pointer = pointer;
+    self->data.slice.start = start;
     self->data.slice.count = count;
     return self;
 }

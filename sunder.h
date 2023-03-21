@@ -1287,7 +1287,7 @@ struct cst_expr {
         } list;
         struct {
             struct cst_typespec const* typespec;
-            struct cst_expr const* pointer;
+            struct cst_expr const* start;
             struct cst_expr const* count;
         } slice;
         struct {
@@ -1360,7 +1360,7 @@ struct cst_expr*
 cst_expr_new_slice(
     struct source_location location,
     struct cst_typespec const* typespec,
-    struct cst_expr const* pointer,
+    struct cst_expr const* start,
     struct cst_expr const* count);
 struct cst_expr*
 cst_expr_new_struct(
@@ -2073,7 +2073,7 @@ struct expr {
             sbuf(struct expr const* const) elements;
         } slice_list;
         struct {
-            struct expr const* pointer;
+            struct expr const* start;
             struct expr const* count;
         } slice;
         struct {
@@ -2179,7 +2179,7 @@ struct expr*
 expr_new_slice(
     struct source_location location,
     struct type const* type,
-    struct expr const* pointer,
+    struct expr const* start,
     struct expr const* count);
 struct expr*
 expr_new_struct(

@@ -216,9 +216,9 @@ eval_rvalue_slice(struct expr const* expr)
     assert(expr != NULL);
     assert(expr->kind == EXPR_SLICE);
 
-    struct value* const pointer = eval_rvalue(expr->data.slice.pointer);
+    struct value* const start = eval_rvalue(expr->data.slice.start);
     struct value* const count = eval_rvalue(expr->data.slice.count);
-    return value_new_slice(expr->type, pointer, count);
+    return value_new_slice(expr->type, start, count);
 }
 
 static struct value*

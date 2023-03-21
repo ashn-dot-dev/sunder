@@ -1744,7 +1744,7 @@ push_rvalue_slice(struct expr const* expr, size_t id)
     // | pointer |
     // +---------+ <-- rsp
     push_rvalue(expr->data.slice.count);
-    push_rvalue(expr->data.slice.pointer);
+    push_rvalue(expr->data.slice.start);
 }
 
 static void

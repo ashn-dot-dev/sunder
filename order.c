@@ -301,7 +301,7 @@ order_expr(struct orderer* orderer, struct cst_expr const* expr)
         return;
     }
     case CST_EXPR_SLICE: {
-        order_expr(orderer, expr->data.slice.pointer);
+        order_expr(orderer, expr->data.slice.start);
         order_expr(orderer, expr->data.slice.count);
         return;
     }

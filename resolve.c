@@ -3357,18 +3357,17 @@ resolve_expr_slice(struct resolver* resolver, struct cst_expr const* expr)
             type->name);
     }
 
-    struct expr const* const pointer =
-        resolve_expr(resolver, expr->data.slice.pointer);
-    if (pointer->type->kind != TYPE_POINTER) {
+    struct expr const* const start =
+        resolve_expr(resolver, expr->data.slice.start);
+    if (start->type->kind != TYPE_POINTER) {
         fatal(
-            pointer->location,
+            start->location,
             "expression of type `%s` is not a pointer",
-            pointer->type->name);
+            start->type->name);
     }
     struct type const* const slice_pointer_type =
         type_unique_pointer(type->data.slice.base);
-    verify_type_compatibility(
-        pointer->location, pointer->type, slice_pointer_type);
+    verify_type_compatibility(start->location, start->type, slice_pointer_type);
 
     struct expr const* count = resolve_expr(resolver, expr->data.slice.count);
     count = implicit_cast(context()->builtin.usize, count);
@@ -3376,7 +3375,7 @@ resolve_expr_slice(struct resolver* resolver, struct cst_expr const* expr)
         count->location, count->type, context()->builtin.usize);
 
     struct expr* const resolved =
-        expr_new_slice(expr->location, type, pointer, count);
+        expr_new_slice(expr->location, type, start, count);
 
     freeze(resolved);
     return resolved;
