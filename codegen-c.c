@@ -728,8 +728,9 @@ codegen_static_function(struct symbol const* symbol, bool prototype)
     }
     else {
         append(
-            "%s %s(%s)",
+            "%s%c%s(%s)",
             mangle_type(function->type->data.function.return_type),
+            (prototype ? ' ' : '\n'),
             mangle_name(function->address->data.static_.name),
             params_written != 0 ? string_start(params) : "void");
     }
