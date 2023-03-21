@@ -1479,7 +1479,7 @@ strgen_rvalue_slice_list(struct expr const* expr)
     char const* const array_name = array_addr->data.local.name;
     struct type const* const array_type =
         symbol_xget_type(expr->data.slice_list.array_symbol);
-    size_t const array_size = array_type->size;
+    uint64_t const array_size = array_type->size;
 
     struct string* const s = string_new_cstr("({");
     for (size_t i = 0; i < sbuf_count(elements); ++i) {
