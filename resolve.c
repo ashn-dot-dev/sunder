@@ -3200,10 +3200,10 @@ resolve_expr_bytes(struct resolver* resolver, struct cst_expr const* expr)
     struct address const* const slice_address =
         resolver_reserve_storage_static(resolver, "__bytes_slice");
 
-    struct value* const slice_start = value_new_pointer(
-        context()->builtin.pointer_to_byte, *array_address);
-    struct value* const slice_count = value_new_integer(
-        context()->builtin.usize, bigint_new_umax(count));
+    struct value* const slice_start =
+        value_new_pointer(context()->builtin.pointer_to_byte, *array_address);
+    struct value* const slice_count =
+        value_new_integer(context()->builtin.usize, bigint_new_umax(count));
     struct value* const slice_value = value_new_slice(
         context()->builtin.slice_of_byte, slice_start, slice_count);
     value_freeze(slice_value);
