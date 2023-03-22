@@ -5,9 +5,8 @@ alias umax = sys::umax;
 alias smax = sys::smax;
 
 # Common error type used within the standard library. The `std::error` type is
-# typically provided as the error template argument in `std::result` template
-# instantiations. Type punning from `*[]byte` to `std::error` is explicitly
-# supported.
+# typically used as the error template argument in `std::result` template
+# instantiations. Type punning from `*[]byte` to `std::error` is supported.
 alias error = *std::error_info;
 
 # Strongly typed wrapper around a static byte-string providing information on
