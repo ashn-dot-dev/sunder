@@ -819,6 +819,8 @@ push_lvalue(struct expr const* expr);
 static void
 push_lvalue_symbol(struct expr const* expr, size_t id);
 static void
+push_lvalue_bytes(struct expr const* expr, size_t id);
+static void
 push_lvalue_access_index(struct expr const* expr, size_t id);
 static void
 push_lvalue_access_index_lhs_array(struct expr const* expr, size_t id);
@@ -3237,6 +3239,7 @@ push_lvalue(struct expr const* expr)
     } const table[] = {
 #define TABLE_ENTRY(kind, fn) [kind] = {#kind, fn}
         TABLE_ENTRY(EXPR_SYMBOL, push_lvalue_symbol),
+        TABLE_ENTRY(EXPR_BYTES, push_lvalue_bytes),
         TABLE_ENTRY(EXPR_ACCESS_INDEX, push_lvalue_access_index),
         TABLE_ENTRY(EXPR_ACCESS_MEMBER_VARIABLE, push_lvalue_access_member_variable),
         TABLE_ENTRY(EXPR_UNARY, push_lvalue_unary),
@@ -3270,6 +3273,17 @@ push_lvalue_symbol(struct expr const* expr, size_t id)
         return;
     }
     push_address(symbol_xget_address(expr->data.symbol));
+}
+
+static void
+push_lvalue_bytes(struct expr const* expr, size_t id)
+{
+    assert(expr != NULL);
+    assert(expr->kind == EXPR_BYTES);
+    (void)id;
+
+    assert(expr->type->size != 0);
+    push_address(symbol_xget_address(expr->data.bytes.slice_symbol));
 }
 
 static void

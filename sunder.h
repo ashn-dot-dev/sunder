@@ -2062,6 +2062,7 @@ struct expr {
         struct value const* value;
         struct {
             struct symbol const* array_symbol;
+            struct symbol const* slice_symbol;
             size_t count;
         } bytes;
         struct {
@@ -2162,6 +2163,7 @@ struct expr*
 expr_new_bytes(
     struct source_location location,
     struct symbol const* array_symbol,
+    struct symbol const* slice_symbol,
     size_t count);
 struct expr*
 expr_new_array_list(

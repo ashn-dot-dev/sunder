@@ -20,8 +20,6 @@ mangle_name(char const* name);
 static char const* // interned
 mangle_type(struct type const* type);
 static char const* // interned
-mangle_address(struct address const* address);
-static char const* // interned
 mangle_local_symbol_name(struct symbol const* symbol);
 static char const* // interned
 mangle_symbol(struct symbol const* symbol);
@@ -191,6 +189,8 @@ strgen_lvalue(struct expr const* expr);
 static char const* // interned
 strgen_lvalue_symbol(struct expr const* expr);
 static char const* // interned
+strgen_lvalue_bytes(struct expr const* expr);
+static char const* // interned
 strgen_lvalue_access_index(struct expr const* expr);
 static char const* // interned
 strgen_lvalue_access_member_variable(struct expr const* expr);
@@ -307,34 +307,6 @@ mangle_type(struct type const* type)
     }
 
     return mangle_name(mangle_type_recursive(type));
-}
-
-static char const*
-mangle_address(struct address const* address)
-{
-    assert(address != NULL);
-
-    switch (address->kind) {
-    case ADDRESS_ABSOLUTE: {
-        return intern_fmt("(void*)%" PRIu64, address->data.absolute);
-    }
-    case ADDRESS_STATIC: {
-        char const* const base =
-            intern_fmt("(void*)&%s", mangle_name(address->data.static_.name));
-        if (address->data.static_.offset == 0) {
-            return base;
-        }
-        return intern_fmt(
-            "(void*)((char*)%s + %" PRIu64 ")",
-            base,
-            address->data.static_.offset);
-    }
-    case ADDRESS_LOCAL: {
-        return intern_fmt("(void*)&%s", mangle_name(address->data.local.name));
-    }
-    }
-
-    UNREACHABLE();
 }
 
 static char const*
@@ -1379,11 +1351,7 @@ strgen_rvalue_bytes(struct expr const* expr)
     assert(expr->kind == EXPR_BYTES);
     assert(expr->type->kind == TYPE_SLICE);
 
-    return intern_fmt(
-        "(%s){.start = %s, .count = %zu}",
-        mangle_type(expr->type),
-        mangle_address(symbol_get_address(expr->data.bytes.array_symbol)),
-        expr->data.bytes.count);
+    return mangle_symbol(expr->data.bytes.slice_symbol);
 }
 
 static char const*
@@ -2653,6 +2621,7 @@ strgen_lvalue(struct expr const* expr)
     } const table[] = {
 #define TABLE_ENTRY(kind, fn) [kind] = {#kind, fn}
         TABLE_ENTRY(EXPR_SYMBOL, strgen_lvalue_symbol),
+        TABLE_ENTRY(EXPR_BYTES, strgen_lvalue_bytes),
         TABLE_ENTRY(EXPR_ACCESS_INDEX, strgen_lvalue_access_index),
         TABLE_ENTRY(EXPR_ACCESS_MEMBER_VARIABLE, strgen_lvalue_access_member_variable),
         TABLE_ENTRY(EXPR_UNARY, strgen_lvalue_unary),
@@ -2677,6 +2646,16 @@ strgen_lvalue_symbol(struct expr const* expr)
     }
 
     return intern_fmt("&%s", mangle_symbol(expr->data.symbol));
+}
+
+static char const*
+strgen_lvalue_bytes(struct expr const* expr)
+{
+    assert(expr != NULL);
+    assert(expr->kind == EXPR_BYTES);
+
+    assert(expr->type->size != 0);
+    return intern_fmt("&%s", mangle_symbol(expr->data.bytes.slice_symbol));
 }
 
 static char const*

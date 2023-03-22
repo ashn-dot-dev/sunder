@@ -15,13 +15,6 @@ struct error_info {
     var data: []byte;
 }
 
-# The set of all `std::error_info` constants used by the standard library.
-let _ALLOCATION_FAILURE = (:std::error_info){.data = "allocation failure"};
-let _BUFFER_FULL = (:std::error_info){.data = "buffer full"};
-let _PARSE_FAILURE = (:std::error_info){.data = "parse failure"};
-let _INVALID_ARGUMENT = (:error_info){.data = "invalid argument"};
-let _RESULT_OUT_OF_RANGE = (:error_info){.data = "result out-of-range"};
-
 # Type representing the outcome of a fallible computation. A result is either
 # in the value state, indicating computation success, or the error state,
 # indicating computation failure.
@@ -4434,11 +4427,12 @@ extend []byte func format(self: *[]byte, writer: std::writer, fmt: []byte) std::
     return std::result[[void, std::error]]::init_error(std::error::INVALID_ARGUMENT);
 }
 
-extend error let ALLOCATION_FAILURE = &std::_ALLOCATION_FAILURE;
-extend error let BUFFER_FULL = &std::_BUFFER_FULL;
-extend error let PARSE_FAILURE = &std::_PARSE_FAILURE;
-extend error let INVALID_ARGUMENT = &std::_INVALID_ARGUMENT;
-extend error let RESULT_OUT_OF_RANGE = &std::_RESULT_OUT_OF_RANGE;
+# The set of `std::error` constants used by the standard library.
+extend error let ALLOCATION_FAILURE = (:std::error)&"allocation failure";
+extend error let BUFFER_FULL = (:std::error)&"buffer full";
+extend error let PARSE_FAILURE = (:std::error)&"parse failure";
+extend error let INVALID_ARGUMENT = (:std::error)&"invalid argument";
+extend error let RESULT_OUT_OF_RANGE = (:std::error)&"result out-of-range";
 
 extend big_integer let ZERO = (:std::big_integer){
     ._allocator = std::null_allocator::ALLOCATOR,

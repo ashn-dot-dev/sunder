@@ -1177,15 +1177,19 @@ struct expr*
 expr_new_bytes(
     struct source_location location,
     struct symbol const* array_symbol,
+    struct symbol const* slice_symbol,
     size_t count)
 {
     assert(array_symbol != NULL);
     assert(symbol_xget_type(array_symbol)->kind == TYPE_ARRAY);
     assert(symbol_xget_type(array_symbol)->data.array.base->kind == TYPE_BYTE);
+    assert(symbol_xget_type(slice_symbol)->kind == TYPE_SLICE);
+    assert(symbol_xget_type(slice_symbol)->data.slice.base->kind == TYPE_BYTE);
 
     struct type const* const type = type_unique_slice(context()->builtin.byte);
     struct expr* const self = expr_new(location, type, EXPR_BYTES);
     self->data.bytes.array_symbol = array_symbol;
+    self->data.bytes.slice_symbol = slice_symbol;
     self->data.bytes.count = count;
     return self;
 }

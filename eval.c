@@ -44,6 +44,8 @@ eval_rvalue_binary(struct expr const* expr);
 static struct value*
 eval_lvalue_symbol(struct expr const* expr);
 static struct value*
+eval_lvalue_bytes(struct expr const* expr);
+static struct value*
 eval_lvalue_access_index(struct expr const* expr);
 static struct value*
 eval_lvalue_access_member_variable(struct expr const* expr);
@@ -1380,6 +1382,9 @@ eval_lvalue(struct expr const* expr)
     case EXPR_SYMBOL: {
         return eval_lvalue_symbol(expr);
     }
+    case EXPR_BYTES: {
+        return eval_lvalue_bytes(expr);
+    }
     case EXPR_ACCESS_INDEX: {
         return eval_lvalue_access_index(expr);
     }
@@ -1390,7 +1395,6 @@ eval_lvalue(struct expr const* expr)
         return eval_lvalue_unary(expr);
     }
     case EXPR_VALUE: /* fallthrough */
-    case EXPR_BYTES: /* fallthrough */
     case EXPR_ARRAY_LIST: /* fallthrough */
     case EXPR_SLICE_LIST: /* fallthrough */
     case EXPR_SLICE: /* fallthrough */
@@ -1424,6 +1428,20 @@ eval_lvalue_symbol(struct expr const* expr)
     struct type const* const type =
         type_unique_pointer(symbol_xget_type(symbol));
     return value_new_pointer(type, *symbol_xget_address(symbol));
+}
+
+static struct value*
+eval_lvalue_bytes(struct expr const* expr)
+{
+    assert(expr != NULL);
+    assert(expr->kind == EXPR_BYTES);
+
+    struct symbol const* const slice_symbol = expr->data.bytes.slice_symbol;
+    assert(symbol_xget_address(slice_symbol)->kind == ADDRESS_STATIC);
+
+    struct type const* const type =
+        type_unique_pointer(symbol_xget_type(slice_symbol));
+    return value_new_pointer(type, *symbol_xget_address(slice_symbol));
 }
 
 static struct value*

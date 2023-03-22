@@ -3165,11 +3165,13 @@ resolve_expr_bytes(struct resolver* resolver, struct cst_expr const* expr)
     struct string const* const bytes = expr->data.bytes.data.bytes;
     size_t const count = string_count(bytes);
 
+    // Bytes Array Object
+
     struct type const* const array_type = type_unique_array(
         expr->location, count + 1 /*NUL*/, context()->builtin.byte);
 
     struct address const* const array_address =
-        resolver_reserve_storage_static(resolver, "__bytes");
+        resolver_reserve_storage_static(resolver, "__bytes_array");
 
     sbuf(struct value*) array_elements = NULL;
     for (size_t i = 0; i < count; ++i) {
@@ -3193,8 +3195,30 @@ resolve_expr_bytes(struct resolver* resolver, struct cst_expr const* expr)
     freeze(array_symbol);
     register_static_symbol(array_symbol);
 
+    // Bytes Slice Object
+
+    struct address const* const slice_address =
+        resolver_reserve_storage_static(resolver, "__bytes_slice");
+
+    struct value* const slice_start = value_new_pointer(
+        context()->builtin.pointer_to_byte, *array_address);
+    struct value* const slice_count = value_new_integer(
+        context()->builtin.usize, bigint_new_umax(count));
+    struct value* const slice_value = value_new_slice(
+        context()->builtin.slice_of_byte, slice_start, slice_count);
+    value_freeze(slice_value);
+
+    struct object* const slice_object = object_new(
+        context()->builtin.slice_of_byte, slice_address, slice_value);
+    freeze(slice_object);
+
+    struct symbol* const slice_symbol = symbol_new_constant(
+        expr->location, slice_address->data.static_.name, slice_object);
+    freeze(slice_symbol);
+    register_static_symbol(slice_symbol);
+
     struct expr* const resolved =
-        expr_new_bytes(expr->location, array_symbol, count);
+        expr_new_bytes(expr->location, array_symbol, slice_symbol, count);
 
     freeze(resolved);
     return resolved;
