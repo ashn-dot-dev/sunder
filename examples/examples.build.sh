@@ -10,7 +10,7 @@ for f in *.sunder; do
     eval $CMD
 done
 
-if command -v nasm >/dev/null; then
+if [ "$(uname -m)" = "x86_64" ] && command -v nasm >/dev/null; then
     export SUNDER_SYSASM_PATH=custom-sys-asm/sys.asm
     CMD="SUNDER_BACKEND=nasm ${SUNDER_HOME}/bin/sunder-compile -o custom-sys-asm/custom-sys-asm custom-sys-asm/main.sunder"
     echo $CMD
