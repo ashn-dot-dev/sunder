@@ -1139,6 +1139,7 @@ codegen_stmt_defer(struct stmt const* stmt)
 {
     assert(stmt != NULL);
     assert(stmt->kind == STMT_DEFER);
+    (void)stmt;
 
     // No code generation is performed for defer statements as defers are
     // generated as equivalent lowered statements by other codegen functions.
@@ -1362,6 +1363,8 @@ strgen_rvalue_array_list(struct expr const* expr)
     assert(expr->type->kind == TYPE_ARRAY);
 
     struct type const* const element_type = expr->type->data.array.base;
+    (void)element_type;
+
     sbuf(struct expr const* const) const elements =
         expr->data.array_list.elements;
 

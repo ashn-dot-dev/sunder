@@ -1779,6 +1779,8 @@ push_rvalue_struct(struct expr const* expr, size_t id)
     // on the stack.
     sbuf(struct member_variable) const member_variable_defs =
         expr->type->data.struct_.member_variables;
+    (void)member_variable_defs;
+
     sbuf(struct member_variable_initializer const) initializers =
         expr->data.struct_.initializers;
     assert(sbuf_count(member_variable_defs) == sbuf_count(initializers));

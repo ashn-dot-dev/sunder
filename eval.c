@@ -233,6 +233,7 @@ eval_rvalue_struct(struct expr const* expr)
 
     sbuf(struct member_variable) const defs =
         expr->type->data.struct_.member_variables;
+    (void)defs;
 
     sbuf(struct member_variable_initializer const) initializers =
         expr->data.struct_.initializers;
