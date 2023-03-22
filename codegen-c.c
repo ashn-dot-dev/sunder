@@ -1579,7 +1579,7 @@ strgen_rvalue_cast(struct expr const* expr)
     assert(expr != NULL);
     assert(expr->kind == EXPR_CAST);
 
-    if (type_is_int(expr->type)
+    if (type_is_integer(expr->type)
         && type_is_ieee754(expr->data.cast.expr->type)) {
         return intern_fmt(
             "__sunder___cast_%s_to_%s(%s)",
@@ -1953,7 +1953,7 @@ strgen_rvalue_unary_neg(struct expr const* expr)
         return intern_fmt("-(%s)", strgen_rvalue(expr->data.unary.rhs));
     }
 
-    assert(type_is_sint(expr->data.unary.rhs->type));
+    assert(type_is_sinteger(expr->data.unary.rhs->type));
     return intern_fmt(
         "({%s %s = %s; if (%s == ((%s)(LLONG_MIN >> ((sizeof(long long) - sizeof(%s))*8)))){%s();}; -(%s);})",
         mangle_type(expr->data.unary.rhs->type),
@@ -1974,7 +1974,7 @@ strgen_rvalue_unary_neg_wrapping(struct expr const* expr)
     assert(expr != NULL);
     assert(expr->kind == EXPR_UNARY);
     assert(expr->data.unary.op == UOP_NEG_WRAPPING);
-    assert(type_is_sint(expr->data.unary.rhs->type));
+    assert(type_is_sinteger(expr->data.unary.rhs->type));
 
     // Negating a negative number that can not be represented as a positive
     // number (e.g. T::MIN for signed integer type T) is undefined behavior in
@@ -2194,7 +2194,7 @@ strgen_rvalue_binary_shl(struct expr const* expr)
     assert(expr != NULL);
     assert(expr->kind == EXPR_BINARY);
     assert(expr->data.binary.op == BOP_SHL);
-    assert(type_is_int(expr->data.binary.lhs->type));
+    assert(type_is_integer(expr->data.binary.lhs->type));
     assert(expr->data.binary.rhs->type->kind == TYPE_USIZE);
 
     // Left shift of a negative number is undefined behavior in C, even though
@@ -2228,10 +2228,10 @@ strgen_rvalue_binary_shr(struct expr const* expr)
     assert(expr != NULL);
     assert(expr->kind == EXPR_BINARY);
     assert(expr->data.binary.op == BOP_SHR);
-    assert(type_is_int(expr->data.binary.lhs->type));
+    assert(type_is_integer(expr->data.binary.lhs->type));
     assert(expr->data.binary.rhs->type->kind == TYPE_USIZE);
 
-    char const* const overshift = type_is_sint(expr->data.binary.lhs->type)
+    char const* const overshift = type_is_sinteger(expr->data.binary.lhs->type)
         ? intern_fmt("((%s < 0) ? -1 : 0)", mangle_name("__lhs"))
         : "0";
     return intern_fmt(
@@ -2353,7 +2353,7 @@ strgen_rvalue_binary_add(struct expr const* expr)
             strgen_rvalue(expr->data.binary.rhs));
     }
 
-    assert(type_is_int(expr->type) && expr->type->size != SIZEOF_UNSIZED);
+    assert(type_is_integer(expr->type) && expr->type->size != SIZEOF_UNSIZED);
     return intern_fmt(
         "({%s %s = %s; %s %s = %s; %s_%s(%s, %s);})",
         mangle_type(expr->data.binary.lhs->type),
@@ -2377,7 +2377,7 @@ strgen_rvalue_binary_add_wrapping(struct expr const* expr)
     assert(expr->kind == EXPR_BINARY);
     assert(expr->data.binary.op == BOP_ADD_WRAPPING);
     assert(expr->data.binary.lhs->type == expr->data.binary.rhs->type);
-    assert(type_is_int(expr->type) && expr->type->size != SIZEOF_UNSIZED);
+    assert(type_is_integer(expr->type) && expr->type->size != SIZEOF_UNSIZED);
 
     return intern_fmt(
         "({%s %s = %s; %s %s = %s; %s_%s(%s, %s);})",
@@ -2410,7 +2410,7 @@ strgen_rvalue_binary_sub(struct expr const* expr)
             strgen_rvalue(expr->data.binary.rhs));
     }
 
-    assert(type_is_int(expr->type) && expr->type->size != SIZEOF_UNSIZED);
+    assert(type_is_integer(expr->type) && expr->type->size != SIZEOF_UNSIZED);
     return intern_fmt(
         "({%s %s = %s; %s %s = %s; %s_%s(%s, %s);})",
         mangle_type(expr->data.binary.lhs->type),
@@ -2434,7 +2434,7 @@ strgen_rvalue_binary_sub_wrapping(struct expr const* expr)
     assert(expr->kind == EXPR_BINARY);
     assert(expr->data.binary.op == BOP_SUB_WRAPPING);
     assert(expr->data.binary.lhs->type == expr->data.binary.rhs->type);
-    assert(type_is_int(expr->type) && expr->type->size != SIZEOF_UNSIZED);
+    assert(type_is_integer(expr->type) && expr->type->size != SIZEOF_UNSIZED);
 
     return intern_fmt(
         "({%s %s = %s; %s %s = %s; %s_%s(%s, %s);})",
@@ -2467,7 +2467,7 @@ strgen_rvalue_binary_mul(struct expr const* expr)
             strgen_rvalue(expr->data.binary.rhs));
     }
 
-    assert(type_is_int(expr->type) && expr->type->size != SIZEOF_UNSIZED);
+    assert(type_is_integer(expr->type) && expr->type->size != SIZEOF_UNSIZED);
     return intern_fmt(
         "({%s %s = %s; %s %s = %s; %s_%s(%s, %s);})",
         mangle_type(expr->data.binary.lhs->type),
@@ -2491,7 +2491,7 @@ strgen_rvalue_binary_mul_wrapping(struct expr const* expr)
     assert(expr->kind == EXPR_BINARY);
     assert(expr->data.binary.op == BOP_MUL_WRAPPING);
     assert(expr->data.binary.lhs->type == expr->data.binary.rhs->type);
-    assert(type_is_int(expr->type) && expr->type->size != SIZEOF_UNSIZED);
+    assert(type_is_integer(expr->type) && expr->type->size != SIZEOF_UNSIZED);
 
     return intern_fmt(
         "({%s %s = %s; %s %s = %s; %s_%s(%s, %s);})",
@@ -2524,7 +2524,7 @@ strgen_rvalue_binary_div(struct expr const* expr)
             strgen_rvalue(expr->data.binary.rhs));
     }
 
-    assert(type_is_int(expr->type) && expr->type->size != SIZEOF_UNSIZED);
+    assert(type_is_integer(expr->type) && expr->type->size != SIZEOF_UNSIZED);
     return intern_fmt(
         "({%s %s = %s; %s %s = %s; %s_%s(%s, %s);})",
         mangle_type(expr->data.binary.lhs->type),
@@ -2548,7 +2548,7 @@ strgen_rvalue_binary_rem(struct expr const* expr)
     assert(expr->kind == EXPR_BINARY);
     assert(expr->data.binary.op == BOP_REM);
     assert(expr->data.binary.lhs->type == expr->data.binary.rhs->type);
-    assert(type_is_int(expr->type) && expr->type->size != SIZEOF_UNSIZED);
+    assert(type_is_integer(expr->type) && expr->type->size != SIZEOF_UNSIZED);
 
     return intern_fmt(
         "({%s %s = %s; %s %s = %s; %s_%s(%s, %s);})",

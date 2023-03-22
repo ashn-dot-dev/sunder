@@ -1037,7 +1037,7 @@ verify_byte_or_int_in_range(
     struct type const* type,
     struct bigint const* integer)
 {
-    assert(type != NULL && (type->kind == TYPE_BYTE || type_is_int(type)));
+    assert(type != NULL && (type->kind == TYPE_BYTE || type_is_integer(type)));
     assert(integer != NULL);
 
     if (type->kind == TYPE_BYTE) {
@@ -1106,20 +1106,20 @@ explicit_cast(
         type->kind == TYPE_POINTER && type->data.pointer.base->kind == TYPE_ANY;
     bool const expr_type_is_pointer_to_any = expr->type->kind == TYPE_POINTER
         && expr->type->data.pointer.base->kind == TYPE_ANY;
-    bool const valid = (type_is_int(type) && type_is_int(expr->type))
-        || (type_is_int(type) && expr->type->kind == TYPE_BOOL)
-        || (type_is_int(type) && expr->type->kind == TYPE_BYTE)
-        || (type_is_int(type) && expr->type->kind == TYPE_F32)
-        || (type_is_int(type) && expr->type->kind == TYPE_F64)
-        || (type->kind == TYPE_F32 && type_is_int(expr->type))
-        || (type->kind == TYPE_F64 && type_is_int(expr->type))
+    bool const valid = (type_is_integer(type) && type_is_integer(expr->type))
+        || (type_is_integer(type) && expr->type->kind == TYPE_BOOL)
+        || (type_is_integer(type) && expr->type->kind == TYPE_BYTE)
+        || (type_is_integer(type) && expr->type->kind == TYPE_F32)
+        || (type_is_integer(type) && expr->type->kind == TYPE_F64)
+        || (type->kind == TYPE_F32 && type_is_integer(expr->type))
+        || (type->kind == TYPE_F64 && type_is_integer(expr->type))
         || (type_is_ieee754(type) && type_is_ieee754(expr->type))
         || (type->kind == TYPE_BOOL && expr->type->kind == TYPE_BOOL)
         || (type->kind == TYPE_BOOL && expr->type->kind == TYPE_BYTE)
-        || (type->kind == TYPE_BOOL && type_is_int(expr->type))
+        || (type->kind == TYPE_BOOL && type_is_integer(expr->type))
         || (type->kind == TYPE_BYTE && expr->type->kind == TYPE_BOOL)
         || (type->kind == TYPE_BYTE && expr->type->kind == TYPE_BYTE)
-        || (type->kind == TYPE_BYTE && type_is_int(expr->type))
+        || (type->kind == TYPE_BYTE && type_is_integer(expr->type))
         || (type->kind == TYPE_POINTER && expr->type->kind == TYPE_POINTER)
         || (type->kind == TYPE_POINTER && expr->type->kind == TYPE_USIZE)
         || (cast_type_is_pointer_to_any && expr->type->kind == TYPE_FUNCTION)
@@ -1223,11 +1223,11 @@ explicit_cast(
     }
 
     // OPTIMIZATION(constant folding)
-    if (type_is_int(type) && expr->kind == EXPR_VALUE) {
+    if (type_is_integer(type) && expr->kind == EXPR_VALUE) {
         struct value* const value = eval_rvalue(resolved);
         value_freeze(value);
 
-        assert(type_is_int(value->type));
+        assert(type_is_integer(value->type));
         resolved = expr_new_value(resolved->location, value);
 
         freeze(resolved);
@@ -1268,7 +1268,7 @@ implicit_cast(struct type const* type, struct expr const* expr)
     }
 
     // FROM unsized integer TO sized integer.
-    if (type_is_int(type) && from->kind == TYPE_INTEGER) {
+    if (type_is_integer(type) && from->kind == TYPE_INTEGER) {
         return explicit_cast(expr->location, type, expr);
     }
 
@@ -4075,7 +4075,7 @@ resolve_expr_unary(struct resolver* resolver, struct cst_expr const* expr)
         return resolve_expr_unary_arithmetic(resolver, op, UOP_POS, rhs);
     }
     case TOKEN_DASH: {
-        if (type_is_uint(rhs->type)) {
+        if (type_is_uinteger(rhs->type)) {
             fatal(
                 op.location,
                 "invalid argument of type `%s` in unary `%s` expression",
@@ -4085,7 +4085,7 @@ resolve_expr_unary(struct resolver* resolver, struct cst_expr const* expr)
         return resolve_expr_unary_arithmetic(resolver, op, UOP_NEG, rhs);
     }
     case TOKEN_DASH_PERCENT: {
-        if (type_is_uint(rhs->type)) {
+        if (type_is_uinteger(rhs->type)) {
             fatal(
                 op.location,
                 "invalid argument of type `%s` in unary `%s` expression",
@@ -4151,7 +4151,7 @@ resolve_expr_unary_arithmetic(
     (void)resolver;
 
     bool const type_is_valid =
-        type_is_int(rhs->type) || type_is_ieee754(rhs->type);
+        type_is_integer(rhs->type) || type_is_ieee754(rhs->type);
     if (!type_is_valid) {
         fatal(
             op.location,
@@ -4164,7 +4164,8 @@ resolve_expr_unary_arithmetic(
 
     // Wrapping unary expressions are only supported for sized integer types.
     bool const is_wrapping = uop == UOP_NEG_WRAPPING;
-    bool const allow_wrapping = type_is_uint(type) || type_is_sint(type);
+    bool const allow_wrapping =
+        type_is_uinteger(type) || type_is_sinteger(type);
     if (is_wrapping && !allow_wrapping) {
         fatal(
             op.location,
@@ -4197,7 +4198,7 @@ resolve_expr_unary_bitwise(
             rhs->type->name,
             token_kind_to_cstr(op.kind));
     }
-    if (!(rhs->type->kind == TYPE_BYTE || type_is_int(rhs->type))) {
+    if (!(rhs->type->kind == TYPE_BYTE || type_is_integer(rhs->type))) {
         fatal(
             rhs->location,
             "cannot apply bitwise NOT to type `%s`",
@@ -4451,7 +4452,7 @@ resolve_expr_binary_shift(
     assert(rhs != NULL);
     (void)resolver;
 
-    if (!type_is_int(lhs->type)) {
+    if (!type_is_integer(lhs->type)) {
         fatal(
             op.location,
             "invalid left-hand argument of type `%s` in binary `%s` expression",
@@ -4606,7 +4607,7 @@ resolve_expr_binary_arithmetic(
     rhs = implicit_cast(lhs->type, rhs);
 
     bool const types_are_valid = lhs->type == rhs->type
-        && (type_is_int(lhs->type) || type_is_ieee754(lhs->type));
+        && (type_is_integer(lhs->type) || type_is_ieee754(lhs->type));
     if (!types_are_valid) {
         fatal(
             op.location,
@@ -4621,7 +4622,8 @@ resolve_expr_binary_arithmetic(
     // Wrapping binary expressions are only supported for sized integer types.
     bool const is_wrapping = (bop == BOP_ADD_WRAPPING)
         || (bop == BOP_SUB_WRAPPING) || (bop == BOP_MUL_WRAPPING);
-    bool const allow_wrapping = type_is_uint(type) || type_is_sint(type);
+    bool const allow_wrapping =
+        type_is_uinteger(type) || type_is_sinteger(type);
     if (is_wrapping && !allow_wrapping) {
         fatal(
             op.location,
@@ -4632,7 +4634,7 @@ resolve_expr_binary_arithmetic(
 
     // Remainder binary expressions are only supported for sized integer types.
     bool const is_rem = bop == BOP_REM;
-    bool const allow_rem = type_is_uint(type) || type_is_sint(type);
+    bool const allow_rem = type_is_uinteger(type) || type_is_sinteger(type);
     if (is_rem && !allow_rem) {
         assert(type->size != SIZEOF_UNSIZED);
         fatal(
@@ -4688,8 +4690,8 @@ resolve_expr_binary_bitwise(
             token_kind_to_cstr(op.kind));
     }
 
-    bool const valid =
-        type->kind == TYPE_BOOL || type->kind == TYPE_BYTE || type_is_int(type);
+    bool const valid = type->kind == TYPE_BOOL || type->kind == TYPE_BYTE
+        || type_is_integer(type);
     if (!valid) {
         goto invalid_operand_types;
     }

@@ -1623,9 +1623,10 @@ struct type {
     union {
         struct {
             // NOTE: The min and max fields are "optional" in the sense that
-            // they are not defined for all types satisfying the type_is_int
-            // function. The type kind TYPE_INTEGER will have these as NULL as
-            // integers of type kind TYPE_INTEGER have no defined size.
+            // they are not defined for all types satisfying the
+            // type_is_integer function. The type kind TYPE_INTEGER will have
+            // these as NULL as integers of type kind TYPE_INTEGER have no
+            // defined size.
             struct bigint const* min; // optional
             struct bigint const* max; // optional
         } integer;
@@ -1739,13 +1740,13 @@ type_member_function(struct type const* self, char const* name);
 
 // Returns true if self is any integer type (unsigned, signed, or unsized).
 bool
-type_is_int(struct type const* self);
+type_is_integer(struct type const* self);
 // Returns true if self is an unsigned integer type.
 bool
-type_is_uint(struct type const* self);
+type_is_uinteger(struct type const* self);
 // Returns true if self is a signed integer type.
 bool
-type_is_sint(struct type const* self);
+type_is_sinteger(struct type const* self);
 // Returns true if self is a IEEE-754 floating point type.
 bool
 type_is_ieee754(struct type const* self);

@@ -537,7 +537,7 @@ type_member_function(struct type const* self, char const* name)
 }
 
 bool
-type_is_int(struct type const* self)
+type_is_integer(struct type const* self)
 {
     assert(self != NULL);
 
@@ -549,7 +549,7 @@ type_is_int(struct type const* self)
 }
 
 bool
-type_is_uint(struct type const* self)
+type_is_uinteger(struct type const* self)
 {
     assert(self != NULL);
 
@@ -559,7 +559,7 @@ type_is_uint(struct type const* self)
 }
 
 bool
-type_is_sint(struct type const* self)
+type_is_sinteger(struct type const* self)
 {
     assert(self != NULL);
 
@@ -593,7 +593,7 @@ type_can_compare_equality(struct type const* self)
     assert(self != NULL);
 
     enum type_kind const kind = self->kind;
-    return kind == TYPE_BOOL || kind == TYPE_BYTE || type_is_int(self)
+    return kind == TYPE_BOOL || kind == TYPE_BYTE || type_is_integer(self)
         || type_is_ieee754(self) || kind == TYPE_FUNCTION
         || kind == TYPE_POINTER;
 }
@@ -604,7 +604,7 @@ type_can_compare_order(struct type const* self)
     assert(self != NULL);
 
     enum type_kind const kind = self->kind;
-    return kind == TYPE_BOOL || kind == TYPE_BYTE || type_is_int(self)
+    return kind == TYPE_BOOL || kind == TYPE_BYTE || type_is_integer(self)
         || type_is_ieee754(self) || kind == TYPE_POINTER;
 }
 
@@ -1552,10 +1552,10 @@ struct value*
 value_new_integer(struct type const* type, struct bigint* integer)
 {
     assert(type != NULL);
-    assert(type_is_int(type));
+    assert(type_is_integer(type));
     assert(integer != NULL);
 
-    bool const is_sized = type_is_uint(type) || type_is_sint(type);
+    bool const is_sized = type_is_uinteger(type) || type_is_sinteger(type);
     assert(!is_sized || bigint_cmp(integer, type->data.integer.min) >= 0);
     assert(!is_sized || bigint_cmp(integer, type->data.integer.max) <= 0);
     (void)is_sized;

@@ -1812,7 +1812,7 @@ push_rvalue_cast(struct expr const* expr, size_t id)
     assert(expr->type->size <= 8u);
     (void)id;
 
-    if (type_is_int(expr->type)
+    if (type_is_integer(expr->type)
         && type_is_ieee754(expr->data.cast.expr->type)) {
         push_rvalue(expr->data.cast.expr);
         appendli("call __fatal_unimplemented");
@@ -2297,7 +2297,7 @@ push_rvalue_unary_neg(struct expr const* expr, size_t id)
         return;
     }
 
-    assert(type_is_sint(rhs->type));
+    assert(type_is_sinteger(rhs->type));
     assert(rhs->type->size <= 8u);
     push_rvalue(expr->data.unary.rhs);
 
@@ -2322,7 +2322,7 @@ push_rvalue_unary_neg_wrapping(struct expr const* expr, size_t id)
     assert(expr->data.unary.op == UOP_NEG_WRAPPING);
     (void)id;
 
-    assert(type_is_sint(expr->data.unary.rhs->type));
+    assert(type_is_sinteger(expr->data.unary.rhs->type));
     assert(expr->data.unary.rhs->type->size <= 8u);
     push_rvalue(expr->data.unary.rhs);
 
@@ -2611,7 +2611,7 @@ push_rvalue_binary_shl(struct expr const* expr, size_t id)
     assert(expr != NULL);
     assert(expr->kind == EXPR_BINARY);
     assert(expr->data.binary.op == BOP_SHL);
-    assert(type_is_int(expr->data.binary.lhs->type));
+    assert(type_is_integer(expr->data.binary.lhs->type));
     assert(expr->data.binary.rhs->type->kind == TYPE_USIZE);
 
     push_rvalue(expr->data.binary.lhs);
@@ -2639,7 +2639,7 @@ push_rvalue_binary_shr(struct expr const* expr, size_t id)
     assert(expr != NULL);
     assert(expr->kind == EXPR_BINARY);
     assert(expr->data.binary.op == BOP_SHR);
-    assert(type_is_int(expr->data.binary.lhs->type));
+    assert(type_is_integer(expr->data.binary.lhs->type));
     assert(expr->data.binary.rhs->type->kind == TYPE_USIZE);
 
     push_rvalue(expr->data.binary.lhs);
@@ -2649,7 +2649,7 @@ push_rvalue_binary_shr(struct expr const* expr, size_t id)
     appendli("mov rbx, 64");
     appendli("cmp rcx, rbx");
     appendli("jl %s%zu_shift", LABEL_EXPR, id);
-    if (type_is_sint(expr->data.binary.lhs->type)) {
+    if (type_is_sinteger(expr->data.binary.lhs->type)) {
         appendli("pop rbx ; discard lhs, but cmov based on high bit");
         appendli("mov r8, 0");
         appendli("mov r9, 0xFFFFFFFFFFFFFFFF");
@@ -2668,7 +2668,7 @@ push_rvalue_binary_shr(struct expr const* expr, size_t id)
     mov_rax_reg_a_with_zero_or_sign_extend(expr->data.binary.lhs->type);
     appendli(
         "%s rax, cl",
-        type_is_sint(expr->data.binary.lhs->type) ? "sar" : "shr");
+        type_is_sinteger(expr->data.binary.lhs->type) ? "sar" : "shr");
     appendli("push rax");
 
     appendln("%s%zu_end:", LABEL_EXPR, id);
@@ -2770,7 +2770,7 @@ push_rvalue_binary_le(struct expr const* expr, size_t id)
     appendli("mov rcx, 0"); // result (default false)
     appendli("mov rdx, 1"); // register holding true
     appendli("cmp %s, %s", lhs_reg, rhs_reg);
-    appendli("%s rcx, rdx", type_is_sint(xhs_type) ? "cmovle" : "cmovbe");
+    appendli("%s rcx, rdx", type_is_sinteger(xhs_type) ? "cmovle" : "cmovbe");
     appendli("push rcx");
 }
 
@@ -2804,7 +2804,7 @@ push_rvalue_binary_lt(struct expr const* expr, size_t id)
     appendli("mov rcx, 0"); // result (default false)
     appendli("mov rdx, 1"); // register holding true
     appendli("cmp %s, %s", lhs_reg, rhs_reg);
-    appendli("%s rcx, rdx", type_is_sint(xhs_type) ? "cmovl" : "cmovb");
+    appendli("%s rcx, rdx", type_is_sinteger(xhs_type) ? "cmovl" : "cmovb");
     appendli("push rcx");
 }
 
@@ -2838,7 +2838,7 @@ push_rvalue_binary_ge(struct expr const* expr, size_t id)
     appendli("mov rcx, 0"); // result (default false)
     appendli("mov rdx, 1"); // register holding true
     appendli("cmp %s, %s", lhs_reg, rhs_reg);
-    appendli("%s rcx, rdx", type_is_sint(xhs_type) ? "cmovge" : "cmovae");
+    appendli("%s rcx, rdx", type_is_sinteger(xhs_type) ? "cmovge" : "cmovae");
     appendli("push rcx");
 }
 
@@ -2872,7 +2872,7 @@ push_rvalue_binary_gt(struct expr const* expr, size_t id)
     appendli("mov rcx, 0"); // result (default false)
     appendli("mov rdx, 1"); // register holding true
     appendli("cmp %s, %s", lhs_reg, rhs_reg);
-    appendli("%s rcx, rdx", type_is_sint(xhs_type) ? "cmovg" : "cmova");
+    appendli("%s rcx, rdx", type_is_sinteger(xhs_type) ? "cmovg" : "cmova");
     appendli("push rcx");
 }
 
@@ -2896,11 +2896,12 @@ push_rvalue_binary_add(struct expr const* expr, size_t id)
         return;
     }
 
-    assert(type_is_int(xhs_type));
+    assert(type_is_integer(xhs_type));
 
     char const* const lhs_reg = reg_a(xhs_type->size);
     char const* const rhs_reg = reg_b(xhs_type->size);
-    char const* const jmp_not_overflow = type_is_sint(xhs_type) ? "jno" : "jnc";
+    char const* const jmp_not_overflow =
+        type_is_sinteger(xhs_type) ? "jno" : "jnc";
 
     push_rvalue(expr->data.binary.lhs);
     push_rvalue(expr->data.binary.rhs);
@@ -2928,7 +2929,7 @@ push_rvalue_binary_add_wrapping(struct expr const* expr, size_t id)
     (void)id;
 
     struct type const* const xhs_type = expr->data.binary.lhs->type;
-    assert(type_is_int(xhs_type));
+    assert(type_is_integer(xhs_type));
 
     char const* const lhs_reg = reg_a(xhs_type->size);
     char const* const rhs_reg = reg_b(xhs_type->size);
@@ -2961,11 +2962,12 @@ push_rvalue_binary_sub(struct expr const* expr, size_t id)
         return;
     }
 
-    assert(type_is_int(xhs_type));
+    assert(type_is_integer(xhs_type));
 
     char const* const lhs_reg = reg_a(xhs_type->size);
     char const* const rhs_reg = reg_b(xhs_type->size);
-    char const* const jmp_not_overflow = type_is_sint(xhs_type) ? "jno" : "jnc";
+    char const* const jmp_not_overflow =
+        type_is_sinteger(xhs_type) ? "jno" : "jnc";
 
     push_rvalue(expr->data.binary.lhs);
     push_rvalue(expr->data.binary.rhs);
@@ -2993,7 +2995,7 @@ push_rvalue_binary_sub_wrapping(struct expr const* expr, size_t id)
     (void)id;
 
     struct type const* const xhs_type = expr->data.binary.lhs->type;
-    assert(type_is_int(xhs_type));
+    assert(type_is_integer(xhs_type));
 
     char const* const lhs_reg = reg_a(xhs_type->size);
     char const* const rhs_reg = reg_b(xhs_type->size);
@@ -3026,10 +3028,10 @@ push_rvalue_binary_mul(struct expr const* expr, size_t id)
         return;
     }
 
-    assert(type_is_int(xhs_type));
+    assert(type_is_integer(xhs_type));
 
     char const* const rhs_reg = reg_b(xhs_type->size);
-    char const* const mul = type_is_sint(xhs_type) ? "imul" : "mul";
+    char const* const mul = type_is_sinteger(xhs_type) ? "imul" : "mul";
 
     push_rvalue(expr->data.binary.lhs);
     push_rvalue(expr->data.binary.rhs);
@@ -3057,10 +3059,10 @@ push_rvalue_binary_mul_wrapping(struct expr const* expr, size_t id)
     (void)id;
 
     struct type const* const xhs_type = expr->data.binary.lhs->type;
-    assert(type_is_int(xhs_type));
+    assert(type_is_integer(xhs_type));
 
     char const* const rhs_reg = reg_b(xhs_type->size);
-    char const* const mul = type_is_sint(xhs_type) ? "imul" : "mul";
+    char const* const mul = type_is_sinteger(xhs_type) ? "imul" : "mul";
 
     push_rvalue(expr->data.binary.lhs);
     push_rvalue(expr->data.binary.rhs);
@@ -3090,16 +3092,16 @@ push_rvalue_binary_divrem(struct expr const* expr, size_t id)
         return;
     }
 
-    assert(type_is_int(xhs_type));
+    assert(type_is_integer(xhs_type));
 
     char const* const rhs_reg = reg_b(xhs_type->size);
-    char const* const div = type_is_sint(xhs_type) ? "idiv" : "div";
+    char const* const div = type_is_sinteger(xhs_type) ? "idiv" : "div";
 
     push_rvalue(expr->data.binary.lhs);
     push_rvalue(expr->data.binary.rhs);
     appendli("pop rbx ; div rhs");
     appendli("pop rax ; div lhs");
-    if (type_is_sint(xhs_type)) {
+    if (type_is_sinteger(xhs_type)) {
         // Sign extend to fill the upper portion of the dividend.
         // https://www.felixcloutier.com/x86/cbw:cwde:cdqe
         // https://www.felixcloutier.com/x86/cwd:cdq:cqo
@@ -3121,7 +3123,7 @@ push_rvalue_binary_divrem(struct expr const* expr, size_t id)
         }
     }
     else {
-        assert(type_is_uint(xhs_type));
+        assert(type_is_uinteger(xhs_type));
         // Clear the upper portion of the dividend.
         appendli("xor rdx, rdx");
         // Zero extend the dividend into itself.
