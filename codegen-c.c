@@ -945,7 +945,7 @@ strgen_value(struct value const* value)
     }
     case TYPE_SLICE: {
         string_append_cstr(s, "{.start = ");
-        string_append_cstr(s, strgen_value(value->data.slice.pointer));
+        string_append_cstr(s, strgen_value(value->data.slice.start));
         string_append_cstr(s, ", .count = ");
         string_append_cstr(s, strgen_value(value->data.slice.count));
         string_append_cstr(s, "}");

@@ -3162,35 +3162,39 @@ resolve_expr_bytes(struct resolver* resolver, struct cst_expr const* expr)
     assert(expr != NULL);
     assert(expr->kind == CST_EXPR_BYTES);
 
-    struct address const* const address =
-        resolver_reserve_storage_static(resolver, "__bytes");
-
     struct string const* const bytes = expr->data.bytes.data.bytes;
     size_t const count = string_count(bytes);
-    struct type const* const type = type_unique_array(
+
+    struct type const* const array_type = type_unique_array(
         expr->location, count + 1 /*NUL*/, context()->builtin.byte);
-    sbuf(struct value*) elements = NULL;
+
+    struct address const* const array_address =
+        resolver_reserve_storage_static(resolver, "__bytes");
+
+    sbuf(struct value*) array_elements = NULL;
     for (size_t i = 0; i < count; ++i) {
         uint8_t const byte = (uint8_t)string_start(bytes)[i];
-        sbuf_push(elements, value_new_byte(byte));
+        sbuf_push(array_elements, value_new_byte(byte));
     }
     // Append a NUL byte to the end of every bytes literal. This NUL byte is
     // not included in the slice length, but will allow bytes literals to be
     // accessed as NUL-terminated arrays when interfacing with C code.
-    sbuf_push(elements, value_new_byte(0x00));
-    struct value* const value = value_new_array(type, elements, NULL);
-    value_freeze(value);
+    sbuf_push(array_elements, value_new_byte(0x00));
+    struct value* const array_value =
+        value_new_array(array_type, array_elements, NULL);
+    value_freeze(array_value);
 
-    struct object* const object = object_new(type, address, value);
-    freeze(object);
+    struct object* const array_object =
+        object_new(array_type, array_address, array_value);
+    freeze(array_object);
 
-    struct symbol* const symbol =
-        symbol_new_constant(expr->location, address->data.static_.name, object);
-    freeze(symbol);
-    register_static_symbol(symbol);
+    struct symbol* const array_symbol = symbol_new_constant(
+        expr->location, array_address->data.static_.name, array_object);
+    freeze(array_symbol);
+    register_static_symbol(array_symbol);
 
     struct expr* const resolved =
-        expr_new_bytes(expr->location, address, count);
+        expr_new_bytes(expr->location, array_address, count);
 
     freeze(resolved);
     return resolved;

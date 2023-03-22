@@ -302,7 +302,7 @@ append_dx_static_initializer(struct value const* value)
         return;
     }
     case TYPE_SLICE: {
-        append_dx_static_initializer(value->data.slice.pointer);
+        append_dx_static_initializer(value->data.slice.start);
         append_dx_static_initializer(value->data.slice.count);
         return;
     }

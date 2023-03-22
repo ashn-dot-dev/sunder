@@ -159,14 +159,14 @@ eval_rvalue_bytes(struct expr const* expr)
     assert(expr != NULL);
     assert(expr->kind == EXPR_BYTES);
 
-    struct value* const pointer = value_new_pointer(
+    struct value* const start = value_new_pointer(
         type_unique_pointer(context()->builtin.byte),
         *expr->data.bytes.address);
 
     struct value* const count = value_new_integer(
         context()->builtin.usize, bigint_new_umax(expr->data.bytes.count));
 
-    return value_new_slice(expr->type, pointer, count);
+    return value_new_slice(expr->type, start, count);
 }
 
 static struct value*
@@ -886,9 +886,9 @@ eval_rvalue_unary(struct expr const* expr)
 
         struct value* const rhs = eval_rvalue(expr->data.unary.rhs);
         assert(rhs->type->kind == TYPE_SLICE);
-        assert(rhs->data.slice.pointer->type->kind == TYPE_POINTER);
-        struct value* res = value_new_pointer(
-            expr->type, rhs->data.slice.pointer->data.pointer);
+        assert(rhs->data.slice.start->type->kind == TYPE_POINTER);
+        struct value* res =
+            value_new_pointer(expr->type, rhs->data.slice.start->data.pointer);
 
         value_del(rhs);
         return res;

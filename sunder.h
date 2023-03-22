@@ -2314,7 +2314,7 @@ struct value {
             struct value* ellipsis; // optional
         } array;
         struct {
-            struct value* pointer; // TYPE_POINTER
+            struct value* start; // TYPE_POINTER
             struct value* count; // TYPE_USIZE
         } slice;
         struct {
@@ -2350,7 +2350,7 @@ value_new_array(
     struct type const* type, struct value** elements, struct value* ellipsis);
 struct value*
 value_new_slice(
-    struct type const* type, struct value* pointer, struct value* count);
+    struct type const* type, struct value* start, struct value* count);
 struct value*
 value_new_struct(struct type const* type);
 void

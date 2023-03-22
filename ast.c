@@ -1627,20 +1627,20 @@ value_new_array(
 
 struct value*
 value_new_slice(
-    struct type const* type, struct value* pointer, struct value* count)
+    struct type const* type, struct value* start, struct value* count)
 {
     assert(type != NULL);
     assert(type->kind == TYPE_SLICE);
-    assert(pointer != NULL);
-    assert(pointer->type->kind == TYPE_POINTER);
+    assert(start != NULL);
+    assert(start->type->kind == TYPE_POINTER);
     assert(count != NULL);
     assert(count->type->kind == TYPE_USIZE);
     assert(bigint_cmp(count->data.integer, BIGINT_ZERO) >= 0);
 
-    assert(type->data.slice.base == pointer->type->data.pointer.base);
+    assert(type->data.slice.base == start->type->data.pointer.base);
 
     struct value* self = value_new(type);
-    self->data.slice.pointer = pointer;
+    self->data.slice.start = start;
     self->data.slice.count = count;
     return self;
 }
@@ -1716,7 +1716,7 @@ value_del(struct value* self)
         break;
     }
     case TYPE_SLICE: {
-        value_del(self->data.slice.pointer);
+        value_del(self->data.slice.start);
         value_del(self->data.slice.count);
         break;
     }
@@ -1795,7 +1795,7 @@ value_freeze(struct value* self)
         return;
     }
     case TYPE_SLICE: {
-        value_freeze(self->data.slice.pointer);
+        value_freeze(self->data.slice.start);
         value_freeze(self->data.slice.count);
         return;
     }
@@ -1872,7 +1872,7 @@ value_clone(struct value const* self)
     case TYPE_SLICE: {
         return value_new_slice(
             self->type,
-            value_clone(self->data.slice.pointer),
+            value_clone(self->data.slice.start),
             value_clone(self->data.slice.count));
     }
     case TYPE_STRUCT: {
