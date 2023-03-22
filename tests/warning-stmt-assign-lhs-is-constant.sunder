@@ -1,0 +1,20 @@
+func constant_bytes () void {
+    "abc" = "123";
+}
+
+func constant_symbol () void {
+    let x = 123s;
+    x = 456;
+}
+
+func main() void {
+    # This Sunder program is valid syntactically, but *should* crash at runtime
+    # if any of the above functions are called.
+}
+################################################################################
+# [warning-stmt-assign-lhs-is-constant.sunder:2] warning: left hand side of assignment statement is a constant
+#     "abc" = "123";
+#     ^
+# [warning-stmt-assign-lhs-is-constant.sunder:7] warning: left hand side of assignment statement is a constant
+#     x = 456;
+#     ^

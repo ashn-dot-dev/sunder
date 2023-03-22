@@ -2824,6 +2824,16 @@ resolve_stmt_assign(struct resolver* resolver, struct cst_stmt const* stmt)
             lhs->location,
             "left hand side of assignment statement is not an lvalue");
     }
+    // Bytes literals are considered lvalues, and it is perfectly valid to
+    // take their address, but assigning to one *should* crash the program.
+    bool const lhs_is_bytes = lhs->kind == EXPR_BYTES;
+    bool const lhs_is_constant_symbol =
+        lhs->kind == EXPR_SYMBOL && lhs->data.symbol->kind == SYMBOL_CONSTANT;
+    if (lhs_is_bytes || lhs_is_constant_symbol) {
+        warning(
+            lhs->location,
+            "left hand side of assignment statement is a constant");
+    }
 
     rhs = implicit_cast(lhs->type, rhs);
     verify_type_compatibility(stmt->location, rhs->type, lhs->type);
