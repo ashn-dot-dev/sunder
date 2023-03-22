@@ -2061,7 +2061,7 @@ struct expr {
         struct symbol const* symbol;
         struct value const* value;
         struct {
-            struct address const* address;
+            struct symbol const* array_symbol;
             size_t count;
         } bytes;
         struct {
@@ -2161,7 +2161,7 @@ expr_new_value(struct source_location location, struct value const* value);
 struct expr*
 expr_new_bytes(
     struct source_location location,
-    struct address const* address,
+    struct symbol const* array_symbol,
     size_t count);
 struct expr*
 expr_new_array_list(

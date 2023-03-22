@@ -161,7 +161,7 @@ eval_rvalue_bytes(struct expr const* expr)
 
     struct value* const start = value_new_pointer(
         type_unique_pointer(context()->builtin.byte),
-        *expr->data.bytes.address);
+        *symbol_xget_address(expr->data.bytes.array_symbol));
 
     struct value* const count = value_new_integer(
         context()->builtin.usize, bigint_new_umax(expr->data.bytes.count));

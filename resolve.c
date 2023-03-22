@@ -3194,7 +3194,7 @@ resolve_expr_bytes(struct resolver* resolver, struct cst_expr const* expr)
     register_static_symbol(array_symbol);
 
     struct expr* const resolved =
-        expr_new_bytes(expr->location, array_address, count);
+        expr_new_bytes(expr->location, array_symbol, count);
 
     freeze(resolved);
     return resolved;

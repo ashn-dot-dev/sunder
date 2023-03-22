@@ -1382,7 +1382,7 @@ strgen_rvalue_bytes(struct expr const* expr)
     return intern_fmt(
         "(%s){.start = %s, .count = %zu}",
         mangle_type(expr->type),
-        mangle_address(expr->data.bytes.address),
+        mangle_address(symbol_get_address(expr->data.bytes.array_symbol)),
         expr->data.bytes.count);
 }
 

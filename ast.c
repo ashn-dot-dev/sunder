@@ -1176,14 +1176,16 @@ expr_new_value(struct source_location location, struct value const* value)
 struct expr*
 expr_new_bytes(
     struct source_location location,
-    struct address const* address,
+    struct symbol const* array_symbol,
     size_t count)
 {
-    assert(address != NULL);
+    assert(array_symbol != NULL);
+    assert(symbol_xget_type(array_symbol)->kind == TYPE_ARRAY);
+    assert(symbol_xget_type(array_symbol)->data.array.base->kind == TYPE_BYTE);
 
     struct type const* const type = type_unique_slice(context()->builtin.byte);
     struct expr* const self = expr_new(location, type, EXPR_BYTES);
-    self->data.bytes.address = address;
+    self->data.bytes.array_symbol = array_symbol;
     self->data.bytes.count = count;
     return self;
 }
@@ -1448,6 +1450,9 @@ expr_is_lvalue(struct expr const* self)
         }
         UNREACHABLE();
     }
+    case EXPR_BYTES: {
+        return true;
+    }
     case EXPR_ACCESS_INDEX: {
         return self->data.access_index.lhs->type->kind == TYPE_SLICE
             || expr_is_lvalue(self->data.access_index.lhs);
@@ -1459,7 +1464,6 @@ expr_is_lvalue(struct expr const* self)
         return self->data.unary.op == UOP_DEREFERENCE;
     }
     case EXPR_VALUE: /* fallthrough */
-    case EXPR_BYTES: /* fallthrough */
     case EXPR_ARRAY_LIST: /* fallthrough */
     case EXPR_SLICE_LIST: /* fallthrough */
     case EXPR_SLICE: /* fallthrough */

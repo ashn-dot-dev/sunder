@@ -1633,7 +1633,7 @@ push_rvalue_bytes(struct expr const* expr, size_t id)
     (void)id;
 
     appendli("push %zu", expr->data.bytes.count); // count
-    push_address(expr->data.bytes.address); // pointer
+    push_address(symbol_get_address(expr->data.bytes.array_symbol)); // start
 }
 
 static void
