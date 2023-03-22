@@ -1186,6 +1186,15 @@ expr_new_bytes(
     assert(symbol_xget_type(slice_symbol)->kind == TYPE_SLICE);
     assert(symbol_xget_type(slice_symbol)->data.slice.base->kind == TYPE_BYTE);
 
+    uintmax_t array_count = symbol_xget_type(array_symbol)->data.array.count;
+    (void)array_count;
+    assert(array_count >= STR_LITERAL_COUNT("\0"));
+
+    uintmax_t array_count_without_nul_terminator =
+        array_count - STR_LITERAL_COUNT("\0");
+    (void)array_count_without_nul_terminator;
+    assert(count == array_count_without_nul_terminator);
+
     struct type const* const type = type_unique_slice(context()->builtin.byte);
     struct expr* const self = expr_new(location, type, EXPR_BYTES);
     self->data.bytes.array_symbol = array_symbol;
