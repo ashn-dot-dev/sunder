@@ -1450,12 +1450,11 @@ resolve_import_file(
         return;
     }
 
-    // For a Sunder directory containing sources files such as:
+    // For a Sunder directory "foo" containing the sources files:
     //
-    //      foo \
-    //          + foo.sunder
-    //          + foo.amd64.sunder
-    //          + foo.arm64.sunder
+    //      + foo.sunder
+    //      + foo.amd64.sunder
+    //      + foo.arm64.sunder
     //
     // the import statement:
     //
