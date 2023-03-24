@@ -790,28 +790,36 @@ strgen_value(struct value const* value)
     case TYPE_F32: {
         double const ieee754 = (double)value->data.f32;
         if (isnan(ieee754)) {
-            return intern_fmt("(float)NAN");
+            string_append_cstr(s, "(float)NAN");
+            break;
         }
         if (isinf(ieee754) && ieee754 < 0) {
-            return intern_fmt("(float)-INFINITY");
+            string_append_cstr(s, "(float)-INFINITY");
+            break;
         }
         if (isinf(ieee754) && ieee754 > 0) {
-            return intern_fmt("(float)+INFINITY");
+            string_append_cstr(s, "(float)+INFINITY");
+            break;
         }
-        return intern_fmt("%.*ff", IEEE754_FLT_DECIMAL_DIG, ieee754);
+        string_append_fmt(s, "%.*ff", IEEE754_FLT_DECIMAL_DIG, ieee754);
+        break;
     }
     case TYPE_F64: {
         double const ieee754 = value->data.f64;
         if (isnan(ieee754)) {
-            return intern_fmt("(double)NAN");
+            string_append_cstr(s, "(double)NAN");
+            break;
         }
         if (isinf(ieee754) && ieee754 < 0) {
-            return intern_fmt("(double)-INFINITY");
+            string_append_cstr(s, "(double)-INFINITY");
+            break;
         }
         if (isinf(ieee754) && ieee754 > 0) {
-            return intern_fmt("(double)+INFINITY");
+            string_append_cstr(s, "(double)+INFINITY");
+            break;
         }
-        return intern_fmt("%.*f", IEEE754_DBL_DECIMAL_DIG, ieee754);
+        string_append_fmt(s, "%.*f", IEEE754_DBL_DECIMAL_DIG, ieee754);
+        break;
     }
     case TYPE_REAL: {
         UNREACHABLE();
