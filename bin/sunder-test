@@ -39,11 +39,9 @@ test() {
 
     echo "[= TEST ${TEST} =]"
 
-    # XXX: Hack that allows conditionally skipping tests that would fail when
-    # compiled with a backend that does not support features exercised by that
-    # particular test.
+    # Conditionally skip tests when not compiling with the C backend.
     if >/dev/null grep -i '#.*only SUNDER_BACKEND=C' "${TEST}" \
-    && ! sunder-compile -e | >/dev/null grep -i 'SUNDER_BACKEND=C'; then
+    && ! "${SUNDER_HOME}/bin/sunder-compile" -e | >/dev/null grep -i 'SUNDER_BACKEND=C'; then
         echo '[= SKIP =]'
         return 0
     fi
