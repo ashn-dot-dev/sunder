@@ -1,0 +1,2 @@
+let PLATFORM_SPECIFIC_ARCH = false;
+let PLATFORM_SPECIFIC_HOST = false;

@@ -49,6 +49,8 @@ static void
 env(void)
 {
     printf("SUNDER_HOME=%s\n", context()->env.SUNDER_HOME);
+    printf("SUNDER_ARCH=%s\n", context()->env.SUNDER_ARCH);
+    printf("SUNDER_HOST=%s\n", context()->env.SUNDER_HOST);
     printf("SUNDER_BACKEND=%s\n", context()->env.SUNDER_BACKEND);
     printf("SUNDER_IMPORT_PATH=%s\n", context()->env.SUNDER_IMPORT_PATH);
     printf("SUNDER_SYSASM_PATH=%s\n", context()->env.SUNDER_SYSASM_PATH);

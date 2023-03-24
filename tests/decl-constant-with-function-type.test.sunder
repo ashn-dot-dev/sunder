@@ -1,4 +1,4 @@
-import "sys/sys.sunder";
+import "sys";
 
 let fn_one: func() ssize = one;
 let fn_sub: func(ssize, ssize) ssize = sub;

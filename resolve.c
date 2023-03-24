@@ -1436,7 +1436,7 @@ resolve_import_file(
         return;
     }
 
-    if (!cstr_ends_with(file_name, ".sunder") && from_directory) {
+    if (from_directory && !cstr_ends_with(file_name, ".sunder")) {
         // Ignore source files imported via a directory import if they do not
         // end in a `.sunder` extension. This will allow directories containing
         // non-Sunder files to be imported without the compiler producing an
@@ -1445,9 +1445,65 @@ resolve_import_file(
         return;
     }
 
-    if (cstr_ends_with(file_name, ".test.sunder") && from_directory) {
+    if (from_directory && cstr_ends_with(file_name, ".test.sunder")) {
         // Ignore test files imported via a directory import.
         return;
+    }
+
+    // For a Sunder directory containing sources files such as:
+    //
+    //      foo \
+    //          + foo.sunder
+    //          + foo.amd64.sunder
+    //          + foo.arm64.sunder
+    //
+    // the import statement:
+    //
+    //      import "foo";
+    //
+    // should import "foo.amd64.sunder" on amd64 systems, import
+    // "foo.arm64.sunder" on arm64 systems, and import "foo.sunder" on all
+    // other systems.
+    //
+    // When this function processes "foo.sunder", the filesystem is checked for
+    // the existence of "foo.<arch>-<host>.sunder".
+    //
+    // If "foo.<arch>-<host>.sunder" exists, then "foo.sunder" is skipped. The
+    // same check is performed with "foo.<arch>.sunder" and
+    // "foo.<host>.sunder".
+    //
+    // When this function processes "foo.amd64.sunder" and "foo.arm64.sunder",
+    // the text between the "foo." part of the file name and the ".sunder" file
+    // extension is extracted.
+    //
+    // If that text does not match "<arch>-<host>, "<arch>", or "<host>", then
+    // the file is skipped.
+    char const* const platform =
+        platform_to_cstr(context()->arch, context()->host);
+    char const* const arch = arch_to_cstr(context()->arch);
+    char const* const host = host_to_cstr(context()->host);
+    size_t path_count = strlen(path);
+    assert(path_count >= STR_LITERAL_COUNT(".sunder"));
+    size_t stem_count = path_count - STR_LITERAL_COUNT(".sunder");
+    char const* const stem = intern_fmt("%.*s", (int)stem_count, path);
+    char const* const dot = strchr(stem, '.');
+    bool const is_special_file = dot != NULL;
+    if (from_directory && is_special_file) {
+        char const* start = dot + 1;
+        bool const matches_target = (0 == strcmp(start, platform))
+            || (0 == strcmp(start, arch)) || (0 == strcmp(start, host));
+        if (!matches_target) {
+            return;
+        }
+    }
+    if (from_directory && !is_special_file) {
+        bool const platform_specific_file_exists =
+            file_exists(intern_fmt("%s.%s.sunder", stem, platform))
+            || file_exists(intern_fmt("%s.%s.sunder", stem, arch))
+            || file_exists(intern_fmt("%s.%s.sunder", stem, host));
+        if (platform_specific_file_exists) {
+            return;
+        }
     }
 
     struct module const* module = lookup_module(path);

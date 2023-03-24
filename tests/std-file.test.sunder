@@ -1,5 +1,5 @@
 import "std";
-import "sys/sys.sunder";
+import "sys";
 
 func main() void {
     var file: std::file = (:std::file){._fd = sys::STDOUT_FILENO};

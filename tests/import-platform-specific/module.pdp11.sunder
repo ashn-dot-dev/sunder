@@ -1,0 +1,9 @@
+# This module, written in K&R Sunder, will not compile with the standard Sunder
+# compiler! Thankfully, the module is tagged with "pdp11", so sunder-compile
+# will skip this module when the "import-platform-specific" directory is
+# imported, as "pdp11" does not match the arch or host tags for any of the
+# platforms supported by Sunder.
+
+main() {
+    printf("hello, world\n");
+}

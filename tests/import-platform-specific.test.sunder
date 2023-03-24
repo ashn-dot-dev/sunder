@@ -1,0 +1,11 @@
+import "std";
+
+# Test that importing a directory containing platform specific files will only
+# load modules that contain a tag matching the arch and/or host.
+import "import-platform-specific";
+
+func main() void {
+    std::assert(PLATFORM_SPECIFIC_ARCH); # module.*.sunder
+    std::assert(PLATFORM_SPECIFIC_HOST); # module.*.sunder
+    std::assert(NO_PLATFORM_SPECIFIC_OVERRIDE); # module-with-no-platform-specific-override.sunder
+}

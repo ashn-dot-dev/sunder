@@ -690,6 +690,27 @@ getenv_with_default(char const* name, char const* default_);
 //////// sunder.c //////////////////////////////////////////////////////////////
 // Global compiler state.
 
+enum arch {
+    ARCH_AMD64,
+    ARCH_ARM64,
+};
+enum arch
+cstr_to_arch(char const* cstr);
+char const*
+arch_to_cstr(enum arch arch);
+
+enum host {
+    HOST_NONE,
+    HOST_LINUX,
+};
+enum host
+cstr_to_host(char const* cstr);
+char const*
+host_to_cstr(enum host host);
+
+char const* // interned
+platform_to_cstr(enum arch arch, enum host host);
+
 struct module {
     // True if the module has been fully loaded/resolved.
     bool loaded;
@@ -758,6 +779,21 @@ struct context {
         char const* real;    // "real"
         // clang-format on
     } interned;
+
+    // Environment variables used by the compiler.
+    struct {
+        char const* SUNDER_HOME;
+        char const* SUNDER_ARCH;
+        char const* SUNDER_HOST;
+        char const* SUNDER_BACKEND;
+        char const* SUNDER_IMPORT_PATH;
+        char const* SUNDER_SYSASM_PATH;
+        char const* SUNDER_CC;
+    } env;
+
+    // Target SUNDER_ARCH and SUNDER_HOST.
+    enum arch arch;
+    enum host host;
 
     // Integer (bigint) constants.
     struct bigint const* u8_min;
@@ -855,15 +891,6 @@ struct context {
         // Location where the instantiation occurred.
         struct source_location location;
     } const* template_instantiation_chain;
-
-    // Environment variables used by the compiler.
-    struct {
-        char const* SUNDER_HOME;
-        char const* SUNDER_BACKEND;
-        char const* SUNDER_IMPORT_PATH;
-        char const* SUNDER_SYSASM_PATH;
-        char const* SUNDER_CC;
-    } env;
 };
 void
 context_init(void);
@@ -2408,9 +2435,6 @@ eval_lvalue(struct expr const* expr);
 
 ////////////////////////////////////////////////////////////////////////////////
 //////// codegen.c /////////////////////////////////////////////////////////////
-
-char const* // interned
-backend(void);
 
 void
 codegen(

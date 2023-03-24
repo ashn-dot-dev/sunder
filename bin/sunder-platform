@@ -1,0 +1,71 @@
+#!/bin/sh
+set -e
+
+PROGNAME=$(basename "$0")
+usage() {
+    cat <<EOF
+Usage: ${PROGNAME} [arch|host]
+
+Options:
+  -h        Display usage information and exit.
+EOF
+}
+
+arch() {
+    if [ "$(uname -m)" = "x86_64"  ]; then
+        echo "amd64"
+        return
+    fi
+
+    if [ "$(uname -m)" = "aarch64"  ]; then
+        echo "arm64"
+        return
+    fi
+
+    >&2 echo "error: unknown arch"
+    exit 1
+}
+
+host() {
+    if >/dev/null command -v lsb_release; then
+        echo "linux"
+        return
+    fi
+
+    >&2 echo "error: unknown host"
+    exit 1
+}
+
+for arg in "$@"; do
+case "${arg}" in
+    -h)
+        usage
+        exit 0
+        ;;
+    *)
+        ;;
+esac
+done
+
+if [ "$#" -eq 0 ]; then
+    echo "$(arch)-$(host)"
+    exit 0
+fi
+
+if [ "$#" -ne 1 ]; then
+    >&2 echo "error: too many arguments"
+    exit 1
+fi
+
+if [ "$1" = "arch" ]; then
+    arch
+    exit 0
+fi
+
+if [ "$1" = "host" ]; then
+    host
+    exit 0
+fi
+
+>&2 echo "error: unexpected argument `$1`"
+exit 1

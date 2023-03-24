@@ -5,6 +5,60 @@
 
 #include "sunder.h"
 
+static char const* arch_list[] = {
+    [ARCH_AMD64] = "amd64",
+    [ARCH_ARM64] = "arm64",
+};
+
+static char const* host_list[] = {
+    [HOST_NONE] = "none",
+    [HOST_LINUX] = "linux",
+};
+
+enum arch
+cstr_to_arch(char const* cstr)
+{
+    for (size_t i = 0; i < ARRAY_COUNT(arch_list); ++i) {
+        if (0 == strcmp(cstr, arch_list[i])) {
+            return (enum arch)i;
+        }
+    }
+
+    fatal(NO_LOCATION, "unknown arch `%s`", cstr);
+    return 0;
+}
+
+char const*
+arch_to_cstr(enum arch arch)
+{
+    return arch_list[(size_t)arch];
+}
+
+enum host
+cstr_to_host(char const* cstr)
+{
+    for (size_t i = 0; i < ARRAY_COUNT(host_list); ++i) {
+        if (0 == strcmp(cstr, host_list[i])) {
+            return (enum host)i;
+        }
+    }
+
+    fatal(NO_LOCATION, "unknown host `%s`", cstr);
+    return 0;
+}
+
+char const*
+host_to_cstr(enum host host)
+{
+    return host_list[(size_t)host];
+}
+
+char const*
+platform_to_cstr(enum arch arch, enum host host)
+{
+    return intern_fmt("%s-%s", arch_to_cstr(arch), host_to_cstr(host));
+}
+
 struct module*
 module_new(char const* name, char const* path)
 {
@@ -182,6 +236,31 @@ context_init(void)
     s_context.interned.f64 = intern_cstr("f64");
     s_context.interned.real = intern_cstr("real");
 
+    s_context.env.SUNDER_HOME = getenv_with_default("SUNDER_HOME", "");
+    s_context.env.SUNDER_ARCH =
+        getenv_with_default("SUNDER_ARCH", STRINGIFY(SUNDER_DEFAULT_ARCH));
+    s_context.env.SUNDER_HOST =
+        getenv_with_default("SUNDER_HOST", STRINGIFY(SUNDER_DEFAULT_HOST));
+    s_context.env.SUNDER_BACKEND = getenv_with_default(
+        "SUNDER_BACKEND", STRINGIFY(SUNDER_DEFAULT_BACKEND));
+    s_context.env.SUNDER_IMPORT_PATH =
+        getenv_with_default("SUNDER_IMPORT_PATH", "");
+    if (getenv("SUNDER_SYSASM_PATH") != NULL) {
+        s_context.env.SUNDER_SYSASM_PATH = getenv("SUNDER_SYSASM_PATH");
+    }
+    else if (getenv("SUNDER_HOME") != NULL) {
+        s_context.env.SUNDER_SYSASM_PATH =
+            intern_fmt("%s/lib/sys/sys.asm", getenv("SUNDER_HOME"));
+    }
+    else {
+        s_context.env.SUNDER_SYSASM_PATH = "";
+    }
+    s_context.env.SUNDER_CC =
+        getenv_with_default("SUNDER_CC", STRINGIFY(SUNDER_DEFAULT_CC));
+
+    s_context.arch = cstr_to_arch(s_context.env.SUNDER_ARCH);
+    s_context.host = cstr_to_host(s_context.env.SUNDER_HOST);
+
 #define INIT_BIGINT_CONSTANT(ident, str_literal)                               \
     struct bigint* const ident = bigint_new_cstr(str_literal);                 \
     bigint_freeze(ident);                                                      \
@@ -261,24 +340,6 @@ context_init(void)
     struct type const* const byte = s_context.builtin.byte;
     s_context.builtin.pointer_to_byte = type_unique_pointer(byte);
     s_context.builtin.slice_of_byte = type_unique_slice(byte);
-
-    s_context.env.SUNDER_HOME = getenv_with_default("SUNDER_HOME", "");
-    s_context.env.SUNDER_BACKEND = getenv_with_default(
-        "SUNDER_BACKEND", STRINGIFY(SUNDER_DEFAULT_BACKEND));
-    s_context.env.SUNDER_IMPORT_PATH =
-        getenv_with_default("SUNDER_IMPORT_PATH", "");
-    if (getenv("SUNDER_SYSASM_PATH") != NULL) {
-        s_context.env.SUNDER_SYSASM_PATH = getenv("SUNDER_SYSASM_PATH");
-    }
-    else if (getenv("SUNDER_HOME") != NULL) {
-        s_context.env.SUNDER_SYSASM_PATH =
-            intern_fmt("%s/lib/sys/sys.asm", getenv("SUNDER_HOME"));
-    }
-    else {
-        s_context.env.SUNDER_SYSASM_PATH = "";
-    }
-    s_context.env.SUNDER_CC =
-        getenv_with_default("SUNDER_CC", STRINGIFY(SUNDER_DEFAULT_CC));
 }
 
 /* util.c */

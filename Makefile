@@ -11,10 +11,14 @@
 .SILENT: clean
 
 SUNDER_HOME = $$HOME/.sunder
+SUNDER_DEFAULT_ARCH = $$(sh bin/sunder-platform arch)
+SUNDER_DEFAULT_HOST = $$(sh bin/sunder-platform host)
 SUNDER_DEFAULT_BACKEND = C
 SUNDER_DEFAULT_CC = clang
 
 C99_BASE = \
+	-DSUNDER_DEFAULT_ARCH=$(SUNDER_DEFAULT_ARCH) \
+	-DSUNDER_DEFAULT_HOST=$(SUNDER_DEFAULT_HOST) \
 	-DSUNDER_DEFAULT_BACKEND=$(SUNDER_DEFAULT_BACKEND) \
 	-DSUNDER_DEFAULT_CC=$(SUNDER_DEFAULT_CC)
 C99_DBG = $(C99_BASE) -O0 -g
@@ -39,7 +43,7 @@ CFLAGS = $(C99_REL)
 
 all: build
 
-build: bin/sunder-compile lib/sys/sys.sunder
+build: bin/sunder-compile
 
 SUNDER_COMPILE_OBJS = \
 	sunder-compile.o \
@@ -57,10 +61,6 @@ SUNDER_COMPILE_OBJS = \
 	codegen-nasm.o
 bin/sunder-compile: $(SUNDER_COMPILE_OBJS)
 	$(CC) -o $@ $(CFLAGS) $(SUNDER_COMPILE_OBJS)
-
-lib/sys/sys.sunder:
-	@if [ ! -L lib/sys/sys.sunder -a $$(uname -m) = "x86_64"  ]; then (cd lib/sys && ln -s sys.sunder.amd64 sys.sunder); fi
-	@if [ ! -L lib/sys/sys.sunder -a $$(uname -m) = "aarch64" ]; then (cd lib/sys && ln -s sys.sunder.arm64 sys.sunder); fi
 
 check: build
 	SUNDER_HOME="$(realpath .)" \
@@ -80,7 +80,6 @@ format:
 	clang-format -i *.h *.c lib/sys/sys.h
 
 clean:
-	unlink lib/sys/sys.sunder 2>/dev/null || true
 	rm -f bin/sunder-compile
 	rm -f $$(find . -type f -name 'a.out*')
 	rm -f $$(find . -type f -name '*.out')

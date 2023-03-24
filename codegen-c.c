@@ -2797,7 +2797,9 @@ codegen_c(
     char const* const opt_o)
 {
     assert(opt_o != NULL);
-    assert(0 == strcmp(backend(), "C") || 0 == strcmp(backend(), "c"));
+
+    char const* const backend = context()->env.SUNDER_BACKEND;
+    assert(0 == strcmp(backend, "C") || 0 == strcmp(backend, "c"));
 
     out = string_new(NULL, 0u);
     struct string* const src_path = string_new_fmt("%s.tmp.c", opt_o);

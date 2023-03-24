@@ -1,0 +1,11 @@
+# This module does not have a platform specific override, such as:
+#
+#   module-with-no-platform-specific-override.amd64.sunder
+#
+# or
+#
+#   module-with-no-platform-specific-override.linux.sunder
+#
+# so it will not be skipped by a directory import.
+
+let NO_PLATFORM_SPECIFIC_OVERRIDE = true;

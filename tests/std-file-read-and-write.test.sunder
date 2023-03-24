@@ -1,5 +1,5 @@
 import "std";
-import "sys/sys.sunder";
+import "sys";
 
 let path: []byte = "data.tmp";
 
