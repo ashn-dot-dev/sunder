@@ -1,6 +1,7 @@
 image: fedora/rawhide
 arch: x86_64
 packages:
+  - diffutils
   - gcc
   - clang
   - nasm
