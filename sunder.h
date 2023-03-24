@@ -699,7 +699,7 @@ char const*
 arch_to_cstr(enum arch arch);
 
 enum host {
-    HOST_NONE,
+    HOST_FREESTANDING,
     HOST_LINUX,
 };
 enum host

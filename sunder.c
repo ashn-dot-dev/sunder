@@ -11,7 +11,7 @@ static char const* arch_list[] = {
 };
 
 static char const* host_list[] = {
-    [HOST_NONE] = "none",
+    [HOST_FREESTANDING] = "freestanding",
     [HOST_LINUX] = "linux",
 };
 
