@@ -517,12 +517,6 @@ bigint_magnitude_bit_set(struct bigint* self, size_t n, int value);
 // is left unmodified.
 int
 bigint_to_u8(uint8_t* res, struct bigint const* bigint);
-// Convert a bigint to a uint64_t.
-// Returns zero on success.
-// Returns non-zero if the provided bigint is out-of-range, in which case *res
-// is left unmodified.
-int
-bigint_to_u64(uint64_t* res, struct bigint const* bigint);
 // Convert a bigint to a size_t.
 // Returns zero on success.
 // Returns non-zero if the provided bigint is out-of-range, in which case *res
@@ -676,8 +670,8 @@ unreachable(char const* file, int line);
 // Round up to the nearest multiple of 8.
 int
 ceil8i(int x);
-uint64_t
-ceil8u64(uint64_t x);
+uintmax_t
+ceil8umax(uintmax_t x);
 
 // Spawn a subprocess and wait for it to complete.
 // Returns the exit status of the spawned process.
@@ -1592,24 +1586,24 @@ order(struct module* module);
 //////// ast.c /////////////////////////////////////////////////////////////////
 
 // SIZEOF_UNSIZED and ALIGNOF_UNSIZED are given the largest possible value of a
-// uint64_t so that checks such as `assert(type->size <= 8u)` in the resolve
+// uintmax_t so that checks such as `assert(type->size <= 8u)` in the resolve
 // and code generation phases will fail for unsized types.
-#define SIZEOF_UNSIZED ((uint64_t)UINT64_MAX)
-#define ALIGNOF_UNSIZED ((uint64_t)UINT64_MAX)
+#define SIZEOF_UNSIZED ((uintmax_t)UINTMAX_MAX)
+#define ALIGNOF_UNSIZED ((uintmax_t)UINTMAX_MAX)
 
 // Maximum allowable object size. The size of a type must not exceed the
 // maximum value of an ssize integer, so that the difference between two
 // pointers into an object of that type may always be safely calculated.
-#define SIZEOF_MAX ((int64_t)INT64_MAX)
+#define SIZEOF_MAX ((intmax_t)INT64_MAX)
 // The less-than operator is used instead of the less-than-or-equal-to operator
-// since UINT64_MAX is reserved for SIZEOF_UNSIZED.
-STATIC_ASSERT(sunder_max_sizeof_fits_in_sunder_usize, SIZEOF_MAX < UINT64_MAX);
+// since UINTMAX_MAX is reserved for SIZEOF_UNSIZED.
+STATIC_ASSERT(sizeof_max_fits_in_usize, SIZEOF_MAX < UINTMAX_MAX);
 
 // Helper struct representing a member variable within a composite type.
 struct member_variable {
     char const* name; // interned
     struct type const* type;
-    uint64_t offset;
+    uintmax_t offset;
 };
 
 // Helper struct representing a member variable initializer.
@@ -1620,8 +1614,8 @@ struct member_variable_initializer {
 
 struct type {
     char const* name; // Canonical human-readable type-name (interned)
-    uint64_t size; // sizeof
-    uint64_t align; // alignof
+    uintmax_t size; // sizeof
+    uintmax_t align; // alignof
     // Symbol table corresponding to static symbols belonging to the type. This
     // symbol table does *NOT* contain symbols for struct member variables as
     // member variables are defined only on instances of a struct.
@@ -1670,7 +1664,7 @@ struct type {
             struct type const* base;
         } pointer;
         struct {
-            uint64_t count;
+            uintmax_t count;
             struct type const* base;
         } array;
         struct {
@@ -1729,7 +1723,7 @@ type_new_function(
 struct type*
 type_new_pointer(struct type const* base);
 struct type*
-type_new_array(uint64_t count, struct type const* base);
+type_new_array(uintmax_t count, struct type const* base);
 struct type*
 type_new_slice(struct type const* base);
 // Create a new struct with no members (size zero and alignment zero).
@@ -1755,7 +1749,7 @@ type_unique_pointer(struct type const* base);
 // unique array type has a size that exceeds the maximum allowed object size.
 struct type const*
 type_unique_array(
-    struct source_location location, uint64_t count, struct type const* base);
+    struct source_location location, uintmax_t count, struct type const* base);
 struct type const*
 type_unique_slice(struct type const* base);
 
@@ -1800,14 +1794,14 @@ struct address {
         ADDRESS_LOCAL,
     } kind;
     union {
-        uint64_t absolute;
+        uintmax_t absolute;
         struct {
             // Full normalized name, including nested namespace information,
             // uniquely identifying the base region of the static storage
             // location in which this address resides.
             char const* name; // interned
             // Offset (in bytes) from the base region.
-            uint64_t offset;
+            uintmax_t offset;
         } static_;
         struct {
             // Name uniquely identifying the local.
@@ -1821,9 +1815,9 @@ struct address {
     } data;
 };
 struct address
-address_init_absolute(uint64_t absolute);
+address_init_absolute(uintmax_t absolute);
 struct address
-address_init_static(char const* name, uint64_t offset);
+address_init_static(char const* name, uintmax_t offset);
 struct address
 address_init_local(char const* name, int rbp_offset);
 struct address*

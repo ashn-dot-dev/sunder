@@ -291,8 +291,8 @@ eval_rvalue_cast(struct expr const* expr)
     if (expr->type->kind == TYPE_POINTER) {
         switch (from->type->kind) {
         case TYPE_USIZE: {
-            uint64_t absolute = 0;
-            if (bigint_to_u64(&absolute, from->data.integer)) {
+            uintmax_t absolute = 0;
+            if (bigint_to_umax(&absolute, from->data.integer)) {
                 UNREACHABLE();
             }
             struct value* const result =
@@ -626,8 +626,7 @@ eval_rvalue_access_index(struct expr const* expr)
         if (idx_uz >= lhs->type->data.array.count) {
             fatal(
                 expr->data.access_index.idx->location,
-                "index out-of-bounds (array count is %" PRIu64
-                ", received %zu)",
+                "index out-of-bounds (array count is %ju, received %zu)",
                 lhs->type->data.array.count,
                 idx_uz);
         }
@@ -692,16 +691,14 @@ eval_rvalue_access_slice(struct expr const* expr)
         if (begin_uz >= lhs->type->data.array.count) {
             fatal(
                 expr->data.access_slice.begin->location,
-                "index out-of-bounds (array count is %" PRIu64
-                ", received %zu)",
+                "index out-of-bounds (array count is %ju, received %zu)",
                 lhs->type->data.array.count,
                 begin_uz);
         }
         if (end_uz > lhs->type->data.array.count) {
             fatal(
                 expr->data.access_slice.begin->location,
-                "index out-of-bounds (array count is %" PRIu64
-                ", received %zu)",
+                "index out-of-bounds (array count is %ju, received %zu)",
                 lhs->type->data.array.count,
                 end_uz);
         }
@@ -1480,7 +1477,7 @@ eval_lvalue_access_index(struct expr const* expr)
     if (idx_uz >= expr->data.access_index.lhs->type->data.array.count) {
         fatal(
             expr->data.access_index.idx->location,
-            "index out-of-bounds (array count is %" PRIu64 ", received %s)",
+            "index out-of-bounds (array count is %ju, received %s)",
             lhs->type->data.array.count,
             bigint_to_new_cstr(idx->data.integer));
     }
@@ -1488,7 +1485,7 @@ eval_lvalue_access_index(struct expr const* expr)
     assert(lhs->data.pointer.kind == ADDRESS_STATIC);
     char const* const address_name = lhs->data.pointer.data.static_.name;
     assert(element_type->size <= SIZE_MAX);
-    uint64_t const address_offset = lhs->data.pointer.data.static_.offset
+    uintmax_t const address_offset = lhs->data.pointer.data.static_.offset
         + (size_t)element_type->size * idx_uz;
     struct address const address =
         address_init_static(address_name, address_offset);

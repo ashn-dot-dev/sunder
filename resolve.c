@@ -437,7 +437,7 @@ resolver_reserve_storage_local(
     assert(name != NULL);
     assert(type != NULL);
 
-    self->current_rbp_offset -= (int)ceil8u64(type->size);
+    self->current_rbp_offset -= (int)ceil8umax(type->size);
     if (self->current_rbp_offset < self->current_function->local_stack_offset) {
         self->current_function->local_stack_offset = self->current_rbp_offset;
     }
@@ -1808,7 +1808,7 @@ resolve_decl_function(struct resolver* resolver, struct cst_decl const* decl)
         address->data.local.is_parameter = true;
         freeze(address);
 
-        rbp_offset += (int)ceil8u64(type->size);
+        rbp_offset += (int)ceil8umax(type->size);
 
         struct object* const object = object_new(type, address, NULL);
         freeze(object);
@@ -2195,7 +2195,7 @@ complete_struct(
     //                     # bytes 3->7 (padding)
     //          var z: u64 # bytes 8->15
     //      }
-    uint64_t next_offset = 0;
+    uintmax_t next_offset = 0;
     for (size_t i = 0; i < members_count; ++i) {
         struct cst_member const* const member = members[i];
         switch (member->kind) {
@@ -3335,8 +3335,7 @@ resolve_expr_list(struct resolver* resolver, struct cst_expr const* expr)
             && resolved_ellipsis == NULL) {
             fatal(
                 expr->location,
-                "array of type `%s` created with %zu elements (expected %" PRIu64
-                ")",
+                "array of type `%s` created with %zu elements (expected %ju)",
                 type->name,
                 sbuf_count(resolved_elements),
                 type->data.array.count);
@@ -4899,8 +4898,8 @@ resolve_typespec_array(
     struct value* const count_value = eval_rvalue(count_expr);
 
     assert(count_value->type == context()->builtin.usize);
-    uint64_t count = 0u;
-    if (bigint_to_u64(&count, count_value->data.integer)) {
+    uintmax_t count = 0u;
+    if (bigint_to_umax(&count, count_value->data.integer)) {
         fatal(
             count_expr->location,
             "array count too large (received %s)",

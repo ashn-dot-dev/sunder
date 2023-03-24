@@ -9,8 +9,8 @@
 static struct type*
 type_new(
     char const* name,
-    uint64_t size,
-    uint64_t align,
+    uintmax_t size,
+    uintmax_t align,
     struct symbol_table* symbols,
     enum type_kind kind)
 {
@@ -317,23 +317,23 @@ type_new_pointer(struct type const* base)
 }
 
 struct type*
-type_new_array(uint64_t count, struct type const* base)
+type_new_array(uintmax_t count, struct type const* base)
 {
     assert(base != NULL);
 
     struct string* const name_string =
-        string_new_fmt("[%" PRIu64 "]%s", count, base->name);
+        string_new_fmt("[%ju]%s", count, base->name);
     char const* const name =
         intern(string_start(name_string), string_count(name_string));
     string_del(name_string);
 
-    uint64_t const size = count * base->size;
+    uintmax_t const size = count * base->size;
     assert((count == 0 || size / count == base->size) && "array size overflow");
     // https://en.cppreference.com/w/c/language/_Alignof
     // > Returns the alignment requirement of the type named by type-name. If
     // > type-name is an array type, the result is the alignment requirement of
     // > the array element type.
-    uint64_t const align = base->align;
+    uintmax_t const align = base->align;
 
     struct symbol_table* const symbols =
         symbol_table_new(context()->global_symbol_table);
@@ -459,11 +459,11 @@ type_unique_pointer(struct type const* base)
 
 struct type const*
 type_unique_array(
-    struct source_location location, uint64_t count, struct type const* base)
+    struct source_location location, uintmax_t count, struct type const* base)
 {
     assert(base != NULL);
 
-    uint64_t const size = count * base->size;
+    uintmax_t const size = count * base->size;
     bool const size_overflow = count != 0 && size / count != base->size;
     if (size_overflow || size > SIZEOF_MAX) {
         fatal(location, "array size exceeds the maximum allowable object size");
@@ -609,7 +609,7 @@ type_can_compare_order(struct type const* self)
 }
 
 struct address
-address_init_absolute(uint64_t absolute)
+address_init_absolute(uintmax_t absolute)
 {
     struct address self = {0};
     self.kind = ADDRESS_ABSOLUTE;
@@ -618,7 +618,7 @@ address_init_absolute(uint64_t absolute)
 }
 
 struct address
-address_init_static(char const* name, uint64_t offset)
+address_init_static(char const* name, uintmax_t offset)
 {
     assert(name != NULL);
 
@@ -2279,8 +2279,8 @@ value_to_new_bytes(struct value const* value)
     }
     case TYPE_ARRAY: {
         sbuf(struct value*) const elements = value->data.array.elements;
-        uint64_t const element_size = value->type->data.array.base->size;
-        uint64_t offset = 0;
+        uintmax_t const element_size = value->type->data.array.base->size;
+        uintmax_t offset = 0;
         for (size_t i = 0; i < sbuf_count(elements); ++i) {
             sbuf(uint8_t) const element_bytes = value_to_new_bytes(elements[i]);
             assert(element_size <= SIZE_MAX);

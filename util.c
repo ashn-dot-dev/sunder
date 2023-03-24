@@ -1772,21 +1772,6 @@ bigint_to_u8(uint8_t* res, struct bigint const* bigint)
 }
 
 int
-bigint_to_u64(uint64_t* res, struct bigint const* bigint)
-{
-    assert(res != NULL);
-    assert(bigint != NULL);
-
-    uintmax_t umax = 0;
-    if (bigint_to_umax(&umax, bigint) || (umax > UINT64_MAX)) {
-        return -1;
-    }
-
-    *res = (uint64_t)umax;
-    return 0;
-}
-
-int
 bigint_to_uz(size_t* res, struct bigint const* bigint)
 {
     assert(res != NULL);
@@ -2319,8 +2304,8 @@ ceil8i(int x)
     return x;
 }
 
-uint64_t
-ceil8u64(uint64_t x)
+uintmax_t
+ceil8umax(uintmax_t x)
 {
     while (x % 8u != 0u) {
         x += 1u;
