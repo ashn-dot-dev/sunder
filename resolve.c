@@ -1481,10 +1481,10 @@ resolve_import_file(
         platform_to_cstr(context()->arch, context()->host);
     char const* const arch = arch_to_cstr(context()->arch);
     char const* const host = host_to_cstr(context()->host);
-    size_t path_count = strlen(path);
-    assert(path_count >= STR_LITERAL_COUNT(".sunder"));
-    size_t stem_count = path_count - STR_LITERAL_COUNT(".sunder");
-    char const* const stem = intern_fmt("%.*s", (int)stem_count, path);
+    size_t file_name_count = strlen(file_name);
+    assert(file_name_count >= STR_LITERAL_COUNT(".sunder"));
+    size_t stem_count = file_name_count - STR_LITERAL_COUNT(".sunder");
+    char const* const stem = intern_fmt("%.*s", (int)stem_count, file_name);
     char const* const dot = strchr(stem, '.');
     bool const is_special_file = dot != NULL;
     if (from_directory && is_special_file) {
