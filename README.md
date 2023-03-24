@@ -116,16 +116,20 @@ The `-o OUT` option may be used to specify the name of the output executable.
 If this option is not provided then the output executable will default to the
 name `a.out`.
 
-The intermediate files `OUT.tmp.asm` and `OUT.tmp.o` (output executable name
-plus `tmp.asm` and `tmp.o` extensions) are generated during compilation and
-subsequently removed after the output executable has been created. The `-k`
-flag will instruct the compiler *not* to remove these files (useful for
-debugging).
+The intermediate files `OUT.tmp.asm`, `OUT.tmp.c`, and `OUT.tmp.o` (output
+executable name plus `tmp.asm`, `tmp.c`, and `tmp.o` extensions) are generated
+during compilation (depending on the chosen `SUNDER_BACKEND`) and subsequently
+removed after the output executable has been created. The `-k` flag will
+instruct the compiler *not* to remove these files (useful for debugging).
 
 ```sh
-$ sunder-compile -k -o hello examples/hello.sunder
+$ SUNDER_BACKEND=C sunder-compile -k -o hello examples/hello.sunder
 $ ls hello*
-hello  hello.asm  hello.o
+hello  hello.tmp.c
+
+$ SUNDER_BACKEND=nasm sunder-compile -k -o hello examples/hello.sunder
+$ ls hello*
+hello  hello.tmp.asm  hello.tmp.o
 ```
 
 The following environment variables affect compiler behavior:
