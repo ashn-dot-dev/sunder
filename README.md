@@ -138,9 +138,8 @@ The following environment variables affect compiler behavior:
   module search path for `import` statements.
 + `SUNDER_SYSASM_PATH` => Location of the platform specific `sys.asm` file that
   defines the program entry point as well as low-level operating system and
-  hardware abstractions for when using the NASM backend. If this environment
-  variable is not set, then the default path, `$SUNDER_HOME/lib/sys/sys.asm`,
-  is used.
+  hardware abstractions when using the NASM backend. If this environment
+  variable is not set, then the default path is used.
 + `SUNDER_CC` => Selects the C compiler to be used when compiling with the C
   backend. Currently, `SUNDER_CC=clang` and `SUNDER_CC=gcc` are supported. If
   this environment variable is not set, then the default C compiler is used.

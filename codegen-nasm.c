@@ -847,7 +847,11 @@ load_sysasm(void** buf, size_t* buf_size)
         if (SUNDER_HOME == NULL) {
             fatal(NO_LOCATION, "missing environment variable SUNDER_HOME");
         }
-        path = string_new_fmt("%s/lib/sys/sys.asm", SUNDER_HOME);
+        path = string_new_fmt(
+            "%s/lib/sys/sys.%s-%s.asm",
+            SUNDER_HOME,
+            context()->env.SUNDER_ARCH,
+            context()->env.SUNDER_HOST);
     }
 
     if (file_read_all(string_start(path), buf, buf_size)) {

@@ -20,5 +20,5 @@ a.out*
 *.tmp
 *.log
 
-!lib/sys/sys.asm
+!lib/sys/sys.amd64-linux.asm
 !examples/custom-sys-asm/sys.asm
