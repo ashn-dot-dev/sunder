@@ -48,7 +48,9 @@ esac
 done
 
 if [ "$#" -eq 0 ]; then
-    echo "$(arch)-$(host)"
+    ARCH="$(arch)"
+    HOST="$(host)"
+    echo "${ARCH}-${HOST}"
     exit 0
 fi
 
