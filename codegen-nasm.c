@@ -1939,8 +1939,7 @@ push_rvalue_access_index_lhs_array(struct expr const* expr, size_t id)
         appendli("jb %s%zu_op", LABEL_EXPR, id);
         appendli("call __fatal_index_out_of_bounds");
         appendln("%s%zu_op:", LABEL_EXPR, id);
-        appendli(
-            "mov rbx, %ju", element_type->size); // sizeof(element_type)
+        appendli("mov rbx, %ju", element_type->size); // sizeof(element_type)
         appendli("mul rbx"); // index * sizeof(element_type)
         appendli("pop rbx"); // start
         appendli("add rax, rbx"); // start + index * sizeof(element_type)
