@@ -3429,14 +3429,16 @@ codegen_nasm(
     assert(opt_o != NULL);
 
     char const* const backend = context()->env.SUNDER_BACKEND;
-    assert(0 == strcmp(backend, "nasm") || 0 == strcmp(backend, "yasm"));
+    bool const is_nasm = cstr_eq_ignore_case(backend, "nasm");
+    bool const is_yasm = cstr_eq_ignore_case(backend, "yasm");
+    assert(is_nasm || is_yasm);
 
     out = string_new(NULL, 0u);
     struct string* const asm_path = string_new_fmt("%s.tmp.asm", opt_o);
     struct string* const obj_path = string_new_fmt("%s.tmp.o", opt_o);
 
     sbuf(char const*) backend_argv = NULL;
-    if (0 == strcmp(backend, "nasm")) {
+    if (is_nasm) {
         sbuf_push(backend_argv, "nasm");
         sbuf_push(backend_argv, "-o");
         if (opt_c) {
@@ -3453,7 +3455,7 @@ codegen_nasm(
         sbuf_push(backend_argv, string_start(asm_path));
         sbuf_push(backend_argv, (char const*)NULL);
     }
-    if (0 == strcmp(backend, "yasm")) {
+    if (is_yasm) {
         sbuf_push(backend_argv, "yasm");
         sbuf_push(backend_argv, "-o");
         if (opt_c) {

@@ -2799,7 +2799,7 @@ codegen_c(
     assert(opt_o != NULL);
 
     char const* const backend = context()->env.SUNDER_BACKEND;
-    assert(0 == strcmp(backend, "C") || 0 == strcmp(backend, "c"));
+    assert(cstr_eq_ignore_case(backend, "C"));
 
     out = string_new(NULL, 0u);
     struct string* const src_path = string_new_fmt("%s.tmp.c", opt_o);

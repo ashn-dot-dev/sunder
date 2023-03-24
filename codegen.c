@@ -15,12 +15,13 @@ codegen(
     assert(opt_o != NULL);
 
     char const* const backend = context()->env.SUNDER_BACKEND;
-    if (0 == strcmp(backend, "C") || 0 == strcmp(backend, "c")) {
+    if (cstr_eq_ignore_case(backend, "C")) {
         codegen_c(opt_c, opt_k, opt_L, opt_l, opt_o);
         return;
     }
 
-    if (0 == strcmp(backend, "nasm") || 0 == strcmp(backend, "yasm")) {
+    if (cstr_eq_ignore_case(backend, "nasm")
+        || cstr_eq_ignore_case(backend, "yasm")) {
         codegen_nasm(opt_c, opt_k, opt_L, opt_l, opt_o);
         return;
     }

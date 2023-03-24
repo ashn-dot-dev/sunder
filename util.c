@@ -107,6 +107,24 @@ safe_isxdigit(int c)
 }
 
 int
+safe_tolower(int c)
+{
+    if (safe_isupper(c)) {
+        return c | 0x20;
+    }
+    return c;
+}
+
+int
+safe_toupper(int c)
+{
+    if (safe_islower(c)) {
+        return c & 0x5f;
+    }
+    return c;
+}
+
+int
 safe_memcmp(void const* s1, void const* s2, size_t n)
 {
     assert(s1 != NULL || n == 0);
@@ -425,6 +443,27 @@ cstr_ends_with(char const* cstr, char const* target)
     }
     char const* const start = cstr + (cstr_count - target_count);
     return safe_memcmp(start, target, target_count) == 0;
+}
+
+bool
+cstr_eq_ignore_case(char const* lhs, char const* rhs)
+{
+    assert(lhs != NULL);
+    assert(rhs != NULL);
+
+    size_t const lhs_count = strlen(lhs);
+    size_t const rhs_count = strlen(lhs);
+    if (lhs_count != rhs_count) {
+        return false;
+    }
+
+    for (size_t i = 0; i < lhs_count; ++i) {
+        if (safe_tolower(lhs[i]) != safe_tolower(rhs[i])) {
+            return false;
+        }
+    }
+
+    return true;
 }
 
 // Variation of djb2 that hashes a start-count pair.

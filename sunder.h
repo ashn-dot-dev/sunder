@@ -89,6 +89,8 @@ int safe_isupper(int c);
 int safe_isbdigit(int c); // Not in C99. Binary digit.
 int safe_isodigit(int c); // Not in C99. Octal digit.
 int safe_isxdigit(int c);
+int safe_tolower(int c);
+int safe_toupper(int c);
 // clang-format on
 
 // Alternatives to the C99 standard library functions in string.h. These
@@ -166,6 +168,9 @@ cstr_starts_with(char const* cstr, char const* target);
 // Returns true if cstr ends with target.
 bool
 cstr_ends_with(char const* cstr, char const* target);
+// Returns true if lhs and rhs are equal, ignoring case.
+bool
+cstr_eq_ignore_case(char const* lhs, char const* rhs);
 
 // Initialize the interned string set.
 void
