@@ -1,0 +1,39 @@
+import "std";
+
+func test(cstr: *byte) void {
+    var data = std::cstr::data(cstr);
+    std::print_format_line(
+        std::out(),
+        "{}",
+        (:[]std::formatter)[std::formatter::init[[[]byte]](&data)]);
+}
+
+func main() void {
+    var s = std::string::init_with_allocator(std::null_allocator::ALLOCATOR);
+    defer s.fini();
+    test(s.cstr());
+    std::assert(s.cstr() != s.start());
+
+    # Using an allocator deliberately filled with non-NUL bytes to ensure that
+    # the NUL terminator is actually being written.
+    var buf = (:[1000]byte)[0xFF...];
+    var allocator = std::linear_allocator::init(buf[0:countof(buf)]);
+    var allocator = std::allocator::init[[typeof(allocator)]](&allocator);
+    var s = std::string::init_from_str_with_allocator(allocator, "foo bar");
+    defer s.fini();
+    test(s.cstr());
+    std::print(std::writer::init[[std::string]](&s), " baz");
+    test(s.cstr());
+    s.resize(countof("foo bar"));
+    test(s.cstr());
+
+    var s = std::string::init_from_str("foo\0bar");
+    defer s.fini();
+    test(s.cstr());
+}
+################################################################################
+#
+# foo bar
+# foo bar baz
+# foo bar
+# foo

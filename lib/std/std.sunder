@@ -2773,6 +2773,26 @@ struct string {
         return (:[]byte){self.*._start, self.*._count};
     }
 
+    # Returns a pointer to the first byte of the string (NUL-terminated). For
+    # strings with a count of zero, a pointer to a static NUL-terminated string
+    # is returned instead. This function does not allocate memory.
+    func cstr(self: *string) *byte {
+        if self.*._capacity == 0 {
+            return startof("");
+        }
+
+        # The total amount of memory allocated for the string is:
+        #
+        #   capacity + countof("\0")
+        #
+        # to account for a potential terminating NUL byte. It should always be
+        # safe to write the NUL-terminator at index `start + count`, even if
+        # the count of the string is equal to the capacity of the string.
+        *std::ptr[[byte]]::add(self.*._start, self.*._count) = '\0';
+
+        return self.*._start;
+    }
+
     # Compares the strings as if they were byte slices.
     func compare(lhs: *string, rhs: *string) ssize {
         var lhs_data = lhs.*.data();
@@ -2801,14 +2821,14 @@ struct string {
         }
 
         if self.*._capacity == 0 {
-            var new = std::slice[[byte]]::new_with_allocator(self.*._allocator, capacity);
+            var new = std::slice[[byte]]::new_with_allocator(self.*._allocator, capacity + countof("\0"));
             self.*._start = &new[0];
             self.*._capacity = capacity;
             return;
         }
 
-        var cur = (:[]byte){self.*._start, self.*._capacity};
-        var new = std::slice[[byte]]::resize_with_allocator(self.*._allocator, cur, capacity);
+        var cur = (:[]byte){self.*._start, self.*._capacity + countof("\0")};
+        var new = std::slice[[byte]]::resize_with_allocator(self.*._allocator, cur, capacity + countof("\0"));
         self.*._start = &new[0];
         self.*._capacity = capacity;
     }
