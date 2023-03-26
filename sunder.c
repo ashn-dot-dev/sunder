@@ -257,6 +257,7 @@ context_init(void)
     }
     s_context.env.SUNDER_CC =
         getenv_with_default("SUNDER_CC", STRINGIFY(SUNDER_DEFAULT_CC));
+    s_context.env.SUNDER_CFLAGS = getenv_with_default("SUNDER_CFLAGS", "");
 
     s_context.arch = cstr_to_arch(s_context.env.SUNDER_ARCH);
     s_context.host = cstr_to_host(s_context.env.SUNDER_HOST);

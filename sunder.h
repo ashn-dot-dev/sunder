@@ -788,6 +788,7 @@ struct context {
         char const* SUNDER_IMPORT_PATH;
         char const* SUNDER_SYSASM_PATH;
         char const* SUNDER_CC;
+        char const* SUNDER_CFLAGS;
     } env;
 
     // Target SUNDER_ARCH and SUNDER_HOST.

@@ -2866,6 +2866,16 @@ codegen_c(
             sbuf_push(backend_argv, intern_fmt("-l%s", opt_l[i]));
         }
     }
+    struct string* const flags = string_new_cstr(context()->env.SUNDER_CFLAGS);
+    sbuf(struct string*) const split =
+        string_split(flags, " ", STR_LITERAL_COUNT(" "));
+    for (size_t i = 0; i < sbuf_count(split); ++i) {
+        sbuf_push(
+            backend_argv,
+            intern(string_start(split[i]), string_count(split[i])));
+        string_del(split[i]);
+    }
+    string_del(flags);
     sbuf_push(backend_argv, (char const*)NULL);
 
     appendln("#include \"sys.h\"");
