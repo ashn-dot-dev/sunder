@@ -147,8 +147,8 @@ The following environment variables affect compiler behavior:
 + `SUNDER_CC` => Selects the C compiler to be used when compiling with the C
   backend. Currently, `SUNDER_CC=clang` and `SUNDER_CC=gcc` are supported. If
   this environment variable is not set, then the default C compiler is used.
-+ `SUNDER_CFLAGS` => List of additional flags passed to the C compiler when
-  compiling with the C backend, separated by a single space.
++ `SUNDER_CFLAGS` => Space-separated list of additional flags passed to the C
+  compiler when compiling with the C backend.
 
 ## Using Sunder as a Scripting Language
 Sunder can be used for scripting by adding `#!/usr/bin/env sunder-run` (or

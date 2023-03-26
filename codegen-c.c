@@ -2870,9 +2870,11 @@ codegen_c(
     sbuf(struct string*) const split =
         string_split(flags, " ", STR_LITERAL_COUNT(" "));
     for (size_t i = 0; i < sbuf_count(split); ++i) {
-        sbuf_push(
-            backend_argv,
-            intern(string_start(split[i]), string_count(split[i])));
+        if (string_count(split[i]) != 0) {
+            sbuf_push(
+                backend_argv,
+                intern(string_start(split[i]), string_count(split[i])));
+        }
         string_del(split[i]);
     }
     string_del(flags);
