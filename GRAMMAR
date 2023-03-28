@@ -152,7 +152,9 @@
 
 <literal-bytes> ::= '"' <character>* '"'
 
-<symbol> ::= "::"? <symbol-element> ("::" <symbol-element>)*
+<symbol> ::= <symbol-element> ("::" <symbol-element>)*
+           | "::" <symbol-element> ("::" <symbol-element>)*
+           | <typespec-typeof> "::" <symbol-element> ("::" <symbol-element>)*
 
 <symbol-element> ::= <identifier> <template-argument-list>?
 

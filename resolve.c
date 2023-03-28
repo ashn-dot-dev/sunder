@@ -563,9 +563,26 @@ xget_symbol(struct resolver* resolver, struct cst_symbol const* target)
     assert(sbuf_count(target->elements) != 0);
     struct cst_symbol_element const* const element = target->elements[0];
     char const* const name = element->identifier.name;
-    struct symbol_table const* const symbol_table = target->is_from_root
-        ? resolver->module->symbols
-        : resolver->current_symbol_table;
+
+    struct symbol_table const* symbol_table = NULL;
+    switch (target->start) {
+    case CST_SYMBOL_START_NONE: {
+        symbol_table = resolver->current_symbol_table;
+        break;
+    }
+    case CST_SYMBOL_START_ROOT: {
+        symbol_table = resolver->module->symbols;
+        break;
+    }
+    case CST_SYMBOL_START_TYPE: {
+        struct type const* const type =
+            resolve_typespec_typeof(resolver, target->typespec);
+        symbol_table = type->symbols;
+        break;
+    }
+    }
+    assert(symbol_table != NULL);
+
     struct symbol const* lhs = symbol_table_lookup(symbol_table, name);
     if (lhs == NULL) {
         fatal(target->location, "use of undeclared identifier `%s`", name);

@@ -630,15 +630,18 @@ cst_expr_new_binary(
 struct cst_symbol*
 cst_symbol_new(
     struct source_location location,
-    bool is_from_root,
+    enum cst_symbol_start start,
+    struct cst_typespec const* typespec,
     struct cst_symbol_element const* const* elements)
 {
     assert(sbuf_count(elements) > 0);
+    assert(start == CST_SYMBOL_START_TYPE || typespec == NULL);
 
     struct cst_symbol* const self = xalloc(NULL, sizeof(*self));
     memset(self, 0x00, sizeof(*self));
     self->location = location;
-    self->is_from_root = is_from_root;
+    self->start = start;
+    self->typespec = typespec;
     self->elements = elements;
     return self;
 }

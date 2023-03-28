@@ -446,8 +446,8 @@ order_symbol(struct orderer* orderer, struct cst_symbol const* symbol)
     char const* const symbol_elem0_name = symbol->elements[0]->identifier.name;
     bool const symbol_elem0_defined_in_current_module =
         orderer_tldecl_lookup(orderer, symbol_elem0_name) != NULL;
-    bool const search_qualified_symbol =
-        symbol->is_from_root || !symbol_elem0_defined_in_current_module;
+    bool const search_qualified_symbol = symbol->start == CST_SYMBOL_START_ROOT
+        || !symbol_elem0_defined_in_current_module;
     if (search_qualified_symbol) {
         struct cst_namespace const* const namespace =
             orderer->module->cst->namespace;
@@ -474,8 +474,13 @@ order_symbol(struct orderer* orderer, struct cst_symbol const* symbol)
         return;
     }
 
+    if (symbol->start == CST_SYMBOL_START_TYPE) {
+        order_typespec(orderer, symbol->typespec);
+        return;
+    }
+
     // Perform ordering based on the first element of the symbol.
-    assert(!symbol->is_from_root);
+    assert(symbol->start != CST_SYMBOL_START_ROOT);
     order_identifier(orderer, &symbol->elements[0]->identifier);
 }
 

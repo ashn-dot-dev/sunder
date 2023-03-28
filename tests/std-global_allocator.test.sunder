@@ -1,6 +1,48 @@
 import "std";
 
+struct custom_allocator {
+    var backing_allocator: std::general_allocator;
+
+    func init() custom_allocator {
+        return (:custom_allocator){
+            .backing_allocator = std::general_allocator::init()
+        };
+    }
+
+    func fini(self: *custom_allocator) void {
+        self.*.backing_allocator.fini();
+    }
+
+    func allocate(self: *custom_allocator, align: usize, size: usize) std::result[[*any, std::error]] {
+        std::print_line(std::out(), "allocating");
+        return self.*.backing_allocator.allocate(align, size);
+    }
+
+    func reallocate(self: *custom_allocator, ptr: *any, align: usize, old_size: usize, new_size: usize) std::result[[*any, std::error]] {
+        std::print_line(std::out(), "reallocating");
+        return self.*.backing_allocator.reallocate(ptr, align, old_size, new_size);
+    }
+
+    func deallocate(self: *custom_allocator, ptr: *any, align: usize, size: usize) void {
+        std::print_line(std::out(), "deallocating");
+        self.*.backing_allocator.deallocate(ptr, align, size);
+    }
+}
+
 func main() void {
+    std::print_line(std::out(), "using default global allocator");
+    var x = std::new_with_allocator[[ssize]](std::global_allocator());
+    std::delete_with_allocator[[ssize]](std::global_allocator(), x);
+
+    std::print_line(std::out(), "using custom global allocator");
+    var allocator = custom_allocator::init();
+    defer allocator.fini();
+    std::set_global_allocator(std::allocator::init[[custom_allocator]](&allocator));
     var x = std::new_with_allocator[[ssize]](std::global_allocator());
     std::delete_with_allocator[[ssize]](std::global_allocator(), x);
 }
+################################################################################
+# using default global allocator
+# using custom global allocator
+# allocating
+# deallocating

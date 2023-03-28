@@ -1,0 +1,14 @@
+import "std";
+
+struct foo {
+    var variable: usize;
+    let CONSTANT = 0xBEEFu16;
+}
+
+func main() void {
+    var f = (:foo){.variable = 123};
+    typeof(f)::CONSTANT;
+    std::print_format_line(std::out(), "{#X}", (:[]std::formatter)[std::formatter::init[[u16]](&typeof(f)::CONSTANT)]);
+}
+################################################################################
+# 0xBEEF

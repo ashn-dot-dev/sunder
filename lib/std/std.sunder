@@ -313,16 +313,26 @@ struct allocator {
     }
 }
 
-# The general allocator used by `std::global_allocator`.
-#
-# This object should be treated as read-only. Any program that mutates this
-# object directly is considered ill-formed.
-var global_general_allocator: std::general_allocator = uninit;
+let _DEFAULT_GLOBAL_ALLOCATOR_ITABLE = (:std::allocator_itable){
+    .allocate = std::general_allocator::allocate,
+    .reallocate = std::general_allocator::reallocate,
+    .deallocate = std::general_allocator::deallocate,
+};
+var _DEFAULT_GLOBAL_ALLOCATOR_OBJECT: std::general_allocator = uninit;
+var _global_allocator = (:std::allocator){
+    .itable = &_DEFAULT_GLOBAL_ALLOCATOR_ITABLE,
+    .object = &_DEFAULT_GLOBAL_ALLOCATOR_OBJECT,
+};
 
-# The allocator used by the standard library for dynamic memory allocation in
-# scenarios where an allocator is not explicitly provided.
+# Set the global allocator used by the standard library.
+func set_global_allocator(allocator: std::allocator) void {
+    _global_allocator = allocator;
+}
+
+# Returns the allocator used by the standard library for dynamic memory
+# allocation in scenarios where an allocator is not explicitly provided.
 func global_allocator() std::allocator {
-    return std::allocator::init[[std::general_allocator]](&global_general_allocator);
+    return _global_allocator;
 }
 
 # Allocator that will never successfully allocate, reallocate, or free memory.

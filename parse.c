@@ -904,6 +904,7 @@ token_kind_nud(enum token_kind kind)
 {
     switch (kind) {
     case TOKEN_IDENTIFIER: /* fallthrough */
+    case TOKEN_TYPEOF: /* fallthrough */
     case TOKEN_COLON_COLON: {
         return parse_expr_symbol;
     }
@@ -1373,18 +1374,52 @@ parse_symbol(struct parser* parser)
 {
     assert(parser != NULL);
 
-    struct source_location location = {0};
-    bool is_from_root = false;
     if (check_current(parser, TOKEN_COLON_COLON)) {
-        is_from_root = true;
-        location = expect_current(parser, TOKEN_COLON_COLON).location;
+        enum cst_symbol_start const start = CST_SYMBOL_START_ROOT;
+        struct source_location const location =
+            expect_current(parser, TOKEN_COLON_COLON).location;
+
+        sbuf(struct cst_symbol_element const*) elements = NULL;
+        sbuf_push(elements, parse_symbol_element(parser));
+        while (check_current(parser, TOKEN_COLON_COLON)) {
+            expect_current(parser, TOKEN_COLON_COLON);
+            sbuf_push(elements, parse_symbol_element(parser));
+        }
+        sbuf_freeze(elements);
+
+        struct cst_symbol* const product =
+            cst_symbol_new(location, start, NULL, elements);
+
+        freeze(product);
+        return product;
     }
 
+    if (check_current(parser, TOKEN_TYPEOF)) {
+        enum cst_symbol_start const start = CST_SYMBOL_START_TYPE;
+        struct cst_typespec const* const typespec = parse_typespec(parser);
+        struct source_location const location = typespec->location;
+
+        expect_current(parser, TOKEN_COLON_COLON);
+
+        sbuf(struct cst_symbol_element const*) elements = NULL;
+        sbuf_push(elements, parse_symbol_element(parser));
+        while (check_current(parser, TOKEN_COLON_COLON)) {
+            expect_current(parser, TOKEN_COLON_COLON);
+            sbuf_push(elements, parse_symbol_element(parser));
+        }
+        sbuf_freeze(elements);
+
+        struct cst_symbol* const product =
+            cst_symbol_new(location, start, typespec, elements);
+
+        freeze(product);
+        return product;
+    }
+
+    enum cst_symbol_start const start = CST_SYMBOL_START_NONE;
     sbuf(struct cst_symbol_element const*) elements = NULL;
     sbuf_push(elements, parse_symbol_element(parser));
-    if (!is_from_root) {
-        location = elements[0]->location;
-    }
+    struct source_location const location = elements[0]->location;
     while (check_current(parser, TOKEN_COLON_COLON)) {
         expect_current(parser, TOKEN_COLON_COLON);
         sbuf_push(elements, parse_symbol_element(parser));
@@ -1392,7 +1427,7 @@ parse_symbol(struct parser* parser)
     sbuf_freeze(elements);
 
     struct cst_symbol* const product =
-        cst_symbol_new(location, is_from_root, elements);
+        cst_symbol_new(location, start, NULL, elements);
 
     freeze(product);
     return product;

@@ -1438,19 +1438,35 @@ struct cst_expr*
 cst_expr_new_binary(
     struct token op, struct cst_expr const* lhs, struct cst_expr const* rhs);
 
+enum cst_symbol_start {
+    // Symbol starts with no special construct.
+    //
+    //  foo::bar::baz
+    CST_SYMBOL_START_NONE,
+    // Symbol starts with "::", indicating that symbol lookup should start from
+    // the module root symbol table instead of the current scope symbol table:
+    //
+    //  ::foo::bar::baz
+    CST_SYMBOL_START_ROOT,
+    // Symbol starts with a "typeof" type specifier, indicating that symbol
+    // lookup should start from the corresponding type's symbol table.
+    //
+    //  typeof(foo)::bar::baz
+    CST_SYMBOL_START_TYPE,
+};
+
 struct cst_symbol {
     struct source_location location;
-    // True if this symbol starts with a "::", indicating that symbol lookup
-    // should start from the module root symbol table instead of the current
-    // scope symbol table.
-    bool is_from_root;
+    enum cst_symbol_start start;
+    struct cst_typespec const* typespec; // Optional (CST_SYMBOL_START_TYPE)
     // Individual symbol elements separated by "::".
     sbuf(struct cst_symbol_element const* const) elements;
 };
 struct cst_symbol*
 cst_symbol_new(
     struct source_location location,
-    bool is_from_root,
+    enum cst_symbol_start start,
+    struct cst_typespec const* typespec,
     struct cst_symbol_element const* const* elements);
 
 struct cst_symbol_element {
