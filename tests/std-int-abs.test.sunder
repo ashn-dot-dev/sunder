@@ -1,0 +1,24 @@
+import "std";
+
+func main() void {
+    var x = s32::abs(+123);
+    var y = s32::abs(-123);
+    std::print_format_line(
+        std::out(),
+        "{} {}",
+        (:[]std::formatter)[
+            std::formatter::init[[typeof(x)]](&x),
+            std::formatter::init[[typeof(y)]](&y)]);
+
+    var x = ssize::abs(+123);
+    var y = ssize::abs(-123);
+    std::print_format_line(
+        std::out(),
+        "{} {}",
+        (:[]std::formatter)[
+            std::formatter::init[[typeof(x)]](&x),
+            std::formatter::init[[typeof(y)]](&y)]);
+}
+################################################################################
+# 123 123
+# 123 123

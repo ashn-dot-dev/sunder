@@ -3931,6 +3931,27 @@ extend integer func _init_sint_from_str[[T]](str: []byte, radix: usize) std::res
     return std::result[[T, std::error]]::init_value((:T)result.value());
 }
 
+extend integer func _abs[[T]](int: T) T {
+    if int < 0 {
+        return -int;
+    }
+    return int;
+}
+
+extend integer func _min[[T]](lhs: T, rhs: T) T {
+    if lhs < rhs {
+        return lhs;
+    }
+    return rhs;
+}
+
+extend integer func _max[[T]](lhs: T, rhs: T) T {
+    if lhs > rhs {
+        return lhs;
+    }
+    return rhs;
+}
+
 extend integer func _compare[[T]](lhs: T, rhs: T) ssize {
     if lhs < rhs { return -1; }
     if lhs > rhs { return +1; }
@@ -4091,6 +4112,12 @@ extend u8 let MAX: u8 = 0xFF;
 extend u8 func init_from_str(str: []byte, radix: usize) std::result[[u8, std::error]] {
     return integer::_init_uint_from_str[[u8]](str, radix);
 }
+extend u8 func min(lhs: u8, rhs: u8) u8 {
+    return integer::_min[[u8]](lhs, rhs);
+}
+extend u8 func max(lhs: u8, rhs: u8) u8 {
+    return integer::_max[[u8]](lhs, rhs);
+}
 extend u8 func compare(lhs: *u8, rhs: *u8) ssize {
     return integer::_compare[[std::umax]]((:std::umax)*lhs, (:std::umax)*rhs);
 }
@@ -4105,6 +4132,12 @@ extend u16 let MIN: u16 = 0x0000;
 extend u16 let MAX: u16 = 0xFFFF;
 extend u16 func init_from_str(str: []byte, radix: usize) std::result[[u16, std::error]] {
     return integer::_init_uint_from_str[[u16]](str, radix);
+}
+extend u16 func min(lhs: u16, rhs: u16) u16 {
+    return integer::_min[[u16]](lhs, rhs);
+}
+extend u16 func max(lhs: u16, rhs: u16) u16 {
+    return integer::_max[[u16]](lhs, rhs);
 }
 extend u16 func compare(lhs: *u16, rhs: *u16) ssize {
     return integer::_compare[[std::umax]]((:std::umax)*lhs, (:std::umax)*rhs);
@@ -4121,6 +4154,12 @@ extend u32 let MAX: u32 = 0xFFFFFFFF;
 extend u32 func init_from_str(str: []byte, radix: usize) std::result[[u32, std::error]] {
     return integer::_init_uint_from_str[[u32]](str, radix);
 }
+extend u32 func min(lhs: u32, rhs: u32) u32 {
+    return integer::_min[[u32]](lhs, rhs);
+}
+extend u32 func max(lhs: u32, rhs: u32) u32 {
+    return integer::_max[[u32]](lhs, rhs);
+}
 extend u32 func compare(lhs: *u32, rhs: *u32) ssize {
     return integer::_compare[[std::umax]]((:std::umax)*lhs, (:std::umax)*rhs);
 }
@@ -4135,6 +4174,12 @@ extend u64 let MIN: u64 = 0x0000000000000000;
 extend u64 let MAX: u64 = 0xFFFFFFFFFFFFFFFF;
 extend u64 func init_from_str(str: []byte, radix: usize) std::result[[u64, std::error]] {
     return integer::_init_uint_from_str[[u64]](str, radix);
+}
+extend u64 func min(lhs: u64, rhs: u64) u64 {
+    return integer::_min[[u64]](lhs, rhs);
+}
+extend u64 func max(lhs: u64, rhs: u64) u64 {
+    return integer::_max[[u64]](lhs, rhs);
 }
 extend u64 func compare(lhs: *u64, rhs: *u64) ssize {
     return integer::_compare[[std::umax]]((:std::umax)*lhs, (:std::umax)*rhs);
@@ -4151,6 +4196,12 @@ extend usize let MAX: usize = (:usize)u64::MAX;
 extend usize func init_from_str(str: []byte, radix: usize) std::result[[usize, std::error]] {
     return integer::_init_uint_from_str[[usize]](str, radix);
 }
+extend usize func min(lhs: usize, rhs: usize) usize {
+    return integer::_min[[usize]](lhs, rhs);
+}
+extend usize func max(lhs: usize, rhs: usize) usize {
+    return integer::_max[[usize]](lhs, rhs);
+}
 extend usize func compare(lhs: *usize, rhs: *usize) ssize {
     return integer::_compare[[std::umax]]((:std::umax)*lhs, (:std::umax)*rhs);
 }
@@ -4165,6 +4216,15 @@ extend s8 let MIN: s8 = (:s8)0x80u8;
 extend s8 let MAX: s8 = (:s8)0x7Fu8;
 extend s8 func init_from_str(str: []byte, radix: usize) std::result[[s8, std::error]] {
     return integer::_init_sint_from_str[[s8]](str, radix);
+}
+extend s8 func abs(int: s8) s8 {
+    return integer::_abs[[s8]](int);
+}
+extend s8 func min(lhs: s8, rhs: s8) s8 {
+    return integer::_min[[s8]](lhs, rhs);
+}
+extend s8 func max(lhs: s8, rhs: s8) s8 {
+    return integer::_max[[s8]](lhs, rhs);
 }
 extend s8 func compare(lhs: *s8, rhs: *s8) ssize {
     return integer::_compare[[std::smax]]((:std::smax)*lhs, (:std::smax)*rhs);
@@ -4181,6 +4241,15 @@ extend s16 let MAX: s16 = (:s16)0x7FFFu16;
 extend s16 func init_from_str(str: []byte, radix: usize) std::result[[s16, std::error]] {
     return integer::_init_sint_from_str[[s16]](str, radix);
 }
+extend s16 func abs(int: s16) s16 {
+    return integer::_abs[[s16]](int);
+}
+extend s16 func min(lhs: s16, rhs: s16) s16 {
+    return integer::_min[[s16]](lhs, rhs);
+}
+extend s16 func max(lhs: s16, rhs: s16) s16 {
+    return integer::_max[[s16]](lhs, rhs);
+}
 extend s16 func compare(lhs: *s16, rhs: *s16) ssize {
     return integer::_compare[[std::smax]]((:std::smax)*lhs, (:std::smax)*rhs);
 }
@@ -4195,6 +4264,15 @@ extend s32 let MIN: s32 = (:s32)0x80000000u32;
 extend s32 let MAX: s32 = (:s32)0x7FFFFFFFu32;
 extend s32 func init_from_str(str: []byte, radix: usize) std::result[[s32, std::error]] {
     return integer::_init_sint_from_str[[s32]](str, radix);
+}
+extend s32 func abs(int: s32) s32 {
+    return integer::_abs[[s32]](int);
+}
+extend s32 func min(lhs: s32, rhs: s32) s32 {
+    return integer::_min[[s32]](lhs, rhs);
+}
+extend s32 func max(lhs: s32, rhs: s32) s32 {
+    return integer::_max[[s32]](lhs, rhs);
 }
 extend s32 func compare(lhs: *s32, rhs: *s32) ssize {
     return integer::_compare[[std::smax]]((:std::smax)*lhs, (:std::smax)*rhs);
@@ -4211,6 +4289,15 @@ extend s64 let MAX: s64 = (:s64)0x7FFFFFFFFFFFFFFFu64;
 extend s64 func init_from_str(str: []byte, radix: usize) std::result[[s64, std::error]] {
     return integer::_init_sint_from_str[[s64]](str, radix);
 }
+extend s64 func abs(int: s64) s64 {
+    return integer::_abs[[s64]](int);
+}
+extend s64 func min(lhs: s64, rhs: s64) s64 {
+    return integer::_min[[s64]](lhs, rhs);
+}
+extend s64 func max(lhs: s64, rhs: s64) s64 {
+    return integer::_max[[s64]](lhs, rhs);
+}
 extend s64 func compare(lhs: *s64, rhs: *s64) ssize {
     return integer::_compare[[std::smax]]((:std::smax)*lhs, (:std::smax)*rhs);
 }
@@ -4225,6 +4312,15 @@ extend ssize let MIN: ssize = (:ssize)s64::MIN;
 extend ssize let MAX: ssize = (:ssize)s64::MAX;
 extend ssize func init_from_str(str: []byte, radix: usize) std::result[[ssize, std::error]] {
     return integer::_init_sint_from_str[[ssize]](str, radix);
+}
+extend ssize func abs(int: ssize) ssize {
+    return integer::_abs[[ssize]](int);
+}
+extend ssize func min(lhs: ssize, rhs: ssize) ssize {
+    return integer::_min[[ssize]](lhs, rhs);
+}
+extend ssize func max(lhs: ssize, rhs: ssize) ssize {
+    return integer::_max[[ssize]](lhs, rhs);
 }
 extend ssize func compare(lhs: *ssize, rhs: *ssize) ssize {
     return integer::_compare[[std::smax]]((:std::smax)*lhs, (:std::smax)*rhs);

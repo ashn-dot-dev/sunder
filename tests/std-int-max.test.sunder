@@ -1,0 +1,32 @@
+import "std";
+
+func main() void {
+    var max = u32::max(10, 20);
+    std::print_format_line(
+        std::out(),
+        "{}",
+        (:[]std::formatter)[std::formatter::init[[typeof(max)]](&max)]);
+
+    var max = usize::max(10, 20);
+    std::print_format_line(
+        std::out(),
+        "{}",
+        (:[]std::formatter)[std::formatter::init[[typeof(max)]](&max)]);
+
+    var max = s32::max(123, -123);
+    std::print_format_line(
+        std::out(),
+        "{}",
+        (:[]std::formatter)[std::formatter::init[[typeof(max)]](&max)]);
+
+    var max = ssize::max(123, -123);
+    std::print_format_line(
+        std::out(),
+        "{}",
+        (:[]std::formatter)[std::formatter::init[[typeof(max)]](&max)]);
+}
+################################################################################
+# 20
+# 20
+# 123
+# 123

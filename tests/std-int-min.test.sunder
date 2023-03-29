@@ -1,0 +1,32 @@
+import "std";
+
+func main() void {
+    var min = u32::min(10, 20);
+    std::print_format_line(
+        std::out(),
+        "{}",
+        (:[]std::formatter)[std::formatter::init[[typeof(min)]](&min)]);
+
+    var min = usize::min(10, 20);
+    std::print_format_line(
+        std::out(),
+        "{}",
+        (:[]std::formatter)[std::formatter::init[[typeof(min)]](&min)]);
+
+    var min = s32::min(123, -123);
+    std::print_format_line(
+        std::out(),
+        "{}",
+        (:[]std::formatter)[std::formatter::init[[typeof(min)]](&min)]);
+
+    var min = ssize::min(123, -123);
+    std::print_format_line(
+        std::out(),
+        "{}",
+        (:[]std::formatter)[std::formatter::init[[typeof(min)]](&min)]);
+}
+################################################################################
+# 10
+# 10
+# -123
+# -123
