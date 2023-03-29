@@ -557,6 +557,7 @@ codegen_type_definition(struct type const* type)
         appendln("struct %s", typename);
         appendli("{");
         indent_incr();
+        uintmax_t padding_offset = 0;
         sbuf(struct member_variable const) const mvars =
             type->data.struct_.member_variables;
         for (size_t i = 0; i < sbuf_count(mvars); ++i) {
@@ -564,10 +565,23 @@ codegen_type_definition(struct type const* type)
                 || mvars[i].type->size == SIZEOF_UNSIZED) {
                 continue;
             }
+            for (; padding_offset < mvars[i].offset; ++padding_offset) {
+                appendli(
+                    "unsigned char %s_%ju;",
+                    mangle_name("__padding_byte"),
+                    padding_offset);
+            }
             appendli(
                 "%s %s;",
                 mangle_type(mvars[i].type),
                 mangle_name(mvars[i].name));
+            padding_offset += mvars[i].type->size;
+        }
+        for (; padding_offset < type->size; ++padding_offset) {
+            appendli(
+                "unsigned char %s_%ju;",
+                mangle_name("__padding_byte"),
+                padding_offset);
         }
         indent_decr();
         appendli("};");
@@ -960,7 +974,10 @@ strgen_value(struct value const* value)
 
             if (member_variable_vals[i] != NULL) {
                 assert(member_variable_vals[i]->type == type);
-                string_append_cstr(s, strgen_value(member_variable_vals[i]));
+                string_append_fmt(s,
+                    ".%s = %s",
+                    mangle_name(member_variable_defs[i].name),
+                    strgen_value(member_variable_vals[i]));
             }
             else {
                 string_append_cstr(s, strgen_uninit(type));
