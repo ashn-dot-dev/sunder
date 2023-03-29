@@ -2833,7 +2833,8 @@ codegen_c(
     // Sunder does not have type qualifiers.
     sbuf_push(backend_argv, "-Wno-discarded-qualifiers");
     sbuf_push(backend_argv, "-Wno-ignored-qualifiers"); // GCC-specific
-    sbuf_push(backend_argv, "-Wno-incompatible-pointer-types-discards-qualifiers");
+    sbuf_push(
+        backend_argv, "-Wno-incompatible-pointer-types-discards-qualifiers");
     // Enforced by sunder-compile warnings in the resolve phase.
     sbuf_push(backend_argv, "-Wno-unused-variable");
     // Unused functions are allowed in Sunder code.
