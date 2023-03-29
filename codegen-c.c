@@ -1096,7 +1096,8 @@ codegen_block(struct block const* block)
             mangle_name(address->data.local.name),
             strgen_uninit(type));
         appendli(
-            "/* zero pading */memset(&%s, 0x00, sizeof(%s));",
+            "/* zero pading */%s(&%s, sizeof(%s));",
+            mangle_name("__memzero"),
             mangle_name(address->data.local.name),
             mangle_name(address->data.local.name));
     }
@@ -1559,7 +1560,8 @@ strgen_rvalue_struct(struct expr const* expr)
         strgen_uninit(expr->type));
     string_append_fmt(
         s,
-        "/* zero padding */memset(&%s, 0x00, sizeof(%s)); ",
+        "/* zero padding */%s(&%s, sizeof(%s)); ",
+        mangle_name("__memzero"),
         mangle_name("__result"),
         mangle_name("__result"));
     for (size_t i = 0; i < sbuf_count(member_variable_defs); ++i) {
