@@ -1,0 +1,10 @@
+# When using the C backend, writing to a constant value is considered undefined
+# behavior, so *technically* the implementation is free to behave however it
+# wants when we write to `*p` below.
+func main() void {
+    let x = 123s;
+    let p = &x;
+    *p = 456;
+}
+################################################################################
+# Segmentation fault

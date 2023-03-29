@@ -16,6 +16,8 @@
 #include <sys/stat.h> /* mkdir */
 #include <sys/types.h> /* mode_t, off_t, size_t, ssize_t */
 #include <unistd.h> /* close, _exit, lseek, read, rmdir, write, unlink */
+#undef const
+#undef restrict
 
 _Static_assert(CHAR_BIT == 8, "8-bit byte");
 

@@ -613,7 +613,7 @@ codegen_static_object(struct symbol const* symbol)
     }
 
     if (symbol->kind == SYMBOL_CONSTANT) {
-        append("__attribute__((section(\"rodata\"))) ");
+        append("const ");
     }
 
     assert(symbol_xget_address(symbol)->data.static_.offset == 0);
@@ -2823,14 +2823,17 @@ codegen_c(
     sbuf_push(backend_argv, "-std=c11");
     sbuf_push(backend_argv, "-Wall");
     sbuf_push(backend_argv, "-Wextra");
+    // Workaround for differences in some GCC and CLANG warning names.
+    sbuf_push(backend_argv, "-Wno-unknown-warning-option");
     // Workaround for a GCC bug where the universal struct zero-initializer for
     // types with nested struct objects produces a missing braces warning.
     sbuf_push(backend_argv, "-Wno-missing-braces");
     // Not useful for auto-generated C code.
     sbuf_push(backend_argv, "-Wno-parentheses-equality");
     // Sunder does not have type qualifiers.
-    // GCC-specific flag.
-    /* sbuf_push(backend_argv, "-Wno-discarded-qualifiers"); */
+    sbuf_push(backend_argv, "-Wno-discarded-qualifiers");
+    sbuf_push(backend_argv, "-Wno-ignored-qualifiers"); // GCC-specific
+    sbuf_push(backend_argv, "-Wno-incompatible-pointer-types-discards-qualifiers");
     // Enforced by sunder-compile warnings in the resolve phase.
     sbuf_push(backend_argv, "-Wno-unused-variable");
     // Unused functions are allowed in Sunder code.
