@@ -396,6 +396,14 @@ extern func str_to_f64(out: *f64, start: *byte, count: usize) bool;
 extern func f32_to_str(buf: *byte, f: f32) bool;
 extern func f64_to_str(buf: *byte, f: f64) bool;
 
+extern func f32_abs(x: f32) f32;
+extern func f32_min(x: f32, y: f32) f32;
+extern func f32_max(x: f32, y: f32) f32;
+
+extern func f64_abs(x: f64) f64;
+extern func f64_min(x: f64, y: f64) f64;
+extern func f64_max(x: f64, y: f64) f64;
+
 # Power Functions
 extern func f32_sqrt(x: f32) f32;
 extern func f32_cbrt(x: f32) f32;

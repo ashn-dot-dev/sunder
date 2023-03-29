@@ -585,6 +585,36 @@ sys_f64_to_str(__sunder_byte* buf, __sunder_f64 f)
         return function(f1, f2);                                               \
     }
 
+__sunder_f32 sys_f32_abs(__sunder_f32 f)
+{
+    return fabsf(f);
+}
+
+__sunder_f64 sys_f64_abs(__sunder_f64 f)
+{
+    return fabs(f);
+}
+
+__sunder_f32 sys_f32_min(__sunder_f32 f1, __sunder_f32 f2)
+{
+    return fminf(f1, f2);
+}
+
+__sunder_f64 sys_f64_min(__sunder_f64 f1, __sunder_f64 f2)
+{
+    return fmin(f1, f2);
+}
+
+__sunder_f32 sys_f32_max(__sunder_f32 f1, __sunder_f32 f2)
+{
+    return fmaxf(f1, f2);
+}
+
+__sunder_f64 sys_f64_max(__sunder_f64 f1, __sunder_f64 f2)
+{
+    return fmax(f1, f2);
+}
+
 __SUNDER_IEEE754_MATH_DEFINITIONS(sqrt)
 __SUNDER_IEEE754_MATH_DEFINITIONS(cbrt)
 __SUNDER_IEEE754_MATH_DEFINITIONS2(hypot)

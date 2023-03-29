@@ -4267,6 +4267,10 @@ extend f32 func radians_to_degrees(radians: f32) f32 {
     return radians * (180.0f32 / f32::PI);
 }
 
+extend f32 func abs(x: f32) f32 { return sys::f32_abs(x); }
+extend f32 func min(x: f32, y: f32) f32 { return sys::f32_min(x, y); }
+extend f32 func max(x: f32, y: f32) f32 { return sys::f32_max(x, y); }
+
 extend f32 func sqrt(x: f32) f32 { return sys::f32_sqrt(x); }
 extend f32 func cbrt(x: f32) f32 { return sys::f32_cbrt(x); }
 extend f32 func hypot(x: f32, y: f32) f32 { return sys::f32_hypot(x, y); }
@@ -4320,6 +4324,10 @@ extend f64 func degrees_to_radians(degrees: f64) f64 {
 extend f64 func radians_to_degrees(radians: f64) f64 {
     return radians * (180.0f64 / f64::PI);
 }
+
+extend f64 func abs(x: f64) f64 { return sys::f64_abs(x); }
+extend f64 func min(x: f64, y: f64) f64 { return sys::f64_min(x, y); }
+extend f64 func max(x: f64, y: f64) f64 { return sys::f64_max(x, y); }
 
 extend f64 func sqrt(x: f64) f64 { return sys::f64_sqrt(x); }
 extend f64 func cbrt(x: f64) f64 { return sys::f64_cbrt(x); }

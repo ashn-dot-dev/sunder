@@ -457,6 +457,14 @@ sys.str_to_f64: call __fatal_unimplemented
 sys.f32_to_str: call __fatal_unimplemented
 sys.f64_to_str: call __fatal_unimplemented
 
+sys.f32_abs: call __fatal_unimplemented
+sys.f32_min: call __fatal_unimplemented
+sys.f32_max: call __fatal_unimplemented
+
+sys.f64_abs: call __fatal_unimplemented
+sys.f64_min: call __fatal_unimplemented
+sys.f64_max: call __fatal_unimplemented
+
 sys.f32_sqrt: call __fatal_unimplemented
 sys.f64_sqrt: call __fatal_unimplemented
 sys.f32_cbrt: call __fatal_unimplemented
