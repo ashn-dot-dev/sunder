@@ -3233,6 +3233,61 @@ struct hash_map_iterator[[K, V]] {
     }
 }
 
+# Managed type containing a collection of unique elements with O(1) average
+# time complexity for insert and remove operations.
+struct hash_set[[T]] {
+    var _hash_map: std::hash_map[[T, void]];
+
+    # Initialize an empty set.
+    func init() hash_set[[T]] {
+        return init_with_allocator(std::global_allocator());
+    }
+
+    # Initialize an empty set.
+    # The provided allocator is used for backing storage.
+    func init_with_allocator(allocator: std::allocator) hash_set[[T]] {
+        return (:hash_set[[T]]){
+            ._hash_map = std::hash_map[[T, void]]::init_with_allocator(allocator)
+        };
+    }
+
+    # Finalize resources associated with the set.
+    func fini(self: *hash_set[[T]]) void {
+        self.*._hash_map.fini();
+    }
+
+    # Returns the number of elements in the set.
+    func count(self: *hash_set[[T]]) usize {
+        return self.*._hash_map.count();
+    }
+
+    # Returns true if the set contains provided element.
+    func contains(self: *hash_set[[T]], element: T) bool {
+        return self.*._hash_map.contains(element);
+    }
+
+    # Insert the provided element into the set. If the element already exists,
+    # then it is overwritten and a non-empty optional containing the existing
+    # element is returned.
+    func insert(self: *hash_set[[T]], element: T) std::optional[[T]] {
+        var existing = self.*._hash_map.insert(element, void::VALUE);
+        if existing.is_empty() {
+            return std::optional[[T]]::EMPTY;
+        }
+        return std::optional[[T]]::init_value(existing.value().key);
+    }
+
+    # Remove the provided element if such an element exists in the set. Returns
+    # a non-empty optional containing the existing element if it was removed.
+    func remove(self: *hash_set[[T]], element: T) std::optional[[T]] {
+        var existing = self.*._hash_map.remove(element);
+        if existing.is_empty() {
+            return std::optional[[T]]::EMPTY;
+        }
+        return std::optional[[T]]::init_value(existing.value().key);
+    }
+}
+
 # Type and associated filesystem operations for a regular file.
 struct file {
     var _fd: sys::sint;
