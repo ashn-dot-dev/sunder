@@ -2971,7 +2971,6 @@ resolve_stmt_assert(struct resolver* resolver, struct cst_stmt const* stmt)
     assert(stmt != NULL);
     assert(stmt->kind == CST_STMT_ASSERT);
 
-
     struct expr const* const expr =
         resolve_expr(resolver, stmt->data.assert_.expr);
     if (expr->type->kind != TYPE_BOOL) {
