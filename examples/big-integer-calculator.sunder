@@ -83,7 +83,7 @@ struct tokenizer {
     func next_token(self: *tokenizer) token {
         # Skip Whitespace
         for std::ascii::is_whitespace(self.*.current_byte()) {
-            std::assert(self.*.current_byte() != '\n');
+            assert self.*.current_byte() != '\n';
             self.*.offset = self.*.offset + + 1;
         }
 

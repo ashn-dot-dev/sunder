@@ -3,8 +3,8 @@ import "sys";
 
 func main() void {
     var a: std::result[[u16, void]] = std::result[[u16, void]]::init_value(0xBEEF);
-    std::assert(a.is_value());
-    std::assert(not a.is_error());
+    assert a.is_value();
+    assert not a.is_error();
     sys::dump[[u16]](a.value());
     a.error(); # boom
 }

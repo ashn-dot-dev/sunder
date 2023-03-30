@@ -2,8 +2,8 @@ import "std";
 
 func main() void {
     var a: std::optional[[u16]] = std::optional[[u16]]::init_empty();
-    std::assert(not a.is_value());
-    std::assert(a.is_empty());
+    assert not a.is_value();
+    assert a.is_empty();
     a.value(); # boom
 }
 ################################################################################

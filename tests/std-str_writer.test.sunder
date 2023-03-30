@@ -7,7 +7,7 @@ func test_success(str: []byte) void {
     var writer = std::writer::init[[std::str_writer]](&writer);
 
     var result = writer.write(str);
-    std::assert(result.is_value());
+    assert result.is_value();
     var nwritten = result.value();
 
     std::print_format_line(

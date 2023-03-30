@@ -2,11 +2,11 @@ import "std";
 
 func main() void {
     var result = std::file::create("some-file.tmp");
-    std::assert(result.is_value());
+    assert result.is_value();
     var result = std::file::open("some-file.tmp", std::file::OPEN_READ);
-    std::assert(result.is_value());
+    assert result.is_value();
     var result = std::file::remove("some-file.tmp");
-    std::assert(result.is_value());
+    assert result.is_value();
     var result = std::file::open("some-file.tmp", std::file::OPEN_READ);
-    std::assert(result.is_error());
+    assert result.is_error();
 }

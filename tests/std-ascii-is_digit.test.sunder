@@ -1,23 +1,23 @@
 import "std";
 
 func main() void {
-    std::assert(std::ascii::is_digit('0'));
-    std::assert(std::ascii::is_digit('1'));
-    std::assert(std::ascii::is_digit('2'));
-    std::assert(std::ascii::is_digit('3'));
-    std::assert(std::ascii::is_digit('4'));
-    std::assert(std::ascii::is_digit('5'));
-    std::assert(std::ascii::is_digit('6'));
-    std::assert(std::ascii::is_digit('7'));
-    std::assert(std::ascii::is_digit('8'));
-    std::assert(std::ascii::is_digit('9'));
+    assert std::ascii::is_digit('0');
+    assert std::ascii::is_digit('1');
+    assert std::ascii::is_digit('2');
+    assert std::ascii::is_digit('3');
+    assert std::ascii::is_digit('4');
+    assert std::ascii::is_digit('5');
+    assert std::ascii::is_digit('6');
+    assert std::ascii::is_digit('7');
+    assert std::ascii::is_digit('8');
+    assert std::ascii::is_digit('9');
 
-    std::assert(not std::ascii::is_digit('A'));
-    std::assert(not std::ascii::is_digit('a'));
-    std::assert(not std::ascii::is_digit('~'));
-    std::assert(not std::ascii::is_digit('\n'));
-    std::assert(not std::ascii::is_digit('\t'));
-    std::assert(not std::ascii::is_digit(' '));
-    std::assert(not std::ascii::is_digit('@'));
-    std::assert(not std::ascii::is_digit('['));
+    assert not std::ascii::is_digit('A');
+    assert not std::ascii::is_digit('a');
+    assert not std::ascii::is_digit('~');
+    assert not std::ascii::is_digit('\n');
+    assert not std::ascii::is_digit('\t');
+    assert not std::ascii::is_digit(' ');
+    assert not std::ascii::is_digit('@');
+    assert not std::ascii::is_digit('[');
 }

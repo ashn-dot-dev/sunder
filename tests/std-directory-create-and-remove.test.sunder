@@ -20,5 +20,5 @@ func main() void {
     }
 
     var result = std::directory::open("some-directory.tmp");
-    std::assert(result.is_error());
+    assert result.is_error();
 }

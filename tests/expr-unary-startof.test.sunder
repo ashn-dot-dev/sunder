@@ -3,19 +3,19 @@ import "std";
 func main() void {
     var a = (:[3]ssize)[123, 456, 789];
     var s = (:[]ssize){&a[0], 3};
-    std::assert(startof(s) == &a[0]);
+    assert startof(s) == &a[0];
 
     let a = (:[3]ssize)[123, 456, 789];
     let s = (:[]ssize){&a[0], 3};
-    std::assert(startof(s) == &a[0]);
+    assert startof(s) == &a[0];
 
     var s = (:[]ssize)[123, 456, 789];
-    std::assert(startof(s) == &s[0]);
+    assert startof(s) == &s[0];
 
     let s = (:[]ssize)[123, 456, 789];
-    std::assert(startof(s) == &s[0]);
+    assert startof(s) == &s[0];
 
     var s = (:[]ssize){std::ptr[[ssize]]::NULL, 0};
-    std::assert(startof(s) == std::ptr[[ssize]]::NULL);
+    assert startof(s) == std::ptr[[ssize]]::NULL;
 
 }

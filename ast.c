@@ -1111,6 +1111,20 @@ stmt_new_return(
 }
 
 struct stmt*
+stmt_new_assert(
+    struct source_location location,
+    struct expr const* expr,
+    struct symbol const* array_symbol,
+    struct symbol const* slice_symbol)
+{
+    struct stmt* const self = stmt_new(location, STMT_ASSERT);
+    self->data.assert_.expr = expr;
+    self->data.assert_.array_symbol = array_symbol;
+    self->data.assert_.slice_symbol = slice_symbol;
+    return self;
+}
+
+struct stmt*
 stmt_new_assign(
     struct source_location location,
     struct expr const* lhs,

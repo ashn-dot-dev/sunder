@@ -68,40 +68,40 @@ typedef double             __sunder_f64;
 // clang-format on
 
 static inline _Noreturn void
-__sunder___fatal(char* message)
+__sunder___fatal(char const* message)
 {
-    fprintf(stderr, "fatal: %s\n", message);
+    fprintf(stderr, "%s\n", message);
     _exit(1);
 }
 
 static _Noreturn void
 __sunder___fatal_divide_by_zero(void)
 {
-    __sunder___fatal("divide by zero");
+    __sunder___fatal("fatal: divide by zero");
 }
 
 static _Noreturn void
 __sunder___fatal_index_out_of_bounds(void)
 {
-    __sunder___fatal("index out-of-bounds");
+    __sunder___fatal("fatal: index out-of-bounds");
 }
 
 static _Noreturn void
 __sunder___fatal_null_pointer_dereference(void)
 {
-    __sunder___fatal("null pointer dereference");
+    __sunder___fatal("fatal: null pointer dereference");
 }
 
 static _Noreturn void
 __sunder___fatal_out_of_range(void)
 {
-    __sunder___fatal("operation produces out-of-range result");
+    __sunder___fatal("fatal: operation produces out-of-range result");
 }
 
 static void
 __sunder___memzero(void* start, size_t size)
 {
-    volatile unsigned char *p = start;
+    volatile unsigned char* p = start;
     while (size--) {
         *p++ = 0;
     }

@@ -24,7 +24,7 @@ func main() void {
 
     var b: []byte = "lorem ipsum dolor sit amet";
     var c: []byte = "consectetur adipiscing elit";
-    std::assert(b[1u] == c[1u]); # o
+    assert b[1u] == c[1u]; # o
 
     # Bytes literals can have their address taken.
     var d: *[]byte = &"foobar";

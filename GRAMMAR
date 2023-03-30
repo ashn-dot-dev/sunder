@@ -38,6 +38,7 @@
          | <stmt-break>
          | <stmt-continue>
          | <stmt-return>
+         | <stmt-assert>
          | <stmt-assign>
          | <stmt-expr>
 
@@ -60,6 +61,8 @@
 <stmt-continue> ::= "continue" ";"
 
 <stmt-return> ::= "return" <expr>? ";"
+
+<stmt-assert> ::= "assert" <expr> ";"
 
 <stmt-assign> ::= <expr> "=" <expr> ";"
 

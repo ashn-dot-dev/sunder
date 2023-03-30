@@ -5,21 +5,21 @@ func main() void {
     var mem = (:[]byte){(:*byte)&arr[0], countof(arr) * sizeof(typeof(arr[0]))};
     var linear_allocator = std::linear_allocator::init(mem);
     var allocator = std::allocator::init[[std::linear_allocator]](&linear_allocator);
-    std::assert(linear_allocator._old_offset == 0);
-    std::assert(linear_allocator._cur_offset == 0);
+    assert linear_allocator._old_offset == 0;
+    assert linear_allocator._cur_offset == 0;
 
     # Allocating more bytes then are avaliable in the backing buffer should
     # fail.
     var res = allocator.allocate(alignof(byte), 1024 + 1);
-    std::assert(res.is_error());
+    assert res.is_error();
 
     # 256 * sizeof(u16) = 512 should allocate half of the 1024 byte memory
     # chunk.
     var res = allocator.allocate(alignof(u16), 256 * sizeof(u16));
     var ptr = res.value();
-    std::assert(linear_allocator._old_offset == 0);
-    std::assert(linear_allocator._cur_offset == 512);
-    std::assert(((:usize)ptr - (:usize)&arr[0]) == linear_allocator._old_offset);
+    assert linear_allocator._old_offset == 0;
+    assert linear_allocator._cur_offset == 512;
+    assert ((:usize)ptr - (:usize)&arr[0]) == linear_allocator._old_offset;
 
     # 512 * sizeof(u16) = 1024 should fill the entire 1024 byte memory chunk.
     # The previous tail allocation should be reused.
@@ -29,20 +29,20 @@ func main() void {
         256 * sizeof(u16),
         512 * sizeof(u16));
     var ptr = res.value();
-    std::assert(linear_allocator._old_offset == 0);
-    std::assert(linear_allocator._cur_offset == 1024);
-    std::assert(((:usize)ptr - (:usize)&arr[0]) == linear_allocator._old_offset);
+    assert linear_allocator._old_offset == 0;
+    assert linear_allocator._cur_offset == 1024;
+    assert ((:usize)ptr - (:usize)&arr[0]) == linear_allocator._old_offset;
 
     # With the entire buffer allocated, any additional allocation should fail.
     var res = allocator.allocate(alignof(byte), 1);
-    std::assert(res.is_error());
+    assert res.is_error();
 
     # But even with the full buffer, a zero-sized allocation should succeed.
     var res = allocator.allocate(alignof(byte), 0);
-    std::assert(res.is_value());
-    std::assert(linear_allocator._old_offset == 0);
-    std::assert(linear_allocator._cur_offset == 1024);
-    std::assert(((:usize)ptr - (:usize)&arr[0]) == linear_allocator._old_offset);
+    assert res.is_value();
+    assert linear_allocator._old_offset == 0;
+    assert linear_allocator._cur_offset == 1024;
+    assert ((:usize)ptr - (:usize)&arr[0]) == linear_allocator._old_offset;
 
     # Resize and leave 4 bytes of free space at the tail of the buffer.
     var res = allocator.reallocate(
@@ -51,16 +51,16 @@ func main() void {
         512 * sizeof(u16),
         510 * sizeof(u16));
     var ptr = res.value();
-    std::assert(((:usize)ptr - (:usize)&arr[0]) == linear_allocator._old_offset);
+    assert ((:usize)ptr - (:usize)&arr[0]) == linear_allocator._old_offset;
 
     # The 4 bytes will have an alignment of four, so allocating 4 bytes with an
     # alignment of 8 should fail as the round-up would go out of the buffer,
     # but allocating 4 bytes with an alignment of 4 should exatly fill the
     # buffer.
     var res = allocator.allocate(8, 4);
-    std::assert(res.is_error());
+    assert res.is_error();
     var res = allocator.allocate(4, 4);
-    std::assert(res.is_value());
+    assert res.is_value();
 
     # Verify that we can downsize the first allocation at the start of the
     # buffer without allocating new memory.
@@ -70,40 +70,40 @@ func main() void {
         alignof(u16),
         510 * sizeof(u16),
         100 * sizeof(u16));
-    std::assert(ptr == res.value());
+    assert ptr == res.value();
 
     # Deallocate all memory associated with the allocator.
     linear_allocator.deallocate_all();
-    std::assert(linear_allocator._old_offset == 0);
-    std::assert(linear_allocator._cur_offset == 0);
+    assert linear_allocator._old_offset == 0;
+    assert linear_allocator._cur_offset == 0;
 
     # Allocating with a non-zero non-power-of-two alignment should not fail.
     allocator.allocate(0, 3); # Get the allocator up to an offset of 3.
-    std::assert(linear_allocator._old_offset == 0);
-    std::assert(linear_allocator._cur_offset == 3);
+    assert linear_allocator._old_offset == 0;
+    assert linear_allocator._cur_offset == 3;
     var res = allocator.allocate(5, 2); # Allocate with an alignment of 5.
-    std::assert(((:usize)res.value() % 5) == 0);
+    assert ((:usize)res.value() % 5) == 0;
     linear_allocator.deallocate_all();
 
     # Resize, expanding the tail allocation.
     var res = allocator.allocate(alignof(byte), 100);
     var ptr = res.value();
-    std::assert(linear_allocator._old_offset == 0);
-    std::assert(linear_allocator._cur_offset == 100);
+    assert linear_allocator._old_offset == 0;
+    assert linear_allocator._cur_offset == 100;
     var res = allocator.reallocate(ptr, alignof(byte), 100, 200);
     var ptr = res.value();
-    std::assert(linear_allocator._old_offset == 0);
-    std::assert(linear_allocator._cur_offset == 200);
-    std::assert(((:usize)ptr - (:usize)&arr[0]) == linear_allocator._old_offset);
+    assert linear_allocator._old_offset == 0;
+    assert linear_allocator._cur_offset == 200;
+    assert ((:usize)ptr - (:usize)&arr[0]) == linear_allocator._old_offset;
 
     # Resize, expanding the non-tail allocation.
     allocator.allocate(alignof(byte), 100);
-    std::assert(linear_allocator._old_offset == 200);
-    std::assert(linear_allocator._cur_offset == 300);
+    assert linear_allocator._old_offset == 200;
+    assert linear_allocator._cur_offset == 300;
     var res = allocator.reallocate(ptr, alignof(byte), 200, 250);
-    std::assert(linear_allocator._old_offset == 300);
-    std::assert(linear_allocator._cur_offset == 550);
-    std::assert(((:usize)res.value() - (:usize)&arr[0]) == linear_allocator._old_offset);
+    assert linear_allocator._old_offset == 300;
+    assert linear_allocator._cur_offset == 550;
+    assert ((:usize)res.value() - (:usize)&arr[0]) == linear_allocator._old_offset;
 
     # Resize, expanding the non-tail allocation when there is not enough space
     # in the backing buffer.
@@ -111,12 +111,12 @@ func main() void {
     var res = allocator.allocate(alignof(byte), 1);
     ptr = res.value();
     allocator.allocate(alignof(byte), 1023);
-    std::assert(linear_allocator._old_offset == 1);
-    std::assert(linear_allocator._cur_offset == 1024);
+    assert linear_allocator._old_offset == 1;
+    assert linear_allocator._cur_offset == 1024;
     var res = allocator.reallocate(ptr, alignof(byte), 1, 2);
-    std::assert(res.is_error());
-    std::assert(linear_allocator._old_offset == 1);
-    std::assert(linear_allocator._cur_offset == 1024);
+    assert res.is_error();
+    assert linear_allocator._old_offset == 1;
+    assert linear_allocator._cur_offset == 1024;
 
     # Scenario discovered from code in the wild where a reallocation after a
     # zero-sized allocation attempted to use the null pointer for offset

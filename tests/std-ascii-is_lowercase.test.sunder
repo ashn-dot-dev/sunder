@@ -1,21 +1,21 @@
 import "std";
 
 func main() void {
-    std::assert(std::ascii::is_lowercase('a'));
-    std::assert(std::ascii::is_lowercase('b'));
-    std::assert(std::ascii::is_lowercase('c'));
-    std::assert(std::ascii::is_lowercase('z'));
+    assert std::ascii::is_lowercase('a');
+    assert std::ascii::is_lowercase('b');
+    assert std::ascii::is_lowercase('c');
+    assert std::ascii::is_lowercase('z');
 
-    std::assert(not std::ascii::is_lowercase('A'));
-    std::assert(not std::ascii::is_lowercase('B'));
-    std::assert(not std::ascii::is_lowercase('C'));
-    std::assert(not std::ascii::is_lowercase('Z'));
+    assert not std::ascii::is_lowercase('A');
+    assert not std::ascii::is_lowercase('B');
+    assert not std::ascii::is_lowercase('C');
+    assert not std::ascii::is_lowercase('Z');
 
-    std::assert(not std::ascii::is_lowercase('1'));
-    std::assert(not std::ascii::is_lowercase('~'));
-    std::assert(not std::ascii::is_lowercase('\n'));
-    std::assert(not std::ascii::is_lowercase('\t'));
-    std::assert(not std::ascii::is_lowercase(' '));
-    std::assert(not std::ascii::is_lowercase('@'));
-    std::assert(not std::ascii::is_lowercase('['));
+    assert not std::ascii::is_lowercase('1');
+    assert not std::ascii::is_lowercase('~');
+    assert not std::ascii::is_lowercase('\n');
+    assert not std::ascii::is_lowercase('\t');
+    assert not std::ascii::is_lowercase(' ');
+    assert not std::ascii::is_lowercase('@');
+    assert not std::ascii::is_lowercase('[');
 }

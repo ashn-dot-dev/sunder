@@ -1,13 +1,13 @@
 import "std";
 
 func main() void {
-    std::assert(std::str::ends_with("", ""));
-    std::assert(std::str::ends_with("a", ""));
-    std::assert(not std::str::ends_with("", "a"));
+    assert std::str::ends_with("", "");
+    assert std::str::ends_with("a", "");
+    assert not std::str::ends_with("", "a");
 
-    std::assert(std::str::ends_with("foobar", "r"));
-    std::assert(std::str::ends_with("foobar", "ar"));
-    std::assert(std::str::ends_with("foobar", "bar"));
-    std::assert(not std::str::ends_with("foobar", "bbar"));
-    std::assert(not std::str::ends_with("foobar", "foo"));
+    assert std::str::ends_with("foobar", "r");
+    assert std::str::ends_with("foobar", "ar");
+    assert std::str::ends_with("foobar", "bar");
+    assert not std::str::ends_with("foobar", "bbar");
+    assert not std::str::ends_with("foobar", "foo");
 }

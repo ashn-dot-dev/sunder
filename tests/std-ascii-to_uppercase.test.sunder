@@ -1,21 +1,21 @@
 import "std";
 
 func main() void {
-    std::assert(std::ascii::to_uppercase('a') == 'A');
-    std::assert(std::ascii::to_uppercase('b') == 'B');
-    std::assert(std::ascii::to_uppercase('c') == 'C');
-    std::assert(std::ascii::to_uppercase('z') == 'Z');
+    assert std::ascii::to_uppercase('a') == 'A';
+    assert std::ascii::to_uppercase('b') == 'B';
+    assert std::ascii::to_uppercase('c') == 'C';
+    assert std::ascii::to_uppercase('z') == 'Z';
 
-    std::assert(std::ascii::to_uppercase('A') == 'A');
-    std::assert(std::ascii::to_uppercase('B') == 'B');
-    std::assert(std::ascii::to_uppercase('C') == 'C');
-    std::assert(std::ascii::to_uppercase('Z') == 'Z');
+    assert std::ascii::to_uppercase('A') == 'A';
+    assert std::ascii::to_uppercase('B') == 'B';
+    assert std::ascii::to_uppercase('C') == 'C';
+    assert std::ascii::to_uppercase('Z') == 'Z';
 
-    std::assert(std::ascii::to_uppercase('1') == '1');
-    std::assert(std::ascii::to_uppercase('~') == '~');
-    std::assert(std::ascii::to_uppercase('\n') == '\n');
-    std::assert(std::ascii::to_uppercase('\t') == '\t');
-    std::assert(std::ascii::to_uppercase(' ') == ' ');
-    std::assert(std::ascii::to_uppercase('@') == '@');
-    std::assert(std::ascii::to_uppercase('[') == '[');
+    assert std::ascii::to_uppercase('1') == '1';
+    assert std::ascii::to_uppercase('~') == '~';
+    assert std::ascii::to_uppercase('\n') == '\n';
+    assert std::ascii::to_uppercase('\t') == '\t';
+    assert std::ascii::to_uppercase(' ') == ' ';
+    assert std::ascii::to_uppercase('@') == '@';
+    assert std::ascii::to_uppercase('[') == '[';
 }

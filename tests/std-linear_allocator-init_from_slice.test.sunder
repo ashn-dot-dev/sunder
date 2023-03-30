@@ -14,7 +14,7 @@ func main() void {
     # At this point the allocator should be at capacity and any allocation
     # should cause an allocation failure.
     std::new_with_allocator[[u8]](allocator);
-    std::assert(false); # unreachable
+    assert false; # unreachable
 }
 ################################################################################
 # allocated 7 u32 values

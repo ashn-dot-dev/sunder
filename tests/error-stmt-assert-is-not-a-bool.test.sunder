@@ -1,0 +1,7 @@
+func main() void {
+    assert 123s;
+}
+################################################################################
+# [error-stmt-assert-is-not-a-bool.test.sunder:2] error: assert with non-boolean type `ssize`
+#     assert 123s;
+#            ^

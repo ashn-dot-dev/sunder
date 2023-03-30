@@ -29,8 +29,8 @@ __SYS_GETDENTS64 equ 217
 ; +--------------------+ <- rbp + 0x20
 ; | msg_start          |
 ; +--------------------+ <- rbp + 0x18
-; | msg_count          |
-; +--------------------+ <- rbp + 0x10
+; | mgs_count          |
+; +--------------------+ <- rbp + 0x18
 ; | return address     |
 ; +--------------------+ <- rbp + 0x08
 ; | saved rbp          |
@@ -42,12 +42,6 @@ __fatal:
 
     mov rax, __SYS_WRITE
     mov rdi, __STDERR_FILENO
-    mov rsi, __fatal_preamble_start
-    mov rdx, __fatal_preamble_count
-    syscall
-
-    mov rax, __SYS_WRITE
-    mov rdi, __STDERR_FILENO
     mov rsi, [rbp + 0x18] ; msg_start
     mov rdx, [rbp + 0x10] ; msg_count
     syscall
@@ -55,9 +49,6 @@ __fatal:
     mov rax, __SYS_EXIT
     mov rdi, __EXIT_FAILURE
     syscall
-
-__fatal_preamble_start: db "fatal: "
-__fatal_preamble_count: equ $ - __fatal_preamble_start;
 
 ; SYS DEFINITIONS (lib/sys/sys.sunder)
 ; ====================================

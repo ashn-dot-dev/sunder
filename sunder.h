@@ -928,6 +928,7 @@ enum token_kind {
     TOKEN_ALIAS,
     TOKEN_EXTERN,
     TOKEN_RETURN,
+    TOKEN_ASSERT,
     TOKEN_DEFER,
     TOKEN_IF,
     TOKEN_ELIF,
@@ -1205,6 +1206,7 @@ struct cst_stmt {
         CST_STMT_BREAK, /* no .data member */
         CST_STMT_CONTINUE, /* no .data member */
         CST_STMT_RETURN,
+        CST_STMT_ASSERT,
         CST_STMT_ASSIGN,
         CST_STMT_EXPR,
     } kind;
@@ -1228,6 +1230,9 @@ struct cst_stmt {
         struct {
             struct cst_expr const* expr; // optional
         } return_;
+        struct {
+            struct cst_expr const* expr;
+        } assert_;
         struct {
             struct cst_expr const* lhs;
             struct cst_expr const* rhs;
@@ -1263,6 +1268,9 @@ struct cst_stmt*
 cst_stmt_new_continue(struct source_location location);
 struct cst_stmt*
 cst_stmt_new_return(
+    struct source_location location, struct cst_expr const* expr);
+struct cst_stmt*
+cst_stmt_new_assert(
     struct source_location location, struct cst_expr const* expr);
 struct cst_stmt*
 cst_stmt_new_assign(
@@ -1996,6 +2004,7 @@ struct stmt {
         STMT_BREAK,
         STMT_CONTINUE,
         STMT_RETURN,
+        STMT_ASSERT,
         STMT_ASSIGN,
         STMT_EXPR,
     } kind;
@@ -2031,6 +2040,11 @@ struct stmt {
             struct expr const* expr; // optional
             struct stmt const* defer; // optional
         } return_;
+        struct {
+            struct expr const* expr;
+            struct symbol const* array_symbol; // assert error string
+            struct symbol const* slice_symbol; // assert error string
+        } assert_;
         struct {
             struct expr const* lhs;
             struct expr const* rhs;
@@ -2072,6 +2086,12 @@ stmt_new_return(
     struct source_location location,
     struct expr const* expr,
     struct stmt const* defer);
+struct stmt*
+stmt_new_assert(
+    struct source_location location,
+    struct expr const* expr,
+    struct symbol const* array_symbol,
+    struct symbol const* slice_symbol);
 struct stmt*
 stmt_new_assign(
     struct source_location location,

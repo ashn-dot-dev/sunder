@@ -7,7 +7,7 @@ func test(str: []byte) void {
     var reader = std::reader::init[[std::str_reader]](&reader);
 
     var result = reader.read(buf[0:countof(buf)]);
-    std::assert(result.is_value()); # str_reader should never have a read error
+    assert result.is_value(); # str_reader should never have a read error
     var nread = result.value();
 
     std::print_format_line(

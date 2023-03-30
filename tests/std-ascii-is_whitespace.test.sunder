@@ -1,14 +1,14 @@
 import "std";
 
 func main() void {
-    std::assert(std::ascii::is_whitespace(' '));
-    std::assert(std::ascii::is_whitespace('\t'));
-    std::assert(std::ascii::is_whitespace('\n'));
-    std::assert(std::ascii::is_whitespace(0x0B));
-    std::assert(std::ascii::is_whitespace(0x0C));
-    std::assert(std::ascii::is_whitespace(0x0D));
+    assert std::ascii::is_whitespace(' ');
+    assert std::ascii::is_whitespace('\t');
+    assert std::ascii::is_whitespace('\n');
+    assert std::ascii::is_whitespace(0x0B);
+    assert std::ascii::is_whitespace(0x0C);
+    assert std::ascii::is_whitespace(0x0D);
 
-    std::assert(not std::ascii::is_whitespace('A'));
-    std::assert(not std::ascii::is_whitespace(0x7F));
-    std::assert(not std::ascii::is_whitespace(0xFF));
+    assert not std::ascii::is_whitespace('A');
+    assert not std::ascii::is_whitespace(0x7F);
+    assert not std::ascii::is_whitespace(0xFF);
 }

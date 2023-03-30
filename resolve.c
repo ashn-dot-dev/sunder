@@ -161,6 +161,15 @@ static struct expr const*
 implicit_cast(struct type const* type, struct expr const* expr);
 
 static void
+create_static_bytes(
+    struct resolver* resolver,
+    struct source_location location,
+    char const* bytes_start,
+    size_t bytes_count,
+    struct symbol const** out_array_symbol,
+    struct symbol const** out_slice_symbol);
+
+static void
 resolve_import(struct resolver* resolver, struct cst_import const* import);
 
 static struct symbol const*
@@ -224,6 +233,8 @@ static struct stmt const*
 resolve_stmt_continue(struct resolver* resolver, struct cst_stmt const* stmt);
 static struct stmt const*
 resolve_stmt_return(struct resolver* resolver, struct cst_stmt const* stmt);
+static struct stmt const*
+resolve_stmt_assert(struct resolver* resolver, struct cst_stmt const* stmt);
 static struct stmt const*
 resolve_stmt_assign(struct resolver* resolver, struct cst_stmt const* stmt);
 static struct stmt const*
@@ -1310,6 +1321,76 @@ implicit_cast(struct type const* type, struct expr const* expr)
 
     // No implicit cast could be performed.
     return expr;
+}
+
+static void
+create_static_bytes(
+    struct resolver* resolver,
+    struct source_location location,
+    char const* bytes_start,
+    size_t bytes_count,
+    struct symbol const** out_array_symbol,
+    struct symbol const** out_slice_symbol)
+{
+    assert(resolver != NULL);
+    assert(bytes_start != NULL || bytes_count == 0);
+    assert(out_array_symbol != NULL);
+    assert(out_slice_symbol != NULL);
+
+    // Bytes Array Object
+
+    struct type const* const array_type = type_unique_array(
+        location, bytes_count + 1 /*NUL*/, context()->builtin.byte);
+
+    struct address const* const array_address =
+        resolver_reserve_storage_static(resolver, "__bytes_array");
+
+    sbuf(struct value*) array_elements = NULL;
+    for (size_t i = 0; i < bytes_count; ++i) {
+        uint8_t const byte = (uint8_t)bytes_start[i];
+        sbuf_push(array_elements, value_new_byte(byte));
+    }
+    // Append a NUL byte to the end of every bytes literal. This NUL byte is
+    // not included in the slice length, but will allow bytes literals to be
+    // accessed as NUL-terminated arrays when interfacing with C code.
+    sbuf_push(array_elements, value_new_byte(0x00));
+    struct value* const array_value =
+        value_new_array(array_type, array_elements, NULL);
+    value_freeze(array_value);
+
+    struct object* const array_object =
+        object_new(array_type, array_address, array_value);
+    freeze(array_object);
+
+    struct symbol* const array_symbol = symbol_new_constant(
+        location, array_address->data.static_.name, array_object);
+    freeze(array_symbol);
+    register_static_symbol(array_symbol);
+
+    // Bytes Slice Object
+
+    struct address const* const slice_address =
+        resolver_reserve_storage_static(resolver, "__bytes_slice");
+
+    struct value* const slice_start =
+        value_new_pointer(context()->builtin.pointer_to_byte, *array_address);
+    struct value* const slice_count = value_new_integer(
+        context()->builtin.usize, bigint_new_umax(bytes_count));
+    struct value* const slice_value = value_new_slice(
+        context()->builtin.slice_of_byte, slice_start, slice_count);
+    value_freeze(slice_value);
+
+    struct object* const slice_object = object_new(
+        context()->builtin.slice_of_byte, slice_address, slice_value);
+    freeze(slice_object);
+
+    struct symbol* const slice_symbol = symbol_new_constant(
+        location, slice_address->data.static_.name, slice_object);
+    freeze(slice_symbol);
+    register_static_symbol(slice_symbol);
+
+    *out_array_symbol = array_symbol;
+    *out_slice_symbol = slice_symbol;
 }
 
 static void
@@ -2504,6 +2585,9 @@ resolve_stmt(struct resolver* resolver, struct cst_stmt const* stmt)
     case CST_STMT_RETURN: {
         return resolve_stmt_return(resolver, stmt);
     }
+    case CST_STMT_ASSERT: {
+        return resolve_stmt_assert(resolver, stmt);
+    }
     case CST_STMT_ASSIGN: {
         return resolve_stmt_assign(resolver, stmt);
     }
@@ -2880,6 +2964,58 @@ resolve_stmt_return(struct resolver* resolver, struct cst_stmt const* stmt)
 }
 
 static struct stmt const*
+resolve_stmt_assert(struct resolver* resolver, struct cst_stmt const* stmt)
+{
+    assert(resolver != NULL);
+    assert(!resolver_is_global(resolver));
+    assert(stmt != NULL);
+    assert(stmt->kind == CST_STMT_ASSERT);
+
+
+    struct expr const* const expr =
+        resolve_expr(resolver, stmt->data.assert_.expr);
+    if (expr->type->kind != TYPE_BOOL) {
+        fatal(
+            expr->location,
+            "assert with non-boolean type `%s`",
+            expr->type->name);
+    }
+
+    // Assert statement location must have a valid path and line.
+    assert(stmt->location.path != NO_PATH);
+    assert(stmt->location.line != NO_LINE);
+    assert(stmt->location.psrc != NO_PSRC);
+    char const* const line_start = source_line_start(stmt->location.psrc);
+    char const* const line_end = source_line_end(stmt->location.psrc);
+    struct string* const bytes = string_new_fmt(
+        "[%s:%zu] assertion failure\n%.*s\n",
+        stmt->location.path,
+        stmt->location.line,
+        (int)(line_end - line_start),
+        line_start);
+    char const* const bytes_start = string_start(bytes);
+    size_t const bytes_count = string_count(bytes);
+
+    struct symbol const* array_symbol = NULL;
+    struct symbol const* slice_symbol = NULL;
+    create_static_bytes(
+        resolver,
+        expr->location,
+        bytes_start,
+        bytes_count,
+        &array_symbol,
+        &slice_symbol);
+
+    string_del(bytes);
+
+    struct stmt* const resolved =
+        stmt_new_assert(expr->location, expr, array_symbol, slice_symbol);
+
+    freeze(resolved);
+    return resolved;
+}
+
+static struct stmt const*
 resolve_stmt_assign(struct resolver* resolver, struct cst_stmt const* stmt)
 {
     assert(resolver != NULL);
@@ -3245,62 +3381,21 @@ resolve_expr_bytes(struct resolver* resolver, struct cst_expr const* expr)
     assert(expr->kind == CST_EXPR_BYTES);
 
     struct string const* const bytes = expr->data.bytes.data.bytes;
-    size_t const count = string_count(bytes);
+    char const* const bytes_start = string_start(bytes);
+    size_t const bytes_count = string_count(bytes);
 
-    // Bytes Array Object
-
-    struct type const* const array_type = type_unique_array(
-        expr->location, count + 1 /*NUL*/, context()->builtin.byte);
-
-    struct address const* const array_address =
-        resolver_reserve_storage_static(resolver, "__bytes_array");
-
-    sbuf(struct value*) array_elements = NULL;
-    for (size_t i = 0; i < count; ++i) {
-        uint8_t const byte = (uint8_t)string_start(bytes)[i];
-        sbuf_push(array_elements, value_new_byte(byte));
-    }
-    // Append a NUL byte to the end of every bytes literal. This NUL byte is
-    // not included in the slice length, but will allow bytes literals to be
-    // accessed as NUL-terminated arrays when interfacing with C code.
-    sbuf_push(array_elements, value_new_byte(0x00));
-    struct value* const array_value =
-        value_new_array(array_type, array_elements, NULL);
-    value_freeze(array_value);
-
-    struct object* const array_object =
-        object_new(array_type, array_address, array_value);
-    freeze(array_object);
-
-    struct symbol* const array_symbol = symbol_new_constant(
-        expr->location, array_address->data.static_.name, array_object);
-    freeze(array_symbol);
-    register_static_symbol(array_symbol);
-
-    // Bytes Slice Object
-
-    struct address const* const slice_address =
-        resolver_reserve_storage_static(resolver, "__bytes_slice");
-
-    struct value* const slice_start =
-        value_new_pointer(context()->builtin.pointer_to_byte, *array_address);
-    struct value* const slice_count =
-        value_new_integer(context()->builtin.usize, bigint_new_umax(count));
-    struct value* const slice_value = value_new_slice(
-        context()->builtin.slice_of_byte, slice_start, slice_count);
-    value_freeze(slice_value);
-
-    struct object* const slice_object = object_new(
-        context()->builtin.slice_of_byte, slice_address, slice_value);
-    freeze(slice_object);
-
-    struct symbol* const slice_symbol = symbol_new_constant(
-        expr->location, slice_address->data.static_.name, slice_object);
-    freeze(slice_symbol);
-    register_static_symbol(slice_symbol);
+    struct symbol const* array_symbol = NULL;
+    struct symbol const* slice_symbol = NULL;
+    create_static_bytes(
+        resolver,
+        expr->location,
+        bytes_start,
+        bytes_count,
+        &array_symbol,
+        &slice_symbol);
 
     struct expr* const resolved =
-        expr_new_bytes(expr->location, array_symbol, slice_symbol, count);
+        expr_new_bytes(expr->location, array_symbol, slice_symbol, bytes_count);
 
     freeze(resolved);
     return resolved;

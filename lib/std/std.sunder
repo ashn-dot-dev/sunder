@@ -431,7 +431,7 @@ struct linear_allocator {
     func reallocate(self: *linear_allocator, ptr: *any, align: usize, old_size: usize, new_size: usize) std::result[[*any, std::error]] {
         if old_size == 0 {
             # Nothing was allocated in the previous allocate/reallocate call.
-            std::assert(ptr == std::ptr[[byte]]::NULL);
+            assert ptr == std::ptr[[byte]]::NULL;
             return self.*.allocate(align, new_size);
         }
 
@@ -746,7 +746,7 @@ struct general_allocator {
 
         var is_only_element = prev == element and next == element;
         if is_only_element {
-            std::assert(self.*._elements == element);
+            assert self.*._elements == element;
             self.*._elements = std::ptr[[general_allocator_element]]::NULL;
             return;
         }
@@ -1157,7 +1157,7 @@ struct str_reader {
     }
 
     func read(self: *str_reader, buf: []byte) std::result[[usize, std::error]] {
-        std::assert(self.*._idx <= countof(self.*._str));
+        assert self.*._idx <= countof(self.*._str);
         var cur_count = countof(self.*._str) - self.*._idx;
         var buf_count = countof(buf);
         var min_count = *std::min[[usize]](&cur_count, &buf_count);
@@ -1184,7 +1184,7 @@ struct str_writer {
     }
 
     func write(self: *str_writer, buf: []byte) std::result[[usize, std::error]] {
-        std::assert(self.*._idx <= countof(self.*._str));
+        assert self.*._idx <= countof(self.*._str);
         if (self.*._idx == countof(self.*._str)) {
             return std::result[[usize, std::error]]::init_error(std::error::BUFFER_FULL);
         }
@@ -1783,13 +1783,6 @@ func panic_format(format: []byte, args: []std::formatter) void {
     std::exit(std::EXIT_FAILURE);
 }
 
-# Panics if the provided condition does not evaluate as true.
-func assert(condition: bool) void {
-    if not condition {
-        std::panic("assert failure");
-    }
-}
-
 # Returns a signed integer less than, equal to, or greater than zero if `lhs`
 # is found, respectively, to be less than, equal to, or greater than `rhs`.
 func compare[[T]](lhs: *T, rhs: *T) ssize {
@@ -1943,7 +1936,7 @@ struct big_integer {
     # Initialize a big integer with the value of a primitive integer.
     # The provided allocator is used for backing storage.
     func init_from_int_with_allocator[[T]](allocator: std::allocator, int: T) big_integer {
-        std::assert(sizeof(T) <= sizeof(u64));
+        assert sizeof(T) <= sizeof(u64);
         if int >= 0 {
             var self = (:big_integer){
                 ._allocator = allocator,
@@ -1961,7 +1954,7 @@ struct big_integer {
         # integer, which will produce an integer out-of-range error when
         # multiplied by negative one, as the negated (positive) value is
         # un-representable as a two's complement signed type `T`.
-        std::assert(T::MIN < 0);
+        assert T::MIN < 0;
         if int == T::MIN {
             magnitude = (:u64)T::MAX + 1;
         }
@@ -2083,7 +2076,7 @@ struct big_integer {
 
     # Convert a big integer to a primitive integer of type `T`.
     func to_int[[T]](self: *big_integer) std::result[[T, std::error]] {
-        std::assert(sizeof(T) <= sizeof(u64));
+        assert sizeof(T) <= sizeof(u64);
         var buf = (:[64]byte)[0...]; # More than enough space.
         var allocator = std::linear_allocator::init(buf[0:countof(buf)]);
         var allocator = std::allocator::init[[typeof(allocator)]](&allocator);
@@ -2101,7 +2094,7 @@ struct big_integer {
         self.*._limbs = std::slice[[u32]]::resize_with_allocator(self.*._allocator, self.*._limbs, countof(from.*._limbs));
 
         if self.*._sign != 0 {
-            std::assert(countof(self.*._limbs) != 0);
+            assert countof(self.*._limbs) != 0;
             std::slice[[u32]]::copy(self.*._limbs, from.*._limbs);
         }
     }
@@ -2114,7 +2107,7 @@ struct big_integer {
             return -1;
         }
 
-        std::assert(lhs.*._sign == rhs.*._sign);
+        assert lhs.*._sign == rhs.*._sign;
         var sign = lhs.*._sign;
         if countof(lhs.*._limbs) > countof(rhs.*._limbs) {
             return sign;
@@ -2123,7 +2116,7 @@ struct big_integer {
             return -sign;
         }
 
-        std::assert(countof(lhs.*._limbs) == countof(rhs.*._limbs));
+        assert countof(lhs.*._limbs) == countof(rhs.*._limbs);
         var count = countof(lhs.*._limbs);
         for i in count {
             var limb_idx = count - i - 1;
@@ -2244,12 +2237,12 @@ struct big_integer {
         defer output.fini();
 
         if magnitude._sign == 0 {
-            std::assert(countof(self.*._limbs) == 0);
+            assert countof(self.*._limbs) == 0;
             # Write a single zero digit.
             output.insert(0u, '0');
         }
         for magnitude._sign != 0 {
-            std::assert(countof(self.*._limbs) != 0);
+            assert countof(self.*._limbs) != 0;
 
             var div = big_integer::init();
             defer div.fini();
@@ -2261,7 +2254,7 @@ struct big_integer {
                 output.insert(0u, '0');
             }
             elif rem._sign == +1 {
-                std::assert(countof(rem._limbs) == 1);
+                assert countof(rem._limbs) == 1;
                 var digit = digits_table[(:usize)rem._limbs[0]];
                 output.insert(0u, digit);
             }
@@ -2273,7 +2266,7 @@ struct big_integer {
         }
 
         if is_digits_prefix and countof(digits_prefix) != 0 {
-            std::assert(countof(digits_prefix) == 2);
+            assert countof(digits_prefix) == 2;
             output.insert(0u, digits_prefix[0]);
             output.insert(1u, digits_prefix[1]);
         }
@@ -2332,7 +2325,7 @@ struct big_integer {
 
         # (+lhs) + (+rhs) == +(lhs + rhs)
         # (-lhs) + (-rhs) == -(lhs + rhs)
-        std::assert(lhs.*._sign == rhs.*._sign);
+        assert lhs.*._sign == rhs.*._sign;
         var sign = lhs.*._sign;
         var lhs_limb_count = countof(lhs.*._limbs);
         var rhs_limb_count = countof(rhs.*._limbs);
@@ -2358,7 +2351,7 @@ struct big_integer {
             tmp_res._limbs[i] = (:u32)tot;
             carry = (:u64)(tot > (:u64)u32::MAX);
         }
-        std::assert(carry == 0);
+        assert carry == 0;
 
         tmp_res._normalize();
         big_integer::assign(res, &tmp_res);
@@ -2396,7 +2389,7 @@ struct big_integer {
 
         # (+lhs) - (+rhs) == +(lhs - rhs)
         # (-lhs) - (-rhs) == -(lhs - rhs)
-        std::assert(lhs.*._sign == rhs.*._sign);
+        assert lhs.*._sign == rhs.*._sign;
         var sign = lhs.*._sign;
         # Note that the expression (lhs - rhs) will require flipping the sign
         # of the result if the magnitude of lhs is greater than the magnitude
@@ -2437,7 +2430,7 @@ struct big_integer {
             tmp_res._limbs[i] = (:u32)tot;
             borrow = (:u64)(tot > (:u64)u32::MAX);
         }
-        std::assert(borrow == 0);
+        assert borrow == 0;
 
         if (neg) {
             big_integer::neg(&tmp_res, &tmp_res);
@@ -2491,7 +2484,7 @@ struct big_integer {
                 var t: u64 = u_limb * v_limb + (:u64)w[i + j] + k;
                 w[i + j] = (:u32)(t % b);
                 k = t / b;
-                assert(k <= b);
+                assert k <= b;
             }
             w[j + m] = (:u32)k;
         }
@@ -3131,7 +3124,7 @@ struct hash_map[[K, V]] {
             for i in 0:countof(self.*._elements) {
                 if self.*._elements[i]._state == hash_map_element[[K, V]]::_STATE_USE {
                     var existing = new.insert(self.*._elements[i]._key, self.*._elements[i]._value);
-                    std::assert(existing.is_empty());
+                    assert existing.is_empty();
                 }
             }
             std::slice[[hash_map_element[[K, V]]]]::delete_with_allocator(self.*._allocator, self.*._elements);
@@ -3179,7 +3172,7 @@ struct hash_map[[K, V]] {
             index = (index + 1) % countof(self.*._elements);
         }
 
-        std::assert(false); # unreachable
+        assert false; # unreachable
         return std::optional[[std::key_value_pair[[K, V]]]]::EMPTY;
     }
 
@@ -4351,7 +4344,7 @@ extend f32 func format(self: *f32, writer: std::writer, fmt: []byte) std::result
         return std::result[[void, std::error]]::init_error(std::error::INVALID_ARGUMENT);
     }
     var buf: [4096]byte = uninit; # More than enough space.
-    std::assert(sys::f32_to_str(&buf[0], *self));
+    assert sys::f32_to_str(&buf[0], *self);
     return std::write_all(writer, std::cstr::data(&buf[0]));
 }
 
@@ -4409,7 +4402,7 @@ extend f64 func format(self: *f64, writer: std::writer, fmt: []byte) std::result
         return std::result[[void, std::error]]::init_error(std::error::INVALID_ARGUMENT);
     }
     var buf: [4096]byte = uninit; # More than enough space.
-    std::assert(sys::f64_to_str(&buf[0], *self));
+    assert sys::f64_to_str(&buf[0], *self);
     return std::write_all(writer, std::cstr::data(&buf[0]));
 }
 

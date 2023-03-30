@@ -8,7 +8,7 @@ func test[[T]](lhs: T, rhs: T) void {
 func test_compare_s64[[T]](lhs: T, rhs: T) void {
     var a: T = lhs *% rhs;
     var b: T = (:T)((:s64)lhs * (:s64)rhs);
-    std::assert(a == b);
+    assert a == b;
 }
 
 func main() void {

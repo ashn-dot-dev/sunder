@@ -77,6 +77,8 @@ static struct cst_stmt const*
 parse_stmt_continue(struct parser* parser);
 static struct cst_stmt const*
 parse_stmt_return(struct parser* parser);
+static struct cst_stmt const*
+parse_stmt_assert(struct parser* parser);
 
 // Precedence levels roughly follow the precedence levels described in the
 // operator precedence section of the Go Programming Language Specification.
@@ -642,6 +644,10 @@ parse_stmt(struct parser* parser)
         return parse_stmt_return(parser);
     }
 
+    if (check_current(parser, TOKEN_ASSERT)) {
+        return parse_stmt_assert(parser);
+    }
+
     struct cst_expr const* const expr = parse_expr(parser);
     if (check_current(parser, TOKEN_ASSIGN)) {
         // <stmt-assign>
@@ -838,6 +844,22 @@ parse_stmt_return(struct parser* parser)
     expect_current(parser, TOKEN_SEMICOLON);
     struct cst_stmt* const product = cst_stmt_new_return(location, expr);
 
+    freeze(product);
+    return product;
+}
+
+static struct cst_stmt const*
+parse_stmt_assert(struct parser* parser)
+{
+    assert(parser != NULL);
+    assert(check_current(parser, TOKEN_ASSERT));
+
+    struct source_location const location =
+        expect_current(parser, TOKEN_ASSERT).location;
+    struct cst_expr const* const expr = parse_expr(parser);
+    expect_current(parser, TOKEN_SEMICOLON);
+
+    struct cst_stmt* const product = cst_stmt_new_assert(location, expr);
     freeze(product);
     return product;
 }

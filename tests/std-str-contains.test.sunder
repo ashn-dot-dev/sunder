@@ -1,19 +1,19 @@
 import "std";
 
 func main() void {
-    std::assert(std::str::contains("", ""));
-    std::assert(std::str::contains("a", ""));
-    std::assert(not std::str::contains("", "a"));
+    assert std::str::contains("", "");
+    assert std::str::contains("a", "");
+    assert not std::str::contains("", "a");
 
-    std::assert(std::str::contains("foobar", "f"));
-    std::assert(std::str::contains("foobar", "fo"));
-    std::assert(std::str::contains("foobar", "foo"));
-    std::assert(not std::str::contains("foobar", "fooo"));
-    std::assert(std::str::contains("foobar", "bar"));
+    assert std::str::contains("foobar", "f");
+    assert std::str::contains("foobar", "fo");
+    assert std::str::contains("foobar", "foo");
+    assert not std::str::contains("foobar", "fooo");
+    assert std::str::contains("foobar", "bar");
 
-    std::assert(std::str::contains("foobar", "foobar"));
-    std::assert(not std::str::contains("foobar", "barfoo"));
-    std::assert(not std::str::contains("foobar", "foobarg"));
+    assert std::str::contains("foobar", "foobar");
+    assert not std::str::contains("foobar", "barfoo");
+    assert not std::str::contains("foobar", "foobarg");
 
-    std::assert(std::str::contains("kpvwblrizaabmnhz", "ab"));
+    assert std::str::contains("kpvwblrizaabmnhz", "ab");
 }

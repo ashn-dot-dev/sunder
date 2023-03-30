@@ -5,7 +5,7 @@ import "std";
 import "import-platform-specific";
 
 func main() void {
-    std::assert(PLATFORM_SPECIFIC_ARCH); # module.*.sunder
-    std::assert(PLATFORM_SPECIFIC_HOST); # module.*.sunder
-    std::assert(NO_PLATFORM_SPECIFIC_OVERRIDE); # module-with-no-platform-specific-override.sunder
+    assert PLATFORM_SPECIFIC_ARCH; # module.*.sunder
+    assert PLATFORM_SPECIFIC_HOST; # module.*.sunder
+    assert NO_PLATFORM_SPECIFIC_OVERRIDE; # module-with-no-platform-specific-override.sunder
 }

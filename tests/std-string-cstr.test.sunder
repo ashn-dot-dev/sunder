@@ -12,7 +12,7 @@ func main() void {
     var s = std::string::init_with_allocator(std::null_allocator::ALLOCATOR);
     defer s.fini();
     test(s.cstr());
-    std::assert(s.cstr() != s.start());
+    assert s.cstr() != s.start();
 
     # Using an allocator deliberately filled with non-NUL bytes to ensure that
     # the NUL terminator is actually being written.

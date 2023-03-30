@@ -1,0 +1,7 @@
+func main() void {
+    assert 123 < 456;
+    assert 123 > 456;
+}
+################################################################################
+# [stmt-assert.test.sunder:3] assertion failure
+#     assert 123 > 456;

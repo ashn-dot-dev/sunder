@@ -709,6 +709,8 @@ codegen_stmt_continue(struct stmt const* stmt, size_t id);
 static void
 codegen_stmt_return(struct stmt const* stmt, size_t id);
 static void
+codegen_stmt_assert(struct stmt const* stmt, size_t id);
+static void
 codegen_stmt_assign(struct stmt const* stmt, size_t id);
 static void
 codegen_stmt_expr(struct stmt const* stmt, size_t id);
@@ -1028,7 +1030,7 @@ codegen_fatals(void)
     appendln("    call __fatal");
     appendch('\n');
     appendln("section .rodata");
-    appendln("__fatal_unimplemented_msg_start: db \"unimplemented\", 0x0A");
+    appendln("__fatal_unimplemented_msg_start: db \"fatal: unimplemented\", 0x0A");
     appendln("__fatal_unimplemented_msg_count: equ $ - __fatal_unimplemented_msg_start");
     appendch('\n');
 
@@ -1041,7 +1043,7 @@ codegen_fatals(void)
     appendln("    call __fatal");
     appendch('\n');
     appendln("section .rodata");
-    appendln("__fatal_divide_by_zero_msg_start: db \"divide by zero\", 0x0A");
+    appendln("__fatal_divide_by_zero_msg_start: db \"fatal: divide by zero\", 0x0A");
     appendln("__fatal_divide_by_zero_msg_count: equ $ - __fatal_divide_by_zero_msg_start");
     appendch('\n');
 
@@ -1054,7 +1056,7 @@ codegen_fatals(void)
     appendln("    call __fatal");
     appendch('\n');
     appendln("section .rodata");
-    appendln("__fatal_index_out_of_bounds_msg_start: db \"index out-of-bounds\", 0x0A");
+    appendln("__fatal_index_out_of_bounds_msg_start: db \"fatal: index out-of-bounds\", 0x0A");
     appendln("__fatal_index_out_of_bounds_msg_count: equ $ - __fatal_index_out_of_bounds_msg_start");
 
     // Builtin null pointer dereference handler.
@@ -1066,20 +1068,22 @@ codegen_fatals(void)
     appendln("    call __fatal");
     appendch('\n');
     appendln("section .rodata");
-    appendln("__fatal_null_pointer_dereference_msg_start: db \"null pointer dereference\", 0x0A");
+    appendln("__fatal_null_pointer_dereference_msg_start: db \"fatal: null pointer dereference\", 0x0A");
     appendln("__fatal_null_pointer_dereference_msg_count: equ $ - __fatal_null_pointer_dereference_msg_start");
     appendch('\n');
 
     // Builtin operation out-of-range handler.
     appendln("section .text");
     appendln("__fatal_out_of_range:");
+    appendln("    push 0");
+    appendln("    push 0");
     appendln("    lea rax, [__fatal_out_of_range_msg_start]");
     appendln("    push rax");
     appendln("    push __fatal_out_of_range_msg_count");
     appendln("    call __fatal");
     appendch('\n');
     appendln("section .rodata");
-    appendln("__fatal_out_of_range_msg_start: db \"operation produces out-of-range result\", 0x0A");
+    appendln("__fatal_out_of_range_msg_start: db \"fatal: operation produces out-of-range result\", 0x0A");
     appendln("__fatal_out_of_range_msg_count: equ $ - __fatal_out_of_range_msg_start");
     appendch('\n');
     // clang-format on
@@ -1227,6 +1231,7 @@ codegen_stmt(struct stmt const* stmt)
         TABLE_ENTRY(STMT_BREAK, codegen_stmt_break),
         TABLE_ENTRY(STMT_CONTINUE, codegen_stmt_continue),
         TABLE_ENTRY(STMT_RETURN, codegen_stmt_return),
+        TABLE_ENTRY(STMT_ASSERT, codegen_stmt_assert),
         TABLE_ENTRY(STMT_ASSIGN, codegen_stmt_assign),
         TABLE_ENTRY(STMT_EXPR, codegen_stmt_expr),
 #undef TABLE_ENTRY
@@ -1417,6 +1422,38 @@ codegen_stmt_return(struct stmt const* stmt, size_t id)
     appendli("pop rbp");
     // Return control to the calling routine.
     appendli("ret");
+}
+
+static void
+codegen_stmt_assert(struct stmt const* stmt, size_t id)
+{
+    assert(stmt != NULL);
+    assert(stmt->kind == STMT_ASSERT);
+
+    push_rvalue(stmt->data.assert_.expr);
+
+    appendli("pop rax");
+    appendli("mov rbx, 0");
+    appendli("cmp rax, rbx");
+    appendli("jne %s%zu_end", LABEL_STMT, id);
+
+    struct address const* const address =
+        symbol_xget_address(stmt->data.assert_.array_symbol);
+    assert(address->kind == ADDRESS_STATIC);
+    assert(address->data.static_.offset == 0);
+    char const* const bytes_start = address->data.static_.name;
+
+    struct type const* const array_type =
+        symbol_xget_type(stmt->data.assert_.array_symbol);
+    assert(array_type->kind == TYPE_ARRAY);
+    uintmax_t bytes_count = array_type->data.array.count - 1; // -1 for NUL
+
+    appendli("lea rax, [%s]", bytes_start);
+    appendli("push rax");
+    appendli("push %ju", bytes_count);
+    appendli("call __fatal");
+
+    appendli("%s%zu_end:", LABEL_STMT, id);
 }
 
 static void

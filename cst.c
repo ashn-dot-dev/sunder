@@ -334,6 +334,15 @@ cst_stmt_new_return(
 }
 
 struct cst_stmt*
+cst_stmt_new_assert(
+    struct source_location location, struct cst_expr const* expr)
+{
+    struct cst_stmt* const self = cst_stmt_new(location, CST_STMT_ASSERT);
+    self->data.assert_.expr = expr;
+    return self;
+}
+
+struct cst_stmt*
 cst_stmt_new_assign(
     struct source_location location,
     struct cst_expr const* lhs,

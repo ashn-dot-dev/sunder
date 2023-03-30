@@ -85,6 +85,8 @@ codegen_stmt_continue(struct stmt const* stmt);
 static void
 codegen_stmt_return(struct stmt const* stmt);
 static void
+codegen_stmt_assert(struct stmt const* stmt);
+static void
 codegen_stmt_assign(struct stmt const* stmt);
 static void
 codegen_stmt_expr(struct stmt const* stmt);
@@ -974,7 +976,8 @@ strgen_value(struct value const* value)
 
             if (member_variable_vals[i] != NULL) {
                 assert(member_variable_vals[i]->type == type);
-                string_append_fmt(s,
+                string_append_fmt(
+                    s,
                     ".%s = %s",
                     mangle_name(member_variable_defs[i].name),
                     strgen_value(member_variable_vals[i]));
@@ -1150,6 +1153,7 @@ codegen_stmt(struct stmt const* stmt)
         TABLE_ENTRY(STMT_BREAK, codegen_stmt_break),
         TABLE_ENTRY(STMT_CONTINUE, codegen_stmt_continue),
         TABLE_ENTRY(STMT_RETURN, codegen_stmt_return),
+        TABLE_ENTRY(STMT_ASSERT, codegen_stmt_assert),
         TABLE_ENTRY(STMT_ASSIGN, codegen_stmt_assign),
         TABLE_ENTRY(STMT_EXPR, codegen_stmt_expr),
 #undef TABLE_ENTRY
@@ -1271,6 +1275,20 @@ codegen_stmt_return(struct stmt const* stmt)
     else {
         appendli("return;");
     }
+}
+
+static void
+codegen_stmt_assert(struct stmt const* stmt)
+{
+    assert(stmt != NULL);
+    assert(stmt->kind == STMT_ASSERT);
+
+    appendli("if (!(%s)) {", strgen_rvalue(stmt->data.assert_.expr));
+    appendli(
+        "%s(%s.start);",
+        mangle_name("__fatal"),
+        mangle_symbol(stmt->data.assert_.slice_symbol));
+    appendli("}");
 }
 
 static void
@@ -2815,6 +2833,7 @@ codegen_c(
 
     char const* const backend = context()->env.SUNDER_BACKEND;
     assert(cstr_eq_ignore_case(backend, "C"));
+    (void)backend;
 
     out = string_new(NULL, 0u);
     struct string* const src_path = string_new_fmt("%s.tmp.c", opt_o);

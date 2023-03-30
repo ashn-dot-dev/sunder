@@ -2,10 +2,10 @@ import "std";
 
 func main() void {
     var result = ssize::init_from_str("123", 0xDEADBEEF);
-    std::assert(result.error() == std::error::INVALID_ARGUMENT);
-    std::assert(result.error() != std::error::PARSE_FAILURE);
+    assert result.error() == std::error::INVALID_ARGUMENT;
+    assert result.error() != std::error::PARSE_FAILURE;
 
     var result = ssize::init_from_str("bad string", 0);
-    std::assert(result.error() == std::error::PARSE_FAILURE);
-    std::assert(result.error() != std::error::INVALID_ARGUMENT);
+    assert result.error() == std::error::PARSE_FAILURE;
+    assert result.error() != std::error::INVALID_ARGUMENT;
 }

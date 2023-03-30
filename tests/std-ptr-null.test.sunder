@@ -7,15 +7,15 @@ struct foo {
 }
 
 func main() void {
-    std::assert((:usize)std::ptr[[u8]]::NULL == 0);
-    std::assert((:usize)std::ptr[[u16]]::NULL == 0);
-    std::assert((:usize)std::ptr[[u32]]::NULL == 0);
-    std::assert((:usize)std::ptr[[u64]]::NULL == 0);
-    std::assert((:usize)std::ptr[[foo]]::NULL == 0);
+    assert (:usize)std::ptr[[u8]]::NULL == 0;
+    assert (:usize)std::ptr[[u16]]::NULL == 0;
+    assert (:usize)std::ptr[[u32]]::NULL == 0;
+    assert (:usize)std::ptr[[u64]]::NULL == 0;
+    assert (:usize)std::ptr[[foo]]::NULL == 0;
 
     var x: u16 = 0xBEEF;
     var y: u32 = 0xCAFEF00D;
 
-    std::assert(std::ptr[[u16]]::NULL != &x);
-    std::assert(std::ptr[[u32]]::NULL != &y);
+    assert std::ptr[[u16]]::NULL != &x;
+    assert std::ptr[[u32]]::NULL != &y;
 }

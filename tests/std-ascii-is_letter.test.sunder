@@ -1,21 +1,21 @@
 import "std";
 
 func main() void {
-    std::assert(std::ascii::is_letter('a'));
-    std::assert(std::ascii::is_letter('b'));
-    std::assert(std::ascii::is_letter('c'));
-    std::assert(std::ascii::is_letter('z'));
+    assert std::ascii::is_letter('a');
+    assert std::ascii::is_letter('b');
+    assert std::ascii::is_letter('c');
+    assert std::ascii::is_letter('z');
 
-    std::assert(std::ascii::is_letter('A'));
-    std::assert(std::ascii::is_letter('B'));
-    std::assert(std::ascii::is_letter('C'));
-    std::assert(std::ascii::is_letter('Z'));
+    assert std::ascii::is_letter('A');
+    assert std::ascii::is_letter('B');
+    assert std::ascii::is_letter('C');
+    assert std::ascii::is_letter('Z');
 
-    std::assert(not std::ascii::is_letter('1'));
-    std::assert(not std::ascii::is_letter('~'));
-    std::assert(not std::ascii::is_letter('\n'));
-    std::assert(not std::ascii::is_letter('\t'));
-    std::assert(not std::ascii::is_letter(' '));
-    std::assert(not std::ascii::is_letter('@'));
-    std::assert(not std::ascii::is_letter('['));
+    assert not std::ascii::is_letter('1');
+    assert not std::ascii::is_letter('~');
+    assert not std::ascii::is_letter('\n');
+    assert not std::ascii::is_letter('\t');
+    assert not std::ascii::is_letter(' ');
+    assert not std::ascii::is_letter('@');
+    assert not std::ascii::is_letter('[');
 }
