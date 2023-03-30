@@ -68,7 +68,7 @@ typedef double             __sunder_f64;
 // clang-format on
 
 static inline _Noreturn void
-__sunder___fatal(char const* message)
+__sunder___fatal(char* message)
 {
     fprintf(stderr, "%s\n", message);
     _exit(1);

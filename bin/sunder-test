@@ -25,15 +25,6 @@ done
 TESTSRUN=0
 FAILURES=0
 
-contains() {
-    CONTAINS_STR="$1" # input string
-    CONTAINS_SUB="$2" # target substring
-    if [ "${CONTAINS_STR#*${CONTAINS_SUB}}" != "${CONTAINS_STR}" ]; then
-        return 0 # Input string contains target substring.
-    fi
-    return 1 # Input string does not contain target substring.
-}
-
 test() {
     TEST="$1"
 
@@ -42,6 +33,20 @@ test() {
     # Conditionally skip tests when not compiling with the C backend.
     if >/dev/null grep -i '#.*only SUNDER_BACKEND=C' "${TEST}" \
     && ! "${SUNDER_HOME}/bin/sunder-compile" -e | >/dev/null grep -i 'SUNDER_BACKEND=C'; then
+        echo '[= SKIP =]'
+        return 0
+    fi
+
+    # Conditionally skip tests when not compiling with the NASM backend.
+    if >/dev/null grep -i '#.*only SUNDER_BACKEND=NASM' "${TEST}" \
+    && ! "${SUNDER_HOME}/bin/sunder-compile" -e | >/dev/null grep -i 'SUNDER_BACKEND=NASM'; then
+        echo '[= SKIP =]'
+        return 0
+    fi
+
+    # Conditionally skip tests when not compiling with the YASM backend.
+    if >/dev/null grep -i '#.*only SUNDER_BACKEND=YASM' "${TEST}" \
+    && ! "${SUNDER_HOME}/bin/sunder-compile" -e | >/dev/null grep -i 'SUNDER_BACKEND=YASM'; then
         echo '[= SKIP =]'
         return 0
     fi
