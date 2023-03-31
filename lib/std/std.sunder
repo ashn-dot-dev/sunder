@@ -3288,6 +3288,25 @@ struct hash_set[[T]] {
     }
 }
 
+# Iterate over the elements of a hash set.
+struct hash_set_iterator[[T]] {
+    var _iterator: std::hash_map_iterator[[T, void]];
+
+    func init(set: *std::hash_set[[T]]) hash_set_iterator[[T]] {
+        return (:hash_set_iterator[[T]]){
+            ._iterator = std::hash_map_iterator[[T, void]]::init(&set.*._hash_map)
+        };
+    }
+
+    func advance(self: *hash_set_iterator[[T]]) bool {
+        return self.*._iterator.advance();
+    }
+
+    func current(self: *hash_set_iterator[[T]]) *T {
+        return self.*._iterator.current().key;
+    }
+}
+
 # Type and associated filesystem operations for a regular file.
 struct file {
     var _fd: sys::sint;
