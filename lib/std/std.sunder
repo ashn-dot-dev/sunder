@@ -3260,11 +3260,11 @@ struct hash_set[[T]] {
     # The provided allocator is used for backing storage.
     func init_union_with_allocator(allocator: std::allocator, x: *hash_set[[T]], y: *hash_set[[T]]) hash_set[[T]] {
         var self = init_with_allocator(allocator);
-        var iter = std::hash_set_iterator[[[]byte]]::init(x);
+        var iter = std::hash_set_iterator[[T]]::init(x);
         for iter.advance() {
             self.insert(*iter.current());
         }
-        var iter = std::hash_set_iterator[[[]byte]]::init(y);
+        var iter = std::hash_set_iterator[[T]]::init(y);
         for iter.advance() {
             self.insert(*iter.current());
         }
@@ -3280,13 +3280,13 @@ struct hash_set[[T]] {
     # The provided allocator is used for backing storage.
     func init_intersection_with_allocator(allocator: std::allocator, x: *hash_set[[T]], y: *hash_set[[T]]) hash_set[[T]] {
         var self = init_with_allocator(allocator);
-        var iter = std::hash_set_iterator[[[]byte]]::init(x);
+        var iter = std::hash_set_iterator[[T]]::init(x);
         for iter.advance() {
             if y.*.contains(*iter.current()) {
                 self.insert(*iter.current());
             }
         }
-        var iter = std::hash_set_iterator[[[]byte]]::init(y);
+        var iter = std::hash_set_iterator[[T]]::init(y);
         for iter.advance() {
             if x.*.contains(*iter.current()) {
                 self.insert(*iter.current());
