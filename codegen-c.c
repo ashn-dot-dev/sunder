@@ -2039,7 +2039,12 @@ strgen_rvalue_unary_bitnot(struct expr const* expr)
     assert(expr->kind == EXPR_UNARY);
     assert(expr->data.unary.op == UOP_BITNOT);
 
-    return intern_fmt("~(%s)", strgen_rvalue(expr->data.unary.rhs));
+    // An additional cast of the resulting `~rhs` expression is required in
+    // order to prevent warnings resulting from integral promotions.
+    return intern_fmt(
+        "((%s)~(%s))",
+        mangle_type(expr->type),
+        strgen_rvalue(expr->data.unary.rhs));
 }
 
 static char const*
