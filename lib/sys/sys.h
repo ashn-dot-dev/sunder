@@ -671,3 +671,51 @@ __SUNDER_IEEE754_MATH_DEFINITIONS(ceil)
 __SUNDER_IEEE754_MATH_DEFINITIONS(floor)
 __SUNDER_IEEE754_MATH_DEFINITIONS(trunc)
 __SUNDER_IEEE754_MATH_DEFINITIONS(round)
+
+__sunder_bool
+sys_f32_is_finite(__sunder_f32 f)
+{
+    return isfinite(f);
+}
+
+__sunder_bool
+sys_f64_is_finite(__sunder_f64 f)
+{
+    return isfinite(f);
+}
+
+__sunder_bool
+sys_f32_is_normal(__sunder_f32 f)
+{
+    return isnormal(f);
+}
+
+__sunder_bool
+sys_f64_is_normal(__sunder_f64 f)
+{
+    return isnormal(f);
+}
+
+__sunder_bool
+sys_f32_is_inf(__sunder_f32 f)
+{
+    return isinf(f);
+}
+
+__sunder_bool
+sys_f64_is_inf(__sunder_f64 f)
+{
+    return isinf(f);
+}
+
+__sunder_bool
+sys_f32_is_nan(__sunder_f32 f)
+{
+    return isnan(f);
+}
+
+__sunder_bool
+sys_f64_is_nan(__sunder_f64 f)
+{
+    return isnan(f);
+}

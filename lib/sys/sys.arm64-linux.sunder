@@ -466,3 +466,14 @@ extern func f64_ceil(x: f64) f64;
 extern func f64_floor(x: f64) f64;
 extern func f64_trunc(x: f64) f64;
 extern func f64_round(x: f64) f64;
+
+# Classification Functions
+extern func f32_is_finite(x: f32) bool;
+extern func f32_is_normal(x: f32) bool;
+extern func f32_is_inf(x: f32) bool;
+extern func f32_is_nan(x: f32) bool;
+
+extern func f64_is_finite(x: f64) bool;
+extern func f64_is_normal(x: f64) bool;
+extern func f64_is_inf(x: f64) bool;
+extern func f64_is_nan(x: f64) bool;
