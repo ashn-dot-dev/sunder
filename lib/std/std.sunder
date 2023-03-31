@@ -3295,6 +3295,24 @@ struct hash_set[[T]] {
         return self;
     }
 
+    # Initialize a set as the difference of x and y.
+    func init_difference(x: *hash_set[[T]], y: *hash_set[[T]]) hash_set[[T]] {
+        return init_difference_with_allocator(std::global_allocator(), x, y);
+    }
+
+    # Initialize a set as the difference of x and y.
+    # The provided allocator is used for backing storage.
+    func init_difference_with_allocator(allocator: std::allocator, x: *hash_set[[T]], y: *hash_set[[T]]) hash_set[[T]] {
+        var self = init_with_allocator(allocator);
+        var iter = std::hash_set_iterator[[T]]::init(x);
+        for iter.advance() {
+            if not y.*.contains(*iter.current()) {
+                self.insert(*iter.current());
+            }
+        }
+        return self;
+    }
+
     # Finalize resources associated with the set.
     func fini(self: *hash_set[[T]]) void {
         self.*._hash_map.fini();
