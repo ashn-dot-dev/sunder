@@ -1,0 +1,28 @@
+import "std";
+
+func main() void {
+    var x = std::hash_set[[[]byte]]::init();
+    defer x.fini();
+    x.insert("foo");
+    x.insert("bar");
+    x.insert("baz");
+
+    var y = std::hash_set[[[]byte]]::init();
+    defer y.fini();
+    y.insert("abc");
+    y.insert("foo");
+    y.insert("bar");
+
+    var set = std::hash_set[[[]byte]]::init_intersection(&x, &y);
+    defer set.fini();
+    var iter = std::hash_set_iterator[[[]byte]]::init(&set);
+    for iter.advance() {
+        std::print_format_line(
+            std::out(),
+            "{}",
+            (:[]std::formatter)[std::formatter::init[[[]byte]](iter.current())]);
+    }
+}
+################################################################################
+# bar
+# foo
