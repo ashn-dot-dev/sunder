@@ -11,7 +11,7 @@
 #include <math.h> /* INFINITY, NAN, isfinite, isinf, isnan, math functions */
 #include <stdint.h> /* uintptr_t */
 #include <stdio.h> /* EOF, fprintf, sscanf */
-#include <string.h> /* memset */
+#include <string.h> /* memset, memcmp, strlen */
 #include <sys/mman.h> /* mmap, munmap */
 #include <sys/stat.h> /* mkdir */
 #include <sys/types.h> /* mode_t, off_t, size_t, ssize_t */
@@ -501,6 +501,28 @@ sys_dump_bytes(void* addr, __sunder_usize size)
 __sunder_bool
 sys_str_to_f32(__sunder_f32* out, __sunder_byte* start, __sunder_usize count)
 {
+    if (count == strlen("infinity") && 0 == memcmp(start, "infinity", count)) {
+        *out = (__sunder_f32)INFINITY;
+        return __sunder_true;
+    }
+
+    if (count == strlen("+infinity")
+        && 0 == memcmp(start, "+infinity", count)) {
+        *out = (__sunder_f32)INFINITY;
+        return __sunder_true;
+    }
+
+    if (count == strlen("-infinity")
+        && 0 == memcmp(start, "-infinity", count)) {
+        *out = (__sunder_f32)-INFINITY;
+        return __sunder_true;
+    }
+
+    if (count == strlen("NaN") && 0 == memcmp(start, "NaN", count)) {
+        *out = (__sunder_f32)NAN;
+        return __sunder_true;
+    }
+
     char* buf = alloca(count + 1);
     for (size_t i = 0; i < count; ++i) {
         __sunder_bool valid_character = isdigit((unsigned char)start[i])
@@ -525,6 +547,28 @@ sys_str_to_f32(__sunder_f32* out, __sunder_byte* start, __sunder_usize count)
 __sunder_bool
 sys_str_to_f64(__sunder_f64* out, __sunder_byte* start, __sunder_usize count)
 {
+    if (count == strlen("infinity") && 0 == memcmp(start, "infinity", count)) {
+        *out = (__sunder_f64)INFINITY;
+        return __sunder_true;
+    }
+
+    if (count == strlen("+infinity")
+        && 0 == memcmp(start, "+infinity", count)) {
+        *out = (__sunder_f64)INFINITY;
+        return __sunder_true;
+    }
+
+    if (count == strlen("-infinity")
+        && 0 == memcmp(start, "-infinity", count)) {
+        *out = (__sunder_f64)-INFINITY;
+        return __sunder_true;
+    }
+
+    if (count == strlen("NaN") && 0 == memcmp(start, "NaN", count)) {
+        *out = (__sunder_f64)NAN;
+        return __sunder_true;
+    }
+
     char* buf = alloca(count + 1);
     for (size_t i = 0; i < count; ++i) {
         __sunder_bool valid_character = isdigit((unsigned char)start[i])

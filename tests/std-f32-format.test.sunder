@@ -1,0 +1,26 @@
+import "std";
+
+func test(f: f32) void {
+    std::print_format_line(
+        std::out(),
+        "{}",
+        (:[]std::formatter)[std::formatter::init[[typeof(f)]](&f)]);
+}
+
+func main() void {
+    test(123.0);
+    test(+123.5);
+    test(-123.5);
+    test(f32::INFINITY);
+    test(+f32::INFINITY);
+    test(-f32::INFINITY);
+    test(f32::NAN);
+}
+################################################################################
+# 123.000000000
+# 123.500000000
+# -123.500000000
+# infinity
+# infinity
+# -infinity
+# NaN
