@@ -404,6 +404,15 @@ extern func f64_abs(x: f64) f64;
 extern func f64_min(x: f64, y: f64) f64;
 extern func f64_max(x: f64, y: f64) f64;
 
+# Exponential Functions
+extern func f32_ln(x: f32) f32;
+extern func f32_log2(x: f32) f32;
+extern func f32_log10(x: f32) f32;
+
+extern func f64_ln(x: f64) f64;
+extern func f64_log2(x: f64) f64;
+extern func f64_log10(x: f64) f64;
+
 # Power Functions
 extern func f32_sqrt(x: f32) f32;
 extern func f32_cbrt(x: f32) f32;

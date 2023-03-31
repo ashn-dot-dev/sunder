@@ -632,6 +632,21 @@ sys_f64_max(__sunder_f64 f1, __sunder_f64 f2)
     return fmax(f1, f2);
 }
 
+__sunder_f32
+sys_f32_ln(__sunder_f32 f)
+{
+    return logf(f);
+}
+
+__sunder_f64
+sys_f64_ln(__sunder_f64 f)
+{
+    return log(f);
+}
+
+__SUNDER_IEEE754_MATH_DEFINITIONS(log2)
+__SUNDER_IEEE754_MATH_DEFINITIONS(log10)
+
 __SUNDER_IEEE754_MATH_DEFINITIONS(sqrt)
 __SUNDER_IEEE754_MATH_DEFINITIONS(cbrt)
 __SUNDER_IEEE754_MATH_DEFINITIONS2(hypot)

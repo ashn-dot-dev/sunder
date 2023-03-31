@@ -456,6 +456,14 @@ sys.f64_abs: call __fatal_unimplemented
 sys.f64_min: call __fatal_unimplemented
 sys.f64_max: call __fatal_unimplemented
 
+sys.f32_ln: call __fatal_unimplemented
+sys.f32_log2: call __fatal_unimplemented
+sys.f32_log10: call __fatal_unimplemented
+
+sys.f64_ln: call __fatal_unimplemented
+sys.f64_log2: call __fatal_unimplemented
+sys.f64_log10: call __fatal_unimplemented
+
 sys.f32_sqrt: call __fatal_unimplemented
 sys.f64_sqrt: call __fatal_unimplemented
 sys.f32_cbrt: call __fatal_unimplemented
