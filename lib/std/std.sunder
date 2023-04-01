@@ -3051,7 +3051,7 @@ struct hash_map[[K, V]] {
 
     # Initialize an empty map.
     func init() hash_map[[K, V]] {
-        return init_with_allocator(std::global_allocator());
+        return hash_map[[K, V]]::init_with_allocator(std::global_allocator());
     }
 
     # Initialize an empty map.
@@ -3240,7 +3240,7 @@ struct hash_set[[T]] {
 
     # Initialize an empty set.
     func init() hash_set[[T]] {
-        return init_with_allocator(std::global_allocator());
+        return hash_set[[T]]::init_with_allocator(std::global_allocator());
     }
 
     # Initialize an empty set.
@@ -3253,7 +3253,7 @@ struct hash_set[[T]] {
 
     # Initialize a set as the union of x and y.
     func init_union(x: *hash_set[[T]], y: *hash_set[[T]]) hash_set[[T]] {
-        return init_union_with_allocator(std::global_allocator(), x, y);
+        return hash_set[[T]]::init_union_with_allocator(std::global_allocator(), x, y);
     }
 
     # Initialize a set as the union of x and y.
@@ -3273,7 +3273,7 @@ struct hash_set[[T]] {
 
     # Initialize a set as the intersection of x and y.
     func init_intersection(x: *hash_set[[T]], y: *hash_set[[T]]) hash_set[[T]] {
-        return init_intersection_with_allocator(std::global_allocator(), x, y);
+        return hash_set[[T]]::init_intersection_with_allocator(std::global_allocator(), x, y);
     }
 
     # Initialize a set as the intersection of x and y.
@@ -3297,7 +3297,7 @@ struct hash_set[[T]] {
 
     # Initialize a set as the difference of x and y.
     func init_difference(x: *hash_set[[T]], y: *hash_set[[T]]) hash_set[[T]] {
-        return init_difference_with_allocator(std::global_allocator(), x, y);
+        return hash_set[[T]]::init_difference_with_allocator(std::global_allocator(), x, y);
     }
 
     # Initialize a set as the difference of x and y.
@@ -3315,7 +3315,7 @@ struct hash_set[[T]] {
 
     # Initialize a set as the symmetric difference of x and y.
     func init_symmetric_difference(x: *hash_set[[T]], y: *hash_set[[T]]) hash_set[[T]] {
-        return init_symmetric_difference_with_allocator(std::global_allocator(), x, y);
+        return hash_set[[T]]::init_symmetric_difference_with_allocator(std::global_allocator(), x, y);
     }
 
     # Initialize a set as the symmetric difference of x and y.
@@ -4524,10 +4524,6 @@ extend f32 func ln(x: f32) f32 { return sys::f32_ln(x); }
 extend f32 func log2(x: f32) f32 { return sys::f32_log2(x); }
 extend f32 func log10(x: f32) f32 { return sys::f32_log10(x); }
 
-extend f64 func ln(x: f64) f64 { return sys::f64_ln(x); }
-extend f64 func log2(x: f64) f64 { return sys::f64_log2(x); }
-extend f64 func log10(x: f64) f64 { return sys::f64_log10(x); }
-
 extend f32 func sqrt(x: f32) f32 { return sys::f32_sqrt(x); }
 extend f32 func cbrt(x: f32) f32 { return sys::f32_cbrt(x); }
 extend f32 func hypot(x: f32, y: f32) f32 { return sys::f32_hypot(x, y); }
@@ -4590,6 +4586,10 @@ extend f64 func radians_to_degrees(radians: f64) f64 {
 extend f64 func abs(x: f64) f64 { return sys::f64_abs(x); }
 extend f64 func min(x: f64, y: f64) f64 { return sys::f64_min(x, y); }
 extend f64 func max(x: f64, y: f64) f64 { return sys::f64_max(x, y); }
+
+extend f64 func ln(x: f64) f64 { return sys::f64_ln(x); }
+extend f64 func log2(x: f64) f64 { return sys::f64_log2(x); }
+extend f64 func log10(x: f64) f64 { return sys::f64_log10(x); }
 
 extend f64 func sqrt(x: f64) f64 { return sys::f64_sqrt(x); }
 extend f64 func cbrt(x: f64) f64 { return sys::f64_cbrt(x); }

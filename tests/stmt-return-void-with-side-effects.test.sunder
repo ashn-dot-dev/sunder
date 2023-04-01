@@ -1,0 +1,19 @@
+import "std";
+
+func f() void {
+    std::print_line(std::out(), "HELLO");
+}
+
+func g() void {
+    return f();
+}
+
+func h() void {
+    return f();
+}
+
+func main() void {
+    return g();
+}
+################################################################################
+# HELLO

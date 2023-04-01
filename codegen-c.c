@@ -1047,7 +1047,7 @@ strgen_uninit(struct type const* type)
     case TYPE_ARRAY: /* fallthrough */
     case TYPE_SLICE: /* fallthrough */
     case TYPE_STRUCT: {
-        string_append_cstr(s, "{/*uninit*/0}");
+        string_append_cstr(s, "{/* uninit */0}");
         break;
     }
     }
@@ -1259,12 +1259,18 @@ codegen_stmt_return(struct stmt const* stmt)
     assert(stmt->kind == STMT_RETURN);
 
     struct expr const* const expr = stmt->data.return_.expr;
-    if (expr != NULL && expr->type->size != 0) {
-        // Compute and store the expression result.
-        appendli(
-            "%s = %s;",
-            mangle_name("return"),
-            strgen_rvalue(stmt->data.return_.expr));
+    if (expr != NULL) {
+        if (expr->type->size == 0) {
+            // Compute the expression result.
+            appendli("%s;", strgen_rvalue(stmt->data.return_.expr));
+        }
+        else {
+            // Compute and store the expression result.
+            appendli(
+                "%s = %s;",
+                mangle_name("return"),
+                strgen_rvalue(stmt->data.return_.expr));
+        }
     }
 
     codegen_defers(stmt->data.return_.defer, NULL);
@@ -1381,7 +1387,7 @@ strgen_rvalue_value(struct expr const* expr)
 
     if (type_is_compound(expr->type)) {
         return intern_fmt(
-            "(%s)%s",
+            "((%s)%s)",
             mangle_type(expr->data.value->type),
             strgen_value(expr->data.value));
     }
@@ -1423,7 +1429,7 @@ strgen_rvalue_array_list(struct expr const* expr)
         }
 
         char const* const output = intern_fmt(
-            "({ %s; /* %s */0;})",
+            "({%s; /* %s */0;})",
             string_start(element_exprs),
             expr->type->name);
 
@@ -1969,7 +1975,7 @@ strgen_rvalue_unary_not(struct expr const* expr)
     assert(expr->kind == EXPR_UNARY);
     assert(expr->data.unary.op == UOP_NOT);
 
-    return intern_fmt("!(%s)", strgen_rvalue(expr->data.unary.rhs));
+    return intern_fmt("(!%s)", strgen_rvalue(expr->data.unary.rhs));
 }
 
 static char const*
@@ -1979,7 +1985,7 @@ strgen_rvalue_unary_pos(struct expr const* expr)
     assert(expr->kind == EXPR_UNARY);
     assert(expr->data.unary.op == UOP_POS);
 
-    return intern_fmt("+(%s)", strgen_rvalue(expr->data.unary.rhs));
+    return intern_fmt("(+%s)", strgen_rvalue(expr->data.unary.rhs));
 }
 
 static char const*
@@ -1990,7 +1996,7 @@ strgen_rvalue_unary_neg(struct expr const* expr)
     assert(expr->data.unary.op == UOP_NEG);
 
     if (type_is_ieee754(expr->type)) {
-        return intern_fmt("-(%s)", strgen_rvalue(expr->data.unary.rhs));
+        return intern_fmt("(-%s)", strgen_rvalue(expr->data.unary.rhs));
     }
 
     assert(type_is_sinteger(expr->data.unary.rhs->type));
@@ -2020,7 +2026,7 @@ strgen_rvalue_unary_neg_wrapping(struct expr const* expr)
     // number (e.g. T::MIN for signed integer type T) is undefined behavior in
     // C, so implement negation "manually" using two's complement negation.
     return intern_fmt(
-        "({%s %s = ~(%s); __builtin_add_overflow(%s, (%s)1, &%s); %s;})",
+        "({%s %s = ~%s; __builtin_add_overflow(%s, (%s)1, &%s); %s;})",
         mangle_type(expr->type),
         mangle_name("__result"),
         strgen_rvalue(expr->data.unary.rhs),
@@ -2042,7 +2048,7 @@ strgen_rvalue_unary_bitnot(struct expr const* expr)
     // An additional cast of the resulting `~rhs` expression is required in
     // order to prevent warnings resulting from integral promotions.
     return intern_fmt(
-        "((%s)~(%s))",
+        "((%s)~%s)",
         mangle_type(expr->type),
         strgen_rvalue(expr->data.unary.rhs));
 }
@@ -2213,7 +2219,7 @@ strgen_rvalue_binary_or(struct expr const* expr)
     assert(expr->data.binary.rhs->type->kind == TYPE_BOOL);
 
     return intern_fmt(
-        "((%s) || (%s))",
+        "(%s || %s)",
         strgen_rvalue(expr->data.binary.lhs),
         strgen_rvalue(expr->data.binary.rhs));
 }
@@ -2228,7 +2234,7 @@ strgen_rvalue_binary_and(struct expr const* expr)
     assert(expr->data.binary.rhs->type->kind == TYPE_BOOL);
 
     return intern_fmt(
-        "((%s) && (%s))",
+        "(%s && %s)",
         strgen_rvalue(expr->data.binary.lhs),
         strgen_rvalue(expr->data.binary.rhs));
 }
@@ -2308,7 +2314,7 @@ strgen_rvalue_binary_eq(struct expr const* expr)
     assert(expr->data.binary.lhs->type == expr->data.binary.rhs->type);
 
     return intern_fmt(
-        "((%s) == (%s))",
+        "(%s == %s)",
         strgen_rvalue(expr->data.binary.lhs),
         strgen_rvalue(expr->data.binary.rhs));
 }
@@ -2322,7 +2328,7 @@ strgen_rvalue_binary_ne(struct expr const* expr)
     assert(expr->data.binary.lhs->type == expr->data.binary.rhs->type);
 
     return intern_fmt(
-        "((%s) != (%s))",
+        "(%s != %s)",
         strgen_rvalue(expr->data.binary.lhs),
         strgen_rvalue(expr->data.binary.rhs));
 }
@@ -2336,7 +2342,7 @@ strgen_rvalue_binary_le(struct expr const* expr)
     assert(expr->data.binary.lhs->type == expr->data.binary.rhs->type);
 
     return intern_fmt(
-        "((%s) <= (%s))",
+        "(%s <= %s)",
         strgen_rvalue(expr->data.binary.lhs),
         strgen_rvalue(expr->data.binary.rhs));
 }
@@ -2350,7 +2356,7 @@ strgen_rvalue_binary_lt(struct expr const* expr)
     assert(expr->data.binary.lhs->type == expr->data.binary.rhs->type);
 
     return intern_fmt(
-        "((%s) < (%s))",
+        "(%s < %s)",
         strgen_rvalue(expr->data.binary.lhs),
         strgen_rvalue(expr->data.binary.rhs));
 }
@@ -2364,7 +2370,7 @@ strgen_rvalue_binary_ge(struct expr const* expr)
     assert(expr->data.binary.lhs->type == expr->data.binary.rhs->type);
 
     return intern_fmt(
-        "((%s) >= (%s))",
+        "(%s >= %s)",
         strgen_rvalue(expr->data.binary.lhs),
         strgen_rvalue(expr->data.binary.rhs));
 }
@@ -2378,7 +2384,7 @@ strgen_rvalue_binary_gt(struct expr const* expr)
     assert(expr->data.binary.lhs->type == expr->data.binary.rhs->type);
 
     return intern_fmt(
-        "((%s) > (%s))",
+        "(%s > %s)",
         strgen_rvalue(expr->data.binary.lhs),
         strgen_rvalue(expr->data.binary.rhs));
 }
@@ -2620,7 +2626,7 @@ strgen_rvalue_binary_bitor(struct expr const* expr)
     assert(expr->data.binary.lhs->type == expr->data.binary.rhs->type);
 
     return intern_fmt(
-        "((%s) | (%s))",
+        "(%s | %s)",
         strgen_rvalue(expr->data.binary.lhs),
         strgen_rvalue(expr->data.binary.rhs));
 }
@@ -2634,7 +2640,7 @@ strgen_rvalue_binary_bitxor(struct expr const* expr)
     assert(expr->data.binary.lhs->type == expr->data.binary.rhs->type);
 
     return intern_fmt(
-        "((%s) ^ (%s))",
+        "(%s ^ %s)",
         strgen_rvalue(expr->data.binary.lhs),
         strgen_rvalue(expr->data.binary.rhs));
 }
@@ -2648,7 +2654,7 @@ strgen_rvalue_binary_bitand(struct expr const* expr)
     assert(expr->data.binary.lhs->type == expr->data.binary.rhs->type);
 
     return intern_fmt(
-        "((%s) & (%s))",
+        "(%s & %s)",
         strgen_rvalue(expr->data.binary.lhs),
         strgen_rvalue(expr->data.binary.rhs));
 }
@@ -2690,7 +2696,7 @@ strgen_lvalue_symbol(struct expr const* expr)
             "/* zero-sized symbol */((%s*)0)", mangle_type(expr->type));
     }
 
-    return intern_fmt("&%s", mangle_symbol(expr->data.symbol));
+    return intern_fmt("(&%s)", mangle_symbol(expr->data.symbol));
 }
 
 static char const*
@@ -2700,7 +2706,7 @@ strgen_lvalue_bytes(struct expr const* expr)
     assert(expr->kind == EXPR_BYTES);
 
     assert(expr->type->size != 0);
-    return intern_fmt("&%s", mangle_symbol(expr->data.bytes.slice_symbol));
+    return intern_fmt("(&%s)", mangle_symbol(expr->data.bytes.slice_symbol));
 }
 
 static char const*
@@ -2924,6 +2930,7 @@ codegen_c(
         }
         string_del(split[i]);
     }
+    sbuf_fini(split);
     string_del(flags);
     sbuf_push(backend_argv, (char const*)NULL);
 
