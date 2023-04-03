@@ -1,7 +1,7 @@
 import "std";
 
 func main() void {
-    var allocator = std::allocator::init[[std::page_allocator]](std::page_allocator::the());
+    var allocator = std::global_allocator();
 
     var slice: []u16 = std::slice[[u16]]::new_with_allocator(allocator, 2048);
     for i in 0:countof(slice) {

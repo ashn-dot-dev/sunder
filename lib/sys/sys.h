@@ -6,7 +6,7 @@
 #include <assert.h> /* assert */
 #include <ctype.h> /* isdigit */
 #include <dirent.h> /* getdents64 */
-#include <errno.h> /* errno */
+#include <errno.h> /* errno, perror */
 #include <fcntl.h> /* open */
 #include <float.h> /* DBL_DECIMAL_DIG, FLT_DECIMAL_DIG */
 #include <limits.h> /* CHAR_BIT, *_MIN, *_MAX */
@@ -15,7 +15,6 @@
 #include <stdio.h> /* EOF, fprintf, sscanf */
 #include <stdlib.h> /* aligned_alloc, free */
 #include <string.h> /* memset, memcmp, strlen */
-#include <sys/mman.h> /* mmap, munmap */
 #include <sys/stat.h> /* mkdir */
 #include <sys/types.h> /* mode_t, off_t, size_t, ssize_t */
 #include <unistd.h> /* close, _exit, lseek, read, rmdir, write, unlink */
@@ -360,75 +359,6 @@ sys_lseek(signed int fd, off_t offset, int whence)
     return result;
 }
 
-#ifdef __EMSCRIPTEN__
-// XXX: Calling munmap produces an ENOSPC error under Wasm32/Emscripten for an
-// unknown reason. For now, emulate the MAP_ANONYMOUS calls to mmap/munmap in
-// the standard library using aligned_alloc and free.
-static __sunder_ssize
-sys_mmap(
-    void* addr,
-    size_t len,
-    signed int prot,
-    signed int flags,
-    signed int fd,
-    off_t off)
-{
-    assert(len != 0);
-    assert(prot == (PROT_READ | PROT_WRITE));
-    assert(flags == (MAP_PRIVATE | MAP_ANONYMOUS));
-    assert(fd == -1);
-    assert(off == 0);
-
-    // The size parameter must be an integral multiple of alignment.
-    size_t size = len;
-    while (size % PAGE_SIZE != 0) {
-        size += 1;
-    }
-
-    void* result = aligned_alloc(PAGE_SIZE, size);
-    if (result == NULL) {
-        perror("PERROR FAKE MMAP");
-        fprintf(stderr, "ERRNO %d\n", errno);
-        return -errno;
-    }
-    memset(result, 0x00, size);
-    return (__sunder_ssize)result;
-}
-
-static __sunder_ssize
-sys_munmap(void* addr, size_t len)
-{
-    free(addr);
-    return 0;
-}
-#else
-static __sunder_ssize
-sys_mmap(
-    void* addr,
-    size_t len,
-    signed int prot,
-    signed int flags,
-    signed int fd,
-    off_t off)
-{
-    void* result = mmap(addr, len, prot, flags, fd, off);
-    if (result == (void*)-1) {
-        return -errno;
-    }
-    return (__sunder_ssize)result;
-}
-
-static __sunder_ssize
-sys_munmap(void* addr, size_t len)
-{
-    int result = munmap(addr, len);
-    if (result == -1) {
-        return -errno;
-    }
-    return result;
-}
-#endif
-
 static void
 sys_exit(signed int error_code)
 {
@@ -486,6 +416,40 @@ sys_unlink(__sunder_byte* pathname)
         return -errno;
     }
     return result;
+}
+
+static void*
+sys_allocate(__sunder_usize align, __sunder_usize size)
+{
+    if (align == 0 && size == 0) {
+        return NULL; // Canonical address.
+    }
+    if (align == 0 && size != 0) {
+        __sunder___fatal("fatal: allocation with invalid alignment");
+    }
+
+    // The size parameter must be an integral multiple of alignment.
+    while (size % align != 0) {
+        size += 1;
+    }
+
+    void* result = aligned_alloc(align, size);
+    if (result == NULL) {
+        perror(__func__);
+        __sunder___fatal("fatal: allocation failure");
+    }
+
+    assert(size != 0);
+    memset(result, 0x00, size);
+    return result;
+}
+
+static __sunder_void
+sys_deallocate(void* ptr, __sunder_usize align, __sunder_usize size)
+{
+    (void)align;
+    (void)size;
+    free(ptr);
 }
 
 __sunder_usize sys_argc;

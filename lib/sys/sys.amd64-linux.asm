@@ -21,6 +21,12 @@ __SYS_RMDIR      equ 84
 __SYS_UNLINK     equ 87
 __SYS_GETDENTS64 equ 217
 
+__PROT_READ  equ 0x1
+__PROT_WRITE equ 0x2
+
+__MAP_PRIVATE   equ 0x02
+__MAP_ANONYMOUS equ 0x20
+
 ; BUILTIN FATAL SUBROUTINE
 ; ========================
 ; func fatal(msg_start: *byte, msg_count: usize) void
@@ -289,8 +295,69 @@ sys.argc: dq 0 ; extern var argc: usize;
 sys.argv: dq 0 ; extern var argv: **byte;
 sys.envp: dq 0 ; extern var envp: **byte;
 
-; SYS DUMP SUBROUTINE (lib/sys/sys.sunder)
-; ========================================
+; SYS ALLOCATE SUBROUTINE
+; =======================
+; ## Stack
+; +--------------------+ <- rbp + 0x28
+; | return value       |
+; +--------------------+ <- rbp + 0x20
+; | align              |
+; +--------------------+ <- rbp + 0x18
+; | size               |
+; +--------------------+ <- rbp + 0x10
+; | return address     |
+; +--------------------+ <- rbp + 0x08
+; | saved rbp          |
+; +--------------------+ <- rbp
+section .text
+sys.allocate:
+    push rbp
+    mov rbp, rsp
+
+    mov rax, __SYS_MMAP
+    mov rdi, 0 ; addr
+    mov rsi, [rbp + 0x10] ; len
+    mov rdx, __PROT_READ | __PROT_WRITE ; prot
+    mov r10, __MAP_PRIVATE | __MAP_ANONYMOUS ; flags
+    mov r8, -1 ; fd
+    mov r9, 0 ; off
+    syscall
+    mov [rbp + 0x20], rax
+
+    mov rsp, rbp
+    pop rbp
+    ret
+
+; SYS DEALLOCATE SUBROUTINE
+; =========================
+; ## Stack
+; +--------------------+ <- rbp + 0x28
+; | ptr                |
+; +--------------------+ <- rbp + 0x20
+; | align              |
+; +--------------------+ <- rbp + 0x18
+; | size               |
+; +--------------------+ <- rbp + 0x10
+; | return address     |
+; +--------------------+ <- rbp + 0x08
+; | saved rbp          |
+; +--------------------+ <- rbp
+section .text
+sys.deallocate:
+    push rbp
+    mov rbp, rsp
+
+    mov rax, __SYS_MUNMAP
+    mov rdi, [rbp + 0x20] ; addr
+    mov rsi, [rbp + 0x10] ; len
+    syscall
+
+    mov rsp, rbp
+    pop rbp
+    ret
+
+; SYS DUMP SUBROUTINE
+; ===================
 ; ## Stack
 ; +--------------------+ <- rbp + 0x20
 ; | object_addr        |

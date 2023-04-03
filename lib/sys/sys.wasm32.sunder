@@ -329,21 +329,6 @@ let SEEK_SET: sint = (:sint)__WASI_WHENCE_SET;
 let SEEK_CUR: sint = (:sint)__WASI_WHENCE_CUR;
 let SEEK_END: sint = (:sint)__WASI_WHENCE_END;
 
-# emscripten/system/lib/libc/musl/include/sys/mman.h
-let PROT_NONE:  sint = 0x0;
-let PROT_READ:  sint = 0x1;
-let PROT_WRITE: sint = 0x2;
-let PROT_EXEC:  sint = 0x4;
-
-# emscripten/system/lib/libc/musl/include/sys/mman.h
-let MAP_SHARED:    sint = 0x01;
-let MAP_PRIVATE:   sint = 0x02;
-let MAP_FIXED:     sint = 0x10;
-let MAP_ANONYMOUS: sint = 0x20;
-
-# emscripten/system/lib/libc/musl/arch/emscripten/bits/limits.h
-let PAGE_SIZE: usize = 65536;
-
 # emscripten/system/lib/libc/musl/include/limits.h
 let NAME_MAX: usize =  255;
 let PATH_MAX: usize = 4096;
@@ -370,8 +355,6 @@ extern func write(fd: sint, buf: *char, count: size_t) ssize;
 extern func open(filename: *char, flags: sint, mode: mode_t) ssize;
 extern func close(fd: sint) ssize;
 extern func lseek(fd: sint, offset: off_t, whence: sint) ssize;
-extern func mmap(addr: *any, len: size_t, prot: sint, flags: sint, fd: sint, off: off_t) ssize;
-extern func munmap(addr: *any, len: size_t) ssize;
 extern func exit(error_code: sint) void;
 extern func mkdir(pathname: *byte, mode: mode_t) ssize;
 extern func rmdir(pathname: *byte) ssize;
@@ -381,6 +364,9 @@ extern func getdents64(fd: sint, dirent: *dirent64, count: uint) ssize;
 extern var argc: usize;
 extern var argv: **byte;
 extern var envp: **byte;
+
+extern func allocate(align: usize, size: usize) *any;
+extern func deallocate(ptr: *any, align: usize, size: usize) void;
 
 extern func dump_bytes(addr: *any, size: usize) void;
 func dump[[T]](object: T) void {

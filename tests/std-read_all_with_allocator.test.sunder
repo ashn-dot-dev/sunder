@@ -5,7 +5,7 @@ func main() void {
     var file: std::file = open_result.value();
 
     var reader = std::reader::init[[std::file]](&file);
-    var allocator = std::allocator::init[[std::page_allocator]](std::page_allocator::the());
+    var allocator = std::global_allocator();
 
     var read_result = std::read_all_with_allocator(allocator, reader);
     var bytes = read_result.value();

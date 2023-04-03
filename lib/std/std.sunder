@@ -481,143 +481,6 @@ struct linear_allocator {
     }
 }
 
-# Allocator that directly allocates, reallocates, and deallocates pages from
-# the operating system using mmap and munmap.
-struct page_allocator {
-    func allocate(self_: *page_allocator, align: usize, size: usize) std::result[[*any, std::error]] {
-        if align == 0 {
-            if size == 0 {
-                # Allocating zero bytes with an alignment of zero is a valid
-                # use case when allocating for any zero-sized type:
-                # allocate(alignof(void), sizeof(void)); Use NULL as the
-                # canonical address for this situation.
-                return std::result[[*any, std::error]]::init_value(std::NULL);
-            }
-            return std::result[[*any, std::error]]::init_error(std::error::INVALID_ARGUMENT);
-        }
-
-        # If the requested alignment is larger than the page size then there is
-        # no way for the kernel to map arbitrary page(s) for the allocation.
-        if align > sys::PAGE_SIZE {
-            return std::result[[*any, std::error]]::init_error(std::error::INVALID_ARGUMENT);
-        }
-
-        # The requested alignment must be a power of two. The expression:
-        #   (x & (x - 1)) == 0
-        # will evaluate as true for any non-zero x that is a power of two. We
-        # check for an alignment of zero above, so it is safe to perform this
-        # check here without the `x == 0 or ...` component that would normally
-        # be required to prevent underflow.
-        var is_power_of_two: bool = (align & (align - 1)) == 0;
-        if not is_power_of_two {
-            return std::result[[*any, std::error]]::init_error(std::error::INVALID_ARGUMENT);
-        }
-
-        # According to POSIX, a call to mmap with a len argument of zero shall
-        # fail and no mapping shall be established. A request for zero bytes of
-        # memory *is* a valid and common case (e.g. allocating a zero element
-        # buffer), so we choose to return the NULL pointer as the "valid"
-        # memory location.
-        if size == 0 {
-            return std::result[[*any, std::error]]::init_value(std::NULL);
-        }
-
-        # NULL addr indicates no address hint.
-        let addr = std::NULL;
-
-        # Give the page(s) read and write permissions.
-        let prot = sys::PROT_READ | sys::PROT_WRITE;
-
-        # Create a private mapping not backed by a file.
-        # The contents of the mapped region are initialized to zero.
-        let flags = sys::MAP_PRIVATE | sys::MAP_ANONYMOUS;
-
-        # Should be -1 when MAP_ANONYMOUS is specified.
-        let fd = (:sys::sint)-1s;
-
-        # Should be 0 when MAP_ANONYMOUS is specified.
-        let off = (:sys::off_t)0u;
-
-        var sysret: ssize = sys::mmap(addr, size, prot, flags, fd, off);
-        if sysret < 0 {
-            return std::result[[*any, std::error]]::init_error((:std::error)sys::error(-sysret));
-        }
-
-        return std::result[[*any, std::error]]::init_value((:*any)(:usize)sysret);
-    }
-
-    func reallocate(self: *page_allocator, ptr: *any, align: usize, old_size: usize, new_size: usize) std::result[[*any, std::error]] {
-        var old_page_count = old_size / sys::PAGE_SIZE + (:usize)((old_size % sys::PAGE_SIZE) != 0);
-        var new_page_count = new_size / sys::PAGE_SIZE + (:usize)((new_size % sys::PAGE_SIZE) != 0);
-        if old_page_count == new_page_count {
-            # Re-use existing allocated page(s).
-            return std::result[[*any, std::error]]::init_value(ptr);
-        }
-
-        var result = self.*.allocate(align, new_size);
-        if result.is_error() {
-            return result;
-        }
-        var new: *any = result.value();
-
-        # Number of bytes that will need to by copied from the old buffer to
-        # the new buffer. If the new buffer has a smaller size then the old
-        # buffer then we should only copy that smaller number of bytes.
-        var copy_size: usize = old_size;
-        if new_size < old_size {
-            copy_size = new_size;
-        }
-
-        std::slice[[byte]]::copy((:[]byte){(:*byte)new, copy_size}, (:[]byte){(:*byte)ptr, copy_size});
-        self.*.deallocate(ptr, align, old_size);
-        return std::result[[*any, std::error]]::init_value(new);
-    }
-
-    func deallocate(self_: *page_allocator, ptr: *any, align: usize, size: usize) void {
-        if align == 0 {
-            if size != 0 {
-                std::panic("invalid alignment");
-            }
-            # Calls to allocate with align of zero and size of zero are always
-            # handed the NULL pointer as a result.
-            if (:usize)ptr != 0 {
-                std::panic("invalid pointer");
-            }
-            # Nothing to deallocate.
-            return;
-        }
-
-        if size == 0 {
-            # The `std::page_allocator::allocate` call will not perform a call
-            # to mmap when the requested allocation size is zero. Likewise,
-            # munmap should *not* be called if the current buffer size is zero
-            # as there is nothing to deallocate.
-            return;
-        }
-
-        if align > sys::PAGE_SIZE {
-            std::panic("invalid alignment");
-        }
-        var is_power_of_two: bool = (align & (align - 1)) == 0;
-        if not is_power_of_two {
-            std::panic("invalid alignment");
-        }
-
-        var sysret = sys::munmap(ptr, size);
-        if sysret < 0 {
-            var error = (:std::error)sys::error(-sysret);
-            std::panic_format(
-                "munmap error: {}",
-                (:[]std::formatter)[std::formatter::init[[std::error]](&error)]);
-        }
-    }
-
-    func the() *page_allocator {
-        let the = (:page_allocator){};
-        return &the;
-    }
-}
-
 struct general_allocator_element {
     var _prev: *general_allocator_element; # nullable
     var _next: *general_allocator_element; # nullable
@@ -677,12 +540,7 @@ struct general_allocator {
 
     func allocate(self: *general_allocator, align: usize, size: usize) std::result[[*any, std::error]] {
         var offset = std::forward_align(sizeof(general_allocator_element), align);
-        var result = std::page_allocator::the().*.allocate(sys::PAGE_SIZE, offset + size);
-        if result.is_error() {
-            return result;
-        }
-
-        var memory = result.value();
+        var memory = sys::allocate(alignof(general_allocator_element), offset + size);
         var element = (:*general_allocator_element)memory;
         *element = (:general_allocator_element){
             ._prev = std::ptr[[std::general_allocator_element]]::NULL,
@@ -698,26 +556,25 @@ struct general_allocator {
 
     func reallocate(self: *general_allocator, ptr: *any, align: usize, old_size: usize, new_size: usize) std::result[[*any, std::error]] {
         var offset = std::forward_align(sizeof(general_allocator_element), align);
-        var element = (:*general_allocator_element)std::ptr[[byte]]::sub((:*byte)ptr, offset);
-        self.*._remove_element(element);
 
-        var result = std::page_allocator::the().*.reallocate((:*any)element, sys::PAGE_SIZE, old_size + offset, new_size + offset);
-        if result.is_error() {
-            return result;
-        }
-
-        var memory = result.value();
-        var element = (:*general_allocator_element)memory;
-        *element = (:general_allocator_element){
+        var old_element = (:*general_allocator_element)std::ptr[[byte]]::sub((:*byte)ptr, offset);
+        var new_element = (:*general_allocator_element)sys::allocate(alignof(general_allocator_element), offset + new_size);
+        *new_element = (:general_allocator_element){
             ._prev = std::ptr[[general_allocator_element]]::NULL,
             ._next = std::ptr[[general_allocator_element]]::NULL,
-            ._start = std::ptr[[byte]]::add((:*byte)memory, offset),
+            ._start = std::ptr[[byte]]::add((:*byte)new_element, offset),
             ._align = align,
             ._size = new_size
         };
+        var copy_size = usize::min(old_size, new_size);
+        std::slice[[byte]]::copy(
+            (:[]byte){(:*byte)new_element.*._start, copy_size},
+            (:[]byte){(:*byte)old_element.*._start, copy_size});
 
-        self.*._insert_element(element);
-        return std::result[[*any, std::error]]::init_value(element.*._start);
+        self.*._remove_element(old_element);
+        sys::deallocate(old_element, alignof(general_allocator_element), offset + old_size);
+        self.*._insert_element(new_element);
+        return std::result[[*any, std::error]]::init_value(new_element.*._start);
     }
 
     func deallocate(self: *general_allocator, ptr: *any, align: usize, size: usize) void {
@@ -725,7 +582,7 @@ struct general_allocator {
         var element = (:*general_allocator_element)std::ptr[[byte]]::sub((:*byte)ptr, offset);
 
         self.*._remove_element(element);
-        std::page_allocator::the().*.deallocate((:*any)element, sys::PAGE_SIZE, size + offset);
+        sys::deallocate(element, alignof(general_allocator_element), offset + size);
     }
 
     func _insert_element(self: *general_allocator, element: *general_allocator_element) void {
@@ -1741,8 +1598,8 @@ func forward_align(addr: usize, align: usize) usize {
         return addr;
     }
 
-    # Align is not a power of two. Count up until the address meets the
-    # specified alignment.
+    # Align is not a power of two.
+    # Count up until the address meets the specified alignment.
     for (addr % align) != 0 {
         addr = addr + 1;
     }
