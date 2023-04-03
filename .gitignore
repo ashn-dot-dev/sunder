@@ -1,5 +1,4 @@
 sunder-compile
-lib/sys/sys.sunder
 
 examples/big-integer-calculator
 examples/brainfuck
@@ -19,6 +18,10 @@ a.out*
 *.asm
 *.tmp
 *.log
+*.html
+
+emsdk/
 
 !lib/sys/sys.amd64-linux.asm
+!lib/sys/sys.wasm32.html
 !examples/custom-sys-asm/sys.asm

@@ -8,6 +8,7 @@
 static char const* arch_list[] = {
     [ARCH_AMD64] = "amd64",
     [ARCH_ARM64] = "arm64",
+    [ARCH_WASM32] = "wasm32",
 };
 
 static char const* host_list[] = {

@@ -605,7 +605,10 @@ struct page_allocator {
 
         var sysret = sys::munmap(ptr, size);
         if sysret < 0 {
-            std::panic("munmap error");
+            var error = (:std::error)sys::error(-sysret);
+            std::panic_format(
+                "munmap error: {}",
+                (:[]std::formatter)[std::formatter::init[[std::error]](&error)]);
         }
     }
 
@@ -3500,7 +3503,7 @@ struct file {
     # Set the file position indicatior of an open file to `offset` bytes
     # relative to the position indicated by `from`.
     func seek(self: *file, offset: ssize, from: usize) std::result[[void, std::error]] {
-        var sysret = sys::lseek(self.*._fd, offset, (:sys::uint)from);
+        var sysret = sys::lseek(self.*._fd, (:sys::off_t)offset, (:sys::sint)from);
         if sysret < 0 {
             return std::result[[void, std::error]]::init_error((:std::error)sys::error(-sysret));
         }
@@ -3510,7 +3513,7 @@ struct file {
 
     # Returns the current value of the file position indicator of an open file.
     func tell(self: *file) std::result[[usize, std::error]] {
-        var sysret = sys::lseek(self.*._fd, 0, sys::SEEK_CUR);
+        var sysret = sys::lseek(self.*._fd, 0, (:sys::sint)sys::SEEK_CUR);
         if sysret < 0 {
             return std::result[[usize, std::error]]::init_error((:std::error)sys::error(-sysret));
         }
@@ -4730,6 +4733,14 @@ extend []byte func format(self: *[]byte, writer: std::writer, fmt: []byte) std::
     }
 
     return std::result[[void, std::error]]::init_error(std::error::INVALID_ARGUMENT);
+}
+
+extend error func format(self: *error, writer: std::writer, fmt: []byte) std::result[[void, std::error]] {
+    if countof(fmt) != 0 {
+        return std::result[[void, std::error]]::init_error(std::error::INVALID_ARGUMENT);
+    }
+
+    return std::write_all(writer, self.*.*.data);
 }
 
 # The set of `std::error` constants used by the standard library.

@@ -1,25 +1,5 @@
-# Linux x86-64 System Interface
+# Emscripten Wasm32 System Interface
 namespace sys;
-
-# C Type             | Size | Alignment | Sunder Type
-# -------------------+------+-----------+------------
-# char               | 1    | 1         | byte
-# signed   char      | 1    | 1         | s8
-# unsigned char      | 1    | 1         | u8
-# signed   short     | 2    | 2         | s16
-# unsigned short     | 2    | 2         | u16
-# signed   int       | 4    | 4         | s32
-# unsigned int       | 4    | 4         | u32
-# signed   long      | 8    | 8         | ssize
-# unsigned long      | 8    | 8         | usize
-# signed   long long | 8    | 8         | s64
-# unsigned long long | 8    | 8         | u64
-#
-# POSIX types obtainted through GDB:
-# mode_t  : type = unsigned int
-# off_t   : type = long int
-# size_t  : type = long unsigned int
-# ssize_t : type = long int
 
 alias smax = s64;
 alias umax = u64;
@@ -36,11 +16,13 @@ alias ulong     = usize;
 alias slonglong = s64;
 alias ulonglong = u64;
 
+alias ino_t   = ulonglong;
 alias mode_t  = uint;
-alias off_t   = slong;
+alias off_t   = slonglong;
 alias size_t  = ulong;
 alias ssize_t = slong;
 
+# emscripten/system/lib/libc/musl/arch/generic/bits/errno.h
 let EPERM:           ssize = 1;
 let ENOENT:          ssize = 2;
 let ESRCH:           ssize = 3;
@@ -173,6 +155,9 @@ let ENOTRECOVERABLE: ssize = 131;
 let ERFKILL:         ssize = 132;
 let EHWPOISON:       ssize = 133;
 
+# emscripten/system/lib/libc/musl/src/errno/__strerror.h
+# These system error definitions are still generated using errno(1) on Linux
+# even though Emscripten provides errno constants in the file listed above.
 let ERRORS = (:[][]byte)[
     "[system error 0] Undefined errno value",
     "[system error EPERM] Operation not permitted",
@@ -323,50 +308,62 @@ let STDIN_FILENO:  sint = 0;
 let STDOUT_FILENO: sint = 1;
 let STDERR_FILENO: sint = 2;
 
+# emscripten/system/lib/libc/musl/include/fcntl.h
 let O_RDONLY:    sint = 0x00000000;
 let O_WRONLY:    sint = 0x00000001;
 let O_RDWR:      sint = 0x00000002;
-let O_CREAT:     sint = 0x00000040;
-let O_TRUNC:     sint = 0x00000200;
-let O_APPEND:    sint = 0x00000400;
-let O_CLOEXEC:   sint = 0x00080000;
-let O_DIRECTORY: sint = 0x00010000;
+# emscripten/system/lib/libc/musl/arch/generic/bits/fcntl.h
+let O_CREAT:     sint = 0o0000100;
+let O_TRUNC:     sint = 0o0001000;
+let O_APPEND:    sint = 0o0002000;
+let O_DIRECTORY: sint = 0o0200000;
+let O_CLOEXEC:   sint = 0o2000000;
 
-let SEEK_SET: sint = 0x0;
-let SEEK_CUR: sint = 0x1;
-let SEEK_END: sint = 0x2;
+# emscripten/system/include/wasi/api.h
+let __WASI_WHENCE_SET: u8 = 0;
+let __WASI_WHENCE_CUR: u8 = 1;
+let __WASI_WHENCE_END: u8 = 2;
 
+# emscripten/system/lib/libc/musl/include/fcntl.h
+let SEEK_SET: sint = (:sint)__WASI_WHENCE_SET;
+let SEEK_CUR: sint = (:sint)__WASI_WHENCE_CUR;
+let SEEK_END: sint = (:sint)__WASI_WHENCE_END;
+
+# emscripten/system/lib/libc/musl/include/sys/mman.h
 let PROT_NONE:  sint = 0x0;
 let PROT_READ:  sint = 0x1;
 let PROT_WRITE: sint = 0x2;
 let PROT_EXEC:  sint = 0x4;
 
+# emscripten/system/lib/libc/musl/include/sys/mman.h
 let MAP_SHARED:    sint = 0x01;
 let MAP_PRIVATE:   sint = 0x02;
 let MAP_FIXED:     sint = 0x10;
 let MAP_ANONYMOUS: sint = 0x20;
 
-let PAGE_SIZE: usize = 4096;
+# emscripten/system/lib/libc/musl/arch/emscripten/bits/limits.h
+let PAGE_SIZE: usize = 65536;
 
-# linux/include/uapi/linux/limits.h:
-let NAME_MAX: usize =  255; # chars in a file name
-let PATH_MAX: usize = 4096; # chars in a path name including nul
+# emscripten/system/lib/libc/musl/include/limits.h
+let NAME_MAX: usize =  255;
+let PATH_MAX: usize = 4096;
 
-# include/linux/dirent.h:
-### struct linux_dirent64 {
-###     uint64_t       d_ino;
-###     int64_t        d_off;
+# emscripten/system/lib/libc/musl/arch/generic/bits/dirent.h
+### struct dirent {
+###     ino_t d_ino;
+###     off_t d_off;
 ###     unsigned short d_reclen;
-###     unsigned char  d_type;
-###     char           d_name[];
+###     unsigned char d_type;
+###     char d_name[256];
 ### };
-struct dirent64 {
-    var d_ino: u64;
-    var d_off: s64;
+struct dirent {
+    var d_ino: ino_t;
+    var d_off: off_t;
     var d_reclen: ushort;
     var d_type: uchar;
     var d_name: [0]char;
 }
+alias dirent64 = dirent;
 
 extern func read(fd: sint, buf: *char, count: size_t) ssize;
 extern func write(fd: sint, buf: *char, count: size_t) ssize;

@@ -186,12 +186,28 @@ type_new_s64(void)
 struct type*
 type_new_usize(void)
 {
+    uintmax_t size = 0;
+    uintmax_t align = 0;
+    switch (context()->arch) {
+    case ARCH_AMD64: /* fallthrough */
+    case ARCH_ARM64: {
+        size = 8;
+        align = 8;
+        break;
+    }
+    case ARCH_WASM32: {
+        size = 4;
+        align = 4;
+        break;
+    }
+    }
+
     struct symbol_table* const symbols =
         symbol_table_new(context()->global_symbol_table);
     sbuf_push(context()->chilling_symbol_tables, symbols);
 
     struct type* const self =
-        type_new(context()->interned.usize, 8u, 8u, symbols, TYPE_USIZE);
+        type_new(context()->interned.usize, size, align, symbols, TYPE_USIZE);
     self->data.integer.min = context()->usize_min;
     self->data.integer.max = context()->usize_max;
     return self;
@@ -200,12 +216,28 @@ type_new_usize(void)
 struct type*
 type_new_ssize(void)
 {
+    uintmax_t size = 0;
+    uintmax_t align = 0;
+    switch (context()->arch) {
+    case ARCH_AMD64: /* fallthrough */
+    case ARCH_ARM64: {
+        size = 8;
+        align = 8;
+        break;
+    }
+    case ARCH_WASM32: {
+        size = 4;
+        align = 4;
+        break;
+    }
+    }
+
     struct symbol_table* const symbols =
         symbol_table_new(context()->global_symbol_table);
     sbuf_push(context()->chilling_symbol_tables, symbols);
 
     struct type* const self =
-        type_new(context()->interned.ssize, 8u, 8u, symbols, TYPE_SSIZE);
+        type_new(context()->interned.ssize, size, align, symbols, TYPE_SSIZE);
     self->data.integer.min = context()->ssize_min;
     self->data.integer.max = context()->ssize_max;
     return self;
@@ -275,6 +307,22 @@ type_new_function(
 {
     assert(return_type != NULL);
 
+    uintmax_t size = 0;
+    uintmax_t align = 0;
+    switch (context()->arch) {
+    case ARCH_AMD64: /* fallthrough */
+    case ARCH_ARM64: {
+        size = 8;
+        align = 8;
+        break;
+    }
+    case ARCH_WASM32: {
+        size = 4;
+        align = 4;
+        break;
+    }
+    }
+
     struct string* const name_string = string_new_cstr("func(");
     if (sbuf_count(parameter_types) != 0) {
         string_append_cstr(name_string, parameter_types[0]->name);
@@ -291,7 +339,8 @@ type_new_function(
         symbol_table_new(context()->global_symbol_table);
     sbuf_push(context()->chilling_symbol_tables, symbols);
 
-    struct type* const self = type_new(name, 8u, 8u, symbols, TYPE_FUNCTION);
+    struct type* const self =
+        type_new(name, size, align, symbols, TYPE_FUNCTION);
     self->data.function.parameter_types = parameter_types;
     self->data.function.return_type = return_type;
     return self;
@@ -302,6 +351,22 @@ type_new_pointer(struct type const* base)
 {
     assert(base != NULL);
 
+    uintmax_t size = 0;
+    uintmax_t align = 0;
+    switch (context()->arch) {
+    case ARCH_AMD64: /* fallthrough */
+    case ARCH_ARM64: {
+        size = 8;
+        align = 8;
+        break;
+    }
+    case ARCH_WASM32: {
+        size = 4;
+        align = 4;
+        break;
+    }
+    }
+
     struct string* const name_string = string_new_fmt("*%s", base->name);
     char const* const name =
         intern(string_start(name_string), string_count(name_string));
@@ -311,7 +376,8 @@ type_new_pointer(struct type const* base)
         symbol_table_new(context()->global_symbol_table);
     sbuf_push(context()->chilling_symbol_tables, symbols);
 
-    struct type* const self = type_new(name, 8u, 8u, symbols, TYPE_POINTER);
+    struct type* const self =
+        type_new(name, size, align, symbols, TYPE_POINTER);
     self->data.pointer.base = base;
     return self;
 }
@@ -350,6 +416,22 @@ type_new_slice(struct type const* base)
 {
     assert(base != NULL);
 
+    uintmax_t size = 0;
+    uintmax_t align = 0;
+    switch (context()->arch) {
+    case ARCH_AMD64: /* fallthrough */
+    case ARCH_ARM64: {
+        size = 2 * 8;
+        align = 8;
+        break;
+    }
+    case ARCH_WASM32: {
+        size = 2 * 4;
+        align = 4;
+        break;
+    }
+    }
+
     struct string* const name_string = string_new_fmt("[]%s", base->name);
     char const* const name =
         intern(string_start(name_string), string_count(name_string));
@@ -364,7 +446,7 @@ type_new_slice(struct type const* base)
     // within the types list.
     (void)type_unique_pointer(base);
 
-    struct type* const self = type_new(name, 8u * 2u, 8u, symbols, TYPE_SLICE);
+    struct type* const self = type_new(name, size, align, symbols, TYPE_SLICE);
     self->data.slice.base = base;
     return self;
 }

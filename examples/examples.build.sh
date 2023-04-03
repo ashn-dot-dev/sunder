@@ -8,6 +8,12 @@ for f in *.sunder; do
     CMD="${SUNDER_HOME}/bin/sunder-compile -o ${f%.sunder} ${f}"
     echo $CMD
     eval $CMD
+
+    if command -v emcc >/dev/null; then
+        CMD="SUNDER_BACKEND=C SUNDER_ARCH=wasm32 SUNDER_HOST=freestanding SUNDER_CC=emcc SUNDER_CFLAGS='-Os -sASSERTIONS -sSINGLE_FILE --shell-file ${SUNDER_HOME}/lib/sys/sys.wasm32.html' sunder-compile -o ${f%.sunder}.html ${f}"
+        echo $CMD
+        eval $CMD
+    fi
 done
 
 if [ "$(uname -m)" = "x86_64" ] && command -v nasm >/dev/null; then

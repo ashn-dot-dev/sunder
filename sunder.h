@@ -692,6 +692,7 @@ getenv_with_default(char const* name, char const* default_);
 enum arch {
     ARCH_AMD64,
     ARCH_ARM64,
+    ARCH_WASM32,
 };
 enum arch
 cstr_to_arch(char const* cstr);

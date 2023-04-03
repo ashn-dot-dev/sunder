@@ -1,7 +1,9 @@
 #define const /* nothing */
 #define restrict /* nothing */
 #define _GNU_SOURCE /* getddents64 */
+#define _ISOC11_SOURCE /* aligned_alloc */
 #include <alloca.h> /* alloca */
+#include <assert.h> /* assert */
 #include <ctype.h> /* isdigit */
 #include <dirent.h> /* getdents64 */
 #include <errno.h> /* errno */
@@ -11,6 +13,7 @@
 #include <math.h> /* INFINITY, NAN, isfinite, isinf, isnan, math functions */
 #include <stdint.h> /* uintptr_t */
 #include <stdio.h> /* EOF, fprintf, sscanf */
+#include <stdlib.h> /* aligned_alloc, free */
 #include <string.h> /* memset, memcmp, strlen */
 #include <sys/mman.h> /* mmap, munmap */
 #include <sys/stat.h> /* mkdir */
@@ -19,11 +22,19 @@
 #undef const
 #undef restrict
 
-_Static_assert(CHAR_BIT == 8, "8-bit byte");
+#ifdef __EMSCRIPTEN__
+#    include <emscripten/emscripten.h>
+#endif
 
-#ifndef __STDC_IEC_559__
+#ifndef __STDC_HOSTED__
+#    error "Sunder requires a hosted environment"
+#endif
+
+#if !defined(__STDC_IEC_559__) && !defined(__EMSCRIPTEN__)
 #    error "IEEE-754 floating point is not fully supported"
 #endif
+
+_Static_assert(CHAR_BIT == 8, "8-bit byte");
 
 // clang-format off
 typedef void               __sunder_void;
@@ -340,7 +351,7 @@ sys_close(signed int fd)
 }
 
 static __sunder_ssize
-sys_lseek(signed int fd, off_t offset, unsigned int whence)
+sys_lseek(signed int fd, off_t offset, int whence)
 {
     off_t result = lseek(fd, offset, whence);
     if (result == (off_t)-1) {
@@ -349,6 +360,48 @@ sys_lseek(signed int fd, off_t offset, unsigned int whence)
     return result;
 }
 
+#ifdef __EMSCRIPTEN__
+// XXX: Calling munmap produces an ENOSPC error under Wasm32/Emscripten for an
+// unknown reason. For now, emulate the MAP_ANONYMOUS calls to mmap/munmap in
+// the standard library using aligned_alloc and free.
+static __sunder_ssize
+sys_mmap(
+    void* addr,
+    size_t len,
+    signed int prot,
+    signed int flags,
+    signed int fd,
+    off_t off)
+{
+    assert(len != 0);
+    assert(prot == (PROT_READ | PROT_WRITE));
+    assert(flags == (MAP_PRIVATE | MAP_ANONYMOUS));
+    assert(fd == -1);
+    assert(off == 0);
+
+    // The size parameter must be an integral multiple of alignment.
+    size_t size = len;
+    while (size % PAGE_SIZE != 0) {
+        size += 1;
+    }
+
+    void* result = aligned_alloc(PAGE_SIZE, size);
+    if (result == NULL) {
+        perror("PERROR FAKE MMAP");
+        fprintf(stderr, "ERRNO %d\n", errno);
+        return -errno;
+    }
+    memset(result, 0x00, size);
+    return (__sunder_ssize)result;
+}
+
+static __sunder_ssize
+sys_munmap(void* addr, size_t len)
+{
+    free(addr);
+    return 0;
+}
+#else
 static __sunder_ssize
 sys_mmap(
     void* addr,
@@ -374,6 +427,7 @@ sys_munmap(void* addr, size_t len)
     }
     return result;
 }
+#endif
 
 static void
 sys_exit(signed int error_code)
@@ -381,12 +435,23 @@ sys_exit(signed int error_code)
     _exit(error_code);
 }
 
+// Glibc requires the user to provide a definition for dirent64 while the
+// musl-based Emscripten system headers use the musl-defined dirent struct.
+#ifdef __EMSCRIPTEN__
+typedef struct __sunder_sys_dirent __sunder_sys_dirent_type;
+typedef struct __sunder_sys_dirent* __sunder_pointer_to_sys_dirent_type;
+#else
+typedef struct __sunder_sys_dirent64* __sunder_pointer_to_sys_dirent_type;
+#endif
+
 struct __sunder_sys_dirent64;
 static __sunder_ssize
 sys_getdents64(
-    signed int fd, struct __sunder_sys_dirent64* dirent, unsigned int count)
+    signed int fd,
+    __sunder_pointer_to_sys_dirent_type dirent,
+    unsigned int count)
 {
-    ssize_t result = getdents64(fd, dirent, count);
+    ssize_t result = getdents64(fd, (void*)dirent, count);
     if (result == -1) {
         return -errno;
     }
