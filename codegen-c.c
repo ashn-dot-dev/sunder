@@ -2026,16 +2026,15 @@ strgen_rvalue_unary_neg_wrapping(struct expr const* expr)
     // number (e.g. T::MIN for signed integer type T) is undefined behavior in
     // C, so implement negation "manually" using two's complement negation.
     return intern_fmt(
-        "({%s %s = ~%s; __builtin_add_overflow(%s, (%s)1, &%s); %s;})",
+        "({%s %s = ~%s; %s_%s(%s, (%s)1);})",
         mangle_type(expr->type),
         mangle_name("__result"),
         strgen_rvalue(expr->data.unary.rhs),
 
-        mangle_name("__result"),
+        mangle_name("__add_wrapping"),
         mangle_type(expr->type),
         mangle_name("__result"),
-
-        mangle_name("__result"));
+        mangle_type(expr->type));
 }
 
 static char const*

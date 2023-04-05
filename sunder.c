@@ -13,6 +13,7 @@ static char const* arch_list[] = {
 
 static char const* host_list[] = {
     [HOST_FREESTANDING] = "freestanding",
+    [HOST_EMSCRIPTEN] = "emscripten",
     [HOST_LINUX] = "linux",
 };
 

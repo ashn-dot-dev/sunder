@@ -26,42 +26,7 @@ func main() void {
         path = std::optional[[[]byte]]::init_value(parser.argument_value());
     }
 
-    if path.is_empty() {
-        std::print_format_line(
-            std::err(),
-            "{}: no file specified",
-            (:[]std::formatter)[
-                std::formatter::init[[[]byte]](&progname)]);
-        std::exit(std::EXIT_FAILURE);
-    }
-    var path = path.value();
-
-    var result = std::file::open(path, std::file::OPEN_READ);
-    if result.is_error() {
-        std::print_format_line(
-            std::err(),
-            "{}: {}",
-            (:[]std::formatter)[
-                std::formatter::init[[[]byte]](&path),
-                std::formatter::init[[[]byte]](&result.error().*.data)]);
-        std::exit(std::EXIT_FAILURE);
-    }
-
-    var file = result.value();
-    defer file.close();
-
-    var result = std::read_all(std::reader::init[[std::file]](&file));
-    if result.is_error() {
-        std::print_format_line(
-            std::err(),
-            "{}: {}",
-            (:[]std::formatter)[
-                std::formatter::init[[[]byte]](&path),
-                std::formatter::init[[[]byte]](&result.error().*.data)]);
-        std::exit(std::EXIT_FAILURE);
-    }
-
-    var source = result.value();
+    var source = read_source(path);
     var source_size = countof(source);
     defer std::slice[[byte]]::delete(source);
 
@@ -89,10 +54,8 @@ func main() void {
             if stack.count() == 0 {
                 std::print_format_line(
                     std::err(),
-                    "{}: [line {}] Unbalanced ']'",
-                    (:[]std::formatter)[
-                        std::formatter::init[[[]byte]](&path),
-                        std::formatter::init[[usize]](&line)]);
+                    "[line {}] Unbalanced ']'",
+                    (:[]std::formatter)[std::formatter::init[[usize]](&line)]);
                 success = false;
                 continue;
             }
@@ -103,10 +66,8 @@ func main() void {
     for i in stack.count() {
         std::print_format_line(
             std::err(),
-            "{}: [line {}] Unbalanced '['",
-            (:[]std::formatter)[
-                std::formatter::init[[[]byte]](&path),
-                std::formatter::init[[usize]](&lines[stack.data()[i]])]);
+            "[line {}] Unbalanced '['",
+            (:[]std::formatter)[std::formatter::init[[usize]](&lines[stack.data()[i]])]);
         success = false;
     }
     if not success {
@@ -165,4 +126,47 @@ func main() void {
         }
         source_index = source_index + 1;
     }
+}
+
+func read_source(path: std::optional[[[]byte]]) []byte {
+    if path.is_empty() {
+        var result = std::read_all(std::input());
+        if result.is_error() {
+            std::print_format_line(
+                std::err(),
+                "{}: {}",
+                (:[]std::formatter)[
+                    std::formatter::init[[[]byte]](&"<stdin>"),
+                    std::formatter::init[[[]byte]](&result.error().*.data)]);
+            std::exit(std::EXIT_FAILURE);
+        }
+        return result.value();
+    }
+
+    var path = path.value();
+    var result = std::file::open(path, std::file::OPEN_READ);
+    if result.is_error() {
+        std::print_format_line(
+            std::err(),
+            "{}: {}",
+            (:[]std::formatter)[
+                std::formatter::init[[[]byte]](&path),
+                std::formatter::init[[[]byte]](&result.error().*.data)]);
+        std::exit(std::EXIT_FAILURE);
+    }
+
+    var file = result.value();
+    defer file.close();
+
+    var result = std::read_all(std::reader::init[[std::file]](&file));
+    if result.is_error() {
+        std::print_format_line(
+            std::err(),
+            "{}: {}",
+            (:[]std::formatter)[
+                std::formatter::init[[[]byte]](&path),
+                std::formatter::init[[[]byte]](&result.error().*.data)]);
+        std::exit(std::EXIT_FAILURE);
+    }
+    return result.value();
 }

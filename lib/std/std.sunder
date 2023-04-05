@@ -3300,7 +3300,7 @@ struct file {
         }
 
         if countof(path) >= sys::PATH_MAX {
-            return std::result[[std::file, std::error]]::init_error((:std::error)sys::error(sys::EINVAL));
+            return std::result[[std::file, std::error]]::init_error(std::error::INVALID_ARGUMENT);
         }
         var path_cstr = (:[sys::PATH_MAX]byte)[0...];
         std::slice[[byte]]::copy(path_cstr[0:countof(path)], path);
@@ -3392,7 +3392,7 @@ struct file {
     # Remove a file.
     func remove(path: []byte) std::result[[void, std::error]] {
         if countof(path) >= sys::PATH_MAX {
-            return std::result[[void, std::error]]::init_error((:std::error)sys::error(sys::EINVAL));
+            return std::result[[void, std::error]]::init_error(std::error::INVALID_ARGUMENT);
         }
         var path_cstr = (:[sys::PATH_MAX]byte)[0...];
         std::slice[[byte]]::copy(path_cstr[0:countof(path)], path);
@@ -3420,7 +3420,7 @@ struct directory {
         var flags: sys::sint = sys::O_RDONLY | sys::O_DIRECTORY | sys::O_CLOEXEC;
 
         if countof(path) >= sys::PATH_MAX {
-            return std::result[[std::directory, std::error]]::init_error((:std::error)sys::error(sys::EINVAL));
+            return std::result[[std::directory, std::error]]::init_error(std::error::INVALID_ARGUMENT);
         }
         var path_cstr = (:[sys::PATH_MAX]byte)[0...];
         std::slice[[byte]]::copy(path_cstr[0:countof(path)], path);
@@ -3491,7 +3491,7 @@ struct directory {
     # Create an empty directory if it does not exist.
     func create(path: []byte)  std::result[[void, std::error]] {
         if countof(path) >= sys::PATH_MAX {
-            return std::result[[void, std::error]]::init_error((:std::error)sys::error(sys::EINVAL));
+            return std::result[[void, std::error]]::init_error(std::error::INVALID_ARGUMENT);
         }
         var path_cstr = (:[sys::PATH_MAX]byte)[0...];
         std::slice[[byte]]::copy(path_cstr[0:countof(path)], path);
@@ -3507,7 +3507,7 @@ struct directory {
     # Remove an empty directory.
     func remove(path: []byte) std::result[[void, std::error]] {
         if countof(path) >= sys::PATH_MAX {
-            return std::result[[void, std::error]]::init_error((:std::error)sys::error(sys::EINVAL));
+            return std::result[[void, std::error]]::init_error(std::error::INVALID_ARGUMENT);
         }
         var path_cstr = (:[sys::PATH_MAX]byte)[0...];
         std::slice[[byte]]::copy(path_cstr[0:countof(path)], path);

@@ -1,0 +1,346 @@
+# Emscripten Wasm32 System Interface
+namespace sys;
+
+alias smax = s64;
+alias umax = u64;
+
+alias char      = byte;
+alias schar     = s8;
+alias uchar     = u8;
+alias sshort    = s16;
+alias ushort    = u16;
+alias sint      = s32;
+alias uint      = u32;
+alias slong     = ssize;
+alias ulong     = usize;
+alias slonglong = s64;
+alias ulonglong = u64;
+
+alias ino_t   = ulonglong;
+alias mode_t  = uint;
+alias off_t   = slonglong;
+alias size_t  = ulong;
+alias ssize_t = slong;
+
+let ERRORS = (:[][]byte)[
+    "[system error 0] No error information",
+    "[system error 1] Argument list too long",
+    "[system error 2] Permission denied",
+    "[system error 3] Address in use",
+    "[system error 4] Address not available",
+    "[system error 5] Address family not supported by protocol",
+    "[system error 6] Resource temporarily unavailable",
+    "[system error 7] Operation already in progress",
+    "[system error 8] Bad file descriptor",
+    "[system error 9] Bad message",
+    "[system error 10] Resource busy",
+    "[system error 11] Operation canceled",
+    "[system error 12] No child process",
+    "[system error 13] Connection aborted",
+    "[system error 14] Connection refused",
+    "[system error 15] Connection reset by peer",
+    "[system error 16] Resource deadlock would occur",
+    "[system error 17] Destination address required",
+    "[system error 18] Domain error",
+    "[system error 19] Quota exceeded",
+    "[system error 20] File exists",
+    "[system error 21] Bad address",
+    "[system error 22] File too large",
+    "[system error 23] Host is unreachable",
+    "[system error 24] Identifier removed",
+    "[system error 25] Illegal byte sequence",
+    "[system error 26] Operation in progress",
+    "[system error 27] Interrupted system call",
+    "[system error 28] Invalid argument",
+    "[system error 29] I/O error",
+    "[system error 30] Socket is connected",
+    "[system error 31] Is a directory",
+    "[system error 32] Symbolic link loop",
+    "[system error 33] No file descriptors available",
+    "[system error 34] Too many links",
+    "[system error 35] Message too large",
+    "[system error 36] Multihop attempted",
+    "[system error 37] Filename too long",
+    "[system error 38] Network is down",
+    "[system error 39] Connection reset by network",
+    "[system error 40] Network unreachable",
+    "[system error 41] Too many open files in system",
+    "[system error 42] No buffer space available",
+    "[system error 43] No such device",
+    "[system error 44] No such file or directory",
+    "[system error 45] Exec format error",
+    "[system error 46] No locks available",
+    "[system error 47] Link has been severed",
+    "[system error 48] Out of memory",
+    "[system error 49] No message of desired type",
+    "[system error 50] Protocol not available",
+    "[system error 51] No space left on device",
+    "[system error 52] Function not implemented",
+    "[system error 53] Socket not connected",
+    "[system error 54] Not a directory",
+    "[system error 55] Directory not empty",
+    "[system error 56] State not recoverable",
+    "[system error 57] Not a socket",
+    "[system error 58] No error information",
+    "[system error 59] Not a tty",
+    "[system error 60] No such device or address",
+    "[system error 61] Value too large for data type",
+    "[system error 62] Previous owner died",
+    "[system error 63] Operation not permitted",
+    "[system error 64] Broken pipe",
+    "[system error 65] Protocol error",
+    "[system error 66] Protocol not supported",
+    "[system error 67] Protocol wrong type for socket",
+    "[system error 68] Result not representable",
+    "[system error 69] Read-only file system",
+    "[system error 70] Invalid seek",
+    "[system error 71] No such process",
+    "[system error 72] Stale file handle",
+    "[system error 73] Operation timed out",
+    "[system error 74] Text file busy",
+    "[system error 75] Cross-device link",
+    "[system error 76] No error information",
+    "[system error 77] No error information",
+    "[system error 78] No error information",
+    "[system error 79] No error information",
+    "[system error 80] No error information",
+    "[system error 81] No error information",
+    "[system error 82] No error information",
+    "[system error 83] No error information",
+    "[system error 84] No error information",
+    "[system error 85] No error information",
+    "[system error 86] No error information",
+    "[system error 87] No error information",
+    "[system error 88] No error information",
+    "[system error 89] No error information",
+    "[system error 90] No error information",
+    "[system error 91] No error information",
+    "[system error 92] No error information",
+    "[system error 93] No error information",
+    "[system error 94] No error information",
+    "[system error 95] No error information",
+    "[system error 96] No error information",
+    "[system error 97] No error information",
+    "[system error 98] No error information",
+    "[system error 99] No error information",
+    "[system error 100] Device not a stream",
+    "[system error 101] No error information",
+    "[system error 102] No error information",
+    "[system error 103] No error information",
+    "[system error 104] No error information",
+    "[system error 105] Block device required",
+    "[system error 106] No error information",
+    "[system error 107] No error information",
+    "[system error 108] No error information",
+    "[system error 109] No error information",
+    "[system error 110] No error information",
+    "[system error 111] No error information",
+    "[system error 112] No error information",
+    "[system error 113] No error information",
+    "[system error 114] No error information",
+    "[system error 115] No error information",
+    "[system error 116] No data available",
+    "[system error 117] Device timeout",
+    "[system error 118] Out of streams resources",
+    "[system error 119] No error information",
+    "[system error 120] No error information",
+    "[system error 121] No error information",
+    "[system error 122] No error information",
+    "[system error 123] No error information",
+    "[system error 124] No error information",
+    "[system error 125] No error information",
+    "[system error 126] No error information",
+    "[system error 127] File descriptor in bad state",
+    "[system error 128] No error information",
+    "[system error 129] No error information",
+    "[system error 130] No error information",
+    "[system error 131] No error information",
+    "[system error 132] No error information",
+    "[system error 133] No error information",
+    "[system error 134] No error information",
+    "[system error 135] No error information",
+    "[system error 136] No error information",
+    "[system error 137] Socket type not supported",
+    "[system error 138] Not supported",
+    "[system error 139] Protocol family not supported",
+    "[system error 140] Cannot send after socket shutdown",
+    "[system error 141] No error information",
+    "[system error 142] Host is down",
+    "[system error 143] No error information",
+    "[system error 144] No error information",
+    "[system error 145] No error information",
+    "[system error 146] No error information",
+    "[system error 147] Remote I/O error",
+    "[system error 148] No medium found",
+    "[system error 149] Wrong medium type",
+    "[system error 150] Required key not available",
+    "[system error 151] Key has expired",
+    "[system error 152] Key has been revoked",
+    "[system error 153] Key was rejected by service",
+];
+
+# Transform an errno value into an `std::error`-compatible pointer.
+func error(errno: ssize) *[]byte {
+    if errno < 0 or (:usize)errno >= countof(ERRORS) {
+        let UNKNOWN = "No error information";
+        return &UNKNOWN;
+    }
+    return &sys::ERRORS[(:usize)errno];
+}
+
+let STDIN_FILENO:  sint = 0;
+let STDOUT_FILENO: sint = 1;
+let STDERR_FILENO: sint = 2;
+
+# emscripten/system/lib/libc/musl/include/fcntl.h
+let O_RDONLY:    sint = 0x00000000;
+let O_WRONLY:    sint = 0x00000001;
+let O_RDWR:      sint = 0x00000002;
+# emscripten/system/lib/libc/musl/arch/generic/bits/fcntl.h
+let O_CREAT:     sint = 0o0000100;
+let O_TRUNC:     sint = 0o0001000;
+let O_APPEND:    sint = 0o0002000;
+let O_DIRECTORY: sint = 0o0200000;
+let O_CLOEXEC:   sint = 0o2000000;
+
+# emscripten/system/include/wasi/api.h
+let __WASI_WHENCE_SET: u8 = 0;
+let __WASI_WHENCE_CUR: u8 = 1;
+let __WASI_WHENCE_END: u8 = 2;
+
+# emscripten/system/lib/libc/musl/include/fcntl.h
+let SEEK_SET: sint = (:sint)__WASI_WHENCE_SET;
+let SEEK_CUR: sint = (:sint)__WASI_WHENCE_CUR;
+let SEEK_END: sint = (:sint)__WASI_WHENCE_END;
+
+# emscripten/system/lib/libc/musl/include/limits.h
+let NAME_MAX: usize =  255;
+let PATH_MAX: usize = 4096;
+
+# emscripten/system/lib/libc/musl/arch/generic/bits/dirent.h
+### struct dirent {
+###     ino_t d_ino;
+###     off_t d_off;
+###     unsigned short d_reclen;
+###     unsigned char d_type;
+###     char d_name[256];
+### };
+struct dirent {
+    var d_ino: ino_t;
+    var d_off: off_t;
+    var d_reclen: ushort;
+    var d_type: uchar;
+    var d_name: [0]char;
+}
+alias dirent64 = dirent;
+
+extern func read(fd: sint, buf: *char, count: size_t) ssize;
+extern func write(fd: sint, buf: *char, count: size_t) ssize;
+extern func open(filename: *char, flags: sint, mode: mode_t) ssize;
+extern func close(fd: sint) ssize;
+extern func lseek(fd: sint, offset: off_t, whence: sint) ssize;
+extern func exit(error_code: sint) void;
+extern func mkdir(pathname: *byte, mode: mode_t) ssize;
+extern func rmdir(pathname: *byte) ssize;
+extern func unlink(pathname: *byte) ssize;
+extern func getdents64(fd: sint, dirent: *dirent64, count: uint) ssize;
+
+extern var argc: usize;
+extern var argv: **byte;
+extern var envp: **byte;
+
+extern func allocate(align: usize, size: usize) *any;
+extern func deallocate(ptr: *any, align: usize, size: usize) void;
+
+extern func dump_bytes(addr: *any, size: usize) void;
+func dump[[T]](object: T) void {
+    dump_bytes(&object, sizeof(T));
+}
+
+extern func str_to_f32(out: *f32, start: *byte, count: usize) bool;
+extern func str_to_f64(out: *f64, start: *byte, count: usize) bool;
+
+extern func f32_to_str(buf: *byte, f: f32) bool;
+extern func f64_to_str(buf: *byte, f: f64) bool;
+
+extern func f32_abs(x: f32) f32;
+extern func f32_min(x: f32, y: f32) f32;
+extern func f32_max(x: f32, y: f32) f32;
+
+extern func f64_abs(x: f64) f64;
+extern func f64_min(x: f64, y: f64) f64;
+extern func f64_max(x: f64, y: f64) f64;
+
+# Exponential Functions
+extern func f32_ln(x: f32) f32;
+extern func f32_log2(x: f32) f32;
+extern func f32_log10(x: f32) f32;
+
+extern func f64_ln(x: f64) f64;
+extern func f64_log2(x: f64) f64;
+extern func f64_log10(x: f64) f64;
+
+# Power Functions
+extern func f32_sqrt(x: f32) f32;
+extern func f32_cbrt(x: f32) f32;
+extern func f32_hypot(x: f32, y: f32) f32;
+extern func f32_pow(base: f32, exponent: f32) f32;
+
+extern func f64_sqrt(x: f64) f64;
+extern func f64_cbrt(x: f64) f64;
+extern func f64_hypot(x: f64, y: f64) f64;
+extern func f64_pow(base: f64, exponent: f64) f64;
+
+# Trigonometric Functions
+extern func f32_sin(x: f32) f32;
+extern func f32_cos(x: f32) f32;
+extern func f32_tan(x: f32) f32;
+extern func f32_asin(x: f32) f32;
+extern func f32_acos(x: f32) f32;
+extern func f32_atan(x: f32) f32;
+extern func f32_atan2(y: f32, x: f32) f32;
+
+extern func f64_sin(x: f64) f64;
+extern func f64_cos(x: f64) f64;
+extern func f64_tan(x: f64) f64;
+extern func f64_asin(x: f64) f64;
+extern func f64_acos(x: f64) f64;
+extern func f64_atan(x: f64) f64;
+extern func f64_atan2(y: f64, x: f64) f64;
+
+# Hyperbolic Functions
+extern func f32_sinh(x: f32) f32;
+extern func f32_cosh(x: f32) f32;
+extern func f32_tanh(x: f32) f32;
+extern func f32_asinh(x: f32) f32;
+extern func f32_acosh(x: f32) f32;
+extern func f32_atanh(x: f32) f32;
+
+extern func f64_sinh(x: f64) f64;
+extern func f64_cosh(x: f64) f64;
+extern func f64_tanh(x: f64) f64;
+extern func f64_asinh(x: f64) f64;
+extern func f64_acosh(x: f64) f64;
+extern func f64_atanh(x: f64) f64;
+
+# Rounding Functions
+extern func f32_ceil(x: f32) f32;
+extern func f32_floor(x: f32) f32;
+extern func f32_trunc(x: f32) f32;
+extern func f32_round(x: f32) f32;
+
+extern func f64_ceil(x: f64) f64;
+extern func f64_floor(x: f64) f64;
+extern func f64_trunc(x: f64) f64;
+extern func f64_round(x: f64) f64;
+
+# Classification Functions
+extern func f32_is_finite(x: f32) bool;
+extern func f32_is_normal(x: f32) bool;
+extern func f32_is_inf(x: f32) bool;
+extern func f32_is_nan(x: f32) bool;
+
+extern func f64_is_finite(x: f64) bool;
+extern func f64_is_normal(x: f64) bool;
+extern func f64_is_inf(x: f64) bool;
+extern func f64_is_nan(x: f64) bool;

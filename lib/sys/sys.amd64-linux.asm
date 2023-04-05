@@ -56,8 +56,8 @@ __fatal:
     mov rdi, __EXIT_FAILURE
     syscall
 
-; SYS DEFINITIONS (lib/sys/sys.sunder)
-; ====================================
+; SYS DEFINITIONS
+; ===============
 ; Linux x64 syscall kernel interface format:
 ; + rax => [in] syscall number
 ;          [out] return value (negative indicates -ERRNO)
@@ -297,6 +297,8 @@ sys.envp: dq 0 ; extern var envp: **byte;
 
 ; SYS ALLOCATE SUBROUTINE
 ; =======================
+; func allocate(align: usize, size: usize) *any
+;
 ; ## Stack
 ; +--------------------+ <- rbp + 0x28
 ; | return value       |
@@ -314,13 +316,19 @@ sys.allocate:
     push rbp
     mov rbp, rsp
 
+.addr  equ 0 ; NULL
+.prot  equ __PROT_READ | __PROT_WRITE
+.flags equ __MAP_PRIVATE | __MAP_ANONYMOUS
+.fd    equ -1
+.off   equ 0
+
     mov rax, __SYS_MMAP
-    mov rdi, 0 ; addr
+    mov rdi, .addr
     mov rsi, [rbp + 0x10] ; len
-    mov rdx, __PROT_READ | __PROT_WRITE ; prot
-    mov r10, __MAP_PRIVATE | __MAP_ANONYMOUS ; flags
-    mov r8, -1 ; fd
-    mov r9, 0 ; off
+    mov rdx, .prot
+    mov r10, .flags
+    mov r8, .fd
+    mov r9, .off
     syscall
     mov [rbp + 0x20], rax
 
@@ -330,6 +338,8 @@ sys.allocate:
 
 ; SYS DEALLOCATE SUBROUTINE
 ; =========================
+; func deallocate(ptr: *any, align: usize, size: usize) void
+;
 ; ## Stack
 ; +--------------------+ <- rbp + 0x28
 ; | ptr                |
@@ -356,8 +366,10 @@ sys.deallocate:
     pop rbp
     ret
 
-; SYS DUMP SUBROUTINE
-; ===================
+; SYS DUMP_BYTES SUBROUTINE
+; =========================
+; func dump_bytes(addr: *any, size: usize) void
+;
 ; ## Stack
 ; +--------------------+ <- rbp + 0x20
 ; | object_addr        |

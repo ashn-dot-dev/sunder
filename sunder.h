@@ -701,6 +701,7 @@ arch_to_cstr(enum arch arch);
 
 enum host {
     HOST_FREESTANDING,
+    HOST_EMSCRIPTEN,
     HOST_LINUX,
 };
 enum host

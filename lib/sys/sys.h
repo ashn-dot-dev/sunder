@@ -29,7 +29,7 @@
 #    error "Sunder requires a hosted environment"
 #endif
 
-#if !defined(__STDC_IEC_559__) && !defined(__EMSCRIPTEN__)
+#if !defined(__STDC_IEC_559__) && !defined(__GCC_IEC_559) && !defined(__EMSCRIPTEN__)
 #    error "IEEE-754 floating point is not fully supported"
 #endif
 

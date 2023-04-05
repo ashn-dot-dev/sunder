@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en-us">
+
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>Sunder Generated Code</title>
+<style>
+  body {
+    font-size: 18px;
+    font-family: sans-serif;
+    padding: 0;
+    margin: 0;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    text-align: center;
+  }
+  textarea {
+    display: block;
+    font-size: 16px;
+    font-family: monospace;
+    width: 80ch;
+    padding-left: 0;
+    padding-right: 0;
+    margin-left: auto;
+    margin-right: auto;
+  }
+</style>
+</head>
+
+<body>
+<main>
+<h2>stdout</h2>
+<textarea id="stdout" rows="12" readonly></textarea>
+<h2>stderr</h2>
+<textarea id="stderr" rows="12" readonly></textarea>
+</main>
+
+<script>
+const MakePrintFunction = (element, method) => {
+  if (element) element.value = ""; // clear browser cache
+  return function(text) {
+    if (arguments.length > 1) {
+      text = Array.prototype.slice.call(arguments).join(" ");
+    }
+    method(text);
+    if (element) {
+      element.value += text + "\n";
+      element.scrollTop = element.scrollHeight; // focus on bottom
+    }
+  };
+};
+
+var Module = {
+  preRun: [],
+  postRun: [],
+  print: MakePrintFunction(document.getElementById("stdout"), console.log),
+  printErr: MakePrintFunction(document.getElementById("stderr"), console.error)
+};
+</script>
+{{{ SCRIPT }}}
+</body>
+
+</html>

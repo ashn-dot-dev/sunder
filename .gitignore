@@ -23,5 +23,5 @@ a.out*
 emsdk/
 
 !lib/sys/sys.amd64-linux.asm
-!lib/sys/sys.wasm32.html
+!lib/sys/sys.wasm32-emscripten.html
 !examples/custom-sys-asm/sys.asm

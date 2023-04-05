@@ -8,4 +8,4 @@ func main() void {
     std::print_line(std::err(), result.error().*.data);
 }
 ################################################################################
-# [system error EINVAL] Invalid argument
+# invalid argument

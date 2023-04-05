@@ -16,8 +16,24 @@ alias slong = sys::slong;
 alias slonglong = sys::slonglong;
 alias ulonglong = sys::slonglong;
 
-alias size_t = usize;
+alias  size_t = usize;
 alias ssize_t = ssize;
+
+alias uint8_t = u8;
+alias  int8_t = s8;
+
+alias uint16_t = u16;
+alias  int16_t = s16;
+
+alias uint32_t = u32;
+alias  int32_t = s32;
+
+alias uint64_t = u64;
+alias  int64_t = s64;
+
+alias uintptr_t = usize;
+alias  intptr_t = ssize;
+alias ptrdiff_t = intptr_t;
 
 alias float = f32;
 alias double = f64;
