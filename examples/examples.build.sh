@@ -12,7 +12,7 @@ for f in *.sunder; do
 
     # Web version with Emscripten.
     if command -v emcc >/dev/null; then
-        CMD="SUNDER_BACKEND=C SUNDER_ARCH=wasm32 SUNDER_HOST=emscripten SUNDER_CC=emcc SUNDER_CFLAGS='-g0 -Os -sASSERTIONS -sSINGLE_FILE --shell-file ${SUNDER_HOME}/lib/sys/sys.wasm32-emscripten.html' sunder-compile -o ${f%.sunder}.html ${f}"
+        CMD="SUNDER_BACKEND=C SUNDER_ARCH=wasm32 SUNDER_HOST=emscripten SUNDER_CC=emcc SUNDER_CFLAGS='-g0 -Os -sASSERTIONS -sSINGLE_FILE --shell-file ${SUNDER_HOME}/lib/sys/sys.wasm32-emscripten.html' ${SUNDER_HOME}/bin/sunder-compile -o ${f%.sunder}.html ${f}"
         echo $CMD
         eval $CMD
     fi
