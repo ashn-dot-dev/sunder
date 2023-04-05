@@ -86,6 +86,7 @@
          | <expr-access-dereference>
          | <expr-sizeof>
          | <expr-alignof>
+         | <expr-embed>
          | <expr-unary>
          | <expr-binary>
 
@@ -118,6 +119,8 @@
 <expr-sizeof> ::= "sizeof" "(" <typespec> ")"
 
 <expr-alignof> ::= "alignof" "(" <typespec> ")"
+
+<expr-alignof> ::= "embed" "(" <literal-bytes> ")"
 
 <expr-unary> ::= "not" <expr>
                | "+" <expr>

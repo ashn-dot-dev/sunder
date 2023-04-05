@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 #include <assert.h>
+#include <errno.h>
 #include <inttypes.h>
 #include <stdlib.h>
 #include <string.h>
@@ -280,6 +281,8 @@ static struct expr const*
 resolve_expr_sizeof(struct resolver* resolver, struct cst_expr const* expr);
 static struct expr const*
 resolve_expr_alignof(struct resolver* resolver, struct cst_expr const* expr);
+static struct expr const*
+resolve_expr_embed(struct resolver* resolver, struct cst_expr const* expr);
 static struct expr const*
 resolve_expr_unary(struct resolver* resolver, struct cst_expr const* expr);
 static struct expr const*
@@ -3134,6 +3137,9 @@ resolve_expr(struct resolver* resolver, struct cst_expr const* expr)
     case CST_EXPR_ALIGNOF: {
         return resolve_expr_alignof(resolver, expr);
     }
+    case CST_EXPR_EMBED: {
+        return resolve_expr_embed(resolver, expr);
+    }
     case CST_EXPR_UNARY: {
         return resolve_expr_unary(resolver, expr);
     }
@@ -4124,6 +4130,7 @@ resolve_expr_sizeof(struct resolver* resolver, struct cst_expr const* expr)
 {
     assert(resolver != NULL);
     assert(expr != NULL);
+    assert(expr->kind == CST_EXPR_SIZEOF);
 
     struct type const* const rhs =
         resolve_typespec(resolver, expr->data.sizeof_.rhs);
@@ -4142,6 +4149,7 @@ resolve_expr_alignof(struct resolver* resolver, struct cst_expr const* expr)
 {
     assert(resolver != NULL);
     assert(expr != NULL);
+    assert(expr->kind == CST_EXPR_ALIGNOF);
 
     struct type const* const rhs =
         resolve_typespec(resolver, expr->data.alignof_.rhs);
@@ -4150,6 +4158,51 @@ resolve_expr_alignof(struct resolver* resolver, struct cst_expr const* expr)
     }
 
     struct expr* const resolved = expr_new_alignof(expr->location, rhs);
+
+    freeze(resolved);
+    return resolved;
+}
+
+static struct expr const*
+resolve_expr_embed(struct resolver* resolver, struct cst_expr const* expr)
+{
+    assert(resolver != NULL);
+    assert(expr != NULL);
+    assert(expr->kind == CST_EXPR_EMBED);
+
+    char const* const path =
+        canonical_import_path(resolver->module->path, expr->data.embed_.path);
+    if (path == NULL) {
+        fatal(
+            expr->location,
+            "failed to resolve embed path `%s`",
+            expr->data.embed_.path);
+    }
+
+    void* bytes_start = NULL;
+    size_t bytes_count = 0;
+    if (file_read_all(path, &bytes_start, &bytes_count)) {
+        fatal(
+            expr->location,
+            "failed to read '%s' with error '%s'",
+            path,
+            strerror(errno));
+    }
+
+    struct symbol const* array_symbol = NULL;
+    struct symbol const* slice_symbol = NULL;
+    create_static_bytes(
+        resolver,
+        expr->location,
+        bytes_start,
+        bytes_count,
+        &array_symbol,
+        &slice_symbol);
+
+    xalloc(bytes_start, XALLOC_FREE);
+
+    struct expr* const resolved =
+        expr_new_bytes(expr->location, array_symbol, slice_symbol, bytes_count);
 
     freeze(resolved);
     return resolved;

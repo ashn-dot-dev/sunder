@@ -144,6 +144,8 @@ parse_expr_sizeof(struct parser* parser);
 static struct cst_expr const*
 parse_expr_alignof(struct parser* parser);
 static struct cst_expr const*
+parse_expr_embed(struct parser* parser);
+static struct cst_expr const*
 parse_expr_nud_unary(struct parser* parser);
 static struct cst_expr const*
 parse_expr_led_binary(struct parser* parser, struct cst_expr const* lhs);
@@ -955,6 +957,9 @@ token_kind_nud(enum token_kind kind)
     case TOKEN_ALIGNOF: {
         return parse_expr_alignof;
     }
+    case TOKEN_EMBED: {
+        return parse_expr_embed;
+    }
     case TOKEN_NOT: /* fallthrough */
     case TOKEN_STARTOF: /* fallthrough */
     case TOKEN_COUNTOF: /* fallthrough */
@@ -1371,6 +1376,25 @@ parse_expr_alignof(struct parser* parser)
     expect_current(parser, TOKEN_RPAREN);
 
     struct cst_expr* const product = cst_expr_new_alignof(location, rhs);
+
+    freeze(product);
+    return product;
+}
+
+static struct cst_expr const*
+parse_expr_embed(struct parser* parser)
+{
+    assert(parser != NULL);
+
+    struct source_location const location =
+        expect_current(parser, TOKEN_EMBED).location;
+    expect_current(parser, TOKEN_LPAREN);
+    struct string const* const bytes =
+        expect_current(parser, TOKEN_BYTES).data.bytes;
+    char const* const path = intern_cstr(string_start(bytes));
+    expect_current(parser, TOKEN_RPAREN);
+
+    struct cst_expr* const product = cst_expr_new_embed(location, path);
 
     freeze(product);
     return product;

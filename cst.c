@@ -612,6 +612,14 @@ cst_expr_new_alignof(
 }
 
 struct cst_expr*
+cst_expr_new_embed(struct source_location location, char const* path)
+{
+    struct cst_expr* const self = cst_expr_new(location, CST_EXPR_EMBED);
+    self->data.embed_.path = path;
+    return self;
+}
+
+struct cst_expr*
 cst_expr_new_unary(struct token op, struct cst_expr const* rhs)
 {
     assert(rhs != NULL);

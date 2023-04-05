@@ -1,0 +1,20 @@
+import "std";
+
+let x = embed("data.txt");
+
+func main() void {
+    let y = embed("data.txt");
+
+    std::print_line(std::out(), std::ascii::view_trimmed(x));
+    std::print_line(std::out(), std::ascii::view_trimmed(y));
+
+    # Embed expressions are treaded like bytes-literals by the compiler, so you
+    # can get a compile-time string count and compile-time address of the textr
+    let _ = countof(embed("data.txt"));
+    let _ = &embed("data.txt");
+}
+################################################################################
+# TEST DATA FILE LINE 1
+# TEST DATA FILE LINE 2
+# TEST DATA FILE LINE 1
+# TEST DATA FILE LINE 2

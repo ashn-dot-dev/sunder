@@ -361,6 +361,9 @@ order_expr(struct orderer* orderer, struct cst_expr const* expr)
         order_typespec(orderer, expr->data.alignof_.rhs);
         return;
     }
+    case CST_EXPR_EMBED: {
+        return;
+    }
     case CST_EXPR_UNARY: {
         order_expr(orderer, expr->data.unary.rhs);
         return;

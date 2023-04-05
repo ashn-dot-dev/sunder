@@ -945,6 +945,7 @@ enum token_kind {
     TOKEN_SIZEOF,
     TOKEN_TYPEOF,
     TOKEN_UNINIT,
+    TOKEN_EMBED,
     // Sigils
     TOKEN_SHL,          // <<
     TOKEN_SHR,          // >>
@@ -1306,6 +1307,7 @@ struct cst_expr {
         // Prefix Unary Operator Expressions
         CST_EXPR_SIZEOF,
         CST_EXPR_ALIGNOF,
+        CST_EXPR_EMBED,
         CST_EXPR_UNARY,
         // Infix Binary Operator Expressions
         CST_EXPR_BINARY,
@@ -1364,6 +1366,9 @@ struct cst_expr {
         struct {
             struct cst_typespec const* rhs;
         } alignof_;
+        struct {
+            char const* path; // interned
+        } embed_;
         struct {
             struct token op;
             struct cst_expr const* rhs;
@@ -1442,6 +1447,8 @@ cst_expr_new_sizeof(
 struct cst_expr*
 cst_expr_new_alignof(
     struct source_location location, struct cst_typespec const* rhs);
+struct cst_expr*
+cst_expr_new_embed(struct source_location location, char const* path);
 struct cst_expr*
 cst_expr_new_unary(struct token op, struct cst_expr const* rhs);
 struct cst_expr*
