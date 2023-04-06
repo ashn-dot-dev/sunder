@@ -2484,6 +2484,7 @@ eval_lvalue(struct expr const* expr);
 void
 codegen(
     bool opt_c,
+    bool opt_g,
     bool opt_k,
     char const* const* opt_L,
     char const* const* opt_l,
@@ -2491,6 +2492,7 @@ codegen(
 void
 codegen_c(
     bool opt_c,
+    bool opt_g,
     bool opt_k,
     char const* const* opt_L,
     char const* const* opt_l,
@@ -2498,6 +2500,7 @@ codegen_c(
 void
 codegen_nasm(
     bool opt_c,
+    bool opt_g,
     bool opt_k,
     char const* const* opt_L,
     char const* const* opt_l,

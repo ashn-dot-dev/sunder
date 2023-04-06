@@ -8,6 +8,7 @@
 #include <string.h>
 #include "sunder.h"
 
+static bool debug = false;
 static struct string* out = NULL;
 static unsigned indent = 0u;
 static struct function const* current_function = NULL;
@@ -1160,7 +1161,9 @@ codegen_stmt(struct stmt const* stmt)
     };
 
     char const* const cstr = table[stmt->kind].kind_cstr;
-    appendli_location(stmt->location, "STATEMENT %s", cstr);
+    if (debug) {
+        appendli_location(stmt->location, "STATEMENT %s", cstr);
+    }
     table[stmt->kind].codegen_fn(stmt);
 }
 
@@ -1362,7 +1365,9 @@ strgen_rvalue(struct expr const* expr)
     // clang-format on
 
     char const* const cstr = table[expr->kind].kind_cstr;
-    appendli_location(expr->location, "RVALUE EXPRESSION %s", cstr);
+    if (debug) {
+        appendli_location(expr->location, "RVALUE EXPRESSION %s", cstr);
+    }
     return table[expr->kind].function(expr);
 }
 
@@ -2680,7 +2685,9 @@ strgen_lvalue(struct expr const* expr)
     // clang-format on
 
     char const* const cstr = table[expr->kind].kind_cstr;
-    appendli_location(expr->location, "LVALUE EXPRESSION %s", cstr);
+    if (debug) {
+        appendli_location(expr->location, "LVALUE EXPRESSION %s", cstr);
+    }
     return table[expr->kind].function(expr);
 }
 
@@ -2834,6 +2841,7 @@ codegen_defers(struct stmt const* begin, struct stmt const* end)
 void
 codegen_c(
     bool opt_c,
+    bool opt_g,
     bool opt_k,
     char const* const* opt_L,
     char const* const* opt_l,
@@ -2845,6 +2853,7 @@ codegen_c(
     assert(cstr_eq_ignore_case(backend, "C"));
     (void)backend;
 
+    debug = opt_g;
     out = string_new(NULL, 0u);
     struct string* const src_path = string_new_fmt("%s.tmp.c", opt_o);
     struct string* const obj_path = string_new_fmt("%s.tmp.o", opt_o);
@@ -2866,7 +2875,9 @@ codegen_c(
         sbuf_push(backend_argv, opt_o);
     }
     sbuf_push(backend_argv, "-O0");
-    sbuf_push(backend_argv, "-g");
+    if (opt_g) {
+        sbuf_push(backend_argv, "-g");
+    }
     sbuf_push(backend_argv, intern_fmt("-I%s/lib/sys", SUNDER_HOME));
     sbuf_push(backend_argv, "-std=c11");
     sbuf_push(backend_argv, "-Wall");

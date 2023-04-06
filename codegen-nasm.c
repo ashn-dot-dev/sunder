@@ -7,6 +7,7 @@
 #include <string.h>
 #include "sunder.h"
 
+static bool debug = false;
 static struct string* out = NULL;
 static struct function const* current_function = NULL;
 static size_t current_loop_id; // Used for generating break & continue labels.
@@ -1239,10 +1240,14 @@ codegen_stmt(struct stmt const* stmt)
 
     size_t const id = unique_id++;
     char const* const cstr = table[stmt->kind].kind_cstr;
-    appendli("; STMT %zu BEGIN", id);
-    appendli_location(stmt->location, "%s (ID %zu)", cstr, id);
+    if (debug) {
+        appendli("; STMT %zu BEGIN", id);
+        appendli_location(stmt->location, "%s (ID %zu)", cstr, id);
+    }
     table[stmt->kind].codegen_fn(stmt, id);
-    appendli("; STMT %zu END", id);
+    if (debug) {
+        appendli("; STMT %zu END", id);
+    }
 }
 
 static void
@@ -1544,11 +1549,15 @@ push_rvalue(struct expr const* expr)
 
     size_t const id = unique_id++;
     char const* const cstr = table[expr->kind].kind_cstr;
-    appendli("; EXPR RVALUE %zu BEGIN", id);
-    appendli_location(expr->location, "%s (ID %zu, RVALUE)", cstr, id);
+    if (debug) {
+        appendli("; EXPR RVALUE %zu BEGIN", id);
+        appendli_location(expr->location, "%s (ID %zu, RVALUE)", cstr, id);
+    }
     assert(table[expr->kind].codegen_fn != NULL);
     table[expr->kind].codegen_fn(expr, id);
-    appendli("; EXPR RVALUE %zu END", id);
+    if (debug) {
+        appendli("; EXPR RVALUE %zu END", id);
+    }
 }
 
 static void
@@ -3294,11 +3303,15 @@ push_lvalue(struct expr const* expr)
 
     size_t const id = unique_id++;
     char const* const cstr = table[expr->kind].kind_cstr;
-    appendli("; EXPR LVALUE %zu BEGIN", id);
-    appendli_location(expr->location, "%s (ID %zu, LVALUE)", cstr, id);
+    if (debug) {
+        appendli("; EXPR LVALUE %zu BEGIN", id);
+        appendli_location(expr->location, "%s (ID %zu, LVALUE)", cstr, id);
+    }
     assert(table[expr->kind].codegen_fn != NULL);
     table[expr->kind].codegen_fn(expr, id);
-    appendli("; EXPR LVALUE %zu END", id);
+    if (debug) {
+        appendli("; EXPR LVALUE %zu END", id);
+    }
 }
 
 static void
@@ -3458,6 +3471,7 @@ push_lvalue_unary(struct expr const* expr, size_t id)
 void
 codegen_nasm(
     bool opt_c,
+    bool opt_g,
     bool opt_k,
     char const* const* opt_L,
     char const* const* opt_l,
@@ -3470,6 +3484,7 @@ codegen_nasm(
     bool const is_yasm = cstr_eq_ignore_case(backend, "yasm");
     assert(is_nasm || is_yasm);
 
+    debug = opt_g;
     out = string_new(NULL, 0u);
     struct string* const asm_path = string_new_fmt("%s.tmp.asm", opt_o);
     struct string* const obj_path = string_new_fmt("%s.tmp.o", opt_o);
@@ -3488,7 +3503,9 @@ codegen_nasm(
         sbuf_push(backend_argv, "-f");
         sbuf_push(backend_argv, "elf64");
         sbuf_push(backend_argv, "-O0");
-        sbuf_push(backend_argv, "-gdwarf");
+        if (opt_g) {
+            sbuf_push(backend_argv, "-gdwarf");
+        }
         sbuf_push(backend_argv, string_start(asm_path));
         sbuf_push(backend_argv, (char const*)NULL);
     }
@@ -3505,7 +3522,9 @@ codegen_nasm(
         sbuf_push(backend_argv, "-f");
         sbuf_push(backend_argv, "elf64");
         sbuf_push(backend_argv, "-O0");
-        sbuf_push(backend_argv, "-gdwarf2");
+        if (opt_g) {
+            sbuf_push(backend_argv, "-gdwarf2");
+        }
         sbuf_push(backend_argv, string_start(asm_path));
         sbuf_push(backend_argv, (char const*)NULL);
     }

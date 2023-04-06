@@ -11,6 +11,7 @@
 // clang-format off
 static char const*       path = NULL;
 static bool              opt_c = false;
+static bool              opt_g = false;
 static bool              opt_k = false;
 static sbuf(char const*) opt_L = NULL;
 static sbuf(char const*) opt_l = NULL;
@@ -40,7 +41,7 @@ main(int argc, char** argv)
         validate_main_is_defined_correctly();
     }
 
-    codegen(opt_c, opt_k, opt_L, opt_l, opt_o);
+    codegen(opt_c, opt_g, opt_k, opt_L, opt_l, opt_o);
 
     return EXIT_SUCCESS;
 }
@@ -62,15 +63,16 @@ usage(void)
 {
     // clang-format off
     char const* const lines[] = {
-   "Usage: sunder-compile [OPTION]... FILE",
+   "Usage: sunder-compile [OPTION...] FILE",
    "",
    "Options:",
    "  -c        Compile and assemble, but do not link.",
    "  -e        Display the Sunder environment and exit.",
-   "  -k        Keep intermediate files (.o and .asm).",
+   "  -g        Generate debug information in output files.",
+   "  -k        Keep intermediate files.",
    "  -L DIR    Add DIR to the linker path.",
    "  -l OPT    Pass OPT directly to the linker.",
-   "  -o OUT    Write output executable to OUT (default a.out).",
+   "  -o OUT    Write output file to OUT (default a.out).",
    "  -h        Display usage information and exit.",
     };
     // clang-format on
@@ -83,7 +85,7 @@ static void
 argparse(int argc, char** argv)
 {
     int c = 0;
-    while ((c = getopt(argc, argv, "cekL:l:o:h")) != -1) {
+    while ((c = getopt(argc, argv, "cegkL:l:o:h")) != -1) {
         switch (c) {
         case 'c': {
             opt_c = true;
@@ -92,6 +94,10 @@ argparse(int argc, char** argv)
         case 'e': {
             env();
             exit(EXIT_SUCCESS);
+            break;
+        }
+        case 'g': {
+            opt_g = true;
             break;
         }
         case 'k': {
