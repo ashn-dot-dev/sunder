@@ -15,7 +15,6 @@ __SYS_LSEEK:     equ 8
 __SYS_MMAP:      equ 9
 __SYS_MUNMAP:    equ 11
 __SYS_EXIT:      equ 60
-__SYS_GETDENTS   equ 78
 __SYS_MKDIR      equ 83
 __SYS_RMDIR      equ 84
 __SYS_UNLINK     equ 87
@@ -204,24 +203,6 @@ sys.exit:
     mov rax, __SYS_EXIT
     mov rdi, [rbp + 0x10] ; error_code
     syscall
-
-; linux/fs/readdir.c:
-; SYSCALL_DEFINE3(getdents, unsigned int, fd, struct linux_dirent __user *, dirent, unsigned int, count)
-section .text
-sys.getdents:
-    push rbp
-    mov rbp, rsp
-
-    mov rax, __SYS_GETDENTS
-    mov rdi, [rbp + 0x20] ; fd
-    mov rsi, [rbp + 0x18] ; dirent
-    mov rdx, [rbp + 0x10] ; count
-    syscall
-    mov [rbp + 0x28], rax
-
-    mov rsp, rbp
-    pop rbp
-    ret
 
 ; linux/fs/namei.c:
 ; SYSCALL_DEFINE2(mkdir, const char __user *, pathname, umode_t, mode)
