@@ -1,16 +1,17 @@
 # The Sunder Programming Language
-Sunder is a C-like systems programming language and compiler for x86-64 Linux.
+Sunder is a C-like systems programming language and compiler for x86-64 and
+ARM64 Linux.
 
 ## Dependencies
-Sunder tooling should build and run on any x86-64 Linux machine satisfying the
-following dependencies:
+Sunder tooling should build and run on any x86-64 or ARM64 Linux machine
+satisfying the following dependencies:
 
 + POSIX-compatible `make`
 + Supported toolchain containing:
   + C99 compiler (POSIX `c99`, `clang`, `gcc`, etc.)
   + `ld`
 + [`clang`](https://clang.llvm.org/) or [`gcc`](https://gcc.gnu.org/) (C backend only)
-+ [`nasm`](https://www.nasm.us/) or [`yasm`](https://yasm.tortall.net/) (NASM backend only)
++ [`nasm`](https://www.nasm.us/) or [`yasm`](https://yasm.tortall.net/) (x86-64 NASM backend only)
 + `clang-format` (development only)
 
 The top-level Dockerfile defines a Debian image with all development
