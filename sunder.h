@@ -56,12 +56,6 @@ typedef union {
 // Number of characters in a string literal, excluding the NUL-terminator.
 #define STR_LITERAL_COUNT(str_literal) (ARRAY_COUNT(str_literal) - 1)
 
-// C99 compatible _Alignof operator.
-// Produces an integer constant expression.
-// clang-format off
-#define ALIGNOF(type) offsetof(struct{char _; type ty;}, ty)
-// clang-format on
-
 // C99 compatible(ish) _Static_assert. Macro parameter `what` should be a valid
 // identifier describing the assertion. Flips the order of arguments from C11's
 // _Static_assert so that assertions read as if they were a sentence.

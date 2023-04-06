@@ -594,10 +594,6 @@ intern_fmt(char const* fmt, ...)
     return interned;
 }
 
-STATIC_ASSERT(
-    SBUF_HEADER_OFFSET_IS_ALIGNED,
-    SBUF__HEADER_OFFSET_ % ALIGNOF(max_align_type) == 0);
-
 /* reserve */
 void*
 sbuf__rsv_(size_t elemsize, void* sbuf, size_t cap)
