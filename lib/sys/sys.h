@@ -458,7 +458,6 @@ __sunder_byte** sys_argv;
 __sunder_byte** sys_envp;
 
 // clang-format off
-__attribute__((section("rodata")))
 static char sys_dump_bytes_lookup_table[256u * 2u] = {
     '0', '0', '0', '1', '0', '2', '0', '3', '0', '4', '0', '5', '0', '6', '0',
     '7', '0', '8', '0', '9', '0', 'A', '0', 'B', '0', 'C', '0', 'D', '0', 'E',
