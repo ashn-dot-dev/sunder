@@ -223,6 +223,7 @@ struct dirent64 {
     var d_type: uchar;
     var d_name: [0]char;
 }
+alias dirent = dirent64;
 
 extern func read(fd: sint, buf: *char, count: size_t) ssize;
 extern func write(fd: sint, buf: *char, count: size_t) ssize;
@@ -233,7 +234,7 @@ extern func exit(error_code: sint) void;
 extern func mkdir(pathname: *byte, mode: mode_t) ssize;
 extern func rmdir(pathname: *byte) ssize;
 extern func unlink(pathname: *byte) ssize;
-extern func getdents64(fd: sint, dirent: *dirent64, count: uint) ssize;
+extern func getdents(fd: sint, dirent: *dirent, count: size_t) ssize;
 
 extern var argc: usize;
 extern var argv: **byte;

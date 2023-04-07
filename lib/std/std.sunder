@@ -3409,7 +3409,7 @@ struct file {
 # Type and associated filesystem operations for a directory.
 struct directory {
     var _fd: sys::sint;
-    var _pad: [alignof(sys::dirent64)-alignof(sys::sint)]byte; # align _buf
+    var _pad: [alignof(sys::dirent)-alignof(sys::sint)]byte; # align _buf
     var _buf: [1024]byte;
     var _buf_idx: usize;
     var _buf_end: usize;
@@ -3454,7 +3454,7 @@ struct directory {
     # Advance the current directory entry.
     func advance(self: *directory) bool {
         if self.*._buf_idx >= self.*._buf_end {
-            var sysret = sys::getdents64(self.*._fd, (:*sys::dirent64)&self.*._buf[0], (:sys::uint)countof(self.*._buf));
+            var sysret = sys::getdents(self.*._fd, (:*sys::dirent)&self.*._buf[0], countof(self.*._buf));
             if sysret == 0 {
                 self.*._current = std::optional[[std::result[[[]byte, std::error]]]]::EMPTY;
                 return false; # end-of-iteration
@@ -3469,7 +3469,7 @@ struct directory {
             self.*._buf_end = (:usize)sysret;
         }
 
-        var dirent = (:*sys::dirent64)&self.*._buf[self.*._buf_idx];
+        var dirent = (:*sys::dirent)&self.*._buf[self.*._buf_idx];
         var result = std::result[[[]byte, std::error]]::init_value(std::cstr::data((:*byte)&dirent.*.d_name));
         self.*._current = std::optional[[std::result[[[]byte, std::error]]]]::init_value(result);
         self.*._buf_idx = self.*._buf_idx + (:usize)dirent.*.d_reclen;

@@ -377,10 +377,10 @@ typedef struct __sunder_sys_dirent64* __sunder_pointer_to_sys_dirent_type;
 
 struct __sunder_sys_dirent64;
 static __sunder_ssize
-sys_getdents64(
+sys_getdents(
     signed int fd,
     __sunder_pointer_to_sys_dirent_type dirent,
-    unsigned int count)
+    size_t count)
 {
     ssize_t result = getdents64(fd, (void*)dirent, count);
     if (result == -1) {

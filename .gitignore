@@ -19,6 +19,7 @@ a.out*
 *.tmp
 *.log
 *.html
+*.wasm
 
 emsdk/
 
