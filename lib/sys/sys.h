@@ -21,10 +21,6 @@
 #undef const
 #undef restrict
 
-#ifdef __EMSCRIPTEN__
-#    include <emscripten/emscripten.h>
-#endif
-
 #ifndef __STDC_HOSTED__
 #    error "Sunder requires a hosted environment"
 #endif
