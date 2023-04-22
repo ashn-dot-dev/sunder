@@ -216,14 +216,13 @@ let PATH_MAX: usize = 4096; # chars in a path name including nul
 ###     unsigned char  d_type;
 ###     char           d_name[];
 ### };
-struct dirent64 {
+struct dirent {
     var d_ino: u64;
     var d_off: s64;
     var d_reclen: ushort;
     var d_type: uchar;
     var d_name: [0]char;
 }
-alias dirent = dirent64;
 
 extern func read(fd: sint, buf: *char, count: size_t) ssize;
 extern func write(fd: sint, buf: *char, count: size_t) ssize;

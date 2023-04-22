@@ -366,21 +366,9 @@ sys_exit(signed int error_code)
     _exit(error_code);
 }
 
-// Glibc requires the user to provide a definition for dirent64 while the
-// musl-based Emscripten system headers use the musl-defined dirent struct.
-#ifdef __EMSCRIPTEN__
-typedef struct __sunder_sys_dirent __sunder_sys_dirent_type;
-typedef struct __sunder_sys_dirent* __sunder_pointer_to_sys_dirent_type;
-#else
-typedef struct __sunder_sys_dirent64* __sunder_pointer_to_sys_dirent_type;
-#endif
-
-struct __sunder_sys_dirent64;
+struct __sunder_sys_dirent;
 static __sunder_ssize
-sys_getdents(
-    signed int fd,
-    __sunder_pointer_to_sys_dirent_type dirent,
-    size_t count)
+sys_getdents(signed int fd, struct __sunder_sys_dirent* dirent, size_t count)
 {
     ssize_t result = getdents64(fd, (void*)dirent, count);
     if (result == -1) {
