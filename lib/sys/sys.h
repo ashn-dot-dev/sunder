@@ -21,15 +21,6 @@
 #undef const
 #undef restrict
 
-#ifndef __STDC_HOSTED__
-#    error "Sunder requires a hosted environment"
-#endif
-
-#if !defined(__STDC_IEC_559__) && !defined(__GCC_IEC_559)                      \
-    && !defined(__EMSCRIPTEN__)
-#    error "IEEE-754 floating point is not fully supported"
-#endif
-
 _Static_assert(CHAR_BIT == 8, "8-bit byte");
 
 // clang-format off
