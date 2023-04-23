@@ -595,7 +595,11 @@ sys_str_to_f64(__sunder_f64* out, __sunder_byte* start, __sunder_usize count)
 }
 
 __sunder_bool
-sys_f32_to_str(__sunder_byte* buf, __sunder_f32 f)
+sys_f32_to_str(
+    __sunder_byte* buf,
+    __sunder_usize buf_size,
+    __sunder_f32 f,
+    __sunder_ssize digits)
 {
     if (isnan(f)) {
         return sprintf(buf, "NaN");
@@ -606,11 +610,19 @@ sys_f32_to_str(__sunder_byte* buf, __sunder_f32 f)
     if (isinf(f) && f > 0) {
         return sprintf(buf, "infinity");
     }
-    return sprintf(buf, "%.*f", FLT_DECIMAL_DIG, (double)f) >= 0;
+
+    assert(INT_MIN <= digits && digits <= INT_MAX);
+    int d = digits < 0 ? FLT_DECIMAL_DIG : (int)digits;
+    int written = sprintf(buf, "%.*f", d, (double)f) >= 0;
+    return 0 <= written && (__sunder_usize)written <= buf_size;
 }
 
 __sunder_bool
-sys_f64_to_str(__sunder_byte* buf, __sunder_f64 f)
+sys_f64_to_str(
+    __sunder_byte* buf,
+    __sunder_usize buf_size,
+    __sunder_f64 f,
+    __sunder_ssize digits)
 {
     if (isnan(f)) {
         return sprintf(buf, "NaN");
@@ -621,7 +633,11 @@ sys_f64_to_str(__sunder_byte* buf, __sunder_f64 f)
     if (isinf(f) && f > 0) {
         return sprintf(buf, "infinity");
     }
-    return sprintf(buf, "%.*f", DBL_DECIMAL_DIG, f) >= 0;
+
+    assert(INT_MIN <= digits && digits <= INT_MAX);
+    int d = digits < 0 ? DBL_DECIMAL_DIG : (int)digits;
+    int written = sprintf(buf, "%.*f", d, f) >= 0;
+    return 0 <= written && (__sunder_usize)written <= buf_size;
 }
 
 #define __SUNDER_IEEE754_MATH_DEFINITIONS(function)                            \

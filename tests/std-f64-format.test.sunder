@@ -1,26 +1,49 @@
 # only SUNDER_BACKEND=C
 import "std";
 
-func test(f: f64) void {
+func test(f: f64, fmt: []byte) void {
     std::print_format_line(
         std::out(),
-        "{}",
+        fmt,
         (:[]std::formatter)[std::formatter::init[[typeof(f)]](&f)]);
 }
 
 func main() void {
-    test(123.0);
-    test(+123.5);
-    test(-123.5);
-    test(f64::INFINITY);
-    test(+f64::INFINITY);
-    test(-f64::INFINITY);
-    test(f64::NAN);
+    test(+0.5, "{}");
+    test(-0.5, "{}");
+    test(123.0, "{}");
+    test(+123.5, "{}");
+    test(-123.5, "{}");
+    test(f64::INFINITY, "{}");
+    test(+f64::INFINITY, "{}");
+    test(-f64::INFINITY, "{}");
+    test(f64::NAN, "{}");
+
+    test(+0.5, "{.3}");
+    test(-0.5, "{.3}");
+    test(123.0, "{.3}");
+    test(+123.5, "{.3}");
+    test(-123.5, "{.3}");
+    test(f64::INFINITY, "{.3}");
+    test(+f64::INFINITY, "{.3}");
+    test(-f64::INFINITY, "{.3}");
+    test(f64::NAN, "{.3}");
 }
 ################################################################################
+# 0.50000000000000000
+# -0.50000000000000000
 # 123.00000000000000000
 # 123.50000000000000000
 # -123.50000000000000000
+# infinity
+# infinity
+# -infinity
+# NaN
+# 0.500
+# -0.500
+# 123.000
+# 123.500
+# -123.500
 # infinity
 # infinity
 # -infinity

@@ -250,8 +250,8 @@ func dump[[T]](object: T) void {
 extern func str_to_f32(out: *f32, start: *byte, count: usize) bool;
 extern func str_to_f64(out: *f64, start: *byte, count: usize) bool;
 
-extern func f32_to_str(buf: *byte, f: f32) bool;
-extern func f64_to_str(buf: *byte, f: f64) bool;
+extern func f32_to_str(buf: *byte, buf_size: usize, f: f32, digits: ssize) bool;
+extern func f64_to_str(buf: *byte, buf_size: usize, f: f64, digits: ssize) bool;
 
 extern func f32_abs(x: f32) f32;
 extern func f32_min(x: f32, y: f32) f32;

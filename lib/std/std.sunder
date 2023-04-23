@@ -4360,11 +4360,24 @@ extend f32 func init_from_str(str: []byte) std::result[[f32, std::error]] {
 }
 
 extend f32 func format(self: *f32, writer: std::writer, fmt: []byte) std::result[[void, std::error]] {
+    var digits = -1s;
     if countof(fmt) != 0 {
-        return std::result[[void, std::error]]::init_error(std::error::INVALID_ARGUMENT);
+        if not std::str::starts_with(fmt, ".") {
+            # Format must be specified as ".NUMBER".
+            return std::result[[void, std::error]]::init_error(std::error::INVALID_ARGUMENT);
+        }
+        if countof(fmt) < 2 {
+            # Format must contain at least one digit after the ".".
+            return std::result[[void, std::error]]::init_error(std::error::INVALID_ARGUMENT);
+        }
+        var result = ssize::init_from_str(fmt[1:countof(fmt)], 10);
+        if result.is_error() {
+            return std::result[[void, std::error]]::init_error(std::error::INVALID_ARGUMENT);
+        }
+        digits = result.value();
     }
     var buf: [4096]byte = uninit; # More than enough space.
-    assert sys::f32_to_str(&buf[0], *self);
+    assert sys::f32_to_str(&buf[0], countof(buf), *self, digits);
     return std::write_all(writer, std::cstr::data(&buf[0]));
 }
 
@@ -4427,11 +4440,24 @@ extend f64 func init_from_str(str: []byte) std::result[[f64, std::error]] {
 }
 
 extend f64 func format(self: *f64, writer: std::writer, fmt: []byte) std::result[[void, std::error]] {
+    var digits = -1s;
     if countof(fmt) != 0 {
-        return std::result[[void, std::error]]::init_error(std::error::INVALID_ARGUMENT);
+        if not std::str::starts_with(fmt, ".") {
+            # Format must be specified as ".NUMBER".
+            return std::result[[void, std::error]]::init_error(std::error::INVALID_ARGUMENT);
+        }
+        if countof(fmt) < 2 {
+            # Format must contain at least one digit after the ".".
+            return std::result[[void, std::error]]::init_error(std::error::INVALID_ARGUMENT);
+        }
+        var result = ssize::init_from_str(fmt[1:countof(fmt)], 10);
+        if result.is_error() {
+            return std::result[[void, std::error]]::init_error(std::error::INVALID_ARGUMENT);
+        }
+        digits = result.value();
     }
     var buf: [4096]byte = uninit; # More than enough space.
-    assert sys::f64_to_str(&buf[0], *self);
+    assert sys::f64_to_str(&buf[0], countof(buf), *self, digits);
     return std::write_all(writer, std::cstr::data(&buf[0]));
 }
 
