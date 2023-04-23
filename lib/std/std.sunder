@@ -4629,8 +4629,8 @@ extend error func format(self: *error, writer: std::writer, fmt: []byte) std::re
 # The set of `std::error` constants used by the standard library.
 extend error let ALLOCATION_FAILURE = (:std::error)&"allocation failure";
 extend error let BUFFER_FULL = (:std::error)&"buffer full";
-extend error let PARSE_FAILURE = (:std::error)&"parse failure";
 extend error let INVALID_ARGUMENT = (:std::error)&"invalid argument";
+extend error let PARSE_FAILURE = (:std::error)&"parse failure";
 extend error let RESULT_OUT_OF_RANGE = (:std::error)&"result out-of-range";
 
 extend big_integer let ZERO = (:std::big_integer){
