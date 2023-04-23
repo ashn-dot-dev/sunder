@@ -2914,6 +2914,11 @@ codegen_c(
     /* sbuf_push(backend_argv, "-fmax-errors=1"); */
     // Clang-specific max errors.
     /* sbuf_push(backend_argv, "-ferror-limit=1"); */
+#if 1
+    // Disable all warnings. Used to future-proof against additional warnings
+    // that would break Sunder tests/workflows if added to GCC/Clang.
+    sbuf_push(backend_argv, "-w");
+#endif
 #if 0
     sbuf_push(backend_argv, "-fsanitize=address");
     sbuf_push(backend_argv, "-fsanitize=leak");
