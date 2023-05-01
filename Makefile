@@ -64,7 +64,7 @@ bin/sunder-compile: $(SUNDER_COMPILE_OBJS)
 
 check: build
 	SUNDER_HOME="$(realpath .)" \
-	SUNDER_IMPORT_PATH="$(realpath .)/lib" \
+	SUNDER_SEARCH_PATH="$(realpath .)/lib" \
 	sh bin/sunder-test
 
 examples: build

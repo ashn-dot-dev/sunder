@@ -1455,32 +1455,32 @@ merge_symbol_table(
     }
 }
 
-// Returns the canonical representation of the provided import path or NULL.
+// Returns the canonical representation of the provided search path or NULL.
 static char const* // interned
-canonical_import_path(char const* module_path, char const* import_path)
+canonical_search_path(char const* module_path, char const* search_path)
 {
     assert(module_path != NULL);
-    assert(import_path != NULL);
+    assert(search_path != NULL);
 
     char const* result = NULL;
 
     // Path relative to the current module.
     char const* const module_dir = directory_path(module_path);
-    struct string* const tmp = string_new_fmt("%s/%s", module_dir, import_path);
+    struct string* const tmp = string_new_fmt("%s/%s", module_dir, search_path);
     if (file_exists(string_start(tmp))) {
         result = canonical_path(string_start(tmp));
         string_del(tmp);
         return result;
     }
 
-    // Path relative to environment-defined import path-list.
-    char const* SUNDER_IMPORT_PATH = getenv("SUNDER_IMPORT_PATH");
-    if (SUNDER_IMPORT_PATH == NULL) {
+    // Path relative to environment-defined search path-list.
+    char const* SUNDER_SEARCH_PATH = getenv("SUNDER_SEARCH_PATH");
+    if (SUNDER_SEARCH_PATH == NULL) {
         string_del(tmp);
         return NULL;
     }
     string_resize(tmp, 0u);
-    string_append_cstr(tmp, SUNDER_IMPORT_PATH);
+    string_append_cstr(tmp, SUNDER_SEARCH_PATH);
 
     sbuf(struct string*) const imp =
         string_split(tmp, ":", STR_LITERAL_COUNT(":"));
@@ -1488,7 +1488,7 @@ canonical_import_path(char const* module_path, char const* import_path)
         struct string* const s = imp[i];
 
         string_resize(tmp, 0u);
-        string_append_fmt(tmp, "%s/%s", string_start(s), import_path);
+        string_append_fmt(tmp, "%s/%s", string_start(s), search_path);
 
         if (!file_exists(string_start(tmp))) {
             continue;
@@ -1517,7 +1517,7 @@ resolve_import_file(
     assert(file_name != NULL);
 
     char const* const path =
-        canonical_import_path(resolver->module->path, file_name);
+        canonical_search_path(resolver->module->path, file_name);
     if (path == NULL) {
         fatal(location, "failed to resolve import `%s`", file_name);
     }
@@ -4171,7 +4171,7 @@ resolve_expr_embed(struct resolver* resolver, struct cst_expr const* expr)
     assert(expr->kind == CST_EXPR_EMBED);
 
     char const* const path =
-        canonical_import_path(resolver->module->path, expr->data.embed_.path);
+        canonical_search_path(resolver->module->path, expr->data.embed_.path);
     if (path == NULL) {
         fatal(
             expr->location,

@@ -245,8 +245,8 @@ context_init(void)
         getenv_with_default("SUNDER_HOST", STRINGIFY(SUNDER_DEFAULT_HOST));
     s_context.env.SUNDER_BACKEND = getenv_with_default(
         "SUNDER_BACKEND", STRINGIFY(SUNDER_DEFAULT_BACKEND));
-    s_context.env.SUNDER_IMPORT_PATH =
-        getenv_with_default("SUNDER_IMPORT_PATH", "");
+    s_context.env.SUNDER_SEARCH_PATH =
+        getenv_with_default("SUNDER_SEARCH_PATH", "");
     if (getenv("SUNDER_SYSASM_PATH") != NULL) {
         s_context.env.SUNDER_SYSASM_PATH = getenv("SUNDER_SYSASM_PATH");
     }

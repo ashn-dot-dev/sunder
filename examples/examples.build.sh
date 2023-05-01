@@ -2,7 +2,7 @@
 set -e
 
 export SUNDER_HOME="$(realpath ..)"
-export SUNDER_IMPORT_PATH="${SUNDER_HOME}/lib"
+export SUNDER_SEARCH_PATH="${SUNDER_HOME}/lib"
 
 for f in *.sunder; do
     # Native version.
