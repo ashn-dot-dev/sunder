@@ -140,7 +140,7 @@ The following environment variables affect compiler behavior:
   `SUNDER_BACKEND=yasm`, are supported. If this environment variable is not
   set, then the default backend is used.
 + `SUNDER_IMPORT_PATH` => Colon-separated list of directories specifying the
-  module search path for `import` statements.
+  module search path for `import` and `embed` statements.
 + `SUNDER_SYSASM_PATH` => Location of the platform specific `sys.asm` file that
   defines the program entry point as well as low-level operating system and
   hardware abstractions when using the NASM backend. If this environment
