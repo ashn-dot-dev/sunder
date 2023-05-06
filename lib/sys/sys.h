@@ -96,15 +96,6 @@ __sunder___fatal_out_of_range(void)
     __sunder___fatal("fatal: operation produces out-of-range result");
 }
 
-static void
-__sunder___memzero(void* start, size_t size)
-{
-    volatile unsigned char* p = start;
-    while (size--) {
-        *p++ = 0;
-    }
-}
-
 #define __SUNDER_INTEGER_ADD_DEFINITION(T)                                     \
     static T __sunder___add_##T(T lhs, T rhs)                                  \
     {                                                                          \

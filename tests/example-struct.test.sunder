@@ -209,6 +209,22 @@ func main() void {
     sys::dump[[bool]](sizeof(typeof(object.z)) == 0);
     sys::dump[[bool]]((:usize)&object.y <= (:usize)&object.z);
 
+    # Check that padding is zeroed when declaring and assigning to a struct
+    # variable.
+    var object: foo = uninit;
+    var buf = (:[]byte){(:*byte)&object, sizeof(typeof(object))};
+    for i in countof(buf) {
+        buf[i] = 0xFF;
+    }
+    sys::dump[[foo]](object);
+    object = (:foo){
+        .w = (:s32)0xFFFFFFFFu32,
+        .x = true,
+        .y = (:*foo)0xFFFFFFFFFFFFFFFFu,
+        .z = (:[]foo){(:*foo)0xFFFFFFFFFFFFFFFFu, 0xFFFFFFFFFFFFFFFFu},
+    };
+    sys::dump[[foo]](object);
+
     var _ = (:c_keywords){.int = 0xDEADBEEF};
     c_keywords::register;
     c_keywords::auto();
@@ -257,3 +273,5 @@ func main() void {
 # 01
 # 01
 # 01
+# FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF
+# FF FF FF FF 01 00 00 00 FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF
