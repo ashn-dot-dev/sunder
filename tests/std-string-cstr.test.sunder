@@ -26,6 +26,9 @@ func main() void {
     test(s.cstr());
     s.resize(countof("foo bar"));
     test(s.cstr());
+    std::slice[[byte]]::fill(s.data()[3:s.count()], 0xFF);
+    s.resize(countof("foo"));
+    test(s.cstr());
 
     var s = std::string::init_from_str("foo\0bar");
     defer s.fini();
@@ -36,4 +39,5 @@ func main() void {
 # foo bar
 # foo bar baz
 # foo bar
+# foo
 # foo

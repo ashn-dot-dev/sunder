@@ -2640,18 +2640,9 @@ struct string {
     # strings with a count of zero, a pointer to a static NUL-terminated string
     # is returned instead. This function does not allocate memory.
     func cstr(self: *string) *byte {
-        if self.*._capacity == 0 {
+        if self.*._count == 0 {
             return startof("");
         }
-
-        # The total amount of memory allocated for the string is:
-        #
-        #   capacity + countof("\0")
-        #
-        # to account for a potential terminating NUL byte. It should always be
-        # safe to write the NUL-terminator at index `start + count`, even if
-        # the count of the string is equal to the capacity of the string.
-        *std::ptr[[byte]]::add(self.*._start, self.*._count) = '\0';
 
         return self.*._start;
     }
@@ -2703,6 +2694,9 @@ struct string {
         }
 
         self.*._count = count;
+        if self.*._count != 0 {
+            *std::ptr[[byte]]::add(self.*._start, self.*._count) = '\0';
+        }
     }
 
     # Implements the writer interface.
