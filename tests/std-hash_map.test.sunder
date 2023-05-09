@@ -84,6 +84,28 @@ func main() void {
 
     std::print(std::out(), "\n");
 
+    var lookup_bar = map.lookup_pair("bar");
+    var pair = lookup_bar.value();
+    std::print_format_line(
+        std::out(),
+        "Lookup pair with key \"{}\" and value {}",
+        (:[]std::formatter)[
+            std::formatter::init[[[]byte]](&pair.key),
+            std::formatter::init[[ssize]](&pair.value)]);
+
+    std::print(std::out(), "\n");
+
+    var lookup_bar = map.lookup_view("bar");
+    var view = lookup_bar.value();
+    std::print_format_line(
+        std::out(),
+        "Lookup view with key \"{}\" and value {}",
+        (:[]std::formatter)[
+            std::formatter::init[[[]byte]](view.key),
+            std::formatter::init[[ssize]](view.value)]);
+
+    std::print(std::out(), "\n");
+
     # Test map inserts. Also test std::map::init_with_allocator.
     var map = std::hash_map[[ssize, usize]]::init_with_allocator(std::global_allocator());
     defer map.fini();
@@ -119,6 +141,10 @@ func main() void {
 # Count 1
 # 789
 # Removed 456
+#
+# Lookup pair with key "bar" and value 789
+#
+# Lookup view with key "bar" and value 789
 #
 # Count 100000
 # Count 0

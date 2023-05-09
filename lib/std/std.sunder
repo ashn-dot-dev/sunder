@@ -2933,25 +2933,60 @@ struct hash_map[[K, V]] {
 
     # Returns true if the map contains a key-value pair with the provided key.
     func contains(self: *hash_map[[K, V]], key: K) bool {
-        var item = self.*.lookup(key);
-        return item.is_value();
+        return self.*._lookup_element(key) != std::ptr[[hash_map_element[[K, V]]]]::NULL;
     }
 
     # Returns a non-empty optional containing the value associated with the
     # provided key if such a key-value pair exists in the map.
     func lookup(self: *hash_map[[K, V]], key: K) std::optional[[V]] {
-        if countof(self.*._elements) == 0 {
+        var element = self.*._lookup_element(key);
+        if element == std::ptr[[hash_map_element[[K, V]]]]::NULL {
             return std::optional[[V]]::EMPTY;
+        }
+        return std::optional[[V]]::init_value(element.*._value);
+    }
+
+    # Returns a non-empty optional containing the key-value pair associated
+    # with the provided key if such a key-value pair exists in the map.
+    func lookup_pair(self: *hash_map[[K, V]], key: K) std::optional[[key_value_pair[[K, V]]]] {
+        var element = self.*._lookup_element(key);
+        if element == std::ptr[[hash_map_element[[K, V]]]]::NULL {
+            return std::optional[[key_value_pair[[K, V]]]]::EMPTY;
+        }
+        return std::optional[[key_value_pair[[K, V]]]]::init_value((:std::key_value_pair[[K, V]]){
+            .key = element.*._key,
+            .value = element.*._value,
+        });
+    }
+
+    # Returns a non-empty optional containing the key-value view associated
+    # with the provided key if such a key-value pair exists in the map.
+    func lookup_view(self: *hash_map[[K, V]], key: K) std::optional[[key_value_view[[K, V]]]] {
+        var element = self.*._lookup_element(key);
+        if element == std::ptr[[hash_map_element[[K, V]]]]::NULL {
+            return std::optional[[key_value_view[[K, V]]]]::EMPTY;
+        }
+        return std::optional[[key_value_view[[K, V]]]]::init_value((:std::key_value_view[[K, V]]){
+            .key = &element.*._key,
+            .value = &element.*._value,
+        });
+    }
+
+    # Returns a non-NULL pointer to the hash map element associated with the
+    # provided key if such a key-value pair exists in the map.
+    func _lookup_element(self: *hash_map[[K, V]], key: K) *hash_map_element[[K, V]] {
+        if countof(self.*._elements) == 0 {
+            return std::ptr[[hash_map_element[[K, V]]]]::NULL;
         }
 
         var index = key.hash() % countof(self.*._elements);
         for self.*._elements[index]._state != hash_map_element[[K, V]]::_STATE_NIL {
             if self.*._elements[index]._state == hash_map_element[[K, V]]::_STATE_USE and std::eq[[K]](&key, &self.*._elements[index]._key) {
-                return std::optional[[V]]::init_value(self.*._elements[index]._value);
+                return &self.*._elements[index];
             }
             index = (index + 1) % countof(self.*._elements);
         }
-        return std::optional[[V]]::EMPTY;
+        return std::ptr[[hash_map_element[[K, V]]]]::NULL;
     }
 
     # Insert the provided key and value into the map. If a key-value pair
@@ -3204,6 +3239,27 @@ struct hash_set[[T]] {
     # Returns true if the set contains provided element.
     func contains(self: *hash_set[[T]], element: T) bool {
         return self.*._hash_map.contains(element);
+    }
+
+    # Returns a non-empty optional containing the in-set element associated
+    # with the provided element if such an element exists in the set.
+    func lookup(self: *hash_set[[T]], element: T) std::optional[[T]] {
+        var existing = self.*._hash_map.lookup_pair(element);
+        if existing.is_empty() {
+            return std::optional[[T]]::EMPTY;
+        }
+        return std::optional[[T]]::init_value(existing.value().key);
+    }
+
+    # Returns a non-empty optional containing a pointer to the in-set element
+    # associated with the provided element if such an element exists in the
+    # set.
+    func lookup_view(self: *hash_set[[T]], element: T) std::optional[[*T]] {
+        var existing = self.*._hash_map.lookup_view(element);
+        if existing.is_empty() {
+            return std::optional[[*T]]::EMPTY;
+        }
+        return std::optional[[*T]]::init_value(existing.value().key);
     }
 
     # Insert the provided element into the set. If the element already exists,

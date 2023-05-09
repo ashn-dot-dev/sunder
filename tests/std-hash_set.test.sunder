@@ -38,6 +38,12 @@ func main() void {
     assert not set.contains("foo");
     assert set.contains("bar");
 
+    var lookup = set.lookup("bar");
+    assert std::str::eq(lookup.value(), "bar");
+
+    var lookup = set.lookup_view("bar");
+    assert std::str::eq(*lookup.value(), "bar");
+
     # Test set inserts. Also test std::set::init_with_allocator.
     var set = std::hash_set[[ssize]]::init_with_allocator(std::global_allocator());
     defer set.fini();
