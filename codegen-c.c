@@ -2834,7 +2834,8 @@ codegen_c(
     bool opt_k,
     char const* const* opt_L,
     char const* const* opt_l,
-    char const* const opt_o)
+    char const* const opt_o,
+    char const* const* paths)
 {
     assert(opt_o != NULL);
 
@@ -2914,6 +2915,9 @@ codegen_c(
     sbuf_push(backend_argv, "-fsanitize=undefined");
 #endif
     sbuf_push(backend_argv, string_start(src_path));
+    for (size_t i = 0; i < sbuf_count(paths); ++i) {
+        sbuf_push(backend_argv, paths[i]);
+    }
     if (!opt_c) {
         for (size_t i = 0; i < sbuf_count(opt_L); ++i) {
             sbuf_push(backend_argv, intern_fmt("-L%s", opt_L[i]));

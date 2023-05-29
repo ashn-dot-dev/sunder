@@ -10,6 +10,9 @@
 
 // clang-format off
 static char const*       path = NULL;
+static sbuf(char const*) a_paths = NULL;
+static sbuf(char const*) c_paths = NULL;
+static sbuf(char const*) o_paths = NULL;
 static bool              opt_c = false;
 static bool              opt_g = false;
 static bool              opt_k = false;
@@ -17,6 +20,9 @@ static sbuf(char const*) opt_L = NULL;
 static sbuf(char const*) opt_l = NULL;
 static char const*       opt_o = "a.out";
 // clang-format on
+
+// List of additional .a, .c, and .o files.
+static sbuf(char const*) paths = NULL;
 
 static void
 env(void);
@@ -41,7 +47,7 @@ main(int argc, char** argv)
         validate_main_is_defined_correctly();
     }
 
-    codegen(opt_c, opt_g, opt_k, opt_L, opt_l, opt_o);
+    codegen(opt_c, opt_g, opt_k, opt_L, opt_l, opt_o, paths);
 
     return EXIT_SUCCESS;
 }
@@ -129,6 +135,22 @@ argparse(int argc, char** argv)
     }
 
     for (int i = optind; i < argc; ++i) {
+        if (cstr_ends_with(argv[i], ".a")) {
+            sbuf_push(a_paths, argv[i]);
+            sbuf_push(paths, argv[i]);
+            continue;
+        }
+        if (cstr_ends_with(argv[i], ".c")) {
+            sbuf_push(c_paths, argv[i]);
+            sbuf_push(paths, argv[i]);
+            continue;
+        }
+        if (cstr_ends_with(argv[i], ".o")) {
+            sbuf_push(o_paths, argv[i]);
+            sbuf_push(paths, argv[i]);
+            continue;
+        }
+
         if (path != NULL) {
             fatal(NO_LOCATION, "multiple input files");
         }
@@ -137,6 +159,47 @@ argparse(int argc, char** argv)
 
     if (path == NULL) {
         fatal(NO_LOCATION, "no input file");
+    }
+
+    size_t const have_a_paths = sbuf_count(a_paths) != 0;
+    size_t const have_c_paths = sbuf_count(c_paths) != 0;
+    size_t const have_o_paths = sbuf_count(o_paths) != 0;
+
+    bool const invalid_a_paths_with_opt_c = opt_c && have_a_paths;
+    bool const invalid_c_paths_with_opt_c = opt_c && have_c_paths;
+    bool const invalid_o_paths_with_opt_c = opt_c && have_o_paths;
+    if (invalid_a_paths_with_opt_c) {
+        fatal(NO_LOCATION, "cannot compile .a files with -c specified");
+    }
+    if (invalid_c_paths_with_opt_c) {
+        fatal(NO_LOCATION, "cannot compile .c files with -c specified");
+    }
+    if (invalid_o_paths_with_opt_c) {
+        fatal(NO_LOCATION, "cannot compile .o files with -c specified");
+    }
+
+    bool const using_c_backend =
+        cstr_eq_ignore_case(context()->env.SUNDER_BACKEND, "c");
+    bool const invalid_a_paths_with_backend = !using_c_backend && have_a_paths;
+    bool const invalid_c_paths_with_backend = !using_c_backend && have_c_paths;
+    bool const invalid_o_paths_with_backend = !using_c_backend && have_o_paths;
+    if (invalid_a_paths_with_backend) {
+        fatal(
+            NO_LOCATION,
+            "cannot compile .a files with backend `%s`",
+            context()->env.SUNDER_BACKEND);
+    }
+    if (invalid_c_paths_with_backend) {
+        fatal(
+            NO_LOCATION,
+            "cannot compile .c files with backend `%s`",
+            context()->env.SUNDER_BACKEND);
+    }
+    if (invalid_o_paths_with_backend) {
+        fatal(
+            NO_LOCATION,
+            "cannot compile .o files with backend `%s`",
+            context()->env.SUNDER_BACKEND);
     }
 }
 

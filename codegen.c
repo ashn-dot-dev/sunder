@@ -11,18 +11,20 @@ codegen(
     bool opt_k,
     char const* const* opt_L,
     char const* const* opt_l,
-    char const* const opt_o)
+    char const* const opt_o,
+    char const* const* paths)
 {
     assert(opt_o != NULL);
 
     char const* const backend = context()->env.SUNDER_BACKEND;
-    if (cstr_eq_ignore_case(backend, "C")) {
-        codegen_c(opt_c, opt_g, opt_k, opt_L, opt_l, opt_o);
+    if (cstr_eq_ignore_case(backend, "c")) {
+        codegen_c(opt_c, opt_g, opt_k, opt_L, opt_l, opt_o, paths);
         return;
     }
 
     if (cstr_eq_ignore_case(backend, "nasm")
         || cstr_eq_ignore_case(backend, "yasm")) {
+        assert(sbuf_count(paths) == 0);
         codegen_nasm(opt_c, opt_g, opt_k, opt_L, opt_l, opt_o);
         return;
     }
