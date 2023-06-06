@@ -4015,7 +4015,7 @@ extend integer func _max[[T]](lhs: T, rhs: T) T {
     return rhs;
 }
 
-extend integer func _compare[[T]](lhs: T, rhs: T) ssize {
+extend integer func _cmp[[T]](lhs: T, rhs: T) ssize {
     if lhs < rhs { return -1; }
     if lhs > rhs { return +1; }
     return 0;
@@ -4159,8 +4159,11 @@ extend integer func _format_smax(int: std::smax, writer: std::writer, fmt: []byt
 extend byte let MIN: byte = 0x00;
 extend byte let MAX: byte = 0xFF;
 extend byte let BITS: usize = 8;
+extend byte func cmp(lhs: byte, rhs: byte) ssize {
+    return integer::_cmp[[std::umax]]((:std::umax)lhs, (:std::umax)rhs);
+}
 extend byte func compare(lhs: *byte, rhs: *byte) ssize {
-    return integer::_compare[[std::umax]]((:std::umax)*lhs, (:std::umax)*rhs);
+    return integer::_cmp[[std::umax]]((:std::umax)*lhs, (:std::umax)*rhs);
 }
 extend byte func hash(self: *byte) usize {
     return (:usize)*self;
@@ -4181,8 +4184,11 @@ extend u8 func min(lhs: u8, rhs: u8) u8 {
 extend u8 func max(lhs: u8, rhs: u8) u8 {
     return integer::_max[[u8]](lhs, rhs);
 }
+extend u8 func cmp(lhs: u8, rhs: u8) ssize {
+    return integer::_cmp[[std::umax]]((:std::umax)lhs, (:std::umax)rhs);
+}
 extend u8 func compare(lhs: *u8, rhs: *u8) ssize {
-    return integer::_compare[[std::umax]]((:std::umax)*lhs, (:std::umax)*rhs);
+    return integer::_cmp[[std::umax]]((:std::umax)*lhs, (:std::umax)*rhs);
 }
 extend u8 func hash(self: *u8) usize {
     return (:usize)*self;
@@ -4202,8 +4208,11 @@ extend u16 func min(lhs: u16, rhs: u16) u16 {
 extend u16 func max(lhs: u16, rhs: u16) u16 {
     return integer::_max[[u16]](lhs, rhs);
 }
+extend u16 func cmp(lhs: u16, rhs: u16) ssize {
+    return integer::_cmp[[std::umax]]((:std::umax)lhs, (:std::umax)rhs);
+}
 extend u16 func compare(lhs: *u16, rhs: *u16) ssize {
-    return integer::_compare[[std::umax]]((:std::umax)*lhs, (:std::umax)*rhs);
+    return integer::_cmp[[std::umax]]((:std::umax)*lhs, (:std::umax)*rhs);
 }
 extend u16 func hash(self: *u16) usize {
     return (:usize)*self;
@@ -4223,8 +4232,11 @@ extend u32 func min(lhs: u32, rhs: u32) u32 {
 extend u32 func max(lhs: u32, rhs: u32) u32 {
     return integer::_max[[u32]](lhs, rhs);
 }
+extend u32 func cmp(lhs: u32, rhs: u32) ssize {
+    return integer::_cmp[[std::umax]]((:std::umax)lhs, (:std::umax)rhs);
+}
 extend u32 func compare(lhs: *u32, rhs: *u32) ssize {
-    return integer::_compare[[std::umax]]((:std::umax)*lhs, (:std::umax)*rhs);
+    return integer::_cmp[[std::umax]]((:std::umax)*lhs, (:std::umax)*rhs);
 }
 extend u32 func hash(self: *u32) usize {
     return (:usize)*self;
@@ -4244,8 +4256,11 @@ extend u64 func min(lhs: u64, rhs: u64) u64 {
 extend u64 func max(lhs: u64, rhs: u64) u64 {
     return integer::_max[[u64]](lhs, rhs);
 }
+extend u64 func cmp(lhs: u64, rhs: u64) ssize {
+    return integer::_cmp[[std::umax]]((:std::umax)lhs, (:std::umax)rhs);
+}
 extend u64 func compare(lhs: *u64, rhs: *u64) ssize {
-    return integer::_compare[[std::umax]]((:std::umax)*lhs, (:std::umax)*rhs);
+    return integer::_cmp[[std::umax]]((:std::umax)*lhs, (:std::umax)*rhs);
 }
 extend u64 func hash(self: *u64) usize {
     return (:usize)*self;
@@ -4265,8 +4280,11 @@ extend usize func min(lhs: usize, rhs: usize) usize {
 extend usize func max(lhs: usize, rhs: usize) usize {
     return integer::_max[[usize]](lhs, rhs);
 }
+extend usize func cmp(lhs: usize, rhs: usize) ssize {
+    return integer::_cmp[[std::umax]]((:std::umax)lhs, (:std::umax)rhs);
+}
 extend usize func compare(lhs: *usize, rhs: *usize) ssize {
-    return integer::_compare[[std::umax]]((:std::umax)*lhs, (:std::umax)*rhs);
+    return integer::_cmp[[std::umax]]((:std::umax)*lhs, (:std::umax)*rhs);
 }
 extend usize func hash(self: *usize) usize {
     return *self;
@@ -4289,8 +4307,11 @@ extend s8 func min(lhs: s8, rhs: s8) s8 {
 extend s8 func max(lhs: s8, rhs: s8) s8 {
     return integer::_max[[s8]](lhs, rhs);
 }
+extend s8 func cmp(lhs: s8, rhs: s8) ssize {
+    return integer::_cmp[[std::smax]]((:std::smax)lhs, (:std::smax)rhs);
+}
 extend s8 func compare(lhs: *s8, rhs: *s8) ssize {
-    return integer::_compare[[std::smax]]((:std::smax)*lhs, (:std::smax)*rhs);
+    return integer::_cmp[[std::smax]]((:std::smax)*lhs, (:std::smax)*rhs);
 }
 extend s8 func hash(self: *s8) usize {
     return (:usize)*self;
@@ -4313,8 +4334,11 @@ extend s16 func min(lhs: s16, rhs: s16) s16 {
 extend s16 func max(lhs: s16, rhs: s16) s16 {
     return integer::_max[[s16]](lhs, rhs);
 }
+extend s16 func cmp(lhs: s16, rhs: s16) ssize {
+    return integer::_cmp[[std::smax]]((:std::smax)lhs, (:std::smax)rhs);
+}
 extend s16 func compare(lhs: *s16, rhs: *s16) ssize {
-    return integer::_compare[[std::smax]]((:std::smax)*lhs, (:std::smax)*rhs);
+    return integer::_cmp[[std::smax]]((:std::smax)*lhs, (:std::smax)*rhs);
 }
 extend s16 func hash(self: *s16) usize {
     return (:usize)*self;
@@ -4337,8 +4361,11 @@ extend s32 func min(lhs: s32, rhs: s32) s32 {
 extend s32 func max(lhs: s32, rhs: s32) s32 {
     return integer::_max[[s32]](lhs, rhs);
 }
+extend s32 func cmp(lhs: s32, rhs: s32) ssize {
+    return integer::_cmp[[std::smax]]((:std::smax)lhs, (:std::smax)rhs);
+}
 extend s32 func compare(lhs: *s32, rhs: *s32) ssize {
-    return integer::_compare[[std::smax]]((:std::smax)*lhs, (:std::smax)*rhs);
+    return integer::_cmp[[std::smax]]((:std::smax)*lhs, (:std::smax)*rhs);
 }
 extend s32 func hash(self: *s32) usize {
     return (:usize)*self;
@@ -4361,8 +4388,11 @@ extend s64 func min(lhs: s64, rhs: s64) s64 {
 extend s64 func max(lhs: s64, rhs: s64) s64 {
     return integer::_max[[s64]](lhs, rhs);
 }
+extend s64 func cmp(lhs: s64, rhs: s64) ssize {
+    return integer::_cmp[[std::smax]]((:std::smax)lhs, (:std::smax)rhs);
+}
 extend s64 func compare(lhs: *s64, rhs: *s64) ssize {
-    return integer::_compare[[std::smax]]((:std::smax)*lhs, (:std::smax)*rhs);
+    return integer::_cmp[[std::smax]]((:std::smax)*lhs, (:std::smax)*rhs);
 }
 extend s64 func hash(self: *s64) usize {
     return (:usize)*self;
@@ -4385,8 +4415,11 @@ extend ssize func min(lhs: ssize, rhs: ssize) ssize {
 extend ssize func max(lhs: ssize, rhs: ssize) ssize {
     return integer::_max[[ssize]](lhs, rhs);
 }
+extend ssize func cmp(lhs: ssize, rhs: ssize) ssize {
+    return integer::_cmp[[std::smax]]((:std::smax)lhs, (:std::smax)rhs);
+}
 extend ssize func compare(lhs: *ssize, rhs: *ssize) ssize {
-    return integer::_compare[[std::smax]]((:std::smax)*lhs, (:std::smax)*rhs);
+    return integer::_cmp[[std::smax]]((:std::smax)*lhs, (:std::smax)*rhs);
 }
 extend ssize func hash(self: *ssize) usize {
     return (:usize)*self;
