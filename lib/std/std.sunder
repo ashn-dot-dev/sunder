@@ -4159,6 +4159,12 @@ extend integer func _format_smax(int: std::smax, writer: std::writer, fmt: []byt
 extend byte let MIN: byte = 0x00;
 extend byte let MAX: byte = 0xFF;
 extend byte let BITS: usize = 8;
+extend byte func min(lhs: byte, rhs: byte) byte {
+    return (:byte)integer::_min[[std::umax]]((:std::umax)lhs, (:std::umax)rhs);
+}
+extend byte func max(lhs: byte, rhs: byte) byte {
+    return (:byte)integer::_max[[std::umax]]((:std::umax)lhs, (:std::umax)rhs);
+}
 extend byte func cmp(lhs: byte, rhs: byte) ssize {
     return integer::_cmp[[std::umax]]((:std::umax)lhs, (:std::umax)rhs);
 }

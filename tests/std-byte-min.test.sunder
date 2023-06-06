@@ -1,0 +1,12 @@
+import "std";
+import "sys";
+
+func main() void {
+    sys::dump[[byte]](byte::min(0xAAy, 0xBBy));
+    sys::dump[[byte]](byte::min(0xBBy, 0xAAy));
+    sys::dump[[byte]](byte::min(0xAAy, 0xAAy));
+}
+################################################################################
+# AA
+# AA
+# AA
