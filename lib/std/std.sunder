@@ -884,8 +884,15 @@ struct str { # namespace
 
     # Returns true if `str` contains `target`.
     func contains(str: []byte, target: []byte) bool {
+        var found = std::str::find(str, target);
+        return found.is_value();
+    }
+
+    # Returns a non-empty optional containing the index of the first occurance
+    # of `target` within `str` if `target` is contained within `str`.
+    func find(str: []byte, target: []byte) std::optional[[usize]] {
         if countof(str) < countof(target) {
-            return false;
+            return std::optional[[usize]]::EMPTY;
         }
 
         var start = 0u;
@@ -899,15 +906,15 @@ struct str { # namespace
             }
 
             if i == countof(target) {
-                return true;
+                return std::optional[[usize]]::init_value(start);
             }
             start = start + 1;
         }
 
-        return false;
+        return std::optional[[usize]]::EMPTY;
     }
 
-    # Return a newly allocated slice containing the fields of `str` split on
+    # Returns a newly allocated slice containing the fields of `str` split on
     # all occurrences of `delimiter`. Consecutive delimiters are not grouped
     # together and are deemed to delimit empty strings. Elements of the
     # returned slice are created from, and thus share a lifetime with, the
@@ -928,7 +935,7 @@ struct str { # namespace
         return std::str::split_with_allocator(std::global_allocator(), str, delimiter);
     }
 
-    # Return a newly allocated slice, using the provided allocator, containing
+    # Returns a newly allocated slice, using the provided allocator, containing
     # the fields of `str` split on all occurrences of `delimiter`. Consecutive
     # delimiters are not grouped together and are deemed to delimit empty
     # strings. Elements of the returned slice are created from, and thus share

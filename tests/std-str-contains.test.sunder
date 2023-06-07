@@ -16,4 +16,5 @@ func main() void {
     assert not std::str::contains("foobar", "foobarg");
 
     assert std::str::contains("kpvwblrizaabmnhz", "ab");
+    assert std::str::contains("foofoo", "foo");
 }

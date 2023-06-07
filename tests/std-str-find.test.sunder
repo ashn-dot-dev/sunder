@@ -1,0 +1,34 @@
+import "std";
+
+func main() void {
+    var x = std::str::find("", "");
+    assert x.value() == 0;
+    var x = std::str::find("a", "");
+    assert x.value() == 0;
+    var x = std::str::find("", "a");
+    assert x.is_empty();
+
+    var x = std::str::find("foobar", "f");
+    assert x.value() == 0;
+    var x = std::str::find("foobar", "fo");
+    assert x.value() == 0;
+    var x = std::str::find("foobar", "foo");
+    assert x.value() == 0;
+    var x = std::str::find("foobar", "fooo");
+    assert x.is_empty();
+    var x = std::str::find("foobar", "bar");
+    assert x.value() == 3;
+
+    var x = std::str::find("foobar", "foobar");
+    assert x.value() == 0;
+    var x = std::str::find("foobar", "barfoo");
+    assert x.is_empty();
+    var x = std::str::find("foobar", "foobarg");
+    assert x.is_empty();
+
+    var x = std::str::find("kpvwblrizaabmnhz", "ab");
+    assert x.value() == 10;
+
+    var x = std::str::find("foofoo", "foo");
+    assert x.value() == 0;
+}
