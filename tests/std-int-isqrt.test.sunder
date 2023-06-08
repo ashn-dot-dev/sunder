@@ -1,0 +1,36 @@
+import "std";
+
+func main() void {
+    assert usize::isqrt(0) == 0;
+    assert usize::isqrt(1) == 1;
+    assert usize::isqrt(2) == 1;
+    assert usize::isqrt(3) == 1;
+    assert usize::isqrt(4) == 2;
+    assert usize::isqrt(5) == 2;
+    assert usize::isqrt(6) == 2;
+    assert usize::isqrt(7) == 2;
+    assert usize::isqrt(8) == 2;
+    assert usize::isqrt(9) == 3;
+    assert usize::isqrt(10) == 3;
+    assert usize::isqrt(100) == 10;
+    assert usize::isqrt(101) == 10;
+
+    assert ssize::isqrt(0) == 0;
+    assert ssize::isqrt(1) == 1;
+    assert ssize::isqrt(2) == 1;
+    assert ssize::isqrt(3) == 1;
+    assert ssize::isqrt(4) == 2;
+    assert ssize::isqrt(5) == 2;
+    assert ssize::isqrt(6) == 2;
+    assert ssize::isqrt(7) == 2;
+    assert ssize::isqrt(8) == 2;
+    assert ssize::isqrt(9) == 3;
+    assert ssize::isqrt(10) == 3;
+    assert ssize::isqrt(100) == 10;
+    assert ssize::isqrt(101) == 10;
+
+    assert u8::isqrt(u8::MAX) == 15;
+    assert s8::isqrt(s8::MAX) == 11;
+    assert u64::isqrt(u64::MAX) == 4294967295;
+    assert s64::isqrt(s64::MAX) == 3037000499;
+}
