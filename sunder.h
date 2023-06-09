@@ -2455,9 +2455,6 @@ value_lt(struct value const* lhs, struct value const* rhs);
 bool
 value_gt(struct value const* lhs, struct value const* rhs);
 
-uint8_t* // sbuf
-value_to_new_bytes(struct value const* value);
-
 ////////////////////////////////////////////////////////////////////////////////
 //////// resolve.c /////////////////////////////////////////////////////////////
 

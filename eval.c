@@ -9,6 +9,8 @@
 
 static bool
 integer_is_out_of_range(struct type const* type, struct bigint const* res);
+static uint8_t* //sbuf
+sized_primitive_value_to_new_bytes(struct value const* value);
 
 static struct value*
 eval_rvalue_symbol(struct expr const* expr);
@@ -67,6 +69,110 @@ integer_is_out_of_range(struct type const* type, struct bigint const* res)
     }
     return bigint_cmp(res, type->data.integer.min) < 0
         || bigint_cmp(res, type->data.integer.max) > 0;
+}
+
+static uint8_t*
+sized_primitive_value_to_new_bytes(struct value const* value)
+{
+    assert(value != NULL);
+    assert(value->type->size != SIZEOF_UNSIZED);
+    assert(!type_is_compound(value->type));
+
+    sbuf(uint8_t) bytes = NULL;
+    assert(value->type->size <= SIZE_MAX);
+    sbuf_resize(bytes, (size_t)value->type->size);
+    safe_memset(bytes, 0x00, (size_t)value->type->size);
+
+    switch (value->type->kind) {
+    case TYPE_ANY: {
+        UNREACHABLE();
+    }
+    case TYPE_VOID: {
+        assert(sbuf_count(bytes) == 0);
+        return bytes;
+    }
+    case TYPE_BOOL: {
+        assert(sbuf_count(bytes) == 1);
+        bytes[0] = value->data.boolean;
+        return bytes;
+    }
+    case TYPE_BYTE: {
+        assert(sbuf_count(bytes) == 1);
+        bytes[0] = value->data.byte;
+        return bytes;
+    }
+    case TYPE_U8: /* fallthrough */
+    case TYPE_S8: /* fallthrough */
+    case TYPE_U16: /* fallthrough */
+    case TYPE_S16: /* fallthrough */
+    case TYPE_U32: /* fallthrough */
+    case TYPE_S32: /* fallthrough */
+    case TYPE_U64: /* fallthrough */
+    case TYPE_S64: /* fallthrough */
+    case TYPE_USIZE: /* fallthrough */
+    case TYPE_SSIZE: {
+        // Convert the bigint into a bit array.
+        size_t const bit_count = (size_t)value->type->size * 8u;
+        struct bitarr* const bits = bitarr_new(bit_count);
+        if (bigint_to_bitarr(bits, value->data.integer)) {
+            // Internal compiler error. Integer is out of range.
+            UNREACHABLE();
+        }
+
+        // Convert the bit array into a byte array via bit shifting and masking.
+        for (size_t i = 0; i < bit_count; ++i) {
+            uint8_t const mask = (uint8_t)(bitarr_get(bits, i) << (i % 8u));
+            bytes[i / 8u] |= mask;
+        }
+
+        bitarr_del(bits);
+        return bytes;
+    }
+    case TYPE_INTEGER: {
+        // Arbitrary precision integers have no meaningful byte representation.
+        UNREACHABLE();
+    }
+    case TYPE_F32: {
+        union {
+            float f32;
+            uint8_t bytes[sizeof(float)];
+        } u;
+        u.f32 = value->data.f32;
+
+        assert(sbuf_count(bytes) == ARRAY_COUNT(u.bytes));
+        for (size_t i = 0; i < sbuf_count(bytes); ++i) {
+            bytes[i] = u.bytes[i];
+        }
+        return bytes;
+    }
+    case TYPE_F64: {
+        union {
+            double f64;
+            uint8_t bytes[sizeof(double)];
+        } u;
+        u.f64 = value->data.f64;
+
+        assert(sbuf_count(bytes) == ARRAY_COUNT(u.bytes));
+        for (size_t i = 0; i < sbuf_count(bytes); ++i) {
+            bytes[i] = u.bytes[i];
+        }
+        return bytes;
+    }
+    case TYPE_REAL: {
+        // Arbitrary precision reals have no meaningful byte representation.
+        UNREACHABLE();
+    }
+    case TYPE_FUNCTION: /* fallthrough */
+    case TYPE_POINTER: /* fallthrough */
+    case TYPE_ARRAY: /* fallthrough */
+    case TYPE_SLICE: /* fallthrough */
+    case TYPE_STRUCT: {
+        UNREACHABLE();
+    }
+    }
+
+    UNREACHABLE();
+    return NULL;
 }
 
 struct value*
@@ -532,7 +638,7 @@ eval_rvalue_cast(struct expr const* expr)
 
     // Cases casting from sized types with a defined byte representation.
     assert(from->type->size != SIZEOF_UNSIZED);
-    sbuf(uint8_t) bytes = value_to_new_bytes(from);
+    sbuf(uint8_t) bytes = sized_primitive_value_to_new_bytes(from);
     struct value* res = NULL;
     switch (expr->type->kind) {
     case TYPE_BOOL: {

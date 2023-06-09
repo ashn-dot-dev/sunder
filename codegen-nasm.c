@@ -186,35 +186,79 @@ append_dx_static_initializer(struct value const* value)
     case TYPE_VOID: {
         UNREACHABLE();
     }
-    case TYPE_BOOL: /* fallthrough */
-    case TYPE_BYTE: /* fallthrough */
-    case TYPE_U8: /* fallthrough */
-    case TYPE_S8: /* fallthrough */
-    case TYPE_U16: /* fallthrough */
-    case TYPE_S16: /* fallthrough */
-    case TYPE_U32: /* fallthrough */
-    case TYPE_S32: /* fallthrough */
-    case TYPE_U64: /* fallthrough */
-    case TYPE_S64: /* fallthrough */
-    case TYPE_USIZE: /* fallthrough */
-    case TYPE_SSIZE: {
-        sbuf(uint8_t) const bytes = value_to_new_bytes(value);
-        for (size_t i = 0; i < sbuf_count(bytes); ++i) {
-            assert(value->type->size != 0);
-            if (value->type->size == 1) {
-                appendli(
-                    "db %#x ; `%s`", (unsigned)bytes[i], value->type->name);
-                continue;
-            }
-
-            // Explicitly note which byte of the value is being written.
-            appendli(
-                "db %#x ; `%s` byte %zu",
-                (unsigned)bytes[i],
-                value->type->name,
-                i);
+    case TYPE_BOOL: {
+        appendli(
+            "db %#x ; %s", (uint8_t)value->data.boolean, value->type->name);
+        return;
+    }
+    case TYPE_BYTE: {
+        appendli("db %#x ; %s", value->data.byte, value->type->name);
+        return;
+    }
+    case TYPE_U8: {
+        uintmax_t umax = 0;
+        if (bigint_to_umax(&umax, value->data.integer)) {
+            UNREACHABLE();
         }
-        sbuf_fini(bytes);
+        appendli("db %ju; %s", umax, value->type->name);
+        return;
+    }
+    case TYPE_U16: {
+        uintmax_t umax = 0;
+        if (bigint_to_umax(&umax, value->data.integer)) {
+            UNREACHABLE();
+        }
+        appendli("dw %ju; %s", umax, value->type->name);
+        return;
+    }
+    case TYPE_U32: {
+        uintmax_t umax = 0;
+        if (bigint_to_umax(&umax, value->data.integer)) {
+            UNREACHABLE();
+        }
+        appendli("dd %ju; %s", umax, value->type->name);
+        return;
+    }
+    case TYPE_U64: /* fallthrough */
+    case TYPE_USIZE: {
+        uintmax_t umax = 0;
+        if (bigint_to_umax(&umax, value->data.integer)) {
+            UNREACHABLE();
+        }
+        appendli("dq %ju; %s", umax, value->type->name);
+        return;
+    }
+    case TYPE_S8: {
+        intmax_t smax = 0;
+        if (bigint_to_smax(&smax, value->data.integer)) {
+            UNREACHABLE();
+        }
+        appendli("db %jd; %s", smax, value->type->name);
+        return;
+    }
+    case TYPE_S16: {
+        intmax_t smax = 0;
+        if (bigint_to_smax(&smax, value->data.integer)) {
+            UNREACHABLE();
+        }
+        appendli("dw %jd; %s", smax, value->type->name);
+        return;
+    }
+    case TYPE_S32: {
+        intmax_t smax = 0;
+        if (bigint_to_smax(&smax, value->data.integer)) {
+            UNREACHABLE();
+        }
+        appendli("dd %jd; %s", smax, value->type->name);
+        return;
+    }
+    case TYPE_S64: /* fallthrough */
+    case TYPE_SSIZE: {
+        intmax_t smax = 0;
+        if (bigint_to_smax(&smax, value->data.integer)) {
+            UNREACHABLE();
+        }
+        appendli("dq %jd; %s", smax, value->type->name);
         return;
     }
     case TYPE_INTEGER: {
