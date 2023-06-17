@@ -358,10 +358,12 @@ stream_read_all(FILE* stream, void** buf, size_t* buf_size)
     unsigned char* bf = NULL;
     size_t sz = 0;
 
-    int c;
-    while ((c = fgetc(stream)) != EOF) {
-        bf = xalloc(bf, sz + 1);
-        bf[sz++] = (unsigned char)c;
+    char tmp[512] = {0};
+    size_t nread = 0;
+    while ((nread = fread(tmp, 1, sizeof(tmp), stream)) != 0) {
+        bf = xalloc(bf, sz + nread);
+        memcpy(bf + sz, tmp, nread);
+        sz += nread;
     }
     if (ferror(stream)) {
         xalloc(bf, XALLOC_FREE);
