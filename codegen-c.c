@@ -24,8 +24,6 @@ mangle_type(struct type const* type);
 static char const* // interned
 mangle_return_typename(struct function const* function);
 static char const* // interned
-mangle_local_symbol_name(struct symbol const* symbol);
-static char const* // interned
 mangle_symbol(struct symbol const* symbol);
 
 static void
@@ -334,16 +332,6 @@ mangle_return_typename(struct function const* function)
     //      __sunder___foo_return_type __sunder_return = ...
     return mangle_name(
         intern_fmt("__%s_return_type", function->address->data.static_.name));
-}
-
-static char const*
-mangle_local_symbol_name(struct symbol const* symbol)
-{
-    assert(symbol != NULL);
-
-    struct address const* const address = symbol_xget_address(symbol);
-    assert(address->kind == ADDRESS_LOCAL);
-    return mangle_name(address->data.local.name);
 }
 
 static char const*
@@ -1238,14 +1226,16 @@ codegen_stmt_for_range(struct stmt const* stmt)
     current_for_range_loop = stmt;
 
     struct symbol const* const variable = stmt->data.for_range.loop_variable;
+    struct address const* const address = symbol_xget_address(variable);
+    assert(address->kind == ADDRESS_LOCAL);
     appendli(
         "for (%s %s = %s; %s < %s; ++%s)",
         mangle_type(context()->builtin.usize),
-        mangle_local_symbol_name(variable),
+        mangle_name(address->data.local.name),
         strgen_rvalue(stmt->data.for_range.begin),
-        mangle_local_symbol_name(variable),
+        mangle_name(address->data.local.name),
         strgen_rvalue(stmt->data.for_range.end),
-        mangle_local_symbol_name(variable));
+    mangle_name(address->data.local.name));
     codegen_block(&stmt->data.for_range.body);
     current_for_range_loop = save_current_for_range_loop;
 }
