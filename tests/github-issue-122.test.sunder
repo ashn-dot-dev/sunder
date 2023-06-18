@@ -1,0 +1,20 @@
+struct foo {
+    var a: u32;
+    var b: s32;
+}
+
+func bar(foo: *foo) foo {
+    return *foo;
+}
+
+func baz(ssize: *ssize) ssize {
+    return *ssize;
+}
+
+func main() void {
+    var x = (:foo){.a = 123, .b = 456};
+    bar(&x);
+
+    var x = 123s;
+    baz(&x);
+}

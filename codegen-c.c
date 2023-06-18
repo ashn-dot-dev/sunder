@@ -22,6 +22,8 @@ mangle_name(char const* name);
 static char const* // interned
 mangle_type(struct type const* type);
 static char const* // interned
+mangle_return_typename(struct function const* function);
+static char const* // interned
 mangle_local_symbol_name(struct symbol const* symbol);
 static char const* // interned
 mangle_symbol(struct symbol const* symbol);
@@ -311,6 +313,27 @@ mangle_type(struct type const* type)
     }
 
     return mangle_name(mangle_type_recursive(type));
+}
+
+static char const*
+mangle_return_typename(struct function const* function)
+{
+    assert(function != NULL);
+
+    // Return typenames are mangled as `__<function-name>_return_type` so that
+    // function definitions containing a function parameter with the same name
+    // as the return type:
+    //
+    //      func foo(ssize: bar) ssize
+    //
+    // will not cause an issue when the local variable for the function's
+    // return value is declared.
+    //
+    //      typedef __sunder_ssize __sunder___foo_return_type;
+    //      ...
+    //      __sunder___foo_return_type __sunder_return = ...
+    return mangle_name(
+        intern_fmt("__%s_return_type", function->address->data.static_.name));
 }
 
 static char const*
@@ -718,8 +741,12 @@ codegen_static_function(struct symbol const* symbol, bool prototype)
     }
     else {
         append(
-            "%s%c%s(%s)",
+            "typedef %s %s;\n",
             mangle_type(function->type->data.function.return_type),
+            mangle_return_typename(function));
+        append(
+            "%s%c%s(%s)",
+            mangle_return_typename(function),
             (prototype ? ' ' : '\n'),
             mangle_name(function->address->data.static_.name),
             params_written != 0 ? string_start(params) : "void");
@@ -1106,15 +1133,17 @@ codegen_block(struct block const* block)
             }
         }
 
+        char const* typename = mangle_type(type);
         if (locals[i].name == context()->interned.return_) {
             assert(!generate_final_return);
+            typename = mangle_return_typename(current_function);
             generate_final_return = true;
         }
 
         appendli("// %s: %s", locals[i].name, type->name);
         appendli(
             "%s %s = %s;",
-            mangle_type(type),
+            typename,
             mangle_name(address->data.local.name),
             strgen_uninit(type));
     }
