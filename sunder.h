@@ -655,8 +655,6 @@ unreachable(char const* file, int line);
 #define UNREACHABLE() unreachable(__FILE__, __LINE__)
 
 // Round up to the nearest multiple of 8.
-int
-ceil8i(int x);
 uintmax_t
 ceil8umax(uintmax_t x);
 

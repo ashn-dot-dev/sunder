@@ -2294,15 +2294,6 @@ unreachable(char const* file, int line)
     exit(EXIT_FAILURE);
 }
 
-int
-ceil8i(int x)
-{
-    while (x % 8 != 0) {
-        x += 1;
-    }
-    return x;
-}
-
 uintmax_t
 ceil8umax(uintmax_t x)
 {
