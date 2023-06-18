@@ -139,12 +139,6 @@ file_read_all(char const* path, void** buf, size_t* buf_size);
 int
 file_write_all(char const* path, void const* buf, size_t buf_size);
 
-// Read the full contents of the input stream specified by stream.
-// Memory for the read content is allocated with xalloc.
-// Returns zero on success.
-int
-stream_read_all(FILE* stream, void** buf, size_t* buf_size);
-
 // Returns an xalloc-allocated cstring of the first count bytes of start.
 // This function behaves similarly to the POSIX strdupn function.
 char*

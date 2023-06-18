@@ -296,6 +296,33 @@ file_is_directory(char const* path)
     return S_ISDIR(statbuf.st_mode);
 }
 
+static int
+stream_read_all(FILE* stream, void** buf, size_t* buf_size)
+{
+    assert(stream != NULL);
+    assert(buf != NULL);
+    assert(buf_size != NULL);
+
+    unsigned char* bf = NULL;
+    size_t sz = 0;
+
+    char tmp[512] = {0};
+    size_t nread = 0;
+    while ((nread = fread(tmp, 1, sizeof(tmp), stream)) != 0) {
+        bf = xalloc(bf, sz + nread);
+        memcpy(bf + sz, tmp, nread);
+        sz += nread;
+    }
+    if (ferror(stream)) {
+        xalloc(bf, XALLOC_FREE);
+        return -1;
+    }
+
+    *buf = bf;
+    *buf_size = sz;
+    return 0;
+}
+
 int
 file_read_all(char const* path, void** buf, size_t* buf_size)
 {
@@ -345,33 +372,6 @@ file_write_all(char const* path, void const* buf, size_t buf_size)
         return -1;
     }
 
-    return 0;
-}
-
-int
-stream_read_all(FILE* stream, void** buf, size_t* buf_size)
-{
-    assert(stream != NULL);
-    assert(buf != NULL);
-    assert(buf_size != NULL);
-
-    unsigned char* bf = NULL;
-    size_t sz = 0;
-
-    char tmp[512] = {0};
-    size_t nread = 0;
-    while ((nread = fread(tmp, 1, sizeof(tmp), stream)) != 0) {
-        bf = xalloc(bf, sz + nread);
-        memcpy(bf + sz, tmp, nread);
-        sz += nread;
-    }
-    if (ferror(stream)) {
-        xalloc(bf, XALLOC_FREE);
-        return -1;
-    }
-
-    *buf = bf;
-    *buf_size = sz;
     return 0;
 }
 
