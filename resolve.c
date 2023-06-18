@@ -1903,8 +1903,8 @@ resolve_decl_function(struct resolver* resolver, struct cst_decl const* decl)
             function_parameters[i]->location;
         char const* const name = function_parameters[i]->identifier.name;
         struct type const* const type = parameter_types[i];
-        struct address* const address =
-            address_new(address_init_local(name, rbp_offset));
+        struct address* const address = address_new(address_init_local(
+            intern_fmt("argument_%u_%s", i, name), rbp_offset));
         address->data.local.is_parameter = true;
         freeze(address);
 

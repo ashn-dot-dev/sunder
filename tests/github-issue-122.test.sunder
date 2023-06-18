@@ -4,7 +4,8 @@ struct foo {
 }
 
 func bar(foo: *foo) foo {
-    return *foo;
+    var x: ::foo = *foo;
+    return x;
 }
 
 func baz(ssize: *ssize) ssize {
