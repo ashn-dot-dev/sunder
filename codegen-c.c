@@ -1235,7 +1235,7 @@ codegen_stmt_for_range(struct stmt const* stmt)
         strgen_rvalue(stmt->data.for_range.begin),
         mangle_name(address->data.local.name),
         strgen_rvalue(stmt->data.for_range.end),
-    mangle_name(address->data.local.name));
+        mangle_name(address->data.local.name));
     codegen_block(&stmt->data.for_range.body);
     current_for_range_loop = save_current_for_range_loop;
 }
