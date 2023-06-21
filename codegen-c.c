@@ -2898,6 +2898,10 @@ codegen_c(
 #if 1
     // Disable all warnings. Used to future-proof against additional warnings
     // that would break Sunder tests/workflows if added to GCC/Clang.
+    //
+    // This backend argument should be removed with `#if 0` when testing for
+    // ISO C compliance with -pedantic and -pedantic-errors, as -w will prevent
+    // pedantic warnings/errors from being reported.
     sbuf_push(backend_argv, "-w");
 #endif
 #if 0
