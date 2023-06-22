@@ -2056,7 +2056,7 @@ push_rvalue_access_index_lhs_array(struct expr const* expr, size_t id)
     appendli("add rax, rsp"); // start + index * sizeof(element_type)
     // rbx := destination
     // NOTE: The push and pop operations that manage the stack-allocated array
-    // align to an 8-byte boundry, but the array itself may or may not have a
+    // align to an 8-byte boundary, but the array itself may or may not have a
     // size cleanly divisible by 8 (as in the case of the type [3u]u16). The
     // ceil8 of the sizeof the left hand side array is used to account for any
     // extra padding at the end of the array required to bring the total push
