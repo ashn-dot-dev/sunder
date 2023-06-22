@@ -535,7 +535,7 @@ intern(char const* start, size_t count)
         return interned[index].string;
     }
 
-    // Check to see if the set needs resizeing.
+    // Check to see if the set needs resizing.
     if (2 * (interned_count + 1) > sbuf_count(interned)) {
         // Insert at 50% occupancy. Create a new set with double the existing
         // element count, populate that set with the existing key-value pairs,
