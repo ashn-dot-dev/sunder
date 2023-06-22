@@ -1736,7 +1736,7 @@ bigint_magnitude_bit_set(struct bigint* self, size_t n, int value)
         if (!value) {
             // The abstract unallocated bit is already zero so re-setting it to
             // zero does not change the representation of self. Return early
-            // rather than going through the trouble of resizeing and then
+            // rather than going through the trouble of resizing and then
             // normalizing for what is essentially a NOP.
             return;
         }
