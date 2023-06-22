@@ -1734,7 +1734,7 @@ bigint_magnitude_bit_set(struct bigint* self, size_t n, int value)
     size_t const limb_idx = (n / BIGINT__LIMB_BITS_);
     if (limb_idx >= self->count) {
         if (!value) {
-            // The abstact unallocated bit is already zero so re-setting it to
+            // The abstract unallocated bit is already zero so re-setting it to
             // zero does not change the representation of self. Return early
             // rather than going through the trouble of resizeing and then
             // normalizing for what is essentially a NOP.
