@@ -2364,7 +2364,7 @@ struct value {
             // Concrete values specified for elements of the array value before
             // the optional ellipsis element. The sbuf_count of the elements
             // member may be less than countof(array), in which case the
-            // ellipsis value represents the rest of the elements upto the
+            // ellipsis value represents the rest of the elements up to the
             // countof(array)th element.
             sbuf(struct value*) elements;
             // Value representing elements from indices within the half-open
