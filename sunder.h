@@ -1795,7 +1795,7 @@ type_is_sinteger(struct type const* self);
 // Returns true if self is a IEEE-754 floating point type.
 bool
 type_is_ieee754(struct type const* self);
-// Returns true if self is a compount type (type made from other types).
+// Returns true if self is a compound type (type made from other types).
 bool
 type_is_compound(struct type const* self);
 // Returns true if the type may be compared with the == or != operators.
