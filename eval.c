@@ -1556,7 +1556,7 @@ eval_lvalue_access_index(struct expr const* expr)
 
     if (expr->data.access_index.lhs->type->kind == TYPE_SLICE) {
         // Disallow indexing of an lvalue slice at compile time as indexing the
-        // slice would be quivalent to dereferencing an arbitrary pointer.
+        // slice would be equivalent to dereferencing an arbitrary pointer.
         fatal(
             expr->location,
             "constant expression contains lvalue slice indexing operation");
