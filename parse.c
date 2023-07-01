@@ -160,7 +160,7 @@ parse_symbol_element(struct parser* parser);
 static struct cst_identifier const*
 parse_template_parameter_list(struct parser* parser);
 
-static struct cst_typespec const* const*
+static struct cst_type const* const*
 parse_template_argument_list(struct parser* parser);
 
 static struct cst_function_parameter const* const*
@@ -184,18 +184,18 @@ parse_member_initializer_list(struct parser* parser);
 static struct cst_member_initializer const*
 parse_member_initializer(struct parser* parser);
 
-static struct cst_typespec const*
-parse_typespec(struct parser* parser);
-static struct cst_typespec const*
-parse_typespec_symbol(struct parser* parser);
-static struct cst_typespec const*
-parse_typespec_function(struct parser* parser);
-static struct cst_typespec const*
-parse_typespec_pointer(struct parser* parser);
-static struct cst_typespec const*
-parse_typespec_array_or_slice(struct parser* parser);
-static struct cst_typespec const*
-parse_typespec_typeof(struct parser* parser);
+static struct cst_type const*
+parse_type(struct parser* parser);
+static struct cst_type const*
+parse_type_symbol(struct parser* parser);
+static struct cst_type const*
+parse_type_function(struct parser* parser);
+static struct cst_type const*
+parse_type_pointer(struct parser* parser);
+static struct cst_type const*
+parse_type_array_or_slice(struct parser* parser);
+static struct cst_type const*
+parse_type_typeof(struct parser* parser);
 
 static struct parser*
 parser_new(struct module* module, struct lexer* lexer)
@@ -424,16 +424,16 @@ parse_decl_variable(struct parser* parser)
     struct source_location const location =
         expect_current(parser, TOKEN_VAR).location;
     struct cst_identifier const identifier = parse_identifier(parser);
-    struct cst_typespec const* typespec = NULL;
+    struct cst_type const* type = NULL;
     if (check_current(parser, TOKEN_COLON)) {
         expect_current(parser, TOKEN_COLON);
-        typespec = parse_typespec(parser);
+        type = parse_type(parser);
     }
     expect_current(parser, TOKEN_ASSIGN);
     struct cst_expr const* expr = NULL;
     if (check_current(parser, TOKEN_UNINIT)) {
         expect_current(parser, TOKEN_UNINIT);
-        if (typespec == NULL) {
+        if (type == NULL) {
             fatal(
                 identifier.location,
                 "uninitialized variable `%s` requires a type specifier",
@@ -446,7 +446,7 @@ parse_decl_variable(struct parser* parser)
     expect_current(parser, TOKEN_SEMICOLON);
 
     struct cst_decl* const product =
-        cst_decl_new_variable(location, identifier, typespec, expr);
+        cst_decl_new_variable(location, identifier, type, expr);
 
     freeze(product);
     return product;
@@ -460,16 +460,16 @@ parse_decl_constant(struct parser* parser)
     struct source_location const location =
         expect_current(parser, TOKEN_LET).location;
     struct cst_identifier const identifier = parse_identifier(parser);
-    struct cst_typespec const* typespec = NULL;
+    struct cst_type const* type = NULL;
     if (check_current(parser, TOKEN_COLON)) {
         expect_current(parser, TOKEN_COLON);
-        typespec = parse_typespec(parser);
+        type = parse_type(parser);
     }
     expect_current(parser, TOKEN_ASSIGN);
     struct cst_expr const* expr = NULL;
     if (check_current(parser, TOKEN_UNINIT)) {
         expect_current(parser, TOKEN_UNINIT);
-        if (typespec == NULL) {
+        if (type == NULL) {
             fatal(
                 identifier.location,
                 "uninitialized constant `%s` requires a type specifier",
@@ -482,7 +482,7 @@ parse_decl_constant(struct parser* parser)
     expect_current(parser, TOKEN_SEMICOLON);
 
     struct cst_decl* const product =
-        cst_decl_new_constant(location, identifier, typespec, expr);
+        cst_decl_new_constant(location, identifier, type, expr);
 
     freeze(product);
     return product;
@@ -502,7 +502,7 @@ parse_decl_function(struct parser* parser)
     sbuf(struct cst_function_parameter const* const) const function_parameters =
         parse_function_parameter_list(parser);
     expect_current(parser, TOKEN_RPAREN);
-    struct cst_typespec const* const return_typespec = parse_typespec(parser);
+    struct cst_type const* const return_type = parse_type(parser);
     struct cst_block const body = parse_block(parser);
 
     struct cst_decl* const product = cst_decl_new_function(
@@ -510,7 +510,7 @@ parse_decl_function(struct parser* parser)
         identifier,
         template_parameters,
         function_parameters,
-        return_typespec,
+        return_type,
         body);
 
     freeze(product);
@@ -566,11 +566,10 @@ parse_decl_extend(struct parser* parser)
 
     struct source_location const location =
         expect_current(parser, TOKEN_EXTEND).location;
-    struct cst_typespec const* const typespec = parse_typespec(parser);
+    struct cst_type const* const type = parse_type(parser);
     struct cst_decl const* const decl = parse_decl(parser);
 
-    struct cst_decl* const product =
-        cst_decl_new_extend(location, typespec, decl);
+    struct cst_decl* const product = cst_decl_new_extend(location, type, decl);
 
     freeze(product);
     return product;
@@ -585,11 +584,11 @@ parse_decl_alias(struct parser* parser)
         expect_current(parser, TOKEN_ALIAS).location;
     struct cst_identifier const identifier = parse_identifier(parser);
     expect_current(parser, TOKEN_ASSIGN);
-    struct cst_typespec const* const typespec = parse_typespec(parser);
+    struct cst_type const* const type = parse_type(parser);
     expect_current(parser, TOKEN_SEMICOLON);
 
     struct cst_decl* const product =
-        cst_decl_new_alias(location, identifier, typespec);
+        cst_decl_new_alias(location, identifier, type);
 
     freeze(product);
     return product;
@@ -605,11 +604,11 @@ parse_decl_extern_variable(struct parser* parser)
     expect_current(parser, TOKEN_VAR);
     struct cst_identifier const identifier = parse_identifier(parser);
     expect_current(parser, TOKEN_COLON);
-    struct cst_typespec const* const typespec = parse_typespec(parser);
+    struct cst_type const* const type = parse_type(parser);
     expect_current(parser, TOKEN_SEMICOLON);
 
     struct cst_decl* const product =
-        cst_decl_new_extern_variable(location, identifier, typespec);
+        cst_decl_new_extern_variable(location, identifier, type);
 
     freeze(product);
     return product;
@@ -628,11 +627,11 @@ parse_decl_extern_function(struct parser* parser)
     sbuf(struct cst_function_parameter const* const) const function_parameters =
         parse_function_parameter_list(parser);
     expect_current(parser, TOKEN_RPAREN);
-    struct cst_typespec const* const return_typespec = parse_typespec(parser);
+    struct cst_type const* const return_type = parse_type(parser);
     expect_current(parser, TOKEN_SEMICOLON);
 
     struct cst_decl* const product = cst_decl_new_extern_function(
-        location, identifier, function_parameters, return_typespec);
+        location, identifier, function_parameters, return_type);
 
     freeze(product);
     return product;
@@ -1184,7 +1183,7 @@ parse_expr_lparen(struct parser* parser)
     }
 
     expect_current(parser, TOKEN_COLON);
-    struct cst_typespec const* const typespec = parse_typespec(parser);
+    struct cst_type const* const type = parse_type(parser);
     expect_current(parser, TOKEN_RPAREN);
 
     if (check_current(parser, TOKEN_LBRACKET)) {
@@ -1214,7 +1213,7 @@ parse_expr_lparen(struct parser* parser)
         expect_current(parser, TOKEN_RBRACKET);
 
         struct cst_expr* const product =
-            cst_expr_new_list(location, typespec, elements, ellipsis);
+            cst_expr_new_list(location, type, elements, ellipsis);
 
         freeze(product);
         return product;
@@ -1229,7 +1228,7 @@ parse_expr_lparen(struct parser* parser)
             expect_current(parser, TOKEN_RBRACE);
 
             struct cst_expr* const product =
-                cst_expr_new_init(location, typespec, initializers);
+                cst_expr_new_init(location, type, initializers);
 
             freeze(product);
             return product;
@@ -1243,7 +1242,7 @@ parse_expr_lparen(struct parser* parser)
         expect_current(parser, TOKEN_RBRACE);
 
         struct cst_expr* const product =
-            cst_expr_new_slice(location, typespec, pointer, count);
+            cst_expr_new_slice(location, type, pointer, count);
 
         freeze(product);
         return product;
@@ -1253,8 +1252,7 @@ parse_expr_lparen(struct parser* parser)
     struct cst_expr const* const expr =
         parse_expr_precedence(parser, PRECEDENCE_PREFIX);
 
-    struct cst_expr* const product =
-        cst_expr_new_cast(location, typespec, expr);
+    struct cst_expr* const product = cst_expr_new_cast(location, type, expr);
 
     freeze(product);
     return product;
@@ -1382,7 +1380,7 @@ parse_expr_sizeof(struct parser* parser)
     struct source_location const location =
         expect_current(parser, TOKEN_SIZEOF).location;
     expect_current(parser, TOKEN_LPAREN);
-    struct cst_typespec const* const rhs = parse_typespec(parser);
+    struct cst_type const* const rhs = parse_type(parser);
     expect_current(parser, TOKEN_RPAREN);
 
     struct cst_expr* const product = cst_expr_new_sizeof(location, rhs);
@@ -1399,7 +1397,7 @@ parse_expr_alignof(struct parser* parser)
     struct source_location const location =
         expect_current(parser, TOKEN_ALIGNOF).location;
     expect_current(parser, TOKEN_LPAREN);
-    struct cst_typespec const* const rhs = parse_typespec(parser);
+    struct cst_type const* const rhs = parse_type(parser);
     expect_current(parser, TOKEN_RPAREN);
 
     struct cst_expr* const product = cst_expr_new_alignof(location, rhs);
@@ -1469,8 +1467,8 @@ parse_symbol(struct parser* parser)
 
     if (check_current(parser, TOKEN_TYPEOF)) {
         enum cst_symbol_start const start = CST_SYMBOL_START_TYPE;
-        struct cst_typespec const* const typespec = parse_typespec(parser);
-        struct source_location const location = typespec->location;
+        struct cst_type const* const type = parse_type(parser);
+        struct source_location const location = type->location;
 
         expect_current(parser, TOKEN_COLON_COLON);
 
@@ -1483,7 +1481,7 @@ parse_symbol(struct parser* parser)
         sbuf_freeze(elements);
 
         struct cst_symbol* const product =
-            cst_symbol_new(location, start, typespec, elements);
+            cst_symbol_new(location, start, type, elements);
 
         freeze(product);
         return product;
@@ -1512,7 +1510,7 @@ parse_symbol_element(struct parser* parser)
     assert(parser != NULL);
 
     struct cst_identifier const identifier = parse_identifier(parser);
-    struct cst_typespec const* const* template_arguments = NULL;
+    struct cst_type const* const* template_arguments = NULL;
     if (check_current(parser, TOKEN_LBRACKET)
         && check_peek(parser, TOKEN_LBRACKET)) {
         template_arguments = parse_template_argument_list(parser);
@@ -1557,7 +1555,7 @@ parse_template_parameter_list(struct parser* parser)
     return template_parameters;
 }
 
-static struct cst_typespec const* const*
+static struct cst_type const* const*
 parse_template_argument_list(struct parser* parser)
 {
     assert(parser != NULL);
@@ -1565,17 +1563,17 @@ parse_template_argument_list(struct parser* parser)
     struct token const lbracket = expect_current(parser, TOKEN_LBRACKET);
     expect_current(parser, TOKEN_LBRACKET);
 
-    sbuf(struct cst_typespec const*) template_arguments = NULL;
+    sbuf(struct cst_type const*) template_arguments = NULL;
     if (check_current(parser, TOKEN_RBRACKET)) {
         fatal(
             lbracket.location,
             "template argument list contains zero template arguments");
     }
 
-    sbuf_push(template_arguments, parse_typespec(parser));
+    sbuf_push(template_arguments, parse_type(parser));
     while (check_current(parser, TOKEN_COMMA)) {
         advance_token(parser);
-        sbuf_push(template_arguments, parse_typespec(parser));
+        sbuf_push(template_arguments, parse_type(parser));
     }
 
     expect_current(parser, TOKEN_RBRACKET);
@@ -1612,10 +1610,10 @@ parse_function_parameter(struct parser* parser)
 
     struct cst_identifier const identifier = parse_identifier(parser);
     expect_current(parser, TOKEN_COLON);
-    struct cst_typespec const* const typespec = parse_typespec(parser);
+    struct cst_type const* const type = parse_type(parser);
 
     struct cst_function_parameter* const product =
-        cst_function_parameter_new(identifier, typespec);
+        cst_function_parameter_new(identifier, type);
 
     freeze(product);
     return product;
@@ -1668,11 +1666,11 @@ parse_member_variable(struct parser* parser)
         expect_current(parser, TOKEN_VAR).location;
     struct cst_identifier const identifier = parse_identifier(parser);
     expect_current(parser, TOKEN_COLON);
-    struct cst_typespec const* const typespec = parse_typespec(parser);
+    struct cst_type const* const type = parse_type(parser);
     expect_current(parser, TOKEN_SEMICOLON);
 
     struct cst_member* const product =
-        cst_member_new_variable(location, identifier, typespec);
+        cst_member_new_variable(location, identifier, type);
 
     freeze(product);
     return product;
@@ -1751,30 +1749,30 @@ parse_member_initializer(struct parser* parser)
     return product;
 }
 
-static struct cst_typespec const*
-parse_typespec(struct parser* parser)
+static struct cst_type const*
+parse_type(struct parser* parser)
 {
     assert(parser != NULL);
 
     if (check_current(parser, TOKEN_IDENTIFIER)
         || check_current(parser, TOKEN_COLON_COLON)) {
-        return parse_typespec_symbol(parser);
+        return parse_type_symbol(parser);
     }
 
     if (check_current(parser, TOKEN_FUNC)) {
-        return parse_typespec_function(parser);
+        return parse_type_function(parser);
     }
 
     if (check_current(parser, TOKEN_STAR)) {
-        return parse_typespec_pointer(parser);
+        return parse_type_pointer(parser);
     }
 
     if (check_current(parser, TOKEN_LBRACKET)) {
-        return parse_typespec_array_or_slice(parser);
+        return parse_type_array_or_slice(parser);
     }
 
     if (check_current(parser, TOKEN_TYPEOF)) {
-        return parse_typespec_typeof(parser);
+        return parse_type_typeof(parser);
     }
 
     fatal(
@@ -1784,21 +1782,21 @@ parse_typespec(struct parser* parser)
     return NULL;
 }
 
-static struct cst_typespec const*
-parse_typespec_symbol(struct parser* parser)
+static struct cst_type const*
+parse_type_symbol(struct parser* parser)
 {
     assert(parser != NULL);
 
     struct cst_symbol const* const symbol = parse_symbol(parser);
 
-    struct cst_typespec* const product = cst_typespec_new_symbol(symbol);
+    struct cst_type* const product = cst_type_new_symbol(symbol);
 
     freeze(product);
     return product;
 }
 
-static struct cst_typespec const*
-parse_typespec_function(struct parser* parser)
+static struct cst_type const*
+parse_type_function(struct parser* parser)
 {
     assert(parser != NULL);
     assert(check_current(parser, TOKEN_FUNC));
@@ -1807,28 +1805,28 @@ parse_typespec_function(struct parser* parser)
         expect_current(parser, TOKEN_FUNC).location;
 
     expect_current(parser, TOKEN_LPAREN);
-    sbuf(struct cst_typespec const*) parameter_typespecs = NULL;
+    sbuf(struct cst_type const*) parameter_types = NULL;
     if (!check_current(parser, TOKEN_RPAREN)) {
-        sbuf_push(parameter_typespecs, parse_typespec(parser));
+        sbuf_push(parameter_types, parse_type(parser));
         while (check_current(parser, TOKEN_COMMA)) {
             advance_token(parser);
-            sbuf_push(parameter_typespecs, parse_typespec(parser));
+            sbuf_push(parameter_types, parse_type(parser));
         }
     }
     expect_current(parser, TOKEN_RPAREN);
-    sbuf_freeze(parameter_typespecs);
+    sbuf_freeze(parameter_types);
 
-    struct cst_typespec const* const return_typespec = parse_typespec(parser);
+    struct cst_type const* const return_type = parse_type(parser);
 
-    struct cst_typespec* const product = cst_typespec_new_function(
-        location, parameter_typespecs, return_typespec);
+    struct cst_type* const product =
+        cst_type_new_function(location, parameter_types, return_type);
 
     freeze(product);
     return product;
 }
 
-static struct cst_typespec const*
-parse_typespec_pointer(struct parser* parser)
+static struct cst_type const*
+parse_type_pointer(struct parser* parser)
 {
     assert(parser != NULL);
     assert(check_current(parser, TOKEN_STAR));
@@ -1836,17 +1834,16 @@ parse_typespec_pointer(struct parser* parser)
     struct source_location const location =
         expect_current(parser, TOKEN_STAR).location;
 
-    struct cst_typespec const* const base = parse_typespec(parser);
+    struct cst_type const* const base = parse_type(parser);
 
-    struct cst_typespec* const product =
-        cst_typespec_new_pointer(location, base);
+    struct cst_type* const product = cst_type_new_pointer(location, base);
 
     freeze(product);
     return product;
 }
 
-static struct cst_typespec const*
-parse_typespec_array_or_slice(struct parser* parser)
+static struct cst_type const*
+parse_type_array_or_slice(struct parser* parser)
 {
     assert(parser != NULL);
     assert(check_current(parser, TOKEN_LBRACKET));
@@ -1855,31 +1852,29 @@ parse_typespec_array_or_slice(struct parser* parser)
         expect_current(parser, TOKEN_LBRACKET).location;
 
     if (check_current(parser, TOKEN_RBRACKET)) {
-        // <typespec-slice>
+        // <type-slice>
         expect_current(parser, TOKEN_RBRACKET);
-        struct cst_typespec const* const base = parse_typespec(parser);
+        struct cst_type const* const base = parse_type(parser);
 
-        struct cst_typespec* const product =
-            cst_typespec_new_slice(location, base);
+        struct cst_type* const product = cst_type_new_slice(location, base);
 
         freeze(product);
         return product;
     }
 
-    // <typespec-array>
+    // <type-array>
     struct cst_expr const* const count = parse_expr(parser);
     expect_current(parser, TOKEN_RBRACKET);
-    struct cst_typespec const* const base = parse_typespec(parser);
+    struct cst_type const* const base = parse_type(parser);
 
-    struct cst_typespec* const product =
-        cst_typespec_new_array(location, count, base);
+    struct cst_type* const product = cst_type_new_array(location, count, base);
 
     freeze(product);
     return product;
 }
 
-static struct cst_typespec const*
-parse_typespec_typeof(struct parser* parser)
+static struct cst_type const*
+parse_type_typeof(struct parser* parser)
 {
     assert(parser != NULL);
     assert(check_current(parser, TOKEN_TYPEOF));
@@ -1890,8 +1885,7 @@ parse_typespec_typeof(struct parser* parser)
     struct cst_expr const* expr = parse_expr(parser);
     expect_current(parser, TOKEN_RPAREN);
 
-    struct cst_typespec* const product =
-        cst_typespec_new_typeof(location, expr);
+    struct cst_type* const product = cst_type_new_typeof(location, expr);
 
     freeze(product);
     return product;

@@ -129,7 +129,7 @@ xget_template_instance(
     struct resolver* resolver,
     struct source_location location,
     struct symbol const* symbol,
-    struct cst_typespec const* const* const template_arguments);
+    struct cst_type const* const* const template_arguments);
 
 // Fatally exits if the actual type does not exactly match the expected type.
 static void
@@ -368,26 +368,19 @@ resolve_expr_binary_bitwise(
     struct expr const* rhs);
 
 static struct type const*
-resolve_typespec(
-    struct resolver* resolver, struct cst_typespec const* typespec);
+resolve_type(struct resolver* resolver, struct cst_type const* type);
 static struct type const*
-resolve_typespec_symbol(
-    struct resolver* resolver, struct cst_typespec const* typespec);
+resolve_type_symbol(struct resolver* resolver, struct cst_type const* type);
 static struct type const*
-resolve_typespec_function(
-    struct resolver* resolver, struct cst_typespec const* typespec);
+resolve_type_function(struct resolver* resolver, struct cst_type const* type);
 static struct type const*
-resolve_typespec_pointer(
-    struct resolver* resolver, struct cst_typespec const* typespec);
+resolve_type_pointer(struct resolver* resolver, struct cst_type const* type);
 static struct type const*
-resolve_typespec_array(
-    struct resolver* resolver, struct cst_typespec const* typespec);
+resolve_type_array(struct resolver* resolver, struct cst_type const* type);
 static struct type const*
-resolve_typespec_slice(
-    struct resolver* resolver, struct cst_typespec const* typespec);
+resolve_type_slice(struct resolver* resolver, struct cst_type const* type);
 static struct type const*
-resolve_typespec_typeof(
-    struct resolver* resolver, struct cst_typespec const* typespec);
+resolve_type_typeof(struct resolver* resolver, struct cst_type const* type);
 
 static struct resolver*
 resolver_new(struct module* module)
@@ -597,7 +590,7 @@ xget_symbol(struct resolver* resolver, struct cst_symbol const* target)
     }
     case CST_SYMBOL_START_TYPE: {
         struct type const* const type =
-            resolve_typespec_typeof(resolver, target->typespec);
+            resolve_type_typeof(resolver, target->type);
         symbol_table = type->symbols;
         break;
     }
@@ -710,7 +703,7 @@ xget_template_instance(
     struct resolver* resolver,
     struct source_location location,
     struct symbol const* symbol,
-    struct cst_typespec const* const* const template_arguments)
+    struct cst_type const* const* const template_arguments)
 {
     assert(resolver != NULL);
     assert(symbol != NULL);
@@ -791,8 +784,7 @@ xget_template_instance(
         sbuf(struct type const*) template_types = NULL;
         for (size_t i = 0; i < template_arguments_count; ++i) {
             sbuf_push(
-                template_types,
-                resolve_typespec(resolver, template_arguments[i]));
+                template_types, resolve_type(resolver, template_arguments[i]));
         }
         sbuf_freeze(template_types);
 
@@ -822,8 +814,8 @@ xget_template_instance(
             const instance_function_parameters =
                 decl->data.function.function_parameters;
         // Same goes for the return type specification.
-        struct cst_typespec const* const instance_return_typespec =
-            decl->data.function.return_typespec;
+        struct cst_type const* const instance_return_type =
+            decl->data.function.return_type;
         // And the body is also unchanged.
         struct cst_block const instance_body = decl->data.function.body;
 
@@ -862,7 +854,7 @@ xget_template_instance(
             instance_identifier,
             instance_template_parameters,
             instance_function_parameters,
-            instance_return_typespec,
+            instance_return_type,
             instance_body);
         freeze(instance_decl);
 
@@ -932,8 +924,7 @@ xget_template_instance(
         sbuf(struct type const*) template_types = NULL;
         for (size_t i = 0; i < template_arguments_count; ++i) {
             sbuf_push(
-                template_types,
-                resolve_typespec(resolver, template_arguments[i]));
+                template_types, resolve_type(resolver, template_arguments[i]));
         }
         sbuf_freeze(template_types);
 
@@ -1705,9 +1696,9 @@ resolve_decl_variable(
         expr = resolve_expr(resolver, decl->data.variable.expr);
     }
 
-    assert(decl->data.variable.typespec != NULL || expr != NULL);
-    struct type const* const type = decl->data.variable.typespec != NULL
-        ? resolve_typespec(resolver, decl->data.variable.typespec)
+    assert(decl->data.variable.type != NULL || expr != NULL);
+    struct type const* const type = decl->data.variable.type != NULL
+        ? resolve_type(resolver, decl->data.variable.type)
         : expr->type;
     if (type->size == SIZEOF_UNSIZED) {
         fatal(
@@ -1777,8 +1768,8 @@ resolve_decl_constant(struct resolver* resolver, struct cst_decl const* decl)
         expr = resolve_expr(resolver, decl->data.constant.expr);
     }
 
-    struct type const* const type = decl->data.constant.typespec != NULL
-        ? resolve_typespec(resolver, decl->data.constant.typespec)
+    struct type const* const type = decl->data.constant.type != NULL
+        ? resolve_type(resolver, decl->data.constant.type)
         : expr->type;
     if (type->size == SIZEOF_UNSIZED) {
         fatal(
@@ -1863,10 +1854,10 @@ resolve_decl_function(struct resolver* resolver, struct cst_decl const* decl)
     sbuf_resize(parameter_types, sbuf_count(function_parameters));
     for (size_t i = 0; i < sbuf_count(function_parameters); ++i) {
         parameter_types[i] =
-            resolve_typespec(resolver, function_parameters[i]->typespec);
+            resolve_type(resolver, function_parameters[i]->type);
         if (parameter_types[i]->size == SIZEOF_UNSIZED) {
             fatal(
-                function_parameters[i]->typespec->location,
+                function_parameters[i]->type->location,
                 "declaration of function parameter with unsized type `%s`",
                 parameter_types[i]->name);
         }
@@ -1874,10 +1865,10 @@ resolve_decl_function(struct resolver* resolver, struct cst_decl const* decl)
     sbuf_freeze(parameter_types);
 
     struct type const* const return_type =
-        resolve_typespec(resolver, decl->data.function.return_typespec);
+        resolve_type(resolver, decl->data.function.return_type);
     if (return_type->size == SIZEOF_UNSIZED) {
         fatal(
-            decl->data.function.return_typespec->location,
+            decl->data.function.return_type->location,
             "declaration of function with unsized return type `%s`",
             return_type->name);
     }
@@ -1972,7 +1963,7 @@ resolve_decl_function(struct resolver* resolver, struct cst_decl const* decl)
         object_new(return_type, return_value_address, NULL);
     freeze(return_value_object);
     struct symbol* const return_value_symbol = symbol_new_variable(
-        decl->data.function.return_typespec->location,
+        decl->data.function.return_type->location,
         context()->interned.return_,
         return_value_object);
     freeze(return_value_symbol);
@@ -2151,7 +2142,7 @@ resolve_decl_extend(struct resolver* resolver, struct cst_decl const* decl)
     }
 
     struct type const* const type =
-        resolve_typespec(resolver, decl->data.extend.typespec);
+        resolve_type(resolver, decl->data.extend.type);
 
     // PLAN: Create the decl in a sub-symbol table of the module namespace that
     // is created specifically for this one symbol so that name collisions
@@ -2192,7 +2183,7 @@ resolve_decl_alias(struct resolver* resolver, struct cst_decl const* decl)
     assert(decl->kind == CST_DECL_ALIAS);
 
     struct type const* const type =
-        resolve_typespec(resolver, decl->data.alias.typespec);
+        resolve_type(resolver, decl->data.alias.type);
     struct symbol* const symbol = symbol_new_type(decl->location, type);
     freeze(symbol);
     symbol_table_insert(
@@ -2214,10 +2205,10 @@ resolve_decl_extern_variable(
     assert(resolver_is_global(resolver));
 
     struct type const* const type =
-        resolve_typespec(resolver, decl->data.extern_variable.typespec);
+        resolve_type(resolver, decl->data.extern_variable.type);
     if (type->size == SIZEOF_UNSIZED) {
         fatal(
-            decl->data.extern_variable.typespec->location,
+            decl->data.extern_variable.type->location,
             "declaration of extern variable with unsized type `%s`",
             type->name);
     }
@@ -2257,10 +2248,10 @@ resolve_decl_extern_function(
     sbuf_resize(parameter_types, sbuf_count(function_parameters));
     for (size_t i = 0; i < sbuf_count(function_parameters); ++i) {
         parameter_types[i] =
-            resolve_typespec(resolver, function_parameters[i]->typespec);
+            resolve_type(resolver, function_parameters[i]->type);
         if (parameter_types[i]->size == SIZEOF_UNSIZED) {
             fatal(
-                function_parameters[i]->typespec->location,
+                function_parameters[i]->type->location,
                 "declaration of function parameter with unsized type `%s`",
                 parameter_types[i]->name);
         }
@@ -2268,10 +2259,10 @@ resolve_decl_extern_function(
     sbuf_freeze(parameter_types);
 
     struct type const* const return_type =
-        resolve_typespec(resolver, decl->data.extern_function.return_typespec);
+        resolve_type(resolver, decl->data.extern_function.return_type);
     if (return_type->size == SIZEOF_UNSIZED) {
         fatal(
-            decl->data.extern_function.return_typespec->location,
+            decl->data.extern_function.return_type->location,
             "declaration of function with unsized return type `%s`",
             return_type->name);
     }
@@ -2398,7 +2389,7 @@ complete_struct(
         case CST_MEMBER_VARIABLE: {
             char const* const member_name = member->name;
             struct type const* const member_type =
-                resolve_typespec(resolver, member->data.variable.typespec);
+                resolve_type(resolver, member->data.variable.type);
             if (member_type->kind == TYPE_STRUCT
                 && !member_type->data.struct_.is_complete) {
                 fatal(
@@ -2578,7 +2569,7 @@ complete_union(
         case CST_MEMBER_VARIABLE: {
             char const* const member_name = member->name;
             struct type const* const member_type =
-                resolve_typespec(resolver, member->data.variable.typespec);
+                resolve_type(resolver, member->data.variable.type);
             if (member_type->kind == TYPE_STRUCT
                 && !member_type->data.struct_.is_complete) {
                 fatal(
@@ -3677,10 +3668,10 @@ resolve_expr_list(struct resolver* resolver, struct cst_expr const* expr)
     assert(expr->kind == CST_EXPR_LIST);
 
     struct type const* const type =
-        resolve_typespec(resolver, expr->data.list.typespec);
+        resolve_type(resolver, expr->data.list.type);
     if (type->kind != TYPE_ARRAY && type->kind != TYPE_SLICE) {
         fatal(
-            expr->data.list.typespec->location,
+            expr->data.list.type->location,
             "expected array or slice type (received `%s`)",
             type->name);
     }
@@ -3821,10 +3812,10 @@ resolve_expr_slice(struct resolver* resolver, struct cst_expr const* expr)
     assert(expr->kind == CST_EXPR_SLICE);
 
     struct type const* const type =
-        resolve_typespec(resolver, expr->data.slice.typespec);
+        resolve_type(resolver, expr->data.slice.type);
     if (type->kind != TYPE_SLICE) {
         fatal(
-            expr->data.slice.typespec->location,
+            expr->data.slice.type->location,
             "expected slice type (received `%s`)",
             type->name);
     }
@@ -4088,7 +4079,7 @@ resolve_expr_init(struct resolver* resolver, struct cst_expr const* expr)
     assert(expr->kind == CST_EXPR_INIT);
 
     struct type const* const type =
-        resolve_typespec(resolver, expr->data.init.typespec);
+        resolve_type(resolver, expr->data.init.type);
 
     if (type->kind == TYPE_STRUCT) {
         return resolve_expr_init_struct(resolver, expr, type);
@@ -4112,7 +4103,7 @@ resolve_expr_cast(struct resolver* resolver, struct cst_expr const* expr)
     assert(expr->kind == CST_EXPR_CAST);
 
     struct type const* const type =
-        resolve_typespec(resolver, expr->data.cast.typespec);
+        resolve_type(resolver, expr->data.cast.type);
     struct expr const* const rhs = resolve_expr(resolver, expr->data.cast.expr);
 
     return explicit_cast(expr->location, type, rhs);
@@ -4131,7 +4122,7 @@ resolve_expr_call(struct resolver* resolver, struct cst_expr const* expr)
         struct cst_expr const* const lhs = dot->data.access_member.lhs;
         char const* const name =
             dot->data.access_member.member->identifier.name;
-        sbuf(struct cst_typespec const* const) const template_arguments =
+        sbuf(struct cst_type const* const) const template_arguments =
             dot->data.access_member.member->template_arguments;
 
         struct expr const* const instance = resolve_expr(resolver, lhs);
@@ -4503,7 +4494,7 @@ resolve_expr_sizeof(struct resolver* resolver, struct cst_expr const* expr)
     assert(expr->kind == CST_EXPR_SIZEOF);
 
     struct type const* const rhs =
-        resolve_typespec(resolver, expr->data.sizeof_.rhs);
+        resolve_type(resolver, expr->data.sizeof_.rhs);
     if (rhs->size == SIZEOF_UNSIZED) {
         fatal(expr->location, "type `%s` has no defined size", rhs->name);
     }
@@ -4522,7 +4513,7 @@ resolve_expr_alignof(struct resolver* resolver, struct cst_expr const* expr)
     assert(expr->kind == CST_EXPR_ALIGNOF);
 
     struct type const* const rhs =
-        resolve_typespec(resolver, expr->data.alignof_.rhs);
+        resolve_type(resolver, expr->data.alignof_.rhs);
     if (rhs->align == ALIGNOF_UNSIZED) {
         fatal(expr->location, "type `%s` has no defined alignment", rhs->name);
     }
@@ -5322,29 +5313,29 @@ invalid_operand_types:
 }
 
 static struct type const*
-resolve_typespec(struct resolver* resolver, struct cst_typespec const* typespec)
+resolve_type(struct resolver* resolver, struct cst_type const* type)
 {
     assert(resolver != NULL);
-    assert(typespec != NULL);
+    assert(type != NULL);
 
-    switch (typespec->kind) {
-    case CST_TYPESPEC_SYMBOL: {
-        return resolve_typespec_symbol(resolver, typespec);
+    switch (type->kind) {
+    case CST_TYPE_SYMBOL: {
+        return resolve_type_symbol(resolver, type);
     }
-    case CST_TYPESPEC_FUNCTION: {
-        return resolve_typespec_function(resolver, typespec);
+    case CST_TYPE_FUNCTION: {
+        return resolve_type_function(resolver, type);
     }
-    case CST_TYPESPEC_POINTER: {
-        return resolve_typespec_pointer(resolver, typespec);
+    case CST_TYPE_POINTER: {
+        return resolve_type_pointer(resolver, type);
     }
-    case CST_TYPESPEC_ARRAY: {
-        return resolve_typespec_array(resolver, typespec);
+    case CST_TYPE_ARRAY: {
+        return resolve_type_array(resolver, type);
     }
-    case CST_TYPESPEC_SLICE: {
-        return resolve_typespec_slice(resolver, typespec);
+    case CST_TYPE_SLICE: {
+        return resolve_type_slice(resolver, type);
     }
-    case CST_TYPESPEC_TYPEOF: {
-        return resolve_typespec_typeof(resolver, typespec);
+    case CST_TYPE_TYPEOF: {
+        return resolve_type_typeof(resolver, type);
     }
     }
 
@@ -5353,72 +5344,69 @@ resolve_typespec(struct resolver* resolver, struct cst_typespec const* typespec)
 }
 
 static struct type const*
-resolve_typespec_symbol(
-    struct resolver* resolver, struct cst_typespec const* typespec)
+resolve_type_symbol(struct resolver* resolver, struct cst_type const* type)
 {
     assert(resolver != NULL);
-    assert(typespec != NULL);
-    assert(typespec->kind == CST_TYPESPEC_SYMBOL);
+    assert(type != NULL);
+    assert(type->kind == CST_TYPE_SYMBOL);
 
     struct symbol const* const symbol =
-        xget_symbol(resolver, typespec->data.symbol);
+        xget_symbol(resolver, type->data.symbol);
     if (symbol->kind == SYMBOL_TEMPLATE) {
         fatal(
-            typespec->location,
-            "template `%s` must be instantiated",
-            symbol->name);
+            type->location, "template `%s` must be instantiated", symbol->name);
     }
     if (symbol->kind != SYMBOL_TYPE) {
-        fatal(
-            typespec->location, "identifier `%s` is not a type", symbol->name);
+        fatal(type->location, "identifier `%s` is not a type", symbol->name);
     }
 
     return symbol_xget_type(symbol);
 }
 
 static struct type const*
-resolve_typespec_function(
-    struct resolver* resolver, struct cst_typespec const* typespec)
+resolve_type_function(struct resolver* resolver, struct cst_type const* type)
 {
     assert(resolver != NULL);
-    assert(typespec != NULL);
-    assert(typespec->kind == CST_TYPESPEC_FUNCTION);
+    assert(type != NULL);
+    assert(type->kind == CST_TYPE_FUNCTION);
 
-    sbuf(struct cst_typespec const* const) const parameter_typespecs =
-        typespec->data.function.parameter_typespecs;
+    sbuf(struct cst_type const* const) const parameter_types =
+        type->data.function.parameter_types;
 
-    sbuf(struct type const*) parameter_types = NULL;
-    sbuf_resize(parameter_types, sbuf_count(parameter_typespecs));
-    for (size_t i = 0; i < sbuf_count(parameter_typespecs); ++i) {
-        parameter_types[i] = resolve_typespec(resolver, parameter_typespecs[i]);
+    sbuf(struct type const*) param_types = NULL;
+    sbuf_resize(param_types, sbuf_count(parameter_types));
+    for (size_t i = 0; i < sbuf_count(parameter_types); ++i) {
+        param_types[i] = resolve_type(resolver, parameter_types[i]);
     }
-    sbuf_freeze(parameter_types);
+    sbuf_freeze(param_types);
 
     struct type const* const return_type =
-        resolve_typespec(resolver, typespec->data.function.return_typespec);
+        resolve_type(resolver, type->data.function.return_type);
 
-    return type_unique_function(parameter_types, return_type);
+    return type_unique_function(param_types, return_type);
 }
 
 static struct type const*
-resolve_typespec_pointer(
-    struct resolver* resolver, struct cst_typespec const* typespec)
+resolve_type_pointer(struct resolver* resolver, struct cst_type const* type)
 {
     assert(resolver != NULL);
-    assert(typespec != NULL);
-    assert(typespec->kind == CST_TYPESPEC_POINTER);
+    assert(type != NULL);
+    assert(type->kind == CST_TYPE_POINTER);
 
     struct type const* const base =
-        resolve_typespec(resolver, typespec->data.pointer.base);
+        resolve_type(resolver, type->data.pointer.base);
     return type_unique_pointer(base);
 }
 
 static struct type const*
-resolve_typespec_array(
-    struct resolver* resolver, struct cst_typespec const* typespec)
+resolve_type_array(struct resolver* resolver, struct cst_type const* type)
 {
+    assert(resolver != NULL);
+    assert(type != NULL);
+    assert(type->kind == CST_TYPE_ARRAY);
+
     struct expr const* count_expr =
-        resolve_expr(resolver, typespec->data.array.count);
+        resolve_expr(resolver, type->data.array.count);
     count_expr = implicit_cast(context()->builtin.usize, count_expr);
 
     if (count_expr->type != context()->builtin.usize) {
@@ -5441,21 +5429,20 @@ resolve_typespec_array(
     value_del(count_value);
 
     struct type const* const base =
-        resolve_typespec(resolver, typespec->data.array.base);
+        resolve_type(resolver, type->data.array.base);
 
-    return type_unique_array(typespec->location, count, base);
+    return type_unique_array(type->location, count, base);
 }
 
 static struct type const*
-resolve_typespec_slice(
-    struct resolver* resolver, struct cst_typespec const* typespec)
+resolve_type_slice(struct resolver* resolver, struct cst_type const* type)
 {
     assert(resolver != NULL);
-    assert(typespec != NULL);
-    assert(typespec->kind == CST_TYPESPEC_SLICE);
+    assert(type != NULL);
+    assert(type->kind == CST_TYPE_SLICE);
 
     struct type const* const base =
-        resolve_typespec(resolver, typespec->data.slice.base);
+        resolve_type(resolver, type->data.slice.base);
     // Generate a unique type for the `start` member of the slice, so that type
     // ordering knows to generate the definition for the slice pointer before
     // generating the definition for the slice itself. This is important for
@@ -5466,15 +5453,14 @@ resolve_typespec_slice(
 }
 
 static struct type const*
-resolve_typespec_typeof(
-    struct resolver* resolver, struct cst_typespec const* typespec)
+resolve_type_typeof(struct resolver* resolver, struct cst_type const* type)
 {
     assert(resolver != NULL);
-    assert(typespec != NULL);
-    assert(typespec->kind == CST_TYPESPEC_TYPEOF);
+    assert(type != NULL);
+    assert(type->kind == CST_TYPE_TYPEOF);
 
     struct expr const* const expr =
-        resolve_expr(resolver, typespec->data.typeof_.expr);
+        resolve_expr(resolver, type->data.typeof_.expr);
     return expr->type;
 }
 

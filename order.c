@@ -46,9 +46,9 @@ static void
 order_expr(struct orderer* orderer, struct cst_expr const* expr);
 static void
 order_template_argument_list(
-    struct orderer* orderer, struct cst_typespec const* const* arguments);
+    struct orderer* orderer, struct cst_type const* const* arguments);
 static void
-order_typespec(struct orderer* orderer, struct cst_typespec const* typespec);
+order_type(struct orderer* orderer, struct cst_type const* type);
 static void
 order_symbol(struct orderer* orderer, struct cst_symbol const* symbol);
 static void
@@ -166,8 +166,8 @@ order_decl(struct orderer* orderer, struct cst_decl const* decl)
 
     switch (decl->kind) {
     case CST_DECL_VARIABLE: {
-        if (decl->data.variable.typespec != NULL) {
-            order_typespec(orderer, decl->data.variable.typespec);
+        if (decl->data.variable.type != NULL) {
+            order_type(orderer, decl->data.variable.type);
         }
         if (decl->data.variable.expr != NULL) {
             order_expr(orderer, decl->data.variable.expr);
@@ -175,8 +175,8 @@ order_decl(struct orderer* orderer, struct cst_decl const* decl)
         return;
     }
     case CST_DECL_CONSTANT: {
-        if (decl->data.constant.typespec != NULL) {
-            order_typespec(orderer, decl->data.constant.typespec);
+        if (decl->data.constant.type != NULL) {
+            order_type(orderer, decl->data.constant.type);
         }
         if (decl->data.constant.expr != NULL) {
             order_expr(orderer, decl->data.constant.expr);
@@ -192,9 +192,9 @@ order_decl(struct orderer* orderer, struct cst_decl const* decl)
         struct cst_function_parameter const* const* const function_parameters =
             decl->data.function.function_parameters;
         for (size_t i = 0; i < sbuf_count(function_parameters); ++i) {
-            order_typespec(orderer, function_parameters[i]->typespec);
+            order_type(orderer, function_parameters[i]->type);
         }
-        order_typespec(orderer, decl->data.function.return_typespec);
+        order_type(orderer, decl->data.function.return_type);
         return;
     }
     case CST_DECL_STRUCT: {
@@ -225,7 +225,7 @@ order_decl(struct orderer* orderer, struct cst_decl const* decl)
             struct cst_member const* const member = members[i];
             switch (member->kind) {
             case CST_MEMBER_VARIABLE: {
-                order_typespec(orderer, member->data.variable.typespec);
+                order_type(orderer, member->data.variable.type);
                 continue;
             }
             case CST_MEMBER_CONSTANT: {
@@ -268,7 +268,7 @@ order_decl(struct orderer* orderer, struct cst_decl const* decl)
             struct cst_member const* const member = members[i];
             switch (member->kind) {
             case CST_MEMBER_VARIABLE: {
-                order_typespec(orderer, member->data.variable.typespec);
+                order_type(orderer, member->data.variable.type);
                 continue;
             }
             case CST_MEMBER_CONSTANT: {
@@ -290,20 +290,20 @@ order_decl(struct orderer* orderer, struct cst_decl const* decl)
         return;
     }
     case CST_DECL_ALIAS: {
-        order_typespec(orderer, decl->data.alias.typespec);
+        order_type(orderer, decl->data.alias.type);
         return;
     }
     case CST_DECL_EXTERN_VARIABLE: {
-        order_typespec(orderer, decl->data.extern_variable.typespec);
+        order_type(orderer, decl->data.extern_variable.type);
         return;
     }
     case CST_DECL_EXTERN_FUNCTION: {
         struct cst_function_parameter const* const* const function_parameters =
             decl->data.extern_function.function_parameters;
         for (size_t i = 0; i < sbuf_count(function_parameters); ++i) {
-            order_typespec(orderer, function_parameters[i]->typespec);
+            order_type(orderer, function_parameters[i]->type);
         }
-        order_typespec(orderer, decl->data.extern_function.return_typespec);
+        order_type(orderer, decl->data.extern_function.return_type);
         return;
     }
     }
@@ -346,7 +346,7 @@ order_expr(struct orderer* orderer, struct cst_expr const* expr)
         return;
     }
     case CST_EXPR_INIT: {
-        order_typespec(orderer, expr->data.init.typespec);
+        order_type(orderer, expr->data.init.type);
         sbuf(struct cst_member_initializer const* const) const initializers =
             expr->data.init.initializers;
         for (size_t i = 0; i < sbuf_count(initializers); ++i) {
@@ -357,7 +357,7 @@ order_expr(struct orderer* orderer, struct cst_expr const* expr)
         return;
     }
     case CST_EXPR_CAST: {
-        order_typespec(orderer, expr->data.cast.typespec);
+        order_type(orderer, expr->data.cast.type);
         order_expr(orderer, expr->data.cast.expr);
         return;
     }
@@ -394,11 +394,11 @@ order_expr(struct orderer* orderer, struct cst_expr const* expr)
         return;
     }
     case CST_EXPR_SIZEOF: {
-        order_typespec(orderer, expr->data.sizeof_.rhs);
+        order_type(orderer, expr->data.sizeof_.rhs);
         return;
     }
     case CST_EXPR_ALIGNOF: {
-        order_typespec(orderer, expr->data.alignof_.rhs);
+        order_type(orderer, expr->data.alignof_.rhs);
         return;
     }
     case CST_EXPR_EMBED: {
@@ -420,51 +420,51 @@ order_expr(struct orderer* orderer, struct cst_expr const* expr)
 
 static void
 order_template_argument_list(
-    struct orderer* orderer, struct cst_typespec const* const* arguments)
+    struct orderer* orderer, struct cst_type const* const* arguments)
 {
     assert(orderer != NULL);
 
     for (size_t i = 0; i < sbuf_count(arguments); ++i) {
-        order_typespec(orderer, arguments[i]);
+        order_type(orderer, arguments[i]);
     }
 }
 
 static void
-order_typespec(struct orderer* orderer, struct cst_typespec const* typespec)
+order_type(struct orderer* orderer, struct cst_type const* type)
 {
     assert(orderer != NULL);
-    assert(typespec != NULL);
+    assert(type != NULL);
 
-    switch (typespec->kind) {
-    case CST_TYPESPEC_SYMBOL: {
-        order_symbol(orderer, typespec->data.symbol);
+    switch (type->kind) {
+    case CST_TYPE_SYMBOL: {
+        order_symbol(orderer, type->data.symbol);
         return;
     }
-    case CST_TYPESPEC_FUNCTION: {
-        sbuf(struct cst_typespec const* const) const parameter_typespecs =
-            typespec->data.function.parameter_typespecs;
-        for (size_t i = 0; i < sbuf_count(parameter_typespecs); ++i) {
-            order_typespec(orderer, parameter_typespecs[i]);
+    case CST_TYPE_FUNCTION: {
+        sbuf(struct cst_type const* const) const parameter_types =
+            type->data.function.parameter_types;
+        for (size_t i = 0; i < sbuf_count(parameter_types); ++i) {
+            order_type(orderer, parameter_types[i]);
         }
 
-        order_typespec(orderer, typespec->data.function.return_typespec);
+        order_type(orderer, type->data.function.return_type);
         return;
     }
-    case CST_TYPESPEC_ARRAY: {
-        order_expr(orderer, typespec->data.array.count);
-        order_typespec(orderer, typespec->data.array.base);
+    case CST_TYPE_POINTER: {
+        order_type(orderer, type->data.pointer.base);
         return;
     }
-    case CST_TYPESPEC_TYPEOF: {
-        order_expr(orderer, typespec->data.typeof_.expr);
+    case CST_TYPE_ARRAY: {
+        order_expr(orderer, type->data.array.count);
+        order_type(orderer, type->data.array.base);
         return;
     }
-    case CST_TYPESPEC_POINTER: {
-        order_typespec(orderer, typespec->data.pointer.base);
+    case CST_TYPE_SLICE: {
+        order_type(orderer, type->data.slice.base);
         return;
     }
-    case CST_TYPESPEC_SLICE: {
-        order_typespec(orderer, typespec->data.slice.base);
+    case CST_TYPE_TYPEOF: {
+        order_expr(orderer, type->data.typeof_.expr);
         return;
     }
     }
@@ -518,7 +518,7 @@ order_symbol(struct orderer* orderer, struct cst_symbol const* symbol)
     }
 
     if (symbol->start == CST_SYMBOL_START_TYPE) {
-        order_typespec(orderer, symbol->typespec);
+        order_type(orderer, symbol->type);
         return;
     }
 

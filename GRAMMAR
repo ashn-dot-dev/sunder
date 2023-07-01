@@ -4,25 +4,25 @@
 
 <import> ::= "import" <literal-bytes> ";"
 
-<decl-variable> ::= "var" <identifier> (":" <typespec>)? "=" <expr> ";"
-                  | "var" <identifier> ":" <typespec> "=" "uninit" ";"
+<decl-variable> ::= "var" <identifier> (":" <type>)? "=" <expr> ";"
+                  | "var" <identifier> ":" <type> "=" "uninit" ";"
 
-<decl-constant> ::= "let" <identifier> (":" <typespec>)? "=" <expr> ";"
-                  | "let" <identifier> ":" <typespec> "=" "uninit" ";"
+<decl-constant> ::= "let" <identifier> (":" <type>)? "=" <expr> ";"
+                  | "let" <identifier> ":" <type> "=" "uninit" ";"
 
-<decl-function> ::= "func" <identifier> <template-parameter-list>? "(" <parameter-list> ")" <typespec> <block>
+<decl-function> ::= "func" <identifier> <template-parameter-list>? "(" <parameter-list> ")" <type> <block>
 
 <decl-struct> ::= "struct" <identifier> <template-parameter-list>? "{" <member-list> "}"
 
 <decl-union> ::= "union" <identifier> <template-parameter-list>? "{" <member-list> "}"
 
-<decl-extend> ::= "extend" <typespec> <decl>
+<decl-extend> ::= "extend" <type> <decl>
 
-<decl-alias> ::= "alias" <identifier> "=" <typespec> ";"
+<decl-alias> ::= "alias" <identifier> "=" <type> ";"
 
-<decl-extern-variable> ::= "extern" "var" <identifier> ":" <typespec> ";"
+<decl-extern-variable> ::= "extern" "var" <identifier> ":" <type> ";"
 
-<decl-extern-function> ::= "extern" "func" <identifier> "(" <parameter-list> ")" <typespec> ";"
+<decl-extern-function> ::= "extern" "func" <identifier> "(" <parameter-list> ")" <type> ";"
 
 <module-level-decl> := <decl-variable>
                      | <decl-constant>
@@ -96,15 +96,15 @@
 
 <expr-bytes> ::= <literal-bytes>
 
-<expr-list> ::= "(" ":" <typespec> ")" "[" "]"
-              | "(" ":" <typespec> ")" "[" <expr> "..." "]"
-              | "(" ":" <typespec> ")" "[" <expr> ("," <expr>)* ("," | ("," <expr> "...")?)? "]"
+<expr-list> ::= "(" ":" <type> ")" "[" "]"
+              | "(" ":" <type> ")" "[" <expr> "..." "]"
+              | "(" ":" <type> ")" "[" <expr> ("," <expr>)* ("," | ("," <expr> "...")?)? "]"
 
-<expr-slice> ::= "(" ":" <typespec-slice> ")" "{" <expr> "," <expr> "}"
+<expr-slice> ::= "(" ":" <type-slice> ")" "{" <expr> "," <expr> "}"
 
-<expr-init> ::= "(" ":" <typespec> ")" "{" <member-initializer-list> "}"
+<expr-init> ::= "(" ":" <type> ")" "{" <member-initializer-list> "}"
 
-<expr-cast> ::= "(" ":" <typespec> ")" <expr>
+<expr-cast> ::= "(" ":" <type> ")" <expr>
 
 <expr-grouped> ::= "(" <expr> ")"
 
@@ -118,9 +118,9 @@
 
 <expr-access-dereference> ::= <expr> ".*"
 
-<expr-sizeof> ::= "sizeof" "(" <typespec> ")"
+<expr-sizeof> ::= "sizeof" "(" <type> ")"
 
-<expr-alignof> ::= "alignof" "(" <typespec> ")"
+<expr-alignof> ::= "alignof" "(" <type> ")"
 
 <expr-alignof> ::= "embed" "(" <literal-bytes> ")"
 
@@ -162,17 +162,17 @@
 
 <symbol> ::= <symbol-element> ("::" <symbol-element>)*
            | "::" <symbol-element> ("::" <symbol-element>)*
-           | <typespec-typeof> "::" <symbol-element> ("::" <symbol-element>)*
+           | <type-typeof> "::" <symbol-element> ("::" <symbol-element>)*
 
 <symbol-element> ::= <identifier> <template-argument-list>?
 
 <template-parameter-list> ::= "[" "[" <identifier> ("," <identifier>)* "]" "]"
 
-<template-argument-list> ::= <typespec>+
+<template-argument-list> ::= <type>+
 
 <function-parameter-list> ::= ( <function-parameter> ("," <function-parameter>)* )?
 
-<function-parameter> ::= <identifier> ":" <typespec>
+<function-parameter> ::= <identifier> ":" <type>
 
 <member-list> ::= <member>*
 
@@ -180,7 +180,7 @@
            | <member-constant>
            | <member-function>
 
-<member-variable> ::= "var" <identifier> ":" <typespec> ";"
+<member-variable> ::= "var" <identifier> ":" <type> ";"
 
 <member-constant> ::= <decl-constant>
 
@@ -190,22 +190,22 @@
 
 <member-initializer> ::= "." <identifier> "=" (<expr> | "uninit")
 
-<typespec> ::= <symbol>
-             | <typespec-function>
-             | <typespec-pointer>
-             | <typespec-array>
-             | <typespec-slice>
-             | <typespec-typeof>
+<type> ::= <symbol>
+             | <type-function>
+             | <type-pointer>
+             | <type-array>
+             | <type-slice>
+             | <type-typeof>
 
-<typespec-function> ::= func "(" ( <typespec> ("," <typespec> )* )? ")" <typespec>
+<type-function> ::= func "(" ( <type> ("," <type> )* )? ")" <type>
 
-<typespec-pointer> ::= "*" <typespec>
+<type-pointer> ::= "*" <type>
 
-<typespec-array> ::= "[" <expr> "]" <typespec>
+<type-array> ::= "[" <expr> "]" <type>
 
-<typespec-slice> ::= "[" "]" <typespec>
+<type-slice> ::= "[" "]" <type>
 
-<typespec-typeof> ::= "typeof" "(" <expr> ")"
+<type-typeof> ::= "typeof" "(" <expr> ")"
 
 <identifier> ::= <letter> (<letter> | <digit-dec>)*
 
