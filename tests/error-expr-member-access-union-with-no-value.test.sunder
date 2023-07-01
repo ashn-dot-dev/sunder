@@ -1,0 +1,11 @@
+union u {
+    var x: u16;
+    var y: u32;
+}
+
+let a: u = uninit;
+let b = a.x;
+################################################################################
+# [error-expr-member-access-union-with-no-value.test.sunder:7] error: constant `a` of type `u` is uninitialized
+# let b = a.x;
+#         ^

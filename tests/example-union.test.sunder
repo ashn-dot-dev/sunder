@@ -1,0 +1,129 @@
+import "sys";
+
+union empty { }
+
+var empty_a: empty = (:empty){};
+let empty_b: empty = (:empty){};
+
+union contains_empty {
+    var e: empty;
+}
+
+var contains_empty_a: contains_empty = (:contains_empty){.e = empty_b};
+let contains_empty_b: contains_empty = (:contains_empty){.e = empty_b};
+
+union u16_or_u32 {
+    var the_u16: u16;
+    var the_u32: u32;
+}
+
+let u16_or_u32_with_u16 = (:u16_or_u32){.the_u16 = 0xFFFFu16};
+let u16_or_u32_with_u32 = (:u16_or_u32){.the_u32 = 0xFFFFFFFFu32};
+
+union either[[T1, T2]] {
+    var this: T1;
+    var that: T2;
+}
+
+let either_a = (:either[[ssize, []byte]]){.this = 123};
+let either_b = (:either[[ssize, []byte]]){.that = "foo"};
+let _: ssize = either_a.this; # Make sure we can assign from a constant union.
+
+union self_referential {
+    var p_self: *self_referential;
+    var pp_self: **self_referential;
+}
+
+union with_member_constants_and_member_functions {
+    var x: u32;
+    var y: u64;
+
+    let X = 0xAAAAAAAAu32;
+    let Y = 0xBBBBBBBBBBBBBBBBu64;
+
+    func init_x(x: u32) with_member_constants_and_member_functions {
+        return (:with_member_constants_and_member_functions){.x = x};
+    }
+
+    func init_y(y: u64) with_member_constants_and_member_functions {
+        return (:with_member_constants_and_member_functions){.y = y};
+    }
+
+    func dump(self: *with_member_constants_and_member_functions) void {
+        sys::dump[[with_member_constants_and_member_functions]](*self);
+    }
+}
+
+func main() void {
+    sys::dump[[empty]](empty_a);
+    sys::dump[[empty]](empty_b);
+    empty_a = empty_b;
+    sys::dump[[empty]](empty_a);
+    empty_a = (:empty){};
+    sys::dump[[empty]](empty_a);
+
+    sys::dump[[contains_empty]](contains_empty_a);
+    sys::dump[[contains_empty]](contains_empty_b);
+    contains_empty_a = contains_empty_b;
+    sys::dump[[contains_empty]](contains_empty_a);
+    contains_empty_a.e = (:empty){};
+
+    sys::dump[[u16_or_u32]](u16_or_u32_with_u16);
+    sys::dump[[u16_or_u32]](u16_or_u32_with_u32);
+
+    var foo = (:u16_or_u32){.the_u16 = 0xAAAAu16};
+    sys::dump[[u16_or_u32]](foo);
+    foo = (:u16_or_u32){.the_u32 = 0xBBBBBBBBu32};
+    sys::dump[[u16_or_u32]](foo);
+    foo = (:u16_or_u32){.the_u16 = 0xCCCCu16};
+    sys::dump[[u16_or_u32]](foo);
+    sys::dump[[u16]](foo.the_u16);
+    sys::dump[[u32]](foo.the_u32);
+
+    var foo = (:u16_or_u32){.the_u16 = 0xAAAAu16};
+    sys::dump[[u16_or_u32]](foo);
+    foo.the_u32 = 0xBBBBBBBBu32;
+    sys::dump[[u16_or_u32]](foo);
+    # TODO: Should we find a way to zero padding when a smaller union member
+    # variable is assigned-to after being initialized with a larger union
+    # member? Here, the final dump of the union will be `CC CC BB BB` rather
+    # than `CC CC 00 00` because the lvalue associated with `foo.the_u16` only
+    # specifies two bytes of data to overwrite.
+    foo.the_u16 = 0xCCCCu16;
+    sys::dump[[u16_or_u32]](foo);
+
+    var foo = (:either[[u64, u32]]){.this = 0xAAAAAAAAAAAAAAAA};
+    sys::dump[[either[[u64, u32]]]](foo);
+    foo.that = 0xBBBBBBBB;
+    sys::dump[[either[[u64, u32]]]](foo);
+
+    var foo: self_referential = uninit;
+    foo.p_self = &foo;
+
+    var x = with_member_constants_and_member_functions::init_x(with_member_constants_and_member_functions::X);
+    var y = with_member_constants_and_member_functions::init_y(with_member_constants_and_member_functions::Y);
+    x.dump();
+    y.dump();
+}
+################################################################################
+#
+#
+#
+#
+#
+#
+#
+# FF FF 00 00
+# FF FF FF FF
+# AA AA 00 00
+# BB BB BB BB
+# CC CC 00 00
+# CC CC
+# CC CC 00 00
+# AA AA 00 00
+# BB BB BB BB
+# CC CC BB BB
+# AA AA AA AA AA AA AA AA
+# BB BB BB BB AA AA AA AA
+# AA AA AA AA 00 00 00 00
+# BB BB BB BB BB BB BB BB

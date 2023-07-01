@@ -1,0 +1,10 @@
+union u {
+    var x: usize;
+    var y: ssize;
+}
+
+let a = (:u){.x = 123, .y = 456};
+################################################################################
+# [error-expr-init-union-expected-one-initializer-got-two.test.sunder:6] error: union type `u` requires exactly one initializer
+# let a = (:u){.x = 123, .y = 456};
+#         ^

@@ -1,0 +1,15 @@
+union a {
+    var member: b;
+}
+
+union b {
+    var member: c;
+}
+
+union c {
+    var member: a;
+}
+################################################################################
+# [error-union-contains-incomplete-union.test.sunder:10] error: union `c` contains a member variable of incomplete union type `a`
+#     var member: a;
+#     ^

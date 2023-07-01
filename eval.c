@@ -25,7 +25,7 @@ eval_rvalue_slice_list(struct expr const* expr);
 static struct value*
 eval_rvalue_slice(struct expr const* expr);
 static struct value*
-eval_rvalue_struct(struct expr const* expr);
+eval_rvalue_init(struct expr const* expr);
 static struct value*
 eval_rvalue_cast(struct expr const* expr);
 static struct value*
@@ -166,7 +166,8 @@ sized_primitive_value_to_new_bytes(struct value const* value)
     case TYPE_POINTER: /* fallthrough */
     case TYPE_ARRAY: /* fallthrough */
     case TYPE_SLICE: /* fallthrough */
-    case TYPE_STRUCT: {
+    case TYPE_STRUCT: /* fallthrough */
+    case TYPE_UNION: {
         UNREACHABLE();
     }
     }
@@ -199,8 +200,8 @@ eval_rvalue(struct expr const* expr)
     case EXPR_SLICE: {
         return eval_rvalue_slice(expr);
     }
-    case EXPR_STRUCT: {
-        return eval_rvalue_struct(expr);
+    case EXPR_INIT: {
+        return eval_rvalue_init(expr);
     }
     case EXPR_CAST: {
         return eval_rvalue_cast(expr);
@@ -330,10 +331,11 @@ eval_rvalue_slice(struct expr const* expr)
 }
 
 static struct value*
-eval_rvalue_struct(struct expr const* expr)
+eval_rvalue_init_struct(struct expr const* expr)
 {
     assert(expr != NULL);
-    assert(expr->kind == EXPR_STRUCT);
+    assert(expr->kind == EXPR_INIT);
+    assert(expr->type->kind == TYPE_STRUCT);
 
     struct value* const value = value_new_struct(expr->type);
 
@@ -341,8 +343,8 @@ eval_rvalue_struct(struct expr const* expr)
         expr->type->data.struct_.member_variables;
     (void)defs;
 
-    sbuf(struct member_variable_initializer const) initializers =
-        expr->data.struct_.initializers;
+    sbuf(struct member_variable_initializer const) const initializers =
+        expr->data.init.initializers;
 
     assert(sbuf_count(defs) == sbuf_count(initializers));
     for (size_t i = 0; i < sbuf_count(initializers); ++i) {
@@ -356,6 +358,53 @@ eval_rvalue_struct(struct expr const* expr)
     }
 
     return value;
+}
+
+static struct value*
+eval_rvalue_init_union(struct expr const* expr)
+{
+    assert(expr != NULL);
+    assert(expr->kind == EXPR_INIT);
+    assert(expr->type->kind == TYPE_UNION);
+
+    sbuf(struct member_variable const) const member_variables =
+        expr->type->data.union_.member_variables;
+    sbuf(struct member_variable_initializer const) const initializers =
+        expr->data.init.initializers;
+
+    struct value* const value = value_new_union(expr->type);
+    if (sbuf_count(member_variables) == 0) {
+        assert(sbuf_count(initializers) == 0);
+        return value;
+    }
+
+    assert(sbuf_count(initializers) == 1);
+    value_set_member(
+        value,
+        initializers[0].variable->name,
+        eval_rvalue(initializers[0].expr));
+
+    assert(value->data.union_.member_variable != NULL);
+    assert(value->data.union_.member_value != NULL);
+    return value;
+}
+
+static struct value*
+eval_rvalue_init(struct expr const* expr)
+{
+    assert(expr != NULL);
+    assert(expr->kind == EXPR_INIT);
+    assert(expr->type->kind == TYPE_STRUCT || expr->type->kind == TYPE_UNION);
+
+    if (expr->type->kind == TYPE_STRUCT) {
+        return eval_rvalue_init_struct(expr);
+    }
+    if (expr->type->kind == TYPE_UNION) {
+        return eval_rvalue_init_union(expr);
+    }
+
+    UNREACHABLE();
+    return NULL;
 }
 
 static struct value*
@@ -432,7 +481,8 @@ eval_rvalue_cast(struct expr const* expr)
         case TYPE_POINTER: /* fallthrough */
         case TYPE_ARRAY: /* fallthrough */
         case TYPE_SLICE: /* fallthrough */
-        case TYPE_STRUCT: {
+        case TYPE_STRUCT: /* fallthrough */
+        case TYPE_UNION: {
             UNREACHABLE();
         }
         }
@@ -699,7 +749,8 @@ eval_rvalue_cast(struct expr const* expr)
     case TYPE_POINTER: /* fallthrough */
     case TYPE_ARRAY: /* fallthrough */
     case TYPE_SLICE: /* fallthrough */
-    case TYPE_STRUCT: {
+    case TYPE_STRUCT: /* fallthrough */
+    case TYPE_UNION: {
         UNREACHABLE();
     }
     }
@@ -853,7 +904,7 @@ eval_rvalue_access_member_variable(struct expr const* expr)
     struct value* const lhs =
         eval_rvalue(expr->data.access_member_variable.lhs);
 
-    struct value const* const member = value_xget_member_variable(
+    struct value const* const member = value_xget_member_value(
         expr->location,
         lhs,
         expr->data.access_member_variable.member_variable->name);
@@ -1502,7 +1553,7 @@ eval_lvalue(struct expr const* expr)
     case EXPR_ARRAY_LIST: /* fallthrough */
     case EXPR_SLICE_LIST: /* fallthrough */
     case EXPR_SLICE: /* fallthrough */
-    case EXPR_STRUCT: /* fallthrough */
+    case EXPR_INIT: /* fallthrough */
     case EXPR_CAST: /* fallthrough */
     case EXPR_CALL: /* fallthrough */
     case EXPR_ACCESS_SLICE: /* fallthrough */

@@ -188,6 +188,8 @@ resolve_decl_function(struct resolver* resolver, struct cst_decl const* decl);
 static struct symbol const*
 resolve_decl_struct(struct resolver* resolver, struct cst_decl const* decl);
 static struct symbol const*
+resolve_decl_union(struct resolver* resolver, struct cst_decl const* decl);
+static struct symbol const*
 resolve_decl_extend(struct resolver* resolver, struct cst_decl const* decl);
 static struct symbol const*
 resolve_decl_alias(struct resolver* resolver, struct cst_decl const* decl);
@@ -200,6 +202,11 @@ resolve_decl_extern_function(
 
 static void
 complete_struct(
+    struct resolver* resolver,
+    struct symbol const* symbol,
+    struct cst_decl const* decl);
+static void
+complete_union(
     struct resolver* resolver,
     struct symbol const* symbol,
     struct cst_decl const* decl);
@@ -260,7 +267,7 @@ resolve_expr_list(struct resolver* resolver, struct cst_expr const* expr);
 static struct expr const*
 resolve_expr_slice(struct resolver* resolver, struct cst_expr const* expr);
 static struct expr const*
-resolve_expr_struct(struct resolver* resolver, struct cst_expr const* expr);
+resolve_expr_init(struct resolver* resolver, struct cst_expr const* expr);
 static struct expr const*
 resolve_expr_cast(struct resolver* resolver, struct cst_expr const* expr);
 static struct expr const*
@@ -762,7 +769,9 @@ xget_template_instance(
 
     // Currently, functions and structs are the only declarations that can be
     // templated, so the rest off this function will only cater to these cases.
-    assert(decl->kind == CST_DECL_FUNCTION || decl->kind == CST_DECL_STRUCT);
+    assert(
+        decl->kind == CST_DECL_FUNCTION || decl->kind == CST_DECL_STRUCT
+        || decl->kind == CST_DECL_UNION);
     if (decl->kind == CST_DECL_FUNCTION) {
         sbuf(struct cst_identifier const) const template_parameters =
             decl->data.function.template_parameters;
@@ -902,9 +911,11 @@ xget_template_instance(
 
         return resolved_symbol;
     }
-    if (decl->kind == CST_DECL_STRUCT) {
+    if (decl->kind == CST_DECL_STRUCT || decl->kind == CST_DECL_UNION) {
         sbuf(struct cst_identifier const) const template_parameters =
-            decl->data.struct_.template_parameters;
+            decl->kind == CST_DECL_STRUCT
+            ? decl->data.struct_.template_parameters
+            : decl->data.union_.template_parameters;
         size_t const template_parameters_count =
             sbuf_count(template_parameters);
         size_t const template_arguments_count = sbuf_count(template_arguments);
@@ -926,7 +937,7 @@ xget_template_instance(
         }
         sbuf_freeze(template_types);
 
-        // Replace struct identifier (i.e. name).
+        // Replace the type identifier (i.e. name).
         struct string* const name_string = string_new_cstr(symbol->name);
         string_append_cstr(name_string, "[[");
         for (size_t i = 0; i < template_arguments_count; ++i) {
@@ -942,14 +953,15 @@ xget_template_instance(
         struct cst_identifier const instance_identifier =
             cst_identifier_init(location, name_interned);
         // Replace template parameters. Zero template parameters means this
-        // struct is no longer a template.
+        // type is no longer a template.
         sbuf(struct cst_identifier const) const instance_template_parameters =
             NULL;
-        // Struct members do not change. When the actual struct is resolved it
-        // will do so inside a symbol table where a template parameter's name
-        // maps to the template instance's chosen type symbol.
+        // Struct/union members do not change. When the actual struct/union is
+        // resolved it will do so inside a symbol table where a template
+        // parameter's name maps to the template instance's chosen type symbol.
         sbuf(struct cst_member const* const) const instance_members =
-            decl->data.struct_.members;
+            decl->kind == CST_DECL_STRUCT ? decl->data.struct_.members
+                                          : decl->data.union_.members;
 
         // Check if a symbol corresponding to these template arguments has
         // already been created. If so then we reuse the cached symbol.
@@ -974,18 +986,24 @@ xget_template_instance(
                 symbol,
                 false);
         }
-        // Store the template struct itself in addition to the template
-        // arguments so that self referential structs (e.g. return values of
-        // init functions) do not have to fully qualify the struct type.
+        // Store the template struct/union itself in addition to the template
+        // arguments so that self referential types (e.g. return values of
+        // init functions) do not have to fully qualify the type.
         symbol_table_insert(instance_symbol_table, symbol->name, symbol, false);
         symbol_table_freeze(instance_symbol_table);
 
         // Generate the template instance concrete syntax tree.
-        struct cst_decl* const instance_decl = cst_decl_new_struct(
-            location,
-            instance_identifier,
-            instance_template_parameters,
-            instance_members);
+        struct cst_decl* const instance_decl = decl->kind == CST_DECL_STRUCT
+            ? cst_decl_new_struct(
+                location,
+                instance_identifier,
+                instance_template_parameters,
+                instance_members)
+            : cst_decl_new_union(
+                location,
+                instance_identifier,
+                instance_template_parameters,
+                instance_members);
         freeze(instance_decl);
 
         struct template_instantiation_link* link = xalloc(NULL, sizeof(*link));
@@ -1014,8 +1032,9 @@ xget_template_instance(
         resolver->current_static_addr_prefix =
             symbol->data.template.symbol_addr_prefix;
         resolver->current_symbol_table = instance_symbol_table;
-        struct symbol const* resolved_symbol =
-            resolve_decl_struct(resolver, instance_decl);
+        struct symbol const* resolved_symbol = decl->kind == CST_DECL_STRUCT
+            ? resolve_decl_struct(resolver, instance_decl)
+            : resolve_decl_union(resolver, instance_decl);
 
         resolver->current_symbol_name_prefix = save_symbol_name_prefix;
         resolver->current_static_addr_prefix = save_static_addr_prefix;
@@ -1029,11 +1048,16 @@ xget_template_instance(
             resolved_symbol,
             false);
 
-        // Now that the instance is in the cache we can complete the struct. If
+        // Now that the instance is in the cache we can complete the type. If
         // we did not add the instance to the cache first then any self
         // referential template instances would cause instance resolution to
         // enter an infinite loop.
-        complete_struct(resolver, resolved_symbol, instance_decl);
+        if (decl->kind == CST_DECL_STRUCT) {
+            complete_struct(resolver, resolved_symbol, instance_decl);
+        }
+        if (decl->kind == CST_DECL_UNION) {
+            complete_union(resolver, resolved_symbol, instance_decl);
+        }
 
         context()->template_instantiation_chain = link->next;
 
@@ -1641,9 +1665,10 @@ resolve_decl(struct resolver* resolver, struct cst_decl const* decl)
     case CST_DECL_FUNCTION: {
         return resolve_decl_function(resolver, decl);
     }
-    case CST_DECL_STRUCT: {
+    case CST_DECL_STRUCT: /* fallthrough */
+    case CST_DECL_UNION: {
         // Should have already been resolved in the initial pre-declaration of
-        // all top-level structs.
+        // all top-level structs/unions.
         UNREACHABLE();
     }
     case CST_DECL_EXTEND: {
@@ -1976,7 +2001,7 @@ resolve_decl_struct(struct resolver* resolver, struct cst_decl const* decl)
     assert(decl != NULL);
     assert(decl->kind == CST_DECL_STRUCT);
 
-    // Check for declaration of a template function.
+    // Check for declaration of a template struct.
     sbuf(struct cst_identifier const) const template_parameters =
         decl->data.struct_.template_parameters;
     if (sbuf_count(template_parameters) != 0) {
@@ -2028,6 +2053,77 @@ resolve_decl_struct(struct resolver* resolver, struct cst_decl const* decl)
                 // XXX: Calling sbuf_fini here because GCC 8.3 ASan will think
                 // we leak even though we hold a valid path to the buffer.
                 sbuf_fini(type->data.struct_.member_variables);
+
+                fatal(
+                    members[j]->location,
+                    "duplicate definition of member `%s`",
+                    members[j]->name);
+            }
+        }
+    }
+
+    return symbol;
+}
+
+static struct symbol const*
+resolve_decl_union(struct resolver* resolver, struct cst_decl const* decl)
+{
+    assert(resolver != NULL);
+    assert(decl != NULL);
+    assert(decl->kind == CST_DECL_UNION);
+
+    // Check for declaration of a template union.
+    sbuf(struct cst_identifier const) const template_parameters =
+        decl->data.union_.template_parameters;
+    if (sbuf_count(template_parameters) != 0) {
+        struct symbol_table* const symbols =
+            symbol_table_new(resolver->current_symbol_table);
+        struct symbol* const template_symbol = symbol_new_template(
+            decl->location,
+            decl->name,
+            decl,
+            resolver->current_symbol_name_prefix,
+            resolver->current_static_addr_prefix,
+            resolver->current_symbol_table,
+            symbols);
+
+        freeze(template_symbol);
+        sbuf_push(context()->chilling_symbol_tables, symbols);
+        symbol_table_insert(
+            resolver->current_symbol_table,
+            template_symbol->name,
+            template_symbol,
+            false);
+        return template_symbol;
+    }
+
+    struct symbol_table* const struct_symbols =
+        symbol_table_new(resolver->current_symbol_table);
+    sbuf_push(context()->chilling_symbol_tables, struct_symbols);
+    struct type* const type = type_new_union(
+        qualified_name(resolver->current_symbol_name_prefix, decl->name),
+        struct_symbols);
+    freeze(type);
+
+    struct symbol* const symbol = symbol_new_type(decl->location, type);
+    freeze(symbol);
+
+    // Add the symbol to the current symbol table so that unions with
+    // self-referential pointer and slice members may reference the type.
+    symbol_table_insert(
+        resolver->current_symbol_table, decl->name, symbol, false);
+
+    sbuf(struct cst_member const* const) const members =
+        decl->data.union_.members;
+    size_t const members_count = sbuf_count(members);
+
+    // Check for duplicate member definitions.
+    for (size_t i = 0; i < members_count; ++i) {
+        for (size_t j = i + 1; j < members_count; ++j) {
+            if (members[i]->name == members[j]->name) {
+                // XXX: Calling sbuf_fini here because GCC 8.3 ASan will think
+                // we leak even though we hold a valid path to the buffer.
+                sbuf_fini(type->data.union_.member_variables);
 
                 fatal(
                     members[j]->location,
@@ -2311,6 +2407,14 @@ complete_struct(
                     struct_type->name,
                     member_type->name);
             }
+            if (member_type->kind == TYPE_UNION
+                && !member_type->data.union_.is_complete) {
+                fatal(
+                    member->location,
+                    "struct `%s` contains a member variable of incomplete union type `%s`",
+                    struct_type->name,
+                    member_type->name);
+            }
 
             // Increase the offset into the struct until the start of the added
             // member variable is aligned to a valid byte boundary. The offset
@@ -2390,6 +2494,161 @@ complete_struct(
                 sbuf_freeze(member_variables);
                 struct_type->data.struct_.member_variables = member_variables;
                 sbuf_push(context()->types, struct_type);
+            }
+            continue;
+        }
+        case CST_MEMBER_CONSTANT: {
+            resolve_decl_constant(resolver, member->data.constant.decl);
+            continue;
+        }
+        case CST_MEMBER_FUNCTION: {
+            resolve_decl_function(resolver, member->data.function.decl);
+            continue;
+        }
+        }
+
+        UNREACHABLE();
+    }
+
+    resolver->current_symbol_name_prefix = save_symbol_name_prefix;
+    resolver->current_static_addr_prefix = save_static_addr_prefix;
+    resolver->current_symbol_table = save_symbol_table;
+}
+
+static void
+complete_union(
+    struct resolver* resolver,
+    struct symbol const* symbol,
+    struct cst_decl const* decl)
+{
+    assert(resolver != NULL);
+    assert(symbol != NULL);
+    assert(symbol->kind == SYMBOL_TYPE);
+    assert(symbol_xget_type(symbol)->kind == TYPE_UNION);
+    assert(decl != NULL);
+    assert(decl->kind == CST_DECL_UNION);
+    assert(cstr_ends_with(symbol->name, decl->name));
+
+    sbuf(struct cst_member const* const) const members =
+        decl->data.union_.members;
+    size_t const members_count = sbuf_count(members);
+
+    // XXX: Evil const cast.
+    struct type* union_type = (struct type*)symbol_xget_type(symbol);
+    // XXX: Evil const cast.
+    struct symbol_table* const union_symbols =
+        (struct symbol_table*)symbol_xget_type(symbol)->symbols;
+
+    sbuf(struct member_variable) member_variables = NULL;
+
+    // Add all member definitions to the union in the order that they were
+    // defined in.
+    char const* const save_symbol_name_prefix =
+        resolver->current_symbol_name_prefix;
+    char const* const save_static_addr_prefix =
+        resolver->current_static_addr_prefix;
+    struct symbol_table* const save_symbol_table =
+        resolver->current_symbol_table;
+
+    resolver->current_symbol_name_prefix = symbol_xget_type(symbol)->name;
+    resolver->current_static_addr_prefix =
+        normalize(symbol_xget_type(symbol)->name, 0);
+    resolver->current_symbol_table = union_symbols;
+
+    // If the union contains no member variable declarations, then the union
+    // should be marked as complete since the size and alignment will always be
+    // zero. Default assume that the union is complete, then iterate through
+    // the rest of the member declarations to see if the union should actually
+    // still be marked as incomplete.
+    union_type->data.union_.is_complete = true;
+    for (size_t i = 0; i < members_count; ++i) {
+        struct cst_member const* const future_member = members[i];
+        if (future_member->kind == CST_MEMBER_VARIABLE) {
+            union_type->data.union_.is_complete = false;
+            break;
+        }
+    }
+    if (union_type->data.union_.is_complete) {
+        sbuf_push(context()->types, union_type);
+    }
+
+    for (size_t i = 0; i < members_count; ++i) {
+        struct cst_member const* const member = members[i];
+        switch (member->kind) {
+        case CST_MEMBER_VARIABLE: {
+            char const* const member_name = member->name;
+            struct type const* const member_type =
+                resolve_typespec(resolver, member->data.variable.typespec);
+            if (member_type->kind == TYPE_STRUCT
+                && !member_type->data.struct_.is_complete) {
+                fatal(
+                    member->location,
+                    "union `%s` contains a member variable of incomplete struct type `%s`",
+                    union_type->name,
+                    member_type->name);
+            }
+            if (member_type->kind == TYPE_UNION
+                && !member_type->data.union_.is_complete) {
+                fatal(
+                    member->location,
+                    "union `%s` contains a member variable of incomplete union type `%s`",
+                    union_type->name,
+                    member_type->name);
+            }
+
+            // Member variables with size zero are part of the union, but do
+            // not contribute to the size or alignment of the union.
+            if (member_type->size == 0) {
+                struct member_variable const m = {
+                    .name = member_name,
+                    .type = member_type,
+                    .offset = 0,
+                };
+                sbuf_push(member_variables, m);
+                goto done_adding_member_variable;
+            }
+
+            assert(member_type->size != 0);
+            assert(member_type->align != 0);
+
+            // Push the added member variable onto the back of the unions's
+            // list of members.
+            struct member_variable const m = {
+                .name = member_name,
+                .type = member_type,
+                .offset = 0,
+            };
+            sbuf_push(member_variables, m);
+
+            // Adjust the union size and alignment to match the greatest size
+            // and alignment of the unions's member variables.
+            if (member_type->size >= union_type->size) {
+                union_type->size = member_type->size;
+            }
+            if (member_type->align >= union_type->align) {
+                union_type->align = member_type->align;
+            }
+
+        done_adding_member_variable:;
+
+            // If this is the last member variable declaration within the
+            // union, then the unions's final size and alignment are known, so
+            // the union can be marked as complete. Default assume that the
+            // union is complete, then iterate through the rest of the member
+            // declarations to see if the union should actually still be marked
+            // as incomplete.
+            union_type->data.union_.is_complete = true;
+            for (size_t j = i + 1; j < members_count; ++j) {
+                struct cst_member const* const future_member = members[j];
+                if (future_member->kind == CST_MEMBER_VARIABLE) {
+                    union_type->data.union_.is_complete = false;
+                    break;
+                }
+            }
+            if (union_type->data.union_.is_complete) {
+                sbuf_freeze(member_variables);
+                union_type->data.union_.member_variables = member_variables;
+                sbuf_push(context()->types, union_type);
             }
             continue;
         }
@@ -2638,6 +2897,10 @@ resolve_stmt_decl(struct resolver* resolver, struct cst_stmt const* stmt)
     }
     case CST_DECL_STRUCT: {
         fatal(decl->location, "local declaration of struct `%s`", decl->name);
+        return NULL;
+    }
+    case CST_DECL_UNION: {
+        fatal(decl->location, "local declaration of union `%s`", decl->name);
         return NULL;
     }
     case CST_DECL_EXTEND: {
@@ -3107,8 +3370,8 @@ resolve_expr(struct resolver* resolver, struct cst_expr const* expr)
     case CST_EXPR_SLICE: {
         return resolve_expr_slice(resolver, expr);
     }
-    case CST_EXPR_STRUCT: {
-        return resolve_expr_struct(resolver, expr);
+    case CST_EXPR_INIT: {
+        return resolve_expr_init(resolver, expr);
     }
     case CST_EXPR_CAST: {
         return resolve_expr_cast(resolver, expr);
@@ -3591,18 +3854,16 @@ resolve_expr_slice(struct resolver* resolver, struct cst_expr const* expr)
 }
 
 static struct expr const*
-resolve_expr_struct(struct resolver* resolver, struct cst_expr const* expr)
+resolve_expr_init_struct(
+    struct resolver* resolver,
+    struct cst_expr const* expr,
+    struct type const* const type)
 {
     assert(resolver != NULL);
     assert(expr != NULL);
-    assert(expr->kind == CST_EXPR_STRUCT);
+    assert(expr->kind == CST_EXPR_INIT);
+    assert(type->kind == TYPE_STRUCT);
 
-    struct type const* const type =
-        resolve_typespec(resolver, expr->data.struct_.typespec);
-    if (type->kind != TYPE_STRUCT) {
-        fatal(
-            expr->location, "expected struct type (received `%s`)", type->name);
-    }
     if (!type->data.struct_.is_complete) {
         fatal(expr->location, "struct type `%s` is incomplete", type->name);
     }
@@ -3611,7 +3872,7 @@ resolve_expr_struct(struct resolver* resolver, struct cst_expr const* expr)
         type->data.struct_.member_variables;
 
     sbuf(struct cst_member_initializer const* const) const initializers =
-        expr->data.struct_.initializers;
+        expr->data.init.initializers;
 
     // Resolve the expressions associated with each initializer element.
     // Expressions are resolved before the checks for duplicate elements,
@@ -3728,10 +3989,119 @@ resolve_expr_struct(struct resolver* resolver, struct cst_expr const* expr)
     sbuf_freeze(initializer_list);
 
     struct expr* const resolved =
-        expr_new_struct(expr->location, type, initializer_list);
+        expr_new_init(expr->location, type, initializer_list);
 
     freeze(resolved);
     return resolved;
+}
+
+static struct expr const*
+resolve_expr_init_union(
+    struct resolver* resolver,
+    struct cst_expr const* expr,
+    struct type const* const type)
+{
+    assert(resolver != NULL);
+    assert(expr != NULL);
+    assert(expr->kind == CST_EXPR_INIT);
+    assert(type->kind == TYPE_UNION);
+
+    if (!type->data.union_.is_complete) {
+        fatal(expr->location, "union type `%s` is incomplete", type->name);
+    }
+
+    sbuf(struct member_variable) const member_variable_defs =
+        type->data.union_.member_variables;
+    size_t const member_variable_defs_count = sbuf_count(member_variable_defs);
+
+    sbuf(struct cst_member_initializer const* const) const initializers =
+        expr->data.init.initializers;
+    size_t const initializers_count = sbuf_count(initializers);
+
+    if (member_variable_defs_count == 0 && initializers_count != 0) {
+        fatal(
+            expr->location,
+            "union type `%s` with no members variables requires exactly zero initializers",
+            type->name);
+    }
+    if (member_variable_defs_count != 0 && initializers_count != 1) {
+        fatal(
+            expr->location,
+            "union type `%s` requires exactly one initializer",
+            type->name);
+    }
+
+    if (initializers_count == 0) {
+        struct expr* const resolved = expr_new_init(expr->location, type, NULL);
+
+        freeze(resolved);
+        return resolved;
+    }
+
+    struct cst_member_initializer const* const initializer = initializers[0];
+    char const* const initializer_name = initializer->identifier.name;
+    struct expr const* initializer_expr =
+        resolve_expr(resolver, initializer->expr);
+
+    struct member_variable const* member_variable = NULL;
+    for (size_t i = 0; i < sbuf_count(member_variable_defs); ++i) {
+        if (initializer_name == member_variable_defs[i].name) {
+            member_variable = &member_variable_defs[i];
+            break;
+        }
+    }
+    if (member_variable == NULL) {
+        fatal(
+            initializer->location,
+            "union `%s` does not have a member variable `%s`",
+            type->name,
+            initializer_name);
+    }
+
+    initializer_expr = implicit_cast(member_variable->type, initializer_expr);
+    verify_type_compatibility(
+        initializer_expr->location,
+        initializer_expr->type,
+        member_variable->type);
+
+    sbuf(struct member_variable_initializer) initializer_list = NULL;
+    sbuf_push(
+        initializer_list,
+        (struct member_variable_initializer){
+            .variable = member_variable,
+            .expr = initializer_expr,
+        });
+    sbuf_freeze(initializer_list);
+
+    struct expr* const resolved =
+        expr_new_init(expr->location, type, initializer_list);
+
+    freeze(resolved);
+    return resolved;
+}
+
+static struct expr const*
+resolve_expr_init(struct resolver* resolver, struct cst_expr const* expr)
+{
+    assert(resolver != NULL);
+    assert(expr != NULL);
+    assert(expr->kind == CST_EXPR_INIT);
+
+    struct type const* const type =
+        resolve_typespec(resolver, expr->data.init.typespec);
+
+    if (type->kind == TYPE_STRUCT) {
+        return resolve_expr_init_struct(resolver, expr, type);
+    }
+    if (type->kind == TYPE_UNION) {
+        return resolve_expr_init_union(resolver, expr, type);
+    }
+
+    fatal(
+        expr->location,
+        "expected struct or union type (received `%s`)",
+        type->name);
+    return NULL;
 }
 
 static struct expr const*
@@ -4034,10 +4404,10 @@ resolve_expr_access_member(
 
     struct expr const* const lhs =
         resolve_expr(resolver, expr->data.access_member.lhs);
-    if (lhs->type->kind != TYPE_STRUCT) {
+    if (lhs->type->kind != TYPE_STRUCT && lhs->type->kind != TYPE_UNION) {
         fatal(
             lhs->location,
-            "attempted member access on non-struct type `%s`",
+            "attempted member access on non-struct and non-union type `%s`",
             lhs->type->name);
     }
 
@@ -4045,7 +4415,7 @@ resolve_expr_access_member(
         expr->data.access_member.member->identifier.name;
 
     struct member_variable const* const member_variable_def =
-        type_struct_member_variable(lhs->type, member_name);
+        type_member_variable(lhs->type, member_name);
     if (member_variable_def != NULL) {
         if (sbuf_count(expr->data.access_member.member->template_arguments)
             != 0) {
@@ -4092,7 +4462,7 @@ resolve_expr_access_member(
     assert(member_symbol == NULL);
     fatal(
         lhs->location,
-        "struct `%s` has no member `%s`",
+        "type `%s` has no member `%s`",
         lhs->type->name,
         member_name);
     return NULL;
@@ -5163,17 +5533,34 @@ resolve(struct module* module)
     // Resolve top-level declarations.
     sbuf(struct cst_decl const* const) const ordered = module->ordered;
     for (size_t i = 0; i < sbuf_count(ordered); ++i) {
-        // Structs have their symbols created before all other declarations to
-        // allow for self referential and cross referential struct
-        // declarations. These structs are then completed as needed based on
-        // their topological order. This is roughly equivalent to forward
-        // declaring structs in C.
+        // Structs and unions have their symbols created before all other
+        // declarations to allow for self referential and cross referential
+        // struct/union declarations. These types are then completed as needed
+        // based on their topological order. This is roughly equivalent to
+        // forward declaring structs/unions in C.
         struct cst_decl const* const decl = module->ordered[i];
-        if (decl->kind != CST_DECL_STRUCT) {
+        struct symbol const* symbol = NULL;
+        switch (decl->kind) {
+        case CST_DECL_VARIABLE: /* fallthrough */
+        case CST_DECL_CONSTANT: /* fallthrough */
+        case CST_DECL_FUNCTION: /* fallthrough */
+        case CST_DECL_EXTEND: /* fallthrough */
+        case CST_DECL_ALIAS: /* fallthrough */
+        case CST_DECL_EXTERN_VARIABLE: /* fallthrough */
+        case CST_DECL_EXTERN_FUNCTION: {
             continue;
         }
 
-        struct symbol const* const symbol = resolve_decl_struct(resolver, decl);
+        case CST_DECL_STRUCT: {
+            symbol = resolve_decl_struct(resolver, decl);
+            break;
+        }
+        case CST_DECL_UNION: {
+            symbol = resolve_decl_union(resolver, decl);
+            break;
+        }
+        }
+
         // If this module declares a namespace then top-level declarations will
         // have been added under the (exported) module namespace and should
         // *not* be added to the module export table or global symbol table
@@ -5200,6 +5587,20 @@ resolve(struct module* module)
             }
 
             complete_struct(resolver, symbol, decl);
+            continue;
+        }
+        // If the declaration was a non-template union then it has already
+        // been resolved and must now be completed.
+        if (decl->kind == CST_DECL_UNION) {
+            struct symbol const* const symbol = symbol_table_lookup_local(
+                resolver->current_symbol_table, decl->name);
+            assert(symbol != NULL);
+            if (symbol->kind != SYMBOL_TYPE) {
+                assert(symbol->kind == SYMBOL_TEMPLATE);
+                continue;
+            }
+
+            complete_union(resolver, symbol, decl);
             continue;
         }
 

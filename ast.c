@@ -460,6 +460,15 @@ type_new_struct(char const* name, struct symbol_table* symbols)
     return self;
 }
 
+struct type*
+type_new_union(char const* name, struct symbol_table* symbols)
+{
+    struct type* const self = type_new(name, 0, 0, symbols, TYPE_UNION);
+    self->data.union_.is_complete = false;
+    self->data.union_.member_variables = NULL;
+    return self;
+}
+
 long
 type_struct_member_variable_index(struct type const* self, char const* name)
 {
@@ -490,6 +499,76 @@ type_struct_member_variable(struct type const* self, char const* name)
         return NULL;
     }
     return &self->data.struct_.member_variables[index];
+}
+
+long
+type_union_member_variable_index(struct type const* self, char const* name)
+{
+    assert(self != NULL);
+    assert(self->kind == TYPE_UNION);
+    assert(name != NULL);
+
+    struct member_variable const* const member_variables =
+        self->data.union_.member_variables;
+    for (size_t i = 0; i < sbuf_count(member_variables); ++i) {
+        if (0 == strcmp(member_variables[i].name, name)) {
+            return (long)i;
+        }
+    }
+
+    return -1;
+}
+
+struct member_variable const*
+type_union_member_variable(struct type const* self, char const* name)
+{
+    assert(self != NULL);
+    assert(self->kind == TYPE_UNION);
+    assert(name != NULL);
+
+    long const index = type_union_member_variable_index(self, name);
+    if (index < 0) {
+        return NULL;
+    }
+    return &self->data.union_.member_variables[index];
+}
+
+long
+type_member_variable_index(struct type const* self, char const* name)
+{
+    assert(self != NULL);
+    assert(self->kind == TYPE_STRUCT || self->kind == TYPE_UNION);
+    assert(name != NULL);
+
+    if (self->kind == TYPE_STRUCT) {
+        return type_struct_member_variable_index(self, name);
+    }
+
+    if (self->kind == TYPE_UNION) {
+        return type_union_member_variable_index(self, name);
+    }
+
+    UNREACHABLE();
+    return -1;
+}
+
+struct member_variable const*
+type_member_variable(struct type const* self, char const* name)
+{
+    assert(self != NULL);
+    assert(self->kind == TYPE_STRUCT || self->kind == TYPE_UNION);
+    assert(name != NULL);
+
+    if (self->kind == TYPE_STRUCT) {
+        return type_struct_member_variable(self, name);
+    }
+
+    if (self->kind == TYPE_UNION) {
+        return type_union_member_variable(self, name);
+    }
+
+    UNREACHABLE();
+    return NULL;
 }
 
 struct type const*
@@ -666,7 +745,7 @@ type_is_compound(struct type const* self)
 
     enum type_kind const kind = self->kind;
     return kind == TYPE_POINTER || kind == TYPE_ARRAY || kind == TYPE_SLICE
-        || kind == TYPE_STRUCT;
+        || kind == TYPE_STRUCT || kind == TYPE_UNION;
 }
 
 bool
@@ -1350,21 +1429,16 @@ expr_new_slice(
 }
 
 struct expr*
-expr_new_struct(
+expr_new_init(
     struct source_location location,
     struct type const* type,
     struct member_variable_initializer const* initializers)
 {
     assert(type != NULL);
-    assert(type->kind == TYPE_STRUCT);
+    assert(type->kind == TYPE_STRUCT || type->kind == TYPE_UNION);
 
-    size_t const member_variables_count =
-        sbuf_count(type->data.struct_.member_variables);
-    (void)member_variables_count;
-    assert(sbuf_count(initializers) == member_variables_count);
-
-    struct expr* const self = expr_new(location, type, EXPR_STRUCT);
-    self->data.struct_.initializers = initializers;
+    struct expr* const self = expr_new(location, type, EXPR_INIT);
+    self->data.init.initializers = initializers;
     return self;
 }
 
@@ -1471,7 +1545,7 @@ expr_new_access_member_variable(
     struct member_variable const* member_variable)
 {
     assert(lhs != NULL);
-    assert(lhs->type->kind == TYPE_STRUCT);
+    assert(lhs->type->kind == TYPE_STRUCT || lhs->type->kind == TYPE_UNION);
     assert(member_variable != NULL);
 
     struct expr* const self =
@@ -1576,7 +1650,7 @@ expr_is_lvalue(struct expr const* self)
     case EXPR_ARRAY_LIST: /* fallthrough */
     case EXPR_SLICE_LIST: /* fallthrough */
     case EXPR_SLICE: /* fallthrough */
-    case EXPR_STRUCT: /* fallthrough */
+    case EXPR_INIT: /* fallthrough */
     case EXPR_CAST: /* fallthrough */
     case EXPR_CALL: /* fallthrough */
     case EXPR_ACCESS_SLICE: /* fallthrough */
@@ -1766,12 +1840,24 @@ value_new_struct(struct type const* type)
 
     struct value* self = value_new(type);
 
-    size_t const member_variables_count =
-        sbuf_count(type->data.struct_.member_variables);
-    self->data.struct_.member_variables = NULL;
-    for (size_t i = 0; i < member_variables_count; ++i) {
-        sbuf_push(self->data.struct_.member_variables, NULL);
+    size_t const count = sbuf_count(type->data.struct_.member_variables);
+    self->data.struct_.member_values = NULL;
+    for (size_t i = 0; i < count; ++i) {
+        sbuf_push(self->data.struct_.member_values, NULL);
     }
+
+    return self;
+}
+
+struct value*
+value_new_union(struct type const* type)
+{
+    assert(type != NULL);
+    assert(type->kind == TYPE_UNION);
+
+    struct value* self = value_new(type);
+    self->data.union_.member_variable = NULL;
+    self->data.union_.member_value = NULL;
 
     return self;
 }
@@ -1834,17 +1920,24 @@ value_del(struct value* self)
         break;
     }
     case TYPE_STRUCT: {
-        size_t const member_variables_count =
+        size_t const count =
             sbuf_count(self->type->data.struct_.member_variables);
-        for (size_t i = 0; i < member_variables_count; ++i) {
-            struct value** pvalue = self->data.struct_.member_variables + i;
+        for (size_t i = 0; i < count; ++i) {
+            struct value** pvalue = self->data.struct_.member_values + i;
             if (*pvalue == NULL) {
                 // Value was never initialized.
                 continue;
             }
             value_del(*pvalue);
         }
-        sbuf_fini(self->data.struct_.member_variables);
+        sbuf_fini(self->data.struct_.member_values);
+        break;
+    }
+    case TYPE_UNION: {
+        if (self->data.union_.member_variable != NULL) {
+            assert(self->data.union_.member_value != NULL);
+            value_del(self->data.union_.member_value);
+        }
         break;
     }
     }
@@ -1916,12 +2009,19 @@ value_freeze(struct value* self)
         size_t const member_variables_count =
             sbuf_count(self->type->data.struct_.member_variables);
         for (size_t i = 0; i < member_variables_count; ++i) {
-            struct value* value = self->data.struct_.member_variables[i];
+            struct value* value = self->data.struct_.member_values[i];
             if (value != NULL) {
                 value_freeze(value);
             }
         }
-        sbuf_freeze(self->data.struct_.member_variables);
+        sbuf_freeze(self->data.struct_.member_values);
+        return;
+    }
+    case TYPE_UNION: {
+        if (self->data.union_.member_variable != NULL) {
+            assert(self->data.union_.member_value != NULL);
+            value_freeze(self->data.union_.member_value);
+        }
         return;
     }
     }
@@ -1990,14 +2090,25 @@ value_clone(struct value const* self)
     }
     case TYPE_STRUCT: {
         struct value* const new = value_new_struct(self->type);
-        size_t const member_variables_count =
+        size_t const count =
             sbuf_count(self->type->data.struct_.member_variables);
-        for (size_t i = 0; i < member_variables_count; ++i) {
-            new->data.struct_.member_variables[i] = NULL;
-            if (self->data.struct_.member_variables[i] != NULL) {
-                new->data.struct_.member_variables[i] =
-                    value_clone(self->data.struct_.member_variables[i]);
+        for (size_t i = 0; i < count; ++i) {
+            new->data.struct_.member_values[i] = NULL;
+            if (self->data.struct_.member_values[i] != NULL) {
+                new->data.struct_.member_values[i] =
+                    value_clone(self->data.struct_.member_values[i]);
             }
+        }
+        return new;
+    }
+    case TYPE_UNION: {
+        struct value* const new = value_new_union(self->type);
+        if (self->data.union_.member_variable != NULL) {
+            assert(self->data.union_.member_value != NULL);
+            new->data.union_.member_variable =
+                self->data.union_.member_variable;
+            new->data.union_.member_value =
+                value_clone(self->data.union_.member_value);
         }
         return new;
     }
@@ -2008,29 +2119,55 @@ value_clone(struct value const* self)
 }
 
 struct value const*
-value_get_member_variable(
+value_get_member_value(
     struct source_location location, struct value const* self, char const* name)
 {
     assert(self != NULL);
+    assert(self->type->kind == TYPE_STRUCT || self->type->kind == TYPE_UNION);
     assert(name != NULL);
 
-    long const index = type_struct_member_variable_index(self->type, name);
+    long const index = type_member_variable_index(self->type, name);
     if (index < 0) {
         // Should never happen.
         fatal(location, "type `%s` has no member `%s`", self->type->name, name);
     }
-    return self->data.struct_.member_variables[index];
+
+    if (self->type->kind == TYPE_STRUCT) {
+        return self->data.struct_.member_values[index];
+    }
+    if (self->type->kind == TYPE_UNION) {
+        if (self->data.union_.member_variable == NULL) {
+            assert(self->data.union_.member_value == NULL);
+            fatal(
+                location,
+                "attempted access of the member `%s` of a union holding no value",
+                name);
+        }
+        if (self->data.union_.member_variable->name != name) {
+            fatal(
+                location,
+                "attempted access of the member `%s` of a union holding a value in member `%s`",
+                name,
+                self->data.union_.member_variable->name);
+        }
+        assert(self->data.union_.member_value != NULL);
+        return self->data.union_.member_value;
+    }
+
+    UNREACHABLE();
+    return NULL;
 }
 
 struct value const*
-value_xget_member_variable(
+value_xget_member_value(
     struct source_location location, struct value const* self, char const* name)
 {
     assert(self != NULL);
+    assert(self->type->kind == TYPE_STRUCT || self->type->kind == TYPE_UNION);
     assert(name != NULL);
 
     struct value const* const value =
-        value_get_member_variable(location, self, name);
+        value_get_member_value(location, self, name);
     if (value == NULL) {
         fatal(
             location,
@@ -2041,8 +2178,9 @@ value_xget_member_variable(
     return value;
 }
 
-void
-value_set_member(struct value* self, char const* name, struct value* value)
+static void
+value_set_member_struct(
+    struct value* self, char const* name, struct value* value)
 {
     assert(self != NULL);
     assert(self->type->kind == TYPE_STRUCT);
@@ -2064,12 +2202,12 @@ value_set_member(struct value* self, char const* name, struct value* value)
     if (type != value->type) {
         fatal(
             NO_LOCATION,
-            "Attempted to set member variable `%s` of type `%s` to a value of type `%s`.",
+            "attempted to set member `%s` of type `%s` to a value of type `%s`",
             name,
             type->name,
             value->type->name);
     }
-    struct value** const pvalue = self->data.struct_.member_variables + index;
+    struct value** const pvalue = self->data.struct_.member_values + index;
 
     // De-initialize the value associated with the member if that member has
     // already been initialized.
@@ -2078,6 +2216,67 @@ value_set_member(struct value* self, char const* name, struct value* value)
     }
 
     *pvalue = value;
+}
+
+static void
+value_set_member_union(
+    struct value* self, char const* name, struct value* value)
+{
+    assert(self != NULL);
+    assert(self->type->kind == TYPE_UNION);
+    assert(name != NULL);
+    assert(value != NULL);
+
+    long const index = type_union_member_variable_index(self->type, name);
+    if (index < 0) {
+        // Should never happen.
+        fatal(
+            NO_LOCATION,
+            "type `%s` has no member `%s`",
+            self->type->name,
+            name);
+    }
+
+    struct type const* const type =
+        self->type->data.union_.member_variables[index].type;
+    if (type != value->type) {
+        fatal(
+            NO_LOCATION,
+            "attempted to set member `%s` of type `%s` to a value of type `%s`",
+            name,
+            type->name,
+            value->type->name);
+    }
+
+    // De-initialize the value associated with the member if that member has
+    // already been initialized.
+    if (self->data.union_.member_value != NULL) {
+        value_del(self->data.union_.member_value);
+    }
+
+    self->data.union_.member_variable =
+        &self->type->data.union_.member_variables[index];
+    self->data.union_.member_value = value;
+}
+
+void
+value_set_member(struct value* self, char const* name, struct value* value)
+{
+    assert(self != NULL);
+    assert(self->type->kind == TYPE_STRUCT || self->type->kind == TYPE_UNION);
+    assert(name != NULL);
+    assert(value != NULL);
+
+    if (self->type->kind == TYPE_STRUCT) {
+        value_set_member_struct(self, name, value);
+        return;
+    }
+    if (self->type->kind == TYPE_UNION) {
+        value_set_member_union(self, name, value);
+        return;
+    }
+
+    UNREACHABLE();
 }
 
 bool
@@ -2138,7 +2337,8 @@ value_eq(struct value const* lhs, struct value const* rhs)
     }
     case TYPE_ARRAY: /* fallthrough */
     case TYPE_SLICE: /* fallthrough */
-    case TYPE_STRUCT: {
+    case TYPE_STRUCT: /* fallthrough */
+    case TYPE_UNION: {
         UNREACHABLE(); // illegal
     }
     }
@@ -2196,7 +2396,8 @@ value_lt(struct value const* lhs, struct value const* rhs)
     case TYPE_FUNCTION: /* fallthrough */
     case TYPE_ARRAY: /* fallthrough */
     case TYPE_SLICE: /* fallthrough */
-    case TYPE_STRUCT: {
+    case TYPE_STRUCT: /* fallthrough */
+    case TYPE_UNION: {
         UNREACHABLE(); // illegal
     }
     }
@@ -2254,7 +2455,8 @@ value_gt(struct value const* lhs, struct value const* rhs)
     case TYPE_FUNCTION: /* fallthrough */
     case TYPE_ARRAY: /* fallthrough */
     case TYPE_SLICE: /* fallthrough */
-    case TYPE_STRUCT: {
+    case TYPE_STRUCT: /* fallthrough */
+    case TYPE_UNION: {
         UNREACHABLE(); // illegal
     }
     }

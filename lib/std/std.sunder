@@ -19,25 +19,22 @@ struct error_info {
 # in the value state, indicating computation success, or the error state,
 # indicating computation failure.
 struct result[[T, E]] {
-    var _value: T;
-    var _error: E;
+    var _data: _result_union[[T, E]];
     var _is_value: bool;
 
     # Initialize a result in the value state (success).
     func init_value(value: T) result[[T, E]] {
         return (:result[[T, E]]){
-            ._value = value,
-            ._error = uninit,
-            ._is_value = true
+            ._data = (:_result_union[[T, E]]){._value = value},
+            ._is_value = true,
         };
     }
 
     # Initialize a result in the error state (failure).
     func init_error(error: E) result[[T, E]] {
         return (:result[[T, E]]){
-            ._value = uninit,
-            ._error = error,
-            ._is_value = false
+            ._data = (:_result_union[[T, E]]){._error = error},
+            ._is_value = false,
         };
     }
 
@@ -58,7 +55,7 @@ struct result[[T, E]] {
         if not self.*._is_value {
             std::panic("attempted to retrieve value from std::result in the error state");
         }
-        return self.*._value;
+        return self.*._data._value;
     }
 
     # Returns the error associated with a result in the error state.
@@ -68,8 +65,13 @@ struct result[[T, E]] {
         if self.*._is_value {
             std::panic("attempted to retrieve error from std::result in the value state");
         }
-        return self.*._error;
+        return self.*._data._error;
     }
+}
+
+union _result_union[[T, E]] {
+    var _value: T;
+    var _error: E;
 }
 
 # Type representing a value that may not be present. An optional is either in

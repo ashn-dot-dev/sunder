@@ -911,6 +911,7 @@ enum token_kind {
     TOKEN_LET,
     TOKEN_FUNC,
     TOKEN_STRUCT,
+    TOKEN_UNION,
     TOKEN_EXTEND,
     TOKEN_ALIAS,
     TOKEN_EXTERN,
@@ -1081,6 +1082,7 @@ struct cst_decl {
         CST_DECL_CONSTANT,
         CST_DECL_FUNCTION,
         CST_DECL_STRUCT,
+        CST_DECL_UNION,
         CST_DECL_EXTEND,
         CST_DECL_ALIAS,
         CST_DECL_EXTERN_VARIABLE,
@@ -1114,6 +1116,13 @@ struct cst_decl {
             sbuf(struct cst_identifier const) template_parameters;
             sbuf(struct cst_member const* const) members;
         } struct_;
+        struct {
+            struct cst_identifier identifier;
+            // A template parameter list with count zero indicates that this
+            // union was declared without template parameters.
+            sbuf(struct cst_identifier const) template_parameters;
+            sbuf(struct cst_member const* const) members;
+        } union_;
         struct {
             struct cst_typespec const* typespec;
             struct cst_decl const* decl;
@@ -1156,6 +1165,12 @@ cst_decl_new_function(
     struct cst_block body);
 struct cst_decl*
 cst_decl_new_struct(
+    struct source_location location,
+    struct cst_identifier identifier,
+    struct cst_identifier const* template_parameters,
+    struct cst_member const* const* members);
+struct cst_decl*
+cst_decl_new_union(
     struct source_location location,
     struct cst_identifier identifier,
     struct cst_identifier const* template_parameters,
@@ -1280,7 +1295,7 @@ struct cst_expr {
         CST_EXPR_BYTES,
         CST_EXPR_LIST,
         CST_EXPR_SLICE,
-        CST_EXPR_STRUCT,
+        CST_EXPR_INIT,
         CST_EXPR_CAST,
         CST_EXPR_GROUPED,
         // Postfix Expressions
@@ -1317,7 +1332,7 @@ struct cst_expr {
         struct {
             struct cst_typespec const* typespec;
             sbuf(struct cst_member_initializer const* const) initializers;
-        } struct_;
+        } init;
         struct {
             struct cst_typespec const* typespec;
             struct cst_expr const* expr;
@@ -1390,7 +1405,7 @@ cst_expr_new_slice(
     struct cst_expr const* start,
     struct cst_expr const* count);
 struct cst_expr*
-cst_expr_new_struct(
+cst_expr_new_init(
     struct source_location location,
     struct cst_typespec const* typespec,
     struct cst_member_initializer const* const* initializers);
@@ -1664,6 +1679,7 @@ struct type {
         TYPE_ARRAY,
         TYPE_SLICE,
         TYPE_STRUCT,
+        TYPE_UNION,
     } kind;
     union {
         struct {
@@ -1698,6 +1714,14 @@ struct type {
             // into the struct (i.e. their declaration order).
             sbuf(struct member_variable) member_variables;
         } struct_;
+        struct {
+            // True if this type has been completed. Initially, all unions are
+            // added as incomplete types and are marked as complete once all
+            // member variable declarations have been resolved.
+            bool is_complete;
+            // List of member variables within the union ordered by offset.
+            sbuf(struct member_variable) member_variables;
+        } union_;
     } data;
 };
 struct type*
@@ -1748,6 +1772,9 @@ type_new_slice(struct type const* base);
 // Create a new struct with no members (size zero and alignment zero).
 struct type*
 type_new_struct(char const* name, struct symbol_table* symbols);
+// Create a new union with no members (size zero and alignment zero).
+struct type*
+type_new_union(char const* name, struct symbol_table* symbols);
 // Returns the index of the member variable `name` of the provided struct type.
 // Returns a non-negative integer index on success.
 // Returns a -1 on failure.
@@ -1758,6 +1785,26 @@ type_struct_member_variable_index(struct type const* self, char const* name);
 // Returns NULL on failure.
 struct member_variable const*
 type_struct_member_variable(struct type const* self, char const* name);
+// Returns the index of the member variable `name` of the provided union type.
+// Returns a non-negative integer index on success.
+// Returns a -1 on failure.
+long
+type_union_member_variable_index(struct type const* self, char const* name);
+// Returns a pointer to the member variable `name` of the provided union type.
+// Returns a pointer to the member variable success.
+// Returns NULL on failure.
+struct member_variable const*
+type_union_member_variable(struct type const* self, char const* name);
+// Returns the index of the member variable `name` of the provided type.
+// Returns a non-negative integer index on success.
+// Returns a -1 on failure.
+long
+type_member_variable_index(struct type const* self, char const* name);
+// Returns a pointer to the member variable `name` of the provided type.
+// Returns a pointer to the member variable success.
+// Returns NULL on failure.
+struct member_variable const*
+type_member_variable(struct type const* self, char const* name);
 
 struct type const*
 type_unique_function(
@@ -2104,7 +2151,7 @@ struct expr {
         EXPR_ARRAY_LIST,
         EXPR_SLICE_LIST,
         EXPR_SLICE,
-        EXPR_STRUCT,
+        EXPR_INIT,
         EXPR_CAST,
         EXPR_CALL,
         EXPR_ACCESS_INDEX,
@@ -2137,9 +2184,9 @@ struct expr {
         } slice;
         struct {
             // Initializers (name, expr) for each member variable in the order
-            // that they appear within the struct member initializer list.
+            // that they appear within the member initializer list.
             sbuf(struct member_variable_initializer const) initializers;
-        } struct_;
+        } init;
         struct {
             struct expr const* expr;
         } cast;
@@ -2242,7 +2289,7 @@ expr_new_slice(
     struct expr const* start,
     struct expr const* count);
 struct expr*
-expr_new_struct(
+expr_new_init(
     struct source_location location,
     struct type const* type,
     struct member_variable_initializer const* initializers);
@@ -2385,8 +2432,16 @@ struct value {
             // pointer in the member_variables array will be initialized to
             // NULL, and the values of each non-uninit member variable must be
             // explicitly set before that member may be used.
-            sbuf(struct value*) member_variables;
+            sbuf(struct value*) member_values;
         } struct_;
+        struct {
+            // Reference to the member variable for the currently held value.
+            // NULL implies the union is currently not holding a value.
+            struct member_variable const* member_variable;
+            // The currently held value.
+            // NULL implies the union is currently not holding a value.
+            struct value* member_value;
+        } union_;
     } data;
 };
 struct value*
@@ -2413,6 +2468,8 @@ value_new_slice(
     struct type const* type, struct value* start, struct value* count);
 struct value*
 value_new_struct(struct type const* type);
+struct value*
+value_new_union(struct type const* type);
 void
 value_del(struct value* self);
 void
@@ -2423,7 +2480,7 @@ value_clone(struct value const* self);
 // Get the value associated with the struct member `self.name`.
 // Returns NULL if the struct member `self.name` is uninitialized.
 struct value const*
-value_get_member_variable(
+value_get_member_value(
     struct source_location location,
     struct value const* self,
     char const* name);
@@ -2431,7 +2488,7 @@ value_get_member_variable(
 // Fatally exits after printing an error message if the struct member
 // `self.name` is uninitialized.
 struct value const*
-value_xget_member_variable(
+value_xget_member_value(
     struct source_location location,
     struct value const* self,
     char const* name);

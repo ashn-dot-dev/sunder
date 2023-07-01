@@ -1,0 +1,8 @@
+union u {
+}
+
+let a = (:u){.x = 123};
+################################################################################
+# [error-expr-init-union-expected-zero-initializers-got-one.test.sunder:4] error: union type `u` with no members variables requires exactly zero initializers
+# let a = (:u){.x = 123};
+#         ^

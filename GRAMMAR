@@ -14,6 +14,8 @@
 
 <decl-struct> ::= "struct" <identifier> <template-parameter-list>? "{" <member-list> "}"
 
+<decl-union> ::= "union" <identifier> <template-parameter-list>? "{" <member-list> "}"
+
 <decl-extend> ::= "extend" <typespec> <decl>
 
 <decl-alias> ::= "alias" <identifier> "=" <typespec> ";"
@@ -76,7 +78,7 @@
          | <expr-bytes>
          | <expr-list>
          | <expr-slice>
-         | <expr-struct>
+         | <expr-init>
          | <expr-cast>
          | <expr-grouped>
          | <expr-call>
@@ -100,7 +102,7 @@
 
 <expr-slice> ::= "(" ":" <typespec-slice> ")" "{" <expr> "," <expr> "}"
 
-<expr-struct> ::= "(" ":" <typespec> ")" "{" <member-initializer-list> "}"
+<expr-init> ::= "(" ":" <typespec> ")" "{" <member-initializer-list> "}"
 
 <expr-cast> ::= "(" ":" <typespec> ")" <expr>
 

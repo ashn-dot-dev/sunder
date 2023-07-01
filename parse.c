@@ -53,6 +53,8 @@ parse_decl_function(struct parser* parser);
 static struct cst_decl const*
 parse_decl_struct(struct parser* parser);
 static struct cst_decl const*
+parse_decl_union(struct parser* parser);
+static struct cst_decl const*
 parse_decl_extend(struct parser* parser);
 static struct cst_decl const*
 parse_decl_alias(struct parser* parser);
@@ -387,6 +389,10 @@ parse_decl(struct parser* parser)
         return parse_decl_struct(parser);
     }
 
+    if (check_current(parser, TOKEN_UNION)) {
+        return parse_decl_union(parser);
+    }
+
     if (check_current(parser, TOKEN_EXTEND)) {
         return parse_decl_extend(parser);
     }
@@ -527,6 +533,27 @@ parse_decl_struct(struct parser* parser)
 
     struct cst_decl* const product =
         cst_decl_new_struct(location, identifier, template_parameters, members);
+
+    freeze(product);
+    return product;
+}
+
+static struct cst_decl const*
+parse_decl_union(struct parser* parser)
+{
+    assert(parser != NULL);
+
+    struct source_location const location =
+        expect_current(parser, TOKEN_UNION).location;
+    struct cst_identifier const identifier = parse_identifier(parser);
+    sbuf(struct cst_identifier const) const template_parameters =
+        parse_template_parameter_list(parser);
+    expect_current(parser, TOKEN_LBRACE);
+    sbuf(struct cst_member const* const) members = parse_member_list(parser);
+    expect_current(parser, TOKEN_RBRACE);
+
+    struct cst_decl* const product =
+        cst_decl_new_union(location, identifier, template_parameters, members);
 
     freeze(product);
     return product;
@@ -1195,14 +1222,14 @@ parse_expr_lparen(struct parser* parser)
 
     if (check_current(parser, TOKEN_LBRACE)) {
         if (check_peek(parser, TOKEN_RBRACE) || check_peek(parser, TOKEN_DOT)) {
-            // <expr-struct>
+            // <expr-init>
             expect_current(parser, TOKEN_LBRACE);
             sbuf(struct cst_member_initializer const* const) initializers =
                 parse_member_initializer_list(parser);
             expect_current(parser, TOKEN_RBRACE);
 
             struct cst_expr* const product =
-                cst_expr_new_struct(location, typespec, initializers);
+                cst_expr_new_init(location, typespec, initializers);
 
             freeze(product);
             return product;

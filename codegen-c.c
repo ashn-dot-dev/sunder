@@ -106,7 +106,7 @@ strgen_rvalue_slice_list(struct expr const* expr);
 static char const* // interned
 strgen_rvalue_slice(struct expr const* expr);
 static char const* // interned
-strgen_rvalue_struct(struct expr const* expr);
+strgen_rvalue_init(struct expr const* expr);
 static char const* // interned
 strgen_rvalue_cast(struct expr const* expr);
 static char const* // interned
@@ -438,14 +438,17 @@ appendch(char ch)
 static void
 codegen_type_declaration(struct type const* type)
 {
-    if (type->kind != TYPE_STRUCT) {
-        return;
-    }
     if (type->size == 0 || type->size == SIZEOF_UNSIZED) {
         return;
     }
+
     char const* const typename = mangle_type(type);
-    appendln("typedef struct %s %s; // %s", typename, typename, type->name);
+    if (type->kind == TYPE_STRUCT) {
+        appendln("typedef struct %s %s; // %s", typename, typename, type->name);
+    }
+    if (type->kind == TYPE_UNION) {
+        appendln("typedef union %s %s; // %s", typename, typename, type->name);
+    }
 }
 
 static void
@@ -574,6 +577,34 @@ codegen_type_definition(struct type const* type)
                 "unsigned char %s_%ju;",
                 mangle_name("__padding_byte"),
                 padding_offset);
+        }
+        indent_decr();
+        appendli("};");
+        break;
+    }
+    case TYPE_UNION: {
+        if (type->size == 0 || type->size == SIZEOF_UNSIZED) {
+            return;
+        }
+        char const* const typename = mangle_type(type);
+        appendln("union %s", typename);
+        appendli("{");
+        indent_incr();
+        appendli(
+            "unsigned char %s[%ju]; /* union-sized buffer */",
+            mangle_name("__buffer"),
+            type->size);
+        sbuf(struct member_variable const) const mvars =
+            type->data.union_.member_variables;
+        for (size_t i = 0; i < sbuf_count(mvars); ++i) {
+            if (mvars[i].type->size == 0
+                || mvars[i].type->size == SIZEOF_UNSIZED) {
+                continue;
+            }
+            appendli(
+                "%s %s;",
+                mangle_type(mvars[i].type),
+                mangle_name(mvars[i].name));
         }
         indent_decr();
         appendli("};");
@@ -944,7 +975,7 @@ strgen_value(struct value const* value)
             sbuf_count(member_variable_defs);
 
         sbuf(struct value*) const member_variable_vals =
-            value->data.struct_.member_variables;
+            value->data.struct_.member_values;
         size_t const member_variable_vals_count =
             sbuf_count(member_variable_vals);
 
@@ -980,6 +1011,22 @@ strgen_value(struct value const* value)
         string_append_cstr(s, "}");
 
         break;
+    }
+    case TYPE_UNION: {
+        string_append_cstr(s, "{");
+        if (value->data.union_.member_variable != NULL) {
+            assert(value->data.union_.member_value != NULL);
+            string_append_fmt(
+                s,
+                ".%s = %s",
+                mangle_name(value->data.union_.member_variable->name),
+                strgen_value(value->data.union_.member_value));
+        }
+        else {
+            assert(value->type->size != 0);
+            string_append_fmt(s, ".%s = {0}", mangle_name("__buffer"));
+        }
+        string_append_cstr(s, "}");
     }
     }
 
@@ -1037,6 +1084,10 @@ strgen_uninit(struct type const* type)
     case TYPE_ARRAY: /* fallthrough */
     case TYPE_SLICE: /* fallthrough */
     case TYPE_STRUCT: {
+        string_append_cstr(s, "{/* uninit */0}");
+        break;
+    }
+    case TYPE_UNION: {
         string_append_cstr(s, "{/* uninit */0}");
         break;
     }
@@ -1336,7 +1387,7 @@ strgen_rvalue(struct expr const* expr)
         TABLE_ENTRY(EXPR_ARRAY_LIST, strgen_rvalue_array_list),
         TABLE_ENTRY(EXPR_SLICE_LIST, strgen_rvalue_slice_list),
         TABLE_ENTRY(EXPR_SLICE, strgen_rvalue_slice),
-        TABLE_ENTRY(EXPR_STRUCT, strgen_rvalue_struct),
+        TABLE_ENTRY(EXPR_INIT, strgen_rvalue_init),
         TABLE_ENTRY(EXPR_CAST, strgen_rvalue_cast),
         TABLE_ENTRY(EXPR_CALL, strgen_rvalue_call),
         TABLE_ENTRY(EXPR_ACCESS_INDEX, strgen_rvalue_access_index),
@@ -1540,16 +1591,16 @@ strgen_rvalue_slice(struct expr const* expr)
 }
 
 static char const*
-strgen_rvalue_struct(struct expr const* expr)
+strgen_rvalue_init_struct(struct expr const* expr)
 {
     assert(expr != NULL);
-    assert(expr->kind == EXPR_STRUCT);
+    assert(expr->kind == EXPR_INIT);
     assert(expr->type->kind == TYPE_STRUCT);
 
     sbuf(struct member_variable) const member_variable_defs =
         expr->type->data.struct_.member_variables;
     sbuf(struct member_variable_initializer const) initializers =
-        expr->data.struct_.initializers;
+        expr->data.init.initializers;
     assert(sbuf_count(member_variable_defs) == sbuf_count(initializers));
 
     struct string* const s = string_new_fmt("({");
@@ -1610,6 +1661,68 @@ done:
     char const* const interned = intern(string_start(s), string_count(s));
     string_del(s);
     return interned;
+}
+
+static char const*
+strgen_rvalue_init_union(struct expr const* expr)
+{
+    assert(expr != NULL);
+    assert(expr->kind == EXPR_INIT);
+    assert(expr->type->kind == TYPE_UNION);
+
+    struct string* const s = string_new_fmt("({");
+
+    if (expr->type->size == 0) {
+        string_append_cstr(s, "/* zero-sized union */0;");
+        goto done;
+    }
+
+    sbuf(struct member_variable_initializer const) initializers =
+        expr->data.init.initializers;
+    assert(sbuf_count(initializers) == 1);
+    struct member_variable_initializer const* const initializer =
+        &initializers[0];
+
+    string_append_fmt(
+        s,
+        "%s %s = (%s)%s; ",
+        mangle_type(expr->type),
+        mangle_name("__result"),
+        mangle_type(expr->type),
+        strgen_uninit(expr->type));
+    if (initializer->variable->type->size != 0) {
+        string_append_fmt(
+            s,
+            "%s.%s = %s; ",
+            mangle_name("__result"),
+            mangle_name(initializer->variable->name),
+            strgen_rvalue(initializer->expr));
+    }
+    string_append_fmt(s, "%s;", mangle_name("__result"));
+
+done:
+    string_append_cstr(s, "})");
+    char const* const interned = intern(string_start(s), string_count(s));
+    string_del(s);
+    return interned;
+}
+
+static char const*
+strgen_rvalue_init(struct expr const* expr)
+{
+    assert(expr != NULL);
+    assert(expr->kind == EXPR_INIT);
+    assert(expr->type->kind == TYPE_STRUCT || expr->type->kind == TYPE_UNION);
+
+    if (expr->type->kind == TYPE_STRUCT) {
+        return strgen_rvalue_init_struct(expr);
+    }
+    if (expr->type->kind == TYPE_UNION) {
+        return strgen_rvalue_init_union(expr);
+    }
+
+    UNREACHABLE();
+    return NULL;
 }
 
 static char const*
@@ -1882,7 +1995,9 @@ strgen_rvalue_access_member_variable(struct expr const* expr)
 {
     assert(expr != NULL);
     assert(expr->kind == EXPR_ACCESS_MEMBER_VARIABLE);
-    assert(expr->data.access_member_variable.lhs->type->kind == TYPE_STRUCT);
+    assert(
+        expr->data.access_member_variable.lhs->type->kind == TYPE_STRUCT
+        || expr->data.access_member_variable.lhs->type->kind == TYPE_UNION);
 
     if (expr->type->size == 0) {
         return intern_fmt(
@@ -2767,7 +2882,9 @@ strgen_lvalue_access_member_variable(struct expr const* expr)
 {
     assert(expr != NULL);
     assert(expr->kind == EXPR_ACCESS_MEMBER_VARIABLE);
-    assert(expr->data.access_member_variable.lhs->type->kind == TYPE_STRUCT);
+    assert(
+        expr->data.access_member_variable.lhs->type->kind == TYPE_STRUCT
+        || expr->data.access_member_variable.lhs->type->kind == TYPE_UNION);
 
     char const* const lexpr =
         strgen_lvalue(expr->data.access_member_variable.lhs);

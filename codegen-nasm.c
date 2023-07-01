@@ -359,7 +359,7 @@ append_dx_static_initializer(struct value const* value)
             sbuf_count(member_variable_defs);
 
         sbuf(struct value*) const member_variable_vals =
-            value->data.struct_.member_variables;
+            value->data.struct_.member_values;
         size_t const member_variable_vals_count =
             sbuf_count(member_variable_vals);
 
@@ -405,6 +405,28 @@ append_dx_static_initializer(struct value const* value)
                         i);
                 }
             }
+        }
+        return;
+    }
+    case TYPE_UNION: {
+        struct member_variable const* member_variable =
+            value->data.union_.member_variable;
+        struct value const* const member_value =
+            value->data.union_.member_value;
+        size_t const size = value->type->size;
+        size_t written = 0;
+
+        assert((member_variable != NULL) == (member_value != NULL));
+        if (member_variable != NULL) {
+            append_dx_static_initializer(member_value);
+            written += member_value->type->size;
+        }
+        for (; written < size; ++written) {
+            appendli(
+                "db %#x ; (uninitialized) `%s` byte %zu",
+                0,
+                value->type->name,
+                written);
         }
         return;
     }
@@ -704,7 +726,8 @@ mov_rax_reg_a_with_zero_or_sign_extend(struct type const* type)
     case TYPE_REAL: /* fallthrough */
     case TYPE_ARRAY: /* fallthrough */
     case TYPE_SLICE: /* fallthrough */
-    case TYPE_STRUCT: {
+    case TYPE_STRUCT: /* fallthrough */
+    case TYPE_UNION: {
         UNREACHABLE();
     }
     }
@@ -776,7 +799,7 @@ push_rvalue_slice_list(struct expr const* expr, size_t id);
 static void
 push_rvalue_slice(struct expr const* expr, size_t id);
 static void
-push_rvalue_struct(struct expr const* expr, size_t id);
+push_rvalue_init(struct expr const* expr, size_t id);
 static void
 push_rvalue_cast(struct expr const* expr, size_t id);
 static void
@@ -1578,7 +1601,7 @@ push_rvalue(struct expr const* expr)
         TABLE_ENTRY(EXPR_ARRAY_LIST, push_rvalue_array_list),
         TABLE_ENTRY(EXPR_SLICE_LIST, push_rvalue_slice_list),
         TABLE_ENTRY(EXPR_SLICE, push_rvalue_slice),
-        TABLE_ENTRY(EXPR_STRUCT, push_rvalue_struct),
+        TABLE_ENTRY(EXPR_INIT, push_rvalue_init),
         TABLE_ENTRY(EXPR_CAST, push_rvalue_cast),
         TABLE_ENTRY(EXPR_CALL, push_rvalue_call),
         TABLE_ENTRY(EXPR_ACCESS_INDEX, push_rvalue_access_index),
@@ -1706,7 +1729,8 @@ push_rvalue_value(struct expr const* expr, size_t id)
     case TYPE_POINTER: /* fallthrough */
     case TYPE_ARRAY: /* fallthrough */
     case TYPE_SLICE: /* fallthrough */
-    case TYPE_STRUCT: {
+    case TYPE_STRUCT: /* fallthrough */
+    case TYPE_UNION: {
         // AST nodes of kind EXPR_VALUE are not produced for these types.
         UNREACHABLE();
     }
@@ -1845,12 +1869,11 @@ push_rvalue_slice(struct expr const* expr, size_t id)
 }
 
 static void
-push_rvalue_struct(struct expr const* expr, size_t id)
+push_rvalue_init_struct(struct expr const* expr)
 {
     assert(expr != NULL);
-    assert(expr->kind == EXPR_STRUCT);
+    assert(expr->kind == EXPR_INIT);
     assert(expr->type->kind == TYPE_STRUCT);
-    (void)id;
 
     // Make space for the struct.
     push(expr->type->size);
@@ -1877,7 +1900,7 @@ push_rvalue_struct(struct expr const* expr, size_t id)
     (void)member_variable_defs;
 
     sbuf(struct member_variable_initializer const) initializers =
-        expr->data.struct_.initializers;
+        expr->data.init.initializers;
     assert(sbuf_count(member_variable_defs) == sbuf_count(initializers));
     for (size_t i = 0; i < sbuf_count(initializers); ++i) {
         if (initializers[i].expr == NULL) {
@@ -1897,6 +1920,63 @@ push_rvalue_struct(struct expr const* expr, size_t id)
         copy_rsp_rbx_via_rcx(size);
 
         pop(size);
+    }
+}
+
+static void
+push_rvalue_init_union(struct expr const* expr)
+{
+    assert(expr != NULL);
+    assert(expr->kind == EXPR_INIT);
+    assert(expr->type->kind == TYPE_UNION);
+
+    // Make space for the union.
+    push(expr->type->size);
+
+    // Fill in stack bytes of the union with zeros.
+    appendli("mov rax, 0"); // zero value
+    appendli("mov rbx, rsp"); // current address
+    uintmax_t const words_count = ceil8umax(expr->type->size) / 8;
+    for (uintmax_t i = 0; i < words_count; ++i) {
+        appendli("mov [rbx], rax");
+        appendli("add rbx, 8");
+    }
+
+    // Evaluate the member variable initializer of the union.
+    sbuf(struct member_variable_initializer const) initializers =
+        expr->data.init.initializers;
+    assert(sbuf_count(initializers) == 1);
+    struct member_variable_initializer const* const initializer =
+        &initializers[0];
+
+    push_rvalue(initializer->expr);
+    struct type const* const type = initializer->variable->type;
+    uintmax_t const size = type->size;
+    uintmax_t const offset = initializer->variable->offset;
+
+    appendli("mov rbx, rsp");
+    appendli("add rbx, %ju", ceil8umax(size)); // struct start
+    appendli("add rbx, %ju", offset); // member offset
+    copy_rsp_rbx_via_rcx(size);
+
+    pop(size);
+}
+
+static void
+push_rvalue_init(struct expr const* expr, size_t id)
+{
+    assert(expr != NULL);
+    assert(expr->kind == EXPR_INIT);
+    assert(expr->type->kind == TYPE_STRUCT || expr->type->kind == TYPE_UNION);
+    (void)id;
+
+    if (expr->type->kind == TYPE_STRUCT) {
+        push_rvalue_init_struct(expr);
+        return;
+    }
+    if (expr->type->kind == TYPE_UNION) {
+        push_rvalue_init_union(expr);
+        return;
     }
 }
 
@@ -2229,7 +2309,9 @@ push_rvalue_access_member_variable(struct expr const* expr, size_t id)
 {
     assert(expr != NULL);
     assert(expr->kind == EXPR_ACCESS_MEMBER_VARIABLE);
-    assert(expr->data.access_member_variable.lhs->type->kind == TYPE_STRUCT);
+    assert(
+        expr->data.access_member_variable.lhs->type->kind == TYPE_STRUCT
+        || expr->data.access_member_variable.lhs->type->kind == TYPE_UNION);
     (void)id;
 
     // Create space on the top of the stack to hold the value of the accessed
@@ -3474,7 +3556,9 @@ push_lvalue_access_member_variable(struct expr const* expr, size_t id)
 {
     assert(expr != NULL);
     assert(expr->kind == EXPR_ACCESS_MEMBER_VARIABLE);
-    assert(expr->data.access_member_variable.lhs->type->kind == TYPE_STRUCT);
+    assert(
+        expr->data.access_member_variable.lhs->type->kind == TYPE_STRUCT
+        || expr->data.access_member_variable.lhs->type->kind == TYPE_UNION);
     (void)id;
 
     push_lvalue(expr->data.access_member_variable.lhs);

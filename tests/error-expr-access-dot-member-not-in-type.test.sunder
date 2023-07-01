@@ -10,6 +10,6 @@ func main() void {
     f.z;
 }
 ################################################################################
-# [error-expr-access-dot-member-not-in-struct.test.sunder:10] error: struct `foo` has no member `z`
+# [error-expr-access-dot-member-not-in-type.test.sunder:10] error: type `foo` has no member `z`
 #     f.z;
 #     ^

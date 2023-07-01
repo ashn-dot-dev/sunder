@@ -153,6 +153,24 @@ cst_decl_new_struct(
 }
 
 struct cst_decl*
+cst_decl_new_union(
+    struct source_location location,
+    struct cst_identifier identifier,
+    struct cst_identifier const* template_parameters,
+    struct cst_member const* const* members)
+{
+    struct cst_decl* const self = xalloc(NULL, sizeof(*self));
+    memset(self, 0x00, sizeof(*self));
+    self->kind = CST_DECL_UNION;
+    self->location = location;
+    self->name = identifier.name;
+    self->data.struct_.identifier = identifier;
+    self->data.struct_.template_parameters = template_parameters;
+    self->data.struct_.members = members;
+    return self;
+}
+
+struct cst_decl*
 cst_decl_new_extend(
     struct source_location location,
     struct cst_typespec const* typespec,
@@ -477,14 +495,14 @@ cst_expr_new_slice(
 }
 
 struct cst_expr*
-cst_expr_new_struct(
+cst_expr_new_init(
     struct source_location location,
     struct cst_typespec const* typespec,
     struct cst_member_initializer const* const* initializers)
 {
-    struct cst_expr* const self = cst_expr_new(location, CST_EXPR_STRUCT);
-    self->data.struct_.typespec = typespec;
-    self->data.struct_.initializers = initializers;
+    struct cst_expr* const self = cst_expr_new(location, CST_EXPR_INIT);
+    self->data.init.typespec = typespec;
+    self->data.init.initializers = initializers;
     return self;
 }
 

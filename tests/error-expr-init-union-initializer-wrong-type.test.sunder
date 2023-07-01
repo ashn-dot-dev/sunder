@@ -1,0 +1,10 @@
+union u {
+    var x: u16;
+}
+
+let a = (:u){.x = 123u32};
+################################################################################
+# [error-expr-init-union-initializer-wrong-type.test.sunder:5] error: incompatible type `u32` (expected `u16`)
+# let a = (:u){.x = 123u32};
+#                   ^
+

@@ -1,0 +1,15 @@
+struct a {
+    var member: b;
+}
+
+union b {
+    var member: c;
+}
+
+union c {
+    var member: a;
+}
+################################################################################
+# [error-union-contains-incomplete-struct.test.sunder:10] error: union `c` contains a member variable of incomplete struct type `a`
+#     var member: a;
+#     ^

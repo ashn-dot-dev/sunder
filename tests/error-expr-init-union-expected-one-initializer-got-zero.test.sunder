@@ -1,0 +1,9 @@
+union u {
+    var x: usize;
+}
+
+let a = (:u){};
+################################################################################
+# [error-expr-init-union-expected-one-initializer-got-zero.test.sunder:5] error: union type `u` requires exactly one initializer
+# let a = (:u){};
+#         ^

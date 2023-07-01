@@ -1,0 +1,15 @@
+struct a {
+    var member: b;
+}
+
+struct b {
+    var member: c;
+}
+
+struct c {
+    var member: a;
+}
+################################################################################
+# [error-struct-contains-incomplete-struct.test.sunder:10] error: struct `c` contains a member variable of incomplete struct type `a`
+#     var member: a;
+#     ^

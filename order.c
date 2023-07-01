@@ -206,7 +206,7 @@ order_decl(struct orderer* orderer, struct cst_decl const* decl)
 
         // Set this struct's state to ordered to allow for self-referential
         // members. This behavior mimics the behavior of the resolve phase
-        // where all structs are completed after the struct symbol has been
+        // where all structs/unions are completed after their symbols have been
         // added to the relevant symbol table.
         struct tldecl* const tldecl =
             orderer_tldecl_lookup(orderer, decl->name);
@@ -236,8 +236,48 @@ order_decl(struct orderer* orderer, struct cst_decl const* decl)
                 order_decl(orderer, member->data.function.decl);
                 continue;
             }
-            default: {
-                UNREACHABLE();
+            }
+        }
+        return;
+    }
+    case CST_DECL_UNION: {
+        sbuf(struct cst_identifier const) const template_parameters =
+            decl->data.union_.template_parameters;
+        if (sbuf_count(template_parameters) != 0) {
+            return;
+        }
+
+        // Set this union's state to ordered to allow for self-referential
+        // members. This behavior mimics the behavior of the resolve phase
+        // where all structs/unions are completed after their symbols have been
+        // added to the relevant symbol table.
+        struct tldecl* const tldecl =
+            orderer_tldecl_lookup(orderer, decl->name);
+        if (tldecl == NULL) {
+            // The returned tldecl may be NULL if this union declaration is
+            // part of an extend declaration. We return early here since an
+            // error will be reported when the extend declaration is resolved.
+            return;
+        }
+        tldecl->state = TLDECL_ORDERED;
+
+        // Order the struct's members.
+        sbuf(struct cst_member const* const) const members =
+            decl->data.union_.members;
+        for (size_t i = 0; i < sbuf_count(members); ++i) {
+            struct cst_member const* const member = members[i];
+            switch (member->kind) {
+            case CST_MEMBER_VARIABLE: {
+                order_typespec(orderer, member->data.variable.typespec);
+                continue;
+            }
+            case CST_MEMBER_CONSTANT: {
+                order_decl(orderer, member->data.constant.decl);
+                continue;
+            }
+            case CST_MEMBER_FUNCTION: {
+                order_decl(orderer, member->data.function.decl);
+                continue;
             }
             }
         }
@@ -305,10 +345,10 @@ order_expr(struct orderer* orderer, struct cst_expr const* expr)
         order_expr(orderer, expr->data.slice.count);
         return;
     }
-    case CST_EXPR_STRUCT: {
-        order_typespec(orderer, expr->data.struct_.typespec);
+    case CST_EXPR_INIT: {
+        order_typespec(orderer, expr->data.init.typespec);
         sbuf(struct cst_member_initializer const* const) const initializers =
-            expr->data.struct_.initializers;
+            expr->data.init.initializers;
         for (size_t i = 0; i < sbuf_count(initializers); ++i) {
             if (initializers[i]->expr != NULL) {
                 order_expr(orderer, initializers[i]->expr);
