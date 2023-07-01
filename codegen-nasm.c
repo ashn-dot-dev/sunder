@@ -413,8 +413,8 @@ append_dx_static_initializer(struct value const* value)
             value->data.union_.member_variable;
         struct value const* const member_value =
             value->data.union_.member_value;
-        size_t const size = value->type->size;
-        size_t written = 0;
+        uintmax_t const size = value->type->size;
+        uintmax_t written = 0;
 
         assert((member_variable != NULL) == (member_value != NULL));
         if (member_variable != NULL) {
@@ -423,7 +423,7 @@ append_dx_static_initializer(struct value const* value)
         }
         for (; written < size; ++written) {
             appendli(
-                "db %#x ; (uninitialized) `%s` byte %zu",
+                "db %#x ; (uninitialized) `%s` byte %ju",
                 0,
                 value->type->name,
                 written);
