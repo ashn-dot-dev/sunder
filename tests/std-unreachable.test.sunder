@@ -1,0 +1,7 @@
+import "std";
+
+func main() void {
+    std::unreachable(fileof(), lineof());
+}
+################################################################################
+# [std-unreachable.test.sunder:4] unreachable

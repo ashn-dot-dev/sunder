@@ -1479,7 +1479,7 @@ func write_format(writer: std::writer, format: []byte, args: []std::formatter) s
             continue;
         }
 
-        std::panic("unreachable");
+        std::unreachable(fileof(), lineof());
     }
 
     # "some{fmt"
@@ -1649,6 +1649,20 @@ func panic_format(format: []byte, args: []std::formatter) void {
     std::write_all(std::err(), PANIC_PREAMBLE);
     std::write_format(std::err(), format, args);
     std::write_all(std::err(), "\n");
+    std::exit(std::EXIT_FAILURE);
+}
+
+# Print an error message indicating that the provided file and line should have
+# been unreachable, followed by a newline, before exiting with failure status.
+# This function is intended to be called as:
+#
+#       std::unreachable(fileof(), lineof());
+func unreachable(file: []byte, line: usize) void {
+    std::write_format(
+        std::err(), "[{}:{}] unreachable",
+        (:[]std::formatter)[
+            std::formatter::init[[typeof(file)]](&file),
+            std::formatter::init[[typeof(line)]](&line)]);
     std::exit(std::EXIT_FAILURE);
 }
 
@@ -2128,7 +2142,7 @@ struct big_integer {
                 output.insert(0u, digit);
             }
             else {
-                std::panic("unreachable");
+                std::unreachable(fileof(), lineof());
             }
 
             big_integer::assign(&magnitude, &div);
@@ -3070,7 +3084,7 @@ struct hash_map[[K, V]] {
             index = (index + 1) % countof(self.*._elements);
         }
 
-        assert false; # unreachable
+        std::unreachable(fileof(), lineof());
         return std::optional[[std::key_value_pair[[K, V]]]]::EMPTY;
     }
 
@@ -3355,7 +3369,7 @@ struct file {
             flags = sys::O_WRONLY | sys::O_CREAT | sys::O_APPEND;
         }
         else {
-            std::panic("unreachable");
+            std::unreachable(fileof(), lineof());
         }
 
         if countof(path) >= sys::PATH_MAX {
