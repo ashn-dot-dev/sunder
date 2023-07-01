@@ -289,6 +289,10 @@ resolve_expr_sizeof(struct resolver* resolver, struct cst_expr const* expr);
 static struct expr const*
 resolve_expr_alignof(struct resolver* resolver, struct cst_expr const* expr);
 static struct expr const*
+resolve_expr_fileof(struct resolver* resolver, struct cst_expr const* expr);
+static struct expr const*
+resolve_expr_lineof(struct resolver* resolver, struct cst_expr const* expr);
+static struct expr const*
 resolve_expr_embed(struct resolver* resolver, struct cst_expr const* expr);
 static struct expr const*
 resolve_expr_unary(struct resolver* resolver, struct cst_expr const* expr);
@@ -3391,6 +3395,12 @@ resolve_expr(struct resolver* resolver, struct cst_expr const* expr)
     case CST_EXPR_ALIGNOF: {
         return resolve_expr_alignof(resolver, expr);
     }
+    case CST_EXPR_FILEOF: {
+        return resolve_expr_fileof(resolver, expr);
+    }
+    case CST_EXPR_LINEOF: {
+        return resolve_expr_lineof(resolver, expr);
+    }
     case CST_EXPR_EMBED: {
         return resolve_expr_embed(resolver, expr);
     }
@@ -4519,6 +4529,50 @@ resolve_expr_alignof(struct resolver* resolver, struct cst_expr const* expr)
     }
 
     struct expr* const resolved = expr_new_alignof(expr->location, rhs);
+
+    freeze(resolved);
+    return resolved;
+}
+
+static struct expr const*
+resolve_expr_fileof(struct resolver* resolver, struct cst_expr const* expr)
+{
+    assert(resolver != NULL);
+    assert(expr != NULL);
+    assert(expr->kind == CST_EXPR_FILEOF);
+
+    char const* const bytes_start = expr->location.path;
+    size_t const bytes_count = strlen(bytes_start);
+
+    struct symbol const* array_symbol = NULL;
+    struct symbol const* slice_symbol = NULL;
+    create_static_bytes(
+        resolver,
+        expr->location,
+        bytes_start,
+        bytes_count,
+        &array_symbol,
+        &slice_symbol);
+
+    struct expr* const resolved =
+        expr_new_bytes(expr->location, array_symbol, slice_symbol, bytes_count);
+
+    freeze(resolved);
+    return resolved;
+}
+
+static struct expr const*
+resolve_expr_lineof(struct resolver* resolver, struct cst_expr const* expr)
+{
+    assert(resolver != NULL);
+    assert(expr != NULL);
+    assert(expr->kind == CST_EXPR_LINEOF);
+
+    struct value* const value = value_new_integer(
+        context()->builtin.usize, bigint_new_umax(expr->location.line));
+    value_freeze(value);
+
+    struct expr* const resolved = expr_new_value(expr->location, value);
 
     freeze(resolved);
     return resolved;

@@ -401,6 +401,12 @@ order_expr(struct orderer* orderer, struct cst_expr const* expr)
         order_type(orderer, expr->data.alignof_.rhs);
         return;
     }
+    case CST_EXPR_FILEOF: {
+        return;
+    }
+    case CST_EXPR_LINEOF: {
+        return;
+    }
     case CST_EXPR_EMBED: {
         return;
     }

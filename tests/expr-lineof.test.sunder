@@ -1,0 +1,13 @@
+import "std";
+
+let a = lineof();
+
+func main() void {
+    let b = lineof();
+
+    std::print_format_line(std::out(), "{}", (:[]std::formatter)[std::formatter::init[[usize]](&a)]);
+    std::print_format_line(std::out(), "{}", (:[]std::formatter)[std::formatter::init[[usize]](&b)]);
+}
+################################################################################
+# 3
+# 6

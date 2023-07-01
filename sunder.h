@@ -930,6 +930,8 @@ enum token_kind {
     TOKEN_COUNTOF,
     TOKEN_SIZEOF,
     TOKEN_TYPEOF,
+    TOKEN_FILEOF,
+    TOKEN_LINEOF,
     TOKEN_UNINIT,
     TOKEN_EMBED,
     // Sigils
@@ -1307,6 +1309,8 @@ struct cst_expr {
         // Prefix Unary Operator Expressions
         CST_EXPR_SIZEOF,
         CST_EXPR_ALIGNOF,
+        CST_EXPR_FILEOF, /* no .data member */
+        CST_EXPR_LINEOF, /* no .data member */
         CST_EXPR_EMBED,
         CST_EXPR_UNARY,
         // Infix Binary Operator Expressions
@@ -1447,6 +1451,10 @@ cst_expr_new_sizeof(
 struct cst_expr*
 cst_expr_new_alignof(
     struct source_location location, struct cst_type const* rhs);
+struct cst_expr*
+cst_expr_new_fileof(struct source_location location);
+struct cst_expr*
+cst_expr_new_lineof(struct source_location location);
 struct cst_expr*
 cst_expr_new_embed(struct source_location location, char const* path);
 struct cst_expr*

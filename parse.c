@@ -146,6 +146,10 @@ parse_expr_sizeof(struct parser* parser);
 static struct cst_expr const*
 parse_expr_alignof(struct parser* parser);
 static struct cst_expr const*
+parse_expr_fileof(struct parser* parser);
+static struct cst_expr const*
+parse_expr_lineof(struct parser* parser);
+static struct cst_expr const*
 parse_expr_embed(struct parser* parser);
 static struct cst_expr const*
 parse_expr_nud_unary(struct parser* parser);
@@ -983,6 +987,12 @@ token_kind_nud(enum token_kind kind)
     case TOKEN_ALIGNOF: {
         return parse_expr_alignof;
     }
+    case TOKEN_FILEOF: {
+        return parse_expr_fileof;
+    }
+    case TOKEN_LINEOF: {
+        return parse_expr_lineof;
+    }
     case TOKEN_EMBED: {
         return parse_expr_embed;
     }
@@ -1401,6 +1411,38 @@ parse_expr_alignof(struct parser* parser)
     expect_current(parser, TOKEN_RPAREN);
 
     struct cst_expr* const product = cst_expr_new_alignof(location, rhs);
+
+    freeze(product);
+    return product;
+}
+
+static struct cst_expr const*
+parse_expr_fileof(struct parser* parser)
+{
+    assert(parser != NULL);
+
+    struct source_location const location =
+        expect_current(parser, TOKEN_FILEOF).location;
+    expect_current(parser, TOKEN_LPAREN);
+    expect_current(parser, TOKEN_RPAREN);
+
+    struct cst_expr* const product = cst_expr_new_fileof(location);
+
+    freeze(product);
+    return product;
+}
+
+static struct cst_expr const*
+parse_expr_lineof(struct parser* parser)
+{
+    assert(parser != NULL);
+
+    struct source_location const location =
+        expect_current(parser, TOKEN_LINEOF).location;
+    expect_current(parser, TOKEN_LPAREN);
+    expect_current(parser, TOKEN_RPAREN);
+
+    struct cst_expr* const product = cst_expr_new_lineof(location);
 
     freeze(product);
     return product;

@@ -88,6 +88,8 @@
          | <expr-access-dereference>
          | <expr-sizeof>
          | <expr-alignof>
+         | <expr-fileof>
+         | <expr-lineof>
          | <expr-embed>
          | <expr-unary>
          | <expr-binary>
@@ -121,6 +123,10 @@
 <expr-sizeof> ::= "sizeof" "(" <type> ")"
 
 <expr-alignof> ::= "alignof" "(" <type> ")"
+
+<expr-fileof> ::= "fileof" "(" ")"
+
+<expr-lineof> ::= "lineof" "(" ")"
 
 <expr-embed> ::= "embed" "(" <literal-bytes> ")"
 

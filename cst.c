@@ -629,6 +629,18 @@ cst_expr_new_alignof(
 }
 
 struct cst_expr*
+cst_expr_new_fileof(struct source_location location)
+{
+    return cst_expr_new(location, CST_EXPR_FILEOF);
+}
+
+struct cst_expr*
+cst_expr_new_lineof(struct source_location location)
+{
+    return cst_expr_new(location, CST_EXPR_LINEOF);
+}
+
+struct cst_expr*
 cst_expr_new_embed(struct source_location location, char const* path)
 {
     struct cst_expr* const self = cst_expr_new(location, CST_EXPR_EMBED);

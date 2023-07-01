@@ -1,0 +1,16 @@
+import "std";
+
+let a = fileof();
+
+func main() void {
+    let b = fileof();
+    let c = &fileof();
+
+    std::print_line(std::out(), a);
+    std::print_line(std::out(), b);
+    std::print_line(std::out(), *c);
+}
+################################################################################
+# expr-fileof.test.sunder
+# expr-fileof.test.sunder
+# expr-fileof.test.sunder
