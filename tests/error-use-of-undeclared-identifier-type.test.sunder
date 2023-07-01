@@ -1,5 +1,5 @@
 let foo: bar = 1s;
 ################################################################################
-# [error-use-of-undeclared-identifier-typespec.test.sunder:1] error: use of undeclared identifier `bar`
+# [error-use-of-undeclared-identifier-type.test.sunder:1] error: use of undeclared identifier `bar`
 # let foo: bar = 1s;
 #          ^
