@@ -122,7 +122,7 @@
 
 <expr-alignof> ::= "alignof" "(" <type> ")"
 
-<expr-alignof> ::= "embed" "(" <literal-bytes> ")"
+<expr-embed> ::= "embed" "(" <literal-bytes> ")"
 
 <expr-unary> ::= "not" <expr>
                | "+" <expr>
