@@ -164,9 +164,9 @@ cst_decl_new_union(
     self->kind = CST_DECL_UNION;
     self->location = location;
     self->name = identifier.name;
-    self->data.struct_.identifier = identifier;
-    self->data.struct_.template_parameters = template_parameters;
-    self->data.struct_.members = members;
+    self->data.union_.identifier = identifier;
+    self->data.union_.template_parameters = template_parameters;
+    self->data.union_.members = members;
     return self;
 }
 
