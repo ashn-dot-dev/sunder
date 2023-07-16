@@ -216,7 +216,7 @@ __SUNDER_INTEGER_MUL_WRAPPING_DEFINITION(__sunder_s64)
 __SUNDER_INTEGER_MUL_WRAPPING_DEFINITION(__sunder_usize)
 __SUNDER_INTEGER_MUL_WRAPPING_DEFINITION(__sunder_ssize)
 
-#define __SUNDER_INTEGER_DIV_DEFINITION(T)                                     \
+#define __SUNDER_UINTEGER_DIV_DEFINITION(T)                                    \
     static T __sunder___div_##T(T lhs, T rhs)                                  \
     {                                                                          \
         if (rhs == 0) {                                                        \
@@ -225,18 +225,36 @@ __SUNDER_INTEGER_MUL_WRAPPING_DEFINITION(__sunder_ssize)
         return lhs / rhs;                                                      \
     }
 
-__SUNDER_INTEGER_DIV_DEFINITION(__sunder_u8)
-__SUNDER_INTEGER_DIV_DEFINITION(__sunder_s8)
-__SUNDER_INTEGER_DIV_DEFINITION(__sunder_u16)
-__SUNDER_INTEGER_DIV_DEFINITION(__sunder_s16)
-__SUNDER_INTEGER_DIV_DEFINITION(__sunder_u32)
-__SUNDER_INTEGER_DIV_DEFINITION(__sunder_s32)
-__SUNDER_INTEGER_DIV_DEFINITION(__sunder_u64)
-__SUNDER_INTEGER_DIV_DEFINITION(__sunder_s64)
-__SUNDER_INTEGER_DIV_DEFINITION(__sunder_usize)
-__SUNDER_INTEGER_DIV_DEFINITION(__sunder_ssize)
-__SUNDER_INTEGER_DIV_DEFINITION(__sunder_f32)
-__SUNDER_INTEGER_DIV_DEFINITION(__sunder_f64)
+#define __SUNDER_SINTEGER_DIV_DEFINITION(T)                                    \
+    static T __sunder___div_##T(T lhs, T rhs)                                  \
+    {                                                                          \
+        if (rhs == 0) {                                                        \
+            __sunder___fatal_divide_by_zero();                                 \
+        }                                                                      \
+        if ((lhs == T##___MIN) && (rhs == -1)) {                               \
+            __sunder___fatal_out_of_range();                                   \
+        }                                                                      \
+        return lhs / rhs;                                                      \
+    }
+
+#define __SUNDER_IEEE754_DIV_DEFINITION(T)                                     \
+    static T __sunder___div_##T(T lhs, T rhs)                                  \
+    {                                                                          \
+        return lhs / rhs;                                                      \
+    }
+
+__SUNDER_UINTEGER_DIV_DEFINITION(__sunder_u8)
+__SUNDER_SINTEGER_DIV_DEFINITION(__sunder_s8)
+__SUNDER_UINTEGER_DIV_DEFINITION(__sunder_u16)
+__SUNDER_SINTEGER_DIV_DEFINITION(__sunder_s16)
+__SUNDER_UINTEGER_DIV_DEFINITION(__sunder_u32)
+__SUNDER_SINTEGER_DIV_DEFINITION(__sunder_s32)
+__SUNDER_UINTEGER_DIV_DEFINITION(__sunder_u64)
+__SUNDER_SINTEGER_DIV_DEFINITION(__sunder_s64)
+__SUNDER_UINTEGER_DIV_DEFINITION(__sunder_usize)
+__SUNDER_SINTEGER_DIV_DEFINITION(__sunder_ssize)
+__SUNDER_IEEE754_DIV_DEFINITION(__sunder_f32)
+__SUNDER_IEEE754_DIV_DEFINITION(__sunder_f64)
 
 #define __SUNDER_INTEGER_REM_DEFINITION(T)                                     \
     static T __sunder___rem_##T(T lhs, T rhs)                                  \

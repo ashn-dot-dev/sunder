@@ -3273,6 +3273,7 @@ push_rvalue_binary_divrem(struct expr const* expr, size_t id)
 
     assert(type_is_integer(xhs_type));
 
+    char const* const lhs_reg = reg_a(xhs_type->size);
     char const* const rhs_reg = reg_b(xhs_type->size);
     char const* const div = type_is_sinteger(xhs_type) ? "idiv" : "div";
 
@@ -3308,13 +3309,34 @@ push_rvalue_binary_divrem(struct expr const* expr, size_t id)
         // Zero extend the dividend into itself.
         mov_rax_reg_a_with_zero_or_sign_extend(xhs_type);
     }
-    appendli("mov rcx, 0");
-    appendli(
-        "cmp %s, %s",
-        rhs_reg,
-        reg_c(xhs_type->size)); // divide-by-zero check
-    appendli("jne %s%zu_op", LABEL_EXPR, id);
-    appendli("call __fatal_divide_by_zero");
+
+    if (type_is_uinteger(xhs_type)) {
+        // Divide-by-zero check.
+        appendli("mov rcx, 0");
+        appendli("cmp %s, %s", rhs_reg, reg_c(xhs_type->size));
+        appendli("jne %s%zu_op", LABEL_EXPR, id);
+        appendli("call __fatal_divide_by_zero");
+    }
+    if (type_is_sinteger(xhs_type)) {
+        // Divide-by-zero check.
+        appendli("mov rcx, 0");
+        appendli("cmp %s, %s", rhs_reg, reg_c(xhs_type->size));
+        appendli("jne %s%zu_oor_check_dividend", LABEL_EXPR, id);
+        appendli("call __fatal_divide_by_zero");
+
+        // T::MIN / -1 check.
+        assert(xhs_type->data.integer.min != NULL);
+        char* const min = bigint_to_new_cstr(xhs_type->data.integer.min);
+        appendli("%s%zu_oor_check_dividend:", LABEL_EXPR, id);
+        appendli("mov %s, %s", reg_c(xhs_type->size), min);
+        appendli("cmp %s, %s", lhs_reg, reg_c(xhs_type->size));
+        appendli("jne %s%zu_op", LABEL_EXPR, id);
+        appendli("mov %s, -1", reg_c(xhs_type->size));
+        appendli("cmp %s, %s", rhs_reg, reg_c(xhs_type->size));
+        appendli("jne %s%zu_op", LABEL_EXPR, id);
+        appendli("call __fatal_out_of_range");
+        xalloc(min, XALLOC_FREE);
+    }
     appendli("%s%zu_op:", LABEL_EXPR, id);
     appendli("%s %s", div, rhs_reg);
 

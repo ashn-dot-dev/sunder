@@ -59,15 +59,21 @@ func main() void {
     display[[f32]](0.50f32 - 0.25f32);
     display[[f32]](0.50f32 * 0.25f32);
     display[[f32]](0.50f32 / 0.25f32);
+    display[[f32]](+1.0f32 / 0.00f32);
+    display[[f32]](-1.0f32 / 0.00f32);
 
     std::print_line(std::out(), "f32 run-time arithmetic");
+    var w = 1.00f32;
     var x = 0.50f32;
     var y = 0.25f32;
+    var z = 0.00f32;
     display[[f32]](-x);
     display[[f32]](x + y);
     display[[f32]](x - y);
     display[[f32]](x * y);
     display[[f32]](x / y);
+    display[[f32]](+w / z);
+    display[[f32]](-w / z);
 
     std::print_line(std::out(), "f64 compile-time arithmetic");
     let x = 0.50f64;
@@ -77,15 +83,21 @@ func main() void {
     display[[f64]](0.50f64 - 0.25f64);
     display[[f64]](0.50f64 * 0.25f64);
     display[[f64]](0.50f64 / 0.25f64);
+    display[[f64]](+1.0f64 / 0.00f64);
+    display[[f64]](-1.0f64 / 0.00f64);
 
     std::print_line(std::out(), "f64 run-time arithmetic");
+    var w = 1.00f64;
     var x = 0.50f64;
     var y = 0.25f64;
+    var z = 0.00f64;
     display[[f64]](-x);
     display[[f64]](x + y);
     display[[f64]](x - y);
     display[[f64]](x * y);
     display[[f64]](x / y);
+    display[[f64]](+w / z);
+    display[[f64]](-w / z);
 
     std::print_line(std::out(), "f32-to-integer casts");
     display[[u8]]((:u8)0.0f32);
@@ -190,24 +202,32 @@ func main() void {
 # 0.250000000
 # 0.125000000
 # 2.000000000
+# infinity
+# -infinity
 # f32 run-time arithmetic
 # -0.500000000
 # 0.750000000
 # 0.250000000
 # 0.125000000
 # 2.000000000
+# infinity
+# -infinity
 # f64 compile-time arithmetic
 # -0.50000000000000000
 # 0.75000000000000000
 # 0.25000000000000000
 # 0.12500000000000000
 # 2.00000000000000000
+# infinity
+# -infinity
 # f64 run-time arithmetic
 # -0.50000000000000000
 # 0.75000000000000000
 # 0.25000000000000000
 # 0.12500000000000000
 # 2.00000000000000000
+# infinity
+# -infinity
 # f32-to-integer casts
 # 0
 # 123

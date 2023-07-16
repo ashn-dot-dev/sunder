@@ -1,0 +1,8 @@
+import "std";
+
+func main() void {
+    var x = s64::MIN / -1;
+    std::print_format(std::out(), "{}", (:[]std::formatter)[std::formatter::init[[typeof(x)]](&x)]);
+}
+################################################################################
+# fatal: operation produces out-of-range result
