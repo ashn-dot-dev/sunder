@@ -197,11 +197,11 @@
 <member-initializer> ::= "." <identifier> "=" (<expr> | "uninit")
 
 <type> ::= <symbol>
-             | <type-function>
-             | <type-pointer>
-             | <type-array>
-             | <type-slice>
-             | <type-typeof>
+         | <type-function>
+         | <type-pointer>
+         | <type-array>
+         | <type-slice>
+         | <type-typeof>
 
 <type-function> ::= func "(" ( <type> ("," <type> )* )? ")" <type>
 
