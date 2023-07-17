@@ -6,9 +6,18 @@ var b: struct {
     var y: struct { var foo: ssize; };
 } = uninit;
 
+func date() struct { var year: usize; var month: usize; var day: usize; } {
+    return (:typeof(date())){
+        .year = 2023,
+        .month = 07,
+        .day = 16,
+    };
+}
+
 func main() void {
     sys::dump[[struct { var x: u16; var y: u32; }]](a);
     sys::dump[[typeof(b)]](b);
+    var _ = date();
 }
 ################################################################################
 # AA AA 00 00 BB BB BB BB
