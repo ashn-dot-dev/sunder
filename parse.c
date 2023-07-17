@@ -1940,6 +1940,7 @@ parse_type_struct(struct parser* parser)
     while (!check_current(parser, TOKEN_RBRACE)) {
         sbuf_push(members, parse_member_variable(parser));
     }
+    sbuf_freeze(members);
     expect_current(parser, TOKEN_RBRACE);
 
     struct cst_type* const product = cst_type_new_struct(location, members);
@@ -1961,6 +1962,7 @@ parse_type_union(struct parser* parser)
     while (!check_current(parser, TOKEN_RBRACE)) {
         sbuf_push(members, parse_member_variable(parser));
     }
+    sbuf_freeze(members);
     expect_current(parser, TOKEN_RBRACE);
 
     struct cst_type* const product = cst_type_new_union(location, members);
