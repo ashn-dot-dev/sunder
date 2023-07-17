@@ -5559,7 +5559,7 @@ resolve_type_struct(struct resolver* resolver, struct cst_type const* type)
     }
 
     struct symbol_table* const struct_symbols =
-        symbol_table_new(context()->global_symbol_table);
+        symbol_table_new(resolver->current_symbol_table);
     sbuf_push(context()->chilling_symbol_tables, struct_symbols);
     struct type* const resolved_type = type_new_struct(name, struct_symbols);
     freeze(resolved_type);
@@ -5624,7 +5624,7 @@ resolve_type_union(struct resolver* resolver, struct cst_type const* type)
     }
 
     struct symbol_table* const union_symbols =
-        symbol_table_new(context()->global_symbol_table);
+        symbol_table_new(resolver->current_symbol_table);
     sbuf_push(context()->chilling_symbol_tables, union_symbols);
     struct type* const resolved_type = type_new_union(name, union_symbols);
     freeze(resolved_type);
