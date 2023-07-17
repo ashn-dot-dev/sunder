@@ -5531,9 +5531,6 @@ resolve_type_struct(struct resolver* resolver, struct cst_type const* type)
         }
     }
 
-    // XXX: Resolving member types in order to get the type name for printing.
-    // Member types are resolved again during struct completion, so there is
-    // wasted duplicate work being done by resolving the types twice.
     struct string* const name_string = string_new_cstr("struct { ");
     for (size_t i = 0; i < members_count; ++i) {
         if (i != 0) {
@@ -5596,9 +5593,6 @@ resolve_type_union(struct resolver* resolver, struct cst_type const* type)
         }
     }
 
-    // XXX: Resolving member types in order to get the type name for printing.
-    // Member types are resolved again during union completion, so there is
-    // wasted duplicate work being done by resolving the types twice.
     struct string* const name_string = string_new_cstr("union { ");
     for (size_t i = 0; i < members_count; ++i) {
         if (i != 0) {
