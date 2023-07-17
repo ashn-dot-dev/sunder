@@ -1,0 +1,8 @@
+let a: union {
+    var x: ssize;
+    var x: ssize;
+} = uninit;
+################################################################################
+# [error-type-union-duplicate-member-name.test.sunder:3] error: duplicate definition of member `x`
+#     var x: ssize;
+#     ^
