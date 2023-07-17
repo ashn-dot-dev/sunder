@@ -1,0 +1,15 @@
+import "sys";
+
+let a: struct { var x: u16; var y: u32; } = (:struct { var x: u16; var y: u32; }){.x = 0xAAAAu16, .y = 0xBBBBBBBBu32};
+var b: struct {
+    var x: struct { var foo: ssize; };
+    var y: struct { var foo: ssize; };
+} = uninit;
+
+func main() void {
+    sys::dump[[struct { var x: u16; var y: u32; }]](a);
+    sys::dump[[typeof(b)]](b);
+}
+################################################################################
+# AA AA 00 00 BB BB BB BB
+# 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00

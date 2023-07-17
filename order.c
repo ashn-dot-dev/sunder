@@ -469,6 +469,16 @@ order_type(struct orderer* orderer, struct cst_type const* type)
         order_type(orderer, type->data.slice.base);
         return;
     }
+    case CST_TYPE_STRUCT: {
+        sbuf(struct cst_member const* const) const members =
+            type->data.struct_.members;
+        for (size_t i = 0; i < sbuf_count(members); ++i) {
+            struct cst_member const* const member = members[i];
+            assert(member->kind == CST_MEMBER_VARIABLE);
+            order_type(orderer, member->data.variable.type);
+        }
+        return;
+    }
     case CST_TYPE_TYPEOF: {
         order_expr(orderer, type->data.typeof_.expr);
         return;

@@ -199,6 +199,8 @@ parse_type_pointer(struct parser* parser);
 static struct cst_type const*
 parse_type_array_or_slice(struct parser* parser);
 static struct cst_type const*
+parse_type_struct(struct parser* parser);
+static struct cst_type const*
 parse_type_typeof(struct parser* parser);
 
 static struct parser*
@@ -1813,6 +1815,10 @@ parse_type(struct parser* parser)
         return parse_type_array_or_slice(parser);
     }
 
+    if (check_current(parser, TOKEN_STRUCT)) {
+        return parse_type_struct(parser);
+    }
+
     if (check_current(parser, TOKEN_TYPEOF)) {
         return parse_type_typeof(parser);
     }
@@ -1910,6 +1916,27 @@ parse_type_array_or_slice(struct parser* parser)
     struct cst_type const* const base = parse_type(parser);
 
     struct cst_type* const product = cst_type_new_array(location, count, base);
+
+    freeze(product);
+    return product;
+}
+
+static struct cst_type const*
+parse_type_struct(struct parser* parser)
+{
+    assert(parser != NULL);
+    assert(check_current(parser, TOKEN_STRUCT));
+
+    struct source_location const location =
+        expect_current(parser, TOKEN_STRUCT).location;
+    expect_current(parser, TOKEN_LBRACE);
+    sbuf(struct cst_member const*) members = NULL;
+    while (!check_current(parser, TOKEN_RBRACE)) {
+        sbuf_push(members, parse_member_variable(parser));
+    }
+    expect_current(parser, TOKEN_RBRACE);
+
+    struct cst_type* const product = cst_type_new_struct(location, members);
 
     freeze(product);
     return product;
