@@ -862,6 +862,15 @@ cst_type_new_struct(
 }
 
 struct cst_type*
+cst_type_new_union(
+    struct source_location location, struct cst_member const* const* members)
+{
+    struct cst_type* const self = cst_type_new(location, CST_TYPE_UNION);
+    self->data.union_.members = members;
+    return self;
+}
+
+struct cst_type*
 cst_type_new_typeof(
     struct source_location location, struct cst_expr const* expr)
 {

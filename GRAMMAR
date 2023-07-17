@@ -202,9 +202,12 @@
          | <type-array>
          | <type-slice>
          | <type-struct>
+         | <type-union>
          | <type-typeof>
 
 <type-struct> ::= "struct" "{" <member-variable>* "}"
+
+<type-struct> ::= "union" "{" <member-variable>* "}"
 
 <type-function> ::= func "(" ( <type> ("," <type> )* )? ")" <type>
 

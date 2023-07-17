@@ -209,7 +209,7 @@ static void
 complete_union(
     struct resolver* resolver,
     struct symbol const* symbol,
-    struct cst_decl const* decl);
+    struct cst_member const* const* members);
 static void
 complete_function(
     struct resolver* resolver, struct incomplete_function const* incomplete);
@@ -385,6 +385,8 @@ static struct type const*
 resolve_type_slice(struct resolver* resolver, struct cst_type const* type);
 static struct type const*
 resolve_type_struct(struct resolver* resolver, struct cst_type const* type);
+static struct type const*
+resolve_type_union(struct resolver* resolver, struct cst_type const* type);
 static struct type const*
 resolve_type_typeof(struct resolver* resolver, struct cst_type const* type);
 
@@ -1054,7 +1056,8 @@ xget_template_instance(
                 resolver, resolved_symbol, instance_decl->data.struct_.members);
         }
         if (decl->kind == CST_DECL_UNION) {
-            complete_union(resolver, resolved_symbol, instance_decl);
+            complete_union(
+                resolver, resolved_symbol, instance_decl->data.union_.members);
         }
 
         context()->template_instantiation_chain = link->next;
@@ -2512,18 +2515,13 @@ static void
 complete_union(
     struct resolver* resolver,
     struct symbol const* symbol,
-    struct cst_decl const* decl)
+    struct cst_member const* const* members)
 {
     assert(resolver != NULL);
     assert(symbol != NULL);
     assert(symbol->kind == SYMBOL_TYPE);
     assert(symbol_xget_type(symbol)->kind == TYPE_UNION);
-    assert(decl != NULL);
-    assert(decl->kind == CST_DECL_UNION);
-    assert(cstr_ends_with(symbol->name, decl->name));
 
-    sbuf(struct cst_member const* const) const members =
-        decl->data.union_.members;
     size_t const members_count = sbuf_count(members);
 
     // XXX: Evil const cast.
@@ -5389,6 +5387,9 @@ resolve_type(struct resolver* resolver, struct cst_type const* type)
     case CST_TYPE_STRUCT: {
         return resolve_type_struct(resolver, type);
     }
+    case CST_TYPE_UNION: {
+        return resolve_type_union(resolver, type);
+    }
     case CST_TYPE_TYPEOF: {
         return resolve_type_typeof(resolver, type);
     }
@@ -5573,6 +5574,71 @@ resolve_type_struct(struct resolver* resolver, struct cst_type const* type)
 }
 
 static struct type const*
+resolve_type_union(struct resolver* resolver, struct cst_type const* type)
+{
+    assert(resolver != NULL);
+    assert(type != NULL);
+    assert(type->kind == CST_TYPE_UNION);
+
+    sbuf(struct cst_member const* const) const members =
+        type->data.union_.members;
+    size_t const members_count = sbuf_count(members);
+
+    // Check for duplicate member definitions.
+    for (size_t i = 0; i < members_count; ++i) {
+        for (size_t j = i + 1; j < members_count; ++j) {
+            if (members[i]->name == members[j]->name) {
+                fatal(
+                    members[j]->location,
+                    "duplicate definition of member `%s`",
+                    members[j]->name);
+            }
+        }
+    }
+
+    // XXX: Resolving member types in order to get the type name for printing.
+    // Member types are resolved again during union completion, so there is
+    // wasted duplicate work being done by resolving the types twice.
+    struct string* const name_string = string_new_cstr("union { ");
+    for (size_t i = 0; i < members_count; ++i) {
+        if (i != 0) {
+            string_append_cstr(name_string, " ");
+        }
+        assert(members[i]->kind == CST_MEMBER_VARIABLE);
+        string_append_fmt(
+            name_string,
+            "var %s: %s;",
+            members[i]->name,
+            resolve_type(resolver, members[i]->data.variable.type)->name);
+    }
+    string_append_cstr(name_string, " }");
+    char const* const name =
+        intern(string_start(name_string), string_count(name_string));
+    string_del(name_string);
+
+    struct symbol const* const existing =
+        symbol_table_lookup(context()->global_symbol_table, name);
+    if (existing != NULL) {
+        assert(existing->kind == SYMBOL_TYPE);
+        return symbol_xget_type(existing);
+    }
+
+    struct symbol_table* const union_symbols =
+        symbol_table_new(context()->global_symbol_table);
+    sbuf_push(context()->chilling_symbol_tables, union_symbols);
+    struct type* const resolved_type = type_new_union(name, union_symbols);
+    freeze(resolved_type);
+
+    struct symbol* const symbol = symbol_new_type(NO_LOCATION, resolved_type);
+    freeze(symbol);
+
+    complete_union(resolver, symbol, members);
+
+    symbol_table_insert(context()->global_symbol_table, name, symbol, false);
+    return resolved_type;
+}
+
+static struct type const*
 resolve_type_typeof(struct resolver* resolver, struct cst_type const* type)
 {
     assert(resolver != NULL);
@@ -5706,7 +5772,7 @@ resolve(struct module* module)
                 continue;
             }
 
-            complete_union(resolver, symbol, decl);
+            complete_union(resolver, symbol, decl->data.union_.members);
             continue;
         }
 

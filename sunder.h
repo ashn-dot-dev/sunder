@@ -1568,6 +1568,7 @@ struct cst_type {
         CST_TYPE_ARRAY,
         CST_TYPE_SLICE,
         CST_TYPE_STRUCT,
+        CST_TYPE_UNION,
         CST_TYPE_TYPEOF
     } kind;
     union {
@@ -1589,6 +1590,9 @@ struct cst_type {
         struct {
             sbuf(struct cst_member const* const) members;
         } struct_;
+        struct {
+            sbuf(struct cst_member const* const) members;
+        } union_;
         struct {
             struct cst_expr const* expr;
         } typeof_;
@@ -1614,6 +1618,9 @@ cst_type_new_slice(
     struct source_location location, struct cst_type const* base);
 struct cst_type*
 cst_type_new_struct(
+    struct source_location location, struct cst_member const* const* members);
+struct cst_type*
+cst_type_new_union(
     struct source_location location, struct cst_member const* const* members);
 struct cst_type*
 cst_type_new_typeof(

@@ -1,0 +1,15 @@
+import "sys";
+
+let a: union { var x: u16; var y: u32; } = (:union { var x: u16; var y: u32; }){.x = 0xAAAAu16};
+var b: union {
+    var x: union { var foo: ssize; };
+    var y: union { var foo: ssize; };
+} = uninit;
+
+func main() void {
+    sys::dump[[union { var x: u16; var y: u32; }]](a);
+    sys::dump[[typeof(b)]](b);
+}
+################################################################################
+# AA AA 00 00
+# 00 00 00 00 00 00 00 00
