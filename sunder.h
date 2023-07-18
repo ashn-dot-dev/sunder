@@ -1224,6 +1224,7 @@ struct cst_stmt {
         } if_;
         struct {
             struct cst_identifier identifier;
+            struct cst_type const* type; // optional
             struct cst_expr const* begin; // optional
             struct cst_expr const* end;
             struct cst_block body;
@@ -1259,6 +1260,7 @@ struct cst_stmt*
 cst_stmt_new_for_range(
     struct source_location location,
     struct cst_identifier identifier,
+    struct cst_type const* type,
     struct cst_expr const* begin,
     struct cst_expr const* end,
     struct cst_block body);

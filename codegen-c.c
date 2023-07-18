@@ -1252,7 +1252,7 @@ codegen_stmt_for_range(struct stmt const* stmt)
     assert(address->kind == ADDRESS_LOCAL);
     appendli(
         "for (%s %s = %s; %s < %s; ++%s)",
-        mangle_type(context()->builtin.usize),
+        mangle_type(symbol_xget_type(variable)),
         mangle_name(address->data.local.name),
         strgen_rvalue(stmt->data.for_range.begin),
         mangle_name(address->data.local.name),

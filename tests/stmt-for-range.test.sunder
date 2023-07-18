@@ -39,6 +39,44 @@ func main() void {
     for i in 3 {
         sys::dump[[usize]](i);
     }
+
+    # Range with an explicit usize type.
+    for i: usize in 0xA0:0xA3 {
+        sys::dump[[usize]](i);
+    }
+
+    # Range with an explicit ssize type.
+    for i: ssize in 0xB0:0xB3 {
+        sys::dump[[ssize]](i);
+    }
+    for i: ssize in -3:3 {
+        sys::dump[[ssize]](i);
+    }
+
+    # Ranges with an explicit u8 and s8 type to ensure that non-native word
+    # sizes can be used for the loop variable type.
+    for i: u8 in 0:4 {
+        sys::dump[[u8]](i);
+    }
+    for i: s8 in -2:2 {
+        sys::dump[[s8]](i);
+    }
+
+    # Ranges of sized integer types to ensure loops with loop variables of all
+    # word sizes compile correctly.
+    for i: u8 in 0:3 { sys::dump[[typeof(i)]](i); }
+    for i: s8 in 0:3 { sys::dump[[typeof(i)]](i); }
+    for i: u16 in 0:3 { sys::dump[[typeof(i)]](i); }
+    for i: s16 in 0:3 { sys::dump[[typeof(i)]](i); }
+    for i: s32 in 0:3 { sys::dump[[typeof(i)]](i); }
+    for i: s32 in 0:3 { sys::dump[[typeof(i)]](i); }
+    for i: u64 in 0:3 { sys::dump[[typeof(i)]](i); }
+    for i: s64 in 0:3 { sys::dump[[typeof(i)]](i); }
+
+    # Make sure that this using the range of a sized type does not cause an
+    # infinite loop. The loop variable should increment up the range-end value
+    # and then stop. So 126 (i.e. 0x7E) should be the last loop variable value.
+    for _: s8 in -128:127 { }
 }
 ################################################################################
 # 03 00 00 00 00 00 00 00
@@ -54,6 +92,50 @@ func main() void {
 # 05 00 00 00 00 00 00 00
 # 06 00 00 00 00 00 00 00
 # EF BE AD DE
+# 00 00 00 00 00 00 00 00
+# 01 00 00 00 00 00 00 00
+# 02 00 00 00 00 00 00 00
+# A0 00 00 00 00 00 00 00
+# A1 00 00 00 00 00 00 00
+# A2 00 00 00 00 00 00 00
+# B0 00 00 00 00 00 00 00
+# B1 00 00 00 00 00 00 00
+# B2 00 00 00 00 00 00 00
+# FD FF FF FF FF FF FF FF
+# FE FF FF FF FF FF FF FF
+# FF FF FF FF FF FF FF FF
+# 00 00 00 00 00 00 00 00
+# 01 00 00 00 00 00 00 00
+# 02 00 00 00 00 00 00 00
+# 00
+# 01
+# 02
+# 03
+# FE
+# FF
+# 00
+# 01
+# 00
+# 01
+# 02
+# 00
+# 01
+# 02
+# 00 00
+# 01 00
+# 02 00
+# 00 00
+# 01 00
+# 02 00
+# 00 00 00 00
+# 01 00 00 00
+# 02 00 00 00
+# 00 00 00 00
+# 01 00 00 00
+# 02 00 00 00
+# 00 00 00 00 00 00 00 00
+# 01 00 00 00 00 00 00 00
+# 02 00 00 00 00 00 00 00
 # 00 00 00 00 00 00 00 00
 # 01 00 00 00 00 00 00 00
 # 02 00 00 00 00 00 00 00

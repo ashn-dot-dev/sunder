@@ -3038,20 +3038,26 @@ resolve_stmt_for_range(struct resolver* resolver, struct cst_stmt const* stmt)
     assert(stmt != NULL);
     assert(stmt->kind == CST_STMT_FOR_RANGE);
 
+    struct type const* loop_var_type = context()->builtin.usize;
+    if (stmt->data.for_range.type != NULL) {
+        loop_var_type = resolve_type(resolver, stmt->data.for_range.type);
+        if (!type_is_uinteger(loop_var_type)
+            && !type_is_sinteger(loop_var_type)) {
+            fatal(
+                stmt->data.for_range.type->location,
+                "illegal for-range index type `%s`",
+                loop_var_type->name);
+        }
+    }
+
     struct expr const* begin = NULL;
     if (stmt->data.for_range.begin != NULL) {
         begin = resolve_expr(resolver, stmt->data.for_range.begin);
-        begin = implicit_cast(context()->builtin.usize, begin);
-        if (begin->type != context()->builtin.usize) {
-            fatal(
-                begin->location,
-                "illegal range-begin-expression with non-usize type `%s`",
-                begin->type->name);
-        }
+        begin = implicit_cast(loop_var_type, begin);
     }
     else {
-        struct value* const value = value_new_integer(
-            context()->builtin.usize, bigint_new(BIGINT_ZERO));
+        struct value* const value =
+            value_new_integer(loop_var_type, bigint_new(BIGINT_ZERO));
         value_freeze(value);
 
         struct expr* const zero = expr_new_value(stmt->location, value);
@@ -3059,21 +3065,16 @@ resolve_stmt_for_range(struct resolver* resolver, struct cst_stmt const* stmt)
 
         begin = zero;
     }
+    verify_type_compatibility(begin->location, begin->type, loop_var_type);
 
     struct expr const* end = resolve_expr(resolver, stmt->data.for_range.end);
-    end = implicit_cast(context()->builtin.usize, end);
-    if (end->type != context()->builtin.usize) {
-        fatal(
-            end->location,
-            "illegal range-end-expression with non-usize type `%s`",
-            end->type->name);
-    }
+    end = implicit_cast(loop_var_type, end);
+    verify_type_compatibility(end->location, end->type, loop_var_type);
 
     int const save_rbp_offset = resolver->current_rbp_offset;
     struct source_location const loop_var_location =
         stmt->data.for_range.identifier.location;
     char const* const loop_var_name = stmt->data.for_range.identifier.name;
-    struct type const* const loop_var_type = context()->builtin.usize;
     struct address const* const loop_var_address =
         resolver_reserve_storage_local(resolver, loop_var_name, loop_var_type);
     struct object* loop_var_object =

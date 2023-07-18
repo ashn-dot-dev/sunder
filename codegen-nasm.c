@@ -80,6 +80,10 @@ reg_b(uintmax_t size);
 static char const*
 reg_c(uintmax_t size);
 
+// Word size: byte, word, dword, qword.
+static char const*
+xword(uintmax_t size);
+
 // Copy size bytes from the address in rax to to the address in rbx using rcx
 // for intermediate storage. Roughly equivalent to memcpy(rbx, rax, size).
 static void
@@ -586,6 +590,23 @@ reg_c(uintmax_t size)
         return "ecx";
     case 8:
         return "rcx";
+    }
+    UNREACHABLE();
+    return NULL;
+}
+
+static char const*
+xword(uintmax_t size)
+{
+    switch (size) {
+    case 1:
+        return "byte";
+    case 2:
+        return "word";
+    case 4:
+        return "dword";
+    case 8:
+        return "qword";
     }
     UNREACHABLE();
     return NULL;
@@ -1375,39 +1396,40 @@ codegen_stmt_for_range(struct stmt const* stmt, size_t id)
     assert(stmt != NULL);
     assert(stmt->kind == STMT_FOR_RANGE);
 
-    assert(
-        symbol_xget_type(stmt->data.for_range.loop_variable)
-        == context()->builtin.usize);
-    assert(stmt->data.for_range.begin->type == context()->builtin.usize);
-    assert(stmt->data.for_range.end->type == context()->builtin.usize);
-    assert(
-        symbol_xget_address(stmt->data.for_range.loop_variable)->kind
-        == ADDRESS_LOCAL);
-
     size_t const save_current_loop_id = current_loop_id;
     current_loop_id = id;
 
-    push_address(symbol_xget_address(stmt->data.for_range.loop_variable));
+    struct symbol const* const variable = stmt->data.for_range.loop_variable;
+    assert(
+        type_is_uinteger(symbol_xget_type(variable))
+        || type_is_sinteger(symbol_xget_type(variable)));
+    assert(stmt->data.for_range.begin->type == symbol_xget_type(variable));
+    assert(stmt->data.for_range.end->type == symbol_xget_type(variable));
+
+    struct address const* const address = symbol_xget_address(variable);
+    assert(address->kind == ADDRESS_LOCAL);
+
+    char const* const jump =
+        type_is_sinteger(symbol_xget_type(variable)) ? "jnl" : "jnb";
+    uintmax_t const size = symbol_xget_type(variable)->size;
+    char const* const word = xword(size);
+
+    push_address(address);
     push_rvalue(stmt->data.for_range.begin);
     appendli("pop rbx"); // begin
     appendli("pop rax"); // addr of loop variable
-    appendli("mov [rax], rbx");
+    appendli("mov [rax], %s", reg_b(size));
     appendln("%s%zu_condition:", LABEL_STMT, id);
-    push_at_address(
-        symbol_xget_type(stmt->data.for_range.loop_variable)->size,
-        symbol_xget_address(stmt->data.for_range.loop_variable));
+    push_at_address(size, address);
     push_rvalue(stmt->data.for_range.end);
     appendli("pop rbx"); // end
     appendli("pop rax"); // loop variable
-    appendli("cmp rax, rbx");
-    appendli("jnb %s%zu_end", LABEL_STMT, id);
+    appendli("cmp %s, %s", reg_a(size), reg_b(size));
+    appendli("%s %s%zu_end", jump, LABEL_STMT, id);
     appendln("%s%zu_body_bgn:", LABEL_STMT, id);
     codegen_block(&stmt->data.for_range.body);
     appendln("%s%zu_body_end:", LABEL_STMT, id);
-    appendli(
-        "inc qword [rbp + %d]",
-        symbol_xget_address(stmt->data.for_range.loop_variable)
-            ->data.local.rbp_offset);
+    appendli("inc %s [rbp + %d]", word, address->data.local.rbp_offset);
     appendli("jmp %s%zu_condition", LABEL_STMT, id);
 
     appendli("%s%zu_end: ; used for break and continue", LABEL_STMT, id);

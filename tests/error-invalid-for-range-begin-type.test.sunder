@@ -1,0 +1,8 @@
+func main() void {
+    for i: ssize in 1u:100s {
+    }
+}
+################################################################################
+# [error-invalid-for-range-begin-type.test.sunder:2] error: incompatible type `usize` (expected `ssize`)
+#     for i: ssize in 1u:100s {
+#                     ^

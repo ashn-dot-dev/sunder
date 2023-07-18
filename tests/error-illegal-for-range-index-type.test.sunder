@@ -1,0 +1,8 @@
+func main() void {
+    for i: bool in 100 {
+    }
+}
+################################################################################
+# [error-illegal-for-range-index-type.test.sunder:2] error: illegal for-range index type `bool`
+#     for i: bool in 100 {
+#            ^

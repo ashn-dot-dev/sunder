@@ -1203,11 +1203,13 @@ stmt_new_for_range(
 {
     assert(loop_variable != NULL);
     assert(loop_variable->kind == SYMBOL_VARIABLE);
-    assert(symbol_xget_type(loop_variable) == context()->builtin.usize);
+    assert(
+        type_is_uinteger(symbol_xget_type(loop_variable))
+        || type_is_sinteger(symbol_xget_type(loop_variable)));
     assert(begin != NULL);
-    assert(begin->type == context()->builtin.usize);
+    assert(begin->type == symbol_xget_type(loop_variable));
     assert(end != NULL);
-    assert(end->type == context()->builtin.usize);
+    assert(end->type == symbol_xget_type(loop_variable));
 
     struct stmt* const self = stmt_new(location, STMT_FOR_RANGE);
     self->data.for_range.loop_variable = loop_variable;

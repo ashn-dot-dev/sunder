@@ -790,9 +790,17 @@ parse_stmt_for(struct parser* parser)
         expect_current(parser, TOKEN_FOR).location;
 
     // <stmt-for-range>
-    if (check_current(parser, TOKEN_IDENTIFIER)
-        && check_peek(parser, TOKEN_IN)) {
+    bool const is_for_range = check_current(parser, TOKEN_IDENTIFIER)
+        && (check_peek(parser, TOKEN_COLON) || check_peek(parser, TOKEN_IN));
+    if (is_for_range) {
         struct cst_identifier const identifier = parse_identifier(parser);
+
+        struct cst_type const* type = NULL;
+        if (check_current(parser, TOKEN_COLON)) {
+            expect_current(parser, TOKEN_COLON);
+            type = parse_type(parser);
+        }
+
         expect_current(parser, TOKEN_IN);
 
         struct cst_expr const* begin = parse_expr(parser);
@@ -801,8 +809,8 @@ parse_stmt_for(struct parser* parser)
             struct cst_expr const* const end = parse_expr(parser);
             struct cst_block const body = parse_block(parser);
 
-            struct cst_stmt* const product =
-                cst_stmt_new_for_range(location, identifier, begin, end, body);
+            struct cst_stmt* const product = cst_stmt_new_for_range(
+                location, identifier, type, begin, end, body);
 
             freeze(product);
             return product;
@@ -812,7 +820,7 @@ parse_stmt_for(struct parser* parser)
         struct cst_block const body = parse_block(parser);
 
         struct cst_stmt* const product =
-            cst_stmt_new_for_range(location, identifier, NULL, end, body);
+            cst_stmt_new_for_range(location, identifier, type, NULL, end, body);
 
         freeze(product);
         return product;

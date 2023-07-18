@@ -270,6 +270,7 @@ struct cst_stmt*
 cst_stmt_new_for_range(
     struct source_location location,
     struct cst_identifier identifier,
+    struct cst_type const* type,
     struct cst_expr const* begin,
     struct cst_expr const* end,
     struct cst_block body)
@@ -278,6 +279,7 @@ cst_stmt_new_for_range(
 
     struct cst_stmt* const self = cst_stmt_new(location, CST_STMT_FOR_RANGE);
     self->data.for_range.identifier = identifier;
+    self->data.for_range.type = type;
     self->data.for_range.begin = begin;
     self->data.for_range.end = end;
     self->data.for_range.body = body;
