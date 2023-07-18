@@ -4564,6 +4564,7 @@ resolve_expr_lineof(struct resolver* resolver, struct cst_expr const* expr)
     assert(resolver != NULL);
     assert(expr != NULL);
     assert(expr->kind == CST_EXPR_LINEOF);
+    (void)resolver;
 
     struct value* const value = value_new_integer(
         context()->builtin.usize, bigint_new_umax(expr->location.line));
