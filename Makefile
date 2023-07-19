@@ -14,7 +14,7 @@ SUNDER_HOME = $$HOME/.sunder
 SUNDER_DEFAULT_ARCH = $$(sh bin/sunder-platform arch)
 SUNDER_DEFAULT_HOST = $$(sh bin/sunder-platform host)
 SUNDER_DEFAULT_BACKEND = C
-SUNDER_DEFAULT_CC = clang
+SUNDER_DEFAULT_CC = cc
 
 C99_BASE = \
 	-DSUNDER_DEFAULT_ARCH=$(SUNDER_DEFAULT_ARCH) \

@@ -53,9 +53,9 @@ $ make <targets> CC=clang CFLAGS='$(GNU_REL)'              # clang/gcc (release)
 ```
 
 The compiler is built with `SUNDER_DEFAULT_BACKEND=C` and
-`SUNDER_DEFAULT_CC=clang` by default, indicating that the C backend should be
-used with `clang` if `SUNDER_BACKEND` and/or `SUNDER_CC` (explained below) are
-not set when the compiler is invoked.
+`SUNDER_DEFAULT_CC=cc` by default, indicating that the C backend should be used
+with `cc` if `SUNDER_BACKEND` and/or `SUNDER_CC` (explained below) are not set
+when the compiler is invoked.
 
 To use `nasm` as the default compiler backend, override
 `SUNDER_DEFAULT_BACKEND` with `nasm` when executing targets:
@@ -146,8 +146,8 @@ The following environment variables affect compiler behavior:
   hardware abstractions when using the NASM backend. If this environment
   variable is not set, then the default path is used.
 + `SUNDER_CC` => Selects the C compiler to be used when compiling with the C
-  backend. Currently, `SUNDER_CC=clang` and `SUNDER_CC=gcc` are supported. If
-  this environment variable is not set, then the default C compiler is used.
+  backend. Currently, `clang` and `gcc` are supported. If this environment
+  variable is not set, then the default C compiler is used.
 + `SUNDER_CFLAGS` => Space-separated list of additional flags passed to the C
   compiler when compiling with the C backend.
 
