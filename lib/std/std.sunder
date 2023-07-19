@@ -914,6 +914,36 @@ struct str { # namespace
         return std::optional[[usize]]::EMPTY;
     }
 
+    # Returns a non-empty optional containing the prefix and suffix bytes of
+    # `str` split on the first occurrence of `separator`. The prefix and suffix
+    # strings are created from, and thus share a lifetime with, the input
+    # string. If `separator` is not found in `str`, then an empty-optional is
+    # returned.
+    #
+    # Example:
+    #   # Split a key-value pair of the form "key=value".
+    #   var optional = std::str::cut(s, "=");
+    #   if optional.is_empty() {
+    #       # Handle the error...
+    #   }
+    #   var key = optional.value().prefix;
+    #   var val = optional.value().suffix;
+
+    func cut(str: []byte, separator: []byte) std::optional[[struct { var prefix: []byte; var suffix: []byte; }]] {
+        alias T = struct { var prefix: []byte; var suffix: []byte; };
+
+        var index = std::str::find(str, separator);
+        if index.is_empty() {
+            return std::optional[[T]]::EMPTY;
+        }
+
+        var index = index.value();
+        return std::optional[[T]]::init_value((:T){
+            .prefix = str[0:index],
+            .suffix = str[index+countof(separator):countof(str)],
+        });
+    }
+
     # Returns a newly allocated slice containing the fields of `str` split on
     # all occurrences of `delimiter`. Consecutive delimiters are not grouped
     # together and are deemed to delimit empty strings. Elements of the

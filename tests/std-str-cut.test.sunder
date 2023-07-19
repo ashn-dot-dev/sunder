@@ -1,0 +1,40 @@
+import "std";
+
+func test(str: []byte, sep: []byte) void {
+    std::print_format(
+        std::out(),
+        "str = \"{e}\", sep = \"{e}\" -> ",
+        (:[]std::formatter)[
+            std::formatter::init[[typeof(str)]](&str),
+            std::formatter::init[[typeof(sep)]](&sep)]);
+
+    var cut = std::str::cut(str, sep);
+    if cut.is_empty() {
+        std::print_line(std::out(), "no cut performed");
+        return;
+    }
+
+    var cut = cut.value();
+    std::print_format_line(
+        std::out(),
+        "prefix = \"{e}\", suffix = \"{e}\"",
+        (:[]std::formatter)[
+            std::formatter::init[[typeof(cut.prefix)]](&cut.prefix),
+            std::formatter::init[[typeof(cut.suffix)]](&cut.suffix)]);
+}
+
+func main() void {
+    test("Hello, World!", "He");
+    test("Hello, World!", "o");
+    test("Hello, World!", ", ");
+    test("Hello, World!", "!");
+    test("foo=bar", "=");
+    test("foo=bar", ":");
+}
+################################################################################
+# str = "Hello, World!", sep = "He" -> prefix = "", suffix = "llo, World!"
+# str = "Hello, World!", sep = "o" -> prefix = "Hell", suffix = ", World!"
+# str = "Hello, World!", sep = ", " -> prefix = "Hello", suffix = "World!"
+# str = "Hello, World!", sep = "!" -> prefix = "Hello, World", suffix = ""
+# str = "foo=bar", sep = "=" -> prefix = "foo", suffix = "bar"
+# str = "foo=bar", sep = ":" -> no cut performed
