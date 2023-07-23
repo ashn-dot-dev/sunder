@@ -928,7 +928,6 @@ struct str { # namespace
     #   }
     #   var key = optional.value().prefix;
     #   var val = optional.value().suffix;
-
     func cut(str: []byte, separator: []byte) std::optional[[struct { var prefix: []byte; var suffix: []byte; }]] {
         alias T = struct { var prefix: []byte; var suffix: []byte; };
 
