@@ -38,7 +38,7 @@ func main() void {
     defer dir.close();
 
     for dir.advance() {
-        var current = dir.current();
+        var current = *dir.current();
         if current.is_error() {
             std::print_format_line(
                 std::err(),

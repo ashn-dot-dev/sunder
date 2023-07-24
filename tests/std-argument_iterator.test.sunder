@@ -14,7 +14,7 @@ func test(arguments: [][]byte) void {
     var iter = std::argument_iterator::init_from_argv(&args[0]);
     var iter = std::iterator[[[]byte]]::init[[typeof(iter)]](&iter);
     for iter.advance() {
-        std::print_line(std::out(), iter.current());
+        std::print_line(std::out(), *iter.current());
     }
 }
 
@@ -50,7 +50,7 @@ func main() void {
     var iter = std::argument_iterator::init_from_argv(&args[0]);
     var iter = std::iterator[[[]byte]]::init[[typeof(iter)]](&iter);
     for iter.advance() {
-        std::print_line(std::out(), iter.current());
+        std::print_line(std::out(), *iter.current());
     }
 }
 ################################################################################

@@ -71,6 +71,7 @@ struct tree_iterator {
         if self.*.cur.is_empty() {
             std::panic("invalid iterator");
         }
+
         return self.*.cur.value();
     }
 }
@@ -94,7 +95,7 @@ func main() void {
 
     var iter = tree_iterator::init(&t);
     defer iter.fini();
-    var iter = std::iterator[[*node]]::init[[tree_iterator]](&iter);
+    var iter = std::iterator[[node]]::init[[tree_iterator]](&iter);
     for iter.advance() {
         std::print_line(std::out(), iter.current().*.value);
     }

@@ -214,7 +214,7 @@ struct formatter {
 
 struct iterator_itable[[T]] {
     var advance: func(*any) bool;
-    var current: func(*any) T;
+    var current: func(*any) *T;
 }
 
 # Interface used to traverse a collection of elements independently of the
@@ -227,7 +227,7 @@ struct iterator_itable[[T]] {
 #   var iter = foo_iterator::init(&foo_object);
 #   var iter = std::iterator[[foo_element]]::init[[foo_iterator]](&iter);
 #   for iter.advance() {
-#       var current = iter.current();
+#       var current = *iter.current();
 #       # Do something with the current element...
 #   }
 struct iterator[[T]] {
@@ -256,7 +256,7 @@ struct iterator[[T]] {
     # iterator has not begun iteration, or if the backing iterator has reached
     # an end-of-iteration condition, then the backing `current` function should
     # panic.
-    func current(self: *iterator[[T]]) T {
+    func current(self: *iterator[[T]]) *T {
         return self.*.itable.*.current(self.*.object);
     }
 }
@@ -3143,10 +3143,12 @@ struct hash_map[[K, V]] {
 # Iterate over the elements of a hash map.
 struct hash_map_iterator[[K, V]] {
     var _iterator: std::slice_iterator[[hash_map_element[[K, V]]]];
+    var _current: std::optional[[std::key_value_view[[K, V]]]];
 
     func init(map: *std::hash_map[[K, V]]) hash_map_iterator[[K, V]] {
         return (:hash_map_iterator[[K, V]]){
-            ._iterator = std::slice_iterator[[hash_map_element[[K, V]]]]::init(map.*._elements)
+            ._iterator = std::slice_iterator[[hash_map_element[[K, V]]]]::init(map.*._elements),
+            ._current = std::optional[[std::key_value_view[[K, V]]]]::EMPTY,
         };
     }
 
@@ -3157,18 +3159,25 @@ struct hash_map_iterator[[K, V]] {
                 continue;
             }
 
+            var element = self.*._iterator.current();
+            var current = (:std::key_value_view[[K, V]]){
+                .key = &element.*._key,
+                .value = &element.*._value
+            };
+            self.*._current = std::optional[[std::key_value_view[[K, V]]]]::init_value(current);
             return true;
         }
 
+        self.*._current = std::optional[[std::key_value_view[[K, V]]]]::EMPTY;
         return false; # end-of-iteration
     }
 
-    func current(self: *hash_map_iterator[[K, V]]) std::key_value_view[[K, V]] {
-        var element = self.*._iterator.current();
-        return (:std::key_value_view[[K, V]]){
-            .key = &element.*._key,
-            .value = &element.*._value
-        };
+    func current(self: *hash_map_iterator[[K, V]]) *std::key_value_view[[K, V]] {
+        if self.*._current.is_empty() {
+            std::panic("invalid iterator");
+        }
+
+        return &self.*._current._value;
     }
 }
 
@@ -3349,7 +3358,7 @@ struct hash_set_iterator[[T]] {
     }
 
     func current(self: *hash_set_iterator[[T]]) *T {
-        return self.*._iterator.current().key;
+        return self.*._iterator.current().*.key;
     }
 }
 
@@ -3581,11 +3590,12 @@ struct directory {
     #
     # A value result may be invalidated by the next call to
     # `std::directory::advance` or `std::directory::close`.
-    func current(self: *directory) std::result[[[]byte, std::error]] {
+    func current(self: *directory) *std::result[[[]byte, std::error]] {
         if self.*._current.is_empty() {
             std::panic("invalid iterator");
         }
-        return self.*._current.value();
+
+        return &self.*._current._value;
     }
 
     # Create an empty directory if it does not exist.
@@ -3628,11 +3638,12 @@ struct directory {
 #   # program name).
 #   var iter = std::argument_iterator::init();
 #   for iter.advance() {
-#       std::print_line(std::out(), iter.current());
+#       std::print_line(std::out(), *iter.current());
 #   }
 struct argument_iterator {
     var _argv: **byte;
     var _index: std::optional[[usize]];
+    var _current: []byte;
 
     # Initialize an argument iterator using the program arguments provided by
     # the hosted environment at program startup.
@@ -3651,7 +3662,8 @@ struct argument_iterator {
     func init_from_argv(argv: **byte) argument_iterator {
         return (:argument_iterator){
             ._argv = argv,
-            ._index = std::optional[[usize]]::EMPTY
+            ._index = std::optional[[usize]]::EMPTY,
+            ._current = uninit,
         };
     }
 
@@ -3668,10 +3680,11 @@ struct argument_iterator {
             return false; # end of iteration
         }
 
+        self.*._current = std::cstr::data(*arg);
         return true;
     }
 
-    func current(self: *argument_iterator) []byte {
+    func current(self: *argument_iterator) *[]byte {
         if self.*._index.is_empty() {
             std::panic("invalid iterator");
         }
@@ -3681,7 +3694,7 @@ struct argument_iterator {
             std::panic("invalid iterator");
         }
 
-        return std::cstr::data(*arg);
+        return &self.*._current;
     }
 }
 
@@ -3782,7 +3795,7 @@ struct argument_parser {
             return false;
         }
 
-        var str = self.*._iterator.current();
+        var str = *self.*._iterator.current();
         if self.*._verbatim {
             self.*._arg = std::optional[[[]byte]]::init_value(str);
             return true;
@@ -3852,7 +3865,7 @@ struct argument_parser {
                     std::formatter::init[[[]byte]](&str)]);
             std::exit(std::EXIT_FAILURE);
         }
-        self.*._arg = std::optional[[[]byte]]::init_value(self.*._iterator.current());
+        self.*._arg = std::optional[[[]byte]]::init_value(*self.*._iterator.current());
         return true;
     }
 

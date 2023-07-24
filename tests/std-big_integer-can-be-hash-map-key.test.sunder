@@ -21,8 +21,8 @@ func main() void {
             std::out(),
             "{} : \"{e}\"",
             (:[]std::formatter)[
-                std::formatter::init[[std::big_integer]](iterator.current().key),
-                std::formatter::init[[[]byte]](iterator.current().value)]);
+                std::formatter::init[[std::big_integer]](iterator.current().*.key),
+                std::formatter::init[[[]byte]](iterator.current().*.value)]);
     }
 }
 ################################################################################

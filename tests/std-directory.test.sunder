@@ -25,9 +25,7 @@ func main() void {
     var vec = std::vector[[[]byte]]::init();
 
     for dir.advance() {
-        var current = dir.current();
-        var name = current.value();
-
+        var name = dir.current().*.value();
         var str = std::slice[[byte]]::new(countof(name));
         std::slice[[byte]]::copy(str, name);
         vec.push(str);

@@ -1,6 +1,6 @@
 import "std";
 
-func print_elements(iter: std::iterator[[*u32]]) void {
+func print_elements(iter: std::iterator[[u32]]) void {
     for iter.advance() {
         std::print_format_line(
             std::out(),
@@ -12,10 +12,10 @@ func print_elements(iter: std::iterator[[*u32]]) void {
 
 func main() void {
     var iter = std::slice_iterator[[u32]]::init((:[]u32)[]);
-    print_elements(std::iterator[[*u32]]::init[[std::slice_iterator[[u32]]]](&iter));
+    print_elements(std::iterator[[u32]]::init[[std::slice_iterator[[u32]]]](&iter));
 
     var iter = std::slice_iterator[[u32]]::init((:[]u32)[1, 2, 3]);
-    print_elements(std::iterator[[*u32]]::init[[std::slice_iterator[[u32]]]](&iter));
+    print_elements(std::iterator[[u32]]::init[[std::slice_iterator[[u32]]]](&iter));
 
     assert not iter.advance();
     assert not iter.advance(); # Should be able to advance multiple times without panic.
