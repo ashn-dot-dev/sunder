@@ -238,28 +238,49 @@ context_init(void)
     s_context.interned.f64 = intern_cstr("f64");
     s_context.interned.real = intern_cstr("real");
 
-    s_context.env.SUNDER_HOME = getenv_with_default("SUNDER_HOME", "");
-    s_context.env.SUNDER_ARCH =
-        getenv_with_default("SUNDER_ARCH", STRINGIFY(SUNDER_DEFAULT_ARCH));
-    s_context.env.SUNDER_HOST =
-        getenv_with_default("SUNDER_HOST", STRINGIFY(SUNDER_DEFAULT_HOST));
-    s_context.env.SUNDER_BACKEND = getenv_with_default(
-        "SUNDER_BACKEND", STRINGIFY(SUNDER_DEFAULT_BACKEND));
-    s_context.env.SUNDER_SEARCH_PATH =
-        getenv_with_default("SUNDER_SEARCH_PATH", "");
-    if (getenv("SUNDER_SYSASM_PATH") != NULL) {
-        s_context.env.SUNDER_SYSASM_PATH = getenv("SUNDER_SYSASM_PATH");
-    }
-    else if (getenv("SUNDER_HOME") != NULL) {
+    s_context.env.SUNDER_HOME = getenv("SUNDER_HOME");
+    s_context.env.SUNDER_HOME = s_context.env.SUNDER_HOME != NULL
+        ? intern_cstr(s_context.env.SUNDER_HOME)
+        : s_context.interned.empty;
+
+    s_context.env.SUNDER_ARCH = getenv("SUNDER_ARCH");
+    s_context.env.SUNDER_ARCH = s_context.env.SUNDER_ARCH != NULL
+        ? intern_cstr(s_context.env.SUNDER_ARCH)
+        : intern_cstr(STRINGIFY(SUNDER_DEFAULT_ARCH));
+
+    s_context.env.SUNDER_HOST = getenv("SUNDER_HOST");
+    s_context.env.SUNDER_HOST = s_context.env.SUNDER_HOST != NULL
+        ? intern_cstr(s_context.env.SUNDER_HOST)
+        : intern_cstr(STRINGIFY(SUNDER_DEFAULT_HOST));
+
+    s_context.env.SUNDER_BACKEND = s_context.env.SUNDER_BACKEND != NULL
+        ? intern_cstr(s_context.env.SUNDER_BACKEND)
+        : intern_cstr(STRINGIFY(SUNDER_DEFAULT_BACKEND));
+
+    s_context.env.SUNDER_SEARCH_PATH = getenv("SUNDER_SEARCH_PATH");
+    s_context.env.SUNDER_SEARCH_PATH = s_context.env.SUNDER_SEARCH_PATH != NULL
+        ? intern_cstr(s_context.env.SUNDER_SEARCH_PATH)
+        : s_context.interned.empty;
+
+    s_context.env.SUNDER_SYSASM_PATH = s_context.interned.empty;
+    if (getenv("SUNDER_HOME") != NULL) {
         s_context.env.SUNDER_SYSASM_PATH =
             intern_fmt("%s/lib/sys/sys.asm", getenv("SUNDER_HOME"));
     }
-    else {
-        s_context.env.SUNDER_SYSASM_PATH = "";
+    if (getenv("SUNDER_SYSASM_PATH") != NULL) {
+        s_context.env.SUNDER_SYSASM_PATH =
+            intern_cstr(getenv("SUNDER_SYSASM_PATH"));
     }
-    s_context.env.SUNDER_CC =
-        getenv_with_default("SUNDER_CC", STRINGIFY(SUNDER_DEFAULT_CC));
-    s_context.env.SUNDER_CFLAGS = getenv_with_default("SUNDER_CFLAGS", "");
+
+    s_context.env.SUNDER_CC = getenv("SUNDER_CC");
+    s_context.env.SUNDER_CC = s_context.env.SUNDER_CC != NULL
+        ? intern_cstr(s_context.env.SUNDER_CC)
+        : intern_cstr(STRINGIFY(SUNDER_DEFAULT_CC));
+
+    s_context.env.SUNDER_CFLAGS = getenv("SUNDER_CFLAGS");
+    s_context.env.SUNDER_CFLAGS = s_context.env.SUNDER_CFLAGS != NULL
+        ? intern_cstr(s_context.env.SUNDER_CFLAGS)
+        : s_context.interned.empty;
 
     s_context.arch = cstr_to_arch(s_context.env.SUNDER_ARCH);
     s_context.host = cstr_to_host(s_context.env.SUNDER_HOST);

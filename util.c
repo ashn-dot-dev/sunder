@@ -2343,13 +2343,3 @@ xspawnvpw(char const* const* argv)
         exit(EXIT_FAILURE);
     }
 }
-
-char const*
-getenv_with_default(char const* name, char const* default_)
-{
-    char const* s = getenv(name);
-    if (s == NULL) {
-        return intern_cstr(default_);
-    }
-    return intern_cstr(s);
-}
