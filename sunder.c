@@ -253,6 +253,7 @@ context_init(void)
         ? intern_cstr(s_context.env.SUNDER_HOST)
         : intern_cstr(STRINGIFY(SUNDER_DEFAULT_HOST));
 
+    s_context.env.SUNDER_BACKEND = getenv("SUNDER_BACKEND");
     s_context.env.SUNDER_BACKEND = s_context.env.SUNDER_BACKEND != NULL
         ? intern_cstr(s_context.env.SUNDER_BACKEND)
         : intern_cstr(STRINGIFY(SUNDER_DEFAULT_BACKEND));
