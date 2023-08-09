@@ -4371,8 +4371,8 @@ extend u64 func format(self: *u64, writer: std::writer, fmt: []byte) std::result
     return integer::_format_umax((:std::umax)*self, writer, fmt);
 }
 
-extend usize let MIN: usize = (:usize)u64::MIN;
-extend usize let MAX: usize = (:usize)u64::MAX;
+extend usize let MIN: usize = 0u;
+extend usize let MAX: usize = ~usize::MIN;
 extend usize func init_from_str(str: []byte, radix: usize) std::result[[usize, std::error]] {
     return integer::_init_uint_from_str[[usize]](str, radix);
 }
@@ -4518,8 +4518,8 @@ extend s64 func format(self: *s64, writer: std::writer, fmt: []byte) std::result
     return integer::_format_smax((:std::smax)*self, writer, fmt);
 }
 
-extend ssize let MIN: ssize = (:ssize)s64::MIN;
-extend ssize let MAX: ssize = (:ssize)s64::MAX;
+extend ssize let MIN: ssize = (:ssize)(1u << (sizeof(ssize) * byte::BITS - 1));
+extend ssize let MAX: ssize = ssize::MIN -% 1;
 extend ssize func init_from_str(str: []byte, radix: usize) std::result[[ssize, std::error]] {
     return integer::_init_sint_from_str[[ssize]](str, radix);
 }
