@@ -62,6 +62,7 @@ env(void)
     printf("SUNDER_SEARCH_PATH=%s\n", context()->env.SUNDER_SEARCH_PATH);
     printf("SUNDER_SYSASM_PATH=%s\n", context()->env.SUNDER_SYSASM_PATH);
     printf("SUNDER_CC=%s\n", context()->env.SUNDER_CC);
+    printf("SUNDER_CFLAGS=%s\n", context()->env.SUNDER_CFLAGS);
 }
 
 static void
