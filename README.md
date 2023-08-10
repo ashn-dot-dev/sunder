@@ -152,10 +152,8 @@ The following environment variables affect compiler behavior:
   compiler when compiling with the C backend.
 
 ## Using Sunder as a Scripting Language
-Sunder can be used for scripting by adding `#!/usr/bin/env sunder-run` (or
-equivalent) as the first line of a Sunder source file. If this environment
-  variable is not set, then the default path, `$SUNDER_HOME/lib/sys/sys.asm`,
-  is used.
+Sunder can be used for scripting by adding `#!/usr/bin/env sunder-run` as the
+first line of a Sunder source file.
 
 ```sunder
 #!/usr/bin/env sunder-run
