@@ -41,7 +41,7 @@ The top-level `Makefile` contains the following important targets:
 
 Targets will execute with `CC=c99` using release mode `CFLAGS` by default.
 
-Specific compiler/compiler-flag combinations include:
+Specific `CC`/`CFLAGS` combinations include:
 
 ```sh
 $ make <targets> CFLAGS='$(C99_DBG)'  # POSIX c99 (debug)
