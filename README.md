@@ -98,7 +98,7 @@ Verify that the compiler has been successfully installed by running
 the start of your next login session.
 
 ## Using the Sunder Compiler
-Sunder programs are compiled into executables with `sunder-compile`.
+Sunder programs are compiled with `sunder-compile`.
 
 ```sunder
 import "std";
@@ -118,10 +118,10 @@ The `-o OUT` option may be used to specify the name of the output executable.
 If this option is not provided then the output executable will default to the
 name `a.out`.
 
-Intermediate files of the form `OUT.tmp.*`, for output program `OUT` are
-generated during compilation and subsequently removed after the output
-executable has been created. The `-k` flag will instruct the compiler *not* to
-remove these files (useful for debugging).
+Intermediate files of the form `OUT.*`, for output program `OUT` are generated
+during compilation and subsequently removed after the output executable has
+been created. The `-k` flag will instruct the compiler *not* to remove these
+files (useful for debugging).
 
 ```sh
 $ SUNDER_BACKEND=C sunder-compile -k -o hello examples/hello.sunder
@@ -169,8 +169,8 @@ Currently, `SUNDER_HOST=freestanding`, `SUNDER_HOST=emscripten`, and
 default host specified by `sunder-platform host` is used.
 
 ## Compiling to WebAssembly
-Sunder supports compiling to WebAssembly via the C backend with
-[Emscripten](https://emscripten.org/). To compile to WebAssembly, specify
+Sunder supports compiling to WebAssembly via the C backend using
+[Emscripten](https://emscripten.org/). When compiling to WebAssembly, specify
 `emcc`, `wasm32`, and `emscripten` as the C compiler, target architecture, and
 target host, respectively.
 
