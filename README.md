@@ -11,6 +11,7 @@ satisfying the following dependencies:
   + C99 compiler (POSIX `c99`, `clang`, `gcc`, etc.)
   + `ld`
 + [`clang`](https://clang.llvm.org/) or [`gcc`](https://gcc.gnu.org/) (C backend only)
++ [`emcc`](https://emscripten.org/) (C→WebAssembly backend only)
 + [`nasm`](https://www.nasm.us/) or [`yasm`](https://yasm.tortall.net/) (x86-64 NASM backend only)
 + `clang-format` (development only)
 
