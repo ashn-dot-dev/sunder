@@ -114,14 +114,12 @@ $ ./hello
 Hello, world!
 ```
 
-The `-o OUT` option may be used to specify the name of the output executable.
-If this option is not provided then the output executable will default to the
-name `a.out`.
+The `-o OUT` option may be used to specify the name of the output file. If this
+option is not provided then the output file will default to the name `a.out`.
 
 Intermediate files of the form `OUT.*`, for output program `OUT` are generated
-during compilation and subsequently removed after the output executable has
-been created. The `-k` flag will instruct the compiler *not* to remove these
-files (useful for debugging).
+during compilation and subsequently removed after the output file has been
+created. The `-k` flag will instruct the compiler *not* to remove these files.
 
 ```sh
 $ SUNDER_BACKEND=C sunder-compile -k -o hello examples/hello.sunder
@@ -135,6 +133,25 @@ hello  hello.tmp.asm  hello.tmp.o
 $ SUNDER_BACKEND=C SUNDER_CC=emcc SUNDER_ARCH=wasm32 SUNDER_HOST=emscripten sunder-compile -k -o hello.html examples/hello.sunder
 $ ls hello*
 hello.html  hello.html.tmp.c  hello.js  hello.wasm
+```
+
+The `-g` flag will instruct the compiler to generate debug information. Use of
+`-g` in combination with `-k` facilitates debugging with GDB.
+
+```sh
+$ SUNDER_BACKEND=nasm sunder-compile -g -k -o hello examples/hello.sunder
+$ gdb -q hello
+libthread-db debugging is 0.
+Reading symbols from hello...
+(gdb) break std.print_line
+Breakpoint 1 at 0x4105c3
+(gdb) run
+Starting program: /home/ashn/sources/sunder/hello
+
+Breakpoint 1, 0x00000000004105c3 in std.print_line ()
+(gdb) where
+#0  0x00000000004105c3 in std.print_line ()
+#1  0x000000000045a548 in main ()
 ```
 
 The following environment variables affect compiler behavior:
