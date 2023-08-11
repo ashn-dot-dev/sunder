@@ -139,30 +139,34 @@ hello.html  hello.html.tmp.c  hello.js  hello.wasm
 
 The following environment variables affect compiler behavior:
 
-+ `SUNDER_BACKEND`: Selects the backend to be used for object file
-  generation. Currently, `SUNDER_BACKEND=C`, `SUNDER_BACKEND=nasm`, and
-  `SUNDER_BACKEND=yasm`, are supported. If this environment variable is not
-  set, then the default backend is used.
-+ `SUNDER_SEARCH_PATH`: Colon-separated list of directories specifying the
-  module search path for `import` and `embed` statements.
-+ `SUNDER_SYSASM_PATH`: Location of the platform specific `sys.asm` file that
-  defines the program entry point as well as low-level operating system and
-  hardware abstractions when using the NASM backend. If this environment
-  variable is not set, then the default path is used.
-+ `SUNDER_ARCH`: Target architecture to build for. Currently,
-  `SUNDER_ARCH=amd64`, `SUNDER_ARCH=arm64`, and `SUNDER_ARCH=wasm32` are
-  supported. If this environment variable is not set, then the default
-  architecture specified by `sunder-platform arch` is used.
-+ `SUNDER_HOST`: Target host operating system to build for. Currently,
-  `SUNDER_HOST=freestanding`, `SUNDER_HOST=emscripten`, and `SUNDER_HOST=linux`
-  are supported. If this environment variable is not set, then the default
-  host specified by `sunder-platform host` is used.
-+ `SUNDER_CC`: Selects the C compiler to be used when compiling with the C
-  backend. Currently, `SUNDER_CC=clang`, `SUNDER_CC=gcc`, and `SUNDER_CC=emcc`
-  are supported. If this environment variable is not set, then the default C
-  compiler is used.
-+ `SUNDER_CFLAGS`: Space-separated list of additional flags passed to the C
-  compiler when compiling with the C backend.
+**`SUNDER_BACKEND`** selects the backend to be used for compilation. Currently,
+`SUNDER_BACKEND=C`, `SUNDER_BACKEND=nasm`, and `SUNDER_BACKEND=yasm`, are
+supported. If `SUNDER_BACKEND` is not set, then the default backend is used.
+
+**`SUNDER_CC`** selects the C compiler to be used when compiling with the C
+backend. Currently, `SUNDER_CC=clang`, `SUNDER_CC=gcc`, and `SUNDER_CC=emcc`
+are supported. If `SUNDER_CC` is not set, then the default C compiler is used.
+
+**`SUNDER_CFLAGS`** is a space-separated list of additional flags passed to the
+C compiler when compiling with the C backend.
+
+**`SUNDER_SEARCH_PATH`** is a colon-separated list of directories specifying
+the module search path for `import` and `embed` statements.
+
+**`SUNDER_SYSASM_PATH`** specifies the location of the platform specific
+`sys.asm` file that defines the program entry point as well as low-level
+operating system and hardware abstractions when using the NASM backend. If
+`SUNDER_SYSASM_PATH` is not set, then the default path is used.
+
+**`SUNDER_ARCH`** specifies the target architecture to build for. Currently,
+`SUNDER_ARCH=amd64`, `SUNDER_ARCH=arm64`, and `SUNDER_ARCH=wasm32` are
+supported. If `SUNDER_ARCH` is not set, then the default architecture specified
+by `sunder-platform arch` is used.
+
+**`SUNDER_HOST`** specifies the target operating system to build for.
+Currently, `SUNDER_HOST=freestanding`, `SUNDER_HOST=emscripten`, and
+`SUNDER_HOST=linux` are supported. If `SUNDER_HOST` is not set, then the
+default host specified by `sunder-platform host` is used.
 
 ## Compiling to WebAssembly
 Sunder supports compiling to WebAssembly via the C backend with
