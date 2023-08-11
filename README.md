@@ -132,25 +132,54 @@ hello  hello.tmp.c
 $ SUNDER_BACKEND=nasm sunder-compile -k -o hello examples/hello.sunder
 $ ls hello*
 hello  hello.tmp.asm  hello.tmp.o
+
+$ SUNDER_BACKEND=C SUNDER_CC=emcc SUNDER_ARCH=wasm32 SUNDER_HOST=emscripten sunder-compile -k -o hello.html examples/hello.sunder
+$ ls hello*
+hello.html  hello.html.tmp.c  hello.js  hello.wasm
 ```
 
 The following environment variables affect compiler behavior:
 
-+ `SUNDER_BACKEND` => Selects the backend to be used for object file
++ `SUNDER_BACKEND`: Selects the backend to be used for object file
   generation. Currently, `SUNDER_BACKEND=C`, `SUNDER_BACKEND=nasm`, and
   `SUNDER_BACKEND=yasm`, are supported. If this environment variable is not
   set, then the default backend is used.
-+ `SUNDER_SEARCH_PATH` => Colon-separated list of directories specifying the
++ `SUNDER_SEARCH_PATH`: Colon-separated list of directories specifying the
   module search path for `import` and `embed` statements.
-+ `SUNDER_SYSASM_PATH` => Location of the platform specific `sys.asm` file that
++ `SUNDER_SYSASM_PATH`: Location of the platform specific `sys.asm` file that
   defines the program entry point as well as low-level operating system and
   hardware abstractions when using the NASM backend. If this environment
   variable is not set, then the default path is used.
-+ `SUNDER_CC` => Selects the C compiler to be used when compiling with the C
-  backend. Currently, `clang` and `gcc` are supported. If this environment
-  variable is not set, then the default C compiler is used.
-+ `SUNDER_CFLAGS` => Space-separated list of additional flags passed to the C
++ `SUNDER_ARCH`: Target architecture to build for. Currently,
+  `SUNDER_ARCH=amd64`, `SUNDER_ARCH=arm64`, and `SUNDER_ARCH=wasm32` are
+  supported. If this environment variable is not set, then the default
+  architecture specified by `sunder-platform arch` is used.
++ `SUNDER_HOST`: Target host operating system to build for. Currently,
+  `SUNDER_HOST=freestanding`, `SUNDER_HOST=emscripten`, and `SUNDER_HOST=linux`
+  are supported. If this environment variable is not set, then the default
+  host specified by `sunder-platform host` is used.
++ `SUNDER_CC`: Selects the C compiler to be used when compiling with the C
+  backend. Currently, `SUNDER_CC=clang`, `SUNDER_CC=gcc`, and `SUNDER_CC=emcc`
+  are supported. If this environment variable is not set, then the default C
+  compiler is used.
++ `SUNDER_CFLAGS`: Space-separated list of additional flags passed to the C
   compiler when compiling with the C backend.
+
+## Compiling to WebAssembly
+Sunder supports compiling to WebAssembly via the C backend with
+[Emscripten](https://emscripten.org/). To compile to WebAssembly, specify
+`emcc`, `wasm32`, and `emscripten` as the C compiler, target architecture, and
+target host, respectively.
+
+```sh
+$ SUNDER_BACKEND=C \
+    SUNDER_CC=emcc \
+    SUNDER_CFLAGS="-sSINGLE_FILE --shell-file ${SUNDER_HOME}/lib/sys/sys.wasm32-emscripten.html" \
+    SUNDER_ARCH=wasm32 \
+    SUNDER_HOST=emscripten \
+    sunder-compile -o hello.html examples/hello.sunder
+$ firefox hello.html
+```
 
 ## Using Sunder as a Scripting Language
 Sunder can be used for scripting by adding `#!/usr/bin/env sunder-run` as the
