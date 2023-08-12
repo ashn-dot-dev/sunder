@@ -33,11 +33,11 @@ programs under the `examples` directory.
 ### Long Version
 The top-level `Makefile` contains the following important targets:
 
-+ `build` => Build the compiler (default `make` target).
-+ `check` => Run the test suite for the language and standard library.
-+ `examples` => Compile the example programs under the `examples` directory.
-+ `format` => Run `clang-format` over the compiler sources.
-+ `clean` => Remove build artifacts.
++ `build` → Build the compiler (default `make` target).
++ `check` → Run the test suite for the language and standard library.
++ `examples` → Compile the example programs under the `examples` directory.
++ `format` → Run `clang-format` over the compiler sources.
++ `clean` → Remove build artifacts.
 
 Targets will execute with `CC=c99` using release mode `CFLAGS` by default.
 
