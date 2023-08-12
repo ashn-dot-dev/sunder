@@ -117,9 +117,10 @@ Hello, world!
 The `-o OUT` option may be used to specify the name of the output file. If this
 option is not provided then the output file will default to the name `a.out`.
 
-Intermediate files of the form `OUT.*`, for output program `OUT` are generated
-during compilation and subsequently removed after the output file has been
-created. The `-k` flag will instruct the compiler *not* to remove these files.
+Intermediate files of the form `OUT.tmp.*` for output program `OUT` are
+generated during compilation and subsequently removed after the output file has
+been created. The `-k` flag will instruct the compiler *not* to remove these
+files.
 
 ```sh
 $ SUNDER_BACKEND=C sunder-compile -k -o hello examples/hello.sunder
