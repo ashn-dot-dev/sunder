@@ -135,8 +135,8 @@ $ ls hello*
 hello.html  hello.html.tmp.c  hello.js  hello.wasm
 ```
 
-The `-g` flag will instruct the compiler to generate debug information. Use of
-`-g` in combination with `-k` facilitates debugging with GDB.
+The `-g` flag will instruct the compiler to generate debug information. The use
+of `-g` in combination with `-k` facilitates debugging with GDB.
 
 ```sh
 $ SUNDER_BACKEND=nasm sunder-compile -g -k -o hello examples/hello.sunder
