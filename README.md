@@ -158,7 +158,7 @@ Breakpoint 1, 0x00000000004105c3 in std.print_line ()
 The following environment variables affect compiler behavior:
 
 **`SUNDER_BACKEND`** selects the backend to be used for compilation. Currently,
-`SUNDER_BACKEND=C`, `SUNDER_BACKEND=nasm`, and `SUNDER_BACKEND=yasm`, are
+`SUNDER_BACKEND=C`, `SUNDER_BACKEND=nasm`, and `SUNDER_BACKEND=yasm` are
 supported. If `SUNDER_BACKEND` is not set, then the default backend is used.
 
 **`SUNDER_CC`** selects the C compiler to be used when compiling with the C
