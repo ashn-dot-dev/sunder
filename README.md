@@ -16,7 +16,7 @@ satisfying the following dependencies:
 + `clang-format` (development only)
 
 The top-level Dockerfile defines a Debian image with dependencies for native
-x86-64 development pre-installed. The Docker image can be built and run with:
+x86-64 development pre-installed. You can build and run the Docker image with:
 
 ```sh
 $ docker buildx build --platform=linux/amd64 --tag sunder .             # Build the image (do this once)
@@ -25,10 +25,10 @@ $ docker run --rm --interactive --tty --volume "$(pwd)":/sunder sunder  # Run th
 
 ## Building
 ### Quick Version
-Run `make` to build the compiler.
+To build the compiler, run `make`.
 
-Run `make check examples` to run the test suite and compile the example
-programs under the `examples` directory.
+To execute the test suite and compile the example programs under the examples
+directory, run `make check examples`.
 
 ### Long Version
 The top-level `Makefile` contains the following important targets:
@@ -94,7 +94,7 @@ fi
 ```
 
 Verify that the compiler has been successfully installed by running
-`sunder-compile -h`. You may have to source your `.profile` in new shells until
+`sunder-compile -h`. You may need to source your `.profile` in new shells until
 the start of your next login session.
 
 ## Using the Sunder Compiler
@@ -115,7 +115,7 @@ Hello, world!
 ```
 
 The `-o OUT` option may be used to specify the name of the output file. If this
-option is not provided then the output file will default to the name `a.out`.
+option is not provided, the output file will default to the name `a.out`.
 
 Intermediate files of the form `OUT.tmp.*` for output program `OUT` are
 generated during compilation and subsequently removed after the output file has
