@@ -15,8 +15,8 @@ satisfying the following dependencies:
 + [`nasm`](https://www.nasm.us/) or [`yasm`](https://yasm.tortall.net/) (x86-64 NASM backend only)
 + `clang-format` (development only)
 
-The top-level Dockerfile defines a Debian image with all development
-dependencies pre-installed. The Docker image can be built and run with:
+The top-level Dockerfile defines a Debian image with dependencies for native
+x86-64 development pre-installed. The Docker image can be built and run with:
 
 ```sh
 $ docker buildx build --platform=linux/amd64 --tag sunder .             # Build the image (do this once)
