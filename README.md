@@ -171,7 +171,7 @@ C compiler when compiling with the C backend.
 **`SUNDER_SEARCH_PATH`** is a colon-separated list of directories specifying
 the module search path for `import` and `embed` statements.
 
-**`SUNDER_SYSASM_PATH`** specifies the location of the platform specific
+**`SUNDER_SYSASM_PATH`** specifies the location of the platform-specific
 `sys.asm` file that defines the program entry point as well as low-level
 operating system and hardware abstractions when compiling with the NASM
 backend. If `SUNDER_SYSASM_PATH` is not set, then the default path is used.
