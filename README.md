@@ -27,7 +27,7 @@ $ docker run --rm --interactive --tty --volume "$(pwd)":/sunder sunder  # Run th
 ### Quick Version
 To build the compiler, run `make`.
 
-To execute the test suite and compile the example programs under the examples
+To execute the test suite and compile the example programs under the `examples`
 directory, run `make check examples`.
 
 ### Long Version
