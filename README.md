@@ -173,8 +173,8 @@ the module search path for `import` and `embed` statements.
 
 **`SUNDER_SYSASM_PATH`** specifies the location of the platform specific
 `sys.asm` file that defines the program entry point as well as low-level
-operating system and hardware abstractions when using the NASM backend. If
-`SUNDER_SYSASM_PATH` is not set, then the default path is used.
+operating system and hardware abstractions when compiling with the NASM
+backend. If `SUNDER_SYSASM_PATH` is not set, then the default path is used.
 
 **`SUNDER_ARCH`** specifies the target architecture to build for. Currently,
 `SUNDER_ARCH=amd64`, `SUNDER_ARCH=arm64`, and `SUNDER_ARCH=wasm32` are
