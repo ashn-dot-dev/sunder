@@ -3918,6 +3918,16 @@ extend void func format(self_: *bool, writer: std::writer, fmt: []byte) std::res
     return std::write_all(writer, "void");
 }
 
+extend bool func init_from_str(str: []byte) std::result[[bool, std::error]] {
+    if std::str::eq(str, "true") {
+        return std::result[[bool, std::error]]::init_value(true);
+    }
+    if std::str::eq(str, "false") {
+        return std::result[[bool, std::error]]::init_value(false);
+    }
+    return std::result[[bool, std::error]]::init_error(std::error::INVALID_ARGUMENT);
+}
+
 extend bool func format(self: *bool, writer: std::writer, fmt: []byte) std::result[[void, std::error]] {
     if countof(fmt) != 0 {
         return std::result[[void, std::error]]::init_error(std::error::INVALID_ARGUMENT);

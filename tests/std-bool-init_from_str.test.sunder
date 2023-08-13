@@ -1,0 +1,29 @@
+import "std";
+
+func main() void {
+    var result = bool::init_from_str("true");
+    var b = result.value();
+    std::print_format_line(std::out(), "{}", (:[]std::formatter)[std::formatter::init[[bool]](&b)]);
+
+    var result = bool::init_from_str("false");
+    var b = result.value();
+    std::print_format_line(std::out(), "{}", (:[]std::formatter)[std::formatter::init[[bool]](&b)]);
+
+    var result = bool::init_from_str("True");
+    var e = result.error();
+    std::print_format_line(std::out(), "{}", (:[]std::formatter)[std::formatter::init[[std::error]](&e)]);
+
+    var result = bool::init_from_str("False");
+    var e = result.error();
+    std::print_format_line(std::out(), "{}", (:[]std::formatter)[std::formatter::init[[std::error]](&e)]);
+
+    var result = bool::init_from_str(" true ");
+    var e = result.error();
+    std::print_format_line(std::out(), "{}", (:[]std::formatter)[std::formatter::init[[std::error]](&e)]);
+}
+################################################################################
+# true
+# false
+# invalid argument
+# invalid argument
+# invalid argument
