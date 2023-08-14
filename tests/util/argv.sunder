@@ -2,10 +2,10 @@ namespace util::argv;
 import "std";
 
 # Transform the provided arguments into an C-style argument vector.
-func new(allocator: std::allocator, arguments: [][]byte) **byte {
-    var args = std::slice[[*byte]]::new_with_allocator(allocator, countof(arguments) + 1);
+func new(arguments: [][]byte) **byte {
+    var args = std::slice[[*byte]]::new(countof(arguments) + 1);
     for i in countof(args) -1 {
-        var str = std::slice[[byte]]::new_with_allocator(allocator, countof(arguments[i]) + 1);
+        var str = std::slice[[byte]]::new(countof(arguments[i]) + 1);
         std::slice[[byte]]::copy(str[0:countof(arguments[i])], arguments[i]);
         str[countof(arguments[i])] = '\0';
         args[i] = &str[0];

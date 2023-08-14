@@ -3700,12 +3700,12 @@ struct argument_iterator {
 
 # Parse a program argument list.
 #
-# Initializer functions are provided with the `options` list containing strings
+# Initializer functions are provided with an `options` list containing strings
 # that will be treated as option flags when parsed. Parsed options may start
 # with any number of dashes, so `-foo`, `--foo`, and `---foo` are all parsed as
 # the option string "foo". An option string may contain a trailing ':'
-# character, signifying that the option requires an additional option argument.
-# If the argument "--" is encountered, then it will be skipped and all
+# character, signifying that the option requires an additional option-argument.
+# If the argument "--" is encountered, then it will be skipped, and all
 # subsequent program arguments will be parsed as positional arguments.
 #
 # Example:
@@ -3741,14 +3741,15 @@ struct argument_iterator {
 #           std::out(),
 #           "Positional argument `{}`",
 #           (:[]std::formatter)[std::formatter::init[[[]byte]](&argument)]);
-#    }
+#   }
 #
 # Example output:
-#   $ sunder-run example.sunder --abc foo --def bar baz -- --abc
+#   $ sunder-run example.sunder --abc foo --def bar --def=baz qux -- --abc
 #   Option `abc`
 #   Positional argument `foo`
 #   Option `def` with required argument `bar`
-#   Positional argument `baz`
+#   Option `def` with required argument `baz`
+#   Positional argument `qux`
 #   Positional argument `--abc`
 struct argument_parser {
     var _options: [][]byte;
@@ -3827,23 +3828,37 @@ struct argument_parser {
             str = str[countof("-"):countof(str)];
         }
 
-        var should_parse_arg = false;
-        var idx = std::optional[[usize]]::EMPTY;
+        var should_parse_arg: bool = uninit; # `-opt=arg` or `-opt arg`
         for i in countof(self.*._options) {
             should_parse_arg = false;
             var opt = self.*._options[i];
 
             if std::str::ends_with(opt, ":") { # Required argument.
-                opt = str[0 : countof(opt) - 1];
+                opt = opt[0 : countof(opt) - 1];
                 should_parse_arg = true;
             }
 
             if std::str::eq(str, opt) {
-                idx = std::optional[[usize]]::init_value(i);
+                self.*._opt = std::optional[[[]byte]]::init_value(opt);
+                break;
+            }
+
+            if std::str::starts_with(str, opt) and str[countof(opt)] == '=' {
+                var arg = str[countof(opt)+1:countof(str)];
+                self.*._opt = std::optional[[[]byte]]::init_value(opt);
+                self.*._arg = std::optional[[[]byte]]::init_value(arg);
+                if not should_parse_arg {
+                    std::print_format_line(
+                        std::err(),
+                        "error: option `{}` does not accept an argument",
+                        (:[]std::formatter)[
+                            std::formatter::init[[[]byte]](&self.*._opt._value)]);
+                    std::exit(std::EXIT_FAILURE);
+                }
                 break;
             }
         }
-        if idx.is_empty() {
+        if self.*._opt.is_empty() {
             std::print_format_line(
                 std::err(),
                 "error: unrecognized option `{}`",
@@ -3852,17 +3867,28 @@ struct argument_parser {
             std::exit(std::EXIT_FAILURE);
         }
 
-        self.*._opt = std::optional[[[]byte]]::init_value(str);
+        # -opt
         if not should_parse_arg {
+            assert self.*._opt.is_value();
+            assert self.*._arg.is_empty();
             return true;
         }
 
+        # -opt=arg
+        if self.*._arg.is_value() {
+            assert self.*._opt.is_value();
+            return true;
+        }
+
+        # -opt arg
+        assert self.*._opt.is_value();
+        assert self.*._arg.is_empty();
         if not self.*._iterator.advance() {
             std::print_format_line(
                 std::err(),
                 "error: missing required argument for option `{}`",
                 (:[]std::formatter)[
-                    std::formatter::init[[[]byte]](&str)]);
+                    std::formatter::init[[[]byte]](&self.*._opt._value)]);
             std::exit(std::EXIT_FAILURE);
         }
         self.*._arg = std::optional[[[]byte]]::init_value(*self.*._iterator.current());

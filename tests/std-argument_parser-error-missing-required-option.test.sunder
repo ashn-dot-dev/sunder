@@ -2,19 +2,13 @@ import "std";
 import "util";
 
 func main() void {
-    var allocator = std::general_allocator::init();
-    defer {
-        allocator.fini();
-    }
-
-    var allocator = std::allocator::init[[typeof(allocator)]](&allocator);
     var parser = std::argument_parser::init_from_argv(
         (:[][]byte)[
             "a",
             "b",
             "c:"
         ],
-        util::argv::new(allocator, (:[][]byte)[
+        util::argv::new((:[][]byte)[
             "arg0",
             "-a",
             "-b",

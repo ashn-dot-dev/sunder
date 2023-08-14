@@ -22,12 +22,8 @@ func dump_parser_info(parser: *std::argument_parser) void {
 }
 
 func main() void {
-    var allocator = std::general_allocator::init();
-    defer allocator.fini();
-    var allocator = std::allocator::init[[typeof(allocator)]](&allocator);
-
     var options = (:[][]byte)[];
-    var argv = util::argv::new(allocator, (:[][]byte)[]);
+    var argv = util::argv::new((:[][]byte)[]);
     var parser = std::argument_parser::init_from_argv(options, argv);
 
     assert not parser.advance();
@@ -36,7 +32,7 @@ func main() void {
     std::print(std::out(), "\n"); ##############################################
 
     var options = (:[][]byte)[];
-    var argv = util::argv::new(allocator, (:[][]byte)["arg0"]);
+    var argv = util::argv::new((:[][]byte)["arg0"]);
     var parser = std::argument_parser::init_from_argv(options, argv);
 
     assert not parser.advance();
@@ -45,7 +41,7 @@ func main() void {
     std::print(std::out(), "\n"); ##############################################
 
     var options = (:[][]byte)[];
-    var argv = util::argv::new(allocator, (:[][]byte)[
+    var argv = util::argv::new((:[][]byte)[
         "arg0",
         "arg1",
         "arg2"
@@ -61,7 +57,7 @@ func main() void {
     std::print(std::out(), "\n"); ##############################################
 
     var options = (:[][]byte)["foo", "bar:"];
-    var argv = util::argv::new(allocator, (:[][]byte)[
+    var argv = util::argv::new((:[][]byte)[
         "arg0",
         "arg1",
         "-foo",
@@ -72,15 +68,25 @@ func main() void {
         "arg7",
         "--bar",
         "arg9",
+        "--bar",
+        "--arg11",
+        "--bar=arg12",
+        "--bar=--arg13",
         "-",
         "--", # <-- marks the rest of the arguments as verbatim
         "--foo",
         "--bar",
         "--bar",
         "--",
-        "arg15"
+        "arg20"
     ]);
     var parser = std::argument_parser::init_from_argv(options, argv);
+    assert parser.advance();
+    dump_parser_info(&parser);
+    assert parser.advance();
+    dump_parser_info(&parser);
+    assert parser.advance();
+    dump_parser_info(&parser);
     assert parser.advance();
     dump_parser_info(&parser);
     assert parser.advance();
@@ -138,6 +144,12 @@ func main() void {
 # parser argument => arg7
 # parser option   => bar
 # parser argument => arg9
+# parser option   => bar
+# parser argument => --arg11
+# parser option   => bar
+# parser argument => arg12
+# parser option   => bar
+# parser argument => --arg13
 # parser option   => <empty>
 # parser argument => -
 # parser option   => <empty>
@@ -149,6 +161,6 @@ func main() void {
 # parser option   => <empty>
 # parser argument => --
 # parser option   => <empty>
-# parser argument => arg15
+# parser argument => arg20
 # parser option   => <empty>
 # parser argument => <empty>
