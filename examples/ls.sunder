@@ -1,19 +1,18 @@
 # Simplified (non-POSIX-compliant) version of `ls`.
 import "std";
-import "sys";
 
 func main() void {
-    var progname = std::cstr::data(*sys::argv);
     var path = std::optional[[[]byte]]::EMPTY;
 
     var parser = std::argument_parser::init((:[][]byte)[]);
+    var program = parser.program();
     for parser.advance() {
         if path.is_value() {
             std::print_format_line(
                 std::err(),
                 "{}: multiple files specified",
                 (:[]std::formatter)[
-                    std::formatter::init[[[]byte]](&progname)]);
+                    std::formatter::init[[[]byte]](&program)]);
             std::exit(std::EXIT_FAILURE);
         }
         path = std::optional[[[]byte]]::init_value(parser.argument_value());
@@ -29,7 +28,7 @@ func main() void {
             std::err(),
             "{}: {}",
             (:[]std::formatter)[
-                std::formatter::init[[[]byte]](&progname),
+                std::formatter::init[[[]byte]](&program),
                 std::formatter::init[[[]byte]](&result.error().*.data)]);
         std::exit(std::EXIT_FAILURE);
     }
@@ -44,7 +43,7 @@ func main() void {
                 std::err(),
                 "{}: {}",
                 (:[]std::formatter)[
-                    std::formatter::init[[[]byte]](&progname),
+                    std::formatter::init[[[]byte]](&program),
                     std::formatter::init[[[]byte]](&current.error().*.data)]);
         }
 

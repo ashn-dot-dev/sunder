@@ -28,6 +28,7 @@ func main() void {
 
     assert not parser.advance();
     dump_parser_info(&parser);
+    std::print_line(std::out(), parser.program());
 
     std::print(std::out(), "\n"); ##############################################
 
@@ -37,6 +38,7 @@ func main() void {
 
     assert not parser.advance();
     dump_parser_info(&parser);
+    std::print_line(std::out(), parser.program());
 
     std::print(std::out(), "\n"); ##############################################
 
@@ -119,9 +121,11 @@ func main() void {
 ################################################################################
 # parser option   => <empty>
 # parser argument => <empty>
+# <program-name>
 #
 # parser option   => <empty>
 # parser argument => <empty>
+# arg0
 #
 # parser option   => <empty>
 # parser argument => arg1

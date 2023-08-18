@@ -3752,6 +3752,7 @@ struct argument_iterator {
 #   Positional argument `qux`
 #   Positional argument `--abc`
 struct argument_parser {
+    var _program: []byte;
     var _options: [][]byte;
     var _iterator: argument_iterator;
     var _verbatim: bool;
@@ -3774,18 +3775,26 @@ struct argument_parser {
     # provided argv *must* contain a NULL-terminated list of NUL-terminated
     # strings in accordance ISO/IEC 9899:1999 section 5.1.2.2.1.
     func init_from_argv(options: [][]byte, argv: **byte) argument_parser {
-        var self = (:argument_parser){
+        var iterator = std::argument_iterator::init_from_argv(argv);
+
+        var program = "<program-name>";
+        if iterator.advance() {
+            program = *iterator.current();
+        }
+
+        return (:argument_parser){
+            ._program = program,
             ._options = options,
-            ._iterator = std::argument_iterator::init_from_argv(argv),
+            ._iterator = iterator,
             ._verbatim = false,
             ._opt = std::optional[[[]byte]]::EMPTY,
             ._arg = std::optional[[[]byte]]::EMPTY
         };
+    }
 
-        # Skip past the first argument (program name).
-        self._iterator.advance();
-
-        return self;
+    # Returns the name of the program.
+    func program(self: *argument_parser) []byte {
+        return self.*._program;
     }
 
     func advance(self: *argument_parser) bool {
