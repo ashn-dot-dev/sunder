@@ -335,10 +335,10 @@ func global_allocator() std::allocator {
     return _global_allocator;
 }
 
-# Allocator that will never successfully allocate, reallocate, or free memory.
-# The purpose of this allocator is to provide a type that may be used as the
-# allocator member for constants of a managed type such as `std::big_integer`.
-# The members constants `ITABLE`, `OBJECT`, and `ALLOCATOR` are provided to
+# Allocator that will never successfully allocate, reallocate, or deallocate
+# memory. The purpose of this type is to provide an allocator that may be used
+# for creating constants of managed types such as `std::big_integer`. The
+# members constants `ITABLE`, `OBJECT`, and `ALLOCATOR` are provided to
 # explicitly support using the null allocator for constant definitions.
 struct null_allocator {
     func allocate(self_: *null_allocator, align_: usize, size_: usize) std::result[[*any, std::error]] {
@@ -354,11 +354,6 @@ struct null_allocator {
         std::panic("attempted null_allocator deallocation");
     }
 
-    func the() *null_allocator {
-        let the = (:null_allocator){};
-        return &the;
-    }
-
     let ITABLE = (:std::allocator_itable){
         .allocate = null_allocator::allocate,
         .reallocate = null_allocator::reallocate,
@@ -371,6 +366,10 @@ struct null_allocator {
         .itable = &null_allocator::ITABLE,
         .object = &null_allocator::OBJECT,
     };
+
+    func the() *null_allocator {
+        return (:*null_allocator)&ALLOCATOR.object;
+    }
 }
 
 # Allocator that allocates and reallocates from a fixed buffer of memory, also
@@ -1608,7 +1607,7 @@ func delete_with_allocator[[T]](allocator: std::allocator, object: *T) void {
     allocator.deallocate((:*byte)object, alignof(T), sizeof(T));
 }
 
-# Align the provided memory address up to the nearest specified alignment.
+# Align the provided memory address forward to the nearest specified alignment.
 func forward_align(addr: usize, align: usize) usize {
     if align == 0 {
         return addr;
