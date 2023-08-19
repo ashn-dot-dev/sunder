@@ -75,7 +75,7 @@ struct tokenizer {
     func init(source: []byte) tokenizer {
         return (:tokenizer){
             .source = source,
-            .offset = 0
+            .offset = 0,
         };
     }
 
@@ -115,7 +115,7 @@ struct tokenizer {
                 self.*.offset = self.*.offset + countof(SYMBOLS[i]);
                 return (:token){
                     .kind = SYMBOLS[i],
-                    .data = data
+                    .data = data,
                 };
             }
         }
@@ -124,7 +124,7 @@ struct tokenizer {
         if self.*.is_eol() {
             return (:token){
                 .kind = token::EOL,
-                .data = uninit
+                .data = uninit,
             };
         }
 
@@ -330,11 +330,11 @@ struct expression {
         let itable = (:expression_itable){
             .del = T::del,
             .format = T::format,
-            .evaluate = T::evaluate
+            .evaluate = T::evaluate,
         };
         return (:expression){
             .itable = &itable,
-            .object = object
+            .object = object,
         };
     }
 
@@ -392,7 +392,7 @@ struct unary_expression {
         var self = std::new[[unary_expression]]();
         *self = (:unary_expression){
             .operator = operator,
-            .rhs = rhs
+            .rhs = rhs,
         };
         return self;
     }
@@ -437,7 +437,7 @@ struct binary_expression {
         *self = (:binary_expression){
             .operator = operator,
             .lhs = lhs,
-            .rhs = rhs
+            .rhs = rhs,
         };
         return self;
     }
