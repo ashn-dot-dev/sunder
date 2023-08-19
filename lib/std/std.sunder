@@ -2370,7 +2370,7 @@ struct big_integer {
         var v = rhs.*._limbs;
         var m = countof(lhs.*._limbs);
         var n = countof(rhs.*._limbs);
-        let b: u64 = (:u64)u32::MAX + 1;
+        let b = (:u64)u32::MAX + 1;
         for j in n {
             if v[j] == 0 {
                 w[j + m] = 0;
