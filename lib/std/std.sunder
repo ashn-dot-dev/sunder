@@ -2942,8 +2942,8 @@ struct hash_map_element[[K, V]] {
 # Managed type mapping keys of type `K` to values of type `V` with O(1) average
 # time complexity for lookup, insert, and remove operations.
 #
-# A type `K` may be used as a key type if `K` impements a `hash` function with
-# the signature `func hash(self: *K) usize`.
+# A type `K` may be used as the key template type if `K` impements a `hash`
+# function with the signature `func hash(self: *K) usize`.
 struct hash_map[[K, V]] {
     var _allocator: std::allocator;
     var _elements: []hash_map_element[[K, V]];
@@ -3180,6 +3180,9 @@ struct hash_map_iterator[[K, V]] {
 
 # Managed type containing a collection of unique elements with O(1) average
 # time complexity for insert and remove operations.
+#
+# A type `T` may be used as the set template type if `T` impements a `hash`
+# function with the signature `func hash(self: *T) usize`.
 struct hash_set[[T]] {
     var _hash_map: std::hash_map[[T, void]];
 
