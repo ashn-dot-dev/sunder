@@ -3750,11 +3750,11 @@ codegen_nasm(
         goto cleanup;
     }
 
-    if ((err = spawnvpw(backend_argv))) {
+    if ((err = spawnvpw(backend_argv, NULL, 0))) {
         goto cleanup;
     }
 
-    if (!opt_c && (err = spawnvpw(ld_argv))) {
+    if (!opt_c && (err = spawnvpw(ld_argv, NULL, 0))) {
         goto cleanup;
     }
 

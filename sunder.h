@@ -661,11 +661,7 @@ ceil8umax(uintmax_t x);
 // Spawn a subprocess and wait for it to complete.
 // Returns the exit status of the spawned process.
 int
-spawnvpw(char const* const* argv);
-// Spawn a subprocess and wait for it to complete.
-// Fatally exits if the exit status of the spawned process is non-zero.
-void
-xspawnvpw(char const* const* argv);
+spawnvpw(char const* const* argv, void const* input, size_t input_size);
 
 ////////////////////////////////////////////////////////////////////////////////
 //////// sunder.c //////////////////////////////////////////////////////////////

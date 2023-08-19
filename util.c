@@ -14,7 +14,7 @@
 #include <sys/stat.h> /* struct stat, stat */
 #include <sys/types.h> /* pid_t */
 #include <sys/wait.h> /* wait* */
-#include <unistd.h> /* exec*, isatty, fork */
+#include <unistd.h> /* close, execvp, fork, isatty, pipe */
 
 #include "sunder.h"
 
@@ -2304,10 +2304,19 @@ ceil8umax(uintmax_t x)
 }
 
 int
-spawnvpw(char const* const* argv)
+spawnvpw(char const* const* argv, void const* input, size_t input_size)
 {
     assert(argv != NULL);
     assert(argv[0] != NULL);
+    assert(input != NULL || input_size == 0);
+
+    int pipefd[2] = {0};
+    if (pipe(pipefd) == -1) {
+        fatal(
+            NO_LOCATION,
+            "failed to create pipe with error '%s'",
+            strerror(errno));
+    }
 
     pid_t const pid = fork();
     if (pid == -1) {
@@ -2315,6 +2324,13 @@ spawnvpw(char const* const* argv)
     }
 
     if (pid == 0) {
+        if (dup2(pipefd[0], STDIN_FILENO) == -1) {
+            fatal(
+                NO_LOCATION, "failed to dup2 with error '%s'", strerror(errno));
+        }
+        close(pipefd[0]); // Close now-duped read-end of the pipe.
+        close(pipefd[1]); // Close unused write-end of the pipe.
+
         // The POSIX 2017 rational section for the exec family of functions
         // notes that the neither the argv vector's elements nor the characters
         // within those elements are modified. The parameter declaration `char
@@ -2329,17 +2345,22 @@ spawnvpw(char const* const* argv)
         }
     }
 
+    close(pipefd[0]); // Close unused read-end of the pipe.
+    size_t input_written = 0;
+    while (input_written < input_size) {
+        char const* const start = (char const*)input + input_written;
+        ssize_t written = write(pipefd[1], start, input_size - input_written);
+        if (written == -1) {
+            fatal(
+                NO_LOCATION,
+                "failed to write to pipe with error '%s'",
+                strerror(errno));
+        }
+        input_written += (size_t)written;
+    }
+    close(pipefd[1]); // Close write-end of the pipe, sending EOF to the child.
+
     int status = 0;
     waitpid(pid, &status, 0);
     return WEXITSTATUS(status);
-}
-
-void
-xspawnvpw(char const* const* argv)
-{
-    assert(argv != NULL);
-
-    if (spawnvpw(argv) != 0) {
-        exit(EXIT_FAILURE);
-    }
 }

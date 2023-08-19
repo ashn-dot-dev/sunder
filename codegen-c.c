@@ -3026,7 +3026,9 @@ codegen_c(
     sbuf_push(backend_argv, "-fsanitize=leak");
     sbuf_push(backend_argv, "-fsanitize=undefined");
 #endif
-    sbuf_push(backend_argv, string_start(src_path));
+    sbuf_push(backend_argv, "-pipe"); // Pipe between phases of C compilation.
+    sbuf_push(backend_argv, "-xc"); // Piping in source with language=c.
+    sbuf_push(backend_argv, "-"); // Read piped source from stdin.
     for (size_t i = 0; i < sbuf_count(paths); ++i) {
         sbuf_push(backend_argv, paths[i]);
     }
@@ -3112,18 +3114,22 @@ codegen_c(
     }
 
     int err = 0;
-    if ((err = file_write_all(
-             string_start(src_path), string_start(out), string_count(out)))) {
-        error(
-            NO_LOCATION,
-            "unable to write file `%s` with error '%s'",
-            string_start(src_path),
-            strerror(errno));
+    if ((err = spawnvpw(backend_argv, string_start(out), string_count(out)))) {
         goto cleanup;
     }
 
-    if ((err = spawnvpw(backend_argv))) {
-        goto cleanup;
+    if (opt_k) {
+        if ((err = file_write_all(
+                 string_start(src_path),
+                 string_start(out),
+                 string_count(out)))) {
+            error(
+                NO_LOCATION,
+                "unable to write file `%s` with error '%s'",
+                string_start(src_path),
+                strerror(errno));
+            goto cleanup;
+        }
     }
 
 cleanup:
