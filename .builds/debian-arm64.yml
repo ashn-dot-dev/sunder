@@ -2,20 +2,12 @@ image: debian/unstable
 arch: arm64
 packages:
   - build-essential
-  - nasm
-  - yasm
 sources:
   - https://git.sr.ht/~ashn/sunder
 tasks:
-  - c99-debug-c-backend: |
+  - c99-debug: |
       cd sunder
-      make clean check examples CFLAGS='$(C99_DBG)' SUNDER_DEFAULT_BACKEND=C
-  - c99-debug-nasm-backend: |
-      cd sunder
-      make clean check examples CFLAGS='$(C99_DBG)' SUNDER_DEFAULT_BACKEND=nasm
-  - c99-debug-yasm-backend: |
-      cd sunder
-      make clean check examples CFLAGS='$(C99_DBG)' SUNDER_DEFAULT_BACKEND=yasm
+      make clean check examples CFLAGS='$(C99_DBG)'
   - c99-release: |
       cd sunder
       make clean check examples CFLAGS='$(C99_REL)'
