@@ -3433,6 +3433,7 @@ struct file {
         return std::result[[void, std::error]]::init_value(void::VALUE);
     }
 
+    # Implements the reader interface.
     func read(self: *file, buf: []byte) std::result[[usize, std::error]] {
         if countof(buf) == 0 {
             return std::result[[usize, std::error]]::init_value(0);
@@ -3446,6 +3447,7 @@ struct file {
         return std::result[[usize, std::error]]::init_value((:usize)sysret);
     }
 
+    # Implements the writer interface.
     func write(self: *file, buf: []byte) std::result[[usize, std::error]] {
         if countof(buf) == 0 {
             return std::result[[usize, std::error]]::init_value(0);
