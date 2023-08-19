@@ -82,14 +82,14 @@ struct optional[[T]] {
     # Optional in the empty state.
     let EMPTY = (:optional[[T]]){
         ._value = uninit,
-        ._is_value = false
+        ._is_value = false,
     };
 
     # Initialize an optional in the value state (value is present).
     func init_value(value: T) optional[[T]] {
         return (:optional[[T]]){
             ._value = value,
-            ._is_value = true
+            ._is_value = true,
         };
     }
 
@@ -130,11 +130,11 @@ struct reader {
 
     func init[[T]](object: *T) reader {
         let itable = (:std::reader_itable){
-            .read = T::read
+            .read = T::read,
         };
         return (:reader){
             .itable = &itable,
-            .object = object
+            .object = object,
         };
     }
 
@@ -163,11 +163,11 @@ struct writer {
 
     func init[[T]](object: *T) writer {
         let itable = (:std::writer_itable){
-            .write = T::write
+            .write = T::write,
         };
         return (:writer){
             .itable = &itable,
-            .object = object
+            .object = object,
         };
     }
 
@@ -194,11 +194,11 @@ struct formatter {
 
     func init[[T]](object: *T) formatter {
         let itable = (:std::formatter_itable){
-            .format = T::format
+            .format = T::format,
         };
         return (:formatter){
             .itable = &itable,
-            .object = object
+            .object = object,
         };
     }
 
@@ -237,11 +237,11 @@ struct iterator[[T]] {
     func init[[I]](object: *I) iterator[[T]] {
         let itable = (:std::iterator_itable[[T]]){
             .advance = I::advance,
-            .current = I::current
+            .current = I::current,
         };
         return (:iterator[[T]]){
             .itable = &itable,
-            .object = object
+            .object = object,
         };
     }
 
@@ -277,11 +277,11 @@ struct allocator {
         let itable = (:std::allocator_itable){
             .allocate = T::allocate,
             .reallocate = T::reallocate,
-            .deallocate = T::deallocate
+            .deallocate = T::deallocate,
         };
         return (:allocator){
             .itable = &itable,
-            .object = object
+            .object = object,
         };
     }
 
@@ -362,14 +362,14 @@ struct null_allocator {
     let ITABLE = (:std::allocator_itable){
         .allocate = null_allocator::allocate,
         .reallocate = null_allocator::reallocate,
-        .deallocate = null_allocator::deallocate
+        .deallocate = null_allocator::deallocate,
     };
 
     let OBJECT = (:std::null_allocator){};
 
     let ALLOCATOR = (:std::allocator){
         .itable = &null_allocator::ITABLE,
-        .object = &null_allocator::OBJECT
+        .object = &null_allocator::OBJECT,
     };
 }
 
@@ -387,7 +387,7 @@ struct linear_allocator {
         return (:std::linear_allocator){
             ._buf = buf,
             ._old_offset = 0,
-            ._cur_offset = 0
+            ._cur_offset = 0,
         };
     }
 
@@ -525,7 +525,7 @@ struct general_allocator {
     # Initialize a general allocator.
     func init() general_allocator {
         return (:general_allocator){
-            ._elements = std::ptr[[general_allocator_element]]::NULL
+            ._elements = std::ptr[[general_allocator_element]]::NULL,
         };
     }
 
@@ -547,7 +547,7 @@ struct general_allocator {
             ._next = std::ptr[[std::general_allocator_element]]::NULL,
             ._start = std::ptr[[byte]]::add((:*byte)memory, offset),
             ._align = align,
-            ._size = size
+            ._size = size,
         };
 
         self.*._insert_element(element);
@@ -564,7 +564,7 @@ struct general_allocator {
             ._next = std::ptr[[general_allocator_element]]::NULL,
             ._start = std::ptr[[byte]]::add((:*byte)new_element, offset),
             ._align = align,
-            ._size = new_size
+            ._size = new_size,
         };
         var copy_size = usize::min(old_size, new_size);
         std::slice[[byte]]::copy(
@@ -625,7 +625,7 @@ struct general_allocator_iterator {
     func init(general_allocator: *std::general_allocator) general_allocator_iterator {
         return (:general_allocator_iterator){
             ._general_allocator = general_allocator,
-            ._current = std::optional[[*general_allocator_element]]::EMPTY
+            ._current = std::optional[[*general_allocator_element]]::EMPTY,
         };
     }
 
@@ -821,7 +821,7 @@ struct slice_iterator[[T]] {
     func init(slice: []T) slice_iterator[[T]] {
         return (:slice_iterator[[T]]){
             ._slice = slice,
-            ._index = std::optional[[usize]]::EMPTY
+            ._index = std::optional[[usize]]::EMPTY,
         };
     }
 
@@ -1048,7 +1048,7 @@ struct str_reader {
     func init(str: []byte) str_reader {
         return (:str_reader){
             ._str = str,
-            ._idx = 0
+            ._idx = 0,
         };
     }
 
@@ -1075,7 +1075,7 @@ struct str_writer {
     func init(str: []byte) str_writer {
         return (:str_writer){
             ._str = str,
-            ._idx = 0
+            ._idx = 0,
         };
     }
 
@@ -1821,7 +1821,7 @@ struct big_integer {
         return (:big_integer){
             ._allocator = allocator,
             ._sign = 0,
-            ._limbs = std::slice[[u32]]::new_with_allocator(allocator, 0)
+            ._limbs = std::slice[[u32]]::new_with_allocator(allocator, 0),
         };
     }
 
@@ -1851,7 +1851,7 @@ struct big_integer {
             var self = (:big_integer){
                 ._allocator = allocator,
                 ._sign = +1s,
-                ._limbs = std::slice[[u32]]::new_with_allocator(allocator, 2)
+                ._limbs = std::slice[[u32]]::new_with_allocator(allocator, 2),
             };
             self._limbs[0] = (:u32)int;
             self._limbs[1] = (:u32)(int >> 32);
@@ -1875,7 +1875,7 @@ struct big_integer {
         var self = (:big_integer){
             ._allocator = allocator,
             ._sign = -1s,
-            ._limbs = std::slice[[u32]]::new_with_allocator(allocator, 2)
+            ._limbs = std::slice[[u32]]::new_with_allocator(allocator, 2),
         };
         self._limbs[0] = (:u32)magnitude;
         self._limbs[1] = (:u32)(magnitude >> 32);
@@ -1933,7 +1933,7 @@ struct big_integer {
         var radix_big_integer = (:big_integer){
             ._allocator = std::null_allocator::ALLOCATOR,
             ._sign = +1,
-            ._limbs = (:[]u32)[(:u32)radix]
+            ._limbs = (:[]u32)[(:u32)radix],
         };
 
         # Parse digits.
@@ -1968,7 +1968,7 @@ struct big_integer {
             var digit_big_integer = (:big_integer){
                 ._allocator = std::null_allocator::ALLOCATOR,
                 ._sign = +1,
-                ._limbs = (:[]u32)[(:u32)digit]
+                ._limbs = (:[]u32)[(:u32)digit],
             };
             big_integer::mul(&self, &self, &radix_big_integer);
             big_integer::add(&self, &self, &digit_big_integer);
@@ -2243,7 +2243,7 @@ struct big_integer {
         var tmp_res = (:big_integer){
             ._allocator = std::global_allocator(),
             ._sign = sign,
-            ._limbs = std::slice[[u32]]::new(limb_count)
+            ._limbs = std::slice[[u32]]::new(limb_count),
         };
 
         var carry: u64 = 0;
@@ -2322,7 +2322,7 @@ struct big_integer {
         var tmp_res = (:big_integer){
             ._allocator = std::global_allocator(),
             ._sign = sign,
-            ._limbs = std::slice[[u32]]::new(limb_count)
+            ._limbs = std::slice[[u32]]::new(limb_count),
         };
 
         var borrow: u64 = 0;
@@ -2629,7 +2629,7 @@ struct string {
             ._allocator = allocator,
             ._start = (:*byte)0u,
             ._count = 0,
-            ._capacity = 0
+            ._capacity = 0,
         };
     }
 
@@ -2777,7 +2777,7 @@ struct vector[[T]] {
             ._allocator = allocator,
             ._start = (:*T)0u,
             ._count = 0,
-            ._capacity = 0
+            ._capacity = 0,
         };
     }
 
@@ -2965,7 +2965,7 @@ struct hash_map[[K, V]] {
             ._allocator = allocator,
             ._elements = (:[]hash_map_element[[K, V]])[],
             ._n = 0,
-            ._q = 0
+            ._q = 0,
         };
     }
 
@@ -3058,7 +3058,7 @@ struct hash_map[[K, V]] {
                 ._allocator = self.*._allocator,
                 ._elements = std::slice[[hash_map_element[[K, V]]]]::new_with_allocator(self.*._allocator, countof(self.*._elements) * 2),
                 ._n = 0,
-                ._q = 0
+                ._q = 0,
             };
             for i in 0:countof(self.*._elements) {
                 if self.*._elements[i]._state == hash_map_element[[K, V]]::_STATE_USE {
@@ -3076,7 +3076,7 @@ struct hash_map[[K, V]] {
                 self.*._elements[index] = (:hash_map_element[[K, V]]){
                     ._state = hash_map_element[[K, V]]::_STATE_USE,
                     ._key = key,
-                    ._value = value
+                    ._value = value,
                 };
                 self.*._n = self.*._n + 1;
                 self.*._q = self.*._q + 1;
@@ -3087,7 +3087,7 @@ struct hash_map[[K, V]] {
                 self.*._elements[index] = (:hash_map_element[[K, V]]){
                     ._state = hash_map_element[[K, V]]::_STATE_USE,
                     ._key = key,
-                    ._value = value
+                    ._value = value,
                 };
                 self.*._n = self.*._n + 1;
                 return std::optional[[std::key_value_pair[[K, V]]]]::EMPTY;
@@ -3098,12 +3098,12 @@ struct hash_map[[K, V]] {
                 var existing = self.*._elements[index];
                 var kv = (:std::key_value_pair[[K, V]]){
                     .key = existing._key,
-                    .value = existing._value
+                    .value = existing._value,
                 };
                 self.*._elements[index] = (:hash_map_element[[K, V]]){
                     ._state = hash_map_element[[K, V]]::_STATE_USE,
                     ._key = key,
-                    ._value = value
+                    ._value = value,
                 };
                 return std::optional[[std::key_value_pair[[K, V]]]]::init_value(kv);
             }
@@ -3128,7 +3128,7 @@ struct hash_map[[K, V]] {
             if self.*._elements[index]._state == hash_map_element[[K, V]]::_STATE_USE and std::eq[[K]](&key, &self.*._elements[index]._key) {
                 var kv = (:std::key_value_pair[[K, V]]){
                     .key = self.*._elements[index]._key,
-                    .value = self.*._elements[index]._value
+                    .value = self.*._elements[index]._value,
                 };
                 self.*._elements[index]._state = hash_map_element[[K, V]]::_STATE_DEL;
                 self.*._n = self.*._n - 1;
@@ -3162,7 +3162,7 @@ struct hash_map_iterator[[K, V]] {
             var element = self.*._iterator.current();
             var current = (:std::key_value_view[[K, V]]){
                 .key = &element.*._key,
-                .value = &element.*._value
+                .value = &element.*._value,
             };
             self.*._current = std::optional[[std::key_value_view[[K, V]]]]::init_value(current);
             return true;
@@ -3195,7 +3195,7 @@ struct hash_set[[T]] {
     # The provided allocator is used for backing storage.
     func init_with_allocator(allocator: std::allocator) hash_set[[T]] {
         return (:hash_set[[T]]){
-            ._hash_map = std::hash_map[[T, void]]::init_with_allocator(allocator)
+            ._hash_map = std::hash_map[[T, void]]::init_with_allocator(allocator),
         };
     }
 
@@ -3349,7 +3349,7 @@ struct hash_set_iterator[[T]] {
 
     func init(set: *std::hash_set[[T]]) hash_set_iterator[[T]] {
         return (:hash_set_iterator[[T]]){
-            ._iterator = std::hash_map_iterator[[T, void]]::init(&set.*._hash_map)
+            ._iterator = std::hash_map_iterator[[T, void]]::init(&set.*._hash_map),
         };
     }
 
@@ -3545,7 +3545,7 @@ struct directory {
             ._buf = (:[1024]byte)[0...],
             ._buf_idx = 0,
             ._buf_end = 0,
-            ._current = std::optional[[std::result[[[]byte, std::error]]]]::EMPTY
+            ._current = std::optional[[std::result[[[]byte, std::error]]]]::EMPTY,
         };
         return std::result[[std::directory, std::error]]::init_value(directory);
     }
@@ -3788,7 +3788,7 @@ struct argument_parser {
             ._iterator = iterator,
             ._verbatim = false,
             ._opt = std::optional[[[]byte]]::EMPTY,
-            ._arg = std::optional[[[]byte]]::EMPTY
+            ._arg = std::optional[[[]byte]]::EMPTY,
         };
     }
 
@@ -4884,41 +4884,41 @@ extend error let RESULT_OUT_OF_RANGE = (:std::error)&"result out-of-range";
 extend big_integer let ZERO = (:std::big_integer){
     ._allocator = std::null_allocator::ALLOCATOR,
     ._sign = 0,
-    ._limbs = (:[]u32)[]
+    ._limbs = (:[]u32)[],
 };
 
 extend big_integer let POSITIVE_ONE = (:std::big_integer){
     ._allocator = std::null_allocator::ALLOCATOR,
     ._sign = +1,
-    ._limbs = (:[]u32)[1]
+    ._limbs = (:[]u32)[1],
 };
 
 extend big_integer let NEGATIVE_ONE = (:std::big_integer){
     ._allocator = std::null_allocator::ALLOCATOR,
     ._sign = -1,
-    ._limbs = (:[]u32)[1]
+    ._limbs = (:[]u32)[1],
 };
 
 extend big_integer let POSITIVE_TWO = (:std::big_integer){
     ._allocator = std::null_allocator::ALLOCATOR,
     ._sign = +1,
-    ._limbs = (:[]u32)[2]
+    ._limbs = (:[]u32)[2],
 };
 
 extend big_integer let NEGATIVE_TWO = (:std::big_integer){
     ._allocator = std::null_allocator::ALLOCATOR,
     ._sign = -1,
-    ._limbs = (:[]u32)[2]
+    ._limbs = (:[]u32)[2],
 };
 
 extend big_integer let POSITIVE_TEN = (:std::big_integer){
     ._allocator = std::null_allocator::ALLOCATOR,
     ._sign = +1,
-    ._limbs = (:[]u32)[10]
+    ._limbs = (:[]u32)[10],
 };
 
 extend big_integer let NEGATIVE_TEN = (:std::big_integer){
     ._allocator = std::null_allocator::ALLOCATOR,
     ._sign = -1,
-    ._limbs = (:[]u32)[10]
+    ._limbs = (:[]u32)[10],
 };
