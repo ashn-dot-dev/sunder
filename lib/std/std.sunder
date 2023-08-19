@@ -185,9 +185,9 @@ struct formatter_itable {
     var format: func(*any, std::writer, []byte) std::result[[void, std::error]];
 }
 
-# Interface wrapping the format member function. Types which implement format
-# may be written to byte streams using type-specific formatting semantics via
-# functions such as `std::write_format` and `std::print_format`.
+# Interface wrapping the format member function. Types that implement the
+# format member function may be written to byte streams using type-specific
+# formatting semantics.
 struct formatter {
     var itable: *std::formatter_itable;
     var object: *any;
@@ -373,8 +373,8 @@ struct null_allocator {
     };
 }
 
-# Allocator that allocates and reallocates out of a fixed buffer of memory,
-# also known as a bump allocator.
+# Allocator that allocates and reallocates from a fixed buffer of memory, also
+# known as a bump allocator.
 #
 # Deallocation with `std::linear_allocator::deallocate` is a no-op.
 struct linear_allocator {
@@ -505,7 +505,7 @@ struct general_allocator_element {
     }
 }
 
-# General purpose heap allocator. This allocator tracks allocations and will
+# General-purpose heap allocator. This allocator tracks allocations and will
 # automatically deallocate memory when `std::general_allocator::fini` is
 # called.
 #
@@ -688,8 +688,8 @@ struct slice[[T]] { # namespace
         }
 
         # If the copy operation is being performed on two slices into the same
-        # buffer then the direction in which the copy is performed does matter.
-        # Say there is some buffer:
+        # buffer, then the direction in which the copy is performed *does*
+        # matter. Say there is some buffer:
         #
         #    0  1  2  3  4
         #   [A][B][C][D][E]
