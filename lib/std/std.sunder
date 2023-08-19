@@ -415,9 +415,9 @@ struct linear_allocator {
             return std::result[[*any, std::error]]::init_value(std::ptr[[byte]]::NULL);
         }
 
-        var buf_addr: usize = (:usize)startof(self.*._buf);
-        var cur_addr: usize = buf_addr + self.*._cur_offset;
-        var offset: usize = std::forward_align(cur_addr, align) - buf_addr;
+        var buf_addr = (:usize)startof(self.*._buf);
+        var cur_addr = buf_addr + self.*._cur_offset;
+        var offset = std::forward_align(cur_addr, align) - buf_addr;
 
         if offset + size > countof(self.*._buf) {
             return std::result[[*any, std::error]]::init_error(std::error::ALLOCATION_FAILURE);
@@ -729,7 +729,7 @@ struct slice[[T]] { # namespace
         else {
             # Copy backwards.
             for i in countof(source) {
-                var index: usize = countof(source) - 1 - i;
+                var index = countof(source) - 1 - i;
                 destination[index] = source[index];
             }
         }
@@ -787,11 +787,11 @@ struct slice[[T]] { # namespace
     #
     # This function panics on error.
     func resize_with_allocator(allocator: std::allocator, slice: []T, new_count: usize) []T {
-        var cur_count: usize = countof(slice);
-        var cur_size: usize = cur_count * sizeof(T);
-        var new_size: usize = new_count * sizeof(T);
+        var cur_count = countof(slice);
+        var cur_size = cur_count * sizeof(T);
+        var new_size = new_count * sizeof(T);
 
-        var cur_pointer: *byte = (:*byte)startof(slice);
+        var cur_pointer = (:*byte)startof(slice);
         var result = allocator.reallocate(cur_pointer, alignof(T), cur_size, new_size);
         if result.is_error() {
             std::panic(result.error().*.data);
@@ -807,8 +807,8 @@ struct slice[[T]] { # namespace
 
     # Deallocate the provided slice using the provided allocator.
     func delete_with_allocator(allocator: std::allocator, slice: []T) void {
-        var pointer: *byte = (:*byte)startof(slice);
-        var size: usize = countof(slice) * sizeof(T);
+        var pointer = (:*byte)startof(slice);
+        var size = countof(slice) * sizeof(T);
         allocator.deallocate(pointer, alignof(T), size);
     }
 }
@@ -1103,7 +1103,7 @@ struct cstr { # namespace
 
     # Returns the number of bytes in `cstr` before the NUL terminator.
     func count(cstr: *byte) usize {
-        var cur: *byte = cstr;
+        var cur = cstr;
         for *cur != '\0' {
             cur = std::ptr[[byte]]::add(cur, 1);
         }
@@ -1358,7 +1358,7 @@ func read_line_with_allocator(allocator: std::allocator, reader: std::reader) st
 # `write` function repeatedly until either all bytes have been written or an
 # error occurs.
 func write_all(writer: std::writer, buf: []byte) std::result[[void, std::error]] {
-    var written: usize = 0;
+    var written = 0u;
     for written < countof(buf) {
         var result = writer.write(buf[written:countof(buf)]);
         if result.is_error() {
@@ -1391,7 +1391,7 @@ func write_line(writer: std::writer, buf: []byte) std::result[[void, std::error]
 # occurs.
 func write_format(writer: std::writer, format: []byte, args: []std::formatter) std::result[[void, std::error]] {
     # Current format argument index.
-    var arg: usize = 0;
+    var arg = 0u;
 
     # Walking along the format string accumulating bytes to be written verbatim.
     #   "some{fmt}text"
@@ -1404,11 +1404,11 @@ func write_format(writer: std::writer, format: []byte, args: []std::formatter) s
     let STATE_FMTTING: ssize = 1;
 
     # Current state.
-    var state: ssize = STATE_WALKING;
+    var state = STATE_WALKING;
 
     # Start and end indices of the current state.
-    var start: usize = 0;
-    var end: usize = start;
+    var start = 0u;
+    var end = start;
 
     # Format message passed to `std::panic` when an invalid format string is
     # encountered. This message contains a format specifier for the `fmt` str.
@@ -1895,8 +1895,8 @@ struct big_integer {
             return std::result[[big_integer, std::error]]::init_error(std::error::INVALID_ARGUMENT);
         }
 
-        var cur: usize = 0;
-        var end: usize = countof(str);
+        var cur = 0u;
+        var end = countof(str);
 
         # Parse optional sign (+ or -).
         var sign: ssize = +1;
@@ -2045,7 +2045,7 @@ struct big_integer {
     }
 
     func hash(self: *big_integer) usize {
-        var hash: usize = 0;
+        var hash = 0u;
         for i in countof(self.*._limbs) {
             hash = hash +% (:usize)self.*._limbs[i];
         }
@@ -2098,11 +2098,11 @@ struct big_integer {
 
         var radix: std::big_integer = uninit;
         defer radix.fini();
-        var digits_prefix: []byte = "";
-        var digits_table: []byte = DIGITS_TABLE_LOWER[0:DIGITS_TABLE_COUNT];
+        var digits_prefix = "";
+        var digits_table = DIGITS_TABLE_LOWER[0:DIGITS_TABLE_COUNT];
 
         if fmt_idx < countof(fmt) {
-            var c: byte = fmt[fmt_idx];
+            var c = fmt[fmt_idx];
             fmt_idx = fmt_idx + 1;
 
             if c == 'd' {
@@ -2862,10 +2862,10 @@ struct vector[[T]] {
 
         # [A][B][C][D][E][ ]
         # [A][B][ ][C][D][E]
-        var n: usize = self.*._count - index;
-        var mem: []T = (:[]T){self.*._start, self.*._capacity};
-        var src: []T = mem[index     : index + n];
-        var dst: []T = mem[index + 1 : index + n + 1];
+        var n = self.*._count - index;
+        var mem = (:[]T){self.*._start, self.*._capacity};
+        var src = mem[index     : index + n];
+        var dst = mem[index + 1 : index + n + 1];
         std::slice[[T]]::copy(dst, src);
         self.*._count = self.*._count + 1;
 
@@ -2884,10 +2884,10 @@ struct vector[[T]] {
 
         # [A][B][X][C][D][E]
         # [A][B][C][D][E][ ]
-        var n: usize = (self.*._count - 1) - index;
-        var mem: []T = (:[]T){self.*._start, self.*._capacity};
-        var src: []T = mem[index + 1 : index + n + 1];
-        var dst: []T = mem[index     : index + n];
+        var n = (self.*._count - 1) - index;
+        var mem = (:[]T){self.*._start, self.*._capacity};
+        var src = mem[index + 1 : index + n + 1];
+        var dst = mem[index     : index + n];
         var res = mem[index];
         std::slice[[T]]::copy(dst, src);
         self.*._count = self.*._count - 1;
@@ -3980,8 +3980,8 @@ extend integer func _init_umax_from_str(str: []byte, radix: usize) std::result[[
         return std::result[[umax, std::error]]::init_error(std::error::INVALID_ARGUMENT);
     }
 
-    var cur: usize = 0;
-    var end: usize = countof(str);
+    var cur = 0u;
+    var end = countof(str);
 
     # Parse optional + sign.
     if (end - cur) > countof("+") and str[cur] == '+' {
@@ -4181,11 +4181,11 @@ extend integer func _format_umax(int: std::umax, writer: std::writer, fmt: []byt
     }
 
     var radix: usize = 10;
-    var digits_prefix: []byte = "";
-    var digits_table: []byte = DIGITS_TABLE_LOWER;
+    var digits_prefix = "";
+    var digits_table = DIGITS_TABLE_LOWER;
 
     if fmt_idx < countof(fmt) {
-        var c: byte = fmt[fmt_idx];
+        var c = fmt[fmt_idx];
         fmt_idx = fmt_idx + 1;
 
         if c == 'd' {
@@ -4217,9 +4217,9 @@ extend integer func _format_umax(int: std::umax, writer: std::writer, fmt: []byt
         return std::result[[void, std::error]]::init_error(std::error::INVALID_ARGUMENT);
     }
 
-    let OUTPUT_COUNT: usize = countof("0b") + sizeof(usize) * 8;
+    let OUTPUT_COUNT = countof("0b") + sizeof(usize) * 8;
     var output = (:[OUTPUT_COUNT]byte)[0...];
-    var output_index: usize = countof(output) - 1;
+    var output_index = countof(output) - 1;
 
     if int == 0 {
         # Write a single zero digit.
@@ -4230,7 +4230,7 @@ extend integer func _format_umax(int: std::umax, writer: std::writer, fmt: []byt
         var div: std::umax = int / (:std::umax)radix;
         var rem: std::umax = int - (:std::umax)radix * (int / (:std::umax)radix);
 
-        var digit: byte = digits_table[(:usize)rem];
+        var digit = digits_table[(:usize)rem];
         output[output_index] = digit;
         output_index = output_index - 1;
 
@@ -4793,7 +4793,7 @@ extend []byte func format(self: *[]byte, writer: std::writer, fmt: []byte) std::
     # Format specifier: "e"
     if countof(fmt) == 1 and fmt[0] == 'e' {
         for i in countof(*self) {
-            var c: byte = self.*[i];
+            var c = self.*[i];
             if c == '\0' {
                 var result = std::write_all(writer, "\\0");
                 if result.is_error() {
