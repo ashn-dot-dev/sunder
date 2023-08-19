@@ -3044,8 +3044,9 @@ struct hash_map[[K, V]] {
             # Initial insert. An initial slice count of 16 was chosen
             # semi-arbitrarily. The initial slice count must be two or greater
             # in order to prevent the lookup loop from spinning forever.
+            let ZEROED: hash_map_element[[K, V]] = uninit;
             self.*._elements = std::slice[[hash_map_element[[K, V]]]]::new_with_allocator(self.*._allocator, 16);
-            std::slice[[hash_map_element[[K, V]]]]::fill(self.*._elements, std::zeroed[[hash_map_element[[K, V]]]]());
+            std::slice[[hash_map_element[[K, V]]]]::fill(self.*._elements, ZEROED);
         }
         elif 2 * (self.*._q + 1) > countof(self.*._elements) {
             # Insert at 50% occupancy. Create a new hash map with double the
