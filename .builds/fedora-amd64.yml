@@ -9,21 +9,24 @@ packages:
 sources:
   - https://git.sr.ht/~ashn/sunder
 tasks:
-  - c99-debug-c-backend-clang: |
+  - c99-debug: |
       cd sunder
-      make clean check examples CFLAGS='$(C99_DBG)' SUNDER_DEFAULT_BACKEND=C SUNDER_DEFAULT_CC=clang
-  - c99-debug-c-backend-gcc: |
-      cd sunder
-      make clean check examples CFLAGS='$(C99_DBG)' SUNDER_DEFAULT_BACKEND=C SUNDER_DEFAULT_CC=gcc
-  - c99-debug-nasm-backend: |
-      cd sunder
-      make clean check examples CFLAGS='$(C99_DBG)' SUNDER_DEFAULT_BACKEND=nasm
-  - c99-debug-yasm-backend: |
-      cd sunder
-      make clean check examples CFLAGS='$(C99_DBG)' SUNDER_DEFAULT_BACKEND=yasm
+      make clean check examples CFLAGS='$(C99_DBG)'
   - c99-release: |
       cd sunder
       make clean check examples CFLAGS='$(C99_REL)'
+  - c99-release-c-backend-clang: |
+      cd sunder
+      make clean check examples CFLAGS='$(C99_REL)' SUNDER_DEFAULT_BACKEND=C SUNDER_DEFAULT_CC=clang
+  - c99-release-c-backend-gcc: |
+      cd sunder
+      make clean check examples CFLAGS='$(C99_REL)' SUNDER_DEFAULT_BACKEND=C SUNDER_DEFAULT_CC=gcc
+  - c99-release-nasm-backend: |
+      cd sunder
+      make clean check examples CFLAGS='$(C99_REL)' SUNDER_DEFAULT_BACKEND=nasm
+  - c99-release-yasm-backend: |
+      cd sunder
+      make clean check examples CFLAGS='$(C99_REL)' SUNDER_DEFAULT_BACKEND=yasm
   - clang-debug: |
       cd sunder
       make clean check examples CC=clang CFLAGS='$(GNU_DBG)'
