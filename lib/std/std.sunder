@@ -4762,7 +4762,7 @@ extend []byte func compare(lhs: *[]byte, rhs: *[]byte) ssize {
     var rhs_data = *rhs;
     var lhs_count = countof(lhs_data);
     var rhs_count = countof(rhs_data);
-    var count = *std::min[[usize]](&lhs_count, &rhs_count);
+    var count = usize::min(lhs_count, rhs_count);
     for i in count {
         if lhs_data[i] != rhs_data[i] {
             return (:ssize)lhs_data[i] - (:ssize)rhs_data[i];
