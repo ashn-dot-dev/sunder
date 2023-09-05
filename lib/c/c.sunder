@@ -14,7 +14,7 @@ alias ulong = sys::ulong;
 alias slong = sys::slong;
 
 alias slonglong = sys::slonglong;
-alias ulonglong = sys::slonglong;
+alias ulonglong = sys::ulonglong;
 
 alias  size_t = usize;
 alias ssize_t = ssize;
