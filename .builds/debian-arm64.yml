@@ -5,9 +5,6 @@ packages:
 sources:
   - https://git.sr.ht/~ashn/sunder
 tasks:
-  - c99-debug: |
-      cd sunder
-      make clean check examples CFLAGS='$(C99_DBG)'
   - c99-release: |
       cd sunder
       make clean check examples CFLAGS='$(C99_REL)'
