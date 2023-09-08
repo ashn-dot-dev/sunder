@@ -171,6 +171,22 @@ cst_decl_new_union(
 }
 
 struct cst_decl*
+cst_decl_new_enum(
+    struct source_location location,
+    struct cst_identifier identifier,
+    struct cst_enum_value const* const* values)
+{
+    struct cst_decl* const self = xalloc(NULL, sizeof(*self));
+    memset(self, 0x00, sizeof(*self));
+    self->kind = CST_DECL_ENUM;
+    self->location = location;
+    self->name = identifier.name;
+    self->data.enum_.identifier = identifier;
+    self->data.enum_.values = values;
+    return self;
+}
+
+struct cst_decl*
 cst_decl_new_extend(
     struct source_location location,
     struct cst_type const* type,
@@ -776,6 +792,20 @@ cst_member_initializer_new(
     struct cst_expr const* expr)
 {
     struct cst_member_initializer* const self = xalloc(NULL, sizeof(*self));
+    memset(self, 0x00, sizeof(*self));
+    self->location = location;
+    self->identifier = identifier;
+    self->expr = expr;
+    return self;
+}
+
+struct cst_enum_value*
+cst_enum_value_new(
+    struct source_location location,
+    struct cst_identifier identifier,
+    struct cst_expr const* expr)
+{
+    struct cst_enum_value* const self = xalloc(NULL, sizeof(*self));
     memset(self, 0x00, sizeof(*self));
     self->location = location;
     self->identifier = identifier;

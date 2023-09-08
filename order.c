@@ -283,6 +283,17 @@ order_decl(struct orderer* orderer, struct cst_decl const* decl)
         }
         return;
     }
+    case CST_DECL_ENUM: {
+        sbuf(struct cst_enum_value const* const) const values =
+            decl->data.enum_.values;
+        for (size_t i = 0; i < sbuf_count(values); ++i) {
+            if (values[i]->expr == NULL) {
+                continue;
+            }
+            order_expr(orderer, values[i]->expr);
+        }
+        return;
+    }
     case CST_DECL_EXTEND: {
         // Extend declarations are resolved in declaration order after all
         // module-level declarations, so no ordering of the extended type

@@ -110,7 +110,8 @@ sized_primitive_value_to_new_bytes(struct value const* value)
     case TYPE_U64: /* fallthrough */
     case TYPE_S64: /* fallthrough */
     case TYPE_USIZE: /* fallthrough */
-    case TYPE_SSIZE: {
+    case TYPE_SSIZE: /* fallthrough */
+    case TYPE_ENUM: {
         // Convert the bigint into a bit array.
         size_t const bit_count = (size_t)value->type->size * 8u;
         struct bitarr* const bits = bitarr_new(bit_count);
@@ -482,7 +483,8 @@ eval_rvalue_cast(struct expr const* expr)
         case TYPE_ARRAY: /* fallthrough */
         case TYPE_SLICE: /* fallthrough */
         case TYPE_STRUCT: /* fallthrough */
-        case TYPE_UNION: {
+        case TYPE_UNION: /* fallthrough */
+        case TYPE_ENUM: {
             UNREACHABLE();
         }
         }
@@ -502,6 +504,8 @@ eval_rvalue_cast(struct expr const* expr)
     if (expr->type->kind == TYPE_BYTE && from->type->kind == TYPE_INTEGER) {
         struct bigint const* const min = context()->u8_min;
         struct bigint const* const max = context()->u8_max;
+        assert(min != NULL);
+        assert(max != NULL);
 
         if (bigint_cmp(from->data.integer, min) < 0) {
             fatal(
@@ -559,6 +563,43 @@ eval_rvalue_cast(struct expr const* expr)
 
         struct value* const result =
             value_new_integer(expr->type, bigint_new(from->data.integer));
+        value_del(from);
+        return result;
+    }
+    if (expr->type->kind == TYPE_ENUM && from->type->kind == TYPE_INTEGER) {
+        struct type const* const expr_actual_type =
+            expr->type->data.enum_.underlying_type;
+        assert(expr_actual_type->data.integer.min != NULL);
+        assert(expr_actual_type->data.integer.max != NULL);
+        struct bigint const* const min = expr_actual_type->data.integer.min;
+        struct bigint const* const max = expr_actual_type->data.integer.max;
+        assert(min != NULL);
+        assert(max != NULL);
+
+        if (bigint_cmp(from->data.integer, min) < 0) {
+            fatal(
+                expr->location,
+                "out-of-range conversion from `%s` to `%s` (%s < %s)",
+                from->type->name,
+                expr->type->name,
+                bigint_to_new_cstr(from->data.integer),
+                bigint_to_new_cstr(min));
+        }
+        if (bigint_cmp(from->data.integer, max) > 0) {
+            fatal(
+                expr->location,
+                "out-of-range conversion from `%s` to `%s` (%s > %s)",
+                from->type->name,
+                expr->type->name,
+                bigint_to_new_cstr(from->data.integer),
+                bigint_to_new_cstr(max));
+        }
+
+        struct value* result =
+            value_new_integer(expr_actual_type, bigint_new(from->data.integer));
+        // Convert from the underlying type to enum.
+        result->type = expr->type;
+
         value_del(from);
         return result;
     }
@@ -713,13 +754,23 @@ eval_rvalue_cast(struct expr const* expr)
     case TYPE_U64: /* fallthrough */
     case TYPE_S64: /* fallthrough */
     case TYPE_USIZE: /* fallthrough */
-    case TYPE_SSIZE: {
+    case TYPE_SSIZE: /* fallthrough */
+    case TYPE_ENUM: {
+        struct type const* const from_actual_type =
+            from->type->kind == TYPE_ENUM
+            ? from->type->data.enum_.underlying_type
+            : from->type;
+        struct type const* const expr_actual_type =
+            expr->type->kind == TYPE_ENUM
+            ? expr->type->data.enum_.underlying_type
+            : expr->type;
+
         // Zero-extension or sign-extension bit.
         size_t bytes_count = sbuf_count(bytes);
-        int const extend =
-            type_is_sinteger(from->type) && (bytes[bytes_count - 1] & 0x80);
+        int const extend = type_is_sinteger(from_actual_type)
+            && (bytes[bytes_count - 1] & 0x80);
 
-        size_t const bit_count = (size_t)expr->type->size * 8u;
+        size_t const bit_count = (size_t)expr_actual_type->size * 8u;
         struct bitarr* const bits = bitarr_new(bit_count);
         for (size_t i = 0; i < bit_count; ++i) {
             if (i >= (bytes_count * 8u)) {
@@ -733,10 +784,14 @@ eval_rvalue_cast(struct expr const* expr)
         }
 
         struct bigint* const integer =
-            bigint_new_bitarr(bits, type_is_sinteger(expr->type));
+            bigint_new_bitarr(bits, type_is_sinteger(expr_actual_type));
         bitarr_del(bits);
 
-        res = value_new_integer(expr->type, integer);
+        res = value_new_integer(expr_actual_type, integer);
+        if (expr->type->kind == TYPE_ENUM) {
+            // Convert from the underlying type to enum.
+            res->type = expr->type;
+        }
         break;
     }
     case TYPE_ANY: /* fallthrough */

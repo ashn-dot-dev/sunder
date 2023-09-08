@@ -190,6 +190,8 @@ resolve_decl_struct(struct resolver* resolver, struct cst_decl const* decl);
 static struct symbol const*
 resolve_decl_union(struct resolver* resolver, struct cst_decl const* decl);
 static struct symbol const*
+resolve_decl_enum(struct resolver* resolver, struct cst_decl const* decl);
+static struct symbol const*
 resolve_decl_extend(struct resolver* resolver, struct cst_decl const* decl);
 static struct symbol const*
 resolve_decl_alias(struct resolver* resolver, struct cst_decl const* decl);
@@ -1181,7 +1183,14 @@ explicit_cast(
         || (cast_type_is_pointer_to_any && expr->type->kind == TYPE_FUNCTION)
         || (type->kind == TYPE_USIZE && expr->type->kind == TYPE_POINTER)
         || (type->kind == TYPE_FUNCTION && expr->type->kind == TYPE_FUNCTION)
-        || (type->kind == TYPE_FUNCTION && expr_type_is_pointer_to_any);
+        || (type->kind == TYPE_FUNCTION && expr_type_is_pointer_to_any)
+        || (type->kind == TYPE_ENUM && expr->type->kind == TYPE_BOOL)
+        || (type->kind == TYPE_BOOL && expr->type->kind == TYPE_ENUM)
+        || (type->kind == TYPE_ENUM && expr->type->kind == TYPE_BYTE)
+        || (type->kind == TYPE_BYTE && expr->type->kind == TYPE_ENUM)
+        || (type->kind == TYPE_ENUM && type_is_integer(expr->type))
+        || (type_is_integer(type) && expr->type->kind == TYPE_ENUM)
+        || (type->kind == TYPE_ENUM && expr->type->kind == TYPE_ENUM);
     if (!valid) {
         fatal(
             location,
@@ -1296,6 +1305,18 @@ explicit_cast(
         value_freeze(value);
 
         assert(type_is_ieee754(type));
+        resolved = expr_new_value(resolved->location, value);
+
+        freeze(resolved);
+        return resolved;
+    }
+
+    // OPTIMIZATION(constant folding)
+    if (type->kind == TYPE_ENUM && expr->kind == EXPR_VALUE) {
+        struct value* const value = eval_rvalue(resolved);
+        value_freeze(value);
+
+        assert(value->type->kind == TYPE_ENUM);
         resolved = expr_new_value(resolved->location, value);
 
         freeze(resolved);
@@ -1671,6 +1692,9 @@ resolve_decl(struct resolver* resolver, struct cst_decl const* decl)
         // Should have already been resolved in the initial pre-declaration of
         // all top-level structs/unions.
         UNREACHABLE();
+    }
+    case CST_DECL_ENUM: {
+        return resolve_decl_enum(resolver, decl);
     }
     case CST_DECL_EXTEND: {
         return resolve_decl_extend(resolver, decl);
@@ -2133,6 +2157,134 @@ resolve_decl_union(struct resolver* resolver, struct cst_decl const* decl)
             }
         }
     }
+
+    return symbol;
+}
+
+static struct symbol const*
+resolve_decl_enum(struct resolver* resolver, struct cst_decl const* decl)
+{
+    assert(resolver != NULL);
+    assert(decl != NULL);
+    assert(decl->kind == CST_DECL_ENUM);
+
+    struct symbol_table* const enum_symbols =
+        symbol_table_new(resolver->current_symbol_table);
+    sbuf_push(context()->chilling_symbol_tables, enum_symbols);
+    struct type* const type = type_new_enum(
+        qualified_name(resolver->current_symbol_name_prefix, decl->name),
+        enum_symbols);
+    freeze(type);
+
+    struct symbol* const symbol = symbol_new_type(decl->location, type);
+    freeze(symbol);
+
+    sbuf(struct cst_enum_value const* const) const values =
+        decl->data.enum_.values;
+    size_t const values_count = sbuf_count(values);
+
+    // Check for duplicate enumerator definitions.
+    for (size_t i = 0; i < values_count; ++i) {
+        for (size_t j = i + 1; j < values_count; ++j) {
+            if (values[i]->identifier.name == values[j]->identifier.name) {
+                // XXX: Calling sbuf_fini here because GCC 8.3 ASan will think
+                // we leak even though we hold a valid path to the buffer.
+                sbuf_fini(type->data.union_.member_variables);
+
+                fatal(
+                    values[j]->location,
+                    "duplicate definition of enum value `%s`",
+                    values[j]->identifier.name);
+            }
+        }
+    }
+
+    // Evaluate enumerator constants.
+    struct bigint* previous = bigint_new(BIGINT_NEG_ONE);
+    sbuf(struct bigint*) integers = NULL;
+    for (size_t i = 0; i < values_count; ++i) {
+        if (values[i]->expr != NULL) {
+            struct expr const* const resolved =
+                resolve_expr(resolver, values[i]->expr);
+            struct value* const rvalue = eval_rvalue(resolved);
+            value_freeze(rvalue);
+            if (!type_is_integer(rvalue->type)) {
+                fatal(
+                    resolved->location,
+                    "enum value with type `%s` is not an integer",
+                    rvalue->type->name);
+            }
+            struct bigint* integer = bigint_new(rvalue->data.integer);
+            sbuf_push(integers, integer);
+            bigint_assign(previous, integer);
+        }
+        else {
+            struct bigint* integer = bigint_new(previous);
+            bigint_add(integer, integer, BIGINT_POS_ONE);
+            sbuf_push(integers, integer);
+            bigint_assign(previous, integer);
+        }
+    }
+    sbuf_freeze(integers);
+    bigint_del(previous);
+
+    // Validate enumerator constants are within range of the underlying type.
+    struct type const* const underlying = type->data.enum_.underlying_type;
+    assert(type_is_integer(underlying));
+    struct bigint const* const min = underlying->data.integer.min;
+    assert(min != NULL);
+    struct bigint const* const max = underlying->data.integer.max;
+    assert(max != NULL);
+    for (size_t i = 0; i < values_count; ++i) {
+        if (bigint_cmp(integers[i], min) < 0) {
+            char* const int_cstr = bigint_to_new_cstr(integers[i]);
+            char* const min_cstr = bigint_to_new_cstr(min);
+            fatal(
+                values[i]->location,
+                "out-of-range enum value for underlying type `%s` (%s < %s)",
+                underlying->name,
+                int_cstr,
+                min_cstr);
+        }
+        if (bigint_cmp(integers[i], max) > 0) {
+            char* const int_cstr = bigint_to_new_cstr(integers[i]);
+            char* const max_cstr = bigint_to_new_cstr(max);
+            fatal(
+                values[i]->location,
+                "out-of-range enum value for underlying type `%s` (%s > %s)",
+                underlying->name,
+                int_cstr,
+                max_cstr);
+        }
+    }
+
+    // Add enumerator constants to the symbol table.
+    for (size_t i = 0; i < values_count; ++i) {
+        struct address const* const address = resolver_reserve_storage_static(
+            resolver, values[i]->identifier.name);
+
+        struct value* const value = value_new_integer(underlying, integers[i]);
+        value_freeze(value);
+
+        struct object* const object = object_new(type, address, value);
+        freeze(object);
+
+        struct symbol* const symbol = symbol_new_constant(
+            values[i]->location, values[i]->identifier.name, object);
+        freeze(symbol);
+
+        symbol_table_insert(
+            enum_symbols, values[i]->identifier.name, symbol, false);
+        register_static_symbol(symbol);
+    }
+
+    // Add the symbol to the current symbol table after all enumerators have
+    // been added. We explicitly do *not* allow for self referential
+    // enumerations, since the underlying type of a C enumeration may be chosen
+    // *after* all enumeration constants have been defined.
+    symbol_table_insert(
+        resolver->current_symbol_table, decl->name, symbol, false);
+    sbuf_push(context()->types, type);
 
     return symbol;
 }
@@ -2892,6 +3044,10 @@ resolve_stmt_decl(struct resolver* resolver, struct cst_stmt const* stmt)
     }
     case CST_DECL_UNION: {
         fatal(decl->location, "local declaration of union `%s`", decl->name);
+        return NULL;
+    }
+    case CST_DECL_ENUM: {
+        fatal(decl->location, "local declaration of enum `%s`", decl->name);
         return NULL;
     }
     case CST_DECL_EXTEND: {
@@ -5712,6 +5868,7 @@ resolve(struct module* module)
         case CST_DECL_VARIABLE: /* fallthrough */
         case CST_DECL_CONSTANT: /* fallthrough */
         case CST_DECL_FUNCTION: /* fallthrough */
+        case CST_DECL_ENUM: /* fallthrough */
         case CST_DECL_EXTEND: /* fallthrough */
         case CST_DECL_ALIAS: /* fallthrough */
         case CST_DECL_EXTERN_VARIABLE: /* fallthrough */
