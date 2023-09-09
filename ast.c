@@ -469,6 +469,59 @@ type_new_union(char const* name, struct symbol_table* symbols)
     return self;
 }
 
+struct type*
+type_new_enum(char const* name, struct symbol_table* symbols)
+{
+    // ISO/IEC 9899:1999 - 6.7.2.2 Enumeration specifiers:
+    //
+    // > Constraints
+    // > The expression that defines the value of an enumeration constant shall
+    // > be an integer constant expression that has a value representable as an
+    // > int.
+    //
+    // > Semantics
+    // > The identifiers in an enumerator list are declared as constants that
+    // > have type int and may appear wherever such are permitted.
+    // > ...
+    // > Each enumerated type shall be compatible with char, a signed integer
+    // > type, or an unsigned integer type. The choice of type is
+    // > implementation-defined, but shall be capable of representing the
+    // > values of all the members of the enumeration.
+    // > ...
+    // > An implementation may delay the choice of which integer type until all
+    // > enumeration constants have been seen.
+
+    // System V Application Binary Interface
+    // AMD64 Architecture Processor Supplement
+    // (With LP64 and ILP32 Programming Models)
+    // Version 1.0
+    //
+    // > Figure 3.1: Scalar Types
+    // > C          | sizeof | Alignment (bytes) | AMD64 Architecture
+    // > -----------+--------+-------------------+-------------------
+    // > signed int | 4      | 4                 | signed fourbyte
+    // > enum†††    |        |                   |
+    // > ...
+    // > ††† C++ and some implementations of C permit enums larger than an int.
+    // > The underlying type is bumped to an unsigned int, long int or unsigned
+    // > long int, in that order.
+
+    // The choice of underlying integral type for the enumeration is
+    // implementation defined. Given that enumerator constants must be
+    // compatible with type int, it appears that int is the common "default"
+    // underlying type for an enumeration. Chibicc specifies an enum size and
+    // alignment of four[1], and cproc requires an enum to be compatible with
+    // either int or unsigned int[2]. The x86-64 SystemV ABI also specifies a
+    // default unrderlying type of int.
+    //
+    // [1]: https://github.com/rui314/chibicc/blob/90d1f7f199cc55b13c7fdb5839d1409806633fdb/type.c#L126-L128
+    // [2]: https://git.sr.ht/~mcf/cproc/tree/0985a7893a4b5de63a67ebab445892d9fffe275b/item/decl.c#L213
+
+    struct type* const self = type_new(name, 4, 4, symbols, TYPE_ENUM);
+    self->data.enum_.underlying_type = context()->builtin.s32;
+    return self;
+}
+
 long
 type_struct_member_variable_index(struct type const* self, char const* name)
 {
@@ -756,7 +809,7 @@ type_can_compare_equality(struct type const* self)
     enum type_kind const kind = self->kind;
     return kind == TYPE_BOOL || kind == TYPE_BYTE || type_is_integer(self)
         || type_is_ieee754(self) || kind == TYPE_FUNCTION
-        || kind == TYPE_POINTER;
+        || kind == TYPE_POINTER || kind == TYPE_ENUM;
 }
 
 bool
@@ -1890,7 +1943,8 @@ value_del(struct value* self)
     case TYPE_S64: /* fallthrough */
     case TYPE_USIZE: /* fallthrough */
     case TYPE_SSIZE: /* fallthrough */
-    case TYPE_INTEGER: {
+    case TYPE_INTEGER: /* fallthrough */
+    case TYPE_ENUM: {
         bigint_del(self->data.integer);
         break;
     }
@@ -1975,7 +2029,8 @@ value_freeze(struct value* self)
     case TYPE_S64: /* fallthrough */
     case TYPE_USIZE: /* fallthrough */
     case TYPE_SSIZE: /* fallthrough */
-    case TYPE_INTEGER: {
+    case TYPE_INTEGER: /* fallthrough */
+    case TYPE_ENUM: {
         bigint_freeze(self->data.integer);
         return;
     }
@@ -2112,6 +2167,13 @@ value_clone(struct value const* self)
             new->data.union_.member_value =
                 value_clone(self->data.union_.member_value);
         }
+        return new;
+    }
+    case TYPE_ENUM: {
+        struct value* const new = value_new_integer(
+            self->type->data.enum_.underlying_type,
+            bigint_new(self->data.integer));
+        new->type = self->type;
         return new;
     }
     }
@@ -2312,7 +2374,8 @@ value_eq(struct value const* lhs, struct value const* rhs)
     case TYPE_S64: /* fallthrough */
     case TYPE_USIZE: /* fallthrough */
     case TYPE_SSIZE: /* fallthrough */
-    case TYPE_INTEGER: {
+    case TYPE_INTEGER: /* fallthrough */
+    case TYPE_ENUM: {
         return bigint_cmp(lhs->data.integer, rhs->data.integer) == 0;
     }
     case TYPE_F32: {
@@ -2380,7 +2443,8 @@ value_lt(struct value const* lhs, struct value const* rhs)
     case TYPE_S64: /* fallthrough */
     case TYPE_USIZE: /* fallthrough */
     case TYPE_SSIZE: /* fallthrough */
-    case TYPE_INTEGER: {
+    case TYPE_INTEGER: /* fallthrough */
+    case TYPE_ENUM: {
         return bigint_cmp(lhs->data.integer, rhs->data.integer) < 0;
     }
     case TYPE_F32: {
@@ -2439,7 +2503,8 @@ value_gt(struct value const* lhs, struct value const* rhs)
     case TYPE_S64: /* fallthrough */
     case TYPE_USIZE: /* fallthrough */
     case TYPE_SSIZE: /* fallthrough */
-    case TYPE_INTEGER: {
+    case TYPE_INTEGER: /* fallthrough */
+    case TYPE_ENUM: {
         return bigint_cmp(lhs->data.integer, rhs->data.integer) > 0;
     }
     case TYPE_F32: {

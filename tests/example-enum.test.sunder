@@ -1,0 +1,187 @@
+# TODO: Make sure enum symbols cannot be used as lvalues?
+# TODO: Tests casts to and from - including compile-time casts.
+import "sys";
+import "std";
+
+enum empty { }
+
+let empty_uninit: empty = uninit;
+var empty_cast_variable: empty = (:empty)0x66666666;
+let empty_cast_constant: empty = (:empty)0x66666666;
+
+enum foo {
+    A;
+    B;
+    C;
+}
+
+var foo_uninit: foo = uninit;
+let foo_a = foo::A;
+let foo_b = foo::B;
+let foo_c = foo::C;
+let foo_x: foo = foo::C;
+
+enum bar {
+    A = 0xAA;
+    B = 0xBB;
+    C = 0xCC;
+}
+
+let bar_uninit: bar = uninit;
+let bar_a = bar::A;
+let bar_b = bar::B;
+let bar_c = bar::C;
+let bar_x: bar = bar::C;
+
+enum baz {
+    A = 42;
+    B;
+    C = 100 + 1;
+    D = 500s64;
+    E = (:s32)3.14f32;
+}
+
+let baz_uninit: baz = uninit;
+let baz_a = baz::A;
+let baz_b = baz::B;
+let baz_c = baz::C;
+let baz_d = baz::D;
+let baz_e = baz::E;
+let baz_x: baz = baz_e;
+
+func main() void {
+    sys::dump[[empty]](empty_uninit);
+    sys::dump[[empty]](empty_cast_variable);
+    sys::dump[[empty]](empty_cast_constant);
+
+    std::print(std::err(), "\n");
+
+    sys::dump[[foo]](foo_uninit);
+    sys::dump[[foo]](foo_a);
+    sys::dump[[foo]](foo_b);
+    sys::dump[[foo]](foo_c);
+    sys::dump[[foo]](foo_x);
+
+    std::print(std::err(), "\n");
+
+    sys::dump[[bar]](bar_uninit);
+    sys::dump[[bar]](bar_a);
+    sys::dump[[bar]](bar_b);
+    sys::dump[[bar]](bar_c);
+    sys::dump[[bar]](bar_x);
+
+    std::print(std::err(), "\n");
+
+    sys::dump[[baz]](baz_uninit);
+    sys::dump[[baz]](baz_a);
+    sys::dump[[baz]](baz_b);
+    sys::dump[[baz]](baz_c);
+    sys::dump[[baz]](baz_d);
+    sys::dump[[baz]](baz_e);
+    sys::dump[[baz]](baz_x);
+
+    std::print(std::err(), "\n");
+
+    # Cast to enum types.
+    var e = (:foo)0xBEEF;
+    sys::dump[[foo]](e);
+    var e = (:foo)0xBEEFs32;
+    sys::dump[[foo]](e);
+    var e = (:foo)0xBEEFu32;
+    sys::dump[[foo]](e);
+    var e = (:foo)0xBEEFs;
+    sys::dump[[foo]](e);
+    var e = (:foo)0xFFy;
+    sys::dump[[foo]](e);
+    std::print(std::err(), "\n");
+    let e = (:foo)0xBEEFs32;
+    sys::dump[[foo]](e);
+    let e = (:foo)0xBEEFu32;
+    sys::dump[[foo]](e);
+    let e = (:foo)0xBEEFs;
+    sys::dump[[foo]](e);
+    let e = (:foo)0xFFy;
+    sys::dump[[foo]](e);
+    let e = (:foo)-1s16;
+    sys::dump[[foo]](e);
+    let e = (:foo)true;
+    sys::dump[[foo]](e);
+    let e = (:foo)bar::A;
+    sys::dump[[foo]](e);
+
+    std::print(std::err(), "\n");
+
+    # Cast from enum types.
+    var x = (:s32)bar::A;
+    sys::dump[[typeof(x)]](x);
+    var x = (:u32)bar::A;
+    sys::dump[[typeof(x)]](x);
+    var x = (:ssize)bar::A;
+    sys::dump[[typeof(x)]](x);
+    var x = (:byte)bar::A;
+    sys::dump[[typeof(x)]](x);
+    std::print(std::err(), "\n");
+    let x = (:s32)bar::A;
+    sys::dump[[typeof(x)]](x);
+    let x = (:u32)bar::A;
+    sys::dump[[typeof(x)]](x);
+    let x = (:ssize)bar::A;
+    sys::dump[[typeof(x)]](x);
+    let x = (:byte)bar::A;
+    sys::dump[[typeof(x)]](x);
+    let x = (:bool)true;
+    sys::dump[[typeof(x)]](x);
+
+    # Enums can be compared for equality, but not ordered (without a cast).
+    assert foo::A == foo::A;
+    assert foo::A != foo::B;
+}
+################################################################################
+# 00 00 00 00
+# 66 66 66 66
+# 66 66 66 66
+#
+# 00 00 00 00
+# 00 00 00 00
+# 01 00 00 00
+# 02 00 00 00
+# 02 00 00 00
+#
+# 00 00 00 00
+# AA 00 00 00
+# BB 00 00 00
+# CC 00 00 00
+# CC 00 00 00
+#
+# 00 00 00 00
+# 2A 00 00 00
+# 2B 00 00 00
+# 65 00 00 00
+# F4 01 00 00
+# 03 00 00 00
+# 03 00 00 00
+#
+# EF BE 00 00
+# EF BE 00 00
+# EF BE 00 00
+# EF BE 00 00
+# FF 00 00 00
+#
+# EF BE 00 00
+# EF BE 00 00
+# EF BE 00 00
+# FF 00 00 00
+# FF FF FF FF
+# 01 00 00 00
+# AA 00 00 00
+#
+# AA 00 00 00
+# AA 00 00 00
+# AA 00 00 00 00 00 00 00
+# AA
+#
+# AA 00 00 00
+# AA 00 00 00
+# AA 00 00 00 00 00 00 00
+# AA
+# 01

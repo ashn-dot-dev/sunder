@@ -16,6 +16,8 @@
 
 <decl-union> ::= "union" <identifier> <template-parameter-list>? "{" <member-list> "}"
 
+<decl-enum> ::= "enum" <identifier> "{" (<identifier> ("=" <expr>)? ";")* "}"
+
 <decl-extend> ::= "extend" <type> <decl>
 
 <decl-alias> ::= "alias" <identifier> "=" <type> ";"

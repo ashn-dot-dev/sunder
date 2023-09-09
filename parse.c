@@ -55,6 +55,8 @@ parse_decl_struct(struct parser* parser);
 static struct cst_decl const*
 parse_decl_union(struct parser* parser);
 static struct cst_decl const*
+parse_decl_enum(struct parser* parser);
+static struct cst_decl const*
 parse_decl_extend(struct parser* parser);
 static struct cst_decl const*
 parse_decl_alias(struct parser* parser);
@@ -187,6 +189,9 @@ static struct cst_member_initializer const* const*
 parse_member_initializer_list(struct parser* parser);
 static struct cst_member_initializer const*
 parse_member_initializer(struct parser* parser);
+
+static struct cst_enum_value const*
+parse_enum_value(struct parser* parser);
 
 static struct cst_type const*
 parse_type(struct parser* parser);
@@ -401,6 +406,10 @@ parse_decl(struct parser* parser)
         return parse_decl_union(parser);
     }
 
+    if (check_current(parser, TOKEN_ENUM)) {
+        return parse_decl_enum(parser);
+    }
+
     if (check_current(parser, TOKEN_EXTEND)) {
         return parse_decl_extend(parser);
     }
@@ -562,6 +571,29 @@ parse_decl_union(struct parser* parser)
 
     struct cst_decl* const product =
         cst_decl_new_union(location, identifier, template_parameters, members);
+
+    freeze(product);
+    return product;
+}
+
+static struct cst_decl const*
+parse_decl_enum(struct parser* parser)
+{
+    assert(parser != NULL);
+
+    struct source_location const location =
+        expect_current(parser, TOKEN_ENUM).location;
+    struct cst_identifier const identifier = parse_identifier(parser);
+    expect_current(parser, TOKEN_LBRACE);
+    sbuf(struct cst_enum_value const*) values = NULL;
+    while (!check_current(parser, TOKEN_RBRACE)) {
+        sbuf_push(values, parse_enum_value(parser));
+    }
+    sbuf_freeze(values);
+    expect_current(parser, TOKEN_RBRACE);
+
+    struct cst_decl* const product =
+        cst_decl_new_enum(location, identifier, values);
 
     freeze(product);
     return product;
@@ -1798,6 +1830,26 @@ parse_member_initializer(struct parser* parser)
 
     struct cst_member_initializer* const product =
         cst_member_initializer_new(location, identifier, expr);
+
+    freeze(product);
+    return product;
+}
+
+static struct cst_enum_value const*
+parse_enum_value(struct parser* parser)
+{
+    assert(parser != NULL);
+
+    struct cst_identifier const identifier = parse_identifier(parser);
+    struct cst_expr const* expr = NULL;
+    if (check_current(parser, TOKEN_ASSIGN)) {
+        expect_current(parser, TOKEN_ASSIGN);
+        expr = parse_expr(parser);
+    }
+    expect_current(parser, TOKEN_SEMICOLON);
+
+    struct cst_enum_value* const product =
+        cst_enum_value_new(identifier.location, identifier, expr);
 
     freeze(product);
     return product;

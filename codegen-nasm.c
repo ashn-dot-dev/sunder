@@ -434,6 +434,12 @@ append_dx_static_initializer(struct value const* value)
         }
         return;
     }
+    case TYPE_ENUM: {
+        struct value underlying = *value;
+        underlying.type = value->type->data.enum_.underlying_type;
+        append_dx_static_initializer(&underlying);
+        return;
+    }
     }
 }
 
@@ -737,6 +743,11 @@ mov_rax_reg_a_with_zero_or_sign_extend(struct type const* type)
         // Functions are implemented as pointers to the function entry point,
         // so the function value stays the same when casting from one function
         // to another.
+        break;
+    }
+    case TYPE_ENUM: {
+        mov_rax_reg_a_with_zero_or_sign_extend(
+            type->data.enum_.underlying_type);
         break;
     }
     case TYPE_ANY: /* fallthrough */
@@ -1709,7 +1720,8 @@ push_rvalue_value(struct expr const* expr, size_t id)
     case TYPE_U64: /* fallthrough */
     case TYPE_S64: /* fallthrough */
     case TYPE_USIZE: /* fallthrough */
-    case TYPE_SSIZE: {
+    case TYPE_SSIZE: /* fallthrough */
+    case TYPE_ENUM: {
         assert(value->type->size >= 1u);
         assert(value->type->size <= 8u);
         char* const cstr = bigint_to_new_cstr(value->data.integer);

@@ -905,6 +905,7 @@ enum token_kind {
     TOKEN_FUNC,
     TOKEN_STRUCT,
     TOKEN_UNION,
+    TOKEN_ENUM,
     TOKEN_EXTEND,
     TOKEN_ALIAS,
     TOKEN_EXTERN,
@@ -1078,6 +1079,7 @@ struct cst_decl {
         CST_DECL_FUNCTION,
         CST_DECL_STRUCT,
         CST_DECL_UNION,
+        CST_DECL_ENUM,
         CST_DECL_EXTEND,
         CST_DECL_ALIAS,
         CST_DECL_EXTERN_VARIABLE,
@@ -1118,6 +1120,10 @@ struct cst_decl {
             sbuf(struct cst_identifier const) template_parameters;
             sbuf(struct cst_member const* const) members;
         } union_;
+        struct {
+            struct cst_identifier identifier;
+            sbuf(struct cst_enum_value const* const) values;
+        } enum_;
         struct {
             struct cst_type const* type;
             struct cst_decl const* decl;
@@ -1170,6 +1176,11 @@ cst_decl_new_union(
     struct cst_identifier identifier,
     struct cst_identifier const* template_parameters,
     struct cst_member const* const* members);
+struct cst_decl*
+cst_decl_new_enum(
+    struct source_location location,
+    struct cst_identifier identifier,
+    struct cst_enum_value const* const* values);
 struct cst_decl*
 cst_decl_new_extend(
     struct source_location location,
@@ -1554,6 +1565,17 @@ cst_member_initializer_new(
     struct cst_identifier identifier,
     struct cst_expr const* expr);
 
+struct cst_enum_value {
+    struct source_location location;
+    struct cst_identifier identifier;
+    struct cst_expr const* expr; // optional
+};
+struct cst_enum_value*
+cst_enum_value_new(
+    struct source_location location,
+    struct cst_identifier identifier,
+    struct cst_expr const* expr);
+
 struct cst_type {
     struct source_location location;
     enum cst_type_kind {
@@ -1697,6 +1719,7 @@ struct type {
         TYPE_SLICE,
         TYPE_STRUCT,
         TYPE_UNION,
+        TYPE_ENUM,
     } kind;
     union {
         struct {
@@ -1739,6 +1762,9 @@ struct type {
             // List of member variables within the union ordered by offset.
             sbuf(struct member_variable) member_variables;
         } union_;
+        struct {
+            struct type const* underlying_type;
+        } enum_;
     } data;
 };
 struct type*
@@ -1792,6 +1818,9 @@ type_new_struct(char const* name, struct symbol_table* symbols);
 // Create a new union with no members (size zero and alignment zero).
 struct type*
 type_new_union(char const* name, struct symbol_table* symbols);
+// Create a new enum with no members.
+struct type*
+type_new_enum(char const* name, struct symbol_table* symbols);
 // Returns the index of the member variable `name` of the provided struct type.
 // Returns a non-negative integer index on success.
 // Returns a -1 on failure.
@@ -2414,7 +2443,7 @@ struct value {
     struct {
         bool boolean;
         uint8_t byte;
-        struct bigint* integer;
+        struct bigint* integer; /* integer an enum types */
         float f32;
         double f64;
         // Using a double to store the value of a real instead of a long double

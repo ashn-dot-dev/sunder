@@ -610,6 +610,16 @@ codegen_type_definition(struct type const* type)
         appendli("};");
         break;
     }
+    case TYPE_ENUM: {
+        if (type->size == 0 || type->size == SIZEOF_UNSIZED) {
+            return;
+        }
+        char const* const typename = mangle_type(type);
+        char const* const underlying =
+            mangle_type(type->data.enum_.underlying_type);
+        appendln("typedef %s %s; // enum", underlying, typename);
+        break;
+    }
     }
 
     if (type->size != 0 && type->size != SIZEOF_UNSIZED) {
@@ -1027,6 +1037,13 @@ strgen_value(struct value const* value)
             string_append_fmt(s, ".%s = {0}", mangle_name("__buffer"));
         }
         string_append_cstr(s, "}");
+        break;
+    }
+    case TYPE_ENUM: {
+        struct value underlying_value = *value;
+        underlying_value.type = value->type->data.enum_.underlying_type;
+        string_append_cstr(s, strgen_value(&underlying_value));
+        break;
     }
     }
 
@@ -1090,6 +1107,9 @@ strgen_uninit(struct type const* type)
     case TYPE_UNION: {
         string_append_cstr(s, "{/* uninit */0}");
         break;
+    }
+    case TYPE_ENUM: {
+        string_append_cstr(s, strgen_uninit(type->data.enum_.underlying_type));
     }
     }
 
@@ -3113,16 +3133,14 @@ codegen_c(
         appendln("}");
     }
 
-    int err = 0;
-    if ((err = spawnvpw(backend_argv, string_start(out), string_count(out)))) {
-        goto cleanup;
-    }
+    int spawn_err =
+        spawnvpw(backend_argv, string_start(out), string_count(out));
 
+    int write_err = 0;
     if (opt_k) {
-        if ((err = file_write_all(
-                 string_start(src_path),
-                 string_start(out),
-                 string_count(out)))) {
+        write_err = file_write_all(
+            string_start(src_path), string_start(out), string_count(out));
+        if (write_err) {
             error(
                 NO_LOCATION,
                 "unable to write file `%s` with error '%s'",
@@ -3143,7 +3161,7 @@ cleanup:
     string_del(src_path);
     string_del(obj_path);
     string_del(out);
-    if (err) {
+    if (spawn_err || write_err) {
         exit(EXIT_FAILURE);
     }
 }
