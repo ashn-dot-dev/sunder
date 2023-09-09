@@ -2714,8 +2714,7 @@ complete_enum(
     assert(resolver != NULL);
     assert(name != NULL);
 
-    bool const is_anonymous =
-        cstr_starts_with(name, "enum {") && cstr_ends_with(name, "}");
+    bool const is_anonymous = cstr_starts_with(name, "enum ");
 
     struct symbol_table* const enum_symbols =
         symbol_table_new(resolver->current_symbol_table);
@@ -5835,26 +5834,12 @@ resolve_type_enum(struct resolver* resolver, struct cst_type const* type)
     struct cst_enum_value const* const* values = type->data.enum_.values;
     size_t const values_count = sbuf_count(values);
 
-    struct string* const name_string = string_new_cstr("enum { ");
+    struct string* const name_string = string_new_fmt(
+        "enum [%s:%zu] { ", type->location.path, type->location.line);
     for (size_t i = 0; i < values_count; ++i) {
         if (i != 0) {
             string_append_cstr(name_string, " ");
         }
-        // TODO: If two enums share the same set of identifiers then their
-        // interned names will be identical, even if the values of those types
-        // are different:
-        //
-        //      enum { A; B; }              <- These would be considered the
-        //      enum { A = 123; B = 456; }  <- same anonymous enum!
-        //
-        // The primary use case for anonymous enums is to replicate the global
-        // constants introduced by C enums, and to allow for easy creation of
-        // tagged unions. So for now, it seems unlikely that the primary use
-        // cases will likely not cause this problem to occur in practice.
-        // However, eventually the expressions corresponding to these types
-        // should be stringified in order to make the anonymous enum
-        // definitions unique based on both their identifiers and the values of
-        // the symbols associated with those identifiers.
         string_append_fmt(name_string, "%s;", values[i]->identifier.name);
     }
     string_append_cstr(name_string, " }");
