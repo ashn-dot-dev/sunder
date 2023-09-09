@@ -587,15 +587,24 @@ parse_decl_enum(struct parser* parser)
         expect_current(parser, TOKEN_ENUM).location;
     struct cst_identifier const identifier = parse_identifier(parser);
     expect_current(parser, TOKEN_LBRACE);
+
     sbuf(struct cst_enum_value const*) values = NULL;
-    while (!check_current(parser, TOKEN_RBRACE)) {
+    while (!check_current(parser, TOKEN_RBRACE)
+           && !check_current(parser, TOKEN_FUNC)) {
         sbuf_push(values, parse_enum_value(parser));
     }
     sbuf_freeze(values);
+
+    sbuf(struct cst_member const*) member_functions = NULL;
+    while (!check_current(parser, TOKEN_RBRACE)) {
+        sbuf_push(member_functions, parse_member_function(parser));
+    }
+    sbuf_freeze(member_functions);
+
     expect_current(parser, TOKEN_RBRACE);
 
     struct cst_decl* const product =
-        cst_decl_new_enum(location, identifier, values);
+        cst_decl_new_enum(location, identifier, values, member_functions);
 
     freeze(product);
     return product;

@@ -292,6 +292,27 @@ order_decl(struct orderer* orderer, struct cst_decl const* decl)
             }
             order_expr(orderer, values[i]->expr);
         }
+
+        // Set this enum's state to ordered to allow for self-referential
+        // member functions. This behavior mimics the behavior of the resolve
+        // phase where all enums have their values processed before member
+        // functions are completed.
+        struct tldecl* const tldecl =
+            orderer_tldecl_lookup(orderer, decl->name);
+        if (tldecl == NULL) {
+            // The returned tldecl may be NULL if this enum declaration is part
+            // of an extend declaration. We return early here since an error
+            // will be reported when the extend declaration is resolved.
+            return;
+        }
+        tldecl->state = TLDECL_ORDERED;
+
+        sbuf(struct cst_member const* const) const member_functions =
+            decl->data.enum_.member_functions;
+        for (size_t i = 0; i < sbuf_count(member_functions); ++i) {
+            assert(member_functions[i]->kind == CST_MEMBER_FUNCTION);
+            order_decl(orderer, member_functions[i]->data.function.decl);
+        }
         return;
     }
     case CST_DECL_EXTEND: {

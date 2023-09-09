@@ -60,6 +60,22 @@ let qux_b_2 = QUX_B;
 let qux_c_1 = qux::QUX_C;
 let qux_c_2 = QUX_C;
 
+# Enum with member functions.
+enum withmembfuncs {
+    A;
+    B;
+
+    func to_str(self: *withmembfuncs) []byte {
+        if *self == withmembfuncs::A {
+            return "A";
+        }
+        if *self == B {
+            return "B";
+        }
+        return "unknown";
+    }
+}
+
 # Example of a tagged union using an anonymous enum.
 struct tagged {
     var kind: enum {
@@ -184,6 +200,11 @@ func main() void {
 
     std::print(std::err(), "\n");
 
+    std::print_line(std::err(), withmembfuncs::A.to_str());
+    std::print_line(std::err(), withmembfuncs::B.to_str());
+
+    std::print(std::err(), "\n");
+
     var this = tagged::init_this(0xDEADBEEF);
     var that = tagged::init_that("DEADBEEF");
     assert this.kind == tagged::THIS;
@@ -251,6 +272,9 @@ func main() void {
 # AA 00 00 00 00 00 00 00
 # AA
 # 01
+#
+# A
+# B
 #
 # EF BE AD DE 00 00 00 00
 # DEADBEEF

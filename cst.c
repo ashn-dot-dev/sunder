@@ -174,7 +174,8 @@ struct cst_decl*
 cst_decl_new_enum(
     struct source_location location,
     struct cst_identifier identifier,
-    struct cst_enum_value const* const* values)
+    struct cst_enum_value const* const* values,
+    struct cst_member const* const* member_functions)
 {
     struct cst_decl* const self = xalloc(NULL, sizeof(*self));
     memset(self, 0x00, sizeof(*self));
@@ -183,6 +184,7 @@ cst_decl_new_enum(
     self->name = identifier.name;
     self->data.enum_.identifier = identifier;
     self->data.enum_.values = values;
+    self->data.enum_.member_functions = member_functions;
     return self;
 }
 

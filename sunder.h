@@ -1123,6 +1123,8 @@ struct cst_decl {
         struct {
             struct cst_identifier identifier;
             sbuf(struct cst_enum_value const* const) values;
+            sbuf(struct cst_member const* const)
+                member_functions; // CST_MEMBER_FUNCTION
         } enum_;
         struct {
             struct cst_type const* type;
@@ -1180,7 +1182,8 @@ struct cst_decl*
 cst_decl_new_enum(
     struct source_location location,
     struct cst_identifier identifier,
-    struct cst_enum_value const* const* values);
+    struct cst_enum_value const* const* values,
+    struct cst_member const* const* member_functions);
 struct cst_decl*
 cst_decl_new_extend(
     struct source_location location,

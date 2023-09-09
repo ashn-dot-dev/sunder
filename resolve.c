@@ -217,7 +217,8 @@ complete_enum(
     struct resolver* resolver,
     struct source_location location,
     char const* name,
-    struct cst_enum_value const* const* values);
+    struct cst_enum_value const* const* values,
+    struct cst_member const* const* member_functions);
 static void
 complete_function(
     struct resolver* resolver, struct incomplete_function const* incomplete);
@@ -2177,7 +2178,11 @@ resolve_decl_enum(struct resolver* resolver, struct cst_decl const* decl)
     assert(decl->kind == CST_DECL_ENUM);
 
     return complete_enum(
-        resolver, decl->location, decl->name, decl->data.enum_.values);
+        resolver,
+        decl->location,
+        decl->name,
+        decl->data.enum_.values,
+        decl->data.enum_.member_functions);
 }
 
 static struct symbol const*
@@ -2709,7 +2714,8 @@ complete_enum(
     struct resolver* resolver,
     struct source_location location,
     char const* name,
-    struct cst_enum_value const* const* values)
+    struct cst_enum_value const* const* values,
+    struct cst_member const* const* member_functions)
 {
     assert(resolver != NULL);
     assert(name != NULL);
@@ -2840,6 +2846,26 @@ complete_enum(
     // *after* all enumeration constants have been defined.
     symbol_table_insert(resolver->current_symbol_table, name, symbol, false);
     sbuf_push(context()->types, type);
+
+    // Resolve member functions.
+    char const* const save_symbol_name_prefix =
+        resolver->current_symbol_name_prefix;
+    char const* const save_static_addr_prefix =
+        resolver->current_static_addr_prefix;
+    struct symbol_table* const save_symbol_table =
+        resolver->current_symbol_table;
+    resolver->current_symbol_name_prefix = symbol_xget_type(symbol)->name;
+    resolver->current_static_addr_prefix =
+        normalize(symbol_xget_type(symbol)->name, 0);
+    resolver->current_symbol_table = enum_symbols;
+    for (size_t i = 0; i < sbuf_count(member_functions); ++i) {
+        assert(member_functions[i]->kind == CST_MEMBER_FUNCTION);
+        resolve_decl_function(
+            resolver, member_functions[i]->data.function.decl);
+    }
+    resolver->current_symbol_name_prefix = save_symbol_name_prefix;
+    resolver->current_static_addr_prefix = save_static_addr_prefix;
+    resolver->current_symbol_table = save_symbol_table;
 
     return symbol;
 }
@@ -5848,7 +5874,7 @@ resolve_type_enum(struct resolver* resolver, struct cst_type const* type)
     string_del(name_string);
 
     return symbol_xget_type(
-        complete_enum(resolver, type->location, name, values));
+        complete_enum(resolver, type->location, name, values, NULL));
 }
 
 static struct type const*
