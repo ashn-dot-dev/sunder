@@ -30,6 +30,8 @@
                      | <decl-constant>
                      | <decl-function>
                      | <decl-struct>
+                     | <decl-union>
+                     | <decl-enum>
                      | <decl-alias>
                      | <decl-extern-variable>
                      | <decl-extern-function>
