@@ -60,6 +60,36 @@ let qux_b_2 = QUX_B;
 let qux_c_1 = qux::QUX_C;
 let qux_c_2 = QUX_C;
 
+# Example of a tagged union using an anonymous enum.
+struct tagged {
+    var kind: enum {
+        THIS;
+        THAT;
+    };
+    var data: union {
+        var this: usize;
+        var that: []byte;
+    };
+
+    func init_this(value: usize) tagged {
+        var self = (:tagged) {
+            .kind = tagged::THIS, # reference using <enclosing-type>::<name>
+            .data = uninit,
+        };
+        self.data.this = value;
+        return self;
+    }
+
+    func init_that(value: []byte) tagged {
+        var self = (:tagged) {
+            .kind = THAT, # reference using <name> without enclosing type
+            .data = uninit,
+        };
+        self.data.that = value;
+        return self;
+    }
+}
+
 func main() void {
     sys::dump[[empty]](empty_uninit);
     sys::dump[[empty]](empty_cast_variable);
@@ -152,6 +182,15 @@ func main() void {
     let x = (:bool)true;
     sys::dump[[typeof(x)]](x);
 
+    std::print(std::err(), "\n");
+
+    var this = tagged::init_this(0xDEADBEEF);
+    var that = tagged::init_that("DEADBEEF");
+    assert this.kind == tagged::THIS;
+    assert that.kind == tagged::THAT;
+    sys::dump[[typeof(this.data.this)]](this.data.this);
+    std::print_line(std::err(), that.data.that);
+
     # Enums can be compared for equality, but not ordered (without a cast).
     assert foo::A == foo::A;
     assert foo::A != foo::B;
@@ -212,3 +251,6 @@ func main() void {
 # AA 00 00 00 00 00 00 00
 # AA
 # 01
+#
+# EF BE AD DE 00 00 00 00
+# DEADBEEF
