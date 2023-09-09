@@ -1586,6 +1586,7 @@ struct cst_type {
         CST_TYPE_SLICE,
         CST_TYPE_STRUCT,
         CST_TYPE_UNION,
+        CST_TYPE_ENUM,
         CST_TYPE_TYPEOF
     } kind;
     union {
@@ -1610,6 +1611,9 @@ struct cst_type {
         struct {
             sbuf(struct cst_member const* const) members;
         } union_;
+        struct {
+            sbuf(struct cst_enum_value const* const) values;
+        } enum_;
         struct {
             struct cst_expr const* expr;
         } typeof_;
@@ -1639,6 +1643,10 @@ cst_type_new_struct(
 struct cst_type*
 cst_type_new_union(
     struct source_location location, struct cst_member const* const* members);
+struct cst_type*
+cst_type_new_enum(
+    struct source_location location,
+    struct cst_enum_value const* const* values);
 struct cst_type*
 cst_type_new_typeof(
     struct source_location location, struct cst_expr const* expr);

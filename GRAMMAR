@@ -206,11 +206,14 @@
          | <type-slice>
          | <type-struct>
          | <type-union>
+         | <type-enum>
          | <type-typeof>
 
 <type-struct> ::= "struct" "{" <member-variable>* "}"
 
-<type-struct> ::= "union" "{" <member-variable>* "}"
+<type-union> ::= "union" "{" <member-variable>* "}"
+
+<type-enum> ::= "enum" "{" (<identifier> ("=" <expr>)? ";")* "}"
 
 <type-function> ::= func "(" ( <type> ("," <type> )* )? ")" <type>
 

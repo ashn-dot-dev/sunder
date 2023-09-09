@@ -903,6 +903,15 @@ cst_type_new_union(
 }
 
 struct cst_type*
+cst_type_new_enum(
+    struct source_location location, struct cst_enum_value const* const* values)
+{
+    struct cst_type* const self = cst_type_new(location, CST_TYPE_ENUM);
+    self->data.enum_.values = values;
+    return self;
+}
+
+struct cst_type*
 cst_type_new_typeof(
     struct source_location location, struct cst_expr const* expr)
 {

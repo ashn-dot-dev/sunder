@@ -208,6 +208,8 @@ parse_type_struct(struct parser* parser);
 static struct cst_type const*
 parse_type_union(struct parser* parser);
 static struct cst_type const*
+parse_type_enum(struct parser* parser);
+static struct cst_type const*
 parse_type_typeof(struct parser* parser);
 
 static struct parser*
@@ -1885,6 +1887,10 @@ parse_type(struct parser* parser)
         return parse_type_union(parser);
     }
 
+    if (check_current(parser, TOKEN_ENUM)) {
+        return parse_type_enum(parser);
+    }
+
     if (check_current(parser, TOKEN_TYPEOF)) {
         return parse_type_typeof(parser);
     }
@@ -2026,6 +2032,28 @@ parse_type_union(struct parser* parser)
     expect_current(parser, TOKEN_RBRACE);
 
     struct cst_type* const product = cst_type_new_union(location, members);
+
+    freeze(product);
+    return product;
+}
+
+static struct cst_type const*
+parse_type_enum(struct parser* parser)
+{
+    assert(parser != NULL);
+    assert(check_current(parser, TOKEN_ENUM));
+
+    struct source_location const location =
+        expect_current(parser, TOKEN_ENUM).location;
+    expect_current(parser, TOKEN_LBRACE);
+    sbuf(struct cst_enum_value const*) values = NULL;
+    while (!check_current(parser, TOKEN_RBRACE)) {
+        sbuf_push(values, parse_enum_value(parser));
+    }
+    sbuf_freeze(values);
+    expect_current(parser, TOKEN_RBRACE);
+
+    struct cst_type* const product = cst_type_new_enum(location, values);
 
     freeze(product);
     return product;

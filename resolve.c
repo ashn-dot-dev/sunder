@@ -212,6 +212,12 @@ complete_union(
     struct resolver* resolver,
     struct symbol const* symbol,
     struct cst_member const* const* members);
+struct symbol const*
+complete_enum(
+    struct resolver* resolver,
+    struct source_location location,
+    char const* name,
+    struct cst_enum_value const* const* values);
 static void
 complete_function(
     struct resolver* resolver, struct incomplete_function const* incomplete);
@@ -389,6 +395,8 @@ static struct type const*
 resolve_type_struct(struct resolver* resolver, struct cst_type const* type);
 static struct type const*
 resolve_type_union(struct resolver* resolver, struct cst_type const* type);
+static struct type const*
+resolve_type_enum(struct resolver* resolver, struct cst_type const* type);
 static struct type const*
 resolve_type_typeof(struct resolver* resolver, struct cst_type const* type);
 
@@ -2168,125 +2176,8 @@ resolve_decl_enum(struct resolver* resolver, struct cst_decl const* decl)
     assert(decl != NULL);
     assert(decl->kind == CST_DECL_ENUM);
 
-    struct symbol_table* const enum_symbols =
-        symbol_table_new(resolver->current_symbol_table);
-    sbuf_push(context()->chilling_symbol_tables, enum_symbols);
-    struct type* const type = type_new_enum(
-        qualified_name(resolver->current_symbol_name_prefix, decl->name),
-        enum_symbols);
-    freeze(type);
-
-    struct symbol* const symbol = symbol_new_type(decl->location, type);
-    freeze(symbol);
-
-    sbuf(struct cst_enum_value const* const) const values =
-        decl->data.enum_.values;
-    size_t const values_count = sbuf_count(values);
-
-    // Check for duplicate enumerator definitions.
-    for (size_t i = 0; i < values_count; ++i) {
-        for (size_t j = i + 1; j < values_count; ++j) {
-            if (values[i]->identifier.name == values[j]->identifier.name) {
-                // XXX: Calling sbuf_fini here because GCC 8.3 ASan will think
-                // we leak even though we hold a valid path to the buffer.
-                sbuf_fini(type->data.union_.member_variables);
-
-                fatal(
-                    values[j]->location,
-                    "duplicate definition of enum value `%s`",
-                    values[j]->identifier.name);
-            }
-        }
-    }
-
-    // Evaluate enumerator constants.
-    struct bigint* previous = bigint_new(BIGINT_NEG_ONE);
-    sbuf(struct bigint*) integers = NULL;
-    for (size_t i = 0; i < values_count; ++i) {
-        if (values[i]->expr != NULL) {
-            struct expr const* const resolved =
-                resolve_expr(resolver, values[i]->expr);
-            struct value* const rvalue = eval_rvalue(resolved);
-            value_freeze(rvalue);
-            if (!type_is_integer(rvalue->type)) {
-                fatal(
-                    resolved->location,
-                    "enum value with type `%s` is not an integer",
-                    rvalue->type->name);
-            }
-            struct bigint* integer = bigint_new(rvalue->data.integer);
-            sbuf_push(integers, integer);
-            bigint_assign(previous, integer);
-        }
-        else {
-            struct bigint* integer = bigint_new(previous);
-            bigint_add(integer, integer, BIGINT_POS_ONE);
-            sbuf_push(integers, integer);
-            bigint_assign(previous, integer);
-        }
-    }
-    sbuf_freeze(integers);
-    bigint_del(previous);
-
-    // Validate enumerator constants are within range of the underlying type.
-    struct type const* const underlying = type->data.enum_.underlying_type;
-    assert(type_is_integer(underlying));
-    struct bigint const* const min = underlying->data.integer.min;
-    assert(min != NULL);
-    struct bigint const* const max = underlying->data.integer.max;
-    assert(max != NULL);
-    for (size_t i = 0; i < values_count; ++i) {
-        if (bigint_cmp(integers[i], min) < 0) {
-            char* const int_cstr = bigint_to_new_cstr(integers[i]);
-            char* const min_cstr = bigint_to_new_cstr(min);
-            fatal(
-                values[i]->location,
-                "out-of-range enum value for underlying type `%s` (%s < %s)",
-                underlying->name,
-                int_cstr,
-                min_cstr);
-        }
-        if (bigint_cmp(integers[i], max) > 0) {
-            char* const int_cstr = bigint_to_new_cstr(integers[i]);
-            char* const max_cstr = bigint_to_new_cstr(max);
-            fatal(
-                values[i]->location,
-                "out-of-range enum value for underlying type `%s` (%s > %s)",
-                underlying->name,
-                int_cstr,
-                max_cstr);
-        }
-    }
-
-    // Add enumerator constants to the symbol table.
-    for (size_t i = 0; i < values_count; ++i) {
-        struct address const* const address = resolver_reserve_storage_static(
-            resolver, values[i]->identifier.name);
-
-        struct value* const value = value_new_integer(underlying, integers[i]);
-        value_freeze(value);
-
-        struct object* const object = object_new(type, address, value);
-        freeze(object);
-
-        struct symbol* const symbol = symbol_new_constant(
-            values[i]->location, values[i]->identifier.name, object);
-        freeze(symbol);
-
-        symbol_table_insert(
-            enum_symbols, values[i]->identifier.name, symbol, false);
-        register_static_symbol(symbol);
-    }
-
-    // Add the symbol to the current symbol table after all enumerators have
-    // been added. We explicitly do *not* allow for self referential
-    // enumerations, since the underlying type of a C enumeration may be chosen
-    // *after* all enumeration constants have been defined.
-    symbol_table_insert(
-        resolver->current_symbol_table, decl->name, symbol, false);
-    sbuf_push(context()->types, type);
-
-    return symbol;
+    return complete_enum(
+        resolver, decl->location, decl->name, decl->data.enum_.values);
 }
 
 static struct symbol const*
@@ -2811,6 +2702,147 @@ complete_union(
     resolver->current_symbol_name_prefix = save_symbol_name_prefix;
     resolver->current_static_addr_prefix = save_static_addr_prefix;
     resolver->current_symbol_table = save_symbol_table;
+}
+
+struct symbol const*
+complete_enum(
+    struct resolver* resolver,
+    struct source_location location,
+    char const* name,
+    struct cst_enum_value const* const* values)
+{
+    assert(resolver != NULL);
+    assert(name != NULL);
+
+    bool const is_anonymous =
+        cstr_starts_with(name, "enum {") && cstr_ends_with(name, "}");
+
+    struct symbol_table* const enum_symbols =
+        symbol_table_new(resolver->current_symbol_table);
+    sbuf_push(context()->chilling_symbol_tables, enum_symbols);
+    struct type* const type = type_new_enum(
+        qualified_name(resolver->current_symbol_name_prefix, name),
+        enum_symbols);
+    freeze(type);
+
+    struct symbol* const symbol = symbol_new_type(location, type);
+    freeze(symbol);
+
+    size_t const values_count = sbuf_count(values);
+
+    // Check for duplicate enumerator definitions.
+    for (size_t i = 0; i < values_count; ++i) {
+        for (size_t j = i + 1; j < values_count; ++j) {
+            if (values[i]->identifier.name == values[j]->identifier.name) {
+                // XXX: Calling sbuf_fini here because GCC 8.3 ASan will think
+                // we leak even though we hold a valid path to the buffer.
+                sbuf_fini(type->data.union_.member_variables);
+
+                fatal(
+                    values[j]->location,
+                    "duplicate definition of enum value `%s`",
+                    values[j]->identifier.name);
+            }
+        }
+    }
+
+    // Evaluate enumerator constants.
+    struct bigint* previous = bigint_new(BIGINT_NEG_ONE);
+    sbuf(struct bigint*) integers = NULL;
+    for (size_t i = 0; i < values_count; ++i) {
+        if (values[i]->expr != NULL) {
+            struct expr const* const resolved =
+                resolve_expr(resolver, values[i]->expr);
+            struct value* const rvalue = eval_rvalue(resolved);
+            value_freeze(rvalue);
+            if (!type_is_integer(rvalue->type)) {
+                fatal(
+                    resolved->location,
+                    "enum value with type `%s` is not an integer",
+                    rvalue->type->name);
+            }
+            struct bigint* integer = bigint_new(rvalue->data.integer);
+            sbuf_push(integers, integer);
+            bigint_assign(previous, integer);
+        }
+        else {
+            struct bigint* integer = bigint_new(previous);
+            bigint_add(integer, integer, BIGINT_POS_ONE);
+            sbuf_push(integers, integer);
+            bigint_assign(previous, integer);
+        }
+    }
+    sbuf_freeze(integers);
+    bigint_del(previous);
+
+    // Validate enumerator constants are within range of the underlying type.
+    struct type const* const underlying = type->data.enum_.underlying_type;
+    assert(type_is_integer(underlying));
+    struct bigint const* const min = underlying->data.integer.min;
+    assert(min != NULL);
+    struct bigint const* const max = underlying->data.integer.max;
+    assert(max != NULL);
+    for (size_t i = 0; i < values_count; ++i) {
+        if (bigint_cmp(integers[i], min) < 0) {
+            char* const int_cstr = bigint_to_new_cstr(integers[i]);
+            char* const min_cstr = bigint_to_new_cstr(min);
+            fatal(
+                values[i]->location,
+                "out-of-range enum value for underlying type `%s` (%s < %s)",
+                underlying->name,
+                int_cstr,
+                min_cstr);
+        }
+        if (bigint_cmp(integers[i], max) > 0) {
+            char* const int_cstr = bigint_to_new_cstr(integers[i]);
+            char* const max_cstr = bigint_to_new_cstr(max);
+            fatal(
+                values[i]->location,
+                "out-of-range enum value for underlying type `%s` (%s > %s)",
+                underlying->name,
+                int_cstr,
+                max_cstr);
+        }
+    }
+
+    // Add enumerator constants to the symbol table.
+    for (size_t i = 0; i < values_count; ++i) {
+        struct address const* const address = resolver_reserve_storage_static(
+            resolver, values[i]->identifier.name);
+
+        struct value* const value = value_new_integer(underlying, integers[i]);
+        value_freeze(value);
+
+        struct object* const object = object_new(type, address, value);
+        freeze(object);
+
+        struct symbol* const symbol = symbol_new_constant(
+            values[i]->location, values[i]->identifier.name, object);
+        freeze(symbol);
+
+        // Anonymous enums have their symbols added to the enclosing scope to
+        // replicate the constants introduced by C enums, and to allow for easy
+        // creation of tagged unions.
+        if (is_anonymous) {
+            symbol_table_insert(
+                resolver->current_symbol_table,
+                values[i]->identifier.name,
+                symbol,
+                false);
+        }
+        symbol_table_insert(
+            enum_symbols, values[i]->identifier.name, symbol, false);
+        register_static_symbol(symbol);
+    }
+
+    // Add the symbol to the current symbol table after all enumerators have
+    // been added. We explicitly do *not* allow for self referential
+    // enumerations, since the underlying type of a C enumeration may be chosen
+    // *after* all enumeration constants have been defined.
+    symbol_table_insert(resolver->current_symbol_table, name, symbol, false);
+    sbuf_push(context()->types, type);
+
+    return symbol;
 }
 
 static void
@@ -5548,6 +5580,9 @@ resolve_type(struct resolver* resolver, struct cst_type const* type)
     case CST_TYPE_UNION: {
         return resolve_type_union(resolver, type);
     }
+    case CST_TYPE_ENUM: {
+        return resolve_type_enum(resolver, type);
+    }
     case CST_TYPE_TYPEOF: {
         return resolve_type_typeof(resolver, type);
     }
@@ -5788,6 +5823,47 @@ resolve_type_union(struct resolver* resolver, struct cst_type const* type)
 
     symbol_table_insert(context()->global_symbol_table, name, symbol, false);
     return resolved_type;
+}
+
+static struct type const*
+resolve_type_enum(struct resolver* resolver, struct cst_type const* type)
+{
+    assert(resolver != NULL);
+    assert(type != NULL);
+    assert(type->kind == CST_TYPE_ENUM);
+
+    struct cst_enum_value const* const* values = type->data.enum_.values;
+    size_t const values_count = sbuf_count(values);
+
+    struct string* const name_string = string_new_cstr("enum { ");
+    for (size_t i = 0; i < values_count; ++i) {
+        if (i != 0) {
+            string_append_cstr(name_string, " ");
+        }
+        // TODO: If two enums share the same set of identifiers then their
+        // interned names will be identical, even if the values of those types
+        // are different:
+        //
+        //      enum { A; B; }              <- These would be considered the
+        //      enum { A = 123; B = 456; }  <- same anonymous enum!
+        //
+        // The primary use case for anonymous enums is to replicate the global
+        // constants introduced by C enums, and to allow for easy creation of
+        // tagged unions. So for now, it seems unlikely that the primary use
+        // cases will likely not cause this problem to occur in practice.
+        // However, eventually the expressions corresponding to these types
+        // should be stringified in order to make the anonymous enum
+        // definitions unique based on both their identifiers and the values of
+        // the symbols associated with those identifiers.
+        string_append_fmt(name_string, "%s;", values[i]->identifier.name);
+    }
+    string_append_cstr(name_string, " }");
+    char const* const name =
+        intern(string_start(name_string), string_count(name_string));
+    string_del(name_string);
+
+    return symbol_xget_type(
+        complete_enum(resolver, type->location, name, values));
 }
 
 static struct type const*

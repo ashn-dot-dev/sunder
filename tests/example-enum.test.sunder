@@ -1,5 +1,3 @@
-# TODO: Make sure enum symbols cannot be used as lvalues?
-# TODO: Tests casts to and from - including compile-time casts.
 import "sys";
 import "std";
 
@@ -49,6 +47,19 @@ let baz_d = baz::D;
 let baz_e = baz::E;
 let baz_x: baz = baz_e;
 
+# Anonymous enums have their constants added to the enclosing scope.
+alias qux = enum {
+    QUX_A = 0xAA;
+    QUX_B = 42;
+    QUX_C;
+};
+let qux_a_1 = qux::QUX_A;
+let qux_a_2 = QUX_A;
+let qux_b_1 = qux::QUX_B;
+let qux_b_2 = QUX_B;
+let qux_c_1 = qux::QUX_C;
+let qux_c_2 = QUX_C;
+
 func main() void {
     sys::dump[[empty]](empty_uninit);
     sys::dump[[empty]](empty_cast_variable);
@@ -79,6 +90,15 @@ func main() void {
     sys::dump[[baz]](baz_d);
     sys::dump[[baz]](baz_e);
     sys::dump[[baz]](baz_x);
+
+    std::print(std::err(), "\n");
+
+    sys::dump[[qux]](qux_a_1);
+    sys::dump[[qux]](qux_a_2);
+    sys::dump[[qux]](qux_b_1);
+    sys::dump[[qux]](qux_b_2);
+    sys::dump[[qux]](qux_c_1);
+    sys::dump[[qux]](qux_c_2);
 
     std::print(std::err(), "\n");
 
@@ -160,6 +180,13 @@ func main() void {
 # F4 01 00 00
 # 03 00 00 00
 # 03 00 00 00
+#
+# AA 00 00 00
+# AA 00 00 00
+# 2A 00 00 00
+# 2A 00 00 00
+# 2B 00 00 00
+# 2B 00 00 00
 #
 # EF BE 00 00
 # EF BE 00 00

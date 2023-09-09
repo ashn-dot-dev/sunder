@@ -500,6 +500,17 @@ order_type(struct orderer* orderer, struct cst_type const* type)
         }
         return;
     }
+    case CST_TYPE_ENUM: {
+        sbuf(struct cst_enum_value const* const) const values =
+            type->data.enum_.values;
+        for (size_t i = 0; i < sbuf_count(values); ++i) {
+            if (values[i]->expr == NULL) {
+                continue;
+            }
+            order_expr(orderer, values[i]->expr);
+        }
+        return;
+    }
     case CST_TYPE_TYPEOF: {
         order_expr(orderer, type->data.typeof_.expr);
         return;
