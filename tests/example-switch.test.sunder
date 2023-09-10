@@ -110,11 +110,33 @@ func main() void {
     else { std::print_line(std::out(), "only else"); }
     }
 
+    # The unhandled enum values foo::A and foo::C, should produce a warning.
     switch foo::A {
-        # These cases intentionally left blank.
+    foo::B { }
     }
+
+    # All three unhandled enum values, foo::A, foo::B, and foo::C, should
+    # produce a warning.
+    switch foo::A {
+    }
+
 }
 ################################################################################
+# [example-switch.test.sunder:114] warning: value `A` of enum `foo` is not handled in switch
+#     switch foo::A {
+#     ^
+# [example-switch.test.sunder:114] warning: value `C` of enum `foo` is not handled in switch
+#     switch foo::A {
+#     ^
+# [example-switch.test.sunder:120] warning: value `A` of enum `foo` is not handled in switch
+#     switch foo::A {
+#     ^
+# [example-switch.test.sunder:120] warning: value `B` of enum `foo` is not handled in switch
+#     switch foo::A {
+#     ^
+# [example-switch.test.sunder:120] warning: value `C` of enum `foo` is not handled in switch
+#     switch foo::A {
+#     ^
 # A
 # B
 # C

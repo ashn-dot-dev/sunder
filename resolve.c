@@ -3425,8 +3425,11 @@ resolve_stmt_switch(struct resolver* resolver, struct cst_stmt const* stmt)
     if (type->kind != TYPE_ENUM) {
         fatal(expr->location, "expected enum type (received `%s`)", type->name);
     }
+    sbuf(struct symbol const* const) const value_symbols =
+        type->data.enum_.value_symbols;
 
     sbuf(struct switch_case) cases = NULL;
+    bool contains_else = false;
     for (size_t i = 0; i < sbuf_count(stmt->data.switch_.cases); ++i) {
         struct symbol_table* const symbol_table =
             symbol_table_new(resolver->current_symbol_table);
@@ -3450,8 +3453,6 @@ resolve_stmt_switch(struct resolver* resolver, struct cst_stmt const* stmt)
                         symbol_xget_type(symbol)->name);
                 }
                 bool is_enum_value_symbol = false;
-                sbuf(struct symbol const* const) const value_symbols =
-                    type->data.enum_.value_symbols;
                 for (size_t k = 0; k < sbuf_count(value_symbols); ++k) {
                     if (value_symbols[k] == symbol) {
                         is_enum_value_symbol = true;
@@ -3479,9 +3480,30 @@ resolve_stmt_switch(struct resolver* resolver, struct cst_stmt const* stmt)
                 .body = block,
             };
             sbuf_push(cases, case_);
+            contains_else = true;
         }
     }
     sbuf_freeze(cases);
+
+    if (!contains_else) {
+        // Emit a warning for each unhandled enum value.
+        for (size_t i = 0; i < sbuf_count(value_symbols); ++i) {
+            bool found = false;
+            for (size_t j = 0; j < sbuf_count(cases); ++j) {
+                if (value_symbols[i] == cases[j].symbol) {
+                    found = true;
+                    break;
+                }
+            }
+            if (!found) {
+                warning(
+                    stmt->location,
+                    "value `%s` of enum `%s` is not handled in switch",
+                    value_symbols[i]->name,
+                    type->name);
+            }
+        }
+    }
 
     struct stmt* const resolved = stmt_new_switch(stmt->location, expr, cases);
 
