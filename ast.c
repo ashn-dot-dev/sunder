@@ -1315,6 +1315,18 @@ stmt_new_continue(
 }
 
 struct stmt*
+stmt_new_switch(
+    struct source_location location,
+    struct expr const* expr,
+    struct switch_case const* cases)
+{
+    struct stmt* const self = stmt_new(location, STMT_SWITCH);
+    self->data.switch_.expr = expr;
+    self->data.switch_.cases = cases;
+    return self;
+}
+
+struct stmt*
 stmt_new_return(
     struct source_location location,
     struct expr const* expr,

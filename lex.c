@@ -47,6 +47,7 @@ static struct vstr token_kind_vstrs[TOKEN_EOF + 1u] = {
     [TOKEN_EXTEND] = VSTR_INIT_STR_LITERAL("extend"),
     [TOKEN_ALIAS] = VSTR_INIT_STR_LITERAL("alias"),
     [TOKEN_EXTERN] = VSTR_INIT_STR_LITERAL("extern"),
+    [TOKEN_SWITCH] = VSTR_INIT_STR_LITERAL("switch"),
     [TOKEN_RETURN] = VSTR_INIT_STR_LITERAL("return"),
     [TOKEN_ASSERT] = VSTR_INIT_STR_LITERAL("assert"),
     [TOKEN_DEFER] = VSTR_INIT_STR_LITERAL("defer"),

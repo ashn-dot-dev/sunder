@@ -909,6 +909,7 @@ enum token_kind {
     TOKEN_EXTEND,
     TOKEN_ALIAS,
     TOKEN_EXTERN,
+    TOKEN_SWITCH,
     TOKEN_RETURN,
     TOKEN_ASSERT,
     TOKEN_DEFER,
@@ -1030,6 +1031,20 @@ struct cst_block {
 struct cst_block
 cst_block_init(
     struct source_location location, struct cst_stmt const* const* stmts);
+
+// Helper CST node representing a single case in a switch statement.
+struct cst_switch_case {
+    struct source_location location;
+    // List of symbols separated by `or` (e.g. `FOO or BAR { ...`).
+    // Zero elements implies the final `else` case.
+    sbuf(struct cst_symbol const* const) symbols;
+    struct cst_block block;
+};
+struct cst_switch_case
+cst_switch_case_init(
+    struct source_location location,
+    struct cst_symbol const* const* symbols,
+    struct cst_block block);
 
 // Helper CST node representing a conditional statement (if, elif, etc.)
 // consisting of a conditional expression and block of statements.
@@ -1217,6 +1232,7 @@ struct cst_stmt {
         CST_STMT_FOR_EXPR,
         CST_STMT_BREAK, /* no .data member */
         CST_STMT_CONTINUE, /* no .data member */
+        CST_STMT_SWITCH,
         CST_STMT_RETURN,
         CST_STMT_ASSERT,
         CST_STMT_ASSIGN,
@@ -1240,6 +1256,10 @@ struct cst_stmt {
             struct cst_expr const* expr;
             struct cst_block body;
         } for_expr;
+        struct {
+            struct cst_expr const* expr;
+            sbuf(struct cst_switch_case const) cases;
+        } switch_;
         struct {
             struct cst_expr const* expr; // optional
         } return_;
@@ -1280,6 +1300,11 @@ struct cst_stmt*
 cst_stmt_new_break(struct source_location location);
 struct cst_stmt*
 cst_stmt_new_continue(struct source_location location);
+struct cst_stmt*
+cst_stmt_new_switch(
+    struct source_location location,
+    struct cst_expr const* expr,
+    struct cst_switch_case const* cases);
 struct cst_stmt*
 cst_stmt_new_return(
     struct source_location location, struct cst_expr const* expr);
@@ -1775,6 +1800,7 @@ struct type {
         } union_;
         struct {
             struct type const* underlying_type;
+            sbuf(struct symbol const*) value_symbols;
         } enum_;
     } data;
 };
@@ -2101,6 +2127,7 @@ struct stmt {
         STMT_FOR_EXPR,
         STMT_BREAK,
         STMT_CONTINUE,
+        STMT_SWITCH,
         STMT_RETURN,
         STMT_ASSERT,
         STMT_ASSIGN,
@@ -2134,6 +2161,13 @@ struct stmt {
             struct stmt const* defer_begin; // optional
             struct stmt const* defer_end; // optional
         } continue_;
+        struct {
+            struct expr const* expr;
+            struct switch_case {
+                struct symbol const* symbol; // optional (NULL=>final else)
+                struct block body;
+            } const* /* sbuf */ cases;
+        } switch_;
         struct {
             struct expr const* expr; // optional
             struct stmt const* defer; // optional
@@ -2179,6 +2213,11 @@ stmt_new_continue(
     struct source_location location,
     struct stmt const* defer_begin,
     struct stmt const* defer_end);
+struct stmt*
+stmt_new_switch(
+    struct source_location location,
+    struct expr const* expr,
+    struct switch_case const* cases);
 struct stmt*
 stmt_new_return(
     struct source_location location,

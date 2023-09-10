@@ -43,6 +43,7 @@
          | <stmt-for-expr>
          | <stmt-break>
          | <stmt-continue>
+         | <stmt-switch>
          | <stmt-return>
          | <stmt-assert>
          | <stmt-assign>
@@ -64,6 +65,8 @@
 <stmt-break> ::= "break" ";"
 
 <stmt-continue> ::= "continue" ";"
+
+<stmt-switch> ::= "switch" <expr> "{" <switch-case>* ("else" <block>)? "}"
 
 <stmt-return> ::= "return" <expr>? ";"
 
@@ -164,6 +167,8 @@
                 | <expr> "&" <expr>
 
 <block> ::= "{" <stmt>* "}"
+
+<switch-case> ::= <symbol> ("or" <symbol>)* <block>
 
 <literal-character> ::= "'" <character> "'"
 

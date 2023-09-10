@@ -83,6 +83,8 @@ codegen_stmt_break(struct stmt const* stmt);
 static void
 codegen_stmt_continue(struct stmt const* stmt);
 static void
+codegen_stmt_switch(struct stmt const* stmt);
+static void
 codegen_stmt_return(struct stmt const* stmt);
 static void
 codegen_stmt_assert(struct stmt const* stmt);
@@ -1208,6 +1210,7 @@ codegen_stmt(struct stmt const* stmt)
         TABLE_ENTRY(STMT_FOR_EXPR, codegen_stmt_for_expr),
         TABLE_ENTRY(STMT_BREAK, codegen_stmt_break),
         TABLE_ENTRY(STMT_CONTINUE, codegen_stmt_continue),
+        TABLE_ENTRY(STMT_SWITCH, codegen_stmt_switch),
         TABLE_ENTRY(STMT_RETURN, codegen_stmt_return),
         TABLE_ENTRY(STMT_ASSERT, codegen_stmt_assert),
         TABLE_ENTRY(STMT_ASSIGN, codegen_stmt_assign),
@@ -1310,6 +1313,54 @@ codegen_stmt_continue(struct stmt const* stmt)
 
     codegen_defers(stmt->data.break_.defer_begin, stmt->data.break_.defer_end);
     appendli("continue;");
+}
+
+static void
+codegen_stmt_switch(struct stmt const* stmt)
+{
+    assert(stmt != NULL);
+    assert(stmt->kind == STMT_SWITCH);
+
+    // Special case of a switch statement with a single `else` case.
+    bool const is_single_else = sbuf_count(stmt->data.switch_.cases) == 1
+        && stmt->data.switch_.cases[0].symbol == NULL;
+    if (is_single_else) {
+        appendli("{ /* BEGIN SWITCH (single `else` case)*/");
+        // Evaluate the condition for side effects.
+        appendli(
+            "%s %s = %s;",
+            mangle_type(stmt->data.switch_.expr->type),
+            mangle_name("__switch_expr"),
+            strgen_rvalue(stmt->data.switch_.expr));
+        // Generate the block for the single `else` case.
+        codegen_block(&stmt->data.switch_.cases[0].body);
+        appendli("} /* END SWITCH */");
+        return;
+    }
+
+    appendli("{ /* BEGIN SWITCH */");
+    appendli(
+        "%s %s = %s;",
+        mangle_type(stmt->data.switch_.expr->type),
+        mangle_name("__switch_expr"),
+        strgen_rvalue(stmt->data.switch_.expr));
+    for (size_t i = 0; i < sbuf_count(stmt->data.switch_.cases); ++i) {
+        if (stmt->data.switch_.cases[i].symbol != NULL) {
+            char const* const conditional = i == 0 ? "if" : "else if";
+            appendli(
+                "%s (%s == %s)",
+                conditional,
+                mangle_name("__switch_expr"),
+                mangle_symbol(stmt->data.switch_.cases[i].symbol));
+        }
+        else {
+            // The else case must come last.
+            assert(i == sbuf_count(stmt->data.switch_.cases) - 1);
+            appendli("else");
+        }
+        codegen_block(&stmt->data.switch_.cases[i].body);
+    }
+    appendli("} /* END SWITCH */");
 }
 
 static void

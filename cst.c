@@ -24,6 +24,19 @@ cst_block_init(
     };
 }
 
+struct cst_switch_case
+cst_switch_case_init(
+    struct source_location location,
+    struct cst_symbol const* const* symbols,
+    struct cst_block block)
+{
+    return (struct cst_switch_case){
+        .location = location,
+        .symbols = symbols,
+        .block = block,
+    };
+}
+
 struct cst_conditional
 cst_conditional_init(
     struct source_location location,
@@ -359,6 +372,18 @@ struct cst_stmt*
 cst_stmt_new_continue(struct source_location location)
 {
     struct cst_stmt* const self = cst_stmt_new(location, CST_STMT_CONTINUE);
+    return self;
+}
+
+struct cst_stmt*
+cst_stmt_new_switch(
+    struct source_location location,
+    struct cst_expr const* expr,
+    struct cst_switch_case const* cases)
+{
+    struct cst_stmt* const self = cst_stmt_new(location, CST_STMT_SWITCH);
+    self->data.switch_.expr = expr;
+    self->data.switch_.cases = cases;
     return self;
 }
 

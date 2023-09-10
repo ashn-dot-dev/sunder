@@ -808,6 +808,8 @@ codegen_stmt_break(struct stmt const* stmt, size_t id);
 static void
 codegen_stmt_continue(struct stmt const* stmt, size_t id);
 static void
+codegen_stmt_switch(struct stmt const* stmt, size_t id);
+static void
 codegen_stmt_return(struct stmt const* stmt, size_t id);
 static void
 codegen_stmt_assert(struct stmt const* stmt, size_t id);
@@ -1331,6 +1333,7 @@ codegen_stmt(struct stmt const* stmt)
         TABLE_ENTRY(STMT_FOR_EXPR, codegen_stmt_for_expr),
         TABLE_ENTRY(STMT_BREAK, codegen_stmt_break),
         TABLE_ENTRY(STMT_CONTINUE, codegen_stmt_continue),
+        TABLE_ENTRY(STMT_SWITCH, codegen_stmt_switch),
         TABLE_ENTRY(STMT_RETURN, codegen_stmt_return),
         TABLE_ENTRY(STMT_ASSERT, codegen_stmt_assert),
         TABLE_ENTRY(STMT_ASSIGN, codegen_stmt_assign),
@@ -1494,6 +1497,60 @@ codegen_stmt_continue(struct stmt const* stmt, size_t id)
 
     codegen_defers(stmt->data.break_.defer_begin, stmt->data.break_.defer_end);
     appendli("jmp %s%zu_body_end", LABEL_STMT, current_loop_id);
+}
+
+static void
+codegen_stmt_switch(struct stmt const* stmt, size_t id)
+{
+    assert(stmt != NULL);
+    assert(stmt->kind == STMT_SWITCH);
+
+    // Special case of a switch statement with a single `else` case.
+    bool const is_single_else = sbuf_count(stmt->data.switch_.cases) == 1
+        && stmt->data.switch_.cases[0].symbol == NULL;
+    if (is_single_else) {
+        // Evaluate the condition for side effects.
+        push_rvalue(stmt->data.switch_.expr);
+        pop(stmt->data.switch_.expr->type->size);
+        // Generate the block for the single `else` case.
+        codegen_block(&stmt->data.switch_.cases[0].body);
+        return;
+    }
+
+    push_rvalue(stmt->data.switch_.expr);
+    for (size_t i = 0; i < sbuf_count(stmt->data.switch_.cases); ++i) {
+        bool const is_last = i == (sbuf_count(stmt->data.switch_.cases) - 1);
+        appendln("%s%zu_case_%zu:", LABEL_STMT, id, i);
+        if (stmt->data.switch_.cases[i].symbol != NULL) {
+            struct symbol const* const symbol =
+                stmt->data.switch_.cases[i].symbol;
+            size_t const size = symbol_xget_type(symbol)->size;
+            assert(size == stmt->data.switch_.expr->type->size);
+            assert(stmt->data.switch_.cases[i].symbol->kind == SYMBOL_CONSTANT);
+            push_at_address(size, symbol_xget_address(symbol));
+            // Stack currently looks like:
+            // RSP + 8 => SWITCH EXPRESSION VALUE
+            // RSP + 0 => CURRENT SYMBOL VALUE
+            appendli("mov %s, [rsp + 0x00]", reg_a(size));
+            appendli("mov %s, [rsp + 0x08]", reg_b(size));
+            pop(symbol_xget_type(symbol)->size);
+            appendli("cmp %s, %s", reg_a(size), reg_b(size));
+            if (is_last) {
+                appendli("jne %s%zu_end", LABEL_STMT, id);
+            }
+            else {
+                appendli("jne %s%zu_case_%zu", LABEL_STMT, id, i + 1);
+            }
+        }
+        else {
+            // The else case must come last.
+            assert(i == sbuf_count(stmt->data.switch_.cases) - 1);
+        }
+        codegen_block(&stmt->data.switch_.cases[i].body);
+        appendli("jne %s%zu_end", LABEL_STMT, id);
+    }
+    pop(stmt->data.switch_.expr->type->size);
+    appendli("%s%zu_end:", LABEL_STMT, id);
 }
 
 static void

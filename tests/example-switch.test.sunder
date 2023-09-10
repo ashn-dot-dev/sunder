@@ -1,0 +1,136 @@
+import "std";
+
+enum foo {
+    A;
+    B;
+    C;
+}
+
+func gimmi_foo_c() foo {
+    return foo::C;
+}
+
+enum bar {
+    A = 123;
+    B = 123;
+}
+
+func main() void {
+    switch foo::A {
+    foo::A { std::print_line(std::out(), "A"); }
+    foo::B { std::print_line(std::out(), "B"); }
+    foo::C { std::print_line(std::out(), "C"); }
+    }
+
+    switch foo::B {
+    foo::A { std::print_line(std::out(), "A"); }
+    foo::B { std::print_line(std::out(), "B"); }
+    foo::C { std::print_line(std::out(), "C"); }
+    }
+
+    switch foo::C {
+    foo::A { std::print_line(std::out(), "A"); }
+    foo::B { std::print_line(std::out(), "B"); }
+    foo::C { std::print_line(std::out(), "C"); }
+    }
+
+    switch gimmi_foo_c() {
+    foo::A { std::print_line(std::out(), "A"); }
+    foo::B { std::print_line(std::out(), "B"); }
+    foo::C { std::print_line(std::out(), "C"); }
+    }
+
+    std::print(std::out(), "\n");
+
+    switch bar::A {
+        bar::A { std::print_line(std::out(), "A"); }
+        bar::B { std::print_line(std::out(), "B"); }
+    }
+
+    # Should still print A, because B is defined to be equal to A, and A comes
+    # before B in the list of cases.
+    switch bar::B {
+        bar::A { std::print_line(std::out(), "A"); }
+        bar::B { std::print_line(std::out(), "B"); }
+    }
+
+    # Should print B, because B is defined to be equal to A, and B comes
+    # before A in the list of cases.
+    switch bar::A {
+        bar::B { std::print_line(std::out(), "B"); }
+        bar::A { std::print_line(std::out(), "A"); }
+    }
+
+    std::print(std::out(), "\n");
+
+    switch foo::A {
+    foo::A or foo::B { std::print_line(std::out(), "A or B"); }
+    foo::C { std::print_line(std::out(), "C"); }
+    }
+
+    switch foo::B {
+    foo::A or foo::B { std::print_line(std::out(), "A or B"); }
+    foo::C { std::print_line(std::out(), "C"); }
+    }
+
+    switch foo::C {
+    foo::A or foo::B { std::print_line(std::out(), "A or B"); }
+    foo::C { std::print_line(std::out(), "C"); }
+    }
+
+    switch foo::A {
+    foo::A or foo::B or foo::C { std::print_line(std::out(), "A or B or C"); }
+    }
+
+    std::print(std::out(), "\n");
+
+    switch foo::A {
+    foo::A { std::print_line(std::out(), "A"); }
+    else { std::print_line(std::out(), "else"); }
+    }
+
+    switch foo::B {
+    foo::A { std::print_line(std::out(), "A"); }
+    else { std::print_line(std::out(), "else"); }
+    }
+
+    switch foo::C {
+    foo::A { std::print_line(std::out(), "A"); }
+    else { std::print_line(std::out(), "else"); }
+    }
+
+    switch foo::C {
+    foo::A { std::print_line(std::out(), "A"); }
+    foo::B { std::print_line(std::out(), "B"); }
+    foo::C { std::print_line(std::out(), "C"); }
+    else { std::print_line(std::out(), "else"); }
+    }
+
+    switch foo::A {
+    else { std::print_line(std::out(), "only else"); }
+    }
+
+    switch foo::A {
+        # These cases intentionally left blank.
+    }
+}
+################################################################################
+# A
+# B
+# C
+# C
+#
+# A
+# A
+# B
+#
+# A or B
+# A or B
+# C
+# A or B or C
+#
+# A
+# else
+# else
+# C
+# only else

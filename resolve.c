@@ -249,6 +249,8 @@ resolve_stmt_break(struct resolver* resolver, struct cst_stmt const* stmt);
 static struct stmt const*
 resolve_stmt_continue(struct resolver* resolver, struct cst_stmt const* stmt);
 static struct stmt const*
+resolve_stmt_switch(struct resolver* resolver, struct cst_stmt const* stmt);
+static struct stmt const*
 resolve_stmt_return(struct resolver* resolver, struct cst_stmt const* stmt);
 static struct stmt const*
 resolve_stmt_assert(struct resolver* resolver, struct cst_stmt const* stmt);
@@ -2837,8 +2839,10 @@ complete_enum(
         }
         symbol_table_insert(
             enum_symbols, values[i]->identifier.name, symbol, false);
+        sbuf_push(type->data.enum_.value_symbols, symbol);
         register_static_symbol(symbol);
     }
+    sbuf_freeze(type->data.enum_.value_symbols);
 
     // Add the symbol to the current symbol table after all enumerators have
     // been added. We explicitly do *not* allow for self referential
@@ -3043,6 +3047,9 @@ resolve_stmt(struct resolver* resolver, struct cst_stmt const* stmt)
     }
     case CST_STMT_CONTINUE: {
         return resolve_stmt_continue(resolver, stmt);
+    }
+    case CST_STMT_SWITCH: {
+        return resolve_stmt_switch(resolver, stmt);
     }
     case CST_STMT_RETURN: {
         return resolve_stmt_return(resolver, stmt);
@@ -3398,6 +3405,85 @@ resolve_stmt_continue(struct resolver* resolver, struct cst_stmt const* stmt)
 
     struct stmt* const resolved = stmt_new_continue(
         stmt->location, resolver->current_defer, resolver->current_loop_defer);
+
+    freeze(resolved);
+    return resolved;
+}
+
+static struct stmt const*
+resolve_stmt_switch(struct resolver* resolver, struct cst_stmt const* stmt)
+{
+    assert(resolver != NULL);
+    assert(!resolver_is_global(resolver));
+    assert(stmt != NULL);
+    assert(stmt->kind == CST_STMT_SWITCH);
+
+    struct expr const* const expr =
+        resolve_expr(resolver, stmt->data.switch_.expr);
+
+    struct type const* const type = expr->type;
+    if (type->kind != TYPE_ENUM) {
+        fatal(expr->location, "expected enum type (received `%s`)", type->name);
+    }
+
+    sbuf(struct switch_case) cases = NULL;
+    for (size_t i = 0; i < sbuf_count(stmt->data.switch_.cases); ++i) {
+        struct symbol_table* const symbol_table =
+            symbol_table_new(resolver->current_symbol_table);
+        struct block const block = resolve_block(
+            resolver, symbol_table, &stmt->data.switch_.cases[i].block);
+        // Freeze the symbol table now that the block has been resolved and no
+        // new symbols will be added.
+        symbol_table_freeze(symbol_table);
+
+        sbuf(struct cst_symbol const* const) const symbols =
+            stmt->data.switch_.cases[i].symbols;
+        if (sbuf_count(symbols) != 0) {
+            for (size_t j = 0; j < sbuf_count(symbols); ++j) {
+                struct symbol const* const symbol =
+                    xget_symbol(resolver, symbols[j]);
+                if (symbol_xget_type(symbol) != type) {
+                    fatal(
+                        symbols[j]->location,
+                        "expected case symbol with enum type `%s` (received symbol of type `%s`)",
+                        type->name,
+                        symbol_xget_type(symbol)->name);
+                }
+                bool is_enum_value_symbol = false;
+                sbuf(struct symbol const* const) const value_symbols =
+                    type->data.enum_.value_symbols;
+                for (size_t k = 0; k < sbuf_count(value_symbols); ++k) {
+                    if (value_symbols[k] == symbol) {
+                        is_enum_value_symbol = true;
+                        break;
+                    }
+                }
+                if (!is_enum_value_symbol) {
+                    fatal(
+                        symbols[j]->location,
+                        "case symbol does not correspond to a declared value of enum type `%s`",
+                        type->name);
+                }
+                struct switch_case const case_ = (struct switch_case){
+                    .symbol = symbol,
+                    .body = block,
+                };
+                sbuf_push(cases, case_);
+            }
+        }
+        else {
+            // The else case must come last.
+            assert(i == sbuf_count(stmt->data.switch_.cases) - 1);
+            struct switch_case const case_ = (struct switch_case){
+                .symbol = NULL,
+                .body = block,
+            };
+            sbuf_push(cases, case_);
+        }
+    }
+    sbuf_freeze(cases);
+
+    struct stmt* const resolved = stmt_new_switch(stmt->location, expr, cases);
 
     freeze(resolved);
     return resolved;

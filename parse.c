@@ -33,6 +33,9 @@ parse_identifier(struct parser* parser);
 static struct cst_block
 parse_block(struct parser* parser);
 
+static struct cst_switch_case
+parse_switch_case(struct parser* parser);
+
 static struct cst_module const*
 parse_module(struct parser* parser);
 
@@ -79,6 +82,8 @@ static struct cst_stmt const*
 parse_stmt_break(struct parser* parser);
 static struct cst_stmt const*
 parse_stmt_continue(struct parser* parser);
+static struct cst_stmt const*
+parse_stmt_switch(struct parser* parser);
 static struct cst_stmt const*
 parse_stmt_return(struct parser* parser);
 static struct cst_stmt const*
@@ -311,6 +316,34 @@ parse_block(struct parser* parser)
     expect_current(parser, TOKEN_RBRACE);
 
     struct cst_block const product = cst_block_init(location, stmts);
+
+    return product;
+}
+
+static struct cst_switch_case
+parse_switch_case(struct parser* parser)
+{
+    assert(parser != NULL);
+
+    struct source_location const location = parser->current_token.location;
+
+    sbuf(struct cst_symbol const*) symbols = NULL;
+    if (check_current(parser, TOKEN_ELSE)) {
+        expect_current(parser, TOKEN_ELSE);
+    }
+    else {
+        sbuf_push(symbols, parse_symbol(parser));
+        while (check_current(parser, TOKEN_OR)) {
+            expect_current(parser, TOKEN_OR);
+            sbuf_push(symbols, parse_symbol(parser));
+        }
+    }
+    sbuf_freeze(symbols);
+
+    struct cst_block const block = parse_block(parser);
+
+    struct cst_switch_case product =
+        cst_switch_case_init(location, symbols, block);
 
     return product;
 }
@@ -719,6 +752,10 @@ parse_stmt(struct parser* parser)
         return parse_stmt_continue(parser);
     }
 
+    if (check_current(parser, TOKEN_SWITCH)) {
+        return parse_stmt_switch(parser);
+    }
+
     if (check_current(parser, TOKEN_RETURN)) {
         return parse_stmt_return(parser);
     }
@@ -909,6 +946,36 @@ parse_stmt_continue(struct parser* parser)
     expect_current(parser, TOKEN_SEMICOLON);
 
     struct cst_stmt* const product = cst_stmt_new_continue(location);
+
+    freeze(product);
+    return product;
+}
+
+static struct cst_stmt const*
+parse_stmt_switch(struct parser* parser)
+{
+    assert(parser != NULL);
+    assert(check_current(parser, TOKEN_SWITCH));
+
+    struct source_location const location =
+        expect_current(parser, TOKEN_SWITCH).location;
+
+    struct cst_expr const* expr = parse_expr(parser);
+
+    sbuf(struct cst_switch_case) cases = NULL;
+    expect_current(parser, TOKEN_LBRACE);
+    while (!check_current(parser, TOKEN_RBRACE)) {
+        bool const is_else = check_current(parser, TOKEN_ELSE);
+        sbuf_push(cases, parse_switch_case(parser));
+        if (is_else) {
+            // An `else` case always indicates the end of the switch statement.
+            break;
+        }
+    }
+    sbuf_freeze(cases);
+    expect_current(parser, TOKEN_RBRACE);
+
+    struct cst_stmt* const product = cst_stmt_new_switch(location, expr, cases);
 
     freeze(product);
     return product;
