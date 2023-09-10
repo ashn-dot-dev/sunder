@@ -1,0 +1,19 @@
+enum foo {
+    A;
+    B;
+    C;
+}
+
+func main() void {
+    let NOPE = (:foo)123s;
+    switch foo::A {
+    foo::A { }
+    foo::B { }
+    else { }
+    foo::C { }
+    }
+}
+################################################################################
+# [error-stmt-switch-else-is-not-last.test.sunder:13] error: expected `}`, found `identifier(foo)`
+#     foo::C { }
+#     ^

@@ -1,0 +1,7 @@
+enum foo {
+    BAR = "ABC";
+}
+################################################################################
+# [error-decl-enum-value-not-an-integer.test.sunder:2] error: enum value with type `[]byte` is not an integer
+#     BAR = "ABC";
+#     ^

@@ -1,0 +1,17 @@
+enum foo {
+    A;
+    B;
+    C;
+}
+
+func main() void {
+    let NOPE = 123s;
+    switch foo::A {
+    NOPE { }
+    else { }
+    }
+}
+################################################################################
+# [error-stmt-switch-case-invalid-type.test.sunder:10] error: expected case symbol with enum type `foo` (received symbol of type `ssize`)
+#     NOPE { }
+#     ^

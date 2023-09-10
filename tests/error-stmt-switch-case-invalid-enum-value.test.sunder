@@ -1,0 +1,17 @@
+enum foo {
+    A;
+    B;
+    C;
+}
+
+func main() void {
+    let NOPE = (:foo)123s;
+    switch foo::A {
+    NOPE { }
+    else { }
+    }
+}
+################################################################################
+# [error-stmt-switch-case-invalid-enum-value.test.sunder:10] error: case symbol `NOPE` does not correspond to a declared value of enum type `foo`
+#     NOPE { }
+#     ^

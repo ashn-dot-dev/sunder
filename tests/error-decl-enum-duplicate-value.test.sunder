@@ -1,0 +1,8 @@
+enum foo {
+    BAR;
+    BAR;
+}
+################################################################################
+# [error-decl-enum-duplicate-value.test.sunder:3] error: duplicate definition of enum value `BAR`
+#     BAR;
+#     ^

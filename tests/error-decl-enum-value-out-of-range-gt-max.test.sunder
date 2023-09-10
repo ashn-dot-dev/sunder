@@ -1,0 +1,7 @@
+enum foo {
+    BAR = +0xAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA;
+}
+################################################################################
+# [error-decl-enum-value-out-of-range-gt-max.test.sunder:2] error: out-of-range enum value for underlying type `s32` (226854911280625642308916404954512140970 > 2147483647)
+#     BAR = +0xAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA;
+#     ^

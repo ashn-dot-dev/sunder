@@ -2764,7 +2764,7 @@ complete_enum(
             value_freeze(rvalue);
             if (!type_is_integer(rvalue->type)) {
                 fatal(
-                    resolved->location,
+                    values[i]->location,
                     "enum value with type `%s` is not an integer",
                     rvalue->type->name);
             }
@@ -3462,7 +3462,8 @@ resolve_stmt_switch(struct resolver* resolver, struct cst_stmt const* stmt)
                 if (!is_enum_value_symbol) {
                     fatal(
                         symbols[j]->location,
-                        "case symbol does not correspond to a declared value of enum type `%s`",
+                        "case symbol `%s` does not correspond to a declared value of enum type `%s`",
+                        symbol->name,
                         type->name);
                 }
                 struct switch_case const case_ = (struct switch_case){

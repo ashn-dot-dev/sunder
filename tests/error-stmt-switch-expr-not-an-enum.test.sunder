@@ -1,0 +1,7 @@
+func main() void {
+    switch 123 { }
+}
+################################################################################
+# [error-stmt-switch-expr-not-an-enum.test.sunder:2] error: expected enum type (received `integer`)
+#     switch 123 { }
+#            ^
