@@ -1524,7 +1524,7 @@ codegen_stmt_switch(struct stmt const* stmt, size_t id)
         if (stmt->data.switch_.cases[i].symbol != NULL) {
             struct symbol const* const symbol =
                 stmt->data.switch_.cases[i].symbol;
-            size_t const size = symbol_xget_type(symbol)->size;
+            uintmax_t const size = symbol_xget_type(symbol)->size;
             assert(size == stmt->data.switch_.expr->type->size);
             assert(stmt->data.switch_.cases[i].symbol->kind == SYMBOL_CONSTANT);
             push_at_address(size, symbol_xget_address(symbol));
