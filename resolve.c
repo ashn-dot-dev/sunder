@@ -2832,7 +2832,24 @@ complete_enum(
         // creation of tagged unions.
         if (is_anonymous) {
             symbol_table_insert(
-                resolver->current_symbol_table, value_symbol->name, value_symbol, false);
+                resolver->current_symbol_table,
+                value_symbol->name,
+                value_symbol,
+                false);
+            // If an anonymous enum is created at un-namespaced global scope,
+            // then each enum value must be manually added to the module export
+            // table, since the top-level `resolve` function call will only add
+            // the symbol produced by `resolve_decl` to that symbol table.
+            bool const un_namespaced_global_scope =
+                resolver->module->cst->namespace == NULL
+                && resolver_is_global(resolver);
+            if (un_namespaced_global_scope) {
+                symbol_table_insert(
+                    resolver->current_export_table,
+                    value_symbol->name,
+                    value_symbol,
+                    false);
+            }
         }
         symbol_table_insert(
             enum_symbols, values[i]->identifier.name, value_symbol, false);
