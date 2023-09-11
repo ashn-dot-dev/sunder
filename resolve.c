@@ -2823,24 +2823,21 @@ complete_enum(
         struct object* const object = object_new(type, address, value);
         freeze(object);
 
-        struct symbol* const symbol = symbol_new_constant(
+        struct symbol* const value_symbol = symbol_new_constant(
             values[i]->location, values[i]->identifier.name, object);
-        freeze(symbol);
+        freeze(value_symbol);
 
         // Anonymous enums have their symbols added to the enclosing scope to
         // replicate the constants introduced by C enums, and to allow for easy
         // creation of tagged unions.
         if (is_anonymous) {
             symbol_table_insert(
-                resolver->current_symbol_table,
-                values[i]->identifier.name,
-                symbol,
-                false);
+                resolver->current_symbol_table, value_symbol->name, value_symbol, false);
         }
         symbol_table_insert(
-            enum_symbols, values[i]->identifier.name, symbol, false);
-        sbuf_push(type->data.enum_.value_symbols, symbol);
-        register_static_symbol(symbol);
+            enum_symbols, values[i]->identifier.name, value_symbol, false);
+        sbuf_push(type->data.enum_.value_symbols, value_symbol);
+        register_static_symbol(value_symbol);
     }
     sbuf_freeze(type->data.enum_.value_symbols);
 
@@ -2848,7 +2845,8 @@ complete_enum(
     // been added. We explicitly do *not* allow for self referential
     // enumerations, since the underlying type of a C enumeration may be chosen
     // *after* all enumeration constants have been defined.
-    symbol_table_insert(resolver->current_symbol_table, name, symbol, false);
+    symbol_table_insert(
+        resolver->current_symbol_table, symbol->name, symbol, false);
     sbuf_push(context()->types, type);
 
     // Resolve member functions.
@@ -5970,7 +5968,7 @@ resolve_type_enum(struct resolver* resolver, struct cst_type const* type)
     size_t const values_count = sbuf_count(values);
 
     struct string* const name_string = string_new_fmt(
-        "enum [%s:%zu] { ", type->location.path, type->location.line);
+        "enum at %s:%zu { ", type->location.path, type->location.line);
     for (size_t i = 0; i < values_count; ++i) {
         if (i != 0) {
             string_append_cstr(name_string, " ");
@@ -6127,6 +6125,7 @@ resolve(struct module* module)
 
         struct symbol const* const symbol =
             resolve_decl(resolver, module->ordered[i]);
+
         // If this module declares a namespace then top-level declarations will
         // have been added under the (exported) module namespace and should
         // *not* be added to the module export table or global symbol table
