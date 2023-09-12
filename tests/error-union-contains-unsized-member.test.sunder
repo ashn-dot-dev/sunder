@@ -1,0 +1,5 @@
+union foo { var x: any; }
+################################################################################
+# [error-union-contains-unsized-member.test.sunder:1] error: union `foo` contains a member variable of unsized type `any`
+# union foo { var x: any; }
+#             ^

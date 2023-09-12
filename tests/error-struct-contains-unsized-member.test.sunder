@@ -1,0 +1,5 @@
+struct foo { var x: any; }
+################################################################################
+# [error-struct-contains-unsized-member.test.sunder:1] error: struct `foo` contains a member variable of unsized type `any`
+# struct foo { var x: any; }
+#              ^

@@ -655,8 +655,6 @@ struct general_allocator_iterator {
 let NULL = (:*any)0u;
 
 struct ptr[[T]] { # namespace
-    var __namespace__: any;
-
     # Typed NULL constant. Equivalent to the C NULL pointer cast as type `*T`.
     let NULL = (:*T)0u;
 
@@ -672,8 +670,6 @@ struct ptr[[T]] { # namespace
 }
 
 struct slice[[T]] { # namespace
-    var __namespace__: any;
-
     # Copy the elements of `source` into `destination`. The source and
     # destination buffers must contain the same number of elements.
     func copy(destination: []T, source: []T) void {
@@ -848,8 +844,6 @@ struct slice_iterator[[T]] {
 }
 
 struct str { # namespace
-    var __namespace__: any;
-
     # Returns true if `str` starts with `target`.
     func starts_with(str: []byte, target: []byte) bool {
         if countof(str) < countof(target) {
@@ -1098,8 +1092,6 @@ struct str_writer {
 }
 
 struct cstr { # namespace
-    var __namespace__: any;
-
     # Returns the number of bytes in `cstr` before the NUL terminator.
     func count(cstr: *byte) usize {
         var cur = cstr;
@@ -1116,8 +1108,6 @@ struct cstr { # namespace
 }
 
 struct ascii { # namespace
-    var __namespace__: any;
-
     # Returns true if `char` is in the range of bytes from '0' to '9'.
     func is_digit(char: byte) bool {
         return '0' <= char and char <= '9';

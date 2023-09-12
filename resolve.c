@@ -2461,6 +2461,13 @@ complete_struct(
                     struct_type->name,
                     member_type->name);
             }
+            if (member_type->size == SIZEOF_UNSIZED) {
+                fatal(
+                    member->location,
+                    "struct `%s` contains a member variable of unsized type `%s`",
+                    struct_type->name,
+                    member_type->name);
+            }
 
             // Increase the offset into the struct until the start of the added
             // member variable is aligned to a valid byte boundary. The offset
@@ -2633,6 +2640,13 @@ complete_union(
                 fatal(
                     member->location,
                     "union `%s` contains a member variable of incomplete union type `%s`",
+                    union_type->name,
+                    member_type->name);
+            }
+            if (member_type->size == SIZEOF_UNSIZED) {
+                fatal(
+                    member->location,
+                    "union `%s` contains a member variable of unsized type `%s`",
                     union_type->name,
                     member_type->name);
             }
