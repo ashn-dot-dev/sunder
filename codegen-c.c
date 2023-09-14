@@ -1983,8 +1983,6 @@ strgen_rvalue_access_slice_lhs_array(struct expr const* expr)
     assert(expr->data.access_slice.lhs->type->kind == TYPE_ARRAY);
     assert(expr_is_lvalue(expr->data.access_slice.lhs));
 
-    char const* const ltype = mangle_type(expr->data.access_slice.lhs->type);
-    char const* const lname = mangle_name("__lhs");
     char const* const lexpr = strgen_lvalue(expr->data.access_slice.lhs);
 
     char const* const btype = mangle_name("usize");
@@ -2065,9 +2063,8 @@ strgen_rvalue_access_slice_lhs_slice(struct expr const* expr)
 
     char const* const tname = mangle_type(expr->type);
 
-    bool const lhs_is_zero_sized = expr->data.access_slice.lhs->type->size == 0;
+    assert(expr->data.access_slice.lhs->type->size != 0);
     uintmax_t const base_size = expr->type->data.slice.base->size;
-    assert(!lhs_is_zero_sized);
 
     // According to the C standard, performing pointer arithmetic on a NULL
     // pointer has undefined behavior. Pointer addition is manually performed
