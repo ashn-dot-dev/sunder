@@ -1,0 +1,286 @@
+# MacOS ARM64 System Interface
+namespace sys;
+
+alias smax = s64;
+alias umax = u64;
+
+alias char      = byte;
+alias schar     = s8;
+alias uchar     = u8;
+alias sshort    = s16;
+alias ushort    = u16;
+alias sint      = s32;
+alias uint      = u32;
+alias slong     = ssize;
+alias ulong     = usize;
+alias slonglong = s64;
+alias ulonglong = u64;
+
+# Definitions from:
+# /Library/Developer/CommandLineTools/SDKs/MacOSX14.0.sdk/System/Library/Frameworks/Kernel.framework/Versions/A/Headers/arm/_types.h
+# /Library/Developer/CommandLineTools/SDKs/MacOSX14.0.sdk/System/Library/Frameworks/Kernel.framework/Versions/A/Headers/sys/types.h
+# /Library/Developer/CommandLineTools/SDKs/MacOSX14.0.sdk/System/Library/Frameworks/Kernel.framework/Versions/A/Headers/sys/_types.h
+alias mode_t  = u16;
+alias off_t   = s64;
+alias size_t  = ulong;
+alias ssize_t = slong;
+
+let ERRORS = (:[][]byte)[
+    "[system error 0] Undefined errno value",
+    "[system error EPERM] Operation not permitted",
+    "[system error ENOENT] No such file or directory",
+    "[system error ESRCH] No such process",
+    "[system error EINTR] Interrupted system call",
+    "[system error EIO] Input/output error",
+    "[system error ENXIO] Device not configured",
+    "[system error E2BIG] Argument list too long",
+    "[system error ENOEXEC] Exec format error",
+    "[system error EBADF] Bad file descriptor",
+    "[system error ECHILD] No child processes",
+    "[system error EDEADLK] Resource deadlock avoided",
+    "[system error ENOMEM] Cannot allocate memory",
+    "[system error EACCES] Permission denied",
+    "[system error EFAULT] Bad address",
+    "[system error ENOTBLK] Block device required",
+    "[system error EBUSY] Resource busy",
+    "[system error EEXIST] File exists",
+    "[system error EXDEV] Cross-device link",
+    "[system error ENODEV] Operation not supported by device",
+    "[system error ENOTDIR] Not a directory",
+    "[system error EISDIR] Is a directory",
+    "[system error EINVAL] Invalid argument",
+    "[system error ENFILE] Too many open files in system",
+    "[system error EMFILE] Too many open files",
+    "[system error ENOTTY] Inappropriate ioctl for device",
+    "[system error ETXTBSY] Text file busy",
+    "[system error EFBIG] File too large",
+    "[system error ENOSPC] No space left on device",
+    "[system error ESPIPE] Illegal seek",
+    "[system error EROFS] Read-only file system",
+    "[system error EMLINK] Too many links",
+    "[system error EPIPE] Broken pipe",
+    "[system error EDOM] Numerical argument out of domain",
+    "[system error ERANGE] Result too large",
+    "[system error EAGAIN] Resource temporarily unavailable",
+    "[system error EINPROGRESS] Operation now in progress",
+    "[system error EALREADY] Operation already in progress",
+    "[system error ENOTSOCK] Socket operation on non-socket",
+    "[system error EDESTADDRREQ] Destination address required",
+    "[system error EMSGSIZE] Message too long",
+    "[system error EPROTOTYPE] Protocol wrong type for socket",
+    "[system error ENOPROTOOPT] Protocol not available",
+    "[system error EPROTONOSUPPORT] Protocol not supported",
+    "[system error ESOCKTNOSUPPORT] Socket type not supported",
+    "[system error ENOTSUP] Operation not supported",
+    "[system error EPFNOSUPPORT] Protocol family not supported",
+    "[system error EAFNOSUPPORT] Address family not supported by protocol family",
+    "[system error EADDRINUSE] Address already in use",
+    "[system error EADDRNOTAVAIL] Can't assign requested address",
+    "[system error ENETDOWN] Network is down",
+    "[system error ENETUNREACH] Network is unreachable",
+    "[system error ENETRESET] Network dropped connection on reset",
+    "[system error ECONNABORTED] Software caused connection abort",
+    "[system error ECONNRESET] Connection reset by peer",
+    "[system error ENOBUFS] No buffer space available",
+    "[system error EISCONN] Socket is already connected",
+    "[system error ENOTCONN] Socket is not connected",
+    "[system error ESHUTDOWN] Can't send after socket shutdown",
+    "[system error ETOOMANYREFS] Too many references: can't splice",
+    "[system error ETIMEDOUT] Operation timed out",
+    "[system error ECONNREFUSED] Connection refused",
+    "[system error ELOOP] Too many levels of symbolic links",
+    "[system error ENAMETOOLONG] File name too long",
+    "[system error EHOSTDOWN] Host is down",
+    "[system error EHOSTUNREACH] No route to host",
+    "[system error ENOTEMPTY] Directory not empty",
+    "[system error EPROCLIM] Too many processes",
+    "[system error EUSERS] Too many users",
+    "[system error EDQUOT] Disc quota exceeded",
+    "[system error ESTALE] Stale NFS file handle",
+    "[system error EREMOTE] Too many levels of remote in path",
+    "[system error EBADRPC] RPC struct is bad",
+    "[system error ERPCMISMATCH] RPC version wrong",
+    "[system error EPROGUNAVAIL] RPC prog. not avail",
+    "[system error EPROGMISMATCH] Program version wrong",
+    "[system error EPROCUNAVAIL] Bad procedure for program",
+    "[system error ENOLCK] No locks available",
+    "[system error ENOSYS] Function not implemented",
+    "[system error EFTYPE] Inappropriate file type or format",
+    "[system error EAUTH] Authentication error",
+    "[system error ENEEDAUTH] Need authenticator",
+    "[system error EPWROFF] Device power is off",
+    "[system error EDEVERR] Device error",
+    "[system error EOVERFLOW] Value too large to be stored in data type",
+    "[system error EBADEXEC] Bad executable (or shared library)",
+    "[system error EBADARCH] Bad CPU type in executable",
+    "[system error ESHLIBVERS] Shared library version mismatch",
+    "[system error EBADMACHO] Malformed Mach-o file",
+    "[system error ECANCELED] Operation canceled",
+    "[system error EIDRM] Identifier removed",
+    "[system error ENOMSG] No message of desired type",
+    "[system error EILSEQ] Illegal byte sequence",
+    "[system error ENOATTR] Attribute not found",
+    "[system error EBADMSG] Bad message",
+    "[system error EMULTIHOP] EMULTIHOP (Reserved)",
+    "[system error ENODATA] No message available on STREAM",
+    "[system error ENOLINK] ENOLINK (Reserved)",
+    "[system error ENOSR] No STREAM resources",
+    "[system error ENOSTR] Not a STREAM",
+    "[system error EPROTO] Protocol error",
+    "[system error ETIME] STREAM ioctl timeout",
+    "[system error EOPNOTSUPP] Operation not supported on socket",
+    "[system error ENOPOLICY] Policy not found",
+    "[system error ENOTRECOVERABLE] State not recoverable",
+    "[system error EOWNERDEAD] Previous owner died",
+    "[system error EQFULL] Interface output queue is full"
+];
+
+# Transform an errno value into an `std::error`-compatible pointer.
+func error(errno: ssize) *[]byte {
+    if errno < 0 or (:usize)errno >= countof(ERRORS) {
+        let UNKNOWN = "Unknown system error";
+        return &UNKNOWN;
+    }
+    return &sys::ERRORS[(:usize)errno];
+}
+
+let STDIN_FILENO:  sint = 0;
+let STDOUT_FILENO: sint = 1;
+let STDERR_FILENO: sint = 2;
+
+let O_RDONLY:    sint = 0x00000000;
+let O_WRONLY:    sint = 0x00000001;
+let O_RDWR:      sint = 0x00000002;
+let O_CREAT:     sint = 0x00000200;
+let O_TRUNC:     sint = 0x00000400;
+let O_APPEND:    sint = 0x00000008;
+let O_CLOEXEC:   sint = 0x01000000;
+let O_DIRECTORY: sint = 0x00100000;
+
+let SEEK_SET: uint = 0x0;
+let SEEK_CUR: uint = 0x1;
+let SEEK_END: uint = 0x2;
+
+# Library/Developer/CommandLineTools/SDKs/MacOSX14.0.sdk/usr/include/sys/syslimits.h
+let NAME_MAX: usize =  255; # max bytes in a file name
+let PATH_MAX: usize = 1024; # max bytes in pathname
+
+# /Library/Developer/CommandLineTools/SDKs/MacOSX14.0.sdk/usr/include/sys/dirent.h
+struct dirent {
+    var d_ino: u64;
+    var d_seekoff: u64;
+    var d_reclen: u16;
+    var d_namlen: u16;
+    var d_name: [PATH_MAX]char;
+}
+
+extern func read(fd: sint, buf: *char, count: size_t) ssize;
+extern func write(fd: sint, buf: *char, count: size_t) ssize;
+extern func open(filename: *char, flags: sint, mode: mode_t) ssize;
+extern func close(fd: sint) ssize;
+extern func lseek(fd: sint, offset: off_t, whence: sint) ssize;
+extern func exit(error_code: sint) void;
+extern func mkdir(pathname: *byte, mode: mode_t) ssize;
+extern func rmdir(pathname: *byte) ssize;
+extern func unlink(pathname: *byte) ssize;
+extern func getdents(fd: sint, dirent: *dirent, count: size_t) ssize;
+
+extern var argc: usize;
+extern var argv: **byte;
+extern var envp: **byte;
+
+extern func allocate(align: usize, size: usize) *any;
+extern func deallocate(ptr: *any, align: usize, size: usize) void;
+
+extern func dump_bytes(addr: *any, size: usize) void;
+func dump[[T]](object: T) void {
+    dump_bytes(&object, sizeof(T));
+}
+
+extern func str_to_f32(out: *f32, start: *byte, count: usize) bool;
+extern func str_to_f64(out: *f64, start: *byte, count: usize) bool;
+
+extern func f32_to_str(buf: *byte, buf_size: usize, f: f32, digits: ssize) bool;
+extern func f64_to_str(buf: *byte, buf_size: usize, f: f64, digits: ssize) bool;
+
+extern func f32_abs(x: f32) f32;
+extern func f32_min(x: f32, y: f32) f32;
+extern func f32_max(x: f32, y: f32) f32;
+
+extern func f64_abs(x: f64) f64;
+extern func f64_min(x: f64, y: f64) f64;
+extern func f64_max(x: f64, y: f64) f64;
+
+# Exponential Functions
+extern func f32_ln(x: f32) f32;
+extern func f32_log2(x: f32) f32;
+extern func f32_log10(x: f32) f32;
+
+extern func f64_ln(x: f64) f64;
+extern func f64_log2(x: f64) f64;
+extern func f64_log10(x: f64) f64;
+
+# Power Functions
+extern func f32_sqrt(x: f32) f32;
+extern func f32_cbrt(x: f32) f32;
+extern func f32_hypot(x: f32, y: f32) f32;
+extern func f32_pow(base: f32, exponent: f32) f32;
+
+extern func f64_sqrt(x: f64) f64;
+extern func f64_cbrt(x: f64) f64;
+extern func f64_hypot(x: f64, y: f64) f64;
+extern func f64_pow(base: f64, exponent: f64) f64;
+
+# Trigonometric Functions
+extern func f32_sin(x: f32) f32;
+extern func f32_cos(x: f32) f32;
+extern func f32_tan(x: f32) f32;
+extern func f32_asin(x: f32) f32;
+extern func f32_acos(x: f32) f32;
+extern func f32_atan(x: f32) f32;
+extern func f32_atan2(y: f32, x: f32) f32;
+
+extern func f64_sin(x: f64) f64;
+extern func f64_cos(x: f64) f64;
+extern func f64_tan(x: f64) f64;
+extern func f64_asin(x: f64) f64;
+extern func f64_acos(x: f64) f64;
+extern func f64_atan(x: f64) f64;
+extern func f64_atan2(y: f64, x: f64) f64;
+
+# Hyperbolic Functions
+extern func f32_sinh(x: f32) f32;
+extern func f32_cosh(x: f32) f32;
+extern func f32_tanh(x: f32) f32;
+extern func f32_asinh(x: f32) f32;
+extern func f32_acosh(x: f32) f32;
+extern func f32_atanh(x: f32) f32;
+
+extern func f64_sinh(x: f64) f64;
+extern func f64_cosh(x: f64) f64;
+extern func f64_tanh(x: f64) f64;
+extern func f64_asinh(x: f64) f64;
+extern func f64_acosh(x: f64) f64;
+extern func f64_atanh(x: f64) f64;
+
+# Rounding Functions
+extern func f32_ceil(x: f32) f32;
+extern func f32_floor(x: f32) f32;
+extern func f32_trunc(x: f32) f32;
+extern func f32_round(x: f32) f32;
+
+extern func f64_ceil(x: f64) f64;
+extern func f64_floor(x: f64) f64;
+extern func f64_trunc(x: f64) f64;
+extern func f64_round(x: f64) f64;
+
+# Classification Functions
+extern func f32_is_finite(x: f32) bool;
+extern func f32_is_normal(x: f32) bool;
+extern func f32_is_inf(x: f32) bool;
+extern func f32_is_nan(x: f32) bool;
+
+extern func f64_is_finite(x: f64) bool;
+extern func f64_is_normal(x: f64) bool;
+extern func f64_is_inf(x: f64) bool;
+extern func f64_is_nan(x: f64) bool;

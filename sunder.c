@@ -15,6 +15,7 @@ static char const* host_list[] = {
     [HOST_FREESTANDING] = "freestanding",
     [HOST_EMSCRIPTEN] = "emscripten",
     [HOST_LINUX] = "linux",
+    [HOST_MACOS] = "macos",
 };
 
 enum arch

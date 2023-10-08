@@ -72,8 +72,8 @@ examples: build
 
 install: build
 	mkdir -p "$(SUNDER_HOME)"
-	cp -r bin/ "$(SUNDER_HOME)"
-	cp -r lib/ "$(SUNDER_HOME)"
+	cp -r bin/ "$(SUNDER_HOME)/bin/"
+	cp -r lib/ "$(SUNDER_HOME)/lib/"
 	cp env "$(SUNDER_HOME)"
 
 format:

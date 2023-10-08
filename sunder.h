@@ -681,6 +681,7 @@ enum host {
     HOST_FREESTANDING,
     HOST_EMSCRIPTEN,
     HOST_LINUX,
+    HOST_MACOS,
 };
 enum host
 cstr_to_host(char const* cstr);

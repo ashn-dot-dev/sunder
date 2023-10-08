@@ -52,8 +52,10 @@ main(void)
         O_NONBLOCK); // When opening a FIFO with O_RDONLY or O_WRONLY set: If O_NONBLOCK is set, an open() for reading-only shall return without delay. An open() for writing-only shall return an error if no process currently has the file open for reading. If O_NONBLOCK is clear, an open() for reading-only shall block the calling thread until a thread opens the file for writing. An open() for writing-only shall block the calling thread until a thread opens the file for reading. When opening a block special or character special file that supports non-blocking opens: If O_NONBLOCK is set, the open() function shall return without blocking for the device to be ready or available. Subsequent behavior of the device is device-specific. If O_NONBLOCK is clear, the open() function shall block the calling thread until the device is ready or available before returning. Otherwise, the O_NONBLOCK flag shall not cause an error, but it is unspecified whether the file status flags will include the O_NONBLOCK flag.
     PRINT_O_VALUE(
         O_DSYNC); // [SIO] [Option Start] Write I/O operations on the file descriptor shall complete as defined by synchronized I/O data integrity completion. [Option End]
+    /* not on macos
     PRINT_O_VALUE(
         O_RSYNC); // [SIO] [Option Start] Read I/O operations on the file descriptor shall complete at the same level of integrity as specified by the O_DSYNC and O_SYNC flags. If both O_DSYNC and O_RSYNC are set in oflag, all I/O operations on the file descriptor shall complete as defined by synchronized I/O data integrity completion. If both O_SYNC and O_RSYNC are set in flags, all I/O operations on the file descriptor shall complete as defined by synchronized I/O file integrity completion. [Option End]
+    */
     PRINT_O_VALUE(
         O_SYNC); // [XSI|SIO] [Option Start] Write I/O operations on the file descriptor shall complete as defined by synchronized I/O file integrity completion. [Option End] [XSI] [Option Start] The O_SYNC flag shall be supported for regular files, even if the Synchronized Input and Output option is not supported. [Option End]
     /*  not in glibc

@@ -366,11 +366,18 @@ struct __sunder_sys_dirent;
 static __sunder_ssize
 sys_getdents(signed int fd, struct __sunder_sys_dirent* dirent, size_t count)
 {
+#ifdef __APPLE__
+    // TODO: The getdirentries function on MacOS does not work with 64-bit
+    // inodes and has been deprecated. Fail by saying the operation is not
+    // supported until a proper solution to directory iteration is implemented.
+    return -ENOTSUP;
+#else
     ssize_t result = getdents64(fd, (void*)dirent, count);
     if (result == -1) {
         return -errno;
     }
     return result;
+#endif
 }
 
 static __sunder_ssize

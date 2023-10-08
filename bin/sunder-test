@@ -60,7 +60,7 @@ test() {
     EXPECTED=$(\
         sed -n '/^########\(#\)*/,$p' "${TEST}" |\
         sed '1d' |\
-        sed 's/^# \?//g')
+        sed -E 's/^#[[:space:]]?//g')
 
     if [ "${EXPECTED}" = "${RECEIVED}" ]; then
         echo '[= PASS =]'

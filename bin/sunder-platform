@@ -17,6 +17,10 @@ arch() {
         return
     fi
 
+    if [ "$(uname -m)" = "arm64"  ]; then
+        echo "arm64"
+        return
+    fi
     if [ "$(uname -m)" = "aarch64"  ]; then
         echo "arm64"
         return
@@ -29,6 +33,11 @@ arch() {
 host() {
     if [ "$(uname -s | tr '[:upper:]' '[:lower:]')" = "linux" ] ; then
         echo "linux"
+        return
+    fi
+
+    if [ "$(uname -s | tr '[:upper:]' '[:lower:]')" = "darwin" ] ; then
+        echo "macos"
         return
     fi
 
