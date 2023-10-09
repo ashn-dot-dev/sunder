@@ -3510,34 +3510,25 @@ struct file {
 
 # Type and associated filesystem operations for a directory.
 struct directory {
-    var _fd: sys::sint;
-    var _pad: [alignof(sys::dirent)-alignof(sys::sint)]byte; # align _buf
-    var _buf: [1024]byte;
-    var _buf_idx: usize;
-    var _buf_end: usize;
+    var _sys_dir: sys::directory;
     var _current: std::optional[[std::result[[[]byte, std::error]]]];
 
     # Open a directory.
     func open(path: []byte) std::result[[std::directory, std::error]] {
-        var flags: sys::sint = sys::O_RDONLY | sys::O_DIRECTORY | sys::O_CLOEXEC;
-
         if countof(path) >= sys::PATH_MAX {
             return std::result[[std::directory, std::error]]::init_error(std::error::INVALID_ARGUMENT);
         }
         var path_cstr = (:[sys::PATH_MAX]byte)[0...];
         std::slice[[byte]]::copy(path_cstr[0:countof(path)], path);
 
-        var sysret = sys::open(&path_cstr[0], flags, 0);
+        var sysdir: sys::directory = uninit;
+        var sysret = sys::directory::open(&sysdir, &path_cstr[0]);
         if sysret < 0 {
             return std::result[[std::directory, std::error]]::init_error((:std::error)sys::error(-sysret));
         }
 
         var directory = (:std::directory){
-            ._fd = (:sys::sint)sysret,
-            ._pad = uninit,
-            ._buf = (:[1024]byte)[0...],
-            ._buf_idx = 0,
-            ._buf_end = 0,
+            ._sys_dir = sysdir,
             ._current = std::optional[[std::result[[[]byte, std::error]]]]::EMPTY,
         };
         return std::result[[std::directory, std::error]]::init_value(directory);
@@ -3545,7 +3536,7 @@ struct directory {
 
     # Close an open directory.
     func close(self: *directory) std::result[[void, std::error]] {
-        var sysret = sys::close(self.*._fd);
+        var sysret = sys::directory::close(&self.*._sys_dir);
         if sysret < 0 {
             return std::result[[void, std::error]]::init_error((:std::error)sys::error(-sysret));
         }
@@ -3555,26 +3546,21 @@ struct directory {
 
     # Advance the current directory entry.
     func advance(self: *directory) bool {
-        if self.*._buf_idx >= self.*._buf_end {
-            var sysret = sys::getdents(self.*._fd, (:*sys::dirent)&self.*._buf[0], countof(self.*._buf));
-            if sysret == 0 {
-                self.*._current = std::optional[[std::result[[[]byte, std::error]]]]::EMPTY;
-                return false; # end-of-iteration
-            }
-            if sysret < 0 {
-                var result = std::result[[[]byte, std::error]]::init_error((:std::error)sys::error(-sysret));
-                self.*._current = std::optional[[std::result[[[]byte, std::error]]]]::init_value(result);
-                return true;
-            }
-
-            self.*._buf_idx = 0;
-            self.*._buf_end = (:usize)sysret;
+        var ret = sys::directory::advance(&self.*._sys_dir);
+        if not ret {
+            return false;
         }
 
-        var dirent = (:*sys::dirent)&self.*._buf[self.*._buf_idx];
-        var result = std::result[[[]byte, std::error]]::init_value(std::cstr::data((:*byte)&dirent.*.d_name));
+        if self.*._sys_dir._current_error != 0 {
+            var result = std::result[[[]byte, std::error]]::init_error((:std::error)sys::error(-self.*._sys_dir._current_error));
+            self.*._current = std::optional[[std::result[[[]byte, std::error]]]]::init_value(result);
+            return true;
+        }
+
+        assert self.*._sys_dir._current_error == 0;
+        assert self.*._sys_dir._current_value != (:*byte)0u;
+        var result = std::result[[[]byte, std::error]]::init_value(std::cstr::data((:*byte)self.*._sys_dir._current_value));
         self.*._current = std::optional[[std::result[[[]byte, std::error]]]]::init_value(result);
-        self.*._buf_idx = self.*._buf_idx + (:usize)dirent.*.d_reclen;
         return true;
     }
 
