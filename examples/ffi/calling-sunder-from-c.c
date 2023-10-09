@@ -1,9 +1,9 @@
 #include <stdio.h>
 #include <string.h>
 
-extern int mylib_x;
-extern int const mylib_y;
-extern void mylib_println(char* start, size_t count);
+extern int mylib_x asm("mylib_x");
+extern int const mylib_y asm("mylib_y");
+extern void mylib_println(char* start, size_t count) asm("mylib_println");
 
 int
 main(void)
