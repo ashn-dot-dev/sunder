@@ -2653,6 +2653,18 @@ struct string {
         }
     }
 
+    # self = from
+    func assign(self: *string, from: *string) void {
+        if self == from {
+            return;
+        }
+
+        self.*.resize(0);
+        var writer = std::writer::init[[string]](self);
+        var result = std::write_all(writer, from.*.data());
+        assert result.is_value(); # should never fail
+    }
+
     # Returns a pointer to the first byte of the string.
     func start(self: *string) *byte {
         return self.*._start;
