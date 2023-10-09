@@ -2787,6 +2787,18 @@ struct vector[[T]] {
         }
     }
 
+    # self = from
+    func assign(self: *vector[[T]], from: *vector[[T]]) void {
+        if self == from {
+            return;
+        }
+
+        self.*.resize(0);
+        for i in from.*.count() {
+            self.*.push(from.*.data()[i]);
+        }
+    }
+
     # Returns a pointer to the first element of the vector.
     func start(self: *vector[[T]]) *T {
         return self.*._start;
