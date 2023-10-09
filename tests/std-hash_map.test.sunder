@@ -125,6 +125,27 @@ func main() void {
     }
     var count = map.count();
     std::print_format_line(std::out(), "Count {}", (:[]std::formatter)[std::formatter::init[[usize]](&count)]);
+
+    std::print(std::out(), "\n");
+
+    var map_a = std::hash_map[[ssize, usize]]::init();
+    var map_b = std::hash_map[[ssize, usize]]::init();
+    defer map_a.fini();
+    defer map_b.fini();
+    map_a.insert(123, 0xAAA);
+    map_a.insert(456, 0xAAA);
+    map_a.insert(789, 0xAAA);
+    assert map_a.count() == 3;
+    assert map_b.count() == 0;
+    map_b.assign(&map_a);
+    assert map_a.count() == 3;
+    assert map_b.count() == 3;
+    assert map_a.contains(123);
+    assert map_b.contains(123);
+    assert map_a.contains(456);
+    assert map_b.contains(456);
+    assert map_a.contains(789);
+    assert map_b.contains(789);
 }
 ################################################################################
 # Count 0

@@ -59,4 +59,25 @@ func main() void {
         set.remove((:ssize)x);
     }
     assert set.count() == 0;
+
+    std::print(std::out(), "\n");
+
+    var set_a = std::hash_set[[ssize]]::init();
+    var set_b = std::hash_set[[ssize]]::init();
+    defer set_a.fini();
+    defer set_b.fini();
+    set_a.insert(123);
+    set_a.insert(456);
+    set_a.insert(789);
+    assert set_a.count() == 3;
+    assert set_b.count() == 0;
+    set_b.assign(&set_a);
+    assert set_a.count() == 3;
+    assert set_b.count() == 3;
+    assert set_a.contains(123);
+    assert set_b.contains(123);
+    assert set_a.contains(456);
+    assert set_b.contains(456);
+    assert set_a.contains(789);
+    assert set_b.contains(789);
 }

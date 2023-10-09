@@ -2963,6 +2963,21 @@ struct hash_map[[K, V]] {
         }
     }
 
+    # self = from
+    func assign(self: *hash_map[[K, V]], from: *hash_map[[K, V]]) void {
+        if self == from {
+            return;
+        }
+
+        std::hash_map[[K, V]]::fini(self);
+        *self = std::hash_map[[K, V]]::init_with_allocator(self.*._allocator);
+
+        var iter = std::hash_map_iterator[[K, V]]::init(from);
+        for iter.advance() {
+            self.*.insert(*iter.current().*.key, *iter.current().*.value);
+        }
+    }
+
     # Returns the number of key-value pairs in the map.
     func count(self: *hash_map[[K, V]]) usize {
         return self.*._n;
@@ -3279,6 +3294,21 @@ struct hash_set[[T]] {
     # Finalize resources associated with the set.
     func fini(self: *hash_set[[T]]) void {
         self.*._hash_map.fini();
+    }
+
+    # self = from
+    func assign(self: *hash_set[[T]], from: *hash_set[[T]]) void {
+        if self == from {
+            return;
+        }
+
+        std::hash_set[[T]]::fini(self);
+        *self = std::hash_set[[T]]::init_with_allocator(self.*._hash_map._allocator);
+
+        var iter = std::hash_set_iterator[[T]]::init(from);
+        for iter.advance() {
+            self.*.insert(*iter.current());
+        }
     }
 
     # Returns the number of elements in the set.
