@@ -171,7 +171,57 @@ struct dirent {
     var d_seekoff: u64;
     var d_reclen: u16;
     var d_namlen: u16;
+    var d_type: u8;
     var d_name: [PATH_MAX]char;
+}
+
+alias DIR = any;
+
+struct directory {
+    var _dir: *DIR;
+    var _current_value: *byte;
+    var _current_error: ssize;
+
+    func open(out: *directory, path: *byte) ssize {
+        var flags = O_RDONLY | O_DIRECTORY | O_CLOEXEC;
+        var sysret = sys::open(path, flags, 0);
+        if sysret < 0 {
+            return sysret;
+        }
+
+        var dir = fdopendir((:sint)sysret);
+        if (:usize)dir == 0 {
+            return -666; # XXX: Unknown errno.
+        }
+
+        *out = (:directory){
+            ._dir = dir,
+            ._current_value = uninit,
+            ._current_error = uninit,
+        };
+        return 0;
+    }
+
+    func close(self: *directory) ssize {
+        var sysret = closedir(self.*._dir);
+        if sysret != 0 {
+            return -666; # XXX: Unknown errno.
+        }
+        return 0;
+    }
+
+    func advance(self: *directory) bool {
+        var dirent = readdir(self.*._dir);
+        # XXX: No error checking on readdir.
+        if (:usize)dirent == 0 {
+            self.*._current_value = (:*byte)0u;
+            self.*._current_error = 0;
+            return false;
+        }
+        self.*._current_value = (:*byte)&dirent.*.d_name[0];
+        self.*._current_error = 0;
+        return true;
+    }
 }
 
 extern func read(fd: sint, buf: *char, count: size_t) ssize;
@@ -183,7 +233,10 @@ extern func exit(error_code: sint) void;
 extern func mkdir(pathname: *byte, mode: mode_t) ssize;
 extern func rmdir(pathname: *byte) ssize;
 extern func unlink(pathname: *byte) ssize;
-extern func getdents(fd: sint, dirent: *dirent, count: size_t) ssize;
+
+extern func fdopendir(fd: sint) *DIR;
+extern func closedir(dir: *DIR) sint;
+extern func readdir(dir: *DIR) *dirent;
 
 extern var argc: usize;
 extern var argv: **byte;

@@ -362,23 +362,35 @@ sys_exit(signed int error_code)
     _exit(error_code);
 }
 
+#ifdef __APPLE__
+struct __sunder_sys_dirent;
+void*
+sys_fdopendir(signed int fd)
+{
+    return fdopendir(fd);
+}
+static int
+sys_closedir(void* dir)
+{
+    return closedir(dir);
+}
+static struct __sunder_sys_dirent*
+sys_readdir(void* dir)
+{
+    return (struct __sunder_sys_dirent*)readdir(dir);
+}
+#else
 struct __sunder_sys_dirent;
 static __sunder_ssize
 sys_getdents(signed int fd, struct __sunder_sys_dirent* dirent, size_t count)
 {
-#ifdef __APPLE__
-    // TODO: The getdirentries function on MacOS does not work with 64-bit
-    // inodes and has been deprecated. Fail by saying the operation is not
-    // supported until a proper solution to directory iteration is implemented.
-    return -ENOTSUP;
-#else
     ssize_t result = getdents64(fd, (void*)dirent, count);
     if (result == -1) {
         return -errno;
     }
     return result;
-#endif
 }
+#endif // __APPLE__
 
 static __sunder_ssize
 sys_mkdir(__sunder_byte* pathname, mode_t mode)

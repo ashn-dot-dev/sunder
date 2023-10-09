@@ -1,18 +1,6 @@
 # NOTE: This test will break when a new file is added to `sunder/tests/util`.
 import "std";
 
-func bubble_sort[[T]](slice: []T) void {
-    for i in countof(slice) {
-        for j in countof(slice) - i - 1 {
-            if std::gt[[T]](&slice[j], &slice[j + 1]) {
-                var tmp = slice[j];
-                slice[j] = slice[j + 1];
-                slice[j + 1] = tmp;
-            }
-        }
-    }
-}
-
 func main() void {
     var result = std::directory::open("util");
     if result.is_error() {
@@ -32,7 +20,7 @@ func main() void {
     }
 
     # Sort so file ordering is deterministic on all filesystems.
-    bubble_sort[[[]byte]](vec.data());
+    std::sort[[[]byte]](vec.data());
 
     for i in vec.count() {
         std::print_line(std::out(), vec.data()[i]);
