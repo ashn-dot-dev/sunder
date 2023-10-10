@@ -1815,13 +1815,13 @@ struct big_integer {
     }
 
     # Initialize a big integer with the value of another big integer.
-    func init_from_big_integer(from: *big_integer) big_integer {
-        return big_integer::init_from_big_integer_with_allocator(std::global_allocator(), from);
+    func init_assign(from: *big_integer) big_integer {
+        return big_integer::init_assign_with_allocator(std::global_allocator(), from);
     }
 
     # Initialize a big integer with the value of another big integer.
     # The provided allocator is used for backing storage.
-    func init_from_big_integer_with_allocator(allocator: std::allocator, from: *big_integer) big_integer {
+    func init_assign_with_allocator(allocator: std::allocator, from: *big_integer) big_integer {
         var self = big_integer::init_with_allocator(allocator);
         big_integer::assign(&self, from);
         return self;
@@ -2127,7 +2127,7 @@ struct big_integer {
             return std::result[[void, std::error]]::init_error(std::error::INVALID_ARGUMENT);
         }
 
-        var magnitude = big_integer::init_from_big_integer(self);
+        var magnitude = big_integer::init_assign(self);
         big_integer::assign(&magnitude, self);
         big_integer::abs(&magnitude, &magnitude);
         defer magnitude.fini();

@@ -380,7 +380,7 @@ struct integer_expression {
     }
 
     func evaluate(self: *integer_expression) std::big_integer {
-        return std::big_integer::init_from_big_integer(&self.*.integer);
+        return std::big_integer::init_assign(&self.*.integer);
     }
 }
 
