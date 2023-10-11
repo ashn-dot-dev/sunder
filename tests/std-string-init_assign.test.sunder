@@ -2,8 +2,7 @@ import "std";
 
 func main() void {
     var string_a = std::string::init_from_str("the quick brown fox jumps over the lazy dog");
-    var string_b = std::string::init();
-    std::string::assign(&string_b, &string_a);
+    var string_b = std::string::init_assign(&string_a);
     assert std::str::eq(string_a.data(), string_b.data());
     string_a.fini();
     string_b.fini();

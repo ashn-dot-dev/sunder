@@ -80,4 +80,17 @@ func main() void {
     assert set_b.contains(456);
     assert set_a.contains(789);
     assert set_b.contains(789);
+
+    std::print(std::out(), "\n");
+
+    var set_c = std::hash_set[[ssize]]::init_assign(&set_a);
+    defer set_c.fini();
+    assert set_a.count() == 3;
+    assert set_c.count() == 3;
+    assert set_a.contains(123);
+    assert set_c.contains(123);
+    assert set_a.contains(456);
+    assert set_c.contains(456);
+    assert set_a.contains(789);
+    assert set_c.contains(789);
 }

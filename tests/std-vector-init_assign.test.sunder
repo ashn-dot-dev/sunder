@@ -1,12 +1,12 @@
+
 import "std";
 
 func main() void {
     var vector_a = std::vector[[ssize]]::init();
-    var vector_b = std::vector[[ssize]]::init();
     vector_a.push(123);
     vector_a.push(456);
     vector_a.push(789);
-    std::vector[[ssize]]::assign(&vector_b, &vector_a);
+    var vector_b = std::vector[[ssize]]::init_assign(&vector_a);
     assert vector_a.count() == vector_b.count();
     assert vector_a.data()[0] == vector_b.data()[0];
     assert vector_a.data()[1] == vector_b.data()[1];

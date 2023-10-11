@@ -2620,6 +2620,17 @@ struct string {
         };
     }
 
+    # Initialize a string with the contents of another string.
+    func init_assign(from: *string) string {
+        return string::init_from_str(from.*.data());
+    }
+
+    # Initialize a string with the contents of another string.
+    # The provided allocator is used for backing storage.
+    func init_assign_with_allocator(allocator: std::allocator, from: *string) string {
+        return string::init_from_str_with_allocator(allocator, from.*.data());
+    }
+
     # Initialize a string as a copy of `str`.
     func init_from_str(str: []byte) string {
         return string::init_from_str_with_allocator(std::global_allocator(), str);
@@ -2778,6 +2789,19 @@ struct vector[[T]] {
             ._count = 0,
             ._capacity = 0,
         };
+    }
+
+    # Initialize a vector with the contents of another vector.
+    func init_assign(from: *vector[[T]]) vector[[T]] {
+        return vector[[T]]::init_assign_with_allocator(std::global_allocator(), from);
+    }
+
+    # Initialize a vector with the contents of another vector.
+    # The provided allocator is used for backing storage.
+    func init_assign_with_allocator(allocator: std::allocator, from: *vector[[T]]) vector[[T]] {
+        var self = vector[[T]]::init_with_allocator(allocator);
+        std::vector[[T]]::assign(&self, from);
+        return self;
     }
 
     # Finalize resources associated with the vector.
@@ -2978,6 +3002,19 @@ struct hash_map[[K, V]] {
             ._n = 0,
             ._q = 0,
         };
+    }
+
+    # Initialize a map with the contents of another map.
+    func init_assign(from: *hash_map[[K, V]]) hash_map[[K, V]] {
+        return hash_map[[K, V]]::init_assign_with_allocator(std::global_allocator(), from);
+    }
+
+    # Initialize a map with the contents of another map.
+    # The provided allocator is used for backing storage.
+    func init_assign_with_allocator(allocator: std::allocator, from: *hash_map[[K, V]]) hash_map[[K, V]] {
+        var self = hash_map[[K, V]]::init_with_allocator(allocator);
+        hash_map[[K, V]]::assign(&self, from);
+        return self;
     }
 
     # Finalize resources associated with the map.
@@ -3227,6 +3264,19 @@ struct hash_set[[T]] {
         return (:hash_set[[T]]){
             ._hash_map = std::hash_map[[T, void]]::init_with_allocator(allocator),
         };
+    }
+
+    # Initialize a set with the contents of another set.
+    func init_assign(from: *hash_set[[T]]) hash_set[[T]] {
+        return hash_set[[T]]::init_assign_with_allocator(std::global_allocator(), from);
+    }
+
+    # Initialize a set with the contents of another set.
+    # The provided allocator is used for backing storage.
+    func init_assign_with_allocator(allocator: std::allocator, from: *hash_set[[T]]) hash_set[[T]] {
+        var self = hash_set[[T]]::init_with_allocator(allocator);
+        hash_set[[T]]::assign(&self, from);
+        return self;
     }
 
     # Initialize a set as the union of x and y.

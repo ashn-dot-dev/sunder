@@ -146,6 +146,18 @@ func main() void {
     assert map_b.contains(456);
     assert map_a.contains(789);
     assert map_b.contains(789);
+
+    std::print(std::out(), "\n");
+
+    var map_c = std::hash_map[[ssize, usize]]::init_assign(&map_a);
+    assert map_a.count() == 3;
+    assert map_c.count() == 3;
+    assert map_a.contains(123);
+    assert map_c.contains(123);
+    assert map_a.contains(456);
+    assert map_c.contains(456);
+    assert map_a.contains(789);
+    assert map_c.contains(789);
 }
 ################################################################################
 # Count 0
