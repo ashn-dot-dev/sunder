@@ -92,6 +92,7 @@
          | <expr-access-slice>
          | <expr-access-member>
          | <expr-access-dereference>
+         | <expr-defined>
          | <expr-sizeof>
          | <expr-alignof>
          | <expr-fileof>
@@ -125,6 +126,8 @@
 <expr-access-member> ::= <expr> "." <symbol-element>
 
 <expr-access-dereference> ::= <expr> ".*"
+
+<expr-defined> ::= "defined" "(" <symbol> ")"
 
 <expr-sizeof> ::= "sizeof" "(" <type> ")"
 

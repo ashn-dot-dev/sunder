@@ -921,6 +921,7 @@ enum token_kind {
     TOKEN_IN,
     TOKEN_BREAK,
     TOKEN_CONTINUE,
+    TOKEN_DEFINED,
     TOKEN_ALIGNOF,
     TOKEN_STARTOF,
     TOKEN_COUNTOF,
@@ -1342,6 +1343,7 @@ struct cst_expr {
         CST_EXPR_ACCESS_MEMBER,
         CST_EXPR_ACCESS_DEREFERENCE,
         // Prefix Unary Operator Expressions
+        CST_EXPR_DEFINED,
         CST_EXPR_SIZEOF,
         CST_EXPR_ALIGNOF,
         CST_EXPR_FILEOF, /* no .data member */
@@ -1399,6 +1401,9 @@ struct cst_expr {
         struct {
             struct cst_expr const* lhs;
         } access_dereference;
+        struct {
+            struct cst_symbol const* symbol;
+        } defined;
         struct {
             struct cst_type const* rhs;
         } sizeof_;
@@ -1480,6 +1485,8 @@ cst_expr_new_access_member(
 struct cst_expr*
 cst_expr_new_access_dereference(
     struct source_location location, struct cst_expr const* lhs);
+struct cst_expr*
+cst_expr_new_defined(struct cst_symbol const* symbol);
 struct cst_expr*
 cst_expr_new_sizeof(
     struct source_location location, struct cst_type const* rhs);

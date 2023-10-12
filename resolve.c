@@ -117,6 +117,9 @@ normalize_unique(char const* name);
 static void
 register_static_symbol(struct symbol const* symbol);
 
+// Finds the symbol or returns NULL if the symbol does not exist.
+static struct symbol const*
+get_symbol(struct resolver* resolver, struct cst_symbol const* target);
 // Finds the symbol or fatally exits. Returns the symbol associated with the
 // target concrete syntax tree symbol.
 static struct symbol const*
@@ -295,6 +298,8 @@ resolve_expr_access_member(
 static struct expr const*
 resolve_expr_access_dereference(
     struct resolver* resolver, struct cst_expr const* expr);
+static struct expr const*
+resolve_expr_defined(struct resolver* resolver, struct cst_expr const* expr);
 static struct expr const*
 resolve_expr_sizeof(struct resolver* resolver, struct cst_expr const* expr);
 static struct expr const*
@@ -590,7 +595,7 @@ register_static_symbol(struct symbol const* symbol)
 }
 
 static struct symbol const*
-xget_symbol(struct resolver* resolver, struct cst_symbol const* target)
+get_symbol_ex(struct resolver* resolver, struct cst_symbol const* target, bool error_is_fatal)
 {
     assert(resolver != NULL);
     assert(target != NULL);
@@ -620,6 +625,9 @@ xget_symbol(struct resolver* resolver, struct cst_symbol const* target)
 
     struct symbol const* lhs = symbol_table_lookup(symbol_table, name);
     if (lhs == NULL) {
+        if (!error_is_fatal) {
+            return NULL;
+        }
         fatal(target->location, "use of undeclared identifier `%s`", name);
     }
     if (sbuf_count(element->template_arguments) != 0) {
@@ -650,6 +658,9 @@ xget_symbol(struct resolver* resolver, struct cst_symbol const* target)
                 lhs->data.namespace.symbols;
             symbol = symbol_table_lookup_local(symbols, name);
             if (symbol == NULL) {
+                if (!error_is_fatal) {
+                    return NULL;
+                }
                 fatal(
                     element->location,
                     "use of undeclared identifier `%s` within `%s`",
@@ -676,6 +687,10 @@ xget_symbol(struct resolver* resolver, struct cst_symbol const* target)
                 // depending on A it sees that A is "already ordered" even
                 // though that is not entirely true. This is a special case
                 // error check that accounts for this scenario.
+                //
+                // NOTE: We produce a fatal error here even when error_is_fatal
+                // is false, because this is always a bug if it appears in user
+                // code.
                 fatal(
                     target->elements[i - 1]->location,
                     "use of incomplete type `%s`",
@@ -683,6 +698,9 @@ xget_symbol(struct resolver* resolver, struct cst_symbol const* target)
             }
             symbol = symbol_table_lookup_local(type->symbols, name);
             if (symbol == NULL) {
+                if (!error_is_fatal) {
+                    return NULL;
+                }
                 fatal(
                     element->location,
                     "use of undeclared identifier `%s` within `%s`",
@@ -702,6 +720,9 @@ xget_symbol(struct resolver* resolver, struct cst_symbol const* target)
 
         if (lhs->kind == SYMBOL_TEMPLATE) {
             if (sbuf_count(element->template_arguments) == 0) {
+                // NOTE: We produce a fatal error here even when error_is_fatal
+                // is false, because this is always a bug if it appears in user
+                // code.
                 fatal(
                     element->location,
                     "template `%s` must be instantiated",
@@ -712,11 +733,31 @@ xget_symbol(struct resolver* resolver, struct cst_symbol const* target)
             continue;
         }
 
+        // NOTE: We produce a fatal error here even when error_is_fatal is
+        // false, because this is always a bug if it appears in user code.
         fatal(element->location, "`%s` is not a namespace or type", lhs->name);
     }
 
     assert(symbol != NULL);
     return symbol;
+}
+
+static struct symbol const*
+get_symbol(struct resolver* resolver, struct cst_symbol const* target)
+{
+    assert(resolver != NULL);
+    assert(target != NULL);
+
+    return get_symbol_ex(resolver, target, false);
+}
+
+static struct symbol const*
+xget_symbol(struct resolver* resolver, struct cst_symbol const* target)
+{
+    assert(resolver != NULL);
+    assert(target != NULL);
+
+    return get_symbol_ex(resolver, target, true);
 }
 
 static struct symbol const*
@@ -3737,6 +3778,9 @@ resolve_expr(struct resolver* resolver, struct cst_expr const* expr)
     case CST_EXPR_ACCESS_DEREFERENCE: {
         return resolve_expr_access_dereference(resolver, expr);
     }
+    case CST_EXPR_DEFINED: {
+        return resolve_expr_defined(resolver, expr);
+    }
     case CST_EXPR_SIZEOF: {
         return resolve_expr_sizeof(resolver, expr);
     }
@@ -4839,6 +4883,23 @@ resolve_expr_access_dereference(
     }
     struct expr* const resolved = expr_new_unary(
         expr->location, lhs->type->data.pointer.base, UOP_DEREFERENCE, lhs);
+
+    freeze(resolved);
+    return resolved;
+}
+
+static struct expr const*
+resolve_expr_defined(struct resolver* resolver, struct cst_expr const* expr)
+{
+    assert(resolver != NULL);
+    assert(expr != NULL);
+    assert(expr->kind == CST_EXPR_DEFINED);
+
+    struct value* const value = value_new_boolean(
+        get_symbol(resolver, expr->data.defined.symbol) != NULL);
+    value_freeze(value);
+
+    struct expr* const resolved = expr_new_value(expr->location, value);
 
     freeze(resolved);
     return resolved;

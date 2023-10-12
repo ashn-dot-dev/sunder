@@ -653,6 +653,17 @@ cst_expr_new_access_dereference(
 }
 
 struct cst_expr*
+cst_expr_new_defined(struct cst_symbol const* symbol)
+{
+    assert(symbol != NULL);
+
+    struct cst_expr* const self =
+        cst_expr_new(symbol->location, CST_EXPR_DEFINED);
+    self->data.defined.symbol = symbol;
+    return self;
+}
+
+struct cst_expr*
 cst_expr_new_sizeof(struct source_location location, struct cst_type const* rhs)
 {
     assert(rhs != NULL);

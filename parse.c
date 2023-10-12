@@ -149,6 +149,8 @@ parse_expr_led_dot_star(struct parser* parser, struct cst_expr const* lhs);
 static struct cst_expr const*
 parse_expr_led_dot(struct parser* parser, struct cst_expr const* lhs);
 static struct cst_expr const*
+parse_expr_defined(struct parser* parser);
+static struct cst_expr const*
 parse_expr_sizeof(struct parser* parser);
 static struct cst_expr const*
 parse_expr_alignof(struct parser* parser);
@@ -1103,6 +1105,9 @@ token_kind_nud(enum token_kind kind)
     case TOKEN_LPAREN: {
         return parse_expr_lparen;
     }
+    case TOKEN_DEFINED: {
+        return parse_expr_defined;
+    }
     case TOKEN_SIZEOF: {
         return parse_expr_sizeof;
     }
@@ -1499,6 +1504,22 @@ parse_expr_nud_unary(struct parser* parser)
     }
 
     struct cst_expr* const product = cst_expr_new_unary(op, rhs);
+
+    freeze(product);
+    return product;
+}
+
+static struct cst_expr const*
+parse_expr_defined(struct parser* parser)
+{
+    assert(parser != NULL);
+
+    expect_current(parser, TOKEN_DEFINED);
+    expect_current(parser, TOKEN_LPAREN);
+    struct cst_symbol const* const rhs = parse_symbol(parser);
+    expect_current(parser, TOKEN_RPAREN);
+
+    struct cst_expr* const product = cst_expr_new_defined(rhs);
 
     freeze(product);
     return product;

@@ -425,6 +425,10 @@ order_expr(struct orderer* orderer, struct cst_expr const* expr)
         order_expr(orderer, expr->data.access_dereference.lhs);
         return;
     }
+    case CST_EXPR_DEFINED: {
+        order_symbol(orderer, expr->data.defined.symbol);
+        return;
+    }
     case CST_EXPR_SIZEOF: {
         order_type(orderer, expr->data.sizeof_.rhs);
         return;

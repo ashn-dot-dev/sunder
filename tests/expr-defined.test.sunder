@@ -1,0 +1,17 @@
+struct s {
+    var variable: usize;
+    let constant: usize = 123;
+    func function() usize { return 123; }
+}
+
+func main() void {
+    assert defined(main);
+    assert defined(::main);
+    assert not defined(nope);
+    assert not defined(foo::bar::baz);
+
+    assert not defined(s::variable);
+    assert defined(s::constant);
+    assert defined(s::function);
+    assert not defined(s::nope);
+}
