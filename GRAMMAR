@@ -39,6 +39,7 @@
 <stmt> ::= <stmt-decl>
          | <stmt-defer>
          | <stmt-if>
+         | <stmt-when>
          | <stmt-for-range>
          | <stmt-for-expr>
          | <stmt-break>
@@ -57,6 +58,8 @@
                | "defer" <expr>
 
 <stmt-if> ::= "if" <expr> <block> ("elif" <expr> <block>)* ("else" <block>)?
+
+<stmt-if> ::= "when" <expr> <block> ("elwhen" <expr> <block>)* ("else" <block>)?
 
 <stmt-for-range> ::= "for" <identifier> (":" <type>)? "in" (<expr> ":")? <expr> <block>
 

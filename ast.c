@@ -1247,6 +1247,14 @@ stmt_new_if(struct conditional const* conditionals)
 }
 
 struct stmt*
+stmt_new_when(struct conditional conditional)
+{
+    struct stmt* const self = stmt_new(conditional.location, STMT_WHEN);
+    self->data.when.conditional = conditional;
+    return self;
+}
+
+struct stmt*
 stmt_new_for_range(
     struct source_location location,
     struct symbol const* loop_variable,

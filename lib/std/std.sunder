@@ -1689,13 +1689,31 @@ func compare[[T]](lhs: *T, rhs: *T) ssize {
 }
 
 # Returns true if `lhs` is found to be equal to `rhs`.
+# Uses `T::eq` if defined. Otherwise uses `T::compare`.
 func eq[[T]](lhs: *T, rhs: *T) bool {
-    return T::compare(lhs, rhs) == 0;
+    when defined(T::eq) {
+        return T::eq(lhs, rhs);
+    }
+    else {
+        return T::compare(lhs, rhs) == 0;
+    }
+
+    std::unreachable(fileof(), lineof());
+    return false;
 }
 
 # Returns true if `lhs` is found to be not equal to `rhs`.
+# Uses `T::eq` if defined. Otherwise uses `T::compare`.
 func ne[[T]](lhs: *T, rhs: *T) bool {
-    return T::compare(lhs, rhs) != 0;
+    when defined(T::eq) {
+        return not T::eq(lhs, rhs);
+    }
+    else {
+        return T::compare(lhs, rhs) != 0;
+    }
+
+    std::unreachable(fileof(), lineof());
+    return false;
 }
 
 # Returns true if `lhs` is found to be less than `rhs`.
@@ -4230,6 +4248,10 @@ extend integer func _cmp[[T]](lhs: T, rhs: T) ssize {
     return 0;
 }
 
+extend integer func _eq[[T]](lhs: T, rhs: T) bool {
+    return lhs == rhs;
+}
+
 # Accepted format language:
 #   [#][radix]
 #
@@ -4383,6 +4405,9 @@ extend byte func cmp(lhs: byte, rhs: byte) ssize {
 extend byte func compare(lhs: *byte, rhs: *byte) ssize {
     return integer::_cmp[[std::umax]]((:std::umax)*lhs, (:std::umax)*rhs);
 }
+extend byte func eq(lhs: *byte, rhs: *byte) bool {
+    return integer::_eq[[std::umax]]((:std::umax)*lhs, (:std::umax)*rhs);
+}
 extend byte func hash(self: *byte) usize {
     return (:usize)*self;
 }
@@ -4411,6 +4436,9 @@ extend u8 func cmp(lhs: u8, rhs: u8) ssize {
 extend u8 func compare(lhs: *u8, rhs: *u8) ssize {
     return integer::_cmp[[std::umax]]((:std::umax)*lhs, (:std::umax)*rhs);
 }
+extend u8 func eq(lhs: *u8, rhs: *u8) bool {
+    return integer::_eq[[std::umax]]((:std::umax)*lhs, (:std::umax)*rhs);
+}
 extend u8 func hash(self: *u8) usize {
     return (:usize)*self;
 }
@@ -4437,6 +4465,9 @@ extend u16 func cmp(lhs: u16, rhs: u16) ssize {
 }
 extend u16 func compare(lhs: *u16, rhs: *u16) ssize {
     return integer::_cmp[[std::umax]]((:std::umax)*lhs, (:std::umax)*rhs);
+}
+extend u16 func eq(lhs: *u16, rhs: *u16) bool {
+    return integer::_eq[[std::umax]]((:std::umax)*lhs, (:std::umax)*rhs);
 }
 extend u16 func hash(self: *u16) usize {
     return (:usize)*self;
@@ -4465,6 +4496,9 @@ extend u32 func cmp(lhs: u32, rhs: u32) ssize {
 extend u32 func compare(lhs: *u32, rhs: *u32) ssize {
     return integer::_cmp[[std::umax]]((:std::umax)*lhs, (:std::umax)*rhs);
 }
+extend u32 func eq(lhs: *u32, rhs: *u32) bool {
+    return integer::_eq[[std::umax]]((:std::umax)*lhs, (:std::umax)*rhs);
+}
 extend u32 func hash(self: *u32) usize {
     return (:usize)*self;
 }
@@ -4492,6 +4526,9 @@ extend u64 func cmp(lhs: u64, rhs: u64) ssize {
 extend u64 func compare(lhs: *u64, rhs: *u64) ssize {
     return integer::_cmp[[std::umax]]((:std::umax)*lhs, (:std::umax)*rhs);
 }
+extend u64 func eq(lhs: *u64, rhs: *u64) bool {
+    return integer::_eq[[std::umax]]((:std::umax)*lhs, (:std::umax)*rhs);
+}
 extend u64 func hash(self: *u64) usize {
     return (:usize)*self;
 }
@@ -4518,6 +4555,9 @@ extend usize func cmp(lhs: usize, rhs: usize) ssize {
 }
 extend usize func compare(lhs: *usize, rhs: *usize) ssize {
     return integer::_cmp[[std::umax]]((:std::umax)*lhs, (:std::umax)*rhs);
+}
+extend usize func eq(lhs: *usize, rhs: *usize) bool {
+    return integer::_eq[[std::umax]]((:std::umax)*lhs, (:std::umax)*rhs);
 }
 extend usize func hash(self: *usize) usize {
     return *self;
@@ -4549,6 +4589,9 @@ extend s8 func cmp(lhs: s8, rhs: s8) ssize {
 extend s8 func compare(lhs: *s8, rhs: *s8) ssize {
     return integer::_cmp[[std::smax]]((:std::smax)*lhs, (:std::smax)*rhs);
 }
+extend s8 func eq(lhs: *s8, rhs: *s8) bool {
+    return integer::_eq[[std::smax]]((:std::smax)*lhs, (:std::smax)*rhs);
+}
 extend s8 func hash(self: *s8) usize {
     return (:usize)*self;
 }
@@ -4578,6 +4621,9 @@ extend s16 func cmp(lhs: s16, rhs: s16) ssize {
 }
 extend s16 func compare(lhs: *s16, rhs: *s16) ssize {
     return integer::_cmp[[std::smax]]((:std::smax)*lhs, (:std::smax)*rhs);
+}
+extend s16 func eq(lhs: *s16, rhs: *s16) bool {
+    return integer::_eq[[std::smax]]((:std::smax)*lhs, (:std::smax)*rhs);
 }
 extend s16 func hash(self: *s16) usize {
     return (:usize)*self;
@@ -4609,6 +4655,9 @@ extend s32 func cmp(lhs: s32, rhs: s32) ssize {
 extend s32 func compare(lhs: *s32, rhs: *s32) ssize {
     return integer::_cmp[[std::smax]]((:std::smax)*lhs, (:std::smax)*rhs);
 }
+extend s32 func eq(lhs: *s32, rhs: *s32) bool {
+    return integer::_eq[[std::smax]]((:std::smax)*lhs, (:std::smax)*rhs);
+}
 extend s32 func hash(self: *s32) usize {
     return (:usize)*self;
 }
@@ -4639,6 +4688,9 @@ extend s64 func cmp(lhs: s64, rhs: s64) ssize {
 extend s64 func compare(lhs: *s64, rhs: *s64) ssize {
     return integer::_cmp[[std::smax]]((:std::smax)*lhs, (:std::smax)*rhs);
 }
+extend s64 func eq(lhs: *s64, rhs: *s64) bool {
+    return integer::_eq[[std::smax]]((:std::smax)*lhs, (:std::smax)*rhs);
+}
 extend s64 func hash(self: *s64) usize {
     return (:usize)*self;
 }
@@ -4668,6 +4720,9 @@ extend ssize func cmp(lhs: ssize, rhs: ssize) ssize {
 }
 extend ssize func compare(lhs: *ssize, rhs: *ssize) ssize {
     return integer::_cmp[[std::smax]]((:std::smax)*lhs, (:std::smax)*rhs);
+}
+extend ssize func eq(lhs: *ssize, rhs: *ssize) bool {
+    return integer::_eq[[std::smax]]((:std::smax)*lhs, (:std::smax)*rhs);
 }
 extend ssize func hash(self: *ssize) usize {
     return (:usize)*self;

@@ -298,6 +298,17 @@ cst_stmt_new_if(struct cst_conditional const* conditionals)
 }
 
 struct cst_stmt*
+cst_stmt_new_when(struct cst_conditional const* conditionals)
+{
+    assert(sbuf_count(conditionals) > 0u);
+
+    struct source_location const location = conditionals[0].location;
+    struct cst_stmt* const self = cst_stmt_new(location, CST_STMT_WHEN);
+    self->data.when.conditionals = conditionals;
+    return self;
+}
+
+struct cst_stmt*
 cst_stmt_new_for_range(
     struct source_location location,
     struct cst_identifier identifier,

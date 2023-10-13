@@ -244,6 +244,8 @@ resolve_stmt_defer_expr(struct resolver* resolver, struct cst_stmt const* stmt);
 static struct stmt const*
 resolve_stmt_if(struct resolver* resolver, struct cst_stmt const* stmt);
 static struct stmt const*
+resolve_stmt_when(struct resolver* resolver, struct cst_stmt const* stmt);
+static struct stmt const*
 resolve_stmt_for_range(struct resolver* resolver, struct cst_stmt const* stmt);
 static struct stmt const*
 resolve_stmt_for_expr(struct resolver* resolver, struct cst_stmt const* stmt);
@@ -595,7 +597,10 @@ register_static_symbol(struct symbol const* symbol)
 }
 
 static struct symbol const*
-get_symbol_ex(struct resolver* resolver, struct cst_symbol const* target, bool error_is_fatal)
+get_symbol_ex(
+    struct resolver* resolver,
+    struct cst_symbol const* target,
+    bool error_is_fatal)
 {
     assert(resolver != NULL);
     assert(target != NULL);
@@ -3106,6 +3111,9 @@ resolve_stmt(struct resolver* resolver, struct cst_stmt const* stmt)
     case CST_STMT_IF: {
         return resolve_stmt_if(resolver, stmt);
     }
+    case CST_STMT_WHEN: {
+        return resolve_stmt_when(resolver, stmt);
+    }
     case CST_STMT_FOR_RANGE: {
         return resolve_stmt_for_range(resolver, stmt);
     }
@@ -3315,6 +3323,55 @@ resolve_stmt_if(struct resolver* resolver, struct cst_stmt const* stmt)
 
     sbuf_freeze(resolved_conditionals);
     struct stmt* const resolved = stmt_new_if(resolved_conditionals);
+
+    freeze(resolved);
+    return resolved;
+}
+
+static struct stmt const*
+resolve_stmt_when(struct resolver* resolver, struct cst_stmt const* stmt)
+{
+    assert(resolver != NULL);
+    assert(!resolver_is_global(resolver));
+    assert(stmt != NULL);
+    assert(stmt->kind == CST_STMT_WHEN);
+
+    struct block block = block_init(
+        stmt->location, resolver->current_symbol_table, NULL, NULL, NULL);
+    struct conditional conditional =
+        conditional_init(stmt->location, NULL, block);
+
+    sbuf(struct cst_conditional const) const conditionals =
+        stmt->data.when.conditionals;
+    for (size_t i = 0; i < sbuf_count(conditionals); ++i) {
+        struct expr const* condition = NULL;
+        if (conditionals[i].condition != NULL) {
+            condition = resolve_expr(resolver, conditionals[i].condition);
+            if (condition->type->kind != TYPE_BOOL) {
+                fatal(
+                    condition->location,
+                    "illegal condition with non-boolean type `%s`",
+                    condition->type->name);
+            }
+        }
+
+        struct value* value = NULL;
+        if (condition != NULL) {
+            value = eval_rvalue(condition);
+        }
+        assert(value == NULL || value->type->kind == TYPE_BOOL);
+        if (value == NULL || value->data.boolean) {
+            block = resolve_block(
+                resolver,
+                resolver->current_symbol_table,
+                &conditionals[i].body);
+            conditional =
+                conditional_init(conditionals[i].location, condition, block);
+            break;
+        }
+    }
+
+    struct stmt* const resolved = stmt_new_when(conditional);
 
     freeze(resolved);
     return resolved;

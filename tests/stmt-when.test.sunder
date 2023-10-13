@@ -1,0 +1,81 @@
+struct foo {
+    func eq(lhs_: *foo, rhs_: *foo) bool {
+        return true;
+    }
+}
+
+struct bar {
+    func compare(lhs_: *bar, rhs_: *bar) ssize {
+        return -1;
+    }
+}
+
+func eq[[T]](lhs: *T, rhs: *T) bool {
+    when defined(T::eq) {
+        return T::eq(lhs, rhs);
+    }
+    else {
+        return T::compare(lhs, rhs) == 0;
+    }
+
+    assert false;
+    return false;
+}
+
+func main() void {
+    var x: ssize = uninit;
+
+    when true {
+        # This code will undergo semantic analysis and compile.
+        x = 123;
+    }
+
+    when false {
+        # This code will *not* undergo semantic analysis.
+        x = "nope";
+    }
+
+    # The block for `when true` will undergo semantic analysis.
+    when true {
+        x = 123;
+    }
+    elwhen false {
+        x = "nope";
+    }
+
+    # The block for `elwhen true` will undergo semantic analysis.
+    when false {
+        x = "nope";
+    }
+    elwhen true {
+        x = 123;
+    }
+
+    # The block for `else` will undergo semantic analysis.
+    when false {
+        x = "nope";
+    }
+    elwhen false {
+        x = "nope";
+    }
+    else {
+        x = 123;
+    }
+
+    # Motivating use case for `when` - use with the `defined` expression.
+    let FOO: void = uninit;
+    when defined(FOO) {
+        x = 123;
+    }
+    else {
+        x = "nope";
+    }
+
+    # Motivating use case for `when` - use to specialize generics.
+    var foo_a: foo = uninit;
+    var foo_b: foo = uninit;
+    var bar_a: bar = uninit;
+    var bar_b: bar = uninit;
+    assert eq[[foo]](&foo_a, &foo_b);
+    assert not eq[[bar]](&bar_a, &bar_b);
+}

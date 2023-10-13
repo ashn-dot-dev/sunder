@@ -800,6 +800,8 @@ codegen_stmt_defer(struct stmt const* stmt, size_t id);
 static void
 codegen_stmt_if(struct stmt const* stmt, size_t id);
 static void
+codegen_stmt_when(struct stmt const* stmt, size_t id);
+static void
 codegen_stmt_for_range(struct stmt const* stmt, size_t id);
 static void
 codegen_stmt_for_expr(struct stmt const* stmt, size_t id);
@@ -1329,6 +1331,7 @@ codegen_stmt(struct stmt const* stmt)
 #define TABLE_ENTRY(kind, fn) [kind] = {#kind, fn}
         TABLE_ENTRY(STMT_DEFER, codegen_stmt_defer),
         TABLE_ENTRY(STMT_IF, codegen_stmt_if),
+        TABLE_ENTRY(STMT_WHEN, codegen_stmt_when),
         TABLE_ENTRY(STMT_FOR_RANGE, codegen_stmt_for_range),
         TABLE_ENTRY(STMT_FOR_EXPR, codegen_stmt_for_expr),
         TABLE_ENTRY(STMT_BREAK, codegen_stmt_break),
@@ -1401,6 +1404,17 @@ codegen_stmt_if(struct stmt const* stmt, size_t id)
         appendli("jmp %s%zu_end", LABEL_STMT, id);
     }
 
+    appendli("%s%zu_end:", LABEL_STMT, id);
+}
+
+static void
+codegen_stmt_when(struct stmt const* stmt, size_t id)
+{
+    assert(stmt != NULL);
+    assert(stmt->kind == STMT_WHEN);
+
+    appendln("%s%zu_body:", LABEL_STMT, id);
+    codegen_block(&stmt->data.when.conditional.body);
     appendli("%s%zu_end:", LABEL_STMT, id);
 }
 

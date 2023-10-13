@@ -77,6 +77,8 @@ parse_stmt_defer(struct parser* parser);
 static struct cst_stmt const*
 parse_stmt_if(struct parser* parser);
 static struct cst_stmt const*
+parse_stmt_when(struct parser* parser);
+static struct cst_stmt const*
 parse_stmt_for(struct parser* parser);
 static struct cst_stmt const*
 parse_stmt_break(struct parser* parser);
@@ -742,6 +744,10 @@ parse_stmt(struct parser* parser)
         return parse_stmt_if(parser);
     }
 
+    if (check_current(parser, TOKEN_WHEN)) {
+        return parse_stmt_when(parser);
+    }
+
     if (check_current(parser, TOKEN_FOR)) {
         return parse_stmt_for(parser);
     }
@@ -857,6 +863,44 @@ parse_stmt_if(struct parser* parser)
 
     sbuf_freeze(conditionals);
     struct cst_stmt* const product = cst_stmt_new_if(conditionals);
+
+    freeze(product);
+    return product;
+}
+
+static struct cst_stmt const*
+parse_stmt_when(struct parser* parser)
+{
+    assert(parser != NULL);
+    assert(check_current(parser, TOKEN_WHEN));
+
+    sbuf(struct cst_conditional) conditionals = NULL;
+
+    struct source_location location =
+        expect_current(parser, TOKEN_WHEN).location;
+    struct cst_expr const* condition = parse_expr(parser);
+    struct cst_block body = parse_block(parser);
+    struct cst_conditional conditional =
+        cst_conditional_init(location, condition, body);
+    sbuf_push(conditionals, conditional);
+
+    while (check_current(parser, TOKEN_ELWHEN)) {
+        location = advance_token(parser).location;
+        condition = parse_expr(parser);
+        body = parse_block(parser);
+        conditional = cst_conditional_init(location, condition, body);
+        sbuf_push(conditionals, conditional);
+    }
+
+    if (check_current(parser, TOKEN_ELSE)) {
+        location = advance_token(parser).location;
+        body = parse_block(parser);
+        conditional = cst_conditional_init(location, NULL, body);
+        sbuf_push(conditionals, conditional);
+    }
+
+    sbuf_freeze(conditionals);
+    struct cst_stmt* const product = cst_stmt_new_when(conditionals);
 
     freeze(product);
     return product;

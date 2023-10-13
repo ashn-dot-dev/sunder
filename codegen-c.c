@@ -75,6 +75,8 @@ codegen_stmt_defer(struct stmt const* stmt);
 static void
 codegen_stmt_if(struct stmt const* stmt);
 static void
+codegen_stmt_when(struct stmt const* stmt);
+static void
 codegen_stmt_for_range(struct stmt const* stmt);
 static void
 codegen_stmt_for_expr(struct stmt const* stmt);
@@ -1210,6 +1212,7 @@ codegen_stmt(struct stmt const* stmt)
 #define TABLE_ENTRY(kind, fn) [kind] = {#kind, fn}
         TABLE_ENTRY(STMT_DEFER, codegen_stmt_defer),
         TABLE_ENTRY(STMT_IF, codegen_stmt_if),
+        TABLE_ENTRY(STMT_WHEN, codegen_stmt_when),
         TABLE_ENTRY(STMT_FOR_RANGE, codegen_stmt_for_range),
         TABLE_ENTRY(STMT_FOR_EXPR, codegen_stmt_for_expr),
         TABLE_ENTRY(STMT_BREAK, codegen_stmt_break),
@@ -1262,6 +1265,15 @@ codegen_stmt_if(struct stmt const* stmt)
         }
         codegen_block(&conditionals[i].body);
     }
+}
+
+static void
+codegen_stmt_when(struct stmt const* stmt)
+{
+    assert(stmt != NULL);
+    assert(stmt->kind == STMT_WHEN);
+
+    codegen_block(&stmt->data.when.conditional.body);
 }
 
 static void

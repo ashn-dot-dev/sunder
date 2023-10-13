@@ -917,6 +917,8 @@ enum token_kind {
     TOKEN_IF,
     TOKEN_ELIF,
     TOKEN_ELSE,
+    TOKEN_WHEN,
+    TOKEN_ELWHEN,
     TOKEN_FOR,
     TOKEN_IN,
     TOKEN_BREAK,
@@ -1230,6 +1232,7 @@ struct cst_stmt {
         CST_STMT_DEFER_BLOCK,
         CST_STMT_DEFER_EXPR,
         CST_STMT_IF,
+        CST_STMT_WHEN,
         CST_STMT_FOR_RANGE,
         CST_STMT_FOR_EXPR,
         CST_STMT_BREAK, /* no .data member */
@@ -1247,6 +1250,9 @@ struct cst_stmt {
         struct {
             sbuf(struct cst_conditional const) conditionals;
         } if_;
+        struct {
+            sbuf(struct cst_conditional const) conditionals;
+        } when;
         struct {
             struct cst_identifier identifier;
             struct cst_type const* type; // optional
@@ -1285,6 +1291,8 @@ cst_stmt_new_defer_expr(
     struct source_location location, struct cst_expr const* expr);
 struct cst_stmt*
 cst_stmt_new_if(struct cst_conditional const* conditionals);
+struct cst_stmt*
+cst_stmt_new_when(struct cst_conditional const* conditionals);
 struct cst_stmt*
 cst_stmt_new_for_range(
     struct source_location location,
@@ -2131,6 +2139,7 @@ struct stmt {
     enum stmt_kind {
         STMT_DEFER,
         STMT_IF,
+        STMT_WHEN,
         STMT_FOR_RANGE,
         STMT_FOR_EXPR,
         STMT_BREAK,
@@ -2151,6 +2160,11 @@ struct stmt {
         struct {
             sbuf(struct conditional const) conditionals;
         } if_;
+        struct {
+            // The first conditional in the when-elwhen-else statement that
+            // evaluated as true.
+            struct conditional conditional;
+        } when;
         struct {
             struct symbol const* loop_variable;
             struct expr const* begin;
@@ -2199,6 +2213,8 @@ stmt_new_defer(
     struct block body);
 struct stmt*
 stmt_new_if(struct conditional const* conditionals);
+struct stmt*
+stmt_new_when(struct conditional conditional);
 struct stmt*
 stmt_new_for_range(
     struct source_location location,
