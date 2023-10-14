@@ -1675,7 +1675,7 @@ func panic_format(format: []byte, args: []std::formatter) void {
 #       std::unreachable(fileof(), lineof());
 func unreachable(file: []byte, line: usize) void {
     std::write_format(
-        std::err(), "[{}:{}] unreachable",
+        std::err(), "[{}:{}] unreachable\n",
         (:[]std::formatter)[
             std::formatter::init[[typeof(file)]](&file),
             std::formatter::init[[typeof(line)]](&line)]);
