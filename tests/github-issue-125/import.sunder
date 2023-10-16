@@ -1,0 +1,18 @@
+namespace lib;
+
+enum e {
+    A;
+    B;
+    C;
+}
+
+var x: e = uninit;
+var y: lib::e = uninit;
+var z: ::lib::e = uninit;
+
+
+struct s {
+    var x: e;
+    var y: lib::e;
+    var z: ::lib::e;
+}

@@ -1,0 +1,4 @@
+import "github-issue-125/import.sunder";
+
+func main() void {
+}

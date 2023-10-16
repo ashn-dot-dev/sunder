@@ -2923,7 +2923,7 @@ complete_enum(
     // enumerations, since the underlying type of a C enumeration may be chosen
     // *after* all enumeration constants have been defined.
     symbol_table_insert(
-        resolver->current_symbol_table, symbol->name, symbol, false);
+        resolver->current_symbol_table, name, symbol, false);
     sbuf_push(context()->types, type);
 
     // Resolve member functions.
