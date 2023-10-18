@@ -642,7 +642,16 @@ sys_f32_to_str(
     assert(INT_MIN <= digits && digits <= INT_MAX);
     int d = digits < 0 ? FLT_DECIMAL_DIG : (int)digits;
     int written = snprintf(buf, buf_size, "%.*f", d, (double)f);
-    return 0 <= written && (__sunder_usize)written < buf_size;
+    if (written < 0 && (__sunder_usize)written >= buf_size) {
+        return __sunder_false;
+    }
+    if (written > 0 && digits < 0) {
+        char* cur = buf + written - 1;
+        while (cur != written && cur[0] == '0' && cur[-1] != '.') {
+            *cur-- = '\0';
+        }
+    }
+    return __sunder_true;
 }
 
 __sunder_bool
@@ -665,7 +674,16 @@ sys_f64_to_str(
     assert(INT_MIN <= digits && digits <= INT_MAX);
     int d = digits < 0 ? DBL_DECIMAL_DIG : (int)digits;
     int written = snprintf(buf, buf_size, "%.*f", d, f);
-    return 0 <= written && (__sunder_usize)written < buf_size;
+    if (written < 0 && (__sunder_usize)written >= buf_size) {
+        return __sunder_false;
+    }
+    if (written > 0 && digits < 0) {
+        char* cur = buf + written - 1;
+        while (cur != written && cur[0] == '0' && cur[-1] != '.') {
+            *cur-- = '\0';
+        }
+    }
+    return __sunder_true;
 }
 
 #define __SUNDER_IEEE754_MATH_DEFINITIONS(function)                            \
