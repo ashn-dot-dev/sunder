@@ -1,3 +1,4 @@
+# only SUNDER_BACKEND=C
 import "std";
 
 func main() void {
