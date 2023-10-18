@@ -4745,6 +4745,25 @@ extend f32 func init_from_str(str: []byte) std::result[[f32, std::error]] {
     return std::result[[f32, std::error]]::init_value(out);
 }
 
+extend f32 func hash(self: *f32) usize {
+    # Canonicalize -0.0 and +0.0 as zero.
+    assert -0.0f32 == +0.0f32;
+    if *self == 0.0 {
+        return 0;
+    }
+
+    # Canonicalize NaN as zero.
+    if f32::is_nan(*self) {
+        return 0;
+    }
+
+    return (:usize)*self;
+}
+
+extend f32 func eq(lhs: *f32, rhs: *f32) bool {
+    return *lhs == *rhs;
+}
+
 extend f32 func format(self: *f32, writer: std::writer, fmt: []byte) std::result[[void, std::error]] {
     var digits = -1s;
     if countof(fmt) != 0 {
@@ -4823,6 +4842,25 @@ extend f64 func init_from_str(str: []byte) std::result[[f64, std::error]] {
         return std::result[[f64, std::error]]::init_error(std::error::INVALID_ARGUMENT);
     }
     return std::result[[f64, std::error]]::init_value(out);
+}
+
+extend f64 func hash(self: *f64) usize {
+    # Canonicalize -0.0 and +0.0 as zero.
+    assert -0.0f64 == +0.0f64;
+    if *self == 0.0 {
+        return 0;
+    }
+
+    # Canonicalize NaN as zero.
+    if f64::is_nan(*self) {
+        return 0;
+    }
+
+    return (:usize)*self;
+}
+
+extend f64 func eq(lhs: *f64, rhs: *f64) bool {
+    return *lhs == *rhs;
 }
 
 extend f64 func format(self: *f64, writer: std::writer, fmt: []byte) std::result[[void, std::error]] {

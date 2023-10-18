@@ -1,0 +1,23 @@
+import "std";
+
+func main() void {
+    let NEGATIVE_ZERO = -0.0f64;
+    let POSITIVE_ZERO = +0.0f64;
+    assert NEGATIVE_ZERO.hash() == POSITIVE_ZERO.hash();
+
+    let NAN: f64 = 0.0 / 0.0;
+
+    var map = std::hash_map[[f64, []byte]]::init();
+    defer map.fini();
+
+    map.insert(NEGATIVE_ZERO, "foo");
+    map.insert(POSITIVE_ZERO, "bar"); # should overwrite "foo"
+    map.insert(NAN, "baz");
+    map.insert(NAN, "qux"); # should not overwrite "baz" (NaN != NaN)
+    map.insert(123.456, "qux");
+
+    assert map.count() == 4;
+    assert map.contains(0.0);
+    # assert map.contains(NAN); # no way to test this since NaN != NaN
+    assert map.contains(123.456);
+}
