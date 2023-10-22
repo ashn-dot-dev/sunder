@@ -1,0 +1,24 @@
+import "std";
+
+func compare_reverse[[T]](lhs: *T, rhs: *T) ssize {
+    var cmp = T::compare(lhs, rhs);
+    if cmp < 0 {
+        return +1;
+    }
+    if cmp > 0 {
+        return -1;
+    }
+    return 0;
+}
+
+func main() void {
+    var x = (:[][]byte)["apple", "banana", "carrot"];
+    std::sort_with_comparator[[[]byte]](x, compare_reverse[[[]byte]]);
+    for i in countof(x) {
+        std::print_format_line(std::out(), "{}", (:[]std::formatter)[std::formatter::init[[[]byte]](&x[i])]);
+    }
+}
+################################################################################
+# carrot
+# banana
+# apple

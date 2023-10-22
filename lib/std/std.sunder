@@ -1761,6 +1761,11 @@ func max[[T]](x: *T, y: *T) *T {
 
 # Stable sort elements of the provided slice.
 func sort[[T]](slice: []T) void {
+    return std::sort_with_comparator[[T]](slice, T::compare);
+}
+
+# Stable sort elements of the provided slice using the provided comparator.
+func sort_with_comparator[[T]](slice: []T, comparator: func(*T, *T) ssize) void {
     if countof(slice) <= 1 {
         return;
     }
@@ -1774,8 +1779,8 @@ func sort[[T]](slice: []T) void {
     std::slice[[T]]::copy(slice0, slice[0:countof(slice)/2]);
     std::slice[[T]]::copy(slice1, slice[countof(slice)/2:countof(slice)]);
 
-    sort[[T]](slice0);
-    sort[[T]](slice1);
+    sort_with_comparator[[T]](slice0, comparator);
+    sort_with_comparator[[T]](slice1, comparator);
 
     var i0 = 0u;
     var i1 = 0u;
@@ -1788,7 +1793,7 @@ func sort[[T]](slice: []T) void {
             slice[i] = slice0[i0];
             i0 = i0 + 1;
         }
-        elif std::compare[[T]](&slice0[i0], &slice1[i1]) < 0 {
+        elif comparator(&slice0[i0], &slice1[i1]) < 0 {
             slice[i] = slice0[i0];
             i0 = i0 + 1;
         }
