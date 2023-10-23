@@ -165,6 +165,14 @@ func main() void {
         map.remove(123);
         map.insert(123, i);
     }
+
+    # Test inserting different elements a bunch of times to ensure that
+    # insertion order indices and tombstones are properly managed.
+    var map = std::hash_map[[ssize, usize]]::init();
+    defer map.fini();
+    for i in 1000000 {
+        map.insert((:ssize)~i & 0xFF, i);
+    }
 }
 ################################################################################
 # Count 0

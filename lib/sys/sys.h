@@ -68,6 +68,7 @@ typedef double             __sunder_f64;
 static inline _Noreturn void
 __sunder___fatal(char* message)
 {
+    *(char volatile*)0 = 0;
     fprintf(stderr, "%s\n", message);
     _exit(1);
 }

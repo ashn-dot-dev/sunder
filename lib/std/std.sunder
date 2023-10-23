@@ -3194,6 +3194,7 @@ struct hash_map[[K, V]] {
                     continue;
 
                 }
+                self.*._elements[self.*._inserted.data()[idx]].index = cur;
                 self.*._inserted.data()[cur] = self.*._inserted.data()[idx];
                 cur = cur + 1;
             }
