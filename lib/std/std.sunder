@@ -2198,6 +2198,11 @@ struct big_integer {
         return std::write_all(writer, output.data());
     }
 
+    # Returns the allocator used by the big integer.
+    func allocator(self: *big_integer) std::allocator {
+        return self.*._allocator;
+    }
+
     # res = -rhs
     func neg(res: *big_integer, rhs: *big_integer) void {
         big_integer::assign(res, rhs);
@@ -2699,6 +2704,11 @@ struct string {
         assert result.is_value(); # should never fail
     }
 
+    # Returns the allocator used by the string.
+    func allocator(self: *string) std::allocator {
+        return self.*._allocator;
+    }
+
     # Returns a pointer to the first byte of the string.
     func start(self: *string) *byte {
         return self.*._start;
@@ -2844,6 +2854,11 @@ struct vector[[T]] {
         for i in from.*.count() {
             self.*.push(from.*.data()[i]);
         }
+    }
+
+    # Returns the allocator used by the vector.
+    func allocator(self: *vector[[T]]) std::allocator {
+        return self.*._allocator;
     }
 
     # Returns a pointer to the first element of the vector.
@@ -3066,6 +3081,11 @@ struct hash_map[[K, V]] {
         for iter.advance() {
             self.*.insert(*iter.current().*.key, *iter.current().*.value);
         }
+    }
+
+    # Returns the allocator used by the map.
+    func allocator(self: *hash_map[[K, V]]) std::allocator {
+        return self.*._allocator;
     }
 
     # Returns the number of key-value pairs in the map.
@@ -3443,6 +3463,11 @@ struct hash_set[[T]] {
         for iter.advance() {
             self.*.insert(*iter.current());
         }
+    }
+
+    # Returns the allocator used by the set.
+    func allocator(self: *hash_set[[T]]) std::allocator {
+        return self.*._hash_map.allocator();
     }
 
     # Returns the number of elements in the set.
