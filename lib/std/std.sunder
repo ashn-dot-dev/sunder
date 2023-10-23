@@ -3454,7 +3454,7 @@ struct hash_set[[T]] {
         }
 
         std::hash_set[[T]]::fini(self);
-        *self = std::hash_set[[T]]::init_with_allocator(self.*._hash_map._allocator);
+        *self = std::hash_set[[T]]::init_with_allocator(self.*.allocator());
 
         var iter = std::hash_set_iterator[[T]]::init(from);
         for iter.advance() {
