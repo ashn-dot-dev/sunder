@@ -3,7 +3,7 @@ import "std";
 func main() void {
     var arr = (:[128]u64)[0...]; # 128 u64 * 8 bytes/u64 = 1024 bytes (u64 aligned).
     var mem = (:[]byte){(:*byte)&arr[0], countof(arr) * sizeof(typeof(arr[0]))};
-    var linear_allocator = std::linear_allocator::init(mem);
+    var linear_allocator = std::linear_allocator::init[[byte]](mem);
     var allocator = std::allocator::init[[std::linear_allocator]](&linear_allocator);
     assert linear_allocator._old_offset == 0;
     assert linear_allocator._cur_offset == 0;
@@ -122,7 +122,26 @@ func main() void {
     # zero-sized allocation attempted to use the null pointer for offset
     # calculations into the backing buffer.
     var mem = (:[64]byte)[0...];
-    var linear_allocator = std::linear_allocator::init(mem[0:countof(mem)]);
+    var linear_allocator = std::linear_allocator::init[[byte]](mem[0:countof(mem)]);
     var allocator = std::allocator::init[[std::linear_allocator]](&linear_allocator);
     var _ = std::str::split_with_allocator(allocator, "123-456-789", "-");
+
+    var slice = (:[]u64)[0, 0, 0, 0];
+    var allocator = std::linear_allocator::init[[u64]](slice);
+    var allocator = std::allocator::init[[typeof(allocator)]](&allocator);
+
+    std::slice[[u32]]::new_with_allocator(allocator, 7);
+    std::print_line(std::out(), "allocated 7 u32 values");
+
+    std::slice[[u16]]::new_with_allocator(allocator, 2);
+    std::print_line(std::out(), "allocated 2 u16 values");
+
+    # At this point the allocator should be at capacity and any allocation
+    # should cause an allocation failure.
+    std::new_with_allocator[[u8]](allocator);
+    std::unreachable(fileof(), lineof());
 }
+################################################################################
+# allocated 7 u32 values
+# allocated 2 u16 values
+# panic: allocation failure

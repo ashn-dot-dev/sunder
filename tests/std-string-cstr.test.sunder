@@ -17,7 +17,7 @@ func main() void {
     # Using an allocator deliberately filled with non-NUL bytes to ensure that
     # the NUL terminator is actually being written.
     var buf = (:[1000]byte)[0xFF...];
-    var allocator = std::linear_allocator::init(buf[0:countof(buf)]);
+    var allocator = std::linear_allocator::init[[byte]](buf[0:countof(buf)]);
     var allocator = std::allocator::init[[typeof(allocator)]](&allocator);
     var s = std::string::init_from_str_with_allocator(allocator, "foo bar");
     defer s.fini();

@@ -381,29 +381,23 @@ struct linear_allocator {
     var _old_offset: usize; # Previous offset into the backing buffer.
     var _cur_offset: usize; # Current offset into the backing buffer.
 
-    # Initialize a linear allocator with the provided buffer of memory.
-    func init(buf: []byte) linear_allocator {
-        return (:std::linear_allocator){
-            ._buf = buf,
-            ._old_offset = 0,
-            ._cur_offset = 0,
-        };
-    }
-
     # Initialize a linear allocator with a buffer of memory created from an
-    # existing slice of some type `T`. Useful for scenarios where the allocator
-    # will be used to allocate elements of type `T`.
+    # existing slice of some type `T`.
     #
     # Example:
     #   var memory = (:[64]ssize)[0...];
-    #   var allocator = std::linear_allocator::init_from_slice[[ssize]](memory[0:countof(memory)]);
+    #   var allocator = std::linear_allocator::init[[ssize]](memory[0:countof(memory)]);
     #   var allocator = std::allocator::init[[typeof(allocator)]](&allocator);
     #   # Later...
     #   var x = std::new_with_allocator[[ssize]](allocator);
-    func init_from_slice[[T]](slice: []T) linear_allocator {
+    func init[[T]](slice: []T) linear_allocator {
         var buf_start = startof(slice);
         var buf_count = countof(slice) * sizeof(T);
-        return linear_allocator::init((:[]byte){(:*byte)buf_start, buf_count});
+        return (:std::linear_allocator){
+            ._buf = (:[]byte){(:*byte)buf_start, buf_count},
+            ._old_offset = 0,
+            ._cur_offset = 0,
+        };
     }
 
     func allocate(self: *linear_allocator, align: usize, size: usize) std::result[[*any, std::error]] {
@@ -2000,7 +1994,7 @@ struct big_integer {
     func to_int[[T]](self: *big_integer) std::result[[T, std::error]] {
         assert sizeof(T) <= sizeof(u64);
         var buf = (:[64]byte)[0...]; # More than enough space.
-        var allocator = std::linear_allocator::init(buf[0:countof(buf)]);
+        var allocator = std::linear_allocator::init[[byte]](buf[0:countof(buf)]);
         var allocator = std::allocator::init[[typeof(allocator)]](&allocator);
         var string = std::string::init_from_format_with_allocator(allocator, "{}", (:[]std::formatter)[std::formatter::init[[big_integer]](self)]);
         return T::init_from_str(string.data(), 0);
