@@ -153,7 +153,7 @@ argparse(int argc, char** argv)
         }
 
         if (path != NULL) {
-            fatal(NO_LOCATION, "multiple input files");
+            fatal(NO_LOCATION, "multiple input files (`%s` and `%s` both specified)", path, argv[i]);
         }
         path = argv[i];
     }
