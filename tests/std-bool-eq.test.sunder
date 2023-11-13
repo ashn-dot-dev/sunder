@@ -1,0 +1,10 @@
+import "std";
+
+func main() void {
+    let T = true;
+    let F = false;
+
+    assert std::eq[[bool]](&T, &T);
+    assert std::eq[[bool]](&F, &F);
+    assert not std::eq[[bool]](&T, &F);
+}
