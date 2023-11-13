@@ -4125,6 +4125,9 @@ extend bool func init_from_str(str: []byte) std::result[[bool, std::error]] {
 extend bool func eq(lhs: *bool, rhs: *bool) bool {
     return *lhs == *rhs;
 }
+extend bool func hash(self: *bool) usize {
+    return (:usize)*self;
+}
 extend bool func format(self: *bool, writer: std::writer, fmt: []byte) std::result[[void, std::error]] {
     if countof(fmt) != 0 {
         return std::result[[void, std::error]]::init_error(std::error::INVALID_ARGUMENT);
