@@ -1,9 +1,4 @@
-import "std";
-import "sys"; # Declares sys::argc and sys::argv as extern.
+extern var foo: ssize;
+extern var foo: ssize;
 
-func main() void {
-    var bytes: []byte = (:[]byte){*sys::argv, std::cstr::count(*sys::argv)};
-    std::print_line(std::out(), bytes);
-}
-################################################################################
-# ./a.out
+func main() void { }

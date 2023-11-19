@@ -2319,6 +2319,16 @@ resolve_decl_extern_variable(
             type->name);
     }
 
+    struct symbol const* const existing = symbol_table_lookup_local(
+        resolver->current_symbol_table,
+        decl->data.extern_variable.identifier.name);
+    if (existing != NULL && existing->kind == SYMBOL_VARIABLE
+        && existing->data.variable->type == type
+        && existing->data.variable->is_extern) {
+        // Duplicate extern variable declaration.
+        return existing;
+    }
+
     struct address const* const address =
         resolver_reserve_storage_static(resolver, decl->name);
 
