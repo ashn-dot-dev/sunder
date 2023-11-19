@@ -2376,6 +2376,16 @@ resolve_decl_extern_function(
     struct type const* function_type =
         type_unique_function(parameter_types, return_type);
 
+    struct symbol const* const existing = symbol_table_lookup_local(
+        resolver->current_symbol_table,
+        decl->data.extern_function.identifier.name);
+    if (existing != NULL && existing->kind == SYMBOL_FUNCTION
+        && existing->data.function->type == function_type
+        && existing->data.function->is_extern) {
+        // Duplicate extern function declaration.
+        return existing;
+    }
+
     struct address const* const function_address =
         resolver_reserve_storage_static(resolver, decl->name);
 

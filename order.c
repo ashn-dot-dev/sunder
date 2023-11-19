@@ -70,7 +70,17 @@ orderer_new(struct module* module)
         struct tldecl const tldecl = {TLDECL_UNORDERED, module->cst->decls[i]};
         struct tldecl const* const existing =
             orderer_tldecl_lookup(self, module->cst->decls[i]->name);
-        if (existing != NULL && tldecl.decl->kind != CST_DECL_EXTEND) {
+        if (existing != NULL && tldecl.decl->kind == CST_DECL_EXTEND) {
+            continue;
+        }
+        else if (
+            existing != NULL && existing->decl->name == tldecl.decl->name
+            && existing->decl->kind == CST_DECL_EXTERN_FUNCTION
+            && tldecl.decl->kind == CST_DECL_EXTERN_FUNCTION) {
+            // Duplicate extern function declaration.
+            continue;
+        }
+        else if (existing != NULL) {
             fatal(
                 module->cst->decls[i]->location,
                 "redeclaration of `%s` previously declared at [%s:%zu]",
