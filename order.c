@@ -77,8 +77,7 @@ orderer_new(struct module* module)
             // Duplicate extern variable declaration.
             continue;
         }
-        if (
-            existing != NULL && existing->decl->name == tldecl.decl->name
+        if (existing != NULL && existing->decl->name == tldecl.decl->name
             && existing->decl->kind == CST_DECL_EXTERN_FUNCTION
             && tldecl.decl->kind == CST_DECL_EXTERN_FUNCTION) {
             // Duplicate extern function declaration.

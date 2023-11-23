@@ -8,11 +8,8 @@ satisfying the following dependencies:
 
 + POSIX-compatible `make`
 + Supported toolchain containing:
-  + C99 compiler (POSIX `c99`, `clang`, `gcc`, etc.)
-  + `ld`
-+ [`clang`](https://clang.llvm.org/) or [`gcc`](https://gcc.gnu.org/) (C backend only)
-+ [`emcc`](https://emscripten.org/) (C→WebAssembly backend only)
-+ [`nasm`](https://www.nasm.us/) or [`yasm`](https://yasm.tortall.net/) (x86-64 NASM backend only)
+    + [`clang`](https://clang.llvm.org/) or [`gcc`](https://gcc.gnu.org/)
+    + [`emcc`](https://emscripten.org/) (WebAssembly code-generation only)
 + `clang-format` (development only)
 
 The top-level Dockerfile defines a Debian image with dependencies for native
@@ -51,25 +48,6 @@ $ # Use CC=clang for Clang or CC=gcc for GCC
 $ make <targets> CC=clang CFLAGS='$(GNU_DBG)'              # clang/gcc (debug)
 $ make <targets> CC=clang CFLAGS='$(GNU_DBG) $(SANITIZE)'  # clang/gcc (debug with Address Sanitizer)
 $ make <targets> CC=clang CFLAGS='$(GNU_REL)'              # clang/gcc (release)
-```
-
-The compiler is built with `SUNDER_DEFAULT_BACKEND=C` and
-`SUNDER_DEFAULT_CC=cc` by default, indicating that the C backend should be used
-with `cc` if `SUNDER_BACKEND` and/or `SUNDER_CC` (explained below) are not set
-when the compiler is invoked.
-
-To use `nasm` as the default compiler backend, override
-`SUNDER_DEFAULT_BACKEND` with `nasm` when executing targets:
-
-```sh
-$ make <targets> SUNDER_DEFAULT_BACKEND=nasm
-```
-
-To use `yasm` as the default compiler backend, override
-`SUNDER_DEFAULT_BACKEND` with `yasm` when executing targets:
-
-```sh
-$ make <targets> SUNDER_DEFAULT_BACKEND=yasm
 ```
 
 ## Installing
@@ -123,58 +101,45 @@ been created. The `-k` flag will instruct the compiler *not* to remove these
 files.
 
 ```sh
-$ SUNDER_BACKEND=C sunder-compile -k -o hello examples/hello.sunder
+$ sunder-compile -k -o hello examples/hello.sunder
 $ ls hello*
 hello  hello.tmp.c
 
-$ SUNDER_BACKEND=nasm sunder-compile -k -o hello examples/hello.sunder
-$ ls hello*
-hello  hello.tmp.asm  hello.tmp.o
-
-$ SUNDER_BACKEND=C SUNDER_CC=emcc SUNDER_ARCH=wasm32 SUNDER_HOST=emscripten sunder-compile -k -o hello.html examples/hello.sunder
+$ SUNDER_CC=emcc SUNDER_ARCH=wasm32 SUNDER_HOST=emscripten sunder-compile -k -o hello.html examples/hello.sunder
 $ ls hello*
 hello.html  hello.html.tmp.c  hello.js  hello.wasm
 ```
 
 The `-g` flag will instruct the compiler to generate debug information. The use
-of `-g` in combination with `-k` facilitates debugging with GDB.
+of `-g` in combination with `-k` facilitates debugging with GDB and LLDB.
 
 ```sh
-$ SUNDER_BACKEND=nasm sunder-compile -g -k -o hello examples/hello.sunder
-$ gdb -q hello
-libthread-db debugging is 0.
-Reading symbols from hello...
-(gdb) break std.print_line
-Breakpoint 1 at 0x4105c3
-(gdb) run
-Starting program: /home/ashn/sources/sunder/hello
-
-Breakpoint 1, 0x00000000004105c3 in std.print_line ()
-(gdb) where
-#0  0x00000000004105c3 in std.print_line ()
-#1  0x000000000045a548 in main ()
+$ sunder-compile -g -k -o hello examples/hello.sunder
+$ lldb hello
+(lldb) target create "hello"
+Current executable set to '/Users/ashn/sources/sunder/hello' (arm64).
+(lldb) b std_print_line
+Breakpoint 1: where = hello`std_print_line + 32 at <stdin>:25334:9, address = 0x000000010000d1dc
+(lldb) run
+Process 54789 launched: '/Users/ashn/sources/sunder/hello' (arm64)
+Process 54789 stopped
+* thread #1, queue = 'com.apple.main-thread', stop reason = breakpoint 1.1
+    frame #0: 0x000000010000d1dc hello`std_print_line(__sunder_argument_0_writer=__sunder_std_writer @ 0x000000016fdff0c0, __sunder_argument_1_str=(start = "Hello, world!", count = 13)) at <stdin>:25334:9
+Target 0: (hello) stopped.
+(lldb)
 ```
 
 The following environment variables affect compiler behavior:
 
-**`SUNDER_BACKEND`** selects the backend to be used for compilation. Currently,
-`SUNDER_BACKEND=C`, `SUNDER_BACKEND=nasm`, and `SUNDER_BACKEND=yasm` are
-supported. If `SUNDER_BACKEND` is not set, then the default backend is used.
-
-**`SUNDER_CC`** selects the C compiler to be used when compiling with the C
-backend. Currently, `SUNDER_CC=clang`, `SUNDER_CC=gcc`, and `SUNDER_CC=emcc`
-are supported. If `SUNDER_CC` is not set, then the default C compiler is used.
+**`SUNDER_CC`** selects the C compiler to be used when compiling generated C.
+Currently, `SUNDER_CC=clang`, `SUNDER_CC=gcc`, and `SUNDER_CC=emcc` are
+supported. If `SUNDER_CC` is not set, then the default C compiler is used.
 
 **`SUNDER_CFLAGS`** is a space-separated list of additional flags passed to the
-C compiler when compiling with the C backend.
+C compiler.
 
 **`SUNDER_SEARCH_PATH`** is a colon-separated list of directories specifying
 the module search path for `import` and `embed` statements.
-
-**`SUNDER_SYSASM_PATH`** specifies the location of the platform-specific
-`sys.asm` file that defines the program entry point as well as low-level
-operating system and hardware abstractions when compiling with the NASM
-backend. If `SUNDER_SYSASM_PATH` is not set, then the default path is used.
 
 **`SUNDER_ARCH`** specifies the target architecture to build for. Currently,
 `SUNDER_ARCH=amd64`, `SUNDER_ARCH=arm64`, and `SUNDER_ARCH=wasm32` are
@@ -187,14 +152,13 @@ Currently, `SUNDER_HOST=freestanding`, `SUNDER_HOST=emscripten`, and
 default host specified by `sunder-platform host` is used.
 
 ## Compiling to WebAssembly
-Sunder supports compiling to WebAssembly via the C backend using
+Sunder supports compiling to WebAssembly via
 [Emscripten](https://emscripten.org/). When compiling to WebAssembly, specify
 `emcc`, `wasm32`, and `emscripten` as the C compiler, target architecture, and
 target host, respectively.
 
 ```sh
-$ SUNDER_BACKEND=C \
-    SUNDER_CC=emcc \
+$ SUNDER_CC=emcc \
     SUNDER_CFLAGS="-sSINGLE_FILE --shell-file ${SUNDER_HOME}/lib/sys/sys.wasm32-emscripten.html" \
     SUNDER_ARCH=wasm32 \
     SUNDER_HOST=emscripten \

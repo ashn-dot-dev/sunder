@@ -58,9 +58,7 @@ env(void)
     printf("SUNDER_HOME=%s\n", context()->env.SUNDER_HOME);
     printf("SUNDER_ARCH=%s\n", context()->env.SUNDER_ARCH);
     printf("SUNDER_HOST=%s\n", context()->env.SUNDER_HOST);
-    printf("SUNDER_BACKEND=%s\n", context()->env.SUNDER_BACKEND);
     printf("SUNDER_SEARCH_PATH=%s\n", context()->env.SUNDER_SEARCH_PATH);
-    printf("SUNDER_SYSASM_PATH=%s\n", context()->env.SUNDER_SYSASM_PATH);
     printf("SUNDER_CC=%s\n", context()->env.SUNDER_CC);
     printf("SUNDER_CFLAGS=%s\n", context()->env.SUNDER_CFLAGS);
 }
@@ -181,30 +179,6 @@ argparse(int argc, char** argv)
     }
     if (invalid_o_paths_with_opt_c) {
         fatal(NO_LOCATION, "cannot compile .o files with -c specified");
-    }
-
-    bool const using_c_backend =
-        cstr_eq_ignore_case(context()->env.SUNDER_BACKEND, "c");
-    bool const invalid_a_paths_with_backend = !using_c_backend && have_a_paths;
-    bool const invalid_c_paths_with_backend = !using_c_backend && have_c_paths;
-    bool const invalid_o_paths_with_backend = !using_c_backend && have_o_paths;
-    if (invalid_a_paths_with_backend) {
-        fatal(
-            NO_LOCATION,
-            "cannot compile .a files with backend `%s`",
-            context()->env.SUNDER_BACKEND);
-    }
-    if (invalid_c_paths_with_backend) {
-        fatal(
-            NO_LOCATION,
-            "cannot compile .c files with backend `%s`",
-            context()->env.SUNDER_BACKEND);
-    }
-    if (invalid_o_paths_with_backend) {
-        fatal(
-            NO_LOCATION,
-            "cannot compile .o files with backend `%s`",
-            context()->env.SUNDER_BACKEND);
     }
 }
 

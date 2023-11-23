@@ -1,4 +1,3 @@
-# only SUNDER_BACKEND=C
 import "std";
 
 func test(str: []byte) void {

@@ -765,9 +765,7 @@ struct context {
         char const* SUNDER_HOME;
         char const* SUNDER_ARCH;
         char const* SUNDER_HOST;
-        char const* SUNDER_BACKEND;
         char const* SUNDER_SEARCH_PATH;
-        char const* SUNDER_SYSASM_PATH;
         char const* SUNDER_CC;
         char const* SUNDER_CFLAGS;
     } env;
@@ -1971,8 +1969,6 @@ struct address {
         struct {
             // Name uniquely identifying the local.
             char const* name; // interned
-            // Base pointer offset of the local (x86-64).
-            int rbp_offset;
             // True if this local corresponds to a function parameter.
             // Initialized to false within `address_init_local`.
             bool is_parameter;
@@ -1984,7 +1980,7 @@ address_init_absolute(uintmax_t absolute);
 struct address
 address_init_static(char const* name, uintmax_t offset);
 struct address
-address_init_local(char const* name, int rbp_offset);
+address_init_local(char const* name);
 struct address*
 address_new(struct address from);
 
@@ -2658,13 +2654,5 @@ codegen_c(
     char const* const* opt_l,
     char const* const opt_o,
     char const* const* paths);
-void
-codegen_nasm(
-    bool opt_c,
-    bool opt_g,
-    bool opt_k,
-    char const* const* opt_L,
-    char const* const* opt_l,
-    char const* const opt_o);
 
 #endif // SUNDER_H_INCLUDED

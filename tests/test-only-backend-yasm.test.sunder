@@ -1,9 +1,0 @@
-# only SUNDER_BACKEND=YASM
-
-extern func __fatal(start: *byte, count: usize) void;
-
-func main() void {
-    __fatal(startof("boom"), countof("boom"));
-}
-################################################################################
-# boom

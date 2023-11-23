@@ -1,9 +1,0 @@
-# only SUNDER_BACKEND=C
-
-extern func __sunder___fatal(message: *byte) void;
-
-func main() void {
-    __sunder___fatal(startof("boom"));
-}
-################################################################################
-# boom

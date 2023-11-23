@@ -11,7 +11,7 @@ FROM debian:stable-slim
 
 ARG DEBIAN_FRONTEND=noninteractive
 RUN apt update -y && apt upgrade -y && apt update -y
-RUN apt install -y build-essential clang clang-format nasm yasm
+RUN apt install -y build-essential clang clang-format
 RUN mkdir -p /sunder
 
 WORKDIR /sunder

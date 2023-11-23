@@ -13,13 +13,11 @@
 SUNDER_HOME = $$HOME/.sunder
 SUNDER_DEFAULT_ARCH = $$(sh bin/sunder-platform arch)
 SUNDER_DEFAULT_HOST = $$(sh bin/sunder-platform host)
-SUNDER_DEFAULT_BACKEND = C
 SUNDER_DEFAULT_CC = cc
 
 C99_BASE = \
 	-DSUNDER_DEFAULT_ARCH=$(SUNDER_DEFAULT_ARCH) \
 	-DSUNDER_DEFAULT_HOST=$(SUNDER_DEFAULT_HOST) \
-	-DSUNDER_DEFAULT_BACKEND=$(SUNDER_DEFAULT_BACKEND) \
 	-DSUNDER_DEFAULT_CC=$(SUNDER_DEFAULT_CC)
 C99_DBG = $(C99_BASE) -O0 -g
 C99_REL = $(C99_BASE) -DNDEBUG
@@ -56,9 +54,7 @@ SUNDER_COMPILE_OBJS = \
 	ast.o \
 	resolve.o \
 	eval.o \
-	codegen.o \
-	codegen-c.o \
-	codegen-nasm.o
+	codegen.o
 bin/sunder-compile: $(SUNDER_COMPILE_OBJS)
 	$(CC) -o $@ $(CFLAGS) $(SUNDER_COMPILE_OBJS)
 

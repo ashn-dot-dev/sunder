@@ -844,12 +844,11 @@ address_init_static(char const* name, uintmax_t offset)
 }
 
 struct address
-address_init_local(char const* name, int rbp_offset)
+address_init_local(char const* name)
 {
     struct address self = {0};
     self.kind = ADDRESS_LOCAL;
     self.data.local.name = name;
-    self.data.local.rbp_offset = rbp_offset;
     self.data.local.is_parameter = false;
     return self;
 }

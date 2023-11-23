@@ -36,9 +36,6 @@ struct resolver {
     // Current local counter. Initialized to zero at the start of function
     // completion, and incremented whenever a local variable is given storage.
     unsigned current_local_counter;
-    // Current offset of rbp for stack allocated data. Initialized to zero at
-    // the start of function completion.
-    int current_rbp_offset;
 
     // True if the resolver is executing within a constant declaration.
     // Currently, this is only used to tell whether slice-list backing arrays
@@ -85,8 +82,7 @@ static struct address const*
 resolver_reserve_storage_static(struct resolver* self, char const* name);
 // Reserve local storage space for an object of the provided name and type.
 static struct address const*
-resolver_reserve_storage_local(
-    struct resolver* self, char const* name, struct type const* type);
+resolver_reserve_storage_local(struct resolver* self, char const* name);
 
 // Produce the fully qualified name (e.g. prefix::name).
 // Providing a NULL prefix parameter implies no prefix.
@@ -424,7 +420,6 @@ resolver_new(struct module* module)
     self->current_symbol_table = module->symbols;
     self->current_export_table = module->exports;
     self->current_local_counter = 0;
-    self->current_rbp_offset = 0x0;
     self->is_within_loop = false;
     return self;
 }
@@ -471,22 +466,14 @@ resolver_reserve_storage_static(struct resolver* self, char const* name)
 }
 
 static struct address const*
-resolver_reserve_storage_local(
-    struct resolver* self, char const* name, struct type const* type)
+resolver_reserve_storage_local(struct resolver* self, char const* name)
 {
     assert(self != NULL);
     assert(self->current_function != NULL);
     assert(name != NULL);
-    assert(type != NULL);
-
-    self->current_rbp_offset -= (int)ceil8umax(type->size);
-    if (self->current_rbp_offset < self->current_function->local_stack_offset) {
-        self->current_function->local_stack_offset = self->current_rbp_offset;
-    }
 
     name = intern_fmt("local_%u_%s", self->current_local_counter++, name);
-    struct address* const address =
-        address_new(address_init_local(name, self->current_rbp_offset));
+    struct address* const address = address_new(address_init_local(name));
     freeze(address);
     return address;
 }
@@ -1815,7 +1802,7 @@ resolve_decl_variable(
 
     struct address const* const address = is_static
         ? resolver_reserve_storage_static(resolver, decl->name)
-        : resolver_reserve_storage_local(resolver, decl->name, type);
+        : resolver_reserve_storage_local(resolver, decl->name);
 
     struct object* const object = object_new(type, address, value);
     freeze(object);
@@ -1992,30 +1979,17 @@ resolve_decl_function(struct resolver* resolver, struct cst_decl const* decl)
         false);
     register_static_symbol(function_symbol);
 
-    // Executing a call instruction pushes the return address (0x8 bytes) onto
-    // the stack. Inside the function the prelude saves the previous value of
-    // rbp (0x8 bytes) by pushing it on the stack. So in total there are 0x8 +
-    // 0x8 = 0x10 bytes between the current rbp (saved from the stack pointer)
-    // and the region of the stack containing function parameters.
-    // XXX: Currently the compiler assumes 0x8 byte stack alignment and does
-    // *NOT* pad the stack to be 0x10 byte-aligned as required by some ABIs.
-    int rbp_offset = 0x10; // Saved rbp + return address.
-    // Resolve the function's parameters in order from lowest->highest on the
-    // stack (i.e. right to left), adjusting the rbp_offset for each parameter
-    // along the way.
     sbuf(struct symbol const*) symbol_parameters = NULL;
     sbuf_resize(symbol_parameters, sbuf_count(function_parameters));
-    for (size_t i = sbuf_count(function_parameters); i--;) {
+    for (size_t i = 0; i < sbuf_count(function_parameters); ++i) {
         struct source_location const location =
             function_parameters[i]->location;
         char const* const name = function_parameters[i]->identifier.name;
         struct type const* const type = parameter_types[i];
-        struct address* const address = address_new(address_init_local(
-            intern_fmt("argument_%u_%s", i, name), rbp_offset));
+        struct address* const address = address_new(
+            address_init_local(intern_fmt("argument_%u_%s", i, name)));
         address->data.local.is_parameter = true;
         freeze(address);
-
-        rbp_offset += (int)ceil8umax(type->size);
 
         struct object* const object = object_new(type, address, NULL);
         freeze(object);
@@ -2047,8 +2021,8 @@ resolve_decl_function(struct resolver* resolver, struct cst_decl const* decl)
     }
 
     // Add the function's return value to its outermost symbol table.
-    struct address* const return_value_address = address_new(
-        address_init_local(context()->interned.return_, rbp_offset));
+    struct address* const return_value_address =
+        address_new(address_init_local(context()->interned.return_));
     freeze(return_value_address);
     struct object* const return_value_object =
         object_new(return_type, return_value_address, NULL);
@@ -2984,7 +2958,6 @@ complete_function(
     // Complete the function.
     assert(resolver->current_function == NULL);
     assert(resolver->current_local_counter == 0);
-    assert(resolver->current_rbp_offset == 0x0);
     assert(!resolver->is_within_loop);
     char const* const save_symbol_name_prefix =
         resolver->current_symbol_name_prefix;
@@ -3003,7 +2976,6 @@ complete_function(
     resolver->current_static_addr_prefix = save_static_addr_prefix;
     resolver->current_function = NULL;
     resolver->current_local_counter = 0;
-    assert(resolver->current_rbp_offset == 0x0);
 
     // Produce an error if the last statement of a non-void returning function
     // is *not* a return statement. Even if the last statement is an if-else
@@ -3052,7 +3024,6 @@ resolve_block(
     struct symbol_table* const save_symbol_table =
         resolver->current_symbol_table;
     resolver->current_symbol_table = symbol_table;
-    int const save_rbp_offset = resolver->current_rbp_offset;
     struct stmt const* save_current_defer = resolver->current_defer;
 
     sbuf(struct stmt const*) stmts = NULL;
@@ -3105,7 +3076,6 @@ resolve_block(
     }
 
     resolver->current_symbol_table = save_symbol_table;
-    resolver->current_rbp_offset = save_rbp_offset;
     resolver->current_defer = save_current_defer;
     return resolved;
 }
@@ -3437,12 +3407,11 @@ resolve_stmt_for_range(struct resolver* resolver, struct cst_stmt const* stmt)
     end = implicit_cast(loop_var_type, end);
     verify_type_compatibility(end->location, end->type, loop_var_type);
 
-    int const save_rbp_offset = resolver->current_rbp_offset;
     struct source_location const loop_var_location =
         stmt->data.for_range.identifier.location;
     char const* const loop_var_name = stmt->data.for_range.identifier.name;
     struct address const* const loop_var_address =
-        resolver_reserve_storage_local(resolver, loop_var_name, loop_var_type);
+        resolver_reserve_storage_local(resolver, loop_var_name);
     struct object* loop_var_object =
         object_new(loop_var_type, loop_var_address, NULL);
     freeze(loop_var_object);
@@ -3463,7 +3432,6 @@ resolve_stmt_for_range(struct resolver* resolver, struct cst_stmt const* stmt)
     resolver->current_loop_defer = resolver->current_defer;
     struct block const body =
         resolve_block(resolver, symbol_table, &stmt->data.for_range.body);
-    resolver->current_rbp_offset = save_rbp_offset;
     resolver->is_within_loop = save_is_within_loop;
     resolver->current_loop_defer = save_current_loop_defer;
 
@@ -4219,7 +4187,7 @@ resolve_expr_list(struct resolver* resolver, struct cst_expr const* expr)
     bool const is_static = is_global || resolver->is_within_constant_decl;
     struct address const* const array_address = is_static
         ? resolver_reserve_storage_static(resolver, array_name)
-        : resolver_reserve_storage_local(resolver, array_name, array_type);
+        : resolver_reserve_storage_local(resolver, array_name);
 
     struct value* array_value = NULL;
     if (is_static) {
