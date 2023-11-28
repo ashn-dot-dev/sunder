@@ -205,8 +205,13 @@ struct directory {
     }
 
     func advance(self: *directory) bool {
+        sys::set_errno(0);
         var dirent = readdir(self.*._dir);
-        # XXX: No error checking on readdir.
+        if (:usize)dirent == 0 and sys::get_errno() != 0 {
+            self.*._current_value = (:*byte)0u;
+            self.*._current_error = -(:ssize)sys::get_errno();
+            return false;
+        }
         if (:usize)dirent == 0 {
             self.*._current_value = (:*byte)0u;
             self.*._current_error = 0;
