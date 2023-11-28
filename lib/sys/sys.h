@@ -422,6 +422,23 @@ sys_unlink(__sunder_byte* pathname)
     return result;
 }
 
+__sunder_usize sys_argc;
+__sunder_byte** sys_argv;
+__sunder_byte** sys_envp;
+
+
+static int
+sys_get_errno(void)
+{
+    return errno;
+}
+
+static void
+sys_set_errno(int value)
+{
+    errno = value;
+}
+
 static void*
 sys_allocate(__sunder_usize align, __sunder_usize size)
 {
@@ -455,10 +472,6 @@ sys_deallocate(void* ptr, __sunder_usize align, __sunder_usize size)
     (void)size;
     free(ptr);
 }
-
-__sunder_usize sys_argc;
-__sunder_byte** sys_argv;
-__sunder_byte** sys_envp;
 
 // clang-format off
 static char sys_dump_bytes_lookup_table[256u * 2u] = {
