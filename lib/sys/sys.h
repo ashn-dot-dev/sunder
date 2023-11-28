@@ -368,20 +368,20 @@ sys_opendir(char* path)
     return opendir(path);
 }
 
-#ifdef __APPLE__
-struct __sunder_sys_dirent;
 static int
 sys_closedir(void* dir)
 {
     return closedir(dir);
 }
+
+struct __sunder_sys_dirent;
 static struct __sunder_sys_dirent*
 sys_readdir(void* dir)
 {
     return (struct __sunder_sys_dirent*)readdir(dir);
 }
-#else
-struct __sunder_sys_dirent;
+
+#ifndef __APPLE__
 static __sunder_ssize
 sys_getdents(signed int fd, struct __sunder_sys_dirent* dirent, size_t count)
 {
