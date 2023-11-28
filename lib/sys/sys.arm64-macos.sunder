@@ -183,13 +183,7 @@ struct directory {
     var _current_error: ssize;
 
     func open(out: *directory, path: *byte) ssize {
-        var flags = O_RDONLY | O_DIRECTORY | O_CLOEXEC;
-        var sysret = sys::open(path, flags, 0);
-        if sysret < 0 {
-            return sysret;
-        }
-
-        var dir = fdopendir((:sint)sysret);
+        var dir = opendir(path);
         if (:usize)dir == 0 {
             return -(:ssize)get_errno();
         }
@@ -233,8 +227,7 @@ extern func exit(error_code: sint) void;
 extern func mkdir(pathname: *byte, mode: mode_t) ssize;
 extern func rmdir(pathname: *byte) ssize;
 extern func unlink(pathname: *byte) ssize;
-
-extern func fdopendir(fd: sint) *DIR;
+extern func opendir(path: *char) *DIR;
 extern func closedir(dir: *DIR) sint;
 extern func readdir(dir: *DIR) *dirent;
 

@@ -5,7 +5,7 @@
 #include <alloca.h> /* alloca */
 #include <assert.h> /* assert */
 #include <ctype.h> /* isdigit */
-#include <dirent.h> /* getdents64 */
+#include <dirent.h> /* opendir, closedir, readdir, getdents64 */
 #include <errno.h> /* errno, perror */
 #include <fcntl.h> /* open */
 #include <float.h> /* DBL_DECIMAL_DIG, FLT_DECIMAL_DIG */
@@ -362,13 +362,14 @@ sys_exit(signed int error_code)
     _exit(error_code);
 }
 
+void*
+sys_opendir(char* path)
+{
+    return opendir(path);
+}
+
 #ifdef __APPLE__
 struct __sunder_sys_dirent;
-void*
-sys_fdopendir(signed int fd)
-{
-    return fdopendir(fd);
-}
 static int
 sys_closedir(void* dir)
 {
