@@ -198,7 +198,7 @@ struct directory {
     func close(self: *directory) ssize {
         var sysret = closedir(self.*._dir);
         if sysret != 0 {
-            return -666; # XXX: Unknown errno.
+            return -(:ssize)sys::get_errno();
         }
         return 0;
     }
