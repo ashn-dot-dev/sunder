@@ -514,7 +514,7 @@ static char sys_dump_bytes_lookup_table[256u * 2u] = {
 };
 // clang-format on
 
-__sunder_void
+static __sunder_void
 sys_dump_bytes(void* addr, __sunder_usize size)
 {
     if (size == 0) {
