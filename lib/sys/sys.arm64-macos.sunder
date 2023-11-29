@@ -154,8 +154,6 @@ let O_RDWR:      sint = 0x00000002;
 let O_CREAT:     sint = 0x00000200;
 let O_TRUNC:     sint = 0x00000400;
 let O_APPEND:    sint = 0x00000008;
-let O_CLOEXEC:   sint = 0x01000000;
-let O_DIRECTORY: sint = 0x00100000;
 
 let SEEK_SET: uint = 0x0;
 let SEEK_CUR: uint = 0x1;
