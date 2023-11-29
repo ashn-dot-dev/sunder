@@ -162,7 +162,6 @@ let SEEK_CUR: uint = 0x1;
 let SEEK_END: uint = 0x2;
 
 # Library/Developer/CommandLineTools/SDKs/MacOSX14.0.sdk/usr/include/sys/syslimits.h
-let NAME_MAX: usize =  255; # max bytes in a file name
 let PATH_MAX: usize = 1024; # max bytes in pathname
 
 # /Library/Developer/CommandLineTools/SDKs/MacOSX14.0.sdk/usr/include/sys/dirent.h

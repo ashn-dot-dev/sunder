@@ -205,7 +205,6 @@ let SEEK_CUR: sint = 0x1;
 let SEEK_END: sint = 0x2;
 
 # linux/include/uapi/linux/limits.h:
-let NAME_MAX: usize =  255; # chars in a file name
 let PATH_MAX: usize = 4096; # chars in a path name including nul
 
 # linux/include/linux/dirent.h:

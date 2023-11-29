@@ -214,7 +214,6 @@ let SEEK_CUR: sint = (:sint)__WASI_WHENCE_CUR;
 let SEEK_END: sint = (:sint)__WASI_WHENCE_END;
 
 # emscripten/system/lib/libc/musl/include/limits.h
-let NAME_MAX: usize =  255;
 let PATH_MAX: usize = 4096;
 
 # emscripten/system/lib/libc/musl/arch/generic/bits/dirent.h
