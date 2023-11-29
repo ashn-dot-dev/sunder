@@ -16,6 +16,7 @@ namespace sys;
 # unsigned long long | 8    | 8         | u64
 #
 # POSIX types obtainted through GDB:
+# ino_t   : type = unsigned long
 # mode_t  : type = unsigned int
 # off_t   : type = long int
 # size_t  : type = long unsigned int
@@ -36,6 +37,7 @@ alias ulong     = usize;
 alias slonglong = s64;
 alias ulonglong = u64;
 
+alias ino_t   = ulong;
 alias mode_t  = uint;
 alias off_t   = slong;
 alias size_t  = ulong;
@@ -197,8 +199,6 @@ let O_RDWR:      sint = 0x00000002;
 let O_CREAT:     sint = 0x00000040;
 let O_TRUNC:     sint = 0x00000200;
 let O_APPEND:    sint = 0x00000400;
-let O_CLOEXEC:   sint = 0x00080000;
-let O_DIRECTORY: sint = 0x00004000;
 
 let SEEK_SET: sint = 0x0;
 let SEEK_CUR: sint = 0x1;
@@ -207,44 +207,30 @@ let SEEK_END: sint = 0x2;
 # linux/include/uapi/linux/limits.h:
 let PATH_MAX: usize = 4096; # chars in a path name including nul
 
-# linux/include/linux/dirent.h:
-### struct linux_dirent64 {
-###     uint64_t       d_ino;
-###     int64_t        d_off;
-###     unsigned short d_reclen;
-###     unsigned char  d_type;
-###     char           d_name[];
-### };
+# musl/arch/generic/bits/dirent.h:
 struct dirent {
-    var d_ino: u64;
-    var d_off: s64;
+    var d_ino: ino_t;
+    var d_off: off_t;
     var d_reclen: ushort;
     var d_type: uchar;
-    var d_name: [0]char;
+    var d_name: [256]char;
 }
 
+alias DIR = any;
+
 struct directory {
-    var _fd: sint;
-    var _pad: [alignof(dirent)-alignof(sint)]byte; # align _buf
-    var _buf: [1024]byte;
-    var _buf_idx: usize;
-    var _buf_end: usize;
+    var _dir: *DIR;
     var _current_value: *byte;
     var _current_error: ssize;
 
     func open(out: *directory, path: *byte) ssize {
-        var flags = O_RDONLY | O_DIRECTORY | O_CLOEXEC;
-        var sysret = sys::open(path, flags, 0);
-        if sysret < 0 {
-            return sysret;
+        var dir = opendir(path);
+        if (:usize)dir == 0 {
+            return -(:ssize)get_errno();
         }
 
         *out = (:directory){
-            ._fd = (:sint)sysret,
-            ._pad = uninit,
-            ._buf = (:[1024]byte)[0...],
-            ._buf_idx = 0,
-            ._buf_end = 0,
+            ._dir = dir,
             ._current_value = uninit,
             ._current_error = uninit,
         };
@@ -252,31 +238,28 @@ struct directory {
     }
 
     func close(self: *directory) ssize {
-        return sys::close(self.*._fd);
+        var sysret = closedir(self.*._dir);
+        if sysret != 0 {
+            return -(:ssize)sys::get_errno();
+        }
+        return 0;
     }
 
     func advance(self: *directory) bool {
-        if self.*._buf_idx >= self.*._buf_end {
-            var sysret = getdents(self.*._fd, (:*dirent)&self.*._buf[0], countof(self.*._buf));
-            if sysret == 0 {
-                self.*._current_value = (:*byte)0u;
-                self.*._current_error = 0;
-                return false; # end-of-iteration
-            }
-            if sysret < 0 {
-                self.*._current_value = (:*byte)0u;
-                self.*._current_error = sysret;
-                return true;
-            }
-
-            self.*._buf_idx = 0;
-            self.*._buf_end = (:usize)sysret;
+        sys::set_errno(0);
+        var dirent = readdir(self.*._dir);
+        if (:usize)dirent == 0 and sys::get_errno() != 0 {
+            self.*._current_value = (:*byte)0u;
+            self.*._current_error = -(:ssize)sys::get_errno();
+            return false;
         }
-
-        var dirent = (:*sys::dirent)&self.*._buf[self.*._buf_idx];
-        self.*._current_value = (:*byte)&dirent.*.d_name;
+        if (:usize)dirent == 0 {
+            self.*._current_value = (:*byte)0u;
+            self.*._current_error = 0;
+            return false;
+        }
+        self.*._current_value = (:*byte)&dirent.*.d_name[0];
         self.*._current_error = 0;
-        self.*._buf_idx = self.*._buf_idx + (:usize)dirent.*.d_reclen;
         return true;
     }
 }
@@ -290,12 +273,16 @@ extern func exit(error_code: sint) void;
 extern func mkdir(pathname: *byte, mode: mode_t) ssize;
 extern func rmdir(pathname: *byte) ssize;
 extern func unlink(pathname: *byte) ssize;
-extern func getdents(fd: sint, dirent: *dirent, count: size_t) ssize;
+extern func opendir(path: *char) *DIR;
+extern func closedir(dir: *DIR) sint;
+extern func readdir(dir: *DIR) *dirent;
 
 extern var argc: usize;
 extern var argv: **byte;
 extern var envp: **byte;
 
+extern func get_errno() sint;
+extern func set_errno(value: sint) void;
 extern func allocate(align: usize, size: usize) *any;
 extern func deallocate(ptr: *any, align: usize, size: usize) void;
 

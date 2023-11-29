@@ -1,11 +1,10 @@
 #define const /* nothing */
 #define restrict /* nothing */
-#define _GNU_SOURCE /* getddents64 */
 #define _ISOC11_SOURCE /* aligned_alloc */
 #include <alloca.h> /* alloca */
 #include <assert.h> /* assert */
 #include <ctype.h> /* isdigit */
-#include <dirent.h> /* opendir, closedir, readdir, getdents64 */
+#include <dirent.h> /* opendir, closedir, readdir */
 #include <errno.h> /* errno, perror */
 #include <fcntl.h> /* open */
 #include <float.h> /* DBL_DECIMAL_DIG, FLT_DECIMAL_DIG */
@@ -380,18 +379,6 @@ sys_readdir(void* dir)
 {
     return (struct __sunder_sys_dirent*)readdir(dir);
 }
-
-#ifndef __APPLE__
-static __sunder_ssize
-sys_getdents(signed int fd, struct __sunder_sys_dirent* dirent, size_t count)
-{
-    ssize_t result = getdents64(fd, (void*)dirent, count);
-    if (result == -1) {
-        return -errno;
-    }
-    return result;
-}
-#endif // __APPLE__
 
 static __sunder_ssize
 sys_mkdir(__sunder_byte* pathname, mode_t mode)
