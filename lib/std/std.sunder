@@ -3691,7 +3691,7 @@ struct file {
 
 # Type and associated filesystem operations for a directory.
 struct directory {
-    var _sys_dir: sys::directory;
+    var _sys_dir: *sys::DIR;
     var _current: std::optional[[std::result[[[]byte, std::error]]]];
 
     # Open a directory.
@@ -3702,45 +3702,41 @@ struct directory {
         var path_cstr = (:[sys::PATH_MAX]byte)[0...];
         std::slice[[byte]]::copy(path_cstr[0:countof(path)], path);
 
-        var sysdir: sys::directory = uninit;
-        var sysret = sys::directory::open(&sysdir, &path_cstr[0]);
-        if sysret < 0 {
-            return std::result[[std::directory, std::error]]::init_error((:std::error)sys::error(-sysret));
+        var dir = sys::opendir(&path_cstr[0]);
+        if dir == std::NULL {
+            return std::result[[std::directory, std::error]]::init_error((:std::error)sys::error((:ssize)sys::get_errno()));
         }
 
-        var directory = (:std::directory){
-            ._sys_dir = sysdir,
+        var self = (:directory){
+            ._sys_dir = dir,
             ._current = std::optional[[std::result[[[]byte, std::error]]]]::EMPTY,
         };
-        return std::result[[std::directory, std::error]]::init_value(directory);
+        return std::result[[std::directory, std::error]]::init_value(self);
     }
 
     # Close an open directory.
     func close(self: *directory) std::result[[void, std::error]] {
-        var sysret = sys::directory::close(&self.*._sys_dir);
-        if sysret < 0 {
-            return std::result[[void, std::error]]::init_error((:std::error)sys::error(-sysret));
+        var sysret = sys::closedir(self.*._sys_dir);
+        if sysret != 0 {
+            return std::result[[void, std::error]]::init_error((:std::error)sys::error((:ssize)sys::get_errno()));
         }
-
         return std::result[[void, std::error]]::init_value(void::VALUE);
     }
 
     # Advance the current directory entry.
     func advance(self: *directory) bool {
-        var ret = sys::directory::advance(&self.*._sys_dir);
-        if not ret {
-            return false;
-        }
-
-        if self.*._sys_dir._current_error != 0 {
-            var result = std::result[[[]byte, std::error]]::init_error((:std::error)sys::error(-self.*._sys_dir._current_error));
+        sys::set_errno(0);
+        var dirent = sys::readdir(self.*._sys_dir);
+        if dirent == std::ptr[[sys::dirent]]::NULL and sys::get_errno() != 0 {
+            var result = std::result[[[]byte, std::error]]::init_error((:std::error)sys::error((:ssize)sys::get_errno()));
             self.*._current = std::optional[[std::result[[[]byte, std::error]]]]::init_value(result);
             return true;
         }
-
-        assert self.*._sys_dir._current_error == 0;
-        assert self.*._sys_dir._current_value != (:*byte)0u;
-        var result = std::result[[[]byte, std::error]]::init_value(std::cstr::data((:*byte)self.*._sys_dir._current_value));
+        if dirent == std::ptr[[sys::dirent]]::NULL {
+            self.*._current = std::optional[[std::result[[[]byte, std::error]]]]::EMPTY;
+            return false;
+        }
+        var result = std::result[[[]byte, std::error]]::init_value(std::cstr::data((:*byte)&dirent.*.d_name[0]));
         self.*._current = std::optional[[std::result[[[]byte, std::error]]]]::init_value(result);
         return true;
     }

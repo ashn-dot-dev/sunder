@@ -174,52 +174,6 @@ struct dirent {
 
 alias DIR = any;
 
-struct directory {
-    var _dir: *DIR;
-    var _current_value: *byte;
-    var _current_error: ssize;
-
-    func open(out: *directory, path: *byte) ssize {
-        var dir = opendir(path);
-        if (:usize)dir == 0 {
-            return -(:ssize)get_errno();
-        }
-
-        *out = (:directory){
-            ._dir = dir,
-            ._current_value = uninit,
-            ._current_error = uninit,
-        };
-        return 0;
-    }
-
-    func close(self: *directory) ssize {
-        var sysret = closedir(self.*._dir);
-        if sysret != 0 {
-            return -(:ssize)sys::get_errno();
-        }
-        return 0;
-    }
-
-    func advance(self: *directory) bool {
-        sys::set_errno(0);
-        var dirent = readdir(self.*._dir);
-        if (:usize)dirent == 0 and sys::get_errno() != 0 {
-            self.*._current_value = (:*byte)0u;
-            self.*._current_error = -(:ssize)sys::get_errno();
-            return false;
-        }
-        if (:usize)dirent == 0 {
-            self.*._current_value = (:*byte)0u;
-            self.*._current_error = 0;
-            return false;
-        }
-        self.*._current_value = (:*byte)&dirent.*.d_name[0];
-        self.*._current_error = 0;
-        return true;
-    }
-}
-
 extern func read(fd: sint, buf: *char, count: size_t) ssize;
 extern func write(fd: sint, buf: *char, count: size_t) ssize;
 extern func open(filename: *char, flags: sint, mode: mode_t) ssize;
