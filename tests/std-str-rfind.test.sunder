@@ -1,0 +1,34 @@
+import "std";
+
+func main() void {
+    var x = std::str::rfind("", "");
+    assert x.value() == 0;
+    var x = std::str::rfind("a", "");
+    assert x.value() == 1;
+    var x = std::str::rfind("", "a");
+    assert x.is_empty();
+
+    var x = std::str::rfind("foobar", "f");
+    assert x.value() == 0;
+    var x = std::str::rfind("foobar", "fo");
+    assert x.value() == 0;
+    var x = std::str::rfind("foobar", "foo");
+    assert x.value() == 0;
+    var x = std::str::rfind("foobar", "fooo");
+    assert x.is_empty();
+    var x = std::str::rfind("foobar", "bar");
+    assert x.value() == 3;
+
+    var x = std::str::rfind("foobar", "foobar");
+    assert x.value() == 0;
+    var x = std::str::rfind("foobar", "barfoo");
+    assert x.is_empty();
+    var x = std::str::rfind("foobar", "foobarg");
+    assert x.is_empty();
+
+    var x = std::str::rfind("kpvwblrizaabmnhz", "ab");
+    assert x.value() == 10;
+
+    var x = std::str::rfind("foofoo", "foo");
+    assert x.value() == 3;
+}

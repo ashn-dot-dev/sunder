@@ -901,6 +901,34 @@ struct str { # namespace
         return std::optional[[usize]]::EMPTY;
     }
 
+    # Returns a non-empty optional containing the index of the last occurance
+    # of `target` within `str` if `target` is contained within `str`.
+    func rfind(str: []byte, target: []byte) std::optional[[usize]] {
+        if countof(str) < countof(target) {
+            return std::optional[[usize]]::EMPTY;
+        }
+
+        var start = countof(str) - countof(target);
+        for true {
+            var i = 0u;
+            for i < countof(target) {
+                if str[start+i] != target[i] {
+                    break;
+                }
+                i = i + 1;
+            }
+
+            if i == countof(target) {
+                return std::optional[[usize]]::init_value(start);
+            }
+
+            if start == 0 { break; }
+            start = start - 1;
+        }
+
+        return std::optional[[usize]]::EMPTY;
+    }
+
     # Returns a non-empty optional containing the prefix and suffix bytes of
     # `str` split on the first occurrence of `separator`. The prefix and suffix
     # strings are created from, and thus share a lifetime with, the input
