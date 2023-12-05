@@ -664,6 +664,61 @@ struct ptr[[T]] { # namespace
 }
 
 struct slice[[T]] { # namespace
+    # Allocate a slice of `count` elements.
+    #
+    # This function panics on error.
+    func new(count: usize) []T {
+        return std::slice[[T]]::new_with_allocator(std::global_allocator(), count);
+    }
+
+    # Allocate a slice of `count` elements using the provided allocator.
+    #
+    # This function panics on error.
+    func new_with_allocator(allocator: std::allocator, count: usize) []T {
+        var result = allocator.allocate(alignof(T), count * sizeof(T));
+        if result.is_error() {
+            std::panic(result.error().*.data);
+        }
+        return (:[]T){(:*T)result.value(), count};
+    }
+
+    # Resize the provided slice to `new_count` elements.
+    #
+    # This function panics on error.
+    func resize(slice: []T, new_count: usize) []T {
+        return std::slice[[T]]::resize_with_allocator(std::global_allocator(), slice, new_count);
+    }
+
+    # Resize the provided slice to `new_count` elements using the provided
+    # allocator.
+    #
+    # This function panics on error.
+    func resize_with_allocator(allocator: std::allocator, slice: []T, new_count: usize) []T {
+        var cur_count = countof(slice);
+        var cur_size = cur_count * sizeof(T);
+        var new_size = new_count * sizeof(T);
+
+        var cur_pointer = (:*byte)startof(slice);
+        var result = allocator.reallocate(cur_pointer, alignof(T), cur_size, new_size);
+        if result.is_error() {
+            std::panic(result.error().*.data);
+        }
+
+        return (:[]T){(:*T)result.value(), new_count};
+    }
+
+    # Deallocate the provided slice.
+    func delete(slice: []T) void {
+        std::slice[[T]]::delete_with_allocator(std::global_allocator(), slice);
+    }
+
+    # Deallocate the provided slice using the provided allocator.
+    func delete_with_allocator(allocator: std::allocator, slice: []T) void {
+        var pointer = (:*byte)startof(slice);
+        var size = countof(slice) * sizeof(T);
+        allocator.deallocate(pointer, alignof(T), size);
+    }
+
     # Copy the elements of `source` into `destination`. The source and
     # destination buffers must contain the same number of elements.
     func copy(destination: []T, source: []T) void {
@@ -744,61 +799,6 @@ struct slice[[T]] { # namespace
             b = b + 1;
             e = e - 1;
         }
-    }
-
-    # Allocate a slice of `count` elements.
-    #
-    # This function panics on error.
-    func new(count: usize) []T {
-        return std::slice[[T]]::new_with_allocator(std::global_allocator(), count);
-    }
-
-    # Allocate a slice of `count` elements using the provided allocator.
-    #
-    # This function panics on error.
-    func new_with_allocator(allocator: std::allocator, count: usize) []T {
-        var result = allocator.allocate(alignof(T), count * sizeof(T));
-        if result.is_error() {
-            std::panic(result.error().*.data);
-        }
-        return (:[]T){(:*T)result.value(), count};
-    }
-
-    # Resize the provided slice to `new_count` elements.
-    #
-    # This function panics on error.
-    func resize(slice: []T, new_count: usize) []T {
-        return std::slice[[T]]::resize_with_allocator(std::global_allocator(), slice, new_count);
-    }
-
-    # Resize the provided slice to `new_count` elements using the provided
-    # allocator.
-    #
-    # This function panics on error.
-    func resize_with_allocator(allocator: std::allocator, slice: []T, new_count: usize) []T {
-        var cur_count = countof(slice);
-        var cur_size = cur_count * sizeof(T);
-        var new_size = new_count * sizeof(T);
-
-        var cur_pointer = (:*byte)startof(slice);
-        var result = allocator.reallocate(cur_pointer, alignof(T), cur_size, new_size);
-        if result.is_error() {
-            std::panic(result.error().*.data);
-        }
-
-        return (:[]T){(:*T)result.value(), new_count};
-    }
-
-    # Deallocate the provided slice.
-    func delete(slice: []T) void {
-        std::slice[[T]]::delete_with_allocator(std::global_allocator(), slice);
-    }
-
-    # Deallocate the provided slice using the provided allocator.
-    func delete_with_allocator(allocator: std::allocator, slice: []T) void {
-        var pointer = (:*byte)startof(slice);
-        var size = countof(slice) * sizeof(T);
-        allocator.deallocate(pointer, alignof(T), size);
     }
 }
 
