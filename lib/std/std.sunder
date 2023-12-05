@@ -838,6 +838,32 @@ struct slice_iterator[[T]] {
 }
 
 struct str { # namespace
+    # Allocate a byte slice that is a copy of `str`.
+    #
+    # This function panics on error.
+    func new(str: []byte) []byte {
+        return std::str::new_with_allocator(std::global_allocator(), str);
+    }
+
+    # Allocate a byte slice that is a copy of `str` using the provided allocator.
+    #
+    # This function panics on error.
+    func new_with_allocator(allocator: std::allocator, str: []byte) []byte {
+        var out = std::slice[[byte]]::new_with_allocator(allocator, countof(str));
+        std::slice[[byte]]::copy(out, str);
+        return out;
+    }
+
+    # Deallocate the provided byte slice.
+    func delete(str: []byte) void {
+        std::str::delete_with_allocator(std::global_allocator(), str);
+    }
+
+    # Deallocate the provided byte slice using the provided allocator.
+    func delete_with_allocator(allocator: std::allocator, str: []byte) void {
+        std::slice[[byte]]::delete_with_allocator(allocator, str);
+    }
+
     # Returns true if `str` starts with `target`.
     func starts_with(str: []byte, target: []byte) bool {
         if countof(str) < countof(target) {
