@@ -414,7 +414,6 @@ __sunder_usize sys_argc;
 __sunder_byte** sys_argv;
 __sunder_byte** sys_envp;
 
-
 static int
 sys_get_errno(void)
 {
