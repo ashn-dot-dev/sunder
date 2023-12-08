@@ -4,4 +4,4 @@ func main() void {
 ################################################################################
 # [error-expr-access-dot-non-struct-non-union-lhs.test.sunder:2] error: attempted member access on non-struct and non-union type `u16`
 #     1u16.x;
-#     ^
+#         ^

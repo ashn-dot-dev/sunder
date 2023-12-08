@@ -4843,7 +4843,7 @@ resolve_expr_access_member(
         resolve_expr(resolver, expr->data.access_member.lhs);
     if (lhs->type->kind != TYPE_STRUCT && lhs->type->kind != TYPE_UNION) {
         fatal(
-            lhs->location,
+            expr->location,
             "attempted member access on non-struct and non-union type `%s`",
             lhs->type->name);
     }
