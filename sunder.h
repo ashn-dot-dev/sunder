@@ -869,6 +869,8 @@ struct context {
         char const* name; // interned
         // Location where the instantiation occurred.
         struct source_location location;
+        // This link's position in the instantiation chain.
+        size_t depth;
     } const* template_instantiation_chain;
 };
 void

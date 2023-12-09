@@ -143,6 +143,10 @@ verify_byte_or_int_in_range(
     struct source_location location,
     struct type const* type,
     struct bigint const* integer);
+// Fatally exists if the template chain exceeds the maximum template chain
+// depth (used to prevent non-terminating template instantiations).
+static void
+verify_template_chain_depth(struct template_instantiation_link* link);
 
 // Returns a newly created and registered expression node of `expr` explicitly
 // casted to `type` if such an explicit cast is valid.
@@ -922,8 +926,10 @@ xget_template_instance(
                 instance_decl->name);
         }
         link->location = location;
+        link->depth = link->next != NULL ? link->next->depth + 1 : 1;
         context()->template_instantiation_chain = link;
         freeze(link);
+        verify_template_chain_depth(link);
 
         // Resolve the actual template instance.
         char const* const save_symbol_name_prefix =
@@ -1061,8 +1067,10 @@ xget_template_instance(
                 instance_decl->name);
         }
         link->location = location;
+        link->depth = link->next != NULL ? link->next->depth + 1 : 1;
         context()->template_instantiation_chain = link;
         freeze(link);
+        verify_template_chain_depth(link);
 
         // Resolve the actual template instance.
         char const* const save_symbol_name_prefix =
@@ -1173,6 +1181,24 @@ verify_byte_or_int_in_range(
         char* const int_cstr = bigint_to_new_cstr(integer);
         char* const max_cstr = bigint_to_new_cstr(type->data.integer.max);
         fatal(location, "out-of-range integer (%s > %s)", int_cstr, max_cstr);
+    }
+}
+
+static void
+verify_template_chain_depth(struct template_instantiation_link* link)
+{
+    assert(link != NULL);
+
+    // Arbitrarily large MAX_DEPTH chosen to cover real-world template
+    // instantiation depth while still producing a reasonably short error
+    // message when the template instantiation chain is reported.
+    static size_t const MAX_DEPTH = 16;
+
+    if (link->depth > MAX_DEPTH) {
+        fatal(
+            NO_LOCATION,
+            "maximum template instantiation depth of %zu exceeded",
+            MAX_DEPTH);
     }
 }
 

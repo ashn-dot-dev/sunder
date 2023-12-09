@@ -1,0 +1,58 @@
+struct x[[T]] { var value: *x[[struct { var value: T; }]]; }
+
+func main() void {
+    var _: x[[ssize]] = uninit;
+}
+################################################################################
+# error: maximum template instantiation depth of 16 exceeded
+# [github-issue-128.test.sunder:1] info: ...encountered during template instantiation of `x[[struct { var value: struct { var value: struct { var value: struct { var value: struct { var value: struct { var value: struct { var value: struct { var value: struct { var value: struct { var value: struct { var value: struct { var value: struct { var value: struct { var value: struct { var value: struct { var value: ssize; }; }; }; }; }; }; }; }; }; }; }; }; }; }; }; }]]`
+# struct x[[T]] { var value: *x[[struct { var value: T; }]]; }
+#                             ^
+# [github-issue-128.test.sunder:1] info: ...encountered during template instantiation of `x[[struct { var value: struct { var value: struct { var value: struct { var value: struct { var value: struct { var value: struct { var value: struct { var value: struct { var value: struct { var value: struct { var value: struct { var value: struct { var value: struct { var value: struct { var value: ssize; }; }; }; }; }; }; }; }; }; }; }; }; }; }; }]]`
+# struct x[[T]] { var value: *x[[struct { var value: T; }]]; }
+#                             ^
+# [github-issue-128.test.sunder:1] info: ...encountered during template instantiation of `x[[struct { var value: struct { var value: struct { var value: struct { var value: struct { var value: struct { var value: struct { var value: struct { var value: struct { var value: struct { var value: struct { var value: struct { var value: struct { var value: struct { var value: ssize; }; }; }; }; }; }; }; }; }; }; }; }; }; }]]`
+# struct x[[T]] { var value: *x[[struct { var value: T; }]]; }
+#                             ^
+# [github-issue-128.test.sunder:1] info: ...encountered during template instantiation of `x[[struct { var value: struct { var value: struct { var value: struct { var value: struct { var value: struct { var value: struct { var value: struct { var value: struct { var value: struct { var value: struct { var value: struct { var value: struct { var value: ssize; }; }; }; }; }; }; }; }; }; }; }; }; }]]`
+# struct x[[T]] { var value: *x[[struct { var value: T; }]]; }
+#                             ^
+# [github-issue-128.test.sunder:1] info: ...encountered during template instantiation of `x[[struct { var value: struct { var value: struct { var value: struct { var value: struct { var value: struct { var value: struct { var value: struct { var value: struct { var value: struct { var value: struct { var value: struct { var value: ssize; }; }; }; }; }; }; }; }; }; }; }; }]]`
+# struct x[[T]] { var value: *x[[struct { var value: T; }]]; }
+#                             ^
+# [github-issue-128.test.sunder:1] info: ...encountered during template instantiation of `x[[struct { var value: struct { var value: struct { var value: struct { var value: struct { var value: struct { var value: struct { var value: struct { var value: struct { var value: struct { var value: struct { var value: ssize; }; }; }; }; }; }; }; }; }; }; }]]`
+# struct x[[T]] { var value: *x[[struct { var value: T; }]]; }
+#                             ^
+# [github-issue-128.test.sunder:1] info: ...encountered during template instantiation of `x[[struct { var value: struct { var value: struct { var value: struct { var value: struct { var value: struct { var value: struct { var value: struct { var value: struct { var value: struct { var value: ssize; }; }; }; }; }; }; }; }; }; }]]`
+# struct x[[T]] { var value: *x[[struct { var value: T; }]]; }
+#                             ^
+# [github-issue-128.test.sunder:1] info: ...encountered during template instantiation of `x[[struct { var value: struct { var value: struct { var value: struct { var value: struct { var value: struct { var value: struct { var value: struct { var value: struct { var value: ssize; }; }; }; }; }; }; }; }; }]]`
+# struct x[[T]] { var value: *x[[struct { var value: T; }]]; }
+#                             ^
+# [github-issue-128.test.sunder:1] info: ...encountered during template instantiation of `x[[struct { var value: struct { var value: struct { var value: struct { var value: struct { var value: struct { var value: struct { var value: struct { var value: ssize; }; }; }; }; }; }; }; }]]`
+# struct x[[T]] { var value: *x[[struct { var value: T; }]]; }
+#                             ^
+# [github-issue-128.test.sunder:1] info: ...encountered during template instantiation of `x[[struct { var value: struct { var value: struct { var value: struct { var value: struct { var value: struct { var value: struct { var value: ssize; }; }; }; }; }; }; }]]`
+# struct x[[T]] { var value: *x[[struct { var value: T; }]]; }
+#                             ^
+# [github-issue-128.test.sunder:1] info: ...encountered during template instantiation of `x[[struct { var value: struct { var value: struct { var value: struct { var value: struct { var value: struct { var value: ssize; }; }; }; }; }; }]]`
+# struct x[[T]] { var value: *x[[struct { var value: T; }]]; }
+#                             ^
+# [github-issue-128.test.sunder:1] info: ...encountered during template instantiation of `x[[struct { var value: struct { var value: struct { var value: struct { var value: struct { var value: ssize; }; }; }; }; }]]`
+# struct x[[T]] { var value: *x[[struct { var value: T; }]]; }
+#                             ^
+# [github-issue-128.test.sunder:1] info: ...encountered during template instantiation of `x[[struct { var value: struct { var value: struct { var value: struct { var value: ssize; }; }; }; }]]`
+# struct x[[T]] { var value: *x[[struct { var value: T; }]]; }
+#                             ^
+# [github-issue-128.test.sunder:1] info: ...encountered during template instantiation of `x[[struct { var value: struct { var value: struct { var value: ssize; }; }; }]]`
+# struct x[[T]] { var value: *x[[struct { var value: T; }]]; }
+#                             ^
+# [github-issue-128.test.sunder:1] info: ...encountered during template instantiation of `x[[struct { var value: struct { var value: ssize; }; }]]`
+# struct x[[T]] { var value: *x[[struct { var value: T; }]]; }
+#                             ^
+# [github-issue-128.test.sunder:1] info: ...encountered during template instantiation of `x[[struct { var value: ssize; }]]`
+# struct x[[T]] { var value: *x[[struct { var value: T; }]]; }
+#                             ^
+# [github-issue-128.test.sunder:4] info: ...encountered during template instantiation of `x[[ssize]]`
+#     var _: x[[ssize]] = uninit;
+#            ^
