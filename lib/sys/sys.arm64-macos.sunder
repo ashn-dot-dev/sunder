@@ -1,29 +1,29 @@
 # MacOS ARM64 System Interface
 namespace sys;
 
-alias smax = s64;
-alias umax = u64;
+type smax = s64;
+type umax = u64;
 
-alias char      = byte;
-alias schar     = s8;
-alias uchar     = u8;
-alias sshort    = s16;
-alias ushort    = u16;
-alias sint      = s32;
-alias uint      = u32;
-alias slong     = ssize;
-alias ulong     = usize;
-alias slonglong = s64;
-alias ulonglong = u64;
+type char      = byte;
+type schar     = s8;
+type uchar     = u8;
+type sshort    = s16;
+type ushort    = u16;
+type sint      = s32;
+type uint      = u32;
+type slong     = ssize;
+type ulong     = usize;
+type slonglong = s64;
+type ulonglong = u64;
 
 # Definitions from:
 # /Library/Developer/CommandLineTools/SDKs/MacOSX14.0.sdk/System/Library/Frameworks/Kernel.framework/Versions/A/Headers/arm/_types.h
 # /Library/Developer/CommandLineTools/SDKs/MacOSX14.0.sdk/System/Library/Frameworks/Kernel.framework/Versions/A/Headers/sys/types.h
 # /Library/Developer/CommandLineTools/SDKs/MacOSX14.0.sdk/System/Library/Frameworks/Kernel.framework/Versions/A/Headers/sys/_types.h
-alias mode_t  = u16;
-alias off_t   = s64;
-alias size_t  = ulong;
-alias ssize_t = slong;
+type mode_t  = u16;
+type off_t   = s64;
+type size_t  = ulong;
+type ssize_t = slong;
 
 let ERRORS = (:[][]byte)[
     "[system error 0] Undefined errno value",
@@ -172,7 +172,7 @@ struct dirent {
     var d_name: [PATH_MAX]char;
 }
 
-alias DIR = any;
+type DIR = any;
 
 extern func read(fd: sint, buf: *char, count: size_t) ssize;
 extern func write(fd: sint, buf: *char, count: size_t) ssize;

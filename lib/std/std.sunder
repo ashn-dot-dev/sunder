@@ -1,13 +1,13 @@
 namespace std;
 import "sys";
 
-alias umax = sys::umax;
-alias smax = sys::smax;
+type umax = sys::umax;
+type smax = sys::smax;
 
 # Common error type used within the standard library. The `std::error` type is
 # typically used as the error template argument in `std::result` template
 # instantiations. Type punning from `*[]byte` to `std::error` is supported.
-alias error = *std::error_info;
+type error = *std::error_info;
 
 # Strongly typed wrapper around a static byte-string providing information on
 # the category of error that has occurred.
@@ -970,7 +970,7 @@ struct str { # namespace
     #   var key = optional.value().prefix;
     #   var val = optional.value().suffix;
     func cut(str: []byte, separator: []byte) std::optional[[struct { var prefix: []byte; var suffix: []byte; }]] {
-        alias T = struct { var prefix: []byte; var suffix: []byte; };
+        type T = struct { var prefix: []byte; var suffix: []byte; };
 
         var index = std::str::find(str, separator);
         if index.is_empty() {

@@ -453,7 +453,7 @@ parse_decl(struct parser* parser)
         return parse_decl_extend(parser);
     }
 
-    if (check_current(parser, TOKEN_ALIAS)) {
+    if (check_current(parser, TOKEN_TYPE)) {
         return parse_decl_alias(parser);
     }
 
@@ -669,7 +669,7 @@ parse_decl_alias(struct parser* parser)
     assert(parser != NULL);
 
     struct source_location const location =
-        expect_current(parser, TOKEN_ALIAS).location;
+        expect_current(parser, TOKEN_TYPE).location;
     struct cst_identifier const identifier = parse_identifier(parser);
     expect_current(parser, TOKEN_ASSIGN);
     struct cst_type const* const type = parse_type(parser);
@@ -732,7 +732,7 @@ parse_stmt(struct parser* parser)
 
     if (check_current(parser, TOKEN_VAR) || check_current(parser, TOKEN_LET)
         || check_current(parser, TOKEN_FUNC)
-        || check_current(parser, TOKEN_ALIAS)) {
+        || check_current(parser, TOKEN_TYPE)) {
         return parse_stmt_decl(parser);
     }
 

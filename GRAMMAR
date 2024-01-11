@@ -20,7 +20,7 @@
 
 <decl-extend> ::= "extend" <type> <decl>
 
-<decl-alias> ::= "alias" <identifier> "=" <type> ";"
+<decl-type-alias> ::= "type" <identifier> "=" <type> ";"
 
 <decl-extern-variable> ::= "extern" "var" <identifier> ":" <type> ";"
 
@@ -32,7 +32,7 @@
                      | <decl-struct>
                      | <decl-union>
                      | <decl-enum>
-                     | <decl-alias>
+                     | <decl-type-alias>
                      | <decl-extern-variable>
                      | <decl-extern-function>
 
@@ -52,7 +52,7 @@
 
 <stmt-decl> ::= <decl-variable>
               | <decl-constant>
-              | <decl-alias>
+              | <decl-type-alias>
 
 <stmt-defer> ::= "defer" <block>
                | "defer" <expr>

@@ -26,7 +26,7 @@ func main() void {
     let Y = X; # X is used
     # Y is unsued
 
-    alias str = *byte; # str is unused
+    type str = *byte; # str is unused
 }
 ################################################################################
 # [warning-unused-symbol.test.sunder:1] warning: unused variable `x`
@@ -58,6 +58,6 @@ func main() void {
 #     ^
 # info: use constant `Y` in an expression or rename the constant to `Y_`
 # [warning-unused-symbol.test.sunder:29] warning: unused type `str`
-#     alias str = *byte; # str is unused
+#     type str = *byte; # str is unused
 #     ^
 # info: use type `str` in an expression or rename the type to `str_`

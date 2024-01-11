@@ -1,36 +1,36 @@
 import "std";
 import "sys";
 
-alias i32 = s32;
+type i32 = s32;
 var a: i32 = 123;
 
-alias unsigned8 = u8;
+type unsigned8 = u8;
 let b = (:unsigned8)123s;
 
-alias array_of_unsigned8 = [4]unsigned8;
+type array_of_unsigned8 = [4]unsigned8;
 let c: array_of_unsigned8 = (:array_of_unsigned8)[0xAA, 0xBB, 0xCC...];
 
-alias slice_of_unsigned8 = []unsigned8;
+type slice_of_unsigned8 = []unsigned8;
 let d: slice_of_unsigned8 = (:slice_of_unsigned8)[0xAA, 0xBB, 0xCC];
 
-alias foo = s64;
+type foo = s64;
 
-alias some_result = std::result[[unsigned8, []byte]];
+type some_result = std::result[[unsigned8, []byte]];
 
 struct empty_struct { }
-alias some_empty_struct = empty_struct;
+type some_empty_struct = empty_struct;
 
 struct non_empty_struct {
     var a: u16;
     var b: u16;
 }
-alias some_non_empty_struct = non_empty_struct;
+type some_non_empty_struct = non_empty_struct;
 
 func main() void {
     sys::dump[[i32]](a);
     sys::dump[[unsigned8]](b);
 
-    alias foo = s32;
+    type foo = s32;
     var bar: foo = -1;
     sys::dump[[foo]](bar);
 
@@ -40,9 +40,9 @@ func main() void {
     var i: i32 = 123;
     sys::dump[[usize]](i32::hash(&i));
 
-    alias str = *byte;
+    type str = *byte;
     var _: str = &"foo"[0];
-    alias str = []byte; # Shadowing previous declaration.
+    type str = []byte; # Shadowing previous declaration.
     var _ = (:str){&"foobar"[0], countof("foobar")};
 
     var _ = (:some_empty_struct){};

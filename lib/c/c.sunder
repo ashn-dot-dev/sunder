@@ -1,39 +1,39 @@
 import "sys";
 
-alias char = sys::char;
-alias uchar = sys::uchar;
-alias schar = sys::schar;
+type char = sys::char;
+type uchar = sys::uchar;
+type schar = sys::schar;
 
-alias ushort = sys::ushort;
-alias sshort = sys::sshort;
+type ushort = sys::ushort;
+type sshort = sys::sshort;
 
-alias uint = sys::uint;
-alias sint = sys::sint;
+type uint = sys::uint;
+type sint = sys::sint;
 
-alias ulong = sys::ulong;
-alias slong = sys::slong;
+type ulong = sys::ulong;
+type slong = sys::slong;
 
-alias slonglong = sys::slonglong;
-alias ulonglong = sys::ulonglong;
+type slonglong = sys::slonglong;
+type ulonglong = sys::ulonglong;
 
-alias  size_t = usize;
-alias ssize_t = ssize;
+type  size_t = usize;
+type ssize_t = ssize;
 
-alias uint8_t = u8;
-alias  int8_t = s8;
+type uint8_t = u8;
+type  int8_t = s8;
 
-alias uint16_t = u16;
-alias  int16_t = s16;
+type uint16_t = u16;
+type  int16_t = s16;
 
-alias uint32_t = u32;
-alias  int32_t = s32;
+type uint32_t = u32;
+type  int32_t = s32;
 
-alias uint64_t = u64;
-alias  int64_t = s64;
+type uint64_t = u64;
+type  int64_t = s64;
 
-alias uintptr_t = usize;
-alias  intptr_t = ssize;
-alias ptrdiff_t = intptr_t;
+type uintptr_t = usize;
+type  intptr_t = ssize;
+type ptrdiff_t = intptr_t;
 
-alias float = f32;
-alias double = f64;
+type float = f32;
+type double = f64;

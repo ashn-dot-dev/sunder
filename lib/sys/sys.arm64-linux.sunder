@@ -22,26 +22,26 @@ namespace sys;
 # size_t  : type = long unsigned int
 # ssize_t : type = long int
 
-alias smax = s64;
-alias umax = u64;
+type smax = s64;
+type umax = u64;
 
-alias char      = byte;
-alias schar     = s8;
-alias uchar     = u8;
-alias sshort    = s16;
-alias ushort    = u16;
-alias sint      = s32;
-alias uint      = u32;
-alias slong     = ssize;
-alias ulong     = usize;
-alias slonglong = s64;
-alias ulonglong = u64;
+type char      = byte;
+type schar     = s8;
+type uchar     = u8;
+type sshort    = s16;
+type ushort    = u16;
+type sint      = s32;
+type uint      = u32;
+type slong     = ssize;
+type ulong     = usize;
+type slonglong = s64;
+type ulonglong = u64;
 
-alias ino_t   = ulong;
-alias mode_t  = uint;
-alias off_t   = slong;
-alias size_t  = ulong;
-alias ssize_t = slong;
+type ino_t   = ulong;
+type mode_t  = uint;
+type off_t   = slong;
+type size_t  = ulong;
+type ssize_t = slong;
 
 let ERRORS = (:[][]byte)[
     "[system error 0] Undefined errno value",
@@ -216,7 +216,7 @@ struct dirent {
     var d_name: [256]char;
 }
 
-alias DIR = any;
+type DIR = any;
 
 extern func read(fd: sint, buf: *char, count: size_t) ssize;
 extern func write(fd: sint, buf: *char, count: size_t) ssize;

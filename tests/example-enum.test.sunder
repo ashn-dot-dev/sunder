@@ -48,7 +48,7 @@ let baz_e = baz::E;
 let baz_x: baz = baz_e;
 
 # Anonymous enums have their constants added to the enclosing scope.
-alias qux = enum {
+type qux = enum {
     QUX_A = 0xAA;
     QUX_B = 42;
     QUX_C;

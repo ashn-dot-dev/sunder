@@ -281,7 +281,7 @@ struct parser {
     # Returns the null denotation associated with the provided token or an
     # empty optional if no such denotation exists.
     func nud(token: *token) std::optional[[func(*parser) expression]] {
-        alias nud_func = func(*parser) expression;
+        type nud_func = func(*parser) expression;
 
         if token.*.is(::token::ADD)
         or token.*.is(::token::SUB) {
@@ -302,7 +302,7 @@ struct parser {
     # Returns the left denotation associated with the provided token or an
     # empty optional if no such denotation exists.
     func led(token: *token) std::optional[[func(*parser, expression) expression]] {
-        alias led_func = func(*parser, expression) expression;
+        type led_func = func(*parser, expression) expression;
 
         if token.*.is(::token::ADD)
         or token.*.is(::token::SUB)
