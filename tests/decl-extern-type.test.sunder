@@ -1,0 +1,4 @@
+extern type foo;
+extern type foo; # duplicate extern declaration should be allowed
+
+func main() void { }

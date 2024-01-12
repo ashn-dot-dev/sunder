@@ -470,6 +470,13 @@ type_new_union(char const* name, struct symbol_table* symbols)
 }
 
 struct type*
+type_new_extern(char const* name, struct symbol_table* symbols)
+{
+    return type_new(
+        name, SIZEOF_UNSIZED, ALIGNOF_UNSIZED, symbols, TYPE_EXTERN);
+}
+
+struct type*
 type_new_enum(char const* name, struct symbol_table* symbols)
 {
     // ISO/IEC 9899:1999 - 6.7.2.2 Enumeration specifiers:
@@ -2015,6 +2022,9 @@ value_del(struct value* self)
         }
         break;
     }
+    case TYPE_EXTERN: {
+        UNREACHABLE();
+    }
     }
 
     memset(self, 0x00, sizeof(*self));
@@ -2099,6 +2109,9 @@ value_freeze(struct value* self)
             value_freeze(self->data.union_.member_value);
         }
         return;
+    }
+    case TYPE_EXTERN: {
+        UNREACHABLE();
     }
     }
 
@@ -2194,6 +2207,9 @@ value_clone(struct value const* self)
             bigint_new(self->data.integer));
         new->type = self->type;
         return new;
+    }
+    case TYPE_EXTERN: {
+        UNREACHABLE();
     }
     }
 
@@ -2422,7 +2438,8 @@ value_eq(struct value const* lhs, struct value const* rhs)
     case TYPE_ARRAY: /* fallthrough */
     case TYPE_SLICE: /* fallthrough */
     case TYPE_STRUCT: /* fallthrough */
-    case TYPE_UNION: {
+    case TYPE_UNION: /* fallthrough */
+    case TYPE_EXTERN: {
         UNREACHABLE(); // illegal
     }
     }
@@ -2482,7 +2499,8 @@ value_lt(struct value const* lhs, struct value const* rhs)
     case TYPE_ARRAY: /* fallthrough */
     case TYPE_SLICE: /* fallthrough */
     case TYPE_STRUCT: /* fallthrough */
-    case TYPE_UNION: {
+    case TYPE_UNION: /* fallthrough */
+    case TYPE_EXTERN: {
         UNREACHABLE(); // illegal
     }
     }
@@ -2542,7 +2560,8 @@ value_gt(struct value const* lhs, struct value const* rhs)
     case TYPE_ARRAY: /* fallthrough */
     case TYPE_SLICE: /* fallthrough */
     case TYPE_STRUCT: /* fallthrough */
-    case TYPE_UNION: {
+    case TYPE_UNION: /* fallthrough */
+    case TYPE_EXTERN: {
         UNREACHABLE(); // illegal
     }
     }

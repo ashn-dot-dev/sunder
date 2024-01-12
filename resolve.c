@@ -204,6 +204,9 @@ resolve_decl_extern_variable(
 static struct symbol const*
 resolve_decl_extern_function(
     struct resolver* resolver, struct cst_decl const* decl);
+static struct symbol const*
+resolve_decl_extern_type(
+    struct resolver* resolver, struct cst_decl const* decl);
 
 static void
 complete_struct(
@@ -1778,6 +1781,9 @@ resolve_decl(struct resolver* resolver, struct cst_decl const* decl)
     case CST_DECL_EXTERN_FUNCTION: {
         return resolve_decl_extern_function(resolver, decl);
     }
+    case CST_DECL_EXTERN_TYPE: {
+        return resolve_decl_extern_type(resolver, decl);
+    }
     }
 
     UNREACHABLE();
@@ -2418,6 +2424,26 @@ resolve_decl_extern_function(
     symbol_table_insert(
         resolver->current_symbol_table, symbol->name, symbol, false);
     register_static_symbol(symbol); // Extern functions are always static.
+
+    return symbol;
+}
+
+static struct symbol const*
+resolve_decl_extern_type(struct resolver* resolver, struct cst_decl const* decl)
+{
+    struct symbol_table* const type_symbols =
+        symbol_table_new(context()->global_symbol_table);
+    sbuf_push(context()->chilling_symbol_tables, type_symbols);
+    struct type* const type = type_new_extern(
+        qualified_name(resolver->current_symbol_name_prefix, decl->name),
+        type_symbols);
+    freeze(type);
+
+    struct symbol* const symbol = symbol_new_type(decl->location, type);
+    freeze(symbol);
+
+    symbol_table_insert(
+        resolver->current_symbol_table, decl->name, symbol, false);
 
     return symbol;
 }
@@ -3229,6 +3255,13 @@ resolve_stmt_decl(struct resolver* resolver, struct cst_stmt const* stmt)
         fatal(
             decl->location,
             "local declaration of extern function `%s`",
+            decl->name);
+        return NULL;
+    }
+    case CST_DECL_EXTERN_TYPE: {
+        fatal(
+            decl->location,
+            "local declaration of extern type `%s`",
             decl->name);
         return NULL;
     }
@@ -6228,7 +6261,8 @@ resolve(struct module* module)
         case CST_DECL_EXTEND: /* fallthrough */
         case CST_DECL_ALIAS: /* fallthrough */
         case CST_DECL_EXTERN_VARIABLE: /* fallthrough */
-        case CST_DECL_EXTERN_FUNCTION: {
+        case CST_DECL_EXTERN_FUNCTION: /* fallthrough */
+        case CST_DECL_EXTERN_TYPE: {
             continue;
         }
 

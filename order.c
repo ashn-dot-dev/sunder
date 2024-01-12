@@ -83,6 +83,12 @@ orderer_new(struct module* module)
             // Duplicate extern function declaration.
             continue;
         }
+        if (existing != NULL && existing->decl->name == tldecl.decl->name
+            && existing->decl->kind == CST_DECL_EXTERN_TYPE
+            && tldecl.decl->kind == CST_DECL_EXTERN_TYPE) {
+            // Duplicate extern type declaration.
+            continue;
+        }
         if (existing != NULL && tldecl.decl->kind != CST_DECL_EXTEND) {
             fatal(
                 module->cst->decls[i]->location,
@@ -349,6 +355,10 @@ order_decl(struct orderer* orderer, struct cst_decl const* decl)
             order_type(orderer, function_parameters[i]->type);
         }
         order_type(orderer, decl->data.extern_function.return_type);
+        return;
+    }
+    case CST_DECL_EXTERN_TYPE: {
+        // Extern type declarations have no dependencies.
         return;
     }
     }

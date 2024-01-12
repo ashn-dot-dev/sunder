@@ -276,6 +276,19 @@ cst_decl_new_extern_function(
     return self;
 }
 
+struct cst_decl*
+cst_decl_new_extern_type(
+    struct source_location location, struct cst_identifier identifier)
+{
+    struct cst_decl* const self = xalloc(NULL, sizeof(*self));
+    memset(self, 0x00, sizeof(*self));
+    self->kind = CST_DECL_EXTERN_TYPE;
+    self->location = location;
+    self->name = identifier.name;
+    self->data.extern_type.identifier = identifier;
+    return self;
+}
+
 static struct cst_stmt*
 cst_stmt_new(struct source_location location, enum cst_stmt_kind kind)
 {

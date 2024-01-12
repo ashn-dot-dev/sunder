@@ -168,7 +168,8 @@ sized_primitive_value_to_new_bytes(struct value const* value)
     case TYPE_ARRAY: /* fallthrough */
     case TYPE_SLICE: /* fallthrough */
     case TYPE_STRUCT: /* fallthrough */
-    case TYPE_UNION: {
+    case TYPE_UNION: /* fallthrough */
+    case TYPE_EXTERN: {
         UNREACHABLE();
     }
     }
@@ -484,7 +485,8 @@ eval_rvalue_cast(struct expr const* expr)
         case TYPE_SLICE: /* fallthrough */
         case TYPE_STRUCT: /* fallthrough */
         case TYPE_UNION: /* fallthrough */
-        case TYPE_ENUM: {
+        case TYPE_ENUM: /* fallthrough */
+        case TYPE_EXTERN: {
             UNREACHABLE();
         }
         }
@@ -805,7 +807,8 @@ eval_rvalue_cast(struct expr const* expr)
     case TYPE_ARRAY: /* fallthrough */
     case TYPE_SLICE: /* fallthrough */
     case TYPE_STRUCT: /* fallthrough */
-    case TYPE_UNION: {
+    case TYPE_UNION: /* fallthrough */
+    case TYPE_EXTERN: {
         UNREACHABLE();
     }
     }

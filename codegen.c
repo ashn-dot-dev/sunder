@@ -628,6 +628,14 @@ codegen_type_definition(struct type const* type)
         appendln("typedef %s %s; // enum", underlying, typename);
         break;
     }
+    case TYPE_EXTERN: {
+        if (type->size == 0 || type->size == SIZEOF_UNSIZED) {
+            return;
+        }
+        char const* const typename = mangle_type(type);
+        appendln("typedef void %s; // extern type", typename);
+        break;
+    }
     }
 
     if (type->size != 0 && type->size != SIZEOF_UNSIZED) {
@@ -1053,6 +1061,9 @@ strgen_value(struct value const* value)
         string_append_cstr(s, strgen_value(&underlying_value));
         break;
     }
+    case TYPE_EXTERN: {
+        UNREACHABLE();
+    }
     }
 
     char const* const result = intern(string_start(s), string_count(s));
@@ -1118,6 +1129,10 @@ strgen_uninit(struct type const* type)
     }
     case TYPE_ENUM: {
         string_append_cstr(s, strgen_uninit(type->data.enum_.underlying_type));
+        break;
+    }
+    case TYPE_EXTERN: {
+        UNREACHABLE();
     }
     }
 

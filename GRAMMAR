@@ -26,6 +26,8 @@
 
 <decl-extern-function> ::= "extern" "func" <identifier> "(" <parameter-list> ")" <type> ";"
 
+<decl-extern-type> ::= "extern" "type" <identifier> ";"
+
 <module-level-decl> := <decl-variable>
                      | <decl-constant>
                      | <decl-function>
@@ -35,6 +37,7 @@
                      | <decl-type-alias>
                      | <decl-extern-variable>
                      | <decl-extern-function>
+                     | <decl-extern-type>
 
 <stmt> ::= <stmt-decl>
          | <stmt-defer>

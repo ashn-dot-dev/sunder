@@ -223,7 +223,7 @@ struct dirent {
     var d_name: [256]char;
 }
 
-type DIR = any;
+extern type DIR;
 
 extern func read(fd: sint, buf: *char, count: size_t) ssize;
 extern func write(fd: sint, buf: *char, count: size_t) ssize;

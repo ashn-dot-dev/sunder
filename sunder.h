@@ -1103,6 +1103,7 @@ struct cst_decl {
         CST_DECL_ALIAS,
         CST_DECL_EXTERN_VARIABLE,
         CST_DECL_EXTERN_FUNCTION,
+        CST_DECL_EXTERN_TYPE,
     } kind;
     union {
         struct {
@@ -1163,6 +1164,9 @@ struct cst_decl {
                 function_parameters;
             struct cst_type const* return_type;
         } extern_function;
+        struct {
+            struct cst_identifier identifier;
+        } extern_type;
     } data;
 };
 struct cst_decl*
@@ -1224,6 +1228,9 @@ cst_decl_new_extern_function(
     struct cst_identifier identifier,
     struct cst_function_parameter const* const* function_parameters,
     struct cst_type const* return_type);
+struct cst_decl*
+cst_decl_new_extern_type(
+    struct source_location location, struct cst_identifier identifier);
 
 struct cst_stmt {
     struct source_location location;
@@ -1772,6 +1779,7 @@ struct type {
         TYPE_STRUCT,
         TYPE_UNION,
         TYPE_ENUM,
+        TYPE_EXTERN,
     } kind;
     union {
         struct {
@@ -1871,6 +1879,9 @@ type_new_struct(char const* name, struct symbol_table* symbols);
 // Create a new union with no members (size zero and alignment zero).
 struct type*
 type_new_union(char const* name, struct symbol_table* symbols);
+// Create an external type (unsized).
+struct type*
+type_new_extern(char const* name, struct symbol_table* symbols);
 // Create a new enum with no members.
 struct type*
 type_new_enum(char const* name, struct symbol_table* symbols);

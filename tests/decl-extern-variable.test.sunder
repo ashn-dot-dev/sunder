@@ -1,4 +1,4 @@
 extern var foo: ssize;
-extern var foo: ssize;
+extern var foo: ssize; # duplicate extern declaration should be allowed
 
 func main() void { }
