@@ -1,10 +1,10 @@
 # The Sunder Programming Language
 Sunder is a C-like systems programming language and compiler for x86-64 Linux,
-ARM64 Linux, and WebAssembly.
+ARM64 Linux, ARM64 macOS, and WebAssembly.
 
 ## Dependencies
-Sunder tooling should build and run on any x86-64 or ARM64 Linux machine
-satisfying the following dependencies:
+Sunder tooling should build and run on any supported machine satisfying the
+following dependencies:
 
 + POSIX-compatible `make`
 + Supported toolchain containing:
@@ -13,7 +13,8 @@ satisfying the following dependencies:
 + `clang-format` (development only)
 
 The top-level Dockerfile defines a Debian image with dependencies for native
-x86-64 development pre-installed. You can build and run the Docker image with:
+x86-64 Linux development pre-installed. You can build and run the Docker image
+with:
 
 ```sh
 $ docker buildx build --platform=linux/amd64 --tag sunder .             # Build the image (do this once)
@@ -147,9 +148,9 @@ supported. If `SUNDER_ARCH` is not set, then the default architecture specified
 by `sunder-platform arch` is used.
 
 **`SUNDER_HOST`** specifies the target operating system to build for.
-Currently, `SUNDER_HOST=freestanding`, `SUNDER_HOST=emscripten`, and
-`SUNDER_HOST=linux` are supported. If `SUNDER_HOST` is not set, then the
-default host specified by `sunder-platform host` is used.
+Currently, `SUNDER_HOST=freestanding`, `SUNDER_HOST=emscripten`,
+`SUNDER_HOST=linux`, and `SUNDER_HOST=macos` are supported. If `SUNDER_HOST` is
+not set, then the default host specified by `sunder-platform host` is used.
 
 ## Compiling to WebAssembly
 Sunder supports compiling to WebAssembly via
