@@ -1,0 +1,8 @@
+func main() void {
+    var x: void = uninit;
+    x += x;
+}
+################################################################################
+# [error-invalid-stmt-op-assign.test.sunder:3] error: invalid arguments of types `void` and `void` in binary `+` expression
+#     x += x;
+#       ^

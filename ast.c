@@ -1369,6 +1369,7 @@ stmt_new_assert(
 struct stmt*
 stmt_new_assign(
     struct source_location location,
+    enum aop_kind op,
     struct expr const* lhs,
     struct expr const* rhs)
 {
@@ -1376,6 +1377,7 @@ stmt_new_assign(
     assert(rhs != NULL);
 
     struct stmt* const self = stmt_new(location, STMT_ASSIGN);
+    self->data.assign.op = op;
     self->data.assign.lhs = lhs;
     self->data.assign.rhs = rhs;
     return self;

@@ -1457,10 +1457,255 @@ codegen_stmt_assign(struct stmt const* stmt)
         return;
     }
 
-    appendli(
-        "*(%s) = %s;",
-        strgen_lvalue(stmt->data.assign.lhs),
-        strgen_rvalue(stmt->data.assign.rhs));
+    switch (stmt->data.assign.op) {
+    case AOP_ASSIGN: {
+        appendli(
+            "*(%s) = %s;",
+            strgen_lvalue(stmt->data.assign.lhs),
+            strgen_rvalue(stmt->data.assign.rhs));
+        return;
+    }
+    case AOP_ADD_ASSIGN: {
+        appendli(
+            "{%s* %s = %s; %s %s = %s; *%s = %s_%s(*%s, %s);}",
+            mangle_type(stmt->data.assign.lhs->type),
+            mangle_name("__lhs"),
+            strgen_lvalue(stmt->data.assign.lhs),
+
+            mangle_type(stmt->data.assign.rhs->type),
+            mangle_name("__rhs"),
+            strgen_rvalue(stmt->data.assign.rhs),
+
+            mangle_name("__lhs"),
+            mangle_name("__add"),
+            mangle_type(stmt->data.assign.lhs->type),
+            mangle_name("__lhs"),
+            mangle_name("__rhs"));
+        return;
+    }
+    case AOP_SUB_ASSIGN: {
+        appendli(
+            "{%s* %s = %s; %s %s = %s; *%s = %s_%s(*%s, %s);}",
+            mangle_type(stmt->data.assign.lhs->type),
+            mangle_name("__lhs"),
+            strgen_lvalue(stmt->data.assign.lhs),
+
+            mangle_type(stmt->data.assign.rhs->type),
+            mangle_name("__rhs"),
+            strgen_rvalue(stmt->data.assign.rhs),
+
+            mangle_name("__lhs"),
+            mangle_name("__sub"),
+            mangle_type(stmt->data.assign.lhs->type),
+            mangle_name("__lhs"),
+            mangle_name("__rhs"));
+        return;
+    }
+    case AOP_MUL_ASSIGN: {
+        appendli(
+            "{%s* %s = %s; %s %s = %s; *%s = %s_%s(*%s, %s);}",
+            mangle_type(stmt->data.assign.lhs->type),
+            mangle_name("__lhs"),
+            strgen_lvalue(stmt->data.assign.lhs),
+
+            mangle_type(stmt->data.assign.rhs->type),
+            mangle_name("__rhs"),
+            strgen_rvalue(stmt->data.assign.rhs),
+
+            mangle_name("__lhs"),
+            mangle_name("__mul"),
+            mangle_type(stmt->data.assign.lhs->type),
+            mangle_name("__lhs"),
+            mangle_name("__rhs"));
+        return;
+    }
+    case AOP_DIV_ASSIGN: {
+        appendli(
+            "{%s* %s = %s; %s %s = %s; *%s = %s_%s(*%s, %s);}",
+            mangle_type(stmt->data.assign.lhs->type),
+            mangle_name("__lhs"),
+            strgen_lvalue(stmt->data.assign.lhs),
+
+            mangle_type(stmt->data.assign.rhs->type),
+            mangle_name("__rhs"),
+            strgen_rvalue(stmt->data.assign.rhs),
+
+            mangle_name("__lhs"),
+            mangle_name("__div"),
+            mangle_type(stmt->data.assign.lhs->type),
+            mangle_name("__lhs"),
+            mangle_name("__rhs"));
+        return;
+    }
+    case AOP_REM_ASSIGN: {
+        appendli(
+            "{%s* %s = %s; %s %s = %s; *%s = %s_%s(*%s, %s);}",
+            mangle_type(stmt->data.assign.lhs->type),
+            mangle_name("__lhs"),
+            strgen_lvalue(stmt->data.assign.lhs),
+
+            mangle_type(stmt->data.assign.rhs->type),
+            mangle_name("__rhs"),
+            strgen_rvalue(stmt->data.assign.rhs),
+
+            mangle_name("__lhs"),
+            mangle_name("__rem"),
+            mangle_type(stmt->data.assign.lhs->type),
+            mangle_name("__lhs"),
+            mangle_name("__rhs"));
+        return;
+    }
+    case AOP_ADD_WRAPPING_ASSIGN: {
+        appendli(
+            "{%s* %s = %s; %s %s = %s; *%s = %s_%s(*%s, %s);}",
+            mangle_type(stmt->data.assign.lhs->type),
+            mangle_name("__lhs"),
+            strgen_lvalue(stmt->data.assign.lhs),
+
+            mangle_type(stmt->data.assign.rhs->type),
+            mangle_name("__rhs"),
+            strgen_rvalue(stmt->data.assign.rhs),
+
+            mangle_name("__lhs"),
+            mangle_name("__add_wrapping"),
+            mangle_type(stmt->data.assign.lhs->type),
+            mangle_name("__lhs"),
+            mangle_name("__rhs"));
+        return;
+    }
+    case AOP_SUB_WRAPPING_ASSIGN: {
+        appendli(
+            "{%s* %s = %s; %s %s = %s; *%s = %s_%s(*%s, %s);}",
+            mangle_type(stmt->data.assign.lhs->type),
+            mangle_name("__lhs"),
+            strgen_lvalue(stmt->data.assign.lhs),
+
+            mangle_type(stmt->data.assign.rhs->type),
+            mangle_name("__rhs"),
+            strgen_rvalue(stmt->data.assign.rhs),
+
+            mangle_name("__lhs"),
+            mangle_name("__sub_wrapping"),
+            mangle_type(stmt->data.assign.lhs->type),
+            mangle_name("__lhs"),
+            mangle_name("__rhs"));
+        return;
+    }
+    case AOP_MUL_WRAPPING_ASSIGN: {
+        appendli(
+            "{%s* %s = %s; %s %s = %s; *%s = %s_%s(*%s, %s);}",
+            mangle_type(stmt->data.assign.lhs->type),
+            mangle_name("__lhs"),
+            strgen_lvalue(stmt->data.assign.lhs),
+
+            mangle_type(stmt->data.assign.rhs->type),
+            mangle_name("__rhs"),
+            strgen_rvalue(stmt->data.assign.rhs),
+
+            mangle_name("__lhs"),
+            mangle_name("__mul_wrapping"),
+            mangle_type(stmt->data.assign.lhs->type),
+            mangle_name("__lhs"),
+            mangle_name("__rhs"));
+        return;
+    }
+    case AOP_SHL_ASSIGN: {
+        appendli(
+            "{%s* %s = %s; %s %s = %s; *%s = %s < sizeof(%s)*8 ? (%s)((%s)*%s << %s) : (%s)0;}",
+            mangle_type(stmt->data.assign.lhs->type),
+            mangle_name("__lhs"),
+            strgen_lvalue(stmt->data.assign.lhs),
+
+            mangle_type(stmt->data.assign.rhs->type),
+            mangle_name("__rhs"),
+            strgen_rvalue(stmt->data.assign.rhs),
+
+            mangle_name("__lhs"),
+            mangle_name("__rhs"),
+            mangle_type(stmt->data.assign.lhs->type),
+            mangle_type(stmt->data.assign.lhs->type),
+            mangle_type(stmt->data.assign.rhs->type),
+            mangle_name("__lhs"),
+            mangle_name("__rhs"),
+
+            mangle_type(stmt->data.assign.lhs->type));
+        return;
+    }
+    case AOP_SHR_ASSIGN: {
+        char const* const overshift =
+            type_is_sinteger(stmt->data.assign.lhs->type)
+            ? intern_fmt("((*%s < 0) ? -1 : 0)", mangle_name("__lhs"))
+            : "0";
+        appendli(
+            "{%s* %s = %s; %s %s = %s; *%s = %s < sizeof(%s)*8 ? (*%s >> %s) : (%s)%s;}",
+            mangle_type(stmt->data.assign.lhs->type),
+            mangle_name("__lhs"),
+            strgen_lvalue(stmt->data.assign.lhs),
+
+            mangle_type(stmt->data.assign.rhs->type),
+            mangle_name("__rhs"),
+            strgen_rvalue(stmt->data.assign.rhs),
+
+            mangle_name("__lhs"),
+            mangle_name("__rhs"),
+            mangle_type(stmt->data.assign.lhs->type),
+            mangle_name("__lhs"),
+            mangle_name("__rhs"),
+            mangle_type(stmt->data.assign.lhs->type),
+            overshift);
+        return;
+    }
+    case AOP_BITOR_ASSIGN: {
+        appendli(
+            "{%s* %s = %s; %s %s = %s; *%s = (*%s | %s);}",
+            mangle_type(stmt->data.assign.lhs->type),
+            mangle_name("__lhs"),
+            strgen_lvalue(stmt->data.assign.lhs),
+
+            mangle_type(stmt->data.assign.rhs->type),
+            mangle_name("__rhs"),
+            strgen_rvalue(stmt->data.assign.rhs),
+
+            mangle_name("__lhs"),
+            mangle_name("__lhs"),
+            mangle_name("__rhs"));
+        return;
+    }
+    case AOP_BITXOR_ASSIGN: {
+        appendli(
+            "{%s* %s = %s; %s %s = %s; *%s = (*%s ^ %s);}",
+            mangle_type(stmt->data.assign.lhs->type),
+            mangle_name("__lhs"),
+            strgen_lvalue(stmt->data.assign.lhs),
+
+            mangle_type(stmt->data.assign.rhs->type),
+            mangle_name("__rhs"),
+            strgen_rvalue(stmt->data.assign.rhs),
+
+            mangle_name("__lhs"),
+            mangle_name("__lhs"),
+            mangle_name("__rhs"));
+        return;
+    }
+    case AOP_BITAND_ASSIGN: {
+        appendli(
+            "{%s* %s = %s; %s %s = %s; *%s = (*%s & %s);}",
+            mangle_type(stmt->data.assign.lhs->type),
+            mangle_name("__lhs"),
+            strgen_lvalue(stmt->data.assign.lhs),
+
+            mangle_type(stmt->data.assign.rhs->type),
+            mangle_name("__rhs"),
+            strgen_rvalue(stmt->data.assign.rhs),
+
+            mangle_name("__lhs"),
+            mangle_name("__lhs"),
+            mangle_name("__rhs"));
+        return;
+    }
+    }
+
+    UNREACHABLE();
 }
 
 static void
@@ -2504,12 +2749,10 @@ strgen_rvalue_binary_shl(struct expr const* expr)
 
         mangle_name("__rhs"),
         mangle_type(expr->data.binary.lhs->type),
-
         mangle_type(expr->data.binary.lhs->type),
         mangle_type(expr->data.binary.rhs->type),
         mangle_name("__lhs"),
         mangle_name("__rhs"),
-
         mangle_type(expr->data.binary.lhs->type));
 }
 
@@ -2526,9 +2769,7 @@ strgen_rvalue_binary_shr(struct expr const* expr)
         ? intern_fmt("((%s < 0) ? -1 : 0)", mangle_name("__lhs"))
         : "0";
     return intern_fmt(
-        // clang-format off
         "({%s %s = %s; %s %s = %s; %s < sizeof(%s)*8 ? (%s >> %s) : (%s)%s;})",
-        // clang-format on
         mangle_type(expr->data.binary.lhs->type),
         mangle_name("__lhs"),
         strgen_rvalue(expr->data.binary.lhs),

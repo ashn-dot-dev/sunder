@@ -797,17 +797,35 @@ parse_stmt(struct parser* parser)
     }
 
     struct cst_expr const* const expr = parse_expr(parser);
-    if (check_current(parser, TOKEN_ASSIGN)) {
-        // <stmt-assign>
-        struct source_location const location =
-            expect_current(parser, TOKEN_ASSIGN).location;
-        struct cst_expr const* const rhs = parse_expr(parser);
-        expect_current(parser, TOKEN_SEMICOLON);
+    static enum token_kind const assignment_ops[] = {
+        TOKEN_ASSIGN,
+        TOKEN_PLUS_ASSIGN,
+        TOKEN_DASH_ASSIGN,
+        TOKEN_STAR_ASSIGN,
+        TOKEN_FSLASH_ASSIGN,
+        TOKEN_PERCENT_ASSIGN,
+        TOKEN_PLUS_PERCENT_ASSIGN,
+        TOKEN_DASH_PERCENT_ASSIGN,
+        TOKEN_STAR_PERCENT_ASSIGN,
+        TOKEN_SHL_ASSIGN,
+        TOKEN_SHR_ASSIGN,
+        TOKEN_PIPE_ASSIGN,
+        TOKEN_CARET_ASSIGN,
+        TOKEN_AMPERSAND_ASSIGN,
+    };
+    for (size_t i = 0; i < ARRAY_COUNT(assignment_ops); ++i) {
+        if (check_current(parser, assignment_ops[i])) {
+            // <stmt-assign>
+            struct token const op = expect_current(parser, assignment_ops[i]);
+            struct source_location const location = op.location;
+            struct cst_expr const* const rhs = parse_expr(parser);
+            expect_current(parser, TOKEN_SEMICOLON);
 
-        struct cst_stmt* const product =
-            cst_stmt_new_assign(location, expr, rhs);
-        freeze(product);
-        return product;
+            struct cst_stmt* const product =
+                cst_stmt_new_assign(location, op, expr, rhs);
+            freeze(product);
+            return product;
+        }
     }
 
     // <stmt-expr>

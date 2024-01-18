@@ -796,8 +796,8 @@ struct slice[[T]] { # namespace
         var e = countof(slice) - 1;
         for b < e {
             std::swap[[T]](&slice[b], &slice[e]);
-            b = b + 1;
-            e = e - 1;
+            b += 1;
+            e -= 1;
         }
     }
 }
@@ -915,7 +915,7 @@ struct str { # namespace
                 if str[start+i] != target[i] {
                     break;
                 }
-                i = i + 1;
+                i += 1;
             }
 
             if i == countof(target) {
@@ -941,7 +941,7 @@ struct str { # namespace
                 if str[start+i] != target[i] {
                     break;
                 }
-                i = i + 1;
+                i += 1;
             }
 
             if i == countof(target) {
@@ -2518,7 +2518,7 @@ struct big_integer {
         big_integer::abs(&D, rhs);
         var i = big_integer::_magnitude_bit_count(lhs);
         for i != 0 {
-            i = i - 1;
+            i -= 1;
             big_integer::_magnitude_shiftl(&R, 1);
             big_integer::_magnitude_set_bit(&R, 0, big_integer::_magnitude_get_bit(&N, i));
             if big_integer::compare(&R, &D) >= 0 {
@@ -2651,7 +2651,7 @@ struct big_integer {
                     self.*._limbs[i] = self.*._limbs[i] | 0x00000001u32;
                 }
 
-                i = i - 1;
+                i -= 1;
             }
             self.*._limbs[0] = self.*._limbs[0] << 1u;
         }

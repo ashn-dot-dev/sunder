@@ -432,6 +432,7 @@ cst_stmt_new_assert(
 struct cst_stmt*
 cst_stmt_new_assign(
     struct source_location location,
+    struct token op,
     struct cst_expr const* lhs,
     struct cst_expr const* rhs)
 {
@@ -439,6 +440,7 @@ cst_stmt_new_assign(
     assert(rhs != NULL);
 
     struct cst_stmt* const self = cst_stmt_new(location, CST_STMT_ASSIGN);
+    self->data.assign.op = op;
     self->data.assign.lhs = lhs;
     self->data.assign.rhs = rhs;
     return self;

@@ -3205,7 +3205,7 @@ resolve_stmt_decl(struct resolver* resolver, struct cst_stmt const* stmt)
 
         if (decl->data.variable.expr != NULL) {
             struct stmt* const resolved =
-                stmt_new_assign(stmt->location, lhs, rhs);
+                stmt_new_assign(stmt->location, AOP_ASSIGN, lhs, rhs);
 
             freeze(resolved);
             return resolved;
@@ -3798,7 +3798,105 @@ resolve_stmt_assign(struct resolver* resolver, struct cst_stmt const* stmt)
     rhs = implicit_cast(lhs->type, rhs);
     verify_type_compatibility(stmt->location, rhs->type, lhs->type);
 
-    struct stmt* const resolved = stmt_new_assign(stmt->location, lhs, rhs);
+    struct token const op = stmt->data.assign.op;
+    enum token_kind tok = (enum token_kind)(-1);
+    enum aop_kind aop = (enum aop_kind)(-1);
+    switch (op.kind) {
+    case TOKEN_ASSIGN: {
+        tok = TOKEN_ASSIGN;
+        aop = AOP_ASSIGN;
+        break;
+    }
+    case TOKEN_PLUS_ASSIGN: {
+        tok = TOKEN_PLUS;
+        aop = AOP_ADD_ASSIGN;
+        break;
+    }
+    case TOKEN_DASH_ASSIGN: {
+        tok = TOKEN_DASH;
+        aop = AOP_SUB_ASSIGN;
+        break;
+    }
+    case TOKEN_STAR_ASSIGN: {
+        tok = TOKEN_STAR;
+        aop = AOP_MUL_ASSIGN;
+        break;
+    }
+    case TOKEN_FSLASH_ASSIGN: {
+        tok = TOKEN_FSLASH;
+        aop = AOP_DIV_ASSIGN;
+        break;
+    }
+    case TOKEN_PERCENT_ASSIGN: {
+        tok = TOKEN_PERCENT;
+        aop = AOP_REM_ASSIGN;
+        break;
+    }
+    case TOKEN_PLUS_PERCENT_ASSIGN: {
+        tok = TOKEN_PLUS_PERCENT;
+        aop = AOP_ADD_WRAPPING_ASSIGN;
+        break;
+    }
+    case TOKEN_DASH_PERCENT_ASSIGN: {
+        tok = TOKEN_DASH_PERCENT;
+        aop = AOP_SUB_WRAPPING_ASSIGN;
+        break;
+    }
+    case TOKEN_STAR_PERCENT_ASSIGN: {
+        tok = TOKEN_STAR_PERCENT;
+        aop = AOP_MUL_WRAPPING_ASSIGN;
+        break;
+    }
+    case TOKEN_SHL_ASSIGN: {
+        tok = TOKEN_SHL;
+        aop = AOP_SHL_ASSIGN;
+        break;
+    }
+    case TOKEN_SHR_ASSIGN: {
+        tok = TOKEN_SHR;
+        aop = AOP_SHR_ASSIGN;
+        break;
+    }
+    case TOKEN_PIPE_ASSIGN: {
+        tok = TOKEN_PIPE;
+        aop = AOP_BITOR_ASSIGN;
+        break;
+    }
+    case TOKEN_CARET_ASSIGN: {
+        tok = TOKEN_CARET;
+        aop = AOP_BITXOR_ASSIGN;
+        break;
+    }
+    case TOKEN_AMPERSAND_ASSIGN: {
+        tok = TOKEN_AMPERSAND;
+        aop = AOP_BITAND_ASSIGN;
+        break;
+    }
+    default: {
+        UNREACHABLE();
+    }
+    }
+
+    // Generate a binary expression CST node and AST node to check that the
+    // binary operation performed before assignment is valid.
+    //
+    // TODO: This currently requires constructing a new CST node as well as the
+    // re-evaluating of the lhs and rhs CST expressions. It should be possible
+    // to refactor this and the `resolve_expr_binary_*` functions to verify a
+    // binary expression provided by a binary-operator, lhs-ast-expression,
+    // rhs-ast-expression triple.
+    if (aop != AOP_ASSIGN) {
+        struct token op = stmt->data.assign.op;
+        op.kind = tok;
+
+        struct cst_expr const* const cst = cst_expr_new_binary(
+            op, stmt->data.assign.lhs, stmt->data.assign.rhs);
+        struct expr const* const ast = resolve_expr_binary(resolver, cst);
+        (void)ast; // The AST node is currently unused.
+    }
+
+    struct stmt* const resolved =
+        stmt_new_assign(stmt->location, aop, lhs, rhs);
 
     freeze(resolved);
     return resolved;

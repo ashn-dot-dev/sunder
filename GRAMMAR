@@ -79,6 +79,19 @@
 <stmt-assert> ::= "assert" <expr> ";"
 
 <stmt-assign> ::= <expr> "=" <expr> ";"
+                | <expr> "+=" <expr> ";"
+                | <expr> "-=" <expr> ";"
+                | <expr> "*=" <expr> ";"
+                | <expr> "/=" <expr> ";"
+                | <expr> "%=" <expr> ";"
+                | <expr> "+%=" <expr> ";"
+                | <expr> "-%=" <expr> ";"
+                | <expr> "*%=" <expr> ";"
+                | <expr> "<<=" <expr> ";"
+                | <expr> ">>=" <expr> ";"
+                | <expr> "|=" <expr> ";"
+                | <expr> "^=" <expr> ";"
+                | <expr> "&=" <expr> ";"
 
 <stmt-expr> ::= <expr> ";"
 
@@ -164,13 +177,15 @@
                 | <expr> ">=" <expr>
                 | <expr> ">" <expr>
                 | <expr> "+" <expr>
-                | <expr> "+%" <expr>
                 | <expr> "-" <expr>
-                | <expr> "-%" <expr>
                 | <expr> "*" <expr>
-                | <expr> "*%" <expr>
                 | <expr> "/" <expr>
                 | <expr> "%" <expr>
+                | <expr> "+%" <expr>
+                | <expr> "-%" <expr>
+                | <expr> "*%" <expr>
+                | <expr> "<<" <expr>
+                | <expr> ">>" <expr>
                 | <expr> "|" <expr>
                 | <expr> "^" <expr>
                 | <expr> "&" <expr>

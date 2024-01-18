@@ -27,7 +27,7 @@ struct vstr {
 
 static enum token_kind const KEYWORDS_FIRST = TOKEN_TRUE;
 static enum token_kind const KEYWORDS_LAST = TOKEN_EMBED;
-static enum token_kind const SIGILS_FIRST = TOKEN_SHL;
+static enum token_kind const SIGILS_FIRST = TOKEN_PLUS_PERCENT_ASSIGN;
 static enum token_kind const SIGILS_LAST = TOKEN_SEMICOLON;
 static struct vstr token_kind_vstrs[TOKEN_EOF + 1u] = {
     // Keywords
@@ -71,8 +71,21 @@ static struct vstr token_kind_vstrs[TOKEN_EOF + 1u] = {
     [TOKEN_UNINIT] = VSTR_INIT_STR_LITERAL("uninit"),
     [TOKEN_EMBED] = VSTR_INIT_STR_LITERAL("embed"),
     // Sigils
+    [TOKEN_PLUS_PERCENT_ASSIGN] = VSTR_INIT_STR_LITERAL("+%="),
+    [TOKEN_DASH_PERCENT_ASSIGN] = VSTR_INIT_STR_LITERAL("-%="),
+    [TOKEN_STAR_PERCENT_ASSIGN] = VSTR_INIT_STR_LITERAL("*%="),
+    [TOKEN_PLUS_ASSIGN] = VSTR_INIT_STR_LITERAL("+="),
+    [TOKEN_DASH_ASSIGN] = VSTR_INIT_STR_LITERAL("-="),
+    [TOKEN_STAR_ASSIGN] = VSTR_INIT_STR_LITERAL("*="),
+    [TOKEN_FSLASH_ASSIGN] = VSTR_INIT_STR_LITERAL("/="),
+    [TOKEN_PERCENT_ASSIGN] = VSTR_INIT_STR_LITERAL("%="),
+    [TOKEN_SHL_ASSIGN] = VSTR_INIT_STR_LITERAL("<<="),
+    [TOKEN_SHR_ASSIGN] = VSTR_INIT_STR_LITERAL(">>="),
     [TOKEN_SHL] = VSTR_INIT_STR_LITERAL("<<"),
     [TOKEN_SHR] = VSTR_INIT_STR_LITERAL(">>"),
+    [TOKEN_PIPE_ASSIGN] = VSTR_INIT_STR_LITERAL("|="),
+    [TOKEN_CARET_ASSIGN] = VSTR_INIT_STR_LITERAL("^="),
+    [TOKEN_AMPERSAND_ASSIGN] = VSTR_INIT_STR_LITERAL("&="),
     [TOKEN_EQ] = VSTR_INIT_STR_LITERAL("=="),
     [TOKEN_NE] = VSTR_INIT_STR_LITERAL("!="),
     [TOKEN_LE] = VSTR_INIT_STR_LITERAL("<="),
