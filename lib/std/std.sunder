@@ -437,7 +437,7 @@ struct linear_allocator {
 
         if new_size < old_size {
             if is_tail_allocation {
-                self.*._cur_offset = self.*._cur_offset - (old_size - new_size);
+                self.*._cur_offset -= old_size - new_size;
             }
             return std::result[[*any, std::error]]::init_value(ptr);
         }
@@ -446,7 +446,7 @@ struct linear_allocator {
             if (new_size - old_size) > (countof(self.*._buf) - self.*._cur_offset) {
                 return std::result[[*any, std::error]]::init_error(std::error::ALLOCATION_FAILURE);
             }
-            self.*._cur_offset = self.*._cur_offset + (new_size - old_size);
+            self.*._cur_offset += new_size - old_size;
             return std::result[[*any, std::error]]::init_value(ptr);
         }
 
@@ -921,7 +921,7 @@ struct str { # namespace
             if i == countof(target) {
                 return std::optional[[usize]]::init_value(start);
             }
-            start = start + 1;
+            start += 1;
         }
 
         return std::optional[[usize]]::EMPTY;
@@ -949,7 +949,7 @@ struct str { # namespace
             }
 
             if start == 0 { break; }
-            start = start - 1;
+            start -= 1;
         }
 
         return std::optional[[usize]]::EMPTY;
@@ -1029,13 +1029,13 @@ struct str { # namespace
         var cur = 0u;
         for cur < countof(str) {
             if not std::str::starts_with(str[cur:countof(str)], delimiter) {
-                cur = cur + 1;
+                cur += 1;
                 continue;
             }
 
             slice = std::slice[[[]byte]]::resize_with_allocator(allocator, slice, countof(slice) + 1);
             slice[countof(slice) - 1] = (:[]byte){&str[start], cur - start};
-            cur = cur + countof(delimiter);
+            cur += countof(delimiter);
             start = cur;
         }
 
@@ -1103,7 +1103,7 @@ struct str_reader {
         var src = self.*._str[self.*._idx : self.*._idx + min_count];
         std::slice[[byte]]::copy(dst, src);
 
-        self.*._idx = self.*._idx + min_count;
+        self.*._idx += min_count;
         return std::result[[usize, std::error]]::init_value(min_count);
     }
 }
@@ -1134,7 +1134,7 @@ struct str_writer {
         var dst = self.*._str[self.*._idx : self.*._idx + min_count];
         std::slice[[byte]]::copy(dst, src);
 
-        self.*._idx = self.*._idx + min_count;
+        self.*._idx += min_count;
         return std::result[[usize, std::error]]::init_value(min_count);
     }
 }
@@ -1210,12 +1210,12 @@ struct ascii { # namespace
 
         # Trim front.
         for start != end and std::ascii::is_whitespace(str[start]) {
-            start = start + 1;
+            start += 1;
         }
 
         # Trim back.
         for end != start and std::ascii::is_whitespace(str[end - 1]) {
-            end = end - 1;
+            end -= 1;
         }
 
         return str[start:end];
@@ -1401,7 +1401,7 @@ func write_all(writer: std::writer, buf: []byte) std::result[[void, std::error]]
         if result.is_error() {
             return std::result[[void, std::error]]::init_error(result.error());
         }
-        written = written + result.value();
+        written += result.value();
     }
     return std::result[[void, std::error]]::init_value(void::VALUE);
 }
@@ -1456,7 +1456,7 @@ func write_format(writer: std::writer, format: []byte, args: []std::formatter) s
             if format[end] != '{' and format[end] != '}' {
                 # "some{fmt}text"
                 #  ^^^^     ^^^^ Any non-'{' non-'}' character.
-                end = end + 1;
+                end += 1;
                 continue;
             }
 
@@ -1509,7 +1509,7 @@ func write_format(writer: std::writer, format: []byte, args: []std::formatter) s
             if format[end] != '{' and format[end] != '}' {
                 # "some{fmt}text"
                 #       ^^^ Any non-'{' non-'}' character.
-                end = end + 1;
+                end += 1;
                 continue;
             }
 
@@ -1538,7 +1538,7 @@ func write_format(writer: std::writer, format: []byte, args: []std::formatter) s
             }
             start = end + 1;
             end = start;
-            arg = arg + 1;
+            arg += 1;
             state = STATE_WALKING;
             continue;
         }
@@ -1665,7 +1665,7 @@ func forward_align(addr: usize, align: usize) usize {
         # If the address is not aligned, then push the address to the next
         # value which is aligned.
         if modulo != 0 {
-            addr = addr + (align - modulo);
+            addr += align - modulo;
         }
 
         return addr;
@@ -1674,7 +1674,7 @@ func forward_align(addr: usize, align: usize) usize {
     # Align is not a power of two.
     # Count up until the address meets the specified alignment.
     for (addr % align) != 0 {
-        addr = addr + 1;
+        addr += 1;
     }
 
     return addr;
@@ -1835,19 +1835,19 @@ func sort_with_comparator[[T]](slice: []T, comparator: func(*T, *T) ssize) void 
     for i in countof(slice) {
         if i0 == countof(slice0) {
             slice[i] = slice1[i1];
-            i1 = i1 + 1;
+            i1 += 1;
         }
         elif i1 == countof(slice1) {
             slice[i] = slice0[i0];
-            i0 = i0 + 1;
+            i0 += 1;
         }
         elif comparator(&slice0[i0], &slice1[i1]) < 0 {
             slice[i] = slice0[i0];
-            i0 = i0 + 1;
+            i0 += 1;
         }
         else {
             slice[i] = slice1[i1];
-            i1 = i1 + 1;
+            i1 += 1;
         }
     }
 }
@@ -1961,11 +1961,11 @@ struct big_integer {
         # Parse optional sign (+ or -).
         var sign: ssize = +1;
         if (end - cur) > countof("+") and str[cur] == '+' {
-            cur = cur + 1;
+            cur += 1;
         }
         if (end - cur) > countof("-") and str[cur] == '-' {
             sign = -1;
-            cur = cur + 1;
+            cur += 1;
         }
 
         # Parse radix.
@@ -1976,15 +1976,15 @@ struct big_integer {
 
             if is_bin {
                 radix = 2;
-                cur = cur + countof("0b");
+                cur += countof("0b");
             }
             elif is_oct {
                 radix = 8;
-                cur = cur + countof("0o");
+                cur += countof("0o");
             }
             elif is_hex {
                 radix = 16;
-                cur = cur + countof("0x");
+                cur += countof("0x");
             }
             else {
                 radix = 10;
@@ -2003,7 +2003,7 @@ struct big_integer {
         var self = big_integer::init_with_allocator(allocator);
         for cur != end {
             var c = str[cur];
-            cur = cur + 1;
+            cur += 1;
 
             var digit: usize = 0;
             if '0' <= c and c <= '9' {
@@ -2107,7 +2107,7 @@ struct big_integer {
     func hash(self: *big_integer) usize {
         var hash = 0u;
         for i in countof(self.*._limbs) {
-            hash = hash +% (:usize)self.*._limbs[i];
+            hash +%= (:usize)self.*._limbs[i];
         }
         return hash;
     }
@@ -2153,7 +2153,7 @@ struct big_integer {
         var is_digits_prefix = false;
         if fmt_idx < countof(fmt) and fmt[fmt_idx] == '#' {
             is_digits_prefix = true;
-            fmt_idx = fmt_idx + 1;
+            fmt_idx += 1;
         }
 
         var radix: std::big_integer = uninit;
@@ -2163,7 +2163,7 @@ struct big_integer {
 
         if fmt_idx < countof(fmt) {
             var c = fmt[fmt_idx];
-            fmt_idx = fmt_idx + 1;
+            fmt_idx += 1;
 
             if c == 'd' {
                 radix = std::big_integer::init_from_int[[usize]](10);
@@ -2257,7 +2257,7 @@ struct big_integer {
         # +1 * -1 == -1
         # -1 * -1 == +1
         #  0 * -1 ==  0
-        res.*._sign = res.*._sign * -1;
+        res.*._sign *= -1;
     }
 
     # res = abs(rhs)
@@ -2266,7 +2266,7 @@ struct big_integer {
         # +1 * +1 == +1
         # -1 * -1 == +1
         #  0 *  0 ==  0
-        res.*._sign = rhs.*._sign * rhs.*._sign;
+        res.*._sign *= res.*._sign;
     }
 
     # res = lhs + rhs
@@ -2563,7 +2563,7 @@ struct big_integer {
     func _normalize(self: *big_integer) void {
         var count = countof(self.*._limbs);
         for count != 0 and self.*._limbs[count - 1] == 0 {
-            count = count - 1;
+            count -= 1;
         }
 
         self.*._limbs = std::slice[[u32]]::resize_with_allocator(self.*._allocator, self.*._limbs, count);
@@ -2988,7 +2988,7 @@ struct vector[[T]] {
         var src = mem[index     : index + n];
         var dst = mem[index + 1 : index + n + 1];
         std::slice[[T]]::copy(dst, src);
-        self.*._count = self.*._count + 1;
+        self.*._count += 1;
 
         # [A][B][ ][C][D][E]
         # [A][B][X][C][D][E]
@@ -3011,7 +3011,7 @@ struct vector[[T]] {
         var dst = mem[index     : index + n];
         var res = mem[index];
         std::slice[[T]]::copy(dst, src);
-        self.*._count = self.*._count - 1;
+        self.*._count -= 1;
         return res;
     }
 
@@ -3246,7 +3246,7 @@ struct hash_map[[K, V]] {
                 }
                 self.*._elements[self.*._inserted.data()[idx]].index = cur;
                 self.*._inserted.data()[cur] = self.*._inserted.data()[idx];
-                cur = cur + 1;
+                cur += 1;
             }
             self.*._inserted.resize(cur);
         }
@@ -3261,8 +3261,8 @@ struct hash_map[[K, V]] {
                     .value = value,
                 };
                 self.*._inserted.push(index);
-                self.*._n = self.*._n + 1;
-                self.*._q = self.*._q + 1;
+                self.*._n += 1;
+                self.*._q += 1;
                 return std::optional[[std::key_value_pair[[K, V]]]]::EMPTY;
             }
 
@@ -3274,7 +3274,7 @@ struct hash_map[[K, V]] {
                     .value = value,
                 };
                 self.*._inserted.push(index);
-                self.*._n = self.*._n + 1;
+                self.*._n += 1;
                 return std::optional[[std::key_value_pair[[K, V]]]]::EMPTY;
             }
 
@@ -3320,7 +3320,7 @@ struct hash_map[[K, V]] {
                 };
                 self.*._elements[index].state = hash_map[[K, V]]::_STATE_DEL;
                 self.*._inserted.data()[self.*._elements[index].index] = std::hash_map[[K, V]]::_INDEX_DEL;
-                self.*._n = self.*._n - 1;
+                self.*._n -= 1;
                 return std::optional[[std::key_value_pair[[K, V]]]]::init_value(kv);
             }
             index = (index + 1) % countof(self.*._elements);
@@ -4202,7 +4202,7 @@ extend integer func _init_umax_from_str(str: []byte, radix: usize) std::result[[
 
     # Parse optional + sign.
     if (end - cur) > countof("+") and str[cur] == '+' {
-        cur = cur + 1;
+        cur += 1;
     }
 
     # Parse radix.
@@ -4213,15 +4213,15 @@ extend integer func _init_umax_from_str(str: []byte, radix: usize) std::result[[
 
         if is_bin {
             radix = 2;
-            cur = cur + countof("0b");
+            cur += countof("0b");
         }
         elif is_oct {
             radix = 8;
-            cur = cur + countof("0o");
+            cur += countof("0o");
         }
         elif is_hex {
             radix = 16;
-            cur = cur + countof("0x");
+            cur += countof("0x");
         }
         else {
             radix = 10;
@@ -4235,7 +4235,7 @@ extend integer func _init_umax_from_str(str: []byte, radix: usize) std::result[[
     var accum: std::umax = 0;
     for cur != end {
         var c = str[cur];
-        cur = cur + 1;
+        cur += 1;
 
         var digit: std::umax = 0;
         if '0' <= c and c <= '9' {
@@ -4258,12 +4258,12 @@ extend integer func _init_umax_from_str(str: []byte, radix: usize) std::result[[
         if accum != 0 and std::umax::MAX / accum < (:typeof(accum))radix {
             return std::result[[std::umax, std::error]]::init_error(std::error::RESULT_OUT_OF_RANGE);
         }
-        accum = accum * (:typeof(accum))radix;
+        accum *= (:typeof(accum))radix;
 
         if std::umax::MAX - accum < (:typeof(accum))digit {
             return std::result[[std::umax, std::error]]::init_error(std::error::RESULT_OUT_OF_RANGE);
         }
-        accum = accum + (:typeof(accum))digit;
+        accum += (:typeof(accum))digit;
     }
 
     return std::result[[std::umax, std::error]]::init_value(accum);
@@ -4398,7 +4398,7 @@ extend integer func _format_umax(int: std::umax, writer: std::writer, fmt: []byt
     var is_digits_prefix = false;
     if fmt_idx < countof(fmt) and fmt[fmt_idx] == '#' {
         is_digits_prefix = true;
-        fmt_idx = fmt_idx + 1;
+        fmt_idx += 1;
     }
 
     var radix: usize = 10;
@@ -4407,7 +4407,7 @@ extend integer func _format_umax(int: std::umax, writer: std::writer, fmt: []byt
 
     if fmt_idx < countof(fmt) {
         var c = fmt[fmt_idx];
-        fmt_idx = fmt_idx + 1;
+        fmt_idx += 1;
 
         if c == 'd' {
             # Decimal defaults already set.
@@ -4445,15 +4445,15 @@ extend integer func _format_umax(int: std::umax, writer: std::writer, fmt: []byt
     if int == 0 {
         # Write a single zero digit.
         output[output_index] = '0';
-        output_index = output_index - 1;
+        output_index -= 1;
     }
     for int != 0 {
-        var div: std::umax = int / (:std::umax)radix;
-        var rem: std::umax = int - (:std::umax)radix * (int / (:std::umax)radix);
+        var div = int / (:std::umax)radix;
+        var rem = int - (:std::umax)radix * (int / (:std::umax)radix);
 
         var digit = digits_table[(:usize)rem];
         output[output_index] = digit;
-        output_index = output_index - 1;
+        output_index -= 1;
 
         int = div;
     }
@@ -4461,7 +4461,7 @@ extend integer func _format_umax(int: std::umax, writer: std::writer, fmt: []byt
     if is_digits_prefix and countof(digits_prefix) != 0 {
         for i in countof(digits_prefix) {
             output[output_index] = digits_prefix[countof(digits_prefix) - i - 1];
-            output_index = output_index - 1;
+            output_index -= 1;
         }
     }
 
