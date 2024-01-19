@@ -3,30 +3,33 @@ import "std";
 func normal() void {
     # Skipping '\0' and since it is a pain to check.
     # Using newline for the escaped hex sequence.
-    let str = "hello\t\n\'\"\x0A";
+    var string = std::string::init_from_str("hello\t\n\'\"\x0A");
+    defer string.fini();
     std::print_format_line(
         std::out(),
         "{}",
         (:[]std::formatter)[
-            std::formatter::init[[[]byte]](&str)]);
+            std::formatter::init[[std::string]](&string)]);
 }
 
 func escaped_with_format_e() void {
-    let str = "hello\t\n\'\"\x10\xAB";
+    var string = std::string::init_from_str("hello\t\n\'\"\x10\xAB");
+    defer string.fini();
     std::print_format_line(
         std::out(),
         "{e}",
         (:[]std::formatter)[
-            std::formatter::init[[[]byte]](&str)]);
+            std::formatter::init[[std::string]](&string)]);
 }
 
 func escaped_with_format_escaped() void {
-    let str = "hello\t\n\'\"\x10\xAB";
+    var string = std::string::init_from_str("hello\t\n\'\"\x10\xAB");
+    defer string.fini();
     std::print_format_line(
         std::out(),
         "{escaped}",
         (:[]std::formatter)[
-            std::formatter::init[[[]byte]](&str)]);
+            std::formatter::init[[std::string]](&string)]);
 }
 
 func main() void {

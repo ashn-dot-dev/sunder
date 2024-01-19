@@ -5074,16 +5074,16 @@ extend []byte func hash(self: *[]byte) usize {
 }
 
 # Accepted format specifiers:
-#   ""  => verbatim (default)
-#   "e" => escaped (e.g. "\0\t\n\'\"\xFFabc)
+#   ""             => verbatim (default)
+#   "e", "escaped" => escaped (e.g. "\0\t\n\'\"\xFFabc)
 extend []byte func format(self: *[]byte, writer: std::writer, fmt: []byte) std::result[[void, std::error]] {
     # Format specifier: ""
     if countof(fmt) == 0 {
         return std::write_all(writer, *self);
     }
 
-    # Format specifier: "e"
-    if countof(fmt) == 1 and fmt[0] == 'e' {
+    # Format specifiers: "e", "escaped"
+    if std::str::eq(fmt, "e") or std::str::eq(fmt, "escaped") {
         for i in countof(*self) {
             var c = self.*[i];
             if c == '\0' {
