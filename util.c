@@ -22,11 +22,6 @@ STATIC_ASSERT(CHAR_BIT_IS_8, CHAR_BIT == 8);
 STATIC_ASSERT(UMAX_WIDTH, UINTMAX_MAX >= UINT64_MAX);
 STATIC_ASSERT(SMAX_WITDH, INTMAX_MIN <= INT64_MIN && INTMAX_MAX >= INT64_MAX);
 
-// XXX: MacOS does not define `__STDC_IEC_559__`!
-//#if !defined(__STDC_IEC_559__) && !defined(__GCC_IEC_559)
-//#    error "IEEE-754 floating point is not fully supported"
-//#endif
-
 static int
 cstr_vpcmp(void const* lhs, void const* rhs)
 {
