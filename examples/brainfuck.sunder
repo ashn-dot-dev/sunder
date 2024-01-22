@@ -43,7 +43,7 @@ func main() void {
     for i in source_size {
         lines[i] = line;
         if source[i] == '\n' {
-            line = line + 1;
+            line += 1;
             continue;
         }
         if source[i] == '[' {
@@ -73,57 +73,57 @@ func main() void {
         std::exit(std::EXIT_FAILURE);
     }
 
-    var source_index: usize = 0;
+    var source_index = 0u;
     for source_index < source_size {
         var cur: byte = source[source_index];
 
         if cur == '>' {
-            cells_index = cells_index + 1;
-            source_index = source_index + 1;
+            cells_index += 1;
+            source_index += 1;
             continue;
         }
         if cur == '<' {
-            cells_index = cells_index - 1;
-            source_index = source_index + 1;
+            cells_index -= 1;
+            source_index += 1;
             continue;
         }
         if cur == '+' {
-            cells[cells_index] = (:u8)((:ssize)cells[cells_index] + 1);
-            source_index = source_index + 1;
+            cells[cells_index] +%= 1;
+            source_index += 1;
             continue;
         }
         if cur == '-' {
-            cells[cells_index] = (:u8)((:ssize)cells[cells_index] - 1);
-            source_index = source_index + 1;
+            cells[cells_index] -%= 1;
+            source_index += 1;
             continue;
         }
         if cur == '.' {
             std::print(std::out(), (:[]byte){(:*byte)&cells[cells_index], 1});
-            source_index = source_index + 1;
+            source_index += 1;
             continue;
         }
         if cur == ',' {
-            var b: byte = 0;
+            var b = 0y;
             var input = std::input();
             var result = input.read((:[]byte){&b, 1});
             if result.value() != 0 { # Only update on non-EOF.
                cells[cells_index] = (:u8)b;
             }
-            source_index = source_index + 1;
+            source_index += 1;
             continue;
         }
         if cur == '[' {
             if cells[cells_index] == 0 {
                 source_index = jumps[source_index];
             }
-            source_index = source_index + 1;
+            source_index += 1;
             continue;
         }
         if cur == ']' {
             source_index = jumps[source_index];
             continue;
         }
-        source_index = source_index + 1;
+        source_index += 1;
     }
 }
 
