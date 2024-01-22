@@ -34,7 +34,6 @@ GNU_BASE = \
 	-Werror=vla
 GNU_DBG = $(GNU_BASE) -O0 -g
 GNU_REL = $(GNU_BASE) -Os -DNDEBUG
-SANITIZE = -fsanitize=address -fsanitize=leak -fsanitize=undefined
 
 CC = c99
 CFLAGS = $(C99_REL)

@@ -47,7 +47,6 @@ $ make <targets> CFLAGS='$(C99_REL)'  # POSIX c99 (release)
 
 $ # Use CC=clang for Clang or CC=gcc for GCC
 $ make <targets> CC=clang CFLAGS='$(GNU_DBG)'              # clang/gcc (debug)
-$ make <targets> CC=clang CFLAGS='$(GNU_DBG) $(SANITIZE)'  # clang/gcc (debug with Address Sanitizer)
 $ make <targets> CC=clang CFLAGS='$(GNU_REL)'              # clang/gcc (release)
 ```
 
