@@ -3414,7 +3414,11 @@ resolve_stmt_when(struct resolver* resolver, struct cst_stmt const* stmt)
             value = eval_rvalue(condition);
         }
         assert(value == NULL || value->type->kind == TYPE_BOOL);
-        if (value == NULL || value->data.boolean) {
+        bool const should_resolve_when = value == NULL || value->data.boolean;
+        if (value != NULL) {
+            value_del(value);
+        }
+        if (should_resolve_when) {
             block = resolve_block(
                 resolver,
                 resolver->current_symbol_table,
