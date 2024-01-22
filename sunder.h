@@ -158,6 +158,8 @@ cstr_ends_with(char const* cstr, char const* target);
 // Returns true if lhs and rhs are equal, ignoring case.
 bool
 cstr_eq_ignore_case(char const* lhs, char const* rhs);
+char const* // interned
+cstr_replace(char const* cstr, char const* target, char const* replacement);
 
 // Initialize the interned string set.
 void

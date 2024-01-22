@@ -248,11 +248,29 @@ context_init(void)
     s_context.env.SUNDER_ARCH = s_context.env.SUNDER_ARCH != NULL
         ? intern_cstr(s_context.env.SUNDER_ARCH)
         : intern_cstr(STRINGIFY(SUNDER_DEFAULT_ARCH));
+    for (char const* p = s_context.env.SUNDER_ARCH; *p; ++p) {
+        if (!safe_isalnum(*p)) {
+            fatal(
+                NO_LOCATION,
+                "SUNDER_ARCH `%s` contains disallowed character `%c`",
+                s_context.env.SUNDER_ARCH,
+                *p);
+        }
+    }
 
     s_context.env.SUNDER_HOST = getenv("SUNDER_HOST");
     s_context.env.SUNDER_HOST = s_context.env.SUNDER_HOST != NULL
         ? intern_cstr(s_context.env.SUNDER_HOST)
         : intern_cstr(STRINGIFY(SUNDER_DEFAULT_HOST));
+    for (char const* p = s_context.env.SUNDER_HOST; *p; ++p) {
+        if (!safe_isalnum(*p)) {
+            fatal(
+                NO_LOCATION,
+                "SUNDER_HOST `%s` contains disallowed character `%c`",
+                s_context.env.SUNDER_HOST,
+                *p);
+        }
+    }
 
     s_context.env.SUNDER_SEARCH_PATH = getenv("SUNDER_SEARCH_PATH");
     s_context.env.SUNDER_SEARCH_PATH = s_context.env.SUNDER_SEARCH_PATH != NULL

@@ -22,6 +22,39 @@ type off_t   = slonglong;
 type size_t  = ulong;
 type ssize_t = slong;
 
+# emscripten/system/lib/libc/musl/include/fcntl.h
+let O_RDONLY:    sint = 0x00000000;
+let O_WRONLY:    sint = 0x00000001;
+let O_RDWR:      sint = 0x00000002;
+# emscripten/system/lib/libc/musl/arch/generic/bits/fcntl.h
+let O_CREAT:     sint = 0o0000100;
+let O_TRUNC:     sint = 0o0001000;
+let O_APPEND:    sint = 0o0002000;
+
+# emscripten/system/include/wasi/api.h
+let __WASI_WHENCE_SET: u8 = 0;
+let __WASI_WHENCE_CUR: u8 = 1;
+let __WASI_WHENCE_END: u8 = 2;
+
+# emscripten/system/lib/libc/musl/include/fcntl.h
+let SEEK_SET: sint = (:sint)__WASI_WHENCE_SET;
+let SEEK_CUR: sint = (:sint)__WASI_WHENCE_CUR;
+let SEEK_END: sint = (:sint)__WASI_WHENCE_END;
+
+# emscripten/system/lib/libc/musl/include/limits.h
+let PATH_MAX: usize = 4096;
+
+# emscripten/system/lib/libc/musl/arch/generic/bits/dirent.h
+struct dirent {
+    var d_ino: ino_t;
+    var d_off: off_t;
+    var d_reclen: ushort;
+    var d_type: uchar;
+    var d_name: [256]char;
+}
+
+extern type DIR;
+
 let ERRORS = (:[][]byte)[
     "[system error 0] No error information",
     "[system error 1] Argument list too long",
@@ -178,164 +211,3 @@ let ERRORS = (:[][]byte)[
     "[system error 152] Key has been revoked",
     "[system error 153] Key was rejected by service",
 ];
-
-# Transform an errno value into an `std::error`-compatible pointer.
-func error(errno: ssize) *[]byte {
-    if errno < 0 or (:usize)errno >= countof(ERRORS) {
-        let UNKNOWN = "No error information";
-        return &UNKNOWN;
-    }
-    return &sys::ERRORS[(:usize)errno];
-}
-
-let STDIN_FILENO:  sint = 0;
-let STDOUT_FILENO: sint = 1;
-let STDERR_FILENO: sint = 2;
-
-# emscripten/system/lib/libc/musl/include/fcntl.h
-let O_RDONLY:    sint = 0x00000000;
-let O_WRONLY:    sint = 0x00000001;
-let O_RDWR:      sint = 0x00000002;
-# emscripten/system/lib/libc/musl/arch/generic/bits/fcntl.h
-let O_CREAT:     sint = 0o0000100;
-let O_TRUNC:     sint = 0o0001000;
-let O_APPEND:    sint = 0o0002000;
-
-# emscripten/system/include/wasi/api.h
-let __WASI_WHENCE_SET: u8 = 0;
-let __WASI_WHENCE_CUR: u8 = 1;
-let __WASI_WHENCE_END: u8 = 2;
-
-# emscripten/system/lib/libc/musl/include/fcntl.h
-let SEEK_SET: sint = (:sint)__WASI_WHENCE_SET;
-let SEEK_CUR: sint = (:sint)__WASI_WHENCE_CUR;
-let SEEK_END: sint = (:sint)__WASI_WHENCE_END;
-
-# emscripten/system/lib/libc/musl/include/limits.h
-let PATH_MAX: usize = 4096;
-
-# emscripten/system/lib/libc/musl/arch/generic/bits/dirent.h
-struct dirent {
-    var d_ino: ino_t;
-    var d_off: off_t;
-    var d_reclen: ushort;
-    var d_type: uchar;
-    var d_name: [256]char;
-}
-
-extern type DIR;
-
-extern func read(fd: sint, buf: *char, count: size_t) ssize;
-extern func write(fd: sint, buf: *char, count: size_t) ssize;
-extern func open(filename: *char, flags: sint, mode: mode_t) ssize;
-extern func close(fd: sint) ssize;
-extern func lseek(fd: sint, offset: off_t, whence: sint) ssize;
-extern func exit(error_code: sint) void;
-extern func mkdir(pathname: *byte, mode: mode_t) ssize;
-extern func rmdir(pathname: *byte) ssize;
-extern func unlink(pathname: *byte) ssize;
-extern func opendir(path: *char) *DIR;
-extern func closedir(dir: *DIR) sint;
-extern func readdir(dir: *DIR) *dirent;
-
-extern var argc: usize;
-extern var argv: **byte;
-extern var envp: **byte;
-
-extern func get_errno() sint;
-extern func set_errno(value: sint) void;
-extern func allocate(align: usize, size: usize) *any;
-extern func deallocate(ptr: *any, align: usize, size: usize) void;
-
-extern func dump_bytes(addr: *any, size: usize) void;
-func dump[[T]](object: T) void {
-    dump_bytes(&object, sizeof(T));
-}
-
-extern func str_to_f32(out: *f32, start: *byte, count: usize) bool;
-extern func str_to_f64(out: *f64, start: *byte, count: usize) bool;
-
-extern func f32_to_str(buf: *byte, buf_size: usize, f: f32, digits: ssize) bool;
-extern func f64_to_str(buf: *byte, buf_size: usize, f: f64, digits: ssize) bool;
-
-extern func f32_abs(x: f32) f32;
-extern func f32_min(x: f32, y: f32) f32;
-extern func f32_max(x: f32, y: f32) f32;
-
-extern func f64_abs(x: f64) f64;
-extern func f64_min(x: f64, y: f64) f64;
-extern func f64_max(x: f64, y: f64) f64;
-
-# Exponential Functions
-extern func f32_ln(x: f32) f32;
-extern func f32_log2(x: f32) f32;
-extern func f32_log10(x: f32) f32;
-
-extern func f64_ln(x: f64) f64;
-extern func f64_log2(x: f64) f64;
-extern func f64_log10(x: f64) f64;
-
-# Power Functions
-extern func f32_sqrt(x: f32) f32;
-extern func f32_cbrt(x: f32) f32;
-extern func f32_hypot(x: f32, y: f32) f32;
-extern func f32_pow(base: f32, exponent: f32) f32;
-
-extern func f64_sqrt(x: f64) f64;
-extern func f64_cbrt(x: f64) f64;
-extern func f64_hypot(x: f64, y: f64) f64;
-extern func f64_pow(base: f64, exponent: f64) f64;
-
-# Trigonometric Functions
-extern func f32_sin(x: f32) f32;
-extern func f32_cos(x: f32) f32;
-extern func f32_tan(x: f32) f32;
-extern func f32_asin(x: f32) f32;
-extern func f32_acos(x: f32) f32;
-extern func f32_atan(x: f32) f32;
-extern func f32_atan2(y: f32, x: f32) f32;
-
-extern func f64_sin(x: f64) f64;
-extern func f64_cos(x: f64) f64;
-extern func f64_tan(x: f64) f64;
-extern func f64_asin(x: f64) f64;
-extern func f64_acos(x: f64) f64;
-extern func f64_atan(x: f64) f64;
-extern func f64_atan2(y: f64, x: f64) f64;
-
-# Hyperbolic Functions
-extern func f32_sinh(x: f32) f32;
-extern func f32_cosh(x: f32) f32;
-extern func f32_tanh(x: f32) f32;
-extern func f32_asinh(x: f32) f32;
-extern func f32_acosh(x: f32) f32;
-extern func f32_atanh(x: f32) f32;
-
-extern func f64_sinh(x: f64) f64;
-extern func f64_cosh(x: f64) f64;
-extern func f64_tanh(x: f64) f64;
-extern func f64_asinh(x: f64) f64;
-extern func f64_acosh(x: f64) f64;
-extern func f64_atanh(x: f64) f64;
-
-# Rounding Functions
-extern func f32_ceil(x: f32) f32;
-extern func f32_floor(x: f32) f32;
-extern func f32_trunc(x: f32) f32;
-extern func f32_round(x: f32) f32;
-
-extern func f64_ceil(x: f64) f64;
-extern func f64_floor(x: f64) f64;
-extern func f64_trunc(x: f64) f64;
-extern func f64_round(x: f64) f64;
-
-# Classification Functions
-extern func f32_is_finite(x: f32) bool;
-extern func f32_is_normal(x: f32) bool;
-extern func f32_is_inf(x: f32) bool;
-extern func f32_is_nan(x: f32) bool;
-
-extern func f64_is_finite(x: f64) bool;
-extern func f64_is_normal(x: f64) bool;
-extern func f64_is_inf(x: f64) bool;
-extern func f64_is_nan(x: f64) bool;

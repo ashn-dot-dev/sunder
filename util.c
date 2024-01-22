@@ -471,6 +471,24 @@ cstr_eq_ignore_case(char const* lhs, char const* rhs)
     return true;
 }
 
+char const*
+cstr_replace(char const* cstr, char const* target, char const* replacement)
+{
+    struct string* const s = string_new("", 0);
+    for (char const* cur = cstr; *cur != '\0';) {
+        if (cstr_starts_with(cur, target)) {
+            string_append_cstr(s, replacement);
+            cur += strlen(target);
+            continue;
+        }
+        string_append(s, cur, 1u);
+        cur += 1;
+    }
+    char const* const interned = intern(string_start(s), string_count(s));
+    string_del(s);
+    return interned;
+}
+
 // Variation of djb2 that hashes a start-count pair.
 static unsigned long
 hash_djb2(char const* start, size_t count)

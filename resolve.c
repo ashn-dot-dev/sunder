@@ -1581,6 +1581,12 @@ canonical_search_path(char const* module_path, char const* search_path)
     assert(module_path != NULL);
     assert(search_path != NULL);
 
+    // Text replace {ARCH} and {HOST} with $SUNDER_HOST and $SUNDER_ARCH.
+    search_path =
+        cstr_replace(search_path, "{ARCH}", context()->env.SUNDER_ARCH);
+    search_path =
+        cstr_replace(search_path, "{HOST}", context()->env.SUNDER_HOST);
+
     char const* result = NULL;
 
     // Path relative to the current module.
