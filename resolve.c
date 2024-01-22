@@ -2144,10 +2144,6 @@ resolve_decl_struct(struct resolver* resolver, struct cst_decl const* decl)
     for (size_t i = 0; i < members_count; ++i) {
         for (size_t j = i + 1; j < members_count; ++j) {
             if (members[i]->name == members[j]->name) {
-                // XXX: Calling sbuf_fini here because GCC 8.3 ASan will think
-                // we leak even though we hold a valid path to the buffer.
-                sbuf_fini(type->data.struct_.member_variables);
-
                 fatal(
                     members[j]->location,
                     "duplicate definition of member `%s`",
@@ -2215,10 +2211,6 @@ resolve_decl_union(struct resolver* resolver, struct cst_decl const* decl)
     for (size_t i = 0; i < members_count; ++i) {
         for (size_t j = i + 1; j < members_count; ++j) {
             if (members[i]->name == members[j]->name) {
-                // XXX: Calling sbuf_fini here because GCC 8.3 ASan will think
-                // we leak even though we hold a valid path to the buffer.
-                sbuf_fini(type->data.union_.member_variables);
-
                 fatal(
                     members[j]->location,
                     "duplicate definition of member `%s`",
@@ -2853,10 +2845,6 @@ complete_enum(
     for (size_t i = 0; i < values_count; ++i) {
         for (size_t j = i + 1; j < values_count; ++j) {
             if (values[i]->identifier.name == values[j]->identifier.name) {
-                // XXX: Calling sbuf_fini here because GCC 8.3 ASan will think
-                // we leak even though we hold a valid path to the buffer.
-                sbuf_fini(type->data.union_.member_variables);
-
                 fatal(
                     values[j]->location,
                     "duplicate definition of enum value `%s`",
@@ -4495,6 +4483,7 @@ resolve_expr_init_struct(
 
         sbuf_push(initializer_exprs, expr);
     }
+    sbuf_freeze(initializer_exprs);
 
     // Ordered list of member variables corresponding to the member variables
     // defined by the struct type. The list is initialized to the length of
@@ -4507,6 +4496,7 @@ resolve_expr_init_struct(
     for (size_t i = 0; i < sbuf_count(member_variable_defs); ++i) {
         sbuf_push(member_variable_exprs, NULL);
     }
+    sbuf_freeze(member_variable_exprs);
 
     // True if the nth member variable has an initializer.
     // Used for detecting duplicate initializers or lack of initializers.
@@ -4514,12 +4504,6 @@ resolve_expr_init_struct(
     for (size_t i = 0; i < sbuf_count(member_variable_defs); ++i) {
         sbuf_push(member_variable_inits, false);
     }
-
-    // XXX: Freezing these stretchy buffers here before any calls to fatal
-    // because GCC 8.3 ASan will think we leak even though we hold a valid path
-    // to the head of each stretchy buffer.
-    sbuf_freeze(initializer_exprs);
-    sbuf_freeze(member_variable_exprs);
     sbuf_freeze(member_variable_inits);
 
     for (size_t i = 0; i < sbuf_count(initializers); ++i) {
