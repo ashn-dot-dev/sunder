@@ -3895,8 +3895,10 @@ resolve_stmt_assign(struct resolver* resolver, struct cst_stmt const* stmt)
         struct token op = stmt->data.assign.op;
         op.kind = tok;
 
-        struct cst_expr const* const cst = cst_expr_new_binary(
+        struct cst_expr* const cst = cst_expr_new_binary(
             op, stmt->data.assign.lhs, stmt->data.assign.rhs);
+        freeze(cst);
+
         struct expr const* const ast = resolve_expr_binary(resolver, cst);
         (void)ast; // The AST node is currently unused.
     }
