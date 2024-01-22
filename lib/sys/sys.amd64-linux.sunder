@@ -1,27 +1,6 @@
 # Linux x86-64 System Interface
 namespace sys;
 
-# C Type             | Size | Alignment | Sunder Type
-# -------------------+------+-----------+------------
-# char               | 1    | 1         | byte
-# signed   char      | 1    | 1         | s8
-# unsigned char      | 1    | 1         | u8
-# signed   short     | 2    | 2         | s16
-# unsigned short     | 2    | 2         | u16
-# signed   int       | 4    | 4         | s32
-# unsigned int       | 4    | 4         | u32
-# signed   long      | 8    | 8         | ssize
-# unsigned long      | 8    | 8         | usize
-# signed   long long | 8    | 8         | s64
-# unsigned long long | 8    | 8         | u64
-#
-# POSIX types obtainted through GDB:
-# ino_t   : type = long unsigned int
-# mode_t  : type = unsigned int
-# off_t   : type = long int
-# size_t  : type = long unsigned int
-# ssize_t : type = long int
-
 type smax = s64;
 type umax = u64;
 
@@ -43,21 +22,19 @@ type off_t   = slong;
 type size_t  = ulong;
 type ssize_t = slong;
 
-let O_RDONLY:    sint = 0x00000000;
-let O_WRONLY:    sint = 0x00000001;
-let O_RDWR:      sint = 0x00000002;
-let O_CREAT:     sint = 0x00000040;
-let O_TRUNC:     sint = 0x00000200;
-let O_APPEND:    sint = 0x00000400;
+let O_RDONLY: sint = 0x00000000;
+let O_WRONLY: sint = 0x00000001;
+let O_RDWR:   sint = 0x00000002;
+let O_CREAT:  sint = 0x00000040;
+let O_TRUNC:  sint = 0x00000200;
+let O_APPEND: sint = 0x00000400;
 
 let SEEK_SET: sint = 0x0;
 let SEEK_CUR: sint = 0x1;
 let SEEK_END: sint = 0x2;
 
-# linux/include/uapi/linux/limits.h:
-let PATH_MAX: usize = 4096; # chars in a path name including nul
+let PATH_MAX: usize = 4096;
 
-# musl/arch/generic/bits/dirent.h:
 struct dirent {
     var d_ino: ino_t;
     var d_off: off_t;

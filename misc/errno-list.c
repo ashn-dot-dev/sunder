@@ -1,7 +1,7 @@
 // Similar to errno-list.sh, but uses strerror directly instead of errno(1).
 //
 // clang misc/errno-list.c && ./a.out
-// emcc -o errno-list.html misc/errno-list.c -sSINGLE_FILE --shell-file lib/sys/sys.wasm32.html
+// emcc -o errno-list.html misc/errno-list.c -sSINGLE_FILE --shell-file lib/sys/sys.wasm32-emscripten.html
 #include <stdio.h>
 #include <string.h>
 

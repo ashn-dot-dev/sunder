@@ -1,4 +1,5 @@
 // clang -std=c11 misc/sys-defs.c
+// emcc -o sys-defs.html misc/sys-defs.c -sSINGLE_FILE --shell-file lib/sys/sys.wasm32-emscripten.html
 #define _GNU_SOURCE
 
 #include <dirent.h>
@@ -83,7 +84,7 @@ main(void)
     fputc('\n', stdout);
 
 #define PRINT_SEEK_VALUE(value)                                                \
-    printf("let %-8s uint = 0x%01x;\n", #value ":", value)
+    printf("let %-8s sint = 0x%01x;\n", #value ":", value)
     PRINT_SEEK_VALUE(SEEK_SET);
     PRINT_SEEK_VALUE(SEEK_CUR);
     PRINT_SEEK_VALUE(SEEK_END);

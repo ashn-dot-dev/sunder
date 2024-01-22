@@ -22,29 +22,19 @@ type off_t   = slonglong;
 type size_t  = ulong;
 type ssize_t = slong;
 
-# emscripten/system/lib/libc/musl/include/fcntl.h
-let O_RDONLY:    sint = 0x00000000;
-let O_WRONLY:    sint = 0x00000001;
-let O_RDWR:      sint = 0x00000002;
-# emscripten/system/lib/libc/musl/arch/generic/bits/fcntl.h
-let O_CREAT:     sint = 0o0000100;
-let O_TRUNC:     sint = 0o0001000;
-let O_APPEND:    sint = 0o0002000;
+let O_RDONLY: sint = 0x00000000;
+let O_WRONLY: sint = 0x00000001;
+let O_RDWR:   sint = 0x00000002;
+let O_CREAT:  sint = 0x00000040;
+let O_TRUNC:  sint = 0x00000200;
+let O_APPEND: sint = 0x00000400;
 
-# emscripten/system/include/wasi/api.h
-let __WASI_WHENCE_SET: u8 = 0;
-let __WASI_WHENCE_CUR: u8 = 1;
-let __WASI_WHENCE_END: u8 = 2;
+let SEEK_SET: sint = 0x0;
+let SEEK_CUR: sint = 0x1;
+let SEEK_END: sint = 0x2;
 
-# emscripten/system/lib/libc/musl/include/fcntl.h
-let SEEK_SET: sint = (:sint)__WASI_WHENCE_SET;
-let SEEK_CUR: sint = (:sint)__WASI_WHENCE_CUR;
-let SEEK_END: sint = (:sint)__WASI_WHENCE_END;
-
-# emscripten/system/lib/libc/musl/include/limits.h
 let PATH_MAX: usize = 4096;
 
-# emscripten/system/lib/libc/musl/arch/generic/bits/dirent.h
 struct dirent {
     var d_ino: ino_t;
     var d_off: off_t;
