@@ -69,7 +69,7 @@ main(void)
 
     printf("== POSIX CONSTANTS ==\n");
 #define PRINT_O_VALUE(value)                                                   \
-    printf("let %-12s sint = 0x%08x;\n", #value ":", value)
+    printf("let %-9s sint = 0x%08x;\n", #value ":", value)
 
     PRINT_O_VALUE(O_RDONLY);
     PRINT_O_VALUE(O_WRONLY);
