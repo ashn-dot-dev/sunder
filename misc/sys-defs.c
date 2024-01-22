@@ -79,13 +79,17 @@ main(void)
     PRINT_O_VALUE(O_TRUNC);
     PRINT_O_VALUE(O_APPEND);
 #undef PRINT_O_VALUE
+
     fputc('\n', stdout);
+
 #define PRINT_SEEK_VALUE(value)                                                \
     printf("let %-8s uint = 0x%01x;\n", #value ":", value)
     PRINT_SEEK_VALUE(SEEK_SET);
     PRINT_SEEK_VALUE(SEEK_CUR);
     PRINT_SEEK_VALUE(SEEK_END);
 #undef PRINT_SEEK_VALUE
+
     fputc('\n', stdout);
+
     printf("let PATH_MAX: usize = %zu;\n", (size_t)PATH_MAX);
 }
