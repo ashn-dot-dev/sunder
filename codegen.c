@@ -3356,6 +3356,15 @@ codegen(
     }
     sbuf_push(backend_argv, intern_fmt("-I%s/lib/sys", SUNDER_HOME));
     sbuf_push(backend_argv, "-std=c11");
+#if 1
+    // Disable all warnings. Used to prevent unecessary warnings that would
+    // break Sunder tests/workflows if emitted by GCC/Clang.
+    //
+    // This backend argument should be removed with `#if 0` when testing for
+    // ISO C compliance with -pedantic and -pedantic-errors, as -w will prevent
+    // pedantic warnings/errors from being reported.
+    sbuf_push(backend_argv, "-w");
+#else
     sbuf_push(backend_argv, "-Wall");
     sbuf_push(backend_argv, "-Wextra");
     // Workaround for differences in some GCC and CLANG warning names.
@@ -3390,14 +3399,6 @@ codegen(
     /* sbuf_push(backend_argv, "-fmax-errors=1"); */
     // Clang-specific max errors.
     /* sbuf_push(backend_argv, "-ferror-limit=1"); */
-#if 1
-    // Disable all warnings. Used to future-proof against additional warnings
-    // that would break Sunder tests/workflows if added to GCC/Clang.
-    //
-    // This backend argument should be removed with `#if 0` when testing for
-    // ISO C compliance with -pedantic and -pedantic-errors, as -w will prevent
-    // pedantic warnings/errors from being reported.
-    sbuf_push(backend_argv, "-w");
 #endif
     sbuf_push(backend_argv, "-pipe"); // Pipe between phases of C compilation.
     sbuf_push(backend_argv, "-xc"); // Piping in source with language=c.
