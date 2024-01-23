@@ -3399,11 +3399,6 @@ codegen(
     // pedantic warnings/errors from being reported.
     sbuf_push(backend_argv, "-w");
 #endif
-#if 0
-    sbuf_push(backend_argv, "-fsanitize=address");
-    sbuf_push(backend_argv, "-fsanitize=leak");
-    sbuf_push(backend_argv, "-fsanitize=undefined");
-#endif
     sbuf_push(backend_argv, "-pipe"); // Pipe between phases of C compilation.
     sbuf_push(backend_argv, "-xc"); // Piping in source with language=c.
     sbuf_push(backend_argv, "-"); // Read piped source from stdin.
