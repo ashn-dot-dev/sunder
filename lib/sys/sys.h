@@ -647,7 +647,7 @@ sys_f32_to_str(
     }
     if (written > 0 && digits < 0) {
         char* cur = buf + written - 1;
-        while (cur != written && cur[0] == '0' && cur[-1] != '.') {
+        while (cur > buf && cur[0] == '0' && cur[-1] != '.') {
             *cur-- = '\0';
         }
     }
@@ -679,7 +679,7 @@ sys_f64_to_str(
     }
     if (written > 0 && digits < 0) {
         char* cur = buf + written - 1;
-        while (cur != written && cur[0] == '0' && cur[-1] != '.') {
+        while (cur > buf && cur[0] == '0' && cur[-1] != '.') {
             *cur-- = '\0';
         }
     }
