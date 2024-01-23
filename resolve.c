@@ -2461,9 +2461,8 @@ complete_struct(
 
     // XXX: Evil const cast.
     struct type* struct_type = (struct type*)symbol_xget_type(symbol);
-    // XXX: Evil const cast.
     struct symbol_table* const struct_symbols =
-        (struct symbol_table*)symbol_xget_type(symbol)->symbols;
+        symbol_xget_type(symbol)->symbols;
 
     sbuf(struct member_variable) member_variables = NULL;
 
@@ -2673,9 +2672,8 @@ complete_union(
 
     // XXX: Evil const cast.
     struct type* union_type = (struct type*)symbol_xget_type(symbol);
-    // XXX: Evil const cast.
     struct symbol_table* const union_symbols =
-        (struct symbol_table*)symbol_xget_type(symbol)->symbols;
+        symbol_xget_type(symbol)->symbols;
 
     sbuf(struct member_variable) member_variables = NULL;
 
