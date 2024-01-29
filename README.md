@@ -1,16 +1,20 @@
 # The Sunder Programming Language
-Sunder is a C-like systems programming language and compiler for x86-64 Linux,
-ARM64 Linux, ARM64 macOS, and WebAssembly.
+Sunder is a systems programming language for Unix-like platforms.
 
 ## Dependencies
 Sunder tooling should build and run on any supported machine satisfying the
 following dependencies:
 
 + POSIX-compatible `make`
-+ Supported toolchain containing:
-    + [`clang`](https://clang.llvm.org/) or [`gcc`](https://gcc.gnu.org/)
-    + [`emcc`](https://emscripten.org/) (WebAssembly code-generation only)
++ [`clang`](https://clang.llvm.org/) or [`gcc`](https://gcc.gnu.org/)
++ [`emcc`](https://emscripten.org/) (WebAssembly code-generation only)
 + `clang-format` (development only)
+
+Supported platforms include:
++ x86-64 Linux
++ ARM64 Linux
++ ARM64 macOS
++ WebAssembly (via Emscripten)
 
 The top-level Dockerfile defines a Debian image with dependencies for native
 x86-64 Linux development pre-installed. You can build and run the Docker image
@@ -46,8 +50,8 @@ $ make <targets> CFLAGS='$(C99_DBG)'  # POSIX c99 (debug)
 $ make <targets> CFLAGS='$(C99_REL)'  # POSIX c99 (release)
 
 $ # Use CC=clang for Clang or CC=gcc for GCC
-$ make <targets> CC=clang CFLAGS='$(GNU_DBG)'              # clang/gcc (debug)
-$ make <targets> CC=clang CFLAGS='$(GNU_REL)'              # clang/gcc (release)
+$ make <targets> CC=clang CFLAGS='$(GNU_DBG)'  # clang/gcc (debug)
+$ make <targets> CC=clang CFLAGS='$(GNU_REL)'  # clang/gcc (release)
 ```
 
 ## Installing
