@@ -1,0 +1,7 @@
+import "sys";
+func main() void {
+    # Ensure that sys::MAX_ALIGN is defined on all platforms.
+    assert defined(sys::MAX_ALIGN);
+    # Ensure that sys::MAX_ALIGN is of type usize.
+    sys::MAX_ALIGN == 0u;
+}

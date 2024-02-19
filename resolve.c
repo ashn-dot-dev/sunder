@@ -234,6 +234,8 @@ resolve_block(
     struct resolver* resolver,
     struct symbol_table* symbol_table,
     struct cst_block const* block);
+static struct block
+resolve_when(struct resolver* resolver, struct cst_stmt const* stmt);
 
 static struct stmt const* // optional
 resolve_stmt(struct resolver* resolver, struct cst_stmt const* stmt);
@@ -246,8 +248,6 @@ static struct stmt const*
 resolve_stmt_defer_expr(struct resolver* resolver, struct cst_stmt const* stmt);
 static struct stmt const*
 resolve_stmt_if(struct resolver* resolver, struct cst_stmt const* stmt);
-static struct stmt const*
-resolve_stmt_when(struct resolver* resolver, struct cst_stmt const* stmt);
 static struct stmt const*
 resolve_stmt_for_range(struct resolver* resolver, struct cst_stmt const* stmt);
 static struct stmt const*
@@ -1703,10 +1703,9 @@ resolve_import_file(
     //
     // If that text does not match "<arch>-<host>, "<arch>", or "<host>", then
     // the file is skipped.
-    char const* const platform =
-        platform_to_cstr(context()->arch, context()->host);
-    char const* const arch = arch_to_cstr(context()->arch);
-    char const* const host = host_to_cstr(context()->host);
+    char const* const arch = context()->env.SUNDER_ARCH;
+    char const* const host = context()->env.SUNDER_HOST;
+    char const* const platform = intern_fmt("%s-%s", arch, host);
     size_t file_name_count = strlen(file_name);
     assert(file_name_count >= STR_LITERAL_COUNT(".sunder"));
     size_t stem_count = file_name_count - STR_LITERAL_COUNT(".sunder");
@@ -3072,11 +3071,25 @@ resolve_block(
 
     sbuf(struct stmt const*) stmts = NULL;
     for (size_t i = 0; i < sbuf_count(block->stmts); ++i) {
+        // Special case for when-statements. The contents of the when block is
+        // inlined directly into the enclosing scope.
+        if (block->stmts[i]->kind == CST_STMT_WHEN) {
+            // Add all statements in the when-block to the current statements.
+            struct block const when = resolve_when(resolver, block->stmts[i]);
+            for (size_t i = 0; i < sbuf_count(when.stmts); ++i) {
+                sbuf_push(stmts, when.stmts[i]);
+            }
+            // Set the current defer head to the when-block defer head.
+            resolver->current_defer = when.defer_begin;
+            continue;
+        }
+
         struct stmt const* const resolved_stmt =
             resolve_stmt(resolver, block->stmts[i]);
-        if (resolved_stmt != NULL) {
-            sbuf_push(stmts, resolved_stmt);
+        if (resolved_stmt == NULL) {
+            continue;
         }
+        sbuf_push(stmts, resolved_stmt);
     }
     sbuf_freeze(stmts);
 
@@ -3124,6 +3137,52 @@ resolve_block(
     return resolved;
 }
 
+static struct block
+resolve_when(struct resolver* resolver, struct cst_stmt const* stmt)
+{
+    assert(resolver != NULL);
+    assert(!resolver_is_global(resolver));
+    assert(stmt != NULL);
+    assert(stmt->kind == CST_STMT_WHEN);
+
+    struct block block = block_init(
+        stmt->location, resolver->current_symbol_table, NULL, NULL, NULL);
+
+    sbuf(struct cst_conditional const) const conditionals =
+        stmt->data.when.conditionals;
+    for (size_t i = 0; i < sbuf_count(conditionals); ++i) {
+        struct expr const* condition = NULL;
+        if (conditionals[i].condition != NULL) {
+            condition = resolve_expr(resolver, conditionals[i].condition);
+            if (condition->type->kind != TYPE_BOOL) {
+                fatal(
+                    condition->location,
+                    "illegal condition with non-boolean type `%s`",
+                    condition->type->name);
+            }
+        }
+
+        struct value* value = NULL;
+        if (condition != NULL) {
+            value = eval_rvalue(condition);
+        }
+        assert(value == NULL || value->type->kind == TYPE_BOOL);
+        bool const should_resolve_when = value == NULL || value->data.boolean;
+        if (value != NULL) {
+            value_del(value);
+        }
+        if (should_resolve_when) {
+            block = resolve_block(
+                resolver,
+                resolver->current_symbol_table,
+                &conditionals[i].body);
+            break;
+        }
+    }
+
+    return block;
+}
+
 static struct stmt const*
 resolve_stmt(struct resolver* resolver, struct cst_stmt const* stmt)
 {
@@ -3145,7 +3204,8 @@ resolve_stmt(struct resolver* resolver, struct cst_stmt const* stmt)
         return resolve_stmt_if(resolver, stmt);
     }
     case CST_STMT_WHEN: {
-        return resolve_stmt_when(resolver, stmt);
+        // When-statements are handled as a special case in `resolve_block`.
+        UNREACHABLE();
     }
     case CST_STMT_FOR_RANGE: {
         return resolve_stmt_for_range(resolver, stmt);
@@ -3363,59 +3423,6 @@ resolve_stmt_if(struct resolver* resolver, struct cst_stmt const* stmt)
 
     sbuf_freeze(resolved_conditionals);
     struct stmt* const resolved = stmt_new_if(resolved_conditionals);
-
-    freeze(resolved);
-    return resolved;
-}
-
-static struct stmt const*
-resolve_stmt_when(struct resolver* resolver, struct cst_stmt const* stmt)
-{
-    assert(resolver != NULL);
-    assert(!resolver_is_global(resolver));
-    assert(stmt != NULL);
-    assert(stmt->kind == CST_STMT_WHEN);
-
-    struct block block = block_init(
-        stmt->location, resolver->current_symbol_table, NULL, NULL, NULL);
-    struct conditional conditional =
-        conditional_init(stmt->location, NULL, block);
-
-    sbuf(struct cst_conditional const) const conditionals =
-        stmt->data.when.conditionals;
-    for (size_t i = 0; i < sbuf_count(conditionals); ++i) {
-        struct expr const* condition = NULL;
-        if (conditionals[i].condition != NULL) {
-            condition = resolve_expr(resolver, conditionals[i].condition);
-            if (condition->type->kind != TYPE_BOOL) {
-                fatal(
-                    condition->location,
-                    "illegal condition with non-boolean type `%s`",
-                    condition->type->name);
-            }
-        }
-
-        struct value* value = NULL;
-        if (condition != NULL) {
-            value = eval_rvalue(condition);
-        }
-        assert(value == NULL || value->type->kind == TYPE_BOOL);
-        bool const should_resolve_when = value == NULL || value->data.boolean;
-        if (value != NULL) {
-            value_del(value);
-        }
-        if (should_resolve_when) {
-            block = resolve_block(
-                resolver,
-                resolver->current_symbol_table,
-                &conditionals[i].body);
-            conditional =
-                conditional_init(conditionals[i].location, condition, block);
-            break;
-        }
-    }
-
-    struct stmt* const resolved = stmt_new_when(conditional);
 
     freeze(resolved);
     return resolved;
@@ -3791,9 +3798,6 @@ resolve_stmt_assign(struct resolver* resolver, struct cst_stmt const* stmt)
             "left hand side of assignment statement is a constant");
     }
 
-    rhs = implicit_cast(lhs->type, rhs);
-    verify_type_compatibility(stmt->location, rhs->type, lhs->type);
-
     struct token const op = stmt->data.assign.op;
     enum token_kind tok = (enum token_kind)(-1);
     enum aop_kind aop = (enum aop_kind)(-1);
@@ -3871,6 +3875,14 @@ resolve_stmt_assign(struct resolver* resolver, struct cst_stmt const* stmt)
     default: {
         UNREACHABLE();
     }
+    }
+
+    if (aop == AOP_SHL_ASSIGN || aop == AOP_SHR_ASSIGN) {
+        rhs = implicit_cast(context()->builtin.usize, rhs);
+    }
+    else {
+        rhs = implicit_cast(lhs->type, rhs);
+        verify_type_compatibility(stmt->location, rhs->type, lhs->type);
     }
 
     // Generate a binary expression CST node and AST node to check that the
@@ -5072,7 +5084,7 @@ resolve_expr_access_dereference(
 
     if (lhs->type->kind != TYPE_POINTER) {
         fatal(
-            lhs->location,
+            expr->location,
             "cannot dereference non-pointer type `%s`",
             lhs->type->name);
     }
@@ -5470,7 +5482,7 @@ resolve_expr_unary_dereference(
 
     if (rhs->type->kind != TYPE_POINTER) {
         fatal(
-            rhs->location,
+            op.location,
             "cannot dereference non-pointer type `%s`",
             rhs->type->name);
     }

@@ -1,0 +1,60 @@
+import "std";
+
+struct foo {
+    var text: []byte;
+
+    func init(text: []byte) foo {
+        return (:foo){.text = text};
+    }
+
+    func fini(self: *foo) void {
+        std::print_line(std::out(), self.*.text);
+    }
+
+    func hash(self: *foo) usize {
+        return self.*.text.hash();
+    }
+
+    func eq(lhs: *foo, rhs: *foo) bool {
+        return std::str::eq(lhs.*.text, rhs.*.text);
+    }
+}
+
+func main() void {
+    var map = std::hash_map[[foo, foo]]::init();
+    map.insert(foo::init("a"), foo::init("x"));
+    map.insert(foo::init("b"), foo::init("y"));
+    map.insert(foo::init("c"), foo::init("z"));
+    map.insert(foo::init("b"), foo::init("r")); # replaces and finalizes <b, y>
+    map.fini();
+
+    std::print(std::out(), "\n");
+
+    var map = std::hash_map[[foo, foo]]::init();
+    map.update(foo::init("a"), foo::init("x"));
+    map.update(foo::init("b"), foo::init("y"));
+    map.update(foo::init("c"), foo::init("z"));
+    var existing = map.update(foo::init("b"), foo::init("r")); # replaces, but does not finalize <b, y>
+    map.fini();
+    var existing = existing.value();
+    existing.key.fini();
+    existing.value.fini();
+}
+################################################################################
+# b
+# y
+# a
+# x
+# c
+# z
+# b
+# r
+#
+# a
+# x
+# c
+# z
+# b
+# r
+# b
+# y

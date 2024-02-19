@@ -1730,6 +1730,16 @@ func unreachable(file: []byte, line: usize) void {
     std::exit(std::EXIT_FAILURE);
 }
 
+# Invokes `T::fini(&value)` if `T::fini` is defined.
+func fini[[T]](value: T) void {
+    when defined(T::fini) {
+        T::fini(&value);
+    }
+    else {
+        value; # prevent unused variable warning
+    }
+}
+
 # Returns a signed integer less than, equal to, or greater than zero if `lhs`
 # is found, respectively, to be less than, equal to, or greater than `rhs`.
 func compare[[T]](lhs: *T, rhs: *T) ssize {
@@ -2887,6 +2897,12 @@ struct vector[[T]] {
 
     # Finalize resources associated with the vector.
     func fini(self: *vector[[T]]) void {
+        when defined(T::fini) {
+            var data = self.*.data();
+            for i in countof(data) {
+                data[i].fini();
+            }
+        }
         if self.*._capacity != 0 {
             std::slice[[T]]::delete_with_allocator(self.*._allocator, (:[]T){self.*._start, self.*._capacity});
         }
@@ -3110,6 +3126,17 @@ struct hash_map[[K, V]] {
 
     # Finalize resources associated with the map.
     func fini(self: *hash_map[[K, V]]) void {
+        when defined(K::fini) or defined(V::fini) {
+            var iter = std::hash_map_iterator[[K, V]]::init(self);
+            for iter.advance() {
+                when defined(K::fini) {
+                    iter.current().*.key.*.fini();
+                }
+                when defined(V::fini) {
+                    iter.current().*.value.*.fini();
+                }
+            }
+        }
         if countof(self.*._elements) != 0 {
             std::slice[[typeof(_ELEMENT)]]::delete_with_allocator(self.*.allocator(), self.*._elements);
         }
@@ -3142,35 +3169,28 @@ struct hash_map[[K, V]] {
     }
 
     # Returns true if the map contains a key-value pair with the provided key.
+    #
+    # Ownership of `key` is *not* transferred with this function call.
     func contains(self: *hash_map[[K, V]], key: K) bool {
         return self.*._lookup_element(key) != std::ptr[[typeof(_ELEMENT)]]::NULL;
     }
 
-    # Returns a non-empty optional containing the value associated with the
-    # provided key if such a key-value pair exists in the map.
-    func lookup(self: *hash_map[[K, V]], key: K) std::optional[[V]] {
-        var element = self.*._lookup_element(key);
-        if element == std::ptr[[typeof(_ELEMENT)]]::NULL {
-            return std::optional[[V]]::EMPTY;
-        }
-        return std::optional[[V]]::init_value(element.*.value);
-    }
-
-    # Returns a non-empty optional containing the key-value pair associated
+    # Returns a non-empty optional containing a pointer to the value associated
     # with the provided key if such a key-value pair exists in the map.
-    func lookup_pair(self: *hash_map[[K, V]], key: K) std::optional[[key_value_pair[[K, V]]]] {
+    #
+    # Ownership of `key` is *not* transferred with this function call.
+    func lookup(self: *hash_map[[K, V]], key: K) std::optional[[*V]] {
         var element = self.*._lookup_element(key);
         if element == std::ptr[[typeof(_ELEMENT)]]::NULL {
-            return std::optional[[key_value_pair[[K, V]]]]::EMPTY;
+            return std::optional[[*V]]::EMPTY;
         }
-        return std::optional[[key_value_pair[[K, V]]]]::init_value((:std::key_value_pair[[K, V]]){
-            .key = element.*.key,
-            .value = element.*.value,
-        });
+        return std::optional[[*V]]::init_value(&element.*.value);
     }
 
     # Returns a non-empty optional containing the key-value view associated
     # with the provided key if such a key-value pair exists in the map.
+    #
+    # Ownership of `key` is *not* transferred with this function call.
     func lookup_view(self: *hash_map[[K, V]], key: K) std::optional[[key_value_view[[K, V]]]] {
         var element = self.*._lookup_element(key);
         if element == std::ptr[[typeof(_ELEMENT)]]::NULL {
@@ -3184,6 +3204,8 @@ struct hash_map[[K, V]] {
 
     # Returns a non-NULL pointer to the hash map element associated with the
     # provided key if such a key-value pair exists in the map.
+    #
+    # Ownership of `key` is *not* transferred with this function call.
     func _lookup_element(self: *hash_map[[K, V]], key: K) *typeof(_ELEMENT) {
         if countof(self.*._elements) == 0 {
             return std::ptr[[typeof(_ELEMENT)]]::NULL;
@@ -3200,9 +3222,30 @@ struct hash_map[[K, V]] {
     }
 
     # Insert the provided key and value into the map. If a key-value pair
+    # associated with the provided key exists, then it is overwritten.
+    func insert(self: *hash_map[[K, V]], key: K, value: V) void {
+        when defined(K::fini) or defined(V::fini) {
+            var existing = self.*.update(key, value);
+            if existing.is_empty() {
+                return;
+            }
+            var existing = existing.value();
+            when defined(K::fini) {
+                existing.key.fini();
+            }
+            when defined(V::fini) {
+                existing.value.fini();
+            }
+        }
+        else {
+            self.*.update(key, value);
+        }
+    }
+
+    # Insert the provided key and value into the map. If a key-value pair
     # associated with the provided key exists, then it is overwritten and a
     # non-empty optional containing the existing key-value pair is returned.
-    func insert(self: *hash_map[[K, V]], key: K, value: V) std::optional[[std::key_value_pair[[K, V]]]] {
+    func update(self: *hash_map[[K, V]], key: K, value: V) std::optional[[std::key_value_pair[[K, V]]]] {
         if countof(self.*._elements) == 0 {
             # Initial insert. An initial slice count of 16 was chosen
             # semi-arbitrarily. The initial slice count must be two or greater
@@ -3227,7 +3270,7 @@ struct hash_map[[K, V]] {
                 }
                 var index = self.*._inserted.data()[i];
                 assert self.*._elements[index].state == hash_map[[K, V]]::_STATE_USE;
-                var existing = new.insert(self.*._elements[index].key, self.*._elements[index].value);
+                var existing = new.update(self.*._elements[index].key, self.*._elements[index].value);
                 assert existing.is_empty();
             }
             std::slice[[typeof(_ELEMENT)]]::delete_with_allocator(self.*.allocator(), self.*._elements);
@@ -3237,7 +3280,7 @@ struct hash_map[[K, V]] {
 
         if self.*._inserted.count() >= 2 * self.*._n {
             # Insert with many tombstones in the inserted vector.
-            # The threshold of 2 * n as arbitrarily chosen.
+            # The threshold of 2 * n was arbitrarily chosen.
             var cur = 0u;
             for idx in self.*._inserted.count() {
                 if self.*._inserted.data()[idx] == hash_map[[K, V]]::_INDEX_DEL {
@@ -3306,6 +3349,8 @@ struct hash_map[[K, V]] {
     # Remove the key-value pair associated with the provided key if such a
     # key-value pair exists in the map. Returns a non-empty optional containing
     # the key-value pair if the pair was removed.
+    #
+    # Ownership of `key` is *not* transferred with this function call.
     func remove(self: *hash_map[[K, V]], key: K) std::optional[[std::key_value_pair[[K, V]]]] {
         if countof(self.*._elements) == 0 {
             return std::optional[[std::key_value_pair[[K, V]]]]::EMPTY;
@@ -3524,24 +3569,18 @@ struct hash_set[[T]] {
     }
 
     # Returns true if the set contains provided element.
+    #
+    # Ownership of `element` is *not* transferred with this function call.
     func contains(self: *hash_set[[T]], element: T) bool {
         return self.*._hash_map.contains(element);
-    }
-
-    # Returns a non-empty optional containing the in-set element associated
-    # with the provided element if such an element exists in the set.
-    func lookup(self: *hash_set[[T]], element: T) std::optional[[T]] {
-        var existing = self.*._hash_map.lookup_pair(element);
-        if existing.is_empty() {
-            return std::optional[[T]]::EMPTY;
-        }
-        return std::optional[[T]]::init_value(existing.value().key);
     }
 
     # Returns a non-empty optional containing a pointer to the in-set element
     # associated with the provided element if such an element exists in the
     # set.
-    func lookup_view(self: *hash_set[[T]], element: T) std::optional[[*T]] {
+    #
+    # Ownership of `element` is *not* transferred with this function call.
+    func lookup(self: *hash_set[[T]], element: T) std::optional[[*T]] {
         var existing = self.*._hash_map.lookup_view(element);
         if existing.is_empty() {
             return std::optional[[*T]]::EMPTY;
@@ -3550,10 +3589,16 @@ struct hash_set[[T]] {
     }
 
     # Insert the provided element into the set. If the element already exists,
+    # then it is overwritten.
+    func insert(self: *hash_set[[T]], element: T) void {
+        self.*._hash_map.insert(element, void::VALUE);
+    }
+
+    # Insert the provided element into the set. If the element already exists,
     # then it is overwritten and a non-empty optional containing the existing
     # element is returned.
-    func insert(self: *hash_set[[T]], element: T) std::optional[[T]] {
-        var existing = self.*._hash_map.insert(element, void::VALUE);
+    func update(self: *hash_set[[T]], element: T) std::optional[[T]] {
+        var existing = self.*._hash_map.update(element, void::VALUE);
         if existing.is_empty() {
             return std::optional[[T]]::EMPTY;
         }
@@ -3562,6 +3607,8 @@ struct hash_set[[T]] {
 
     # Remove the provided element if such an element exists in the set. Returns
     # a non-empty optional containing the existing element if it was removed.
+    #
+    # Ownership of `element` is *not* transferred with this function call.
     func remove(self: *hash_set[[T]], element: T) std::optional[[T]] {
         var existing = self.*._hash_map.remove(element);
         if existing.is_empty() {
@@ -3967,6 +4014,7 @@ struct argument_parser {
     var _program: []byte;
     var _options: [][]byte;
     var _iterator: argument_iterator;
+    var _finished: bool;
     var _verbatim: bool;
     var _opt: std::optional[[[]byte]];
     var _arg: std::optional[[[]byte]];
@@ -3988,16 +4036,21 @@ struct argument_parser {
     # strings in accordance ISO/IEC 9899:1999 section 5.1.2.2.1.
     func init_from_argv(options: [][]byte, argv: **byte) argument_parser {
         var iterator = std::argument_iterator::init_from_argv(argv);
+        var finished = false;
 
         var program = "<program-name>";
         if iterator.advance() {
             program = *iterator.current();
+        }
+        else {
+            finished = true;
         }
 
         return (:argument_parser){
             ._program = program,
             ._options = options,
             ._iterator = iterator,
+            ._finished = finished,
             ._verbatim = false,
             ._opt = std::optional[[[]byte]]::EMPTY,
             ._arg = std::optional[[[]byte]]::EMPTY,
@@ -4013,7 +4066,12 @@ struct argument_parser {
         self.*._opt = std::optional[[[]byte]]::EMPTY;
         self.*._arg = std::optional[[[]byte]]::EMPTY;
 
+        if self.*._finished {
+            return false;
+        }
+
         if not self.*._iterator.advance() {
+            self.*._finished = true;
             return false;
         }
 

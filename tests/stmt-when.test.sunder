@@ -1,3 +1,5 @@
+import "std";
+
 struct foo {
     func eq(lhs_: *foo, rhs_: *foo) bool {
         return true;
@@ -20,6 +22,16 @@ func eq[[T]](lhs: *T, rhs: *T) bool {
 
     assert false;
     return false;
+}
+
+func f() ssize {
+    # Test for a bug that was caused by incorrect when block code generation.
+    var out = 123s;
+    when true {
+        out = 456;
+        return out;
+    }
+    return out;
 }
 
 func main() void {
@@ -78,4 +90,46 @@ func main() void {
     var bar_b: bar = uninit;
     assert eq[[foo]](&foo_a, &foo_b);
     assert not eq[[bar]](&bar_a, &bar_b);
+
+    # Ensure that when interacts appropriately with defer.
+    defer std::print_line(std::out(), "A");
+
+    when true    { defer std::print_line(std::out(), "B"); }
+    elwhen false { defer std::print_line(std::out(), "X"); }
+    else         { defer std::print_line(std::out(), "X"); }
+
+    when  false  { defer std::print_line(std::out(), "X"); }
+    elwhen true  { defer std::print_line(std::out(), "C"); }
+    else         { defer std::print_line(std::out(), "X"); }
+
+    when false   { defer std::print_line(std::out(), "X"); }
+    elwhen false { defer std::print_line(std::out(), "X"); }
+    else         { defer std::print_line(std::out(), "D"); }
+
+    when true {
+        defer std::print_line(std::out(), "E");
+        when true {
+            defer std::print_line(std::out(), "F");
+            when true {
+                defer std::print_line(std::out(), "G");
+            }
+            defer std::print_line(std::out(), "H");
+        }
+        defer std::print_line(std::out(), "I");
+    }
+
+    # Misc. testing.
+    var x = f();
+    std::print_format_line(std::out(), "{}", (:[]std::formatter)[std::formatter::init[[ssize]](&x)]);
 }
+################################################################################
+# 456
+# I
+# H
+# G
+# F
+# E
+# D
+# C
+# B
+# A

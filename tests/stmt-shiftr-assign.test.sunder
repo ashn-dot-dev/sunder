@@ -2,6 +2,20 @@ import "sys";
 
 func main() void {
     var x = 0x02u8 ;
+    x >>= 1u;
+    sys::dump[[typeof(x)]](x);
+
+    var x = +1s8 ;
+    x >>= 1u;
+    sys::dump[[typeof(x)]](x);
+
+    var x = -1s8 ;
+    x >>= 1u;
+    sys::dump[[typeof(x)]](x);
+
+    # Check implicit casts from an integer rhs to usize.
+
+    var x = 0x02u8 ;
     x >>= 1;
     sys::dump[[typeof(x)]](x);
 
@@ -14,6 +28,9 @@ func main() void {
     sys::dump[[typeof(x)]](x);
 }
 ################################################################################
+# 01
+# 00
+# FF
 # 01
 # 00
 # FF

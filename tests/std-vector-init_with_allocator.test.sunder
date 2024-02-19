@@ -2,7 +2,7 @@ import "std";
 import "sys";
 
 func main() void {
-    var vec: std::vector[[u32]] = std::vector[[u32]]::init_with_allocator(std::global_allocator());
+    var vec = std::vector[[u32]]::init_with_allocator(std::global_allocator());
     defer vec.fini();
 
     sys::dump[[*u32]](vec.start());

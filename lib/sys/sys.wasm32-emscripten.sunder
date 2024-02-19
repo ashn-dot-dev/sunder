@@ -22,6 +22,8 @@ type off_t   = slonglong;
 type size_t  = ulong;
 type ssize_t = slong;
 
+let MAX_ALIGN: usize = 8;
+
 let O_RDONLY: sint = 0x00000000;
 let O_WRONLY: sint = 0x00000001;
 let O_RDWR:   sint = 0x00000002;

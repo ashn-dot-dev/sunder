@@ -25,7 +25,7 @@ func main() void {
     std::print_format_line(
         std::out(),
         "{}",
-        (:[]std::formatter)[std::formatter::init[[ssize]](&value)]);
+        (:[]std::formatter)[std::formatter::init[[ssize]](value)]);
 
     std::print(std::out(), "\n");
 
@@ -40,7 +40,7 @@ func main() void {
     std::print_format_line(
         std::out(),
         "{}",
-        (:[]std::formatter)[std::formatter::init[[ssize]](&value_foo)]);
+        (:[]std::formatter)[std::formatter::init[[ssize]](value_foo)]);
 
     std::print(std::out(), "\n");
 
@@ -57,8 +57,8 @@ func main() void {
         std::out(),
         "{} {}",
         (:[]std::formatter)[
-            std::formatter::init[[ssize]](&value_foo),
-            std::formatter::init[[ssize]](&value_bar)]);
+            std::formatter::init[[ssize]](value_foo),
+            std::formatter::init[[ssize]](value_bar)]);
 
     std::print(std::out(), "\n");
 
@@ -74,24 +74,13 @@ func main() void {
         std::out(),
         "{}",
         (:[]std::formatter)[
-            std::formatter::init[[ssize]](&value_bar)]);
+            std::formatter::init[[ssize]](value_bar)]);
     var removed = removed.value();
     std::print_format_line(
         std::out(),
         "Removed {}",
         (:[]std::formatter)[
             std::formatter::init[[ssize]](&removed.value)]);
-
-    std::print(std::out(), "\n");
-
-    var lookup_bar = map.lookup_pair("bar");
-    var pair = lookup_bar.value();
-    std::print_format_line(
-        std::out(),
-        "Lookup pair with key \"{}\" and value {}",
-        (:[]std::formatter)[
-            std::formatter::init[[[]byte]](&pair.key),
-            std::formatter::init[[ssize]](&pair.value)]);
 
     std::print(std::out(), "\n");
 
@@ -189,8 +178,6 @@ func main() void {
 # Count 1
 # 789
 # Removed 456
-#
-# Lookup pair with key "bar" and value 789
 #
 # Lookup view with key "bar" and value 789
 #

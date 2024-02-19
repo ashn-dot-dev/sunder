@@ -1,14 +1,15 @@
 # The Sunder Programming Language
-Sunder is a systems programming language for Unix-like platforms.
+Sunder is a modest systems programming language for Unix-like platforms.
 
 ## Dependencies
 Sunder tooling should build and run on any supported machine satisfying the
 following dependencies:
 
 + POSIX-compatible `make`
-+ [`clang`](https://clang.llvm.org/) or [`gcc`](https://gcc.gnu.org/)
-+ [`emcc`](https://emscripten.org/) (WebAssembly code-generation only)
-+ `clang-format` (development only)
++ [GNU Core Utilities](https://www.gnu.org/software/coreutils/)
++ [Clang](https://clang.llvm.org/) or [GCC](https://gcc.gnu.org/)
++ [Emscripten](https://emscripten.org/) (WebAssembly code-generation only)
++ [Clang Format](https://clang.llvm.org/docs/ClangFormat.html) (development only)
 
 Supported platforms include:
 + x86-64 Linux
@@ -123,12 +124,19 @@ $ lldb hello
 (lldb) target create "hello"
 Current executable set to '/Users/ashn/sources/sunder/hello' (arm64).
 (lldb) b std_print_line
-Breakpoint 1: where = hello`std_print_line + 32 at <stdin>:25334:9, address = 0x000000010000d1dc
+Breakpoint 1: where = hello`std_print_line + 32 at hello.tmp.c:25216:9, address = 0x000000010000d24c
 (lldb) run
-Process 54789 launched: '/Users/ashn/sources/sunder/hello' (arm64)
-Process 54789 stopped
+Process 80648 launched: '/Users/ashn/sources/sunder/hello' (arm64)
+Process 80648 stopped
 * thread #1, queue = 'com.apple.main-thread', stop reason = breakpoint 1.1
-    frame #0: 0x000000010000d1dc hello`std_print_line(__sunder_argument_0_writer=__sunder_std_writer @ 0x000000016fdff0c0, __sunder_argument_1_str=(start = "Hello, world!", count = 13)) at <stdin>:25334:9
+    frame #0: 0x000000010000d24c hello`std_print_line(__sunder_argument_0_writer=__sunder_std_writer @ 0x000000016fdff0c0, __sunder_argument_1_str=(start = "Hello, world!", count = 13)) at hello.tmp.c:25216:9
+   25213	__sunder_std_print_line(__sunder_std_writer __sunder_argument_0_writer, __sunder_slice_of_byte __sunder_argument_1_str)
+   25214	{
+   25215	   // var return: void
+-> 25216	   int __sunder_return = /* zero-sized local */0;
+   25217	   // var result: std::result[[void, *std::error_info]]
+   25218	   __sunder_std_result__void___std_error_info__ __sunder_local_0_result = {/* uninit */0};
+   25219	   /// [std/std.sunder:1592] STATEMENT STMT_ASSIGN
 Target 0: (hello) stopped.
 (lldb)
 ```
@@ -151,9 +159,9 @@ supported. If `SUNDER_ARCH` is not set, then the default architecture specified
 by `sunder-platform arch` is used.
 
 **`SUNDER_HOST`** specifies the target operating system to build for.
-Currently, `SUNDER_HOST=freestanding`, `SUNDER_HOST=emscripten`,
-`SUNDER_HOST=linux`, and `SUNDER_HOST=macos` are supported. If `SUNDER_HOST` is
-not set, then the default host specified by `sunder-platform host` is used.
+Currently, `SUNDER_HOST=emscripten`, `SUNDER_HOST=linux`, and
+`SUNDER_HOST=macos` are supported. If `SUNDER_HOST` is not set, then the
+default host specified by `sunder-platform host` is used.
 
 ## Compiling to WebAssembly
 Sunder supports compiling to WebAssembly via
@@ -167,7 +175,7 @@ $ SUNDER_CC=emcc \
     SUNDER_ARCH=wasm32 \
     SUNDER_HOST=emscripten \
     sunder-compile -o hello.html examples/hello.sunder
-$ firefox hello.html
+$ firefox --new-window "file://$(realpath hello.html)"
 ```
 
 ## Using Sunder as a Scripting Language

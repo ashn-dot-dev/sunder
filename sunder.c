@@ -11,13 +11,6 @@ static char const* arch_list[] = {
     [ARCH_WASM32] = "wasm32",
 };
 
-static char const* host_list[] = {
-    [HOST_FREESTANDING] = "freestanding",
-    [HOST_EMSCRIPTEN] = "emscripten",
-    [HOST_LINUX] = "linux",
-    [HOST_MACOS] = "macos",
-};
-
 enum arch
 cstr_to_arch(char const* cstr)
 {
@@ -29,37 +22,6 @@ cstr_to_arch(char const* cstr)
 
     fatal(NO_LOCATION, "unknown arch `%s`", cstr);
     return 0;
-}
-
-char const*
-arch_to_cstr(enum arch arch)
-{
-    return arch_list[(size_t)arch];
-}
-
-enum host
-cstr_to_host(char const* cstr)
-{
-    for (size_t i = 0; i < ARRAY_COUNT(host_list); ++i) {
-        if (0 == strcmp(cstr, host_list[i])) {
-            return (enum host)i;
-        }
-    }
-
-    fatal(NO_LOCATION, "unknown host `%s`", cstr);
-    return 0;
-}
-
-char const*
-host_to_cstr(enum host host)
-{
-    return host_list[(size_t)host];
-}
-
-char const*
-platform_to_cstr(enum arch arch, enum host host)
-{
-    return intern_fmt("%s-%s", arch_to_cstr(arch), host_to_cstr(host));
 }
 
 struct module*
@@ -288,7 +250,6 @@ context_init(void)
         : s_context.interned.empty;
 
     s_context.arch = cstr_to_arch(s_context.env.SUNDER_ARCH);
-    s_context.host = cstr_to_host(s_context.env.SUNDER_HOST);
 
 #define INIT_BIGINT_CONSTANT(ident, str_literal)                               \
     struct bigint* const ident = bigint_new_cstr(str_literal);                 \

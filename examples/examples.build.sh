@@ -3,6 +3,8 @@ set -e
 
 export SUNDER_HOME="$(realpath ..)"
 export SUNDER_SEARCH_PATH="${SUNDER_HOME}/lib"
+export SUNDER_CC="$(${SUNDER_HOME}/bin/sunder-compile -e | grep SUNDER_CC | cut -d= -f2)"
+export SUNDER_CFLAGS="$(${SUNDER_HOME}/bin/sunder-compile -e | grep SUNDER_CFLAGS | cut -d= -f2)"
 
 for f in *.sunder; do
     # Native version.
@@ -18,21 +20,19 @@ for f in *.sunder; do
     fi
 done
 
-if command -v clang >/dev/null; then
-    CMD="clang -c -o ffi/c-code.o ffi/calling-c-from-sunder.c"
-    echo $CMD
-    eval $CMD
-    CMD="SUNDER_CC=clang ${SUNDER_HOME}/bin/sunder-compile -c -o ffi/calling-c-from-sunder.o ffi/calling-c-from-sunder.sunder"
-    echo $CMD
-    eval $CMD
-    CMD="clang -o ffi/calling-c-from-sunder -lm ffi/calling-c-from-sunder.o ffi/c-code.o"
-    echo $CMD
-    eval $CMD
+CMD="${SUNDER_HOME}/bin/sunder-compile -c -o ffi/calling-c-from-sunder.o ffi/calling-c-from-sunder.sunder"
+echo $CMD
+eval $CMD
+CMD="${SUNDER_CC} ${SUNDER_CFLAGS} -c -o ffi/c-code.o ffi/calling-c-from-sunder.c"
+echo $CMD
+eval $CMD
+CMD="${SUNDER_CC} ${SUNDER_CFLAGS} -o ffi/calling-c-from-sunder ffi/calling-c-from-sunder.o ffi/c-code.o -lm"
+echo $CMD
+eval $CMD
 
-    CMD="SUNDER_CC=clang ${SUNDER_HOME}/bin/sunder-compile -c -o ffi/sunder-code.o ffi/calling-sunder-from-c.sunder"
-    echo $CMD
-    eval $CMD
-    CMD="clang -o ffi/calling-sunder-from-c -lm ffi/calling-sunder-from-c.c ffi/sunder-code.o"
-    echo $CMD
-    eval $CMD
-fi
+CMD="${SUNDER_HOME}/bin/sunder-compile -c -o ffi/sunder-code.o ffi/calling-sunder-from-c.sunder"
+echo $CMD
+eval $CMD
+CMD="${SUNDER_CC} ${SUNDER_CFLAGS} -o ffi/calling-sunder-from-c ffi/calling-sunder-from-c.c ffi/sunder-code.o -lm"
+echo $CMD
+eval $CMD

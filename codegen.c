@@ -75,8 +75,6 @@ codegen_stmt_defer(struct stmt const* stmt);
 static void
 codegen_stmt_if(struct stmt const* stmt);
 static void
-codegen_stmt_when(struct stmt const* stmt);
-static void
 codegen_stmt_for_range(struct stmt const* stmt);
 static void
 codegen_stmt_for_expr(struct stmt const* stmt);
@@ -1167,7 +1165,7 @@ codegen_block(struct block const* block)
         assert(address->kind == ADDRESS_LOCAL);
 
         if (type->size == 0) {
-            appendli("// %s: %s", locals[i].name, type->name);
+            appendli("// var %s: %s", locals[i].name, type->name);
             appendli(
                 "int %s = /* zero-sized local */0;",
                 mangle_name(address->data.local.name));
@@ -1193,7 +1191,7 @@ codegen_block(struct block const* block)
             generate_final_return = true;
         }
 
-        appendli("// %s: %s", locals[i].name, type->name);
+        appendli("// var %s: %s", locals[i].name, type->name);
         appendli(
             "%s %s = %s;",
             mangle_type(type),
@@ -1227,7 +1225,6 @@ codegen_stmt(struct stmt const* stmt)
 #define TABLE_ENTRY(kind, fn) [kind] = {#kind, fn}
         TABLE_ENTRY(STMT_DEFER, codegen_stmt_defer),
         TABLE_ENTRY(STMT_IF, codegen_stmt_if),
-        TABLE_ENTRY(STMT_WHEN, codegen_stmt_when),
         TABLE_ENTRY(STMT_FOR_RANGE, codegen_stmt_for_range),
         TABLE_ENTRY(STMT_FOR_EXPR, codegen_stmt_for_expr),
         TABLE_ENTRY(STMT_BREAK, codegen_stmt_break),
@@ -1280,15 +1277,6 @@ codegen_stmt_if(struct stmt const* stmt)
         }
         codegen_block(&conditionals[i].body);
     }
-}
-
-static void
-codegen_stmt_when(struct stmt const* stmt)
-{
-    assert(stmt != NULL);
-    assert(stmt->kind == STMT_WHEN);
-
-    codegen_block(&stmt->data.when.conditional.body);
 }
 
 static void
@@ -1444,7 +1432,6 @@ codegen_stmt_assign(struct stmt const* stmt)
 {
     assert(stmt != NULL);
     assert(stmt->kind == STMT_ASSIGN);
-    assert(stmt->data.assign.lhs->type == stmt->data.assign.rhs->type);
 
     if (stmt->data.assign.lhs->type->size == 0) {
         // The left and right hand sides of the assignment are evaluated, since
@@ -3400,9 +3387,7 @@ codegen(
     // Clang-specific max errors.
     /* sbuf_push(backend_argv, "-ferror-limit=1"); */
 #endif
-    sbuf_push(backend_argv, "-pipe"); // Pipe between phases of C compilation.
-    sbuf_push(backend_argv, "-xc"); // Piping in source with language=c.
-    sbuf_push(backend_argv, "-"); // Read piped source from stdin.
+    sbuf_push(backend_argv, string_start(src_path));
     for (size_t i = 0; i < sbuf_count(paths); ++i) {
         sbuf_push(backend_argv, paths[i]);
     }
@@ -3487,21 +3472,20 @@ codegen(
         appendln("}");
     }
 
-    int spawn_err =
-        spawnvpw(backend_argv, string_start(out), string_count(out));
+    int err = 0;
 
-    int write_err = 0;
-    if (opt_k) {
-        write_err = file_write_all(
-            string_start(src_path), string_start(out), string_count(out));
-        if (write_err) {
-            error(
-                NO_LOCATION,
-                "unable to write file `%s` with error '%s'",
-                string_start(src_path),
-                strerror(errno));
-            goto cleanup;
-        }
+    if ((err = file_write_all(
+             string_start(src_path), string_start(out), string_count(out)))) {
+        error(
+            NO_LOCATION,
+            "unable to write file `%s` with error '%s'",
+            string_start(src_path),
+            strerror(errno));
+        goto cleanup;
+    }
+
+    if ((err = spawnvpw(backend_argv))) {
+        goto cleanup;
     }
 
 cleanup:
@@ -3515,7 +3499,7 @@ cleanup:
     string_del(src_path);
     string_del(obj_path);
     string_del(out);
-    if (spawn_err || write_err) {
+    if (err) {
         exit(EXIT_FAILURE);
     }
 }

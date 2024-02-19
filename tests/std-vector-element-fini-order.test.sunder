@@ -1,0 +1,31 @@
+import "std";
+
+struct foo {
+    var text: []byte;
+
+    func init(text: []byte) foo {
+        return (:foo){.text = text};
+    }
+
+    func fini(self: *foo) void {
+        std::print_line(std::out(), self.*.text);
+    }
+}
+
+func main() void {
+    var vec = std::vector[[foo]]::init();
+    vec.push(foo::init("a"));
+    vec.push(foo::init("b"));
+    vec.push(foo::init("c"));
+    vec.push(foo::init("d"));
+    vec.push(foo::init("e"));
+    vec.push(foo::init("f"));
+    vec.fini();
+}
+################################################################################
+# a
+# b
+# c
+# d
+# e
+# f

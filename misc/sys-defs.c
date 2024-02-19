@@ -5,6 +5,8 @@
 #include <dirent.h>
 #include <fcntl.h>
 #include <limits.h>
+#include <stdalign.h>
+#include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -58,6 +60,10 @@ main(void)
     dump_primitive(size_t);
     dump_primitive(ssize_t);
     dump_primitive(time_t);
+
+    fputc('\n', stdout);
+
+    printf("let MAX_ALIGN: usize = %zu;\n", alignof(max_align_t));
 
     fputc('\n', stdout);
 

@@ -12,6 +12,8 @@ func main() void {
         std::print_format_line(std::err(), "std::directory::open: {}", (:[]std::formatter)[std::formatter::init[[[]byte]](&result.error().*.data)]);
         std::exit(std::EXIT_FAILURE);
     }
+    var dir = result.value();
+    defer dir.close();
 
     var result = std::directory::remove("some-directory.tmp");
     if result.is_error() {

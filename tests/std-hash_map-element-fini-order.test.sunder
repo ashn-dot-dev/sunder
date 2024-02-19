@@ -1,0 +1,72 @@
+import "std";
+
+struct foo {
+    var text: []byte;
+
+    func init(text: []byte) foo {
+        return (:foo){.text = text};
+    }
+
+    func fini(self: *foo) void {
+        std::print_line(std::out(), self.*.text);
+    }
+
+    func hash(self: *foo) usize {
+        return self.*.text.hash();
+    }
+
+    func eq(lhs: *foo, rhs: *foo) bool {
+        return std::str::eq(lhs.*.text, rhs.*.text);
+    }
+}
+
+func main() void {
+    var map = std::hash_map[[ssize, foo]]::init();
+    map.insert(1, foo::init("a"));
+    map.insert(2, foo::init("b"));
+    map.insert(3, foo::init("c"));
+    map.insert(4, foo::init("d"));
+    map.insert(5, foo::init("e"));
+    map.insert(6, foo::init("f"));
+    map.fini();
+
+    std::print(std::out(), "\n");
+
+    var map = std::hash_map[[foo, ssize]]::init();
+    map.insert(foo::init("q"), 1);
+    map.insert(foo::init("r"), 2);
+    map.insert(foo::init("s"), 3);
+    map.insert(foo::init("t"), 4);
+    map.insert(foo::init("u"), 5);
+    map.insert(foo::init("v"), 6);
+    map.fini();
+
+    std::print(std::out(), "\n");
+
+    var map = std::hash_map[[foo, foo]]::init();
+    map.insert(foo::init("a"), foo::init("1"));
+    map.insert(foo::init("b"), foo::init("2"));
+    map.insert(foo::init("c"), foo::init("3"));
+    map.fini();
+}
+################################################################################
+# a
+# b
+# c
+# d
+# e
+# f
+#
+# q
+# r
+# s
+# t
+# u
+# v
+#
+# a
+# 1
+# b
+# 2
+# c
+# 3

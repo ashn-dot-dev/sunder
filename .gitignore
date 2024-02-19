@@ -7,7 +7,6 @@ examples/fizzbuzz
 examples/greet
 examples/hello
 examples/ls
-examples/custom-sys-asm/custom-sys-asm
 examples/ffi/calling-c-from-sunder
 examples/ffi/calling-sunder-from-c
 
@@ -23,6 +22,4 @@ a.out*
 
 emsdk/
 
-!lib/sys/sys.amd64-linux.asm
 !lib/sys/sys.wasm32-emscripten.html
-!examples/custom-sys-asm/sys.asm

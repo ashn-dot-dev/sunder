@@ -1,0 +1,13 @@
+struct foo {
+    var x: ssize;
+}
+
+func main() void {
+    var f = (:foo){.x = 123};
+    var g = &f;
+    *g.*.x;
+}
+################################################################################
+# [error-dereference-non-pointer-type-prefix.test.sunder:8] error: cannot dereference non-pointer type `ssize`
+#     *g.*.x;
+#     ^

@@ -1,7 +1,6 @@
 #define const /* nothing */
 #define restrict /* nothing */
 #define _ISOC11_SOURCE /* aligned_alloc */
-#include <alloca.h> /* alloca */
 #include <assert.h> /* assert */
 #include <ctype.h> /* isdigit */
 #include <dirent.h> /* opendir, closedir, readdir */
@@ -509,11 +508,15 @@ sys_dump_bytes(void* addr, __sunder_usize size)
     }
 
     // Allocate a buffer large enough to hold size number of three-byte
-    // triples. For each three-byte triple, x, bytes x[0:1] will contain the
-    // two-byte hex representation of a single byte of obj, and byte x[2] will
-    // contain a whitespace separator (either ' ' or '\n').
-    char* buf = alloca(size * 3u); // Locally allocated buffer.
-    char* ptr = buf; // Write pointer into the locally allocated buffer.
+    // triples. For each three-byte triple, x, bytes x[0] and x[1] will contain
+    // the two-byte hex representation of a single byte of obj, and byte x[2]
+    // will contain a whitespace separator (either ' ' or '\n').
+    char* buf = malloc(size * 3u);
+    if (buf == NULL) {
+        perror(__func__);
+        __sunder___fatal("fatal: allocation failure");
+    }
+    char* ptr = buf;
 
     unsigned char* cur = addr;
     unsigned char* end = (unsigned char*)addr + size;
@@ -528,6 +531,7 @@ sys_dump_bytes(void* addr, __sunder_usize size)
 
     ptr[-1] = '\n';
     fprintf(stderr, "%.*s", (int)(size * 3u), buf);
+    free(buf);
 }
 
 __sunder_bool
@@ -555,7 +559,10 @@ sys_str_to_f32(__sunder_f32* out, __sunder_byte* start, __sunder_usize count)
         return __sunder_true;
     }
 
-    char* buf = alloca(count + 1);
+    char buf[4096]; // NUL-terminated copy of the input string.
+    if ((count + 1) > sizeof(buf)) {
+        return __sunder_false;
+    }
     for (size_t i = 0; i < count; ++i) {
         __sunder_bool valid_character = isdigit((unsigned char)start[i])
             || start[i] == '.' || start[i] == '+' || start[i] == '-';
@@ -601,7 +608,10 @@ sys_str_to_f64(__sunder_f64* out, __sunder_byte* start, __sunder_usize count)
         return __sunder_true;
     }
 
-    char* buf = alloca(count + 1);
+    char buf[4096]; // NUL-terminated copy of the input string.
+    if ((count + 1) > sizeof(buf)) {
+        return __sunder_false;
+    }
     for (size_t i = 0; i < count; ++i) {
         __sunder_bool valid_character = isdigit((unsigned char)start[i])
             || start[i] == '.' || start[i] == '+' || start[i] == '-';

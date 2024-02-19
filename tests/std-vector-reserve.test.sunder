@@ -2,7 +2,7 @@ import "std";
 import "sys";
 
 func main() void {
-    var vec: std::vector[[u8]] = std::vector[[u8]]::init();
+    var vec = std::vector[[u8]]::init();
     defer vec.fini();
 
     sys::dump[[usize]](vec.count());

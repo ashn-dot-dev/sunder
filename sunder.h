@@ -663,7 +663,7 @@ ceil8umax(uintmax_t x);
 // Spawn a subprocess and wait for it to complete.
 // Returns the exit status of the spawned process.
 int
-spawnvpw(char const* const* argv, void const* input, size_t input_size);
+spawnvpw(char const* const* argv);
 
 ////////////////////////////////////////////////////////////////////////////////
 //////// sunder.c //////////////////////////////////////////////////////////////
@@ -676,22 +676,6 @@ enum arch {
 };
 enum arch
 cstr_to_arch(char const* cstr);
-char const*
-arch_to_cstr(enum arch arch);
-
-enum host {
-    HOST_FREESTANDING,
-    HOST_EMSCRIPTEN,
-    HOST_LINUX,
-    HOST_MACOS,
-};
-enum host
-cstr_to_host(char const* cstr);
-char const*
-host_to_cstr(enum host host);
-
-char const* // interned
-platform_to_cstr(enum arch arch, enum host host);
 
 struct module {
     // True if the module has been fully loaded/resolved.
@@ -772,9 +756,8 @@ struct context {
         char const* SUNDER_CFLAGS;
     } env;
 
-    // Target SUNDER_ARCH and SUNDER_HOST.
+    // Target SUNDER_ARCH.
     enum arch arch;
-    enum host host;
 
     // Integer (bigint) constants.
     struct bigint const* u8_min;
@@ -2165,7 +2148,6 @@ struct stmt {
     enum stmt_kind {
         STMT_DEFER,
         STMT_IF,
-        STMT_WHEN,
         STMT_FOR_RANGE,
         STMT_FOR_EXPR,
         STMT_BREAK,
@@ -2186,11 +2168,6 @@ struct stmt {
         struct {
             sbuf(struct conditional const) conditionals;
         } if_;
-        struct {
-            // The first conditional in the when-elwhen-else statement that
-            // evaluated as true.
-            struct conditional conditional;
-        } when;
         struct {
             struct symbol const* loop_variable;
             struct expr const* begin;

@@ -1,0 +1,39 @@
+import "std";
+
+struct foo {
+    var text: []byte;
+
+    func init(text: []byte) foo {
+        return (:foo){.text = text};
+    }
+
+    func fini(self: *foo) void {
+        std::print_line(std::out(), self.*.text);
+    }
+
+    func hash(self: *foo) usize {
+        return self.*.text.hash();
+    }
+
+    func eq(lhs: *foo, rhs: *foo) bool {
+        return std::str::eq(lhs.*.text, rhs.*.text);
+    }
+}
+
+func main() void {
+    var set = std::hash_set[[foo]]::init();
+    set.insert(foo::init("a"));
+    set.insert(foo::init("b"));
+    set.insert(foo::init("c"));
+    set.insert(foo::init("d"));
+    set.insert(foo::init("e"));
+    set.insert(foo::init("f"));
+    set.fini();
+}
+################################################################################
+# a
+# b
+# c
+# d
+# e
+# f

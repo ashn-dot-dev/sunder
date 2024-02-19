@@ -1,0 +1,32 @@
+import "std";
+
+struct foo {
+    var text: []byte;
+
+    func init(text: []byte) foo {
+        return (:foo){.text = text};
+    }
+
+    func fini(self: *foo) void {
+        std::print_line(std::out(), self.*.text);
+    }
+}
+
+func main() void {
+    # Calling std::fini on an object with a type that *does not* implement a
+    # fini function should do nothing.
+    var x = 123s;
+    std::fini[[ssize]](x);
+
+    # Calling std::fini on an object with a type that *does* implement a fini
+    # function invoke that fini function.
+    var x = foo::init("foo");
+    std::fini[[foo]](x);
+
+    # The motivating use case for std::fini.
+    var x = foo::init("bar");
+    defer std::fini[[typeof(x)]](x);
+}
+################################################################################
+# foo
+# bar
