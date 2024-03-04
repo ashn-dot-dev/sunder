@@ -1748,6 +1748,7 @@ object_new(
 {
     assert(type != NULL);
     assert(address != NULL);
+    assert(value == NULL || value->type == type);
 
     struct object* const self = xalloc(NULL, sizeof(*self));
     memset(self, 0x00, sizeof(*self));

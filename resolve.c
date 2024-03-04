@@ -2915,6 +2915,8 @@ complete_enum(
             resolver, values[i]->identifier.name);
 
         struct value* const value = value_new_integer(underlying, integers[i]);
+        assert(value->type == type->data.enum_.underlying_type);
+        value->type = type; // Enumify the integer value.
         value_freeze(value);
 
         struct object* const object = object_new(type, address, value);

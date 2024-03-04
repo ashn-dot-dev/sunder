@@ -19,6 +19,18 @@ let foo_b = foo::B;
 let foo_c = foo::C;
 let foo_x: foo = foo::C;
 
+let FOO_ARRAY = (:[3]foo)[
+    foo::A,
+    foo::B,
+    foo::C,
+];
+
+let FOO_SLICE = (:[]foo)[
+    foo::A,
+    foo::B,
+    foo::C,
+];
+
 enum bar {
     A = 0xAA;
     B = 0xBB;
@@ -118,6 +130,12 @@ func main() void {
     sys::dump[[foo]](foo_b);
     sys::dump[[foo]](foo_c);
     sys::dump[[foo]](foo_x);
+    sys::dump[[foo]](FOO_ARRAY[0]);
+    sys::dump[[foo]](FOO_ARRAY[1]);
+    sys::dump[[foo]](FOO_ARRAY[2]);
+    sys::dump[[foo]](FOO_SLICE[0]);
+    sys::dump[[foo]](FOO_SLICE[1]);
+    sys::dump[[foo]](FOO_SLICE[2]);
 
     std::print(std::err(), "\n");
 
@@ -225,6 +243,12 @@ func main() void {
 # 00 00 00 00
 # 01 00 00 00
 # 02 00 00 00
+# 02 00 00 00
+# 00 00 00 00
+# 01 00 00 00
+# 02 00 00 00
+# 00 00 00 00
+# 01 00 00 00
 # 02 00 00 00
 #
 # 00 00 00 00

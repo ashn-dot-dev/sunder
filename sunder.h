@@ -2537,7 +2537,7 @@ struct value {
     struct {
         bool boolean;
         uint8_t byte;
-        struct bigint* integer; /* integer an enum types */
+        struct bigint* integer; /* integer and enum types */
         float f32;
         double f64;
         // Using a double to store the value of a real instead of a long double
