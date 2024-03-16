@@ -4215,6 +4215,12 @@ struct argument_parser {
 }
 
 extend void let VALUE: void = uninit;
+extend void func compare(lhs_: *void, rhs_: *void) ssize {
+    return 0;
+}
+extend void func hash(self_: *void) usize {
+    return 0;
+}
 extend void func format(self_: *bool, writer: std::writer, fmt: []byte) std::result[[void, std::error]] {
     if countof(fmt) != 0 {
         return std::result[[void, std::error]]::init_error(std::error::INVALID_ARGUMENT);
