@@ -4273,7 +4273,9 @@ extend integer func _init_umax_from_str(str: []byte, radix: usize) std::result[[
     var end = countof(str);
 
     # Parse optional + sign.
+    var pos = false;
     if (end - cur) > countof("+") and str[cur] == '+' {
+        pos = true;
         cur += 1;
     }
     # Parse optional - sign.
@@ -4281,6 +4283,10 @@ extend integer func _init_umax_from_str(str: []byte, radix: usize) std::result[[
     if (end - cur) > countof("-") and str[cur] == '-' {
         neg = true;
         cur += 1;
+    }
+    # Check for the invalid case where "+-" appears before any digits.
+    if pos and neg {
+        return std::result[[std::umax, std::error]]::init_error(std::error::PARSE_FAILURE);
     }
 
     # Parse radix.
@@ -4359,6 +4365,11 @@ extend integer func _init_smax_from_str(str: []byte, radix: usize) std::result[[
     if countof(str) != 0 and str[0] == '-' {
         sign = -1s;
         str = str[1:countof(str)];
+    }
+    # Check for the invalid case where "-+" or "--" appears before any digits.
+    # This case is *not* handled by `integer::_init_umax_from_str`.
+    if sign == -1 and countof(str) != 0 and (str[0] == '+' or str[0] == '-') {
+        return std::result[[std::smax, std::error]]::init_error(std::error::PARSE_FAILURE);
     }
 
     var result = integer::_init_umax_from_str(str, radix);

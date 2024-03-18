@@ -218,6 +218,28 @@ func error_invalid_radix() void {
     std::print_line(std::out(), result.error().*.data);
 }
 
+func error_invalid_signs() void {
+    var result = usize::init_from_str("++0", 0);
+    std::print_line(std::out(), result.error().*.data);
+    var result = ssize::init_from_str("++0", 0);
+    std::print_line(std::out(), result.error().*.data);
+
+    var result = usize::init_from_str("--0", 0);
+    std::print_line(std::out(), result.error().*.data);
+    var result = ssize::init_from_str("--0", 0);
+    std::print_line(std::out(), result.error().*.data);
+
+    var result = usize::init_from_str("+-0", 0);
+    std::print_line(std::out(), result.error().*.data);
+    var result = ssize::init_from_str("+-0", 0);
+    std::print_line(std::out(), result.error().*.data);
+
+    var result = usize::init_from_str("-+0", 0);
+    std::print_line(std::out(), result.error().*.data);
+    var result = ssize::init_from_str("-+0", 0);
+    std::print_line(std::out(), result.error().*.data);
+}
+
 func error_integer_contains_no_digits() void {
     var result = ssize::init_from_str("", 0);
     std::print_line(std::out(), result.error().*.data);
@@ -306,6 +328,7 @@ func main() void {
     nominal_min_and_max();
 
     error_invalid_radix();
+    error_invalid_signs();
     error_integer_contains_no_digits();
     error_integer_contains_invalid_digit();
     error_integer_out_of_range();
@@ -338,6 +361,14 @@ func main() void {
 # invalid argument
 # invalid argument
 # invalid argument
+# parse failure
+# parse failure
+# parse failure
+# parse failure
+# parse failure
+# parse failure
+# parse failure
+# parse failure
 # parse failure
 # parse failure
 # parse failure

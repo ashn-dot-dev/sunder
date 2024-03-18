@@ -1,35 +1,20 @@
 import "std";
 
+func test[[T]](str: []byte) void {
+    std::print_format_line(std::err(), "parsing {}", (:[]std::formatter)[std::formatter::init[[typeof(str)]](&str)]);
+    var x = T::init_from_str(str, 0);
+    if x.is_value() {
+        std::print_line(std::err(), "...parsed");
+    }
+    else {
+        std::print_line(std::err(), x.error().*.data);
+    }
+}
+
 func main() void {
-    var str = "0x00";
-    std::print_format_line(std::err(), "parsing {}", (:[]std::formatter)[std::formatter::init[[typeof(str)]](&str)]);
-    var x = u8::init_from_str(str, 0);
-    if x.is_value() {
-        std::print_line(std::err(), "...parsed");
-    }
-    else {
-        std::print_line(std::err(), x.error().*.data);
-    }
-
-    var str = "-0x00";
-    std::print_format_line(std::err(), "parsing {}", (:[]std::formatter)[std::formatter::init[[typeof(str)]](&str)]);
-    var x = u8::init_from_str(str, 0);
-    if x.is_value() {
-        std::print_line(std::err(), "...parsed");
-    }
-    else {
-        std::print_line(std::err(), x.error().*.data);
-    }
-
-    var str = "-0x01";
-    std::print_format_line(std::err(), "parsing {}", (:[]std::formatter)[std::formatter::init[[typeof(str)]](&str)]);
-    var x = u8::init_from_str(str, 0);
-    if x.is_value() {
-        std::print_line(std::err(), "...parsed");
-    }
-    else {
-        std::print_line(std::err(), x.error().*.data);
-    }
+    test[[u8]]("0x00");
+    test[[u8]]("-0x00");
+    test[[u8]]("-0x01");
 }
 ################################################################################
 # parsing 0x00
