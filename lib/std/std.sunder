@@ -4276,6 +4276,12 @@ extend integer func _init_umax_from_str(str: []byte, radix: usize) std::result[[
     if (end - cur) > countof("+") and str[cur] == '+' {
         cur += 1;
     }
+    # Parse optional - sign.
+    var neg = false;
+    if (end - cur) > countof("-") and str[cur] == '-' {
+        neg = true;
+        cur += 1;
+    }
 
     # Parse radix.
     if radix == 0 {
@@ -4338,6 +4344,13 @@ extend integer func _init_umax_from_str(str: []byte, radix: usize) std::result[[
         accum += (:typeof(accum))digit;
     }
 
+    if neg and accum != 0 {
+        # Negative numbers are always out of range. We wait until all digits
+        # have been parsed before producing an error for numbers with a
+        # negative sign since the digits would have otherwise produced a valid
+        # integer, and numbers such as -0x00 are valid umax values.
+        return std::result[[std::umax, std::error]]::init_error(std::error::RESULT_OUT_OF_RANGE);
+    }
     return std::result[[std::umax, std::error]]::init_value(accum);
 }
 

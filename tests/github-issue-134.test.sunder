@@ -1,0 +1,40 @@
+import "std";
+
+func main() void {
+    var str = "0x00";
+    std::print_format_line(std::err(), "parsing {}", (:[]std::formatter)[std::formatter::init[[typeof(str)]](&str)]);
+    var x = u8::init_from_str(str, 0);
+    if x.is_value() {
+        std::print_line(std::err(), "...parsed");
+    }
+    else {
+        std::print_line(std::err(), x.error().*.data);
+    }
+
+    var str = "-0x00";
+    std::print_format_line(std::err(), "parsing {}", (:[]std::formatter)[std::formatter::init[[typeof(str)]](&str)]);
+    var x = u8::init_from_str(str, 0);
+    if x.is_value() {
+        std::print_line(std::err(), "...parsed");
+    }
+    else {
+        std::print_line(std::err(), x.error().*.data);
+    }
+
+    var str = "-0x01";
+    std::print_format_line(std::err(), "parsing {}", (:[]std::formatter)[std::formatter::init[[typeof(str)]](&str)]);
+    var x = u8::init_from_str(str, 0);
+    if x.is_value() {
+        std::print_line(std::err(), "...parsed");
+    }
+    else {
+        std::print_line(std::err(), x.error().*.data);
+    }
+}
+################################################################################
+# parsing 0x00
+# ...parsed
+# parsing -0x00
+# ...parsed
+# parsing -0x01
+# result out-of-range
