@@ -2056,12 +2056,20 @@ struct big_integer {
 
     # Convert a big integer to a primitive integer of type `T`.
     func to_int[[T]](self: *big_integer) std::result[[T, std::error]] {
-        assert sizeof(T) <= sizeof(u64);
+        assert sizeof(T) <= sizeof(u64) and sizeof(u64) == sizeof(std::umax);
+        let LIMBS_PER_U64 = sizeof(u64) / sizeof(typeof(self.*._limbs[0]));
+        if countof(self.*._limbs) > LIMBS_PER_U64 {
+            # Regardless of whether this big integer is positive or negative,
+            # there is no possibility that resulting integer would fit into a
+            # maximum-width integer type, so we return early to indicate that
+            # the big integer has a size outside the range of type `T`.
+            return std::result[[T, std::error]]::init_error(std::error::RESULT_OUT_OF_RANGE);
+        }
         var buf = (:[64]byte)[0...]; # More than enough space.
         var allocator = std::linear_allocator::init[[byte]](buf[0:countof(buf)]);
         var allocator = std::allocator::init[[typeof(allocator)]](&allocator);
-        var string = std::string::init_from_format_with_allocator(allocator, "{}", (:[]std::formatter)[std::formatter::init[[big_integer]](self)]);
-        return T::init_from_str(string.data(), 0);
+        var string = std::string::init_from_format_with_allocator(allocator, "{X}", (:[]std::formatter)[std::formatter::init[[big_integer]](self)]);
+        return T::init_from_str(string.data(), 16);
     }
 
     # self = from

@@ -1,0 +1,142 @@
+import "std";
+
+func test[[T]](bytes: usize) void {
+    std::print_format_line(
+        std::out(),
+        "Testing std::big_integer::to_int with {} byte(s) of data...",
+        (:[]std::formatter)[
+            std::formatter::init[[typeof(bytes)]](&bytes)]);
+
+    var s = std::string::init();
+    defer s.fini();
+    var w = std::writer::init[[std::string]](&s);
+    for _ in bytes * 2 {
+        std::print(w, "F");
+    }
+
+    var x = std::big_integer::init_from_str(s.data(), 16);
+    var x = x.value();
+    defer x.fini();
+    std::print_format_line(std::out(), "big integer: {#X}", (:[]std::formatter)[std::formatter::init[[typeof(x)]](&x)]);
+
+    var y = x.to_int[[T]]();
+    if y.is_value() {
+        var value = y.value();
+        std::print_format_line(std::out(), "value: {#X}", (:[]std::formatter)[std::formatter::init[[typeof(value)]](&value)]);
+    }
+    else {
+        var error = y.error().*.data;
+        std::print_format_line(std::out(), "error: {}", (:[]std::formatter)[std::formatter::init[[typeof(error)]](&error)]);
+    }
+}
+
+func main() void {
+    for bytes in 1:32+1 {
+        test[[std::umax]](bytes);
+    }
+    test[[u8]](1);
+    test[[u8]](2);
+}
+################################################################################
+# Testing std::big_integer::to_int with 1 byte(s) of data...
+# big integer: 0xFF
+# value: 0xFF
+# Testing std::big_integer::to_int with 2 byte(s) of data...
+# big integer: 0xFFFF
+# value: 0xFFFF
+# Testing std::big_integer::to_int with 3 byte(s) of data...
+# big integer: 0xFFFFFF
+# value: 0xFFFFFF
+# Testing std::big_integer::to_int with 4 byte(s) of data...
+# big integer: 0xFFFFFFFF
+# value: 0xFFFFFFFF
+# Testing std::big_integer::to_int with 5 byte(s) of data...
+# big integer: 0xFFFFFFFFFF
+# value: 0xFFFFFFFFFF
+# Testing std::big_integer::to_int with 6 byte(s) of data...
+# big integer: 0xFFFFFFFFFFFF
+# value: 0xFFFFFFFFFFFF
+# Testing std::big_integer::to_int with 7 byte(s) of data...
+# big integer: 0xFFFFFFFFFFFFFF
+# value: 0xFFFFFFFFFFFFFF
+# Testing std::big_integer::to_int with 8 byte(s) of data...
+# big integer: 0xFFFFFFFFFFFFFFFF
+# value: 0xFFFFFFFFFFFFFFFF
+# Testing std::big_integer::to_int with 9 byte(s) of data...
+# big integer: 0xFFFFFFFFFFFFFFFFFF
+# error: result out-of-range
+# Testing std::big_integer::to_int with 10 byte(s) of data...
+# big integer: 0xFFFFFFFFFFFFFFFFFFFF
+# error: result out-of-range
+# Testing std::big_integer::to_int with 11 byte(s) of data...
+# big integer: 0xFFFFFFFFFFFFFFFFFFFFFF
+# error: result out-of-range
+# Testing std::big_integer::to_int with 12 byte(s) of data...
+# big integer: 0xFFFFFFFFFFFFFFFFFFFFFFFF
+# error: result out-of-range
+# Testing std::big_integer::to_int with 13 byte(s) of data...
+# big integer: 0xFFFFFFFFFFFFFFFFFFFFFFFFFF
+# error: result out-of-range
+# Testing std::big_integer::to_int with 14 byte(s) of data...
+# big integer: 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFF
+# error: result out-of-range
+# Testing std::big_integer::to_int with 15 byte(s) of data...
+# big integer: 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
+# error: result out-of-range
+# Testing std::big_integer::to_int with 16 byte(s) of data...
+# big integer: 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
+# error: result out-of-range
+# Testing std::big_integer::to_int with 17 byte(s) of data...
+# big integer: 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
+# error: result out-of-range
+# Testing std::big_integer::to_int with 18 byte(s) of data...
+# big integer: 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
+# error: result out-of-range
+# Testing std::big_integer::to_int with 19 byte(s) of data...
+# big integer: 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
+# error: result out-of-range
+# Testing std::big_integer::to_int with 20 byte(s) of data...
+# big integer: 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
+# error: result out-of-range
+# Testing std::big_integer::to_int with 21 byte(s) of data...
+# big integer: 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
+# error: result out-of-range
+# Testing std::big_integer::to_int with 22 byte(s) of data...
+# big integer: 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
+# error: result out-of-range
+# Testing std::big_integer::to_int with 23 byte(s) of data...
+# big integer: 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
+# error: result out-of-range
+# Testing std::big_integer::to_int with 24 byte(s) of data...
+# big integer: 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
+# error: result out-of-range
+# Testing std::big_integer::to_int with 25 byte(s) of data...
+# big integer: 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
+# error: result out-of-range
+# Testing std::big_integer::to_int with 26 byte(s) of data...
+# big integer: 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
+# error: result out-of-range
+# Testing std::big_integer::to_int with 27 byte(s) of data...
+# big integer: 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
+# error: result out-of-range
+# Testing std::big_integer::to_int with 28 byte(s) of data...
+# big integer: 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
+# error: result out-of-range
+# Testing std::big_integer::to_int with 29 byte(s) of data...
+# big integer: 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
+# error: result out-of-range
+# Testing std::big_integer::to_int with 30 byte(s) of data...
+# big integer: 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
+# error: result out-of-range
+# Testing std::big_integer::to_int with 31 byte(s) of data...
+# big integer: 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
+# error: result out-of-range
+# Testing std::big_integer::to_int with 32 byte(s) of data...
+# big integer: 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
+# error: result out-of-range
+# Testing std::big_integer::to_int with 1 byte(s) of data...
+# big integer: 0xFF
+# value: 0xFF
+# Testing std::big_integer::to_int with 2 byte(s) of data...
+# big integer: 0xFFFF
+# error: result out-of-range
