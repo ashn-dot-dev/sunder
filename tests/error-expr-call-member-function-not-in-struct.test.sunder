@@ -10,4 +10,4 @@ func main() void {
 ################################################################################
 # [error-expr-call-member-function-not-in-struct.test.sunder:8] error: type `foo` has no member function `z`
 #     f.z();
-#     ^
+#       ^

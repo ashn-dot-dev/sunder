@@ -16,4 +16,4 @@ func main() void {
 ################################################################################
 # [error-expr-call-member-function-non-lvalue.test.sunder:14] error: attempted to call member function `x` on non-lvalue instance of type `foo`
 #     (:foo){.x = 123}.x();
-#     ^
+#                      ^

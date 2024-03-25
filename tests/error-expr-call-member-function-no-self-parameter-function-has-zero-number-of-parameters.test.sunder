@@ -13,4 +13,4 @@ func main() void {
 ################################################################################
 # [error-expr-call-member-function-no-self-parameter-function-has-zero-number-of-parameters.test.sunder:11] error: expected type `*foo` for the first parameter of member function `fn` of type `foo`
 #     a.fn();
-#     ^
+#         ^

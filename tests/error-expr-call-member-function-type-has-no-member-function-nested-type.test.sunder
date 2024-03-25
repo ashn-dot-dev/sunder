@@ -1,0 +1,17 @@
+struct foo {
+    var x: usize;
+}
+
+struct bar {
+    var f: foo;
+}
+
+func main() void {
+    var f = (:foo){.x = 123};
+    var b = (:bar){.f = f};
+    b.f.fn();
+}
+################################################################################
+# [error-expr-call-member-function-type-has-no-member-function-nested-type.test.sunder:12] error: type `foo` has no member function `fn`
+#     b.f.fn();
+#         ^

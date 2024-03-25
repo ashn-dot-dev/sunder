@@ -1,0 +1,12 @@
+struct foo {
+    var x: usize;
+}
+
+func main() void {
+    var f = (:foo){.x = 123};
+    f.fn();
+}
+################################################################################
+# [error-expr-call-member-function-type-has-no-member-function.test.sunder:7] error: type `foo` has no member function `fn`
+#     f.fn();
+#       ^
