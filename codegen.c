@@ -1438,7 +1438,7 @@ codegen_stmt_assign(struct stmt const* stmt)
         // they might have side effects. However, no C assignment operation is
         // performed since there is nothing to assign.
         appendli(
-            "%s; /* zero-sized assignment*/; %s;",
+            "%s; /* zero-sized assignment */; %s;",
             strgen_lvalue(stmt->data.assign.lhs),
             strgen_rvalue(stmt->data.assign.rhs));
         return;
@@ -1453,6 +1453,14 @@ codegen_stmt_assign(struct stmt const* stmt)
         return;
     }
     case AOP_ADD_ASSIGN: {
+        if (type_is_ieee754(stmt->data.assign.lhs->type)) {
+            appendli(
+                "*(%s) += %s;",
+                strgen_lvalue(stmt->data.assign.lhs),
+                strgen_rvalue(stmt->data.assign.rhs));
+            return;
+        }
+
         appendli(
             "{%s* %s = %s; %s %s = %s; *%s = %s_%s(*%s, %s);}",
             mangle_type(stmt->data.assign.lhs->type),
@@ -1471,6 +1479,14 @@ codegen_stmt_assign(struct stmt const* stmt)
         return;
     }
     case AOP_SUB_ASSIGN: {
+        if (type_is_ieee754(stmt->data.assign.lhs->type)) {
+            appendli(
+                "*(%s) -= %s;",
+                strgen_lvalue(stmt->data.assign.lhs),
+                strgen_rvalue(stmt->data.assign.rhs));
+            return;
+        }
+
         appendli(
             "{%s* %s = %s; %s %s = %s; *%s = %s_%s(*%s, %s);}",
             mangle_type(stmt->data.assign.lhs->type),
@@ -1489,6 +1505,14 @@ codegen_stmt_assign(struct stmt const* stmt)
         return;
     }
     case AOP_MUL_ASSIGN: {
+        if (type_is_ieee754(stmt->data.assign.lhs->type)) {
+            appendli(
+                "*(%s) *= %s;",
+                strgen_lvalue(stmt->data.assign.lhs),
+                strgen_rvalue(stmt->data.assign.rhs));
+            return;
+        }
+
         appendli(
             "{%s* %s = %s; %s %s = %s; *%s = %s_%s(*%s, %s);}",
             mangle_type(stmt->data.assign.lhs->type),
@@ -1507,6 +1531,14 @@ codegen_stmt_assign(struct stmt const* stmt)
         return;
     }
     case AOP_DIV_ASSIGN: {
+        if (type_is_ieee754(stmt->data.assign.lhs->type)) {
+            appendli(
+                "*(%s) /= %s;",
+                strgen_lvalue(stmt->data.assign.lhs),
+                strgen_rvalue(stmt->data.assign.rhs));
+            return;
+        }
+
         appendli(
             "{%s* %s = %s; %s %s = %s; *%s = %s_%s(*%s, %s);}",
             mangle_type(stmt->data.assign.lhs->type),

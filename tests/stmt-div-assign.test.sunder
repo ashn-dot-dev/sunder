@@ -1,9 +1,15 @@
 import "sys";
+import "std";
 
 func main() void {
     var x = 5u8;
     x /= 2;
     sys::dump[[typeof(x)]](x);
+
+    var y = 3.0f32;
+    y /= 2.0;
+    std::print_format_line(std::err(), "{.1}", (:[]std::formatter)[std::formatter::init[[typeof(y)]](&y)]);
 }
 ################################################################################
 # 02
+# 1.5
