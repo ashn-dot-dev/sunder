@@ -2569,7 +2569,7 @@ complete_struct(
             // size zero in Sunder) so that the size and alignment of structs
             // with flexible array members is consistent between C and Sunder.
             if (member_type->align != 0) {
-                while (next_offset % member_type->align != 0) {
+                while ((next_offset % member_type->align) != 0) {
                     next_offset += 1;
                 }
             }
@@ -2608,7 +2608,7 @@ complete_struct(
             // padding.
             struct_type->size = next_offset + member_type->size;
             assert(struct_type->align != 0);
-            while (struct_type->size % struct_type->align != 0) {
+            while ((struct_type->size % struct_type->align) != 0) {
                 struct_type->size += 1;
             }
 
@@ -2772,7 +2772,6 @@ complete_union(
             }
 
         done_adding_member_variable:;
-
             // If this is the last member variable declaration within the
             // union, then the unions's final size and alignment are known, so
             // the union can be marked as complete. Default assume that the
@@ -2788,6 +2787,12 @@ complete_union(
                 }
             }
             if (union_type->data.union_.is_complete) {
+                // If the union is complete, pad the union to a size that
+                // matches the alignment of the union.
+                while ((union_type->size % union_type->align) != 0) {
+                    union_type->size += 1;
+                }
+
                 sbuf_freeze(member_variables);
                 union_type->data.union_.member_variables = member_variables;
                 sbuf_push(context()->types, union_type);
