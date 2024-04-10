@@ -2789,8 +2789,10 @@ complete_union(
             if (union_type->data.union_.is_complete) {
                 // If the union is complete, pad the union to a size that
                 // matches the alignment of the union.
-                while ((union_type->size % union_type->align) != 0) {
-                    union_type->size += 1;
+                if (union_type->align != 0) {
+                    while ((union_type->size % union_type->align) != 0) {
+                        union_type->size += 1;
+                    }
                 }
 
                 sbuf_freeze(member_variables);
