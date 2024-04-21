@@ -1,0 +1,41 @@
+import "std";
+
+func main() void {
+    var map = std::hash_map[[[]byte, ssize]]::init();
+    defer map.fini();
+    map.insert("foo", 1);
+    map.insert("bar", 2);
+    map.insert("baz", 3);
+
+    std::print_line(std::out(), "direct iterator");
+    var iter = map.iterator();
+    for iter.advance() {
+        std::print_format_line(
+            std::out(),
+            "{}, {}",
+            (:[]std::formatter)[
+                std::formatter::init[[typeof(iter.current().*.key.*)]](iter.current().*.key),
+                std::formatter::init[[typeof(iter.current().*.value.*)]](iter.current().*.value)]);
+    }
+
+    std::print_line(std::out(), "generic iterator");
+    var iter = map.iterator();
+    var iter = std::iterator[[typeof(*iter.current())]]::init[[typeof(iter)]](&iter);
+    for iter.advance() {
+        std::print_format_line(
+            std::out(),
+            "{}, {}",
+            (:[]std::formatter)[
+                std::formatter::init[[typeof(iter.current().*.key.*)]](iter.current().*.key),
+                std::formatter::init[[typeof(iter.current().*.value.*)]](iter.current().*.value)]);
+    }
+}
+################################################################################
+# direct iterator
+# foo, 1
+# bar, 2
+# baz, 3
+# generic iterator
+# foo, 1
+# bar, 2
+# baz, 3

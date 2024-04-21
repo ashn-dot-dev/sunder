@@ -1,0 +1,39 @@
+import "std";
+
+func main() void {
+    var set = std::hash_set[[[]byte]]::init();
+    defer set.fini();
+    set.insert("foo");
+    set.insert("bar");
+    set.insert("baz");
+
+    std::print_line(std::out(), "direct iterator");
+    var iter = set.iterator();
+    for iter.advance() {
+        std::print_format_line(
+            std::out(),
+            "{}",
+            (:[]std::formatter)[
+                std::formatter::init[[typeof(*iter.current())]](iter.current())]);
+    }
+
+    std::print_line(std::out(), "generic iterator");
+    var iter = set.iterator();
+    var iter = std::iterator[[typeof(*iter.current())]]::init[[typeof(iter)]](&iter);
+    for iter.advance() {
+        std::print_format_line(
+            std::out(),
+            "{}",
+            (:[]std::formatter)[
+                std::formatter::init[[typeof(*iter.current())]](iter.current())]);
+    }
+}
+################################################################################
+# direct iterator
+# foo
+# bar
+# baz
+# generic iterator
+# foo
+# bar
+# baz

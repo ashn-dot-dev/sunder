@@ -1,0 +1,39 @@
+import "std";
+
+func main() void {
+    var vec = std::vector[[[]byte]]::init();
+    defer vec.fini();
+    vec.push("foo");
+    vec.push("bar");
+    vec.push("baz");
+
+    std::print_line(std::out(), "direct iterator");
+    var iter = vec.iterator();
+    for iter.advance() {
+        std::print_format_line(
+            std::out(),
+            "{}",
+            (:[]std::formatter)[
+                std::formatter::init[[typeof(*iter.current())]](iter.current())]);
+    }
+
+    std::print_line(std::out(), "generic iterator");
+    var iter = vec.iterator();
+    var iter = std::iterator[[typeof(*iter.current())]]::init[[typeof(iter)]](&iter);
+    for iter.advance() {
+        std::print_format_line(
+            std::out(),
+            "{}",
+            (:[]std::formatter)[
+                std::formatter::init[[typeof(*iter.current())]](iter.current())]);
+    }
+}
+################################################################################
+# direct iterator
+# foo
+# bar
+# baz
+# generic iterator
+# foo
+# bar
+# baz

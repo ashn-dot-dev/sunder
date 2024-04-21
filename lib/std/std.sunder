@@ -3051,6 +3051,11 @@ struct vector[[T]] {
         }
         return self.*.remove(self.*._count - 1);
     }
+
+    # Returns an iterator over the elements of the vector.
+    func iterator(self: *vector[[T]]) std::slice_iterator[[T]] {
+        return std::slice_iterator[[T]]::init(self.*.data());
+    }
 }
 
 # Key-value pair used in map operations.
@@ -3380,6 +3385,11 @@ struct hash_map[[K, V]] {
         }
         return std::optional[[std::key_value_pair[[K, V]]]]::EMPTY;
     }
+
+    # Returns an iterator over the key-value pairs of the hash map.
+    func iterator(self: *std::hash_map[[K, V]]) std::hash_map_iterator[[K, V]] {
+        return std::hash_map_iterator[[K, V]]::init(self);
+    }
 }
 
 # Iterate over the elements of a hash map.
@@ -3623,6 +3633,11 @@ struct hash_set[[T]] {
             return std::optional[[T]]::EMPTY;
         }
         return std::optional[[T]]::init_value(existing.value().key);
+    }
+
+    # Returns an iterator over the elements of the hash set.
+    func iterator(self: *std::hash_set[[T]]) std::hash_set_iterator[[T]] {
+        return std::hash_set_iterator[[T]]::init(self);
     }
 }
 
