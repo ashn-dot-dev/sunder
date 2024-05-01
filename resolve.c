@@ -27,6 +27,8 @@ struct resolver {
     // Prefix used when creating static address names (e.g. <prefix>.<name>).
     char const* current_static_addr_prefix;
 
+    // Optional (NULL => not in a type).
+    struct type const* current_type;
     // Optional (NULL => not in a function).
     struct function* current_function;
 
@@ -2467,6 +2469,7 @@ complete_struct(
 
     // Add all member definitions to the struct in the order that they were
     // defined in.
+    struct type const* const save_current_type = resolver->current_type;
     char const* const save_symbol_name_prefix =
         resolver->current_symbol_name_prefix;
     char const* const save_static_addr_prefix =
@@ -2474,6 +2477,7 @@ complete_struct(
     struct symbol_table* const save_symbol_table =
         resolver->current_symbol_table;
 
+    resolver->current_type = struct_type;
     resolver->current_symbol_name_prefix = symbol_xget_type(symbol)->name;
     resolver->current_static_addr_prefix =
         normalize(symbol_xget_type(symbol)->name, 0);
@@ -2651,6 +2655,7 @@ complete_struct(
         UNREACHABLE();
     }
 
+    resolver->current_type = save_current_type;
     resolver->current_symbol_name_prefix = save_symbol_name_prefix;
     resolver->current_static_addr_prefix = save_static_addr_prefix;
     resolver->current_symbol_table = save_symbol_table;
@@ -2678,6 +2683,7 @@ complete_union(
 
     // Add all member definitions to the union in the order that they were
     // defined in.
+    struct type const* const save_current_type = resolver->current_type;
     char const* const save_symbol_name_prefix =
         resolver->current_symbol_name_prefix;
     char const* const save_static_addr_prefix =
@@ -2685,6 +2691,7 @@ complete_union(
     struct symbol_table* const save_symbol_table =
         resolver->current_symbol_table;
 
+    resolver->current_type = union_type;
     resolver->current_symbol_name_prefix = symbol_xget_type(symbol)->name;
     resolver->current_static_addr_prefix =
         normalize(symbol_xget_type(symbol)->name, 0);
@@ -2814,6 +2821,7 @@ complete_union(
         UNREACHABLE();
     }
 
+    resolver->current_type = save_current_type;
     resolver->current_symbol_name_prefix = save_symbol_name_prefix;
     resolver->current_static_addr_prefix = save_static_addr_prefix;
     resolver->current_symbol_table = save_symbol_table;
@@ -2839,6 +2847,9 @@ complete_enum(
         qualified_name(resolver->current_symbol_name_prefix, name),
         enum_symbols);
     freeze(type);
+
+    struct type const* const save_current_type = type;
+    resolver->current_type = type;
 
     struct symbol* const symbol = symbol_new_type(location, type);
     freeze(symbol);
@@ -2948,6 +2959,7 @@ complete_enum(
             // the symbol produced by `resolve_decl` to that symbol table.
             bool const un_namespaced_global_scope =
                 resolver->module->cst->namespace == NULL
+                && save_current_type == NULL
                 && resolver_is_global(resolver);
             if (un_namespaced_global_scope) {
                 symbol_table_insert(
@@ -2987,6 +2999,7 @@ complete_enum(
         resolve_decl_function(
             resolver, member_functions[i]->data.function.decl);
     }
+    resolver->current_type = save_current_type;
     resolver->current_symbol_name_prefix = save_symbol_name_prefix;
     resolver->current_static_addr_prefix = save_static_addr_prefix;
     resolver->current_symbol_table = save_symbol_table;

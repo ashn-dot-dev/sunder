@@ -1,0 +1,14 @@
+struct foo {
+    var kind: enum {
+        X;
+    };
+}
+
+union bar {
+    var kind: enum {
+        X;
+    };
+}
+
+func main() void {
+}
