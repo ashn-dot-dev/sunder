@@ -2959,8 +2959,7 @@ complete_enum(
             // the symbol produced by `resolve_decl` to that symbol table.
             bool const un_namespaced_global_scope =
                 resolver->module->cst->namespace == NULL
-                && save_current_type == NULL
-                && resolver_is_global(resolver);
+                && save_current_type == NULL && resolver_is_global(resolver);
             if (un_namespaced_global_scope) {
                 symbol_table_insert(
                     resolver->current_export_table,
