@@ -1395,6 +1395,24 @@ parse_expr_lparen(struct parser* parser)
     struct source_location const location =
         expect_current(parser, TOKEN_LPAREN).location;
 
+    // Special case warning for:
+    //      (:::T){INITIALIZERS}
+    // which is parsed as:
+    //      (:: :T){INITIALIZERS}
+    // instead of:
+    //      (: ::T){INITIALIZERS}
+    // as a user might expect.
+    assert(parser->current_token.location.psrc != NULL);
+    assert(parser->peek_token.location.psrc != NULL);
+    bool const emit_colon_warning = check_current(parser, TOKEN_COLON_COLON)
+        && check_peek(parser, TOKEN_COLON)
+        && (parser->current_token.location.psrc + 2
+            == parser->peek_token.location.psrc);
+    if (emit_colon_warning) {
+        warning(parser->current_token.location, "`:::` is parsed as `:: :`");
+        info(parser->current_token.location, "write as `: ::` to disambiguate");
+    }
+
     if (!check_current(parser, TOKEN_COLON)) {
         // <expr-grouped>
         struct cst_expr const* const expr = parse_expr(parser);

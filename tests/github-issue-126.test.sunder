@@ -1,0 +1,17 @@
+struct x { }
+
+func main() void {
+    var x = 123u;
+    var x = (: ::x){}; # no warning emitted
+    var x = (:::x){};
+}
+################################################################################
+# [github-issue-126.test.sunder:6] warning: `:::` is parsed as `:: :`
+#     var x = (:::x){};
+#              ^
+# [github-issue-126.test.sunder:6] info: write as `: ::` to disambiguate
+#     var x = (:::x){};
+#              ^
+# [github-issue-126.test.sunder:6] error: expected `identifier`, found `:`
+#     var x = (:::x){};
+#                ^
