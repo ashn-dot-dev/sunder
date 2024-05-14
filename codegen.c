@@ -1863,7 +1863,7 @@ strgen_rvalue_array_list(struct expr const* expr)
             }
             char const* const local = intern_fmt("__element_%zu", i);
             char const* const initname = mangle_name(local);
-            string_append_fmt(s, "%s", initname);
+            string_append_cstr(s, initname);
         }
         for (size_t i = sbuf_count(elements); i < count; ++i) {
             assert(ellipsis_rvalue != NULL);
@@ -1871,7 +1871,7 @@ strgen_rvalue_array_list(struct expr const* expr)
                 string_append_cstr(s, ", ");
             }
             char const* const initname = mangle_name("__ellipsis");
-            string_append_fmt(s, "%s", initname);
+            string_append_cstr(s, initname);
         }
         string_append_cstr(s, "};");
     }
@@ -1901,7 +1901,7 @@ strgen_rvalue_slice_list(struct expr const* expr)
             if (i != 0) {
                 string_append_cstr(element_exprs, "; ");
             }
-            string_append_fmt(element_exprs, "%s", strgen_rvalue(elements[i]));
+            string_append_cstr(element_exprs, strgen_rvalue(elements[i]));
         }
 
         char const* const output = intern_fmt(
@@ -1980,7 +1980,7 @@ strgen_rvalue_init_struct(struct expr const* expr)
         expr->data.init.initializers;
     assert(sbuf_count(member_variable_defs) == sbuf_count(initializers));
 
-    struct string* const s = string_new_fmt("({");
+    struct string* const s = string_new_cstr("({");
     for (size_t i = 0; i < sbuf_count(initializers); ++i) {
         char const* const local =
             intern_fmt("__initializer_%s", initializers[i].variable->name);
@@ -2047,7 +2047,7 @@ strgen_rvalue_init_union(struct expr const* expr)
     assert(expr->kind == EXPR_INIT);
     assert(expr->type->kind == TYPE_UNION);
 
-    struct string* const s = string_new_fmt("({");
+    struct string* const s = string_new_cstr("({");
 
     if (expr->type->size == 0) {
         string_append_cstr(s, "/* zero-sized union */0;");
@@ -2130,7 +2130,7 @@ strgen_rvalue_call(struct expr const* expr)
     struct expr const* const function = expr->data.call.function;
     sbuf(struct expr const* const) const arguments = expr->data.call.arguments;
 
-    struct string* const s = string_new_fmt("({");
+    struct string* const s = string_new_cstr("({");
 
     for (size_t i = 0; i < sbuf_count(arguments); ++i) {
         char const* const local = intern_fmt("__argument_%zu", i + 1);
