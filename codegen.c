@@ -1866,7 +1866,7 @@ strgen_rvalue_array_list(struct expr const* expr)
             string_append_cstr(s, initname);
         }
         for (size_t i = sbuf_count(elements); i < count; ++i) {
-            assert(ellipsis_rvalue != NULL);
+            assert(ellipsis_valuestr != NULL);
             if (i != 0) {
                 string_append_cstr(s, ", ");
             }
