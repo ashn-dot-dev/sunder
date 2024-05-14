@@ -11,6 +11,16 @@ let g: [2u][2u][3u]u16 = (:[2u][2u][3u]u16)[
     ]...
 ];
 
+func dead(val: void) void {
+    sys::dump[[u16]](0xDEAD);
+    return val;
+}
+
+func beef(val: u8) u8 {
+    sys::dump[[u16]](0xBEEF);
+    return val;
+}
+
 func main() void {
     var c: [5u]u16 = (:[5u]u16)[0xAAu16, 0xBBu16, 0xCCu16...];
     var d: [5u]u16 = (:[5u]u16)[0xAAu16...];
@@ -23,6 +33,11 @@ func main() void {
     sys::dump[[[0]u16]](e);
     sys::dump[[[3][5]u16]](f);
     sys::dump[[[2][2][3]u16]](g);
+
+    # The ellipsis expression should only be evaluated once.
+    let VOID: void = uninit;
+    sys::dump[[[3]void]]((:[3]void)[dead(VOID)...]);
+    sys::dump[[[3]u8]]((:[3]u8)[beef(0xAB)...]);
 }
 ################################################################################
 # AA 00 BB 00 CC 00 CC 00 CC 00
@@ -32,3 +47,7 @@ func main() void {
 #
 # AA 00 BB 00 CC 00 CC 00 CC 00 AA 00 BB 00 CC 00 CC 00 CC 00 AA 00 BB 00 CC 00 CC 00 CC 00
 # FF 00 FF 00 FF 00 AA 00 BB 00 CC 00 FF 00 FF 00 FF 00 AA 00 BB 00 CC 00
+# AD DE
+#
+# EF BE
+# AB AB AB

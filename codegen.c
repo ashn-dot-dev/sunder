@@ -1821,51 +1821,62 @@ strgen_rvalue_array_list(struct expr const* expr)
     assert(expr->type->kind == TYPE_ARRAY);
 
     struct type const* const element_type = expr->type->data.array.base;
-    (void)element_type;
 
     sbuf(struct expr const* const) const elements =
         expr->data.array_list.elements;
 
-    if (expr->type->size == 0) {
-        struct string* const element_exprs = string_new(NULL, 0);
-        for (size_t i = 0; i < sbuf_count(elements); ++i) {
-            assert(elements[i]->type == element_type);
-            if (i != 0) {
-                string_append_cstr(element_exprs, "; ");
-            }
-            string_append_fmt(element_exprs, "%s", strgen_rvalue(elements[i]));
-        }
-
-        char const* const output = intern_fmt(
-            "({%s; /* %s */0;})",
-            string_start(element_exprs),
-            expr->type->name);
-
-        string_del(element_exprs);
-        return output;
-    }
-
-    struct string* const s = string_new_fmt("(%s){", mangle_type(expr->type));
+    struct string* const s = string_new_cstr("({");
+    char const* const typename =
+        element_type->size != 0 ? mangle_type(element_type) : "int";
 
     for (size_t i = 0; i < sbuf_count(elements); ++i) {
         assert(elements[i]->type == element_type);
-        if (i != 0) {
-            string_append_cstr(s, ", ");
-        }
-        string_append_fmt(s, "%s", strgen_rvalue(elements[i]));
+        char const* const local = intern_fmt("__element_%zu", i);
+        char const* const initname = mangle_name(local);
+        char const* const valuestr = strgen_rvalue(elements[i]);
+
+        string_append_fmt(s, "%s %s = %s; ", typename, initname, valuestr);
     }
 
     uintmax_t const count = expr->type->data.array.count;
     struct expr const* const ellipsis = expr->data.array_list.ellipsis;
     assert(sbuf_count(elements) == count || ellipsis != NULL);
-    for (size_t i = sbuf_count(elements); i < count; ++i) {
-        if (i != 0) {
-            string_append_cstr(s, ", ");
-        }
-        string_append_fmt(s, "%s", strgen_rvalue(ellipsis));
+    char const* ellipsis_valuestr = NULL;
+    if (ellipsis != NULL) {
+        assert(ellipsis->type == element_type);
+        char const* const initname = mangle_name("__ellipsis");
+        ellipsis_valuestr = strgen_rvalue(ellipsis);
+
+        string_append_fmt(
+            s, "%s %s = %s; ", typename, initname, ellipsis_valuestr);
     }
 
-    string_append_cstr(s, "}");
+    if (expr->type->size == 0) {
+        string_append_fmt(s, "/* %s */0;", expr->type->name);
+    }
+    else {
+        string_append_fmt(s, "(%s){", mangle_type(expr->type));
+        for (size_t i = 0; i < sbuf_count(elements); ++i) {
+            assert(elements[i]->type == element_type);
+            if (i != 0) {
+                string_append_cstr(s, ", ");
+            }
+            char const* const local = intern_fmt("__element_%zu", i);
+            char const* const initname = mangle_name(local);
+            string_append_fmt(s, "%s", initname);
+        }
+        for (size_t i = sbuf_count(elements); i < count; ++i) {
+            assert(ellipsis_rvalue != NULL);
+            if (i != 0) {
+                string_append_cstr(s, ", ");
+            }
+            char const* const initname = mangle_name("__ellipsis");
+            string_append_fmt(s, "%s", initname);
+        }
+        string_append_cstr(s, "};");
+    }
+
+    string_append_cstr(s, "})");
 
     char const* const interned = intern(string_start(s), string_count(s));
     string_del(s);
@@ -2120,14 +2131,13 @@ strgen_rvalue_call(struct expr const* expr)
     sbuf(struct expr const* const) const arguments = expr->data.call.arguments;
 
     struct string* const s = string_new_fmt("({");
-    for (size_t i = 0; i < sbuf_count(arguments); ++i) {
-        if (arguments[i]->type->size == 0) {
-            continue;
-        }
 
+    for (size_t i = 0; i < sbuf_count(arguments); ++i) {
         char const* const local = intern_fmt("__argument_%zu", i + 1);
         char const* const initname = mangle_name(local);
-        char const* const typename = mangle_type(arguments[i]->type);
+        char const* const typename = arguments[i]->type->size != 0
+            ? mangle_type(arguments[i]->type)
+            : "int";
         char const* const valuestr = strgen_rvalue(arguments[i]);
 
         string_append_fmt(s, "%s %s = %s; ", typename, initname, valuestr);
@@ -2156,6 +2166,7 @@ strgen_rvalue_call(struct expr const* expr)
     else {
         string_append_cstr(s, ");");
     }
+
     string_append_cstr(s, "})");
 
     char const* const interned = intern(string_start(s), string_count(s));
