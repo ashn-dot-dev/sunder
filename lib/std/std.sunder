@@ -4649,10 +4649,10 @@ extend u8 func init_from_str(str: []byte, radix: usize) std::result[[u8, std::er
     return integer::_init_uint_from_str[[u8]](str, radix);
 }
 extend u8 func min(lhs: u8, rhs: u8) u8 {
-    return integer::_min[[u8]](lhs, rhs);
+    return (:u8)integer::_min[[std::umax]]((:std::umax)lhs, (:std::umax)rhs);
 }
 extend u8 func max(lhs: u8, rhs: u8) u8 {
-    return integer::_max[[u8]](lhs, rhs);
+    return (:u8)integer::_max[[std::umax]]((:std::umax)lhs, (:std::umax)rhs);
 }
 extend u8 func isqrt(int: u8) u8 {
     return (:u8)integer::_isqrt[[std::umax]]((:std::umax)int);
@@ -4679,10 +4679,10 @@ extend u16 func init_from_str(str: []byte, radix: usize) std::result[[u16, std::
     return integer::_init_uint_from_str[[u16]](str, radix);
 }
 extend u16 func min(lhs: u16, rhs: u16) u16 {
-    return integer::_min[[u16]](lhs, rhs);
+    return (:u16)integer::_min[[std::umax]]((:std::umax)lhs, (:std::umax)rhs);
 }
 extend u16 func max(lhs: u16, rhs: u16) u16 {
-    return integer::_max[[u16]](lhs, rhs);
+    return (:u16)integer::_max[[std::umax]]((:std::umax)lhs, (:std::umax)rhs);
 }
 extend u16 func isqrt(int: u16) u16 {
     return (:u16)integer::_isqrt[[std::umax]]((:std::umax)int);
@@ -4709,10 +4709,10 @@ extend u32 func init_from_str(str: []byte, radix: usize) std::result[[u32, std::
     return integer::_init_uint_from_str[[u32]](str, radix);
 }
 extend u32 func min(lhs: u32, rhs: u32) u32 {
-    return integer::_min[[u32]](lhs, rhs);
+    return (:u32)integer::_min[[std::umax]]((:std::umax)lhs, (:std::umax)rhs);
 }
 extend u32 func max(lhs: u32, rhs: u32) u32 {
-    return integer::_max[[u32]](lhs, rhs);
+    return (:u32)integer::_max[[std::umax]]((:std::umax)lhs, (:std::umax)rhs);
 }
 extend u32 func isqrt(int: u32) u32 {
     return (:u32)integer::_isqrt[[std::umax]]((:std::umax)int);
@@ -4739,10 +4739,10 @@ extend u64 func init_from_str(str: []byte, radix: usize) std::result[[u64, std::
     return integer::_init_uint_from_str[[u64]](str, radix);
 }
 extend u64 func min(lhs: u64, rhs: u64) u64 {
-    return integer::_min[[u64]](lhs, rhs);
+    return (:u64)integer::_min[[std::umax]]((:std::umax)lhs, (:std::umax)rhs);
 }
 extend u64 func max(lhs: u64, rhs: u64) u64 {
-    return integer::_max[[u64]](lhs, rhs);
+    return (:u64)integer::_max[[std::umax]]((:std::umax)lhs, (:std::umax)rhs);
 }
 extend u64 func isqrt(int: u64) u64 {
     return (:u64)integer::_isqrt[[std::umax]]((:std::umax)int);
@@ -4769,10 +4769,10 @@ extend usize func init_from_str(str: []byte, radix: usize) std::result[[usize, s
     return integer::_init_uint_from_str[[usize]](str, radix);
 }
 extend usize func min(lhs: usize, rhs: usize) usize {
-    return integer::_min[[usize]](lhs, rhs);
+    return (:usize)integer::_min[[std::umax]]((:std::umax)lhs, (:std::umax)rhs);
 }
 extend usize func max(lhs: usize, rhs: usize) usize {
-    return integer::_max[[usize]](lhs, rhs);
+    return (:usize)integer::_max[[std::umax]]((:std::umax)lhs, (:std::umax)rhs);
 }
 extend usize func isqrt(int: usize) usize {
     return (:usize)integer::_isqrt[[std::umax]]((:std::umax)int);
@@ -4799,13 +4799,13 @@ extend s8 func init_from_str(str: []byte, radix: usize) std::result[[s8, std::er
     return integer::_init_sint_from_str[[s8]](str, radix);
 }
 extend s8 func abs(int: s8) s8 {
-    return integer::_abs[[s8]](int);
+    return (:s8)integer::_abs[[std::smax]]((:std::smax)int);
 }
 extend s8 func min(lhs: s8, rhs: s8) s8 {
-    return integer::_min[[s8]](lhs, rhs);
+    return (:s8)integer::_min[[std::smax]]((:std::smax)lhs, (:std::smax)rhs);
 }
 extend s8 func max(lhs: s8, rhs: s8) s8 {
-    return integer::_max[[s8]](lhs, rhs);
+    return (:s8)integer::_max[[std::smax]]((:std::smax)lhs, (:std::smax)rhs);
 }
 extend s8 func isqrt(int: s8) s8 {
     return (:s8)integer::_isqrt[[std::smax]]((:std::smax)int);
@@ -4832,13 +4832,13 @@ extend s16 func init_from_str(str: []byte, radix: usize) std::result[[s16, std::
     return integer::_init_sint_from_str[[s16]](str, radix);
 }
 extend s16 func abs(int: s16) s16 {
-    return integer::_abs[[s16]](int);
+    return (:s16)integer::_abs[[std::smax]]((:std::smax)int);
 }
 extend s16 func min(lhs: s16, rhs: s16) s16 {
-    return integer::_min[[s16]](lhs, rhs);
+    return (:s16)integer::_min[[std::smax]]((:std::smax)lhs, (:std::smax)rhs);
 }
 extend s16 func max(lhs: s16, rhs: s16) s16 {
-    return integer::_max[[s16]](lhs, rhs);
+    return (:s16)integer::_max[[std::smax]]((:std::smax)lhs, (:std::smax)rhs);
 }
 extend s16 func isqrt(int: s16) s16 {
     return (:s16)integer::_isqrt[[std::smax]]((:std::smax)int);
@@ -4865,13 +4865,13 @@ extend s32 func init_from_str(str: []byte, radix: usize) std::result[[s32, std::
     return integer::_init_sint_from_str[[s32]](str, radix);
 }
 extend s32 func abs(int: s32) s32 {
-    return integer::_abs[[s32]](int);
+    return (:s32)integer::_abs[[std::smax]]((:std::smax)int);
 }
 extend s32 func min(lhs: s32, rhs: s32) s32 {
-    return integer::_min[[s32]](lhs, rhs);
+    return (:s32)integer::_min[[std::smax]]((:std::smax)lhs, (:std::smax)rhs);
 }
 extend s32 func max(lhs: s32, rhs: s32) s32 {
-    return integer::_max[[s32]](lhs, rhs);
+    return (:s32)integer::_max[[std::smax]]((:std::smax)lhs, (:std::smax)rhs);
 }
 extend s32 func isqrt(int: s32) s32 {
     return (:s32)integer::_isqrt[[std::smax]]((:std::smax)int);
@@ -4898,13 +4898,13 @@ extend s64 func init_from_str(str: []byte, radix: usize) std::result[[s64, std::
     return integer::_init_sint_from_str[[s64]](str, radix);
 }
 extend s64 func abs(int: s64) s64 {
-    return integer::_abs[[s64]](int);
+    return (:s64)integer::_abs[[std::smax]]((:std::smax)int);
 }
 extend s64 func min(lhs: s64, rhs: s64) s64 {
-    return integer::_min[[s64]](lhs, rhs);
+    return (:s64)integer::_min[[std::smax]]((:std::smax)lhs, (:std::smax)rhs);
 }
 extend s64 func max(lhs: s64, rhs: s64) s64 {
-    return integer::_max[[s64]](lhs, rhs);
+    return (:s64)integer::_max[[std::smax]]((:std::smax)lhs, (:std::smax)rhs);
 }
 extend s64 func isqrt(int: s64) s64 {
     return (:s64)integer::_isqrt[[std::smax]]((:std::smax)int);
@@ -4931,13 +4931,13 @@ extend ssize func init_from_str(str: []byte, radix: usize) std::result[[ssize, s
     return integer::_init_sint_from_str[[ssize]](str, radix);
 }
 extend ssize func abs(int: ssize) ssize {
-    return integer::_abs[[ssize]](int);
+    return (:ssize)integer::_abs[[std::smax]]((:std::smax)int);
 }
 extend ssize func min(lhs: ssize, rhs: ssize) ssize {
-    return integer::_min[[ssize]](lhs, rhs);
+    return (:ssize)integer::_min[[std::smax]]((:std::smax)lhs, (:std::smax)rhs);
 }
 extend ssize func max(lhs: ssize, rhs: ssize) ssize {
-    return integer::_max[[ssize]](lhs, rhs);
+    return (:ssize)integer::_max[[std::smax]]((:std::smax)lhs, (:std::smax)rhs);
 }
 extend ssize func isqrt(int: ssize) ssize {
     return (:ssize)integer::_isqrt[[std::smax]]((:std::smax)int);
