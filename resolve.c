@@ -1051,15 +1051,15 @@ xget_template_instance(
         // Generate the template instance concrete syntax tree.
         struct cst_decl* const instance_decl = decl->kind == CST_DECL_STRUCT
             ? cst_decl_new_struct(
-                location,
-                instance_identifier,
-                instance_template_parameters,
-                instance_members)
+                  location,
+                  instance_identifier,
+                  instance_template_parameters,
+                  instance_members)
             : cst_decl_new_union(
-                location,
-                instance_identifier,
-                instance_template_parameters,
-                instance_members);
+                  location,
+                  instance_identifier,
+                  instance_template_parameters,
+                  instance_members);
         freeze(instance_decl);
 
         struct template_instantiation_link* link = xalloc(NULL, sizeof(*link));
