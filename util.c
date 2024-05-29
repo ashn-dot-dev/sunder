@@ -401,6 +401,16 @@ cstr_new_fmt(char const* fmt, ...)
 
     va_list args;
     va_start(args, fmt);
+    char* const new = cstr_new_vfmt(fmt, args);
+    va_end(args);
+
+    return new;
+}
+
+char*
+cstr_new_vfmt(char const* fmt, va_list args)
+{
+    assert(fmt != NULL);
 
     va_list copy;
     va_copy(copy, args);
@@ -415,7 +425,6 @@ cstr_new_fmt(char const* fmt, ...)
     size_t size = (size_t)len + STR_LITERAL_COUNT("\0");
     char* const buf = xalloc(NULL, size);
     vsnprintf(buf, size, fmt, args);
-    va_end(args);
 
     return buf;
 }
