@@ -15,7 +15,6 @@ static struct function const* current_function = NULL;
 static struct stmt const* current_for_range_loop = NULL;
 FILE* out = NULL;
 
-// Temporary strings held until `tmpstr_clear` is called.
 static sbuf(char*) tmp = NULL;
 static char const*
 tmpstr(char const* start, size_t count);
