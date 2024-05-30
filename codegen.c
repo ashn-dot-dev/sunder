@@ -9,6 +9,14 @@
 #include <string.h>
 #include "sunder.h"
 
+#if defined(__GNUC__) /* GCC and Clang */
+#    define WRITEF __attribute__((format(printf, 1, 2)))
+#    define WRITEF_LOCATION __attribute__((format(printf, 2, 3)))
+#else
+#    define WRITEF /* nothing */
+#    define WRITEF_LOCATION /* nothing */
+#endif
+
 static bool debug = false;
 static unsigned indent = 0u;
 static struct function const* current_function = NULL;
@@ -20,7 +28,7 @@ static char const*
 tmpstr(char const* start, size_t count);
 static char const*
 tmpstr_cstr(char const* cstr);
-static char const*
+static WRITEF char const*
 tmpstr_fmt(char const* fmt, ...);
 
 static char const*
@@ -37,21 +45,13 @@ indent_incr(void);
 static void
 indent_decr(void);
 
-#if defined(__GNUC__) /* GCC and Clang */
-#    define APPENDF __attribute__((format(printf, 1, 2)))
-#    define APPENDF_LOCATION __attribute__((format(printf, 2, 3)))
-#else
-#    define APPENDF /* nothing */
-#    define APPENDF_LOCATION /* nothing */
-#endif
-
-static APPENDF void
+static WRITEF void
 append(char const* fmt, ...);
-static APPENDF void
+static WRITEF void
 appendln(char const* fmt, ...);
-static APPENDF void
+static WRITEF void
 appendli(char const* fmt, ...);
-static APPENDF_LOCATION void
+static WRITEF_LOCATION void
 appendli_location(struct source_location location, char const* fmt, ...);
 static void
 appendch(char ch);
