@@ -3395,6 +3395,7 @@ codegen_defers(struct stmt const* begin, struct stmt const* end)
 void
 codegen(
     bool opt_c,
+    bool opt_d,
     bool opt_g,
     bool opt_k,
     char const* const* opt_L,
@@ -3573,7 +3574,7 @@ codegen(
 
     (void)fclose(out);
 
-    if ((err = spawnvpw(backend_argv))) {
+    if (!opt_d && (err = spawnvpw(backend_argv))) {
         goto cleanup;
     }
 

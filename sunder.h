@@ -2667,6 +2667,7 @@ eval_lvalue(struct expr const* expr);
 void
 codegen(
     bool opt_c,
+    bool opt_d,
     bool opt_g,
     bool opt_k,
     char const* const* opt_L,

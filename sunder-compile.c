@@ -14,6 +14,7 @@ static sbuf(char const*) a_paths = NULL;
 static sbuf(char const*) c_paths = NULL;
 static sbuf(char const*) o_paths = NULL;
 static bool              opt_c = false;
+static bool              opt_d = false;
 static bool              opt_g = false;
 static bool              opt_k = false;
 static sbuf(char const*) opt_L = NULL;
@@ -47,7 +48,7 @@ main(int argc, char** argv)
         validate_main_is_defined_correctly();
     }
 
-    codegen(opt_c, opt_g, opt_k, opt_L, opt_l, opt_o, paths);
+    codegen(opt_c, opt_d, opt_g, opt_k, opt_L, opt_l, opt_o, paths);
 
     return EXIT_SUCCESS;
 }
@@ -72,6 +73,7 @@ usage(void)
    "",
    "Options:",
    "  -c        Compile and assemble, but do not link.",
+   "  -d        Do not invoke the C compiler to compile, assemble, or link.",
    "  -e        Display the Sunder environment and exit.",
    "  -g        Generate debug information in output files.",
    "  -k        Keep intermediate files.",
@@ -90,10 +92,14 @@ static void
 argparse(int argc, char** argv)
 {
     int c = 0;
-    while ((c = getopt(argc, argv, "cegkL:l:o:h")) != -1) {
+    while ((c = getopt(argc, argv, "cdegkL:l:o:h")) != -1) {
         switch (c) {
         case 'c': {
             opt_c = true;
+            break;
+        }
+        case 'd': {
+            opt_d = true;
             break;
         }
         case 'e': {
@@ -160,6 +166,9 @@ argparse(int argc, char** argv)
         path = argv[i];
     }
 
+    if (opt_c && opt_d) {
+        fatal(NO_LOCATION, "options -c and -d are mutually exclusive");
+    }
     if (path == NULL) {
         fatal(NO_LOCATION, "no input file");
     }
