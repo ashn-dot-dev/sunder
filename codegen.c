@@ -967,7 +967,7 @@ strgen_value(struct value const* value)
                 struct type const* const object_type =
                     symbol_xget_type(context()->static_symbols[i]);
                 if (object_type->size != 0) {
-                    // Object has a non-zero size, and therefor will have a
+                    // Object has a non-zero size, and therefore will have a
                     // non-NULL address.
                     break;
                 }
