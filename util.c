@@ -494,16 +494,22 @@ cstr_replace(char const* cstr, char const* target, char const* replacement)
 }
 
 // Variation of djb2 that hashes a start-count pair.
-static unsigned long
+static uintmax_t
 hash_djb2(char const* start, size_t count)
 {
-    unsigned long hash = 5381;
+    uintmax_t hash = 5381;
 
     for (size_t i = 0; i < count; ++i) {
-        hash = ((hash << 5) + hash) + (unsigned long)start[i];
+        hash = ((hash << 5) + hash) + (uintmax_t)start[i];
     }
 
     return hash;
+}
+
+uintmax_t
+hash(void const* start, size_t count)
+{
+    return hash_djb2(start, count);
 }
 
 struct interned_element {

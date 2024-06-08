@@ -1461,13 +1461,24 @@ create_static_bytes(
     assert(out_array_symbol != NULL);
     assert(out_slice_symbol != NULL);
 
+    // Use the hash of the byte string to construct the bytes array and bytes
+    // slice static storage names. Symbols with similar names sharing the same
+    // static address prefix will take significantly longer to normalize, since
+    // the normalizer will attempt to reserve duplicate names (e.g. <name>.1,
+    // <name>.2, <name.3>, etc.). Include the hash of the byte string content
+    // as part of the name in order to reduce the number of duplicate names the
+    // normalizer will have to process.
+    uintmax_t const hashed = hash(bytes_start, bytes_count);
+    char* const array_name = cstr_new_fmt("__bytes_array.%ju", hashed);
+    char* const slice_name = cstr_new_fmt("__bytes_slice.%ju", hashed);
+
     // Bytes Array Object
 
     struct type const* const array_type = type_unique_array(
         location, bytes_count + 1 /*NUL*/, context()->builtin.byte);
 
     struct address const* const array_address =
-        resolver_reserve_storage_static(resolver, "__bytes_array");
+        resolver_reserve_storage_static(resolver, array_name);
 
     sbuf(struct value*) array_elements = NULL;
     for (size_t i = 0; i < bytes_count; ++i) {
@@ -1494,7 +1505,7 @@ create_static_bytes(
     // Bytes Slice Object
 
     struct address const* const slice_address =
-        resolver_reserve_storage_static(resolver, "__bytes_slice");
+        resolver_reserve_storage_static(resolver, slice_name);
 
     struct value* const slice_start =
         value_new_pointer(context()->builtin.pointer_to_byte, *array_address);
@@ -1515,6 +1526,8 @@ create_static_bytes(
 
     *out_array_symbol = array_symbol;
     *out_slice_symbol = slice_symbol;
+    xalloc(array_name, XALLOC_FREE);
+    xalloc(slice_name, XALLOC_FREE);
 }
 
 static void

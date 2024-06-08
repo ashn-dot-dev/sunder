@@ -165,6 +165,9 @@ cstr_eq_ignore_case(char const* lhs, char const* rhs);
 char const* // interned
 cstr_replace(char const* cstr, char const* target, char const* replacement);
 
+uintmax_t
+hash(void const* start, size_t count);
+
 // Initialize the interned string set.
 void
 intern_init(void);
