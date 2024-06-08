@@ -549,7 +549,7 @@ char const*
 intern(char const* start, size_t count)
 {
     assert(start != NULL || count == 0);
-    unsigned long const hash = hash_djb2(start, count);
+    uintmax_t const hash = hash_djb2(start, count);
 
     // Check to see if the string has already been interned.
     for (size_t index = hash % sbuf_count(interned);
