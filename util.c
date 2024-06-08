@@ -2091,11 +2091,11 @@ string_append_vfmt(struct string* self, char const* fmt, va_list args)
         fatal(NO_LOCATION, "[%s] Formatting failure", __func__);
     }
 
-    size_t size = (size_t)len + STR_LITERAL_COUNT("\0");
-    char* const buf = xalloc(NULL, size);
-    vsnprintf(buf, size, fmt, args);
-    string_append(self, buf, (size_t)len);
-    xalloc(buf, XALLOC_FREE);
+    size_t const index = self->count;
+    string_resize(self, self->count + (size_t)len);
+
+    size_t const size = (size_t)len + STR_LITERAL_COUNT("\0");
+    vsnprintf(self->start + index, size, fmt, args);
 }
 
 struct string**
