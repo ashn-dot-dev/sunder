@@ -1469,8 +1469,8 @@ create_static_bytes(
     // as part of the name in order to reduce the number of duplicate names the
     // normalizer will have to process.
     uintmax_t const hashed = hash(bytes_start, bytes_count);
-    char* const array_name = cstr_new_fmt("__bytes_array.%ju", hashed);
-    char* const slice_name = cstr_new_fmt("__bytes_slice.%ju", hashed);
+    char* const array_name = cstr_new_fmt("__bytes_array.%jx", hashed);
+    char* const slice_name = cstr_new_fmt("__bytes_slice.%jx", hashed);
 
     // Bytes Array Object
 
