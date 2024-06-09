@@ -515,7 +515,7 @@ hash(void const* start, size_t count)
 struct interned_element {
     char* string; // Optional (NULL indicates the element is not in use).
     size_t count; // Number of bytes in the string before the final NUL.
-    unsigned long hash; // Hash of the string contents.
+    uintmax_t hash; // Hash of the string contents.
 };
 
 // Hash set of interned cstrings.
