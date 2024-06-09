@@ -1001,8 +1001,66 @@ strgen_value(struct value const* value)
     case TYPE_ARRAY: {
         sbuf(struct value*) const elements = value->data.array.elements;
         struct value const* const ellipsis = value->data.array.ellipsis;
-        uintmax_t const count = value->type->data.array.count;
+        size_t const count = (size_t)value->type->data.array.count;
         string_append_fmt(s, "{.elements = {");
+
+        if (value->type->data.array.base->kind == TYPE_BYTE) {
+            // Peephole optimization for arrays of bytes. We know that each
+            // byte will be encoded as `0xXY`, so four characters per element.
+            // We also know that each byte will be followed by either the text
+            // ", " or "}}", both of which consist of two characters. So we can
+            // resize the string by an additional `countof(array) * (4 + 2)`
+            // bytes, and write the rest of the value directly into the string
+            // buffer. This optimization comes in handy when generating the
+            // value for string arrays created from `embed` statements where
+            // multi-MB files would otherwise produce a large number of
+            // string reallocations.
+            size_t const stride = STR_LITERAL_COUNT("0xXY??");
+            size_t const growth = count * stride;
+
+            size_t const index = string_count(s);
+            string_resize(s, string_count(s) + growth);
+
+            // clang-format off
+            static char const LOOKUP_TABLE[16] = {
+                '0', '1', '2', '3', '4', '5', '6', '7',
+                '8', '9', 'A', 'B', 'C', 'D', 'E', 'F',
+            };
+            // clang-format on
+
+            char* const start = (char*)string_start(s) + index;
+            size_t const elements_count = sbuf_count(elements);
+            for (size_t i = 0; i < elements_count; ++i) {
+                char* const current = start + i * stride;
+                unsigned const byte = elements[i]->data.byte;
+                unsigned const hi = (byte >> 4u) & 0x0Fu;
+                unsigned const lo = (byte >> 0u) & 0x0Fu;
+                current[0] = '0';
+                current[1] = 'x';
+                current[2] = LOOKUP_TABLE[hi];
+                current[3] = LOOKUP_TABLE[lo];
+                current[4] = ',';
+                current[5] = ' ';
+            }
+            if (ellipsis != NULL) {
+                unsigned const byte = ellipsis->data.byte;
+                unsigned const hi = (byte >> 4u) & 0x0Fu;
+                unsigned const lo = (byte >> 0u) & 0x0Fu;
+                for (size_t i = elements_count; i < count; ++i) {
+                    char* const current = start + i * stride;
+                    current[0] = '0';
+                    current[1] = 'x';
+                    current[2] = LOOKUP_TABLE[hi];
+                    current[3] = LOOKUP_TABLE[lo];
+                    current[4] = ',';
+                    current[5] = ' ';
+                }
+            }
+            ((char*)string_start(s) + string_count(s) - 2)[0] = '}';
+            ((char*)string_start(s) + string_count(s) - 2)[1] = '}';
+            break;
+        }
+
         for (size_t i = 0; i < count; ++i) {
             if (i != 0) {
                 string_append_cstr(s, ", ");
