@@ -338,6 +338,19 @@ extern sbuf(char*) interned;
 void
 context_fini(void)
 {
+    // Finalizing modules, interned strings, chilling & frozen objects, and
+    // other dynamically allocated resources at program exit is unnecessary
+    // when the operating system is already going to unmap pages associated
+    // with the process during cleanup. Sunder tooling built in release mode
+    // skips the finalization of dynamically allocated resources in order to
+    // avoid superfluously spinning in a loop and calling `free` on objects
+    // that are about to be unmapped anyway. Sunder tooling built in debug mode
+    // *will* finalize dynamically allocated resources (1) as a way to ensure
+    // that the model of object lifecycles is correctly implemented *if*
+    // finalization were to be explicitly re-enabled, and (2) in order to allow
+    // tooling such as LeakSanitizer to find legitimate sources of memory leaks
+    // during application testing.
+#ifndef NDEBUG
     struct context* const self = &s_context;
 
     for (size_t i = 0; i < sbuf_count(self->modules); ++i) {
@@ -361,6 +374,7 @@ context_fini(void)
     freeze_fini();
 
     memset(self, 0x00, sizeof(*self));
+#endif
 }
 
 struct context*
