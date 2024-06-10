@@ -2677,14 +2677,5 @@ codegen(
     char const* const* opt_l,
     char const* const opt_o,
     char const* const* paths);
-void
-codegen_c(
-    bool opt_c,
-    bool opt_g,
-    bool opt_k,
-    char const* const* opt_L,
-    char const* const* opt_l,
-    char const* const opt_o,
-    char const* const* paths);
 
 #endif // SUNDER_H_INCLUDED
