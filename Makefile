@@ -76,10 +76,10 @@ format:
 
 clean:
 	rm -f bin/sunder-compile
-	rm -f $$(find . -type f -name 'a.out*')
-	rm -f $$(find . -type f -name '*.out')
 	rm -f $$(find . -type f -name '*.o')
+	rm -f $$(find . -type f -name '*.out')
 	rm -f $$(find . -type f -name '*.tmp')
+	rm -f $$(find . -type f -name '*.tmp.*')
 	(cd examples/ && sh examples.clean.sh)
 
 .SUFFIXES: .c .o
