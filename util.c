@@ -418,7 +418,6 @@ cstr_new_vfmt(char const* fmt, va_list args)
     va_end(copy);
 
     if (len < 0) {
-        va_end(args);
         fatal(NO_LOCATION, "[%s] Formatting failure", __func__);
     }
 
