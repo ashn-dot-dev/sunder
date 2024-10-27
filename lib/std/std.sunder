@@ -1257,13 +1257,13 @@ func read_all(reader: std::reader) std::result[[[]byte, std::error]] {
 # On success, this function returns a newly allocated slice of bytes containing
 # the read data, allocated using the provided allocator.
 func read_all_with_allocator(allocator: std::allocator, reader: std::reader) std::result[[[]byte, std::error]] {
-    var bytes = std::slice[[byte]]::new_with_allocator(allocator, 0);
+    var vec = std::vector[[byte]]::init_with_allocator(allocator);
 
     var buf = (:[4096]byte)[0...];
     for true {
         var result = reader.read(buf[0:countof(buf)]);
         if result.is_error() {
-            std::slice[[byte]]::delete_with_allocator(allocator, bytes);
+            vec.fini();
             return std::result[[[]byte, std::error]]::init_error(result.error());
         }
 
@@ -1272,12 +1272,22 @@ func read_all_with_allocator(allocator: std::allocator, reader: std::reader) std
             break;
         }
 
-        var cur_count = countof(bytes);
-        var new_count = cur_count + read_size;
-        bytes = std::slice[[byte]]::resize_with_allocator(allocator, bytes, new_count);
-        std::slice[[byte]]::copy(bytes[cur_count:new_count], buf[0:read_size]);
+        var cur_count = vec.count();
+        var new_count = vec.count() + read_size;
+
+        if new_count > vec.capacity() {
+            vec.reserve(usize::max(new_count, vec.capacity() * 2));
+        }
+
+        vec.resize(new_count);
+        std::slice[[byte]]::copy(vec.data()[cur_count:new_count], buf[0:read_size]);
     }
 
+    var bytes = (:[]byte){vec.start(), vec.count()};
+    var slice = (:[]byte){vec.start(), vec.capacity()};
+    if countof(bytes) != countof(slice) {
+        bytes = std::slice[[byte]]::resize_with_allocator(allocator, slice, countof(bytes));
+    }
     return std::result[[[]byte, std::error]]::init_value(bytes);
 }
 
