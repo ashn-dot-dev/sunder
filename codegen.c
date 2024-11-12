@@ -39,6 +39,8 @@ mangle_name(char const* name);
 static char const*
 mangle_type(struct type const* type);
 static char const*
+mangle_address(struct address const* address);
+static char const*
 mangle_symbol(struct symbol const* symbol);
 
 static void
@@ -464,16 +466,18 @@ mangle_type(struct type const* type)
 }
 
 static char const*
-mangle_symbol(struct symbol const* symbol)
+mangle_address(struct address const* address)
 {
-    assert(symbol != NULL);
+    assert(address != NULL);
 
-    struct address const* const address = symbol_xget_address(symbol);
     switch (address->kind) {
     case ADDRESS_ABSOLUTE: {
         UNREACHABLE();
     }
     case ADDRESS_STATIC: {
+        // Mangled static addresses in generated C produced by `mangle_address`
+        // are used exclusively for symbols and static objects, and will always
+        // have an offset of zero.
         assert(address->data.static_.offset == 0);
         return mangle_name(address->data.static_.name);
     }
@@ -483,6 +487,14 @@ mangle_symbol(struct symbol const* symbol)
     }
 
     UNREACHABLE();
+}
+
+static char const*
+mangle_symbol(struct symbol const* symbol)
+{
+    assert(symbol != NULL);
+
+    return mangle_address(symbol_xget_address(symbol));
 }
 
 static void
@@ -1017,8 +1029,7 @@ strgen_value(struct value const* value)
         //
         // This particular form of casting should be well behaved on POSIX
         // platforms, as function<->pointer casts are used in dlsym.
-        string_append_fmt(
-            s, "(void*)%s", mangle_name(address->data.static_.name));
+        string_append_fmt(s, "(void*)%s", mangle_address(address));
         break;
     }
     case TYPE_POINTER: {
@@ -1348,8 +1359,7 @@ codegen_block(struct block const* block)
         if (type->size == 0) {
             appendli("// var %s: %s", locals[i].name, type->name);
             appendli(
-                "int %s = /* zero-sized local */0;",
-                mangle_name(address->data.local.name));
+                "int %s = /* zero-sized local */0;", mangle_address(address));
             continue;
         }
 
@@ -1376,7 +1386,7 @@ codegen_block(struct block const* block)
         appendli(
             "%s %s = %s;",
             mangle_type(type),
-            mangle_name(address->data.local.name),
+            mangle_address(address),
             strgen_uninit(type));
     }
 
@@ -1477,11 +1487,11 @@ codegen_stmt_for_range(struct stmt const* stmt)
     appendli(
         "for (%s %s = %s; %s < %s; ++%s)",
         mangle_type(symbol_xget_type(variable)),
-        mangle_name(address->data.local.name),
+        mangle_address(address),
         strgen_rvalue(stmt->data.for_range.begin),
-        mangle_name(address->data.local.name),
+        mangle_address(address),
         strgen_rvalue(stmt->data.for_range.end),
-        mangle_name(address->data.local.name));
+        mangle_address(address));
     codegen_block(&stmt->data.for_range.body);
     current_for_range_loop = save_current_for_range_loop;
 }
