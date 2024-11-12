@@ -257,8 +257,8 @@ mangle(char const* cstr)
             continue;
         }
 
-        // some::type
-        // some_type
+        // some::symbol
+        // some_symbol
         if (cstr_starts_with(cur, "::")) {
             string_append_cstr(s, "_");
             cur += 2;
@@ -337,16 +337,24 @@ mangle(char const* cstr)
             continue;
         }
 
-        // struct { var <member>; }
-        // struct_LBRACE_VAR_<member>_RBRACE
+        // struct { var <member-name>: <member-type>; }
+        // struct_LBRACE_VAR_<member-name>_TYPE_<member-type>_RBRACE
         if (cstr_starts_with(cur, "var ")) {
             string_append_cstr(s, "_VAR_");
             cur += 4;
             continue;
         }
 
-        // struct { var <member>; }
-        // struct_LBRACE_VAR_<member>_RBRACE
+        // struct { var <member-name>: <member-type>; }
+        // struct_LBRACE_VAR_<member-name>_TYPE_<member-type>_RBRACE
+        if (cstr_starts_with(cur, ":")) {
+            string_append_cstr(s, "_TYPE_");
+            cur += 1;
+            continue;
+        }
+
+        // struct { var <member-name>: <member-type>; }
+        // struct_LBRACE_VAR_<member-name>_TYPE_<member-type>_RBRACE
         if (cstr_starts_with(cur, ";")) {
             cur += 1;
             continue;

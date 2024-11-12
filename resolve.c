@@ -460,7 +460,7 @@ resolver_reserve_storage_static(struct resolver* self, char const* name)
 
     struct string* const tmp = string_new(NULL, 0);
     if (self->current_static_addr_prefix != NULL) {
-        string_append_fmt(tmp, "%s.", self->current_static_addr_prefix);
+        string_append_fmt(tmp, "%s::", self->current_static_addr_prefix);
     }
     string_append_cstr(tmp, name);
 
@@ -516,24 +516,7 @@ normalize(char const* name, unsigned unique_id)
 {
     assert(name != NULL);
 
-    // Substitute invalid assembly character symbols with replacement
-    // characters within the provided name.
-    struct string* const s = string_new(NULL, 0);
-    for (char const* search = name; *search != '\0'; ++search) {
-        if (cstr_starts_with(search, "::")) {
-            string_append_cstr(s, ".");
-            search += 1;
-            continue;
-        }
-
-        if (safe_isalnum(*search) || *search == '_' || *search == '.') {
-            string_append_fmt(s, "%c", *search);
-            continue;
-        }
-
-        // Replace all non valid identifier characters with an underscore.
-        string_append_cstr(s, "_");
-    }
+    struct string* const s = string_new_cstr(name);
     assert(string_count(s) != 0);
 
     // <name>.<unique-id>
