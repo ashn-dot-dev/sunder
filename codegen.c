@@ -17,6 +17,8 @@
 #    define WRITEF_LOCATION /* nothing */
 #endif
 
+#define MANGLE_PREFIX "__sunder_"
+
 static bool debug = false;
 static unsigned indent = 0u;
 static struct function const* current_function = NULL;
@@ -275,7 +277,107 @@ mangle_name(char const* name)
 {
     assert(name != NULL);
 
-    return strgen_fmt("__sunder_%s", mangle(name));
+    char const* const reserved[] = {
+        // Preprocessor Keywords
+        /* elif */ /* Sunder keyword */
+        /* else */ /* Sunder keyword */
+        "endif",
+        "ifdef",
+        "ifndef",
+        "elifdef",
+        "elifndef",
+        "define",
+        "undef",
+        "include",
+        /* embed */ /* Sunder keyword */
+        "line",
+        "error",
+        "warning",
+        "pragma",
+        /* defined */ /* Sunder keyword */
+        "__has_include",
+        "__has_embed",
+        "__has_c_attribute",
+
+        // Non-preprocessor Pragma Control
+        "_Pragma",
+
+        // Language Keywords
+        "alignas",
+        /* alignof */ /* Sunder keyword */
+        "auto",
+        /* bool */ /* Sunder keyword */
+        /* break */ /* Sunder keyword */
+        /* case */ /* Sunder keyword */
+        "char",
+        "const",
+        "constexpr",
+        /* continue */ /* Sunder keyword */
+        "default",
+        "do",
+        "double",
+        /* else */ /* Sunder keyword */
+        /* enum */ /* Sunder keyword */
+        /* extern */ /* Sunder keyword */
+        /* false */ /* Sunder keyword */
+        "float",
+        /* for */ /* Sunder keyword */
+        "goto",
+        /* if */ /* Sunder keyword */
+        "inline",
+        "int",
+        "long",
+        "nullptr",
+        "register",
+        "restrict",
+        "return", /* Sunder keyword that is also used as a symbol name */
+        "short",
+        "signed",
+        /* sizeof */ /* Sunder keyword */
+        "static",
+        "static_assert",
+        /* struct */ /* Sunder keyword */
+        /* switch */ /* Sunder keyword */
+        "thread_local",
+        /* true */ /* Sunder keyword */
+        "typedef",
+        /* typeof */ /* Sunder keyword */
+        "typeof_unqual",
+        /* union */ /* Sunder keyword */
+        "unsigned",
+        /* void */ /* Sunder keyword */
+        "volatile",
+        "while",
+        "_Alignas",
+        "_Alignof",
+        "_Atomic",
+        "_BitInt",
+        "_Bool",
+        "_Complex",
+        "_Decimal128",
+        "_Decimal32",
+        "_Decimal64",
+        "_Generic",
+        "_Imaginary",
+        "_Noreturn",
+        "_Static_assert",
+        "_Thread_local",
+
+        // C Extensions
+        "asm",
+        "fortran",
+
+        // C Runtime
+        "main",
+    };
+
+    for (size_t i = 0; i < ARRAY_COUNT(reserved); ++i) {
+        if (0 == strcmp(name, reserved[i])) {
+            return strgen_fmt(MANGLE_PREFIX "%s", mangle(name));
+        }
+    }
+
+    return mangle(name);
 }
 
 static char const*
@@ -292,11 +394,11 @@ mangle_type_recursive(struct type const* type)
                 string_append_cstr(p, "_");
             }
             string_append_fmt(
-                p, "parameter%zu_%s", i + 1, mangle_type_recursive(ptypes[i]));
+                p, "_parameter%zu_%s", i + 1, mangle_type_recursive(ptypes[i]));
         }
 
         struct string* const s = string_new_fmt(
-            "func_%s_returning_%s",
+            "func%s_returning_%s",
             string_start(p),
             mangle_type_recursive(type->data.function.return_type));
 
@@ -349,7 +451,16 @@ mangle_type(struct type const* type)
         return context()->interned.void_;
     }
 
-    return mangle_name(mangle_type_recursive(type));
+    char const* const typename = mangle_type_recursive(type);
+
+    // Type names such as "pointer_to_T" or "slice_of_T" are valid identifiers
+    // in both C and Sunder. Add the mangle prefix to the type names generated
+    // in this fashion to avoid potential symbol conflicts.
+    bool has_readable_name = type->kind == TYPE_FUNCTION
+        || type->kind == TYPE_POINTER || type->kind == TYPE_ARRAY
+        || type->kind == TYPE_SLICE;
+    return has_readable_name ? strgen_fmt(MANGLE_PREFIX "%s", mangle(typename))
+                             : mangle_name(typename);
 }
 
 static char const*
@@ -712,11 +823,7 @@ codegen_static_object(struct symbol const* symbol)
     }
 
     assert(symbol_xget_address(symbol)->data.static_.offset == 0);
-    append(
-        "%s %s __asm__(\"%s\")",
-        mangle_type(type),
-        mangle_name(name),
-        mangle(name));
+    append("%s %s", mangle_type(type), mangle_name(name));
     if (symbol->data.variable->value == NULL) {
         // Global data without an initializer is zero-initialized.
         appendln(";");
@@ -782,35 +889,17 @@ codegen_static_function(struct symbol const* symbol, bool prototype)
         }
     }
 
-    if (function->is_extern) {
-        appendln(
-            "#define %s %s",
-            mangle_name(function->address->data.static_.name),
-            mangle(function->address->data.static_.name));
-        append(
-            "%s %s(%s)",
-            mangle_type(function->type->data.function.return_type),
-            mangle(function->address->data.static_.name),
-            params_written != 0 ? string_start(params) : "void");
-    }
-    else {
-        append(
-            "%s%c%s(%s)",
-            mangle_type(function->type->data.function.return_type),
-            (prototype ? ' ' : '\n'),
-            mangle_name(function->address->data.static_.name),
-            params_written != 0 ? string_start(params) : "void");
-    }
+    append(
+        "%s%c%s(%s)",
+        mangle_type(function->type->data.function.return_type),
+        (prototype ? ' ' : '\n'),
+        ((function->is_extern ? mangle : mangle_name)(
+            function->address->data.static_.name)),
+        params_written != 0 ? string_start(params) : "void");
 
     string_del(params);
 
     if (prototype) {
-        char const* const name = function->address->data.static_.name;
-        bool const use_unmagled_symbol =
-            !function->is_extern && name != context()->interned.main;
-        if (use_unmagled_symbol) {
-            append(" __asm__(\"%s\")", mangle(name));
-        }
         appendln(";");
         return;
     }
@@ -2204,7 +2293,7 @@ strgen_rvalue_cast(struct expr const* expr)
     if (type_is_integer(expr->type)
         && type_is_ieee754(expr->data.cast.expr->type)) {
         return strgen_fmt(
-            "__sunder___cast_%s_to_%s(%s)",
+            "__cast_%s_to_%s(%s)",
             mangle_type(expr->data.cast.expr->type),
             mangle_type(expr->type),
             strgen_rvalue(expr->data.cast.expr));

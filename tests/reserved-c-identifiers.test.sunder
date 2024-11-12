@@ -1,0 +1,15 @@
+# Reserved C identifiers may be used in Sunder, provided that they are not
+# themselves reserved in the Sunder language.
+
+var _Pragma: bool = uninit;
+var pragma: bool = uninit;
+var unsigned: bool = uninit;
+var signed: bool = uninit;
+var while: bool = uninit;
+var _Atomic: bool = uninit;
+var _Generic: bool = uninit;
+var const: bool = uninit;
+var volatile: bool = uninit;
+var restrict: bool = uninit;
+
+func main() void { }
