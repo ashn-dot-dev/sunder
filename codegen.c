@@ -252,9 +252,103 @@ mangle(char const* cstr)
     struct string* const s = string_new(NULL, 0);
 
     for (char const* cur = cstr; *cur != '\0';) {
+        if (safe_isspace(*cur)) {
+            cur += 1;
+            continue;
+        }
+
+        // some::type
+        // some_type
         if (cstr_starts_with(cur, "::")) {
             string_append_cstr(s, "_");
             cur += 2;
+            continue;
+        }
+
+        // type[[foo, bar]]
+        // type_TEMPLATE_BGN_foo_COMMA_bar_TEMPLATE_END
+        if (cstr_starts_with(cur, "[[")) {
+            string_append_cstr(s, "_TEMPLATE_BGN_");
+            cur += 2;
+            continue;
+        }
+
+        // type[[foo, bar]]
+        // type_TEMPLATE_BGN_foo_COMMA_bar_TEMPLATE_END
+        if (cstr_starts_with(cur, "]]")) {
+            string_append_cstr(s, "_TEMPLATE_END");
+            cur += 2;
+            continue;
+        }
+
+        // type[[foo, bar]]
+        // type_TEMPLATE_BGN_foo_COMMA_bar_TEMPLATE_END
+        if (cstr_starts_with(cur, ",")) {
+            string_append_cstr(s, "_COMMA_");
+            cur += 1;
+            continue;
+        }
+
+        // []type
+        // ...slice_of_type...
+        if (cstr_starts_with(cur, "[]")) {
+            string_append_cstr(s, "slice_of_");
+            cur += 2;
+            continue;
+        }
+
+        // [N]type
+        // ...array_N_of_type...
+        if (cstr_starts_with(cur, "[")) {
+            string_append_cstr(s, "array_");
+            cur += 1;
+            continue;
+        }
+
+        // [N]type
+        // ...array_N_of_type...
+        if (cstr_starts_with(cur, "]")) {
+            string_append_cstr(s, "_of_");
+            cur += 1;
+            continue;
+        }
+
+        // *type
+        // ...pointer_to_type...
+        if (cstr_starts_with(cur, "*")) {
+            string_append_cstr(s, "pointer_to_");
+            cur += 1;
+            continue;
+        }
+
+        // struct { var <member>; }
+        // struct_LBRACE_VAR_<member>_RBRACE
+        if (cstr_starts_with(cur, "{")) {
+            string_append_cstr(s, "_LBRACE");
+            cur += 1;
+            continue;
+        }
+
+        // struct { var <member>; }
+        // struct_LBRACE_VAR_<member>_RBRACE
+        if (cstr_starts_with(cur, "}")) {
+            string_append_cstr(s, "_RBRACE");
+            cur += 1;
+            continue;
+        }
+
+        // struct { var <member>; }
+        // struct_LBRACE_VAR_<member>_RBRACE
+        if (cstr_starts_with(cur, "var ")) {
+            string_append_cstr(s, "_VAR_");
+            cur += 4;
+            continue;
+        }
+
+        // struct { var <member>; }
+        // struct_LBRACE_VAR_<member>_RBRACE
+        if (cstr_starts_with(cur, ";")) {
+            cur += 1;
             continue;
         }
 

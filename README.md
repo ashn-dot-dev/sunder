@@ -122,22 +122,21 @@ of `-g` in combination with `-k` facilitates debugging with GDB and LLDB.
 $ sunder-compile -g -k -o hello examples/hello.sunder
 $ lldb hello
 (lldb) target create "hello"
-Current executable set to '/Users/ashn/sources/sunder/hello' (arm64).
+Current executable set to '/home/ashn/sources/sunder/hello' (x86_64).
 (lldb) b std_print_line
-Breakpoint 1: where = hello`std_print_line + 32 at hello.tmp.c:25216:9, address = 0x000000010000d24c
+Breakpoint 1: where = hello`std_print_line + 58 at hello.tmp.c:13191:9, address = 0x0000000000020b06
 (lldb) run
-Process 80648 launched: '/Users/ashn/sources/sunder/hello' (arm64)
-Process 80648 stopped
-* thread #1, queue = 'com.apple.main-thread', stop reason = breakpoint 1.1
-    frame #0: 0x000000010000d24c hello`std_print_line(__sunder_argument_0_writer=__sunder_std_writer @ 0x000000016fdff0c0, __sunder_argument_1_str=(start = "Hello, world!", count = 13)) at hello.tmp.c:25216:9
-   25213	__sunder_std_print_line(__sunder_std_writer __sunder_argument_0_writer, __sunder_slice_of_byte __sunder_argument_1_str)
-   25214	{
-   25215	   // var return: void
--> 25216	   int __sunder_return = /* zero-sized local */0;
-   25217	   // var result: std::result[[void, *std::error_info]]
-   25218	   __sunder_std_result__void___std_error_info__ __sunder_local_0_result = {/* uninit */0};
-   25219	   /// [std/std.sunder:1592] STATEMENT STMT_ASSIGN
-Target 0: (hello) stopped.
+Process 133770 launched: '/home/ashn/sources/sunder/hello' (x86_64)
+Process 133770 stopped
+* thread #1, name = 'hello', stop reason = breakpoint 1.1
+    frame #0: 0x0000555555574b06 hello`std_print_line(__sunder_argument_0_writer=std_writer @ 0x00007fffffffe4d0, __sunder_argument_1_str=(start = "Hello, world!", count = 13)) at hello.tmp.c:13191:9
+   13188        std_print_line(std_writer __sunder_argument_0_writer, __sunder_slice_of_byte __sunder_argument_1_str)
+   13189        {
+   13190            // var return: void
+-> 13191            int __sunder_return = /* zero-sized local */0;
+   13192            // var result: std::result[[void, *std::error_info]]
+   13193            std_result_TEMPLATE_BGN_void_COMMA_pointer_to_std_error_info_TEMPLATE_END __sunder_local_0_result = {/* uninit */0};
+   13194            /// [std/std.sunder:1602] STATEMENT STMT_ASSIGN
 (lldb)
 ```
 
