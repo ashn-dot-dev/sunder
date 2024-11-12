@@ -482,7 +482,7 @@ mangle_address(struct address const* address)
         return mangle_name(address->data.static_.name);
     }
     case ADDRESS_LOCAL: {
-        return mangle_name(address->data.local.name);
+        return strgen_fmt(MANGLE_PREFIX "%s", mangle(address->data.local.name));
     }
     }
 
@@ -2106,12 +2106,9 @@ strgen_rvalue_slice_list(struct expr const* expr)
         return output;
     }
 
-    struct address const* const array_addr =
-        symbol_xget_address(expr->data.slice_list.array_symbol);
-    assert(array_addr->kind == ADDRESS_LOCAL);
-    char const* const array_name = array_addr->data.local.name;
-    struct type const* const array_type =
-        symbol_xget_type(expr->data.slice_list.array_symbol);
+    struct symbol const* const array_symbol =
+        expr->data.slice_list.array_symbol;
+    struct type const* const array_type = symbol_xget_type(array_symbol);
     uintmax_t const array_size = array_type->size;
 
     struct string* const s = string_new_cstr("({");
@@ -2125,13 +2122,13 @@ strgen_rvalue_slice_list(struct expr const* expr)
         string_append_fmt(
             s,
             "%s.elements[%zu] = %s; ",
-            mangle_name(array_name),
+            mangle_symbol(array_symbol),
             i,
             strgen_rvalue(elements[i]));
     }
 
     char const* const start = array_size != 0
-        ? strgen_fmt("%s.elements", mangle_name(array_name))
+        ? strgen_fmt("%s.elements", mangle_symbol(array_symbol))
         : "/* zero-sized array */0";
     string_append_fmt(
         s,
