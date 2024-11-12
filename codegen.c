@@ -820,7 +820,6 @@ codegen_static_object(struct symbol const* symbol)
     bool const is_extern_variable =
         symbol->kind == SYMBOL_VARIABLE && symbol->data.variable->is_extern;
     if (is_extern_variable) {
-        appendln("#define %s %s", mangle_name(name), mangle(name));
         appendln("extern %s %s;", mangle_type(type), mangle(name));
         return;
     }
