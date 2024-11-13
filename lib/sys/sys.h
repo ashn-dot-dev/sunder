@@ -42,26 +42,26 @@ typedef double             f64;
 #define __sunder_true  ((bool)1)
 #define __sunder_false ((bool)0)
 
-#define u8___MIN    ((u8)0)
-#define u8___MAX    ((u8)UCHAR_MAX)
-#define s8___MIN    ((s8)SCHAR_MIN)
-#define s8___MAX    ((s8)SCHAR_MAX)
-#define u16___MIN   ((u16)0)
-#define u16___MAX   ((u16)USHRT_MAX)
-#define s16___MIN   ((s16)SHRT_MIN)
-#define s16___MAX   ((s16)SHRT_MAX)
-#define u32___MIN   ((u32)0)
-#define u32___MAX   ((u32)UINT_MAX)
-#define s32___MIN   ((s32)INT_MIN)
-#define s32___MAX   ((s32)INT_MAX)
-#define u64___MIN   ((u64)0)
-#define u64___MAX   ((u64)ULLONG_MAX)
-#define s64___MIN   ((s64)LLONG_MIN)
-#define s64___MAX   ((s64)LLONG_MAX)
-#define usize___MIN ((usize)0)
-#define usize___MAX ((usize)ULONG_MAX)
-#define ssize___MIN ((ssize)LONG_MIN)
-#define ssize___MAX ((ssize)LONG_MAX)
+#define __sunder_u8_MIN    ((u8)0)
+#define __sunder_u8_MAX    ((u8)UCHAR_MAX)
+#define __sunder_s8_MIN    ((s8)SCHAR_MIN)
+#define __sunder_s8_MAX    ((s8)SCHAR_MAX)
+#define __sunder_u16_MIN   ((u16)0)
+#define __sunder_u16_MAX   ((u16)USHRT_MAX)
+#define __sunder_s16_MIN   ((s16)SHRT_MIN)
+#define __sunder_s16_MAX   ((s16)SHRT_MAX)
+#define __sunder_u32_MIN   ((u32)0)
+#define __sunder_u32_MAX   ((u32)UINT_MAX)
+#define __sunder_s32_MIN   ((s32)INT_MIN)
+#define __sunder_s32_MAX   ((s32)INT_MAX)
+#define __sunder_u64_MIN   ((u64)0)
+#define __sunder_u64_MAX   ((u64)ULLONG_MAX)
+#define __sunder_s64_MIN   ((s64)LLONG_MIN)
+#define __sunder_s64_MAX   ((s64)LLONG_MAX)
+#define __sunder_usize_MIN ((usize)0)
+#define __sunder_usize_MAX ((usize)ULONG_MAX)
+#define __sunder_ssize_MIN ((ssize)LONG_MIN)
+#define __sunder_ssize_MAX ((ssize)LONG_MAX)
 // clang-format on
 
 static inline _Noreturn void
@@ -230,7 +230,7 @@ __SUNDER_INTEGER_MUL_WRAPPING_DEFINITION(ssize)
         if (rhs == 0) {                                                        \
             __fatal_divide_by_zero();                                          \
         }                                                                      \
-        if ((lhs == T##___MIN) && (rhs == -1)) {                               \
+        if ((lhs == __sunder_##T##_MIN) && (rhs == -1)) {                      \
             __fatal_out_of_range();                                            \
         }                                                                      \
         return lhs / rhs;                                                      \
@@ -278,7 +278,8 @@ __SUNDER_INTEGER_REM_DEFINITION(ssize)
 #define __SUNDER_CAST_IEEE754_TO_INTEGER_DEFINITION(F, I)                      \
     static I __cast_##F##_to_##I(F f)                                          \
     {                                                                          \
-        if (!isfinite(f) || f < (F)I##___MIN || (F)I##___MAX < f) {            \
+        if (!isfinite(f) || f < (F)__sunder_##I##_MIN                          \
+            || (F)__sunder_##I##_MAX < f) {                                    \
             __fatal_out_of_range();                                            \
         }                                                                      \
         return (I)f;                                                           \
