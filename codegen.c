@@ -495,7 +495,10 @@ mangle_type_recursive(struct type const* type)
             type->data.function.parameter_types;
         for (size_t i = 0; i < sbuf_count(ptypes); ++i) {
             string_append_fmt(
-                p, "_parameter%zu_%s", i + 1, mangle_type_recursive(ptypes[i]));
+                p,
+                "_parameter_%zu_%s",
+                i + 1,
+                mangle_type_recursive(ptypes[i]));
         }
 
         struct string* const s = string_new_fmt(
