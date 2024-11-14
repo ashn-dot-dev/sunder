@@ -65,42 +65,42 @@ typedef double             f64;
 // clang-format on
 
 static inline _Noreturn void
-__fatal(char* message)
+__sunder_fatal(char* message)
 {
     fprintf(stderr, "%s\n", message);
     _exit(1);
 }
 
 static _Noreturn void
-__fatal_divide_by_zero(void)
+__sunder_fatal_divide_by_zero(void)
 {
-    __fatal("fatal: divide by zero");
+    __sunder_fatal("fatal: divide by zero");
 }
 
 static _Noreturn void
-__fatal_index_out_of_bounds(void)
+__sunder_fatal_index_out_of_bounds(void)
 {
-    __fatal("fatal: index out-of-bounds");
+    __sunder_fatal("fatal: index out-of-bounds");
 }
 
 static _Noreturn void
-__fatal_null_pointer_dereference(void)
+__sunder_fatal_null_pointer_dereference(void)
 {
-    __fatal("fatal: null pointer dereference");
+    __sunder_fatal("fatal: null pointer dereference");
 }
 
 static _Noreturn void
-__fatal_out_of_range(void)
+__sunder_fatal_out_of_range(void)
 {
-    __fatal("fatal: operation produces out-of-range result");
+    __sunder_fatal("fatal: operation produces out-of-range result");
 }
 
 #define __SUNDER_INTEGER_ADD_DEFINITION(T)                                     \
-    static T __add_##T(T lhs, T rhs)                                           \
+    static T __sunder_add_##T(T lhs, T rhs)                                    \
     {                                                                          \
         T result;                                                              \
         if (__builtin_add_overflow(lhs, rhs, &result)) {                       \
-            __fatal_out_of_range();                                            \
+            __sunder_fatal_out_of_range();                                     \
         }                                                                      \
         return result;                                                         \
     }
@@ -117,7 +117,7 @@ __SUNDER_INTEGER_ADD_DEFINITION(usize)
 __SUNDER_INTEGER_ADD_DEFINITION(ssize)
 
 #define __SUNDER_INTEGER_ADD_WRAPPING_DEFINITION(T)                            \
-    static T __add_wrapping_##T(T lhs, T rhs)                                  \
+    static T __sunder_add_wrapping_##T(T lhs, T rhs)                           \
     {                                                                          \
         T result;                                                              \
         __builtin_add_overflow(lhs, rhs, &result);                             \
@@ -136,11 +136,11 @@ __SUNDER_INTEGER_ADD_WRAPPING_DEFINITION(usize)
 __SUNDER_INTEGER_ADD_WRAPPING_DEFINITION(ssize)
 
 #define __SUNDER_INTEGER_SUB_DEFINITION(T)                                     \
-    static T __sub_##T(T lhs, T rhs)                                           \
+    static T __sunder_sub_##T(T lhs, T rhs)                                    \
     {                                                                          \
         T result;                                                              \
         if (__builtin_sub_overflow(lhs, rhs, &result)) {                       \
-            __fatal_out_of_range();                                            \
+            __sunder_fatal_out_of_range();                                     \
         }                                                                      \
         return result;                                                         \
     }
@@ -157,7 +157,7 @@ __SUNDER_INTEGER_SUB_DEFINITION(usize)
 __SUNDER_INTEGER_SUB_DEFINITION(ssize)
 
 #define __SUNDER_INTEGER_SUB_WRAPPING_DEFINITION(T)                            \
-    static T __sub_wrapping_##T(T lhs, T rhs)                                  \
+    static T __sunder_sub_wrapping_##T(T lhs, T rhs)                           \
     {                                                                          \
         T result;                                                              \
         __builtin_sub_overflow(lhs, rhs, &result);                             \
@@ -176,11 +176,11 @@ __SUNDER_INTEGER_SUB_WRAPPING_DEFINITION(usize)
 __SUNDER_INTEGER_SUB_WRAPPING_DEFINITION(ssize)
 
 #define __SUNDER_INTEGER_MUL_DEFINITION(T)                                     \
-    static T __mul_##T(T lhs, T rhs)                                           \
+    static T __sunder_mul_##T(T lhs, T rhs)                                    \
     {                                                                          \
         T result;                                                              \
         if (__builtin_mul_overflow(lhs, rhs, &result)) {                       \
-            __fatal_out_of_range();                                            \
+            __sunder_fatal_out_of_range();                                     \
         }                                                                      \
         return result;                                                         \
     }
@@ -197,7 +197,7 @@ __SUNDER_INTEGER_MUL_DEFINITION(usize)
 __SUNDER_INTEGER_MUL_DEFINITION(ssize)
 
 #define __SUNDER_INTEGER_MUL_WRAPPING_DEFINITION(T)                            \
-    static T __mul_wrapping_##T(T lhs, T rhs)                                  \
+    static T __sunder_mul_wrapping_##T(T lhs, T rhs)                           \
     {                                                                          \
         T result;                                                              \
         __builtin_mul_overflow(lhs, rhs, &result);                             \
@@ -216,28 +216,28 @@ __SUNDER_INTEGER_MUL_WRAPPING_DEFINITION(usize)
 __SUNDER_INTEGER_MUL_WRAPPING_DEFINITION(ssize)
 
 #define __SUNDER_UINTEGER_DIV_DEFINITION(T)                                    \
-    static T __div_##T(T lhs, T rhs)                                           \
+    static T __sunder_div_##T(T lhs, T rhs)                                    \
     {                                                                          \
         if (rhs == 0) {                                                        \
-            __fatal_divide_by_zero();                                          \
+            __sunder_fatal_divide_by_zero();                                   \
         }                                                                      \
         return lhs / rhs;                                                      \
     }
 
 #define __SUNDER_SINTEGER_DIV_DEFINITION(T)                                    \
-    static T __div_##T(T lhs, T rhs)                                           \
+    static T __sunder_div_##T(T lhs, T rhs)                                    \
     {                                                                          \
         if (rhs == 0) {                                                        \
-            __fatal_divide_by_zero();                                          \
+            __sunder_fatal_divide_by_zero();                                   \
         }                                                                      \
         if ((lhs == __sunder_##T##_MIN) && (rhs == -1)) {                      \
-            __fatal_out_of_range();                                            \
+            __sunder_fatal_out_of_range();                                     \
         }                                                                      \
         return lhs / rhs;                                                      \
     }
 
 #define __SUNDER_IEEE754_DIV_DEFINITION(T)                                     \
-    static T __div_##T(T lhs, T rhs)                                           \
+    static T __sunder_div_##T(T lhs, T rhs)                                    \
     {                                                                          \
         return lhs / rhs;                                                      \
     }
@@ -256,10 +256,10 @@ __SUNDER_IEEE754_DIV_DEFINITION(f32)
 __SUNDER_IEEE754_DIV_DEFINITION(f64)
 
 #define __SUNDER_INTEGER_REM_DEFINITION(T)                                     \
-    static T __rem_##T(T lhs, T rhs)                                           \
+    static T __sunder_rem_##T(T lhs, T rhs)                                    \
     {                                                                          \
         if (rhs == 0) {                                                        \
-            __fatal_divide_by_zero();                                          \
+            __sunder_fatal_divide_by_zero();                                   \
         }                                                                      \
         return lhs % rhs;                                                      \
     }
@@ -276,11 +276,11 @@ __SUNDER_INTEGER_REM_DEFINITION(usize)
 __SUNDER_INTEGER_REM_DEFINITION(ssize)
 
 #define __SUNDER_CAST_IEEE754_TO_INTEGER_DEFINITION(F, I)                      \
-    static I __cast_##F##_to_##I(F f)                                          \
+    static I __sunder_cast_##F##_to_##I(F f)                                   \
     {                                                                          \
         if (!isfinite(f) || f < (F)__sunder_##I##_MIN                          \
             || (F)__sunder_##I##_MAX < f) {                                    \
-            __fatal_out_of_range();                                            \
+            __sunder_fatal_out_of_range();                                     \
         }                                                                      \
         return (I)f;                                                           \
     }
@@ -434,7 +434,7 @@ sys_allocate(usize align, usize size)
         return NULL; // Canonical address.
     }
     if (align == 0 && size != 0) {
-        __fatal("fatal: allocation with invalid alignment");
+        __sunder_fatal("fatal: allocation with invalid alignment");
     }
 
     // The size parameter must be an integral multiple of alignment.
@@ -445,7 +445,7 @@ sys_allocate(usize align, usize size)
     void* result = aligned_alloc(align, size);
     if (result == NULL) {
         perror(__func__);
-        __fatal("fatal: allocation failure");
+        __sunder_fatal("fatal: allocation failure");
     }
 
     assert(size != 0);
@@ -516,7 +516,7 @@ sys_dump_bytes(void* addr, usize size)
     char* buf = malloc(size * 3u);
     if (buf == NULL) {
         perror(__func__);
-        __fatal("fatal: allocation failure");
+        __sunder_fatal("fatal: allocation failure");
     }
     char* ptr = buf;
 

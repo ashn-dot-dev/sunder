@@ -828,7 +828,7 @@ codegen_type_definition(struct type const* type)
             for (; padding_offset < mvars[i].offset; ++padding_offset) {
                 appendli(
                     "unsigned char %s_%ju;",
-                    mangle_name("__padding_byte"),
+                    MANGLE_PREFIX "padding_byte",
                     padding_offset);
             }
             appendli(
@@ -840,7 +840,7 @@ codegen_type_definition(struct type const* type)
         for (; padding_offset < type->size; ++padding_offset) {
             appendli(
                 "unsigned char %s_%ju;",
-                mangle_name("__padding_byte"),
+                MANGLE_PREFIX "padding_byte",
                 padding_offset);
         }
         indent_decr();
@@ -857,7 +857,7 @@ codegen_type_definition(struct type const* type)
         indent_incr();
         appendli(
             "unsigned char %s[%ju]; /* union-sized buffer */",
-            mangle_name("__buffer"),
+            MANGLE_PREFIX "buffer",
             type->size);
         sbuf(struct member_variable const) const mvars =
             type->data.union_.member_variables;
@@ -1341,7 +1341,7 @@ strgen_value(struct value const* value)
         }
         else {
             assert(value->type->size != 0);
-            string_append_fmt(s, ".%s = {0}", mangle_name("__buffer"));
+            string_append_fmt(s, ".%s = {0}", MANGLE_PREFIX "buffer");
         }
         string_append_cstr(s, "}");
         break;
@@ -1642,7 +1642,7 @@ codegen_stmt_switch(struct stmt const* stmt)
         appendli(
             "%s %s = %s;",
             mangle_type(stmt->data.switch_.expr->type),
-            mangle_name("__switch_expr"),
+            MANGLE_PREFIX "switch_expr",
             strgen_rvalue(stmt->data.switch_.expr));
         // Generate the block for the single `else` case.
         codegen_block(&stmt->data.switch_.cases[0].body);
@@ -1654,7 +1654,7 @@ codegen_stmt_switch(struct stmt const* stmt)
     appendli(
         "%s %s = %s;",
         mangle_type(stmt->data.switch_.expr->type),
-        mangle_name("__switch_expr"),
+        MANGLE_PREFIX "switch_expr",
         strgen_rvalue(stmt->data.switch_.expr));
     for (size_t i = 0; i < sbuf_count(stmt->data.switch_.cases); ++i) {
         if (stmt->data.switch_.cases[i].symbol != NULL) {
@@ -1662,7 +1662,7 @@ codegen_stmt_switch(struct stmt const* stmt)
             appendli(
                 "%s (%s == %s)",
                 conditional,
-                mangle_name("__switch_expr"),
+                MANGLE_PREFIX "switch_expr",
                 mangle_symbol(stmt->data.switch_.cases[i].symbol));
         }
         else {
@@ -1715,7 +1715,7 @@ codegen_stmt_assert(struct stmt const* stmt)
     appendli("if (!(%s)) {", strgen_rvalue(stmt->data.assert_.expr));
     appendli(
         "%s(%s.start);",
-        mangle_name("__fatal"),
+        MANGLE_PREFIX "fatal",
         mangle_symbol(stmt->data.assert_.slice_symbol));
     appendli("}");
 }
@@ -1757,18 +1757,18 @@ codegen_stmt_assign(struct stmt const* stmt)
         appendli(
             "{%s* %s = %s; %s %s = %s; *%s = %s_%s(*%s, %s);}",
             mangle_type(stmt->data.assign.lhs->type),
-            mangle_name("__lhs"),
+            MANGLE_PREFIX "lhs",
             strgen_lvalue(stmt->data.assign.lhs),
 
             mangle_type(stmt->data.assign.rhs->type),
-            mangle_name("__rhs"),
+            MANGLE_PREFIX "rhs",
             strgen_rvalue(stmt->data.assign.rhs),
 
-            mangle_name("__lhs"),
-            mangle_name("__add"),
+            MANGLE_PREFIX "lhs",
+            MANGLE_PREFIX "add",
             mangle_type(stmt->data.assign.lhs->type),
-            mangle_name("__lhs"),
-            mangle_name("__rhs"));
+            MANGLE_PREFIX "lhs",
+            MANGLE_PREFIX "rhs");
         return;
     }
     case AOP_SUB_ASSIGN: {
@@ -1783,18 +1783,18 @@ codegen_stmt_assign(struct stmt const* stmt)
         appendli(
             "{%s* %s = %s; %s %s = %s; *%s = %s_%s(*%s, %s);}",
             mangle_type(stmt->data.assign.lhs->type),
-            mangle_name("__lhs"),
+            MANGLE_PREFIX "lhs",
             strgen_lvalue(stmt->data.assign.lhs),
 
             mangle_type(stmt->data.assign.rhs->type),
-            mangle_name("__rhs"),
+            MANGLE_PREFIX "rhs",
             strgen_rvalue(stmt->data.assign.rhs),
 
-            mangle_name("__lhs"),
-            mangle_name("__sub"),
+            MANGLE_PREFIX "lhs",
+            MANGLE_PREFIX "sub",
             mangle_type(stmt->data.assign.lhs->type),
-            mangle_name("__lhs"),
-            mangle_name("__rhs"));
+            MANGLE_PREFIX "lhs",
+            MANGLE_PREFIX "rhs");
         return;
     }
     case AOP_MUL_ASSIGN: {
@@ -1809,18 +1809,18 @@ codegen_stmt_assign(struct stmt const* stmt)
         appendli(
             "{%s* %s = %s; %s %s = %s; *%s = %s_%s(*%s, %s);}",
             mangle_type(stmt->data.assign.lhs->type),
-            mangle_name("__lhs"),
+            MANGLE_PREFIX "lhs",
             strgen_lvalue(stmt->data.assign.lhs),
 
             mangle_type(stmt->data.assign.rhs->type),
-            mangle_name("__rhs"),
+            MANGLE_PREFIX "rhs",
             strgen_rvalue(stmt->data.assign.rhs),
 
-            mangle_name("__lhs"),
-            mangle_name("__mul"),
+            MANGLE_PREFIX "lhs",
+            MANGLE_PREFIX "mul",
             mangle_type(stmt->data.assign.lhs->type),
-            mangle_name("__lhs"),
-            mangle_name("__rhs"));
+            MANGLE_PREFIX "lhs",
+            MANGLE_PREFIX "rhs");
         return;
     }
     case AOP_DIV_ASSIGN: {
@@ -1835,110 +1835,110 @@ codegen_stmt_assign(struct stmt const* stmt)
         appendli(
             "{%s* %s = %s; %s %s = %s; *%s = %s_%s(*%s, %s);}",
             mangle_type(stmt->data.assign.lhs->type),
-            mangle_name("__lhs"),
+            MANGLE_PREFIX "lhs",
             strgen_lvalue(stmt->data.assign.lhs),
 
             mangle_type(stmt->data.assign.rhs->type),
-            mangle_name("__rhs"),
+            MANGLE_PREFIX "rhs",
             strgen_rvalue(stmt->data.assign.rhs),
 
-            mangle_name("__lhs"),
-            mangle_name("__div"),
+            MANGLE_PREFIX "lhs",
+            MANGLE_PREFIX "div",
             mangle_type(stmt->data.assign.lhs->type),
-            mangle_name("__lhs"),
-            mangle_name("__rhs"));
+            MANGLE_PREFIX "lhs",
+            MANGLE_PREFIX "rhs");
         return;
     }
     case AOP_REM_ASSIGN: {
         appendli(
             "{%s* %s = %s; %s %s = %s; *%s = %s_%s(*%s, %s);}",
             mangle_type(stmt->data.assign.lhs->type),
-            mangle_name("__lhs"),
+            MANGLE_PREFIX "lhs",
             strgen_lvalue(stmt->data.assign.lhs),
 
             mangle_type(stmt->data.assign.rhs->type),
-            mangle_name("__rhs"),
+            MANGLE_PREFIX "rhs",
             strgen_rvalue(stmt->data.assign.rhs),
 
-            mangle_name("__lhs"),
-            mangle_name("__rem"),
+            MANGLE_PREFIX "lhs",
+            MANGLE_PREFIX "rem",
             mangle_type(stmt->data.assign.lhs->type),
-            mangle_name("__lhs"),
-            mangle_name("__rhs"));
+            MANGLE_PREFIX "lhs",
+            MANGLE_PREFIX "rhs");
         return;
     }
     case AOP_ADD_WRAPPING_ASSIGN: {
         appendli(
             "{%s* %s = %s; %s %s = %s; *%s = %s_%s(*%s, %s);}",
             mangle_type(stmt->data.assign.lhs->type),
-            mangle_name("__lhs"),
+            MANGLE_PREFIX "lhs",
             strgen_lvalue(stmt->data.assign.lhs),
 
             mangle_type(stmt->data.assign.rhs->type),
-            mangle_name("__rhs"),
+            MANGLE_PREFIX "rhs",
             strgen_rvalue(stmt->data.assign.rhs),
 
-            mangle_name("__lhs"),
-            mangle_name("__add_wrapping"),
+            MANGLE_PREFIX "lhs",
+            MANGLE_PREFIX "add_wrapping",
             mangle_type(stmt->data.assign.lhs->type),
-            mangle_name("__lhs"),
-            mangle_name("__rhs"));
+            MANGLE_PREFIX "lhs",
+            MANGLE_PREFIX "rhs");
         return;
     }
     case AOP_SUB_WRAPPING_ASSIGN: {
         appendli(
             "{%s* %s = %s; %s %s = %s; *%s = %s_%s(*%s, %s);}",
             mangle_type(stmt->data.assign.lhs->type),
-            mangle_name("__lhs"),
+            MANGLE_PREFIX "lhs",
             strgen_lvalue(stmt->data.assign.lhs),
 
             mangle_type(stmt->data.assign.rhs->type),
-            mangle_name("__rhs"),
+            MANGLE_PREFIX "rhs",
             strgen_rvalue(stmt->data.assign.rhs),
 
-            mangle_name("__lhs"),
-            mangle_name("__sub_wrapping"),
+            MANGLE_PREFIX "lhs",
+            MANGLE_PREFIX "sub_wrapping",
             mangle_type(stmt->data.assign.lhs->type),
-            mangle_name("__lhs"),
-            mangle_name("__rhs"));
+            MANGLE_PREFIX "lhs",
+            MANGLE_PREFIX "rhs");
         return;
     }
     case AOP_MUL_WRAPPING_ASSIGN: {
         appendli(
             "{%s* %s = %s; %s %s = %s; *%s = %s_%s(*%s, %s);}",
             mangle_type(stmt->data.assign.lhs->type),
-            mangle_name("__lhs"),
+            MANGLE_PREFIX "lhs",
             strgen_lvalue(stmt->data.assign.lhs),
 
             mangle_type(stmt->data.assign.rhs->type),
-            mangle_name("__rhs"),
+            MANGLE_PREFIX "rhs",
             strgen_rvalue(stmt->data.assign.rhs),
 
-            mangle_name("__lhs"),
-            mangle_name("__mul_wrapping"),
+            MANGLE_PREFIX "lhs",
+            MANGLE_PREFIX "mul_wrapping",
             mangle_type(stmt->data.assign.lhs->type),
-            mangle_name("__lhs"),
-            mangle_name("__rhs"));
+            MANGLE_PREFIX "lhs",
+            MANGLE_PREFIX "rhs");
         return;
     }
     case AOP_SHL_ASSIGN: {
         appendli(
             "{%s* %s = %s; %s %s = %s; *%s = %s < sizeof(%s)*8 ? (%s)((%s)*%s << %s) : (%s)0;}",
             mangle_type(stmt->data.assign.lhs->type),
-            mangle_name("__lhs"),
+            MANGLE_PREFIX "lhs",
             strgen_lvalue(stmt->data.assign.lhs),
 
             mangle_type(stmt->data.assign.rhs->type),
-            mangle_name("__rhs"),
+            MANGLE_PREFIX "rhs",
             strgen_rvalue(stmt->data.assign.rhs),
 
-            mangle_name("__lhs"),
-            mangle_name("__rhs"),
+            MANGLE_PREFIX "lhs",
+            MANGLE_PREFIX "rhs",
             mangle_type(stmt->data.assign.lhs->type),
             mangle_type(stmt->data.assign.lhs->type),
             mangle_type(stmt->data.assign.rhs->type),
-            mangle_name("__lhs"),
-            mangle_name("__rhs"),
+            MANGLE_PREFIX "lhs",
+            MANGLE_PREFIX "rhs",
 
             mangle_type(stmt->data.assign.lhs->type));
         return;
@@ -1946,23 +1946,23 @@ codegen_stmt_assign(struct stmt const* stmt)
     case AOP_SHR_ASSIGN: {
         char const* const overshift =
             type_is_sinteger(stmt->data.assign.lhs->type)
-            ? strgen_fmt("((*%s < 0) ? -1 : 0)", mangle_name("__lhs"))
+            ? strgen_fmt("((*%s < 0) ? -1 : 0)", MANGLE_PREFIX "lhs")
             : "0";
         appendli(
             "{%s* %s = %s; %s %s = %s; *%s = %s < sizeof(%s)*8 ? (*%s >> %s) : (%s)%s;}",
             mangle_type(stmt->data.assign.lhs->type),
-            mangle_name("__lhs"),
+            MANGLE_PREFIX "lhs",
             strgen_lvalue(stmt->data.assign.lhs),
 
             mangle_type(stmt->data.assign.rhs->type),
-            mangle_name("__rhs"),
+            MANGLE_PREFIX "rhs",
             strgen_rvalue(stmt->data.assign.rhs),
 
-            mangle_name("__lhs"),
-            mangle_name("__rhs"),
+            MANGLE_PREFIX "lhs",
+            MANGLE_PREFIX "rhs",
             mangle_type(stmt->data.assign.lhs->type),
-            mangle_name("__lhs"),
-            mangle_name("__rhs"),
+            MANGLE_PREFIX "lhs",
+            MANGLE_PREFIX "rhs",
             mangle_type(stmt->data.assign.lhs->type),
             overshift);
         return;
@@ -1971,48 +1971,48 @@ codegen_stmt_assign(struct stmt const* stmt)
         appendli(
             "{%s* %s = %s; %s %s = %s; *%s = (*%s | %s);}",
             mangle_type(stmt->data.assign.lhs->type),
-            mangle_name("__lhs"),
+            MANGLE_PREFIX "lhs",
             strgen_lvalue(stmt->data.assign.lhs),
 
             mangle_type(stmt->data.assign.rhs->type),
-            mangle_name("__rhs"),
+            MANGLE_PREFIX "rhs",
             strgen_rvalue(stmt->data.assign.rhs),
 
-            mangle_name("__lhs"),
-            mangle_name("__lhs"),
-            mangle_name("__rhs"));
+            MANGLE_PREFIX "lhs",
+            MANGLE_PREFIX "lhs",
+            MANGLE_PREFIX "rhs");
         return;
     }
     case AOP_BITXOR_ASSIGN: {
         appendli(
             "{%s* %s = %s; %s %s = %s; *%s = (*%s ^ %s);}",
             mangle_type(stmt->data.assign.lhs->type),
-            mangle_name("__lhs"),
+            MANGLE_PREFIX "lhs",
             strgen_lvalue(stmt->data.assign.lhs),
 
             mangle_type(stmt->data.assign.rhs->type),
-            mangle_name("__rhs"),
+            MANGLE_PREFIX "rhs",
             strgen_rvalue(stmt->data.assign.rhs),
 
-            mangle_name("__lhs"),
-            mangle_name("__lhs"),
-            mangle_name("__rhs"));
+            MANGLE_PREFIX "lhs",
+            MANGLE_PREFIX "lhs",
+            MANGLE_PREFIX "rhs");
         return;
     }
     case AOP_BITAND_ASSIGN: {
         appendli(
             "{%s* %s = %s; %s %s = %s; *%s = (*%s & %s);}",
             mangle_type(stmt->data.assign.lhs->type),
-            mangle_name("__lhs"),
+            MANGLE_PREFIX "lhs",
             strgen_lvalue(stmt->data.assign.lhs),
 
             mangle_type(stmt->data.assign.rhs->type),
-            mangle_name("__rhs"),
+            MANGLE_PREFIX "rhs",
             strgen_rvalue(stmt->data.assign.rhs),
 
-            mangle_name("__lhs"),
-            mangle_name("__lhs"),
-            mangle_name("__rhs"));
+            MANGLE_PREFIX "lhs",
+            MANGLE_PREFIX "lhs",
+            MANGLE_PREFIX "rhs");
         return;
     }
     }
@@ -2124,7 +2124,7 @@ strgen_rvalue_array_list(struct expr const* expr)
 
     for (size_t i = 0; i < sbuf_count(elements); ++i) {
         assert(elements[i]->type == element_type);
-        char const* const local = strgen_fmt("__element_%zu", i);
+        char const* const local = strgen_fmt(MANGLE_PREFIX "element_%zu", i);
         char const* const initname = mangle_name(local);
         char const* const valuestr = strgen_rvalue(elements[i]);
 
@@ -2137,7 +2137,7 @@ strgen_rvalue_array_list(struct expr const* expr)
     char const* ellipsis_valuestr = NULL;
     if (ellipsis != NULL) {
         assert(ellipsis->type == element_type);
-        char const* const initname = mangle_name("__ellipsis");
+        char const* const initname = MANGLE_PREFIX "ellipsis";
         ellipsis_valuestr = strgen_rvalue(ellipsis);
 
         string_append_fmt(
@@ -2154,7 +2154,8 @@ strgen_rvalue_array_list(struct expr const* expr)
             if (i != 0) {
                 string_append_cstr(s, ", ");
             }
-            char const* const local = strgen_fmt("__element_%zu", i);
+            char const* const local =
+                strgen_fmt(MANGLE_PREFIX "element_%zu", i);
             char const* const initname = mangle_name(local);
             string_append_cstr(s, initname);
         }
@@ -2163,7 +2164,7 @@ strgen_rvalue_array_list(struct expr const* expr)
             if (i != 0) {
                 string_append_cstr(s, ", ");
             }
-            char const* const initname = mangle_name("__ellipsis");
+            char const* const initname = MANGLE_PREFIX "ellipsis";
             string_append_cstr(s, initname);
         }
         string_append_cstr(s, "};");
@@ -2272,8 +2273,8 @@ strgen_rvalue_init_struct(struct expr const* expr)
 
     struct string* const s = string_new_cstr("({");
     for (size_t i = 0; i < sbuf_count(initializers); ++i) {
-        char const* const local =
-            strgen_fmt("__initializer_%s", initializers[i].variable->name);
+        char const* const local = strgen_fmt(
+            MANGLE_PREFIX "initializer_%s", initializers[i].variable->name);
         char const* const initname = mangle_name(local);
         char const* const typename =
             mangle_type(initializers[i].variable->type);
@@ -2305,23 +2306,23 @@ strgen_rvalue_init_struct(struct expr const* expr)
         s,
         "%s %s = (%s)%s; ",
         mangle_type(expr->type),
-        mangle_name("__result"),
+        MANGLE_PREFIX "result",
         mangle_type(expr->type),
         strgen_uninit(expr->type));
     for (size_t i = 0; i < sbuf_count(member_variable_defs); ++i) {
         if (member_variable_defs[i].type->size == 0) {
             continue;
         }
-        char const* const local =
-            strgen_fmt("__initializer_%s", member_variable_defs[i].name);
+        char const* const local = strgen_fmt(
+            MANGLE_PREFIX "initializer_%s", member_variable_defs[i].name);
         string_append_fmt(
             s,
             "%s.%s = %s; ",
-            mangle_name("__result"),
+            MANGLE_PREFIX "result",
             mangle_name(member_variable_defs[i].name),
             mangle_name(local));
     }
-    string_append_fmt(s, "%s;", mangle_name("__result"));
+    string_append_fmt(s, "%s;", MANGLE_PREFIX "result");
 
 done:
     string_append_cstr(s, "})");
@@ -2354,18 +2355,18 @@ strgen_rvalue_init_union(struct expr const* expr)
         s,
         "%s %s = (%s)%s; ",
         mangle_type(expr->type),
-        mangle_name("__result"),
+        MANGLE_PREFIX "result",
         mangle_type(expr->type),
         strgen_uninit(expr->type));
     if (initializer->variable->type->size != 0) {
         string_append_fmt(
             s,
             "%s.%s = %s; ",
-            mangle_name("__result"),
+            MANGLE_PREFIX "result",
             mangle_name(initializer->variable->name),
             strgen_rvalue(initializer->expr));
     }
-    string_append_fmt(s, "%s;", mangle_name("__result"));
+    string_append_fmt(s, "%s;", MANGLE_PREFIX "result");
 
 done:
     string_append_cstr(s, "})");
@@ -2401,7 +2402,7 @@ strgen_rvalue_cast(struct expr const* expr)
     if (type_is_integer(expr->type)
         && type_is_ieee754(expr->data.cast.expr->type)) {
         return strgen_fmt(
-            "__cast_%s_to_%s(%s)",
+            MANGLE_PREFIX "cast_%s_to_%s(%s)",
             mangle_type(expr->data.cast.expr->type),
             mangle_type(expr->type),
             strgen_rvalue(expr->data.cast.expr));
@@ -2423,7 +2424,8 @@ strgen_rvalue_call(struct expr const* expr)
     struct string* const s = string_new_cstr("({");
 
     for (size_t i = 0; i < sbuf_count(arguments); ++i) {
-        char const* const local = strgen_fmt("__argument_%zu", i + 1);
+        char const* const local =
+            strgen_fmt(MANGLE_PREFIX "argument_%zu", i + 1);
         char const* const initname = mangle_name(local);
         char const* const typename = arguments[i]->type->size != 0
             ? mangle_type(arguments[i]->type)
@@ -2443,7 +2445,8 @@ strgen_rvalue_call(struct expr const* expr)
             string_append_cstr(s, ", ");
         }
 
-        char const* const local = strgen_fmt("__argument_%zu", i + 1);
+        char const* const local =
+            strgen_fmt(MANGLE_PREFIX "argument_%zu", i + 1);
         char const* const initname = mangle_name(local);
         string_append_cstr(s, initname);
 
@@ -2486,7 +2489,7 @@ strgen_rvalue_access_index(struct expr const* expr)
 
         char const* const elements = lhs_is_zero_sized
             ? strgen_fmt("((%s*)0)", mangle_type(expr->type))
-            : strgen_fmt("%s.elements", mangle_name("__lhs"));
+            : strgen_fmt("%s.elements", MANGLE_PREFIX "lhs");
 
         char const* const result = base_size == 0
             ? "/* index array of zero-sized type */0"
@@ -2494,22 +2497,22 @@ strgen_rvalue_access_index(struct expr const* expr)
                   "*(%s*)((uintptr_t)%s + (%s * %ju))",
                   mangle_type(expr->type),
                   elements,
-                  mangle_name("__idx"),
+                  MANGLE_PREFIX "idx",
                   base_size);
 
         return strgen_fmt(
             "({%s %s = %s; %s %s = %s; if (%s >= %ju){%s();}; %s;})",
             lhs_type,
-            mangle_name("__lhs"),
+            MANGLE_PREFIX "lhs",
             strgen_rvalue(expr->data.access_index.lhs),
 
             mangle_type(expr->data.access_index.idx->type),
-            mangle_name("__idx"),
+            MANGLE_PREFIX "idx",
             strgen_rvalue(expr->data.access_index.idx),
 
-            mangle_name("__idx"),
+            MANGLE_PREFIX "idx",
             expr->data.access_index.lhs->type->data.array.count,
-            mangle_name("__fatal_index_out_of_bounds"),
+            MANGLE_PREFIX "fatal_index_out_of_bounds",
 
             result);
     }
@@ -2524,8 +2527,8 @@ strgen_rvalue_access_index(struct expr const* expr)
             : strgen_fmt(
                   "*(%s*)((uintptr_t)%s.start + (%s * %ju))",
                   mangle_type(expr->type),
-                  mangle_name("__lhs"),
-                  mangle_name("__idx"),
+                  MANGLE_PREFIX "lhs",
+                  MANGLE_PREFIX "idx",
                   base_size);
 
         return strgen_fmt(
@@ -2533,16 +2536,16 @@ strgen_rvalue_access_index(struct expr const* expr)
             "({%s %s = %s; %s %s = %s; if (%s >= %s.count){%s();}; %s;})",
             // clang-format on
             mangle_type(expr->data.access_index.lhs->type),
-            mangle_name("__lhs"),
+            MANGLE_PREFIX "lhs",
             strgen_rvalue(expr->data.access_index.lhs),
 
             mangle_type(expr->data.access_index.idx->type),
-            mangle_name("__idx"),
+            MANGLE_PREFIX "idx",
             strgen_rvalue(expr->data.access_index.idx),
 
-            mangle_name("__idx"),
-            mangle_name("__lhs"),
-            mangle_name("__fatal_index_out_of_bounds"),
+            MANGLE_PREFIX "idx",
+            MANGLE_PREFIX "lhs",
+            MANGLE_PREFIX "fatal_index_out_of_bounds",
 
             result);
     }
@@ -2578,11 +2581,11 @@ strgen_rvalue_access_slice_lhs_array(struct expr const* expr)
     char const* const lexpr = strgen_lvalue(expr->data.access_slice.lhs);
 
     char const* const btype = mangle_name("usize");
-    char const* const bname = mangle_name("__b");
+    char const* const bname = MANGLE_PREFIX "b";
     char const* const bexpr = strgen_rvalue(expr->data.access_slice.begin);
 
     char const* const etype = mangle_name("usize");
-    char const* const ename = mangle_name("__e");
+    char const* const ename = MANGLE_PREFIX "e";
     char const* const eexpr = strgen_rvalue(expr->data.access_slice.end);
 
     char const* const tname = mangle_type(expr->type);
@@ -2627,7 +2630,7 @@ strgen_rvalue_access_slice_lhs_array(struct expr const* expr)
         expr->data.access_slice.lhs->type->data.array.count,
         ename,
         expr->data.access_slice.lhs->type->data.array.count,
-        mangle_name("__fatal_index_out_of_bounds"),
+        MANGLE_PREFIX "fatal_index_out_of_bounds",
 
         tname,
         start,
@@ -2642,15 +2645,15 @@ strgen_rvalue_access_slice_lhs_slice(struct expr const* expr)
     assert(expr->data.access_slice.lhs->type->kind == TYPE_SLICE);
 
     char const* const ltype = mangle_type(expr->data.access_slice.lhs->type);
-    char const* const lname = mangle_name("__lhs");
+    char const* const lname = MANGLE_PREFIX "lhs";
     char const* const lexpr = strgen_rvalue(expr->data.access_slice.lhs);
 
     char const* const btype = mangle_name("usize");
-    char const* const bname = mangle_name("__b");
+    char const* const bname = MANGLE_PREFIX "b";
     char const* const bexpr = strgen_rvalue(expr->data.access_slice.begin);
 
     char const* const etype = mangle_name("usize");
-    char const* const ename = mangle_name("__e");
+    char const* const ename = MANGLE_PREFIX "e";
     char const* const eexpr = strgen_rvalue(expr->data.access_slice.end);
 
     char const* const tname = mangle_type(expr->type);
@@ -2689,7 +2692,7 @@ strgen_rvalue_access_slice_lhs_slice(struct expr const* expr)
         lname,
         ename,
         lname,
-        mangle_name("__fatal_index_out_of_bounds"),
+        MANGLE_PREFIX "fatal_index_out_of_bounds",
 
         tname,
         start,
@@ -2809,15 +2812,15 @@ strgen_rvalue_unary_neg(struct expr const* expr)
     return strgen_fmt(
         "({%s %s = %s; if (%s == ((%s)(LLONG_MIN >> ((sizeof(long long) - sizeof(%s))*8)))){%s();}; -(%s);})",
         mangle_type(expr->data.unary.rhs->type),
-        mangle_name("__rhs"),
+        MANGLE_PREFIX "rhs",
         strgen_rvalue(expr->data.unary.rhs),
 
-        mangle_name("__rhs"),
+        MANGLE_PREFIX "rhs",
         mangle_type(expr->data.unary.rhs->type),
         mangle_type(expr->data.unary.rhs->type),
-        mangle_name("__fatal_out_of_range"),
+        MANGLE_PREFIX "fatal_out_of_range",
 
-        mangle_name("__rhs"));
+        MANGLE_PREFIX "rhs");
 }
 
 static char const*
@@ -2834,12 +2837,12 @@ strgen_rvalue_unary_neg_wrapping(struct expr const* expr)
     return strgen_fmt(
         "({%s %s = ~%s; %s_%s(%s, (%s)1);})",
         mangle_type(expr->type),
-        mangle_name("__result"),
+        MANGLE_PREFIX "result",
         strgen_rvalue(expr->data.unary.rhs),
 
-        mangle_name("__add_wrapping"),
+        MANGLE_PREFIX "add_wrapping",
         mangle_type(expr->type),
-        mangle_name("__result"),
+        MANGLE_PREFIX "result",
         mangle_type(expr->type));
 }
 
@@ -2878,13 +2881,13 @@ strgen_rvalue_unary_dereference(struct expr const* expr)
     return strgen_fmt(
         "({%s %s = %s; if (%s == 0){%s();}; *%s;})",
         mangle_type(expr->data.unary.rhs->type),
-        mangle_name("__ptr"),
+        MANGLE_PREFIX "ptr",
         strgen_rvalue(expr->data.unary.rhs),
 
-        mangle_name("__ptr"),
-        mangle_name("__fatal_null_pointer_dereference"),
+        MANGLE_PREFIX "ptr",
+        MANGLE_PREFIX "fatal_null_pointer_dereference",
 
-        mangle_name("__ptr"));
+        MANGLE_PREFIX "ptr");
 }
 
 static char const*
@@ -3060,19 +3063,19 @@ strgen_rvalue_binary_shl(struct expr const* expr)
     return strgen_fmt(
         "({%s %s = %s; %s %s = %s; %s < sizeof(%s)*8 ? (%s)((%s)%s << %s) : (%s)0;})",
         mangle_type(expr->data.binary.lhs->type),
-        mangle_name("__lhs"),
+        MANGLE_PREFIX "lhs",
         strgen_rvalue(expr->data.binary.lhs),
 
         mangle_type(expr->data.binary.rhs->type),
-        mangle_name("__rhs"),
+        MANGLE_PREFIX "rhs",
         strgen_rvalue(expr->data.binary.rhs),
 
-        mangle_name("__rhs"),
+        MANGLE_PREFIX "rhs",
         mangle_type(expr->data.binary.lhs->type),
         mangle_type(expr->data.binary.lhs->type),
         mangle_type(expr->data.binary.rhs->type),
-        mangle_name("__lhs"),
-        mangle_name("__rhs"),
+        MANGLE_PREFIX "lhs",
+        MANGLE_PREFIX "rhs",
         mangle_type(expr->data.binary.lhs->type));
 }
 
@@ -3086,22 +3089,22 @@ strgen_rvalue_binary_shr(struct expr const* expr)
     assert(expr->data.binary.rhs->type->kind == TYPE_USIZE);
 
     char const* const overshift = type_is_sinteger(expr->data.binary.lhs->type)
-        ? strgen_fmt("((%s < 0) ? -1 : 0)", mangle_name("__lhs"))
+        ? strgen_fmt("((%s < 0) ? -1 : 0)", MANGLE_PREFIX "lhs")
         : "0";
     return strgen_fmt(
         "({%s %s = %s; %s %s = %s; %s < sizeof(%s)*8 ? (%s >> %s) : (%s)%s;})",
         mangle_type(expr->data.binary.lhs->type),
-        mangle_name("__lhs"),
+        MANGLE_PREFIX "lhs",
         strgen_rvalue(expr->data.binary.lhs),
 
         mangle_type(expr->data.binary.rhs->type),
-        mangle_name("__rhs"),
+        MANGLE_PREFIX "rhs",
         strgen_rvalue(expr->data.binary.rhs),
 
-        mangle_name("__rhs"),
+        MANGLE_PREFIX "rhs",
         mangle_type(expr->data.binary.lhs->type),
-        mangle_name("__lhs"),
-        mangle_name("__rhs"),
+        MANGLE_PREFIX "lhs",
+        MANGLE_PREFIX "rhs",
         mangle_type(expr->data.binary.lhs->type),
         overshift);
 }
@@ -3209,17 +3212,17 @@ strgen_rvalue_binary_add(struct expr const* expr)
     return strgen_fmt(
         "({%s %s = %s; %s %s = %s; %s_%s(%s, %s);})",
         mangle_type(expr->data.binary.lhs->type),
-        mangle_name("__lhs"),
+        MANGLE_PREFIX "lhs",
         strgen_rvalue(expr->data.binary.lhs),
 
         mangle_type(expr->data.binary.rhs->type),
-        mangle_name("__rhs"),
+        MANGLE_PREFIX "rhs",
         strgen_rvalue(expr->data.binary.rhs),
 
-        mangle_name("__add"),
+        MANGLE_PREFIX "add",
         mangle_type(expr->data.binary.lhs->type),
-        mangle_name("__lhs"),
-        mangle_name("__rhs"));
+        MANGLE_PREFIX "lhs",
+        MANGLE_PREFIX "rhs");
 }
 
 static char const*
@@ -3234,17 +3237,17 @@ strgen_rvalue_binary_add_wrapping(struct expr const* expr)
     return strgen_fmt(
         "({%s %s = %s; %s %s = %s; %s_%s(%s, %s);})",
         mangle_type(expr->data.binary.lhs->type),
-        mangle_name("__lhs"),
+        MANGLE_PREFIX "lhs",
         strgen_rvalue(expr->data.binary.lhs),
 
         mangle_type(expr->data.binary.rhs->type),
-        mangle_name("__rhs"),
+        MANGLE_PREFIX "rhs",
         strgen_rvalue(expr->data.binary.rhs),
 
-        mangle_name("__add_wrapping"),
+        MANGLE_PREFIX "add_wrapping",
         mangle_type(expr->data.binary.lhs->type),
-        mangle_name("__lhs"),
-        mangle_name("__rhs"));
+        MANGLE_PREFIX "lhs",
+        MANGLE_PREFIX "rhs");
 }
 
 static char const*
@@ -3266,17 +3269,17 @@ strgen_rvalue_binary_sub(struct expr const* expr)
     return strgen_fmt(
         "({%s %s = %s; %s %s = %s; %s_%s(%s, %s);})",
         mangle_type(expr->data.binary.lhs->type),
-        mangle_name("__lhs"),
+        MANGLE_PREFIX "lhs",
         strgen_rvalue(expr->data.binary.lhs),
 
         mangle_type(expr->data.binary.rhs->type),
-        mangle_name("__rhs"),
+        MANGLE_PREFIX "rhs",
         strgen_rvalue(expr->data.binary.rhs),
 
-        mangle_name("__sub"),
+        MANGLE_PREFIX "sub",
         mangle_type(expr->data.binary.lhs->type),
-        mangle_name("__lhs"),
-        mangle_name("__rhs"));
+        MANGLE_PREFIX "lhs",
+        MANGLE_PREFIX "rhs");
 }
 
 static char const*
@@ -3291,17 +3294,17 @@ strgen_rvalue_binary_sub_wrapping(struct expr const* expr)
     return strgen_fmt(
         "({%s %s = %s; %s %s = %s; %s_%s(%s, %s);})",
         mangle_type(expr->data.binary.lhs->type),
-        mangle_name("__lhs"),
+        MANGLE_PREFIX "lhs",
         strgen_rvalue(expr->data.binary.lhs),
 
         mangle_type(expr->data.binary.rhs->type),
-        mangle_name("__rhs"),
+        MANGLE_PREFIX "rhs",
         strgen_rvalue(expr->data.binary.rhs),
 
-        mangle_name("__sub_wrapping"),
+        MANGLE_PREFIX "sub_wrapping",
         mangle_type(expr->data.binary.lhs->type),
-        mangle_name("__lhs"),
-        mangle_name("__rhs"));
+        MANGLE_PREFIX "lhs",
+        MANGLE_PREFIX "rhs");
 }
 
 static char const*
@@ -3323,17 +3326,17 @@ strgen_rvalue_binary_mul(struct expr const* expr)
     return strgen_fmt(
         "({%s %s = %s; %s %s = %s; %s_%s(%s, %s);})",
         mangle_type(expr->data.binary.lhs->type),
-        mangle_name("__lhs"),
+        MANGLE_PREFIX "lhs",
         strgen_rvalue(expr->data.binary.lhs),
 
         mangle_type(expr->data.binary.rhs->type),
-        mangle_name("__rhs"),
+        MANGLE_PREFIX "rhs",
         strgen_rvalue(expr->data.binary.rhs),
 
-        mangle_name("__mul"),
+        MANGLE_PREFIX "mul",
         mangle_type(expr->data.binary.lhs->type),
-        mangle_name("__lhs"),
-        mangle_name("__rhs"));
+        MANGLE_PREFIX "lhs",
+        MANGLE_PREFIX "rhs");
 }
 
 static char const*
@@ -3348,17 +3351,17 @@ strgen_rvalue_binary_mul_wrapping(struct expr const* expr)
     return strgen_fmt(
         "({%s %s = %s; %s %s = %s; %s_%s(%s, %s);})",
         mangle_type(expr->data.binary.lhs->type),
-        mangle_name("__lhs"),
+        MANGLE_PREFIX "lhs",
         strgen_rvalue(expr->data.binary.lhs),
 
         mangle_type(expr->data.binary.rhs->type),
-        mangle_name("__rhs"),
+        MANGLE_PREFIX "rhs",
         strgen_rvalue(expr->data.binary.rhs),
 
-        mangle_name("__mul_wrapping"),
+        MANGLE_PREFIX "mul_wrapping",
         mangle_type(expr->data.binary.lhs->type),
-        mangle_name("__lhs"),
-        mangle_name("__rhs"));
+        MANGLE_PREFIX "lhs",
+        MANGLE_PREFIX "rhs");
 }
 
 static char const*
@@ -3380,17 +3383,17 @@ strgen_rvalue_binary_div(struct expr const* expr)
     return strgen_fmt(
         "({%s %s = %s; %s %s = %s; %s_%s(%s, %s);})",
         mangle_type(expr->data.binary.lhs->type),
-        mangle_name("__lhs"),
+        MANGLE_PREFIX "lhs",
         strgen_rvalue(expr->data.binary.lhs),
 
         mangle_type(expr->data.binary.rhs->type),
-        mangle_name("__rhs"),
+        MANGLE_PREFIX "rhs",
         strgen_rvalue(expr->data.binary.rhs),
 
-        mangle_name("__div"),
+        MANGLE_PREFIX "div",
         mangle_type(expr->data.binary.lhs->type),
-        mangle_name("__lhs"),
-        mangle_name("__rhs"));
+        MANGLE_PREFIX "lhs",
+        MANGLE_PREFIX "rhs");
 }
 
 static char const*
@@ -3405,17 +3408,17 @@ strgen_rvalue_binary_rem(struct expr const* expr)
     return strgen_fmt(
         "({%s %s = %s; %s %s = %s; %s_%s(%s, %s);})",
         mangle_type(expr->data.binary.lhs->type),
-        mangle_name("__lhs"),
+        MANGLE_PREFIX "lhs",
         strgen_rvalue(expr->data.binary.lhs),
 
         mangle_type(expr->data.binary.rhs->type),
-        mangle_name("__rhs"),
+        MANGLE_PREFIX "rhs",
         strgen_rvalue(expr->data.binary.rhs),
 
-        mangle_name("__rem"),
+        MANGLE_PREFIX "rem",
         mangle_type(expr->data.binary.lhs->type),
-        mangle_name("__lhs"),
-        mangle_name("__rhs"));
+        MANGLE_PREFIX "lhs",
+        MANGLE_PREFIX "rhs");
 }
 
 static char const*
@@ -3532,24 +3535,24 @@ strgen_lvalue_access_index(struct expr const* expr)
             : mangle_type(expr->data.access_index.lhs->type);
         char const* const elements = lhs_is_zero_sized
             ? strgen_fmt("((%s*)0)", mangle_type(expr->type))
-            : strgen_fmt("%s->elements", mangle_name("__lhs"));
+            : strgen_fmt("%s->elements", MANGLE_PREFIX "lhs");
         return strgen_fmt(
             "({%s* %s = %s; %s %s = %s; if (%s >= %ju){%s();}; (%s*)((uintptr_t)%s + (%s * %ju));})",
             lhs_type,
-            mangle_name("__lhs"),
+            MANGLE_PREFIX "lhs",
             strgen_lvalue(expr->data.access_index.lhs),
 
             mangle_type(expr->data.access_index.idx->type),
-            mangle_name("__idx"),
+            MANGLE_PREFIX "idx",
             strgen_rvalue(expr->data.access_index.idx),
 
-            mangle_name("__idx"),
+            MANGLE_PREFIX "idx",
             expr->data.access_index.lhs->type->data.array.count,
-            mangle_name("__fatal_index_out_of_bounds"),
+            MANGLE_PREFIX "fatal_index_out_of_bounds",
 
             mangle_type(expr->type),
             elements,
-            mangle_name("__idx"),
+            MANGLE_PREFIX "idx",
             base_size);
     }
 
@@ -3559,20 +3562,20 @@ strgen_lvalue_access_index(struct expr const* expr)
         return strgen_fmt(
             "({%s %s = %s; %s %s = %s; if (%s >= %s.count){%s();}; (%s*)((uintptr_t)%s.start + (%s * %ju));})",
             mangle_type(expr->data.access_index.lhs->type),
-            mangle_name("__lhs"),
+            MANGLE_PREFIX "lhs",
             strgen_rvalue(expr->data.access_index.lhs),
 
             mangle_type(expr->data.access_index.idx->type),
-            mangle_name("__idx"),
+            MANGLE_PREFIX "idx",
             strgen_rvalue(expr->data.access_index.idx),
 
-            mangle_name("__idx"),
-            mangle_name("__lhs"),
-            mangle_name("__fatal_index_out_of_bounds"),
+            MANGLE_PREFIX "idx",
+            MANGLE_PREFIX "lhs",
+            MANGLE_PREFIX "fatal_index_out_of_bounds",
 
             mangle_type(expr->type),
-            mangle_name("__lhs"),
-            mangle_name("__idx"),
+            MANGLE_PREFIX "lhs",
+            MANGLE_PREFIX "idx",
             base_size);
     }
 
