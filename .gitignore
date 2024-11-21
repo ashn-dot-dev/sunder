@@ -7,7 +7,7 @@ examples/fizzbuzz
 examples/greet
 examples/hello
 examples/ls
-examples/ffi/calling-c-from-sunder
+examples/ffi/calling-c-from-sunder/calling-c-from-sunder
 examples/ffi/calling-sunder-from-c
 
 *.tmp*

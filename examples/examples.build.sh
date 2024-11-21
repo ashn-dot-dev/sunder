@@ -20,13 +20,13 @@ for f in *.sunder; do
     fi
 done
 
-CMD="${SUNDER_HOME}/bin/sunder-compile -c -o ffi/calling-c-from-sunder.o ffi/calling-c-from-sunder.sunder"
+CMD="${SUNDER_HOME}/bin/sunder-compile -c -o ffi/calling-c-from-sunder/calling-c-from-sunder.o ffi/calling-c-from-sunder/calling-c-from-sunder.sunder"
 echo $CMD
 eval $CMD
-CMD="${SUNDER_CC} ${SUNDER_CFLAGS} -c -o ffi/c-code.o ffi/calling-c-from-sunder.c"
+CMD="${SUNDER_CC} ${SUNDER_CFLAGS} -c -o ffi/calling-c-from-sunder/c-code.o ffi/calling-c-from-sunder/calling-c-from-sunder.c"
 echo $CMD
 eval $CMD
-CMD="${SUNDER_CC} ${SUNDER_CFLAGS} -o ffi/calling-c-from-sunder ffi/calling-c-from-sunder.o ffi/c-code.o -lm"
+CMD="${SUNDER_CC} ${SUNDER_CFLAGS} -o ffi/calling-c-from-sunder/calling-c-from-sunder ffi/calling-c-from-sunder/calling-c-from-sunder.o ffi/calling-c-from-sunder/c-code.o -lm"
 echo $CMD
 eval $CMD
 

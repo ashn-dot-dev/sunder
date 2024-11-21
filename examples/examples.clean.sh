@@ -8,6 +8,6 @@ for f in *.sunder; do
 done
 
 rm -f \
-    ffi/calling-c-from-sunder \
+    ffi/calling-c-from-sunder/calling-c-from-sunder \
     ffi/calling-sunder-from-c \
-    ffi/*.o
+    $(find ffi -name '*.o')
