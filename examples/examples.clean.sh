@@ -9,5 +9,5 @@ done
 
 rm -f \
     ffi/calling-c-from-sunder/calling-c-from-sunder \
-    ffi/calling-sunder-from-c \
+    ffi/calling-sunder-from-c/calling-sunder-from-c \
     $(find ffi -name '*.o')

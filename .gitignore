@@ -8,7 +8,7 @@ examples/greet
 examples/hello
 examples/ls
 examples/ffi/calling-c-from-sunder/calling-c-from-sunder
-examples/ffi/calling-sunder-from-c
+examples/ffi/calling-sunder-from-c/calling-sunder-from-c
 
 *.tmp*
 a.out*

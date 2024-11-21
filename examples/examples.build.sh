@@ -30,9 +30,9 @@ CMD="${SUNDER_CC} ${SUNDER_CFLAGS} -o ffi/calling-c-from-sunder/calling-c-from-s
 echo $CMD
 eval $CMD
 
-CMD="${SUNDER_HOME}/bin/sunder-compile -c -o ffi/sunder-code.o ffi/calling-sunder-from-c.sunder"
+CMD="${SUNDER_HOME}/bin/sunder-compile -c -o ffi/calling-sunder-from-c/sunder-code.o ffi/calling-sunder-from-c/calling-sunder-from-c.sunder"
 echo $CMD
 eval $CMD
-CMD="${SUNDER_CC} ${SUNDER_CFLAGS} -o ffi/calling-sunder-from-c ffi/calling-sunder-from-c.c ffi/sunder-code.o -lm"
+CMD="${SUNDER_CC} ${SUNDER_CFLAGS} -o ffi/calling-sunder-from-c/calling-sunder-from-c ffi/calling-sunder-from-c/calling-sunder-from-c.c ffi/calling-sunder-from-c/sunder-code.o -lm"
 echo $CMD
 eval $CMD
