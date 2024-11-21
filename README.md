@@ -203,7 +203,7 @@ func main() void {
     var line = optional.value();
     defer std::slice[[byte]]::delete(line);
 
-    var name = std::ascii::view_trimmed(optional.value());
+    var name = std::ascii::view_trimmed(line);
     std::print_format_line(std::out(), "Nice to meet you {}!", (:[]std::formatter)[std::formatter::init[[typeof(name)]](&name)]);
 }
 ```
