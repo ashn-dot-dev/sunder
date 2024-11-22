@@ -1002,6 +1002,23 @@ codegen_static_function(struct symbol const* symbol, bool prototype)
         }
     }
 
+    if (!prototype) {
+        // Disable -fsanitize=function checking for function definitions in
+        // generated C. Sunder allows implicit casting of a function with
+        // parameter types and/or a return type of type `*T` to a function type
+        // where those same parameter types and/or return type are of type
+        // `*any`.
+        //
+        // Enabling -fsanitize=function, either explicitly or implicitly
+        // through -fsanitize=undefined, will trigger reporting of undefined
+        // behavior that (1) is fundamentally built into the Sunder language
+        // (there are no plans to change the language behavior to be strictly
+        // conforming to the C standard and abstract machine), and (2) should
+        // be well behaved on POSIX platforms (see similar comments under
+        // `strgen_value` discussing this same topic).
+        append("__attribute__((no_sanitize(\"function\"))) ");
+    }
+
     append(
         "%s%c%s(%s)",
         mangle_type(function->type->data.function.return_type),
@@ -1125,11 +1142,52 @@ strgen_value(struct value const* value)
         struct address const* const address = value->data.function->address;
         assert(address->kind == ADDRESS_STATIC);
         assert(address->data.static_.offset == 0);
-        // Casting to a void pointer in order to support the implicit function
-        // conversions permitted in Sunder wich are disallowed in ISO C.
+        // According to the ISO C standard, calling a function of one type
+        // through a function pointer of a different (incompatible) type
+        // results in undefined behavior.
         //
-        // This particular form of casting should be well behaved on POSIX
-        // platforms, as function<->pointer casts are used in dlsym.
+        // ISO/IEC 9899:2024 - Section 6.3.3.3:
+        // > A pointer to a function of one type can be converted to a pointer
+        // > to a function of another type and back again; the result shall
+        // > compare equal to the original pointer. If a converted pointer is
+        // > used to call a function whose type is not compatible with the
+        // > referenced type, the behavior is undefined.
+        //
+        // Sunder allows implicit casting of a function with parameter types
+        // and/or a return type of type `*T` to a function type where those
+        // same parameter types and/or return type are of type `*any`. Function
+        // values in generated C are cast to a void pointer in order to support
+        // the implicit conversions that are permitted in Sunder, but are
+        // disallowed in strictly conforming ISO C.
+        //
+        // Note that this cast to a void pointer does *not* make the generated
+        // code strictly conforming. Rather, the cast, in conjunction with the
+        // `no_sanitize("function")` attribute on generated function
+        // definitions, is intended to silence compile-time and run-time
+        // reporting of this specific non-strictly conforming behavior.
+        //
+        // Sunder views pointer values as "just an address", matching the
+        // original representation of pointers as word-sized integers within
+        // the Sunder abstract machine and generated NASM-flavored x64 assembly
+        // used when Sunder was exclusively targeting the x64 Linux platform.
+        // This definition of pointer types and values does *not* match the
+        // definition of pointer types and values used by the ISO C standard,
+        // but is expected to work on existing Unix-like platforms due to the
+        // historical representation of pointers as word-sized integers. In
+        // particular, it is expected that this form of function<->function
+        // casting *should* be well behaved, as function<->pointer casts are
+        // used in dlsym, and modern systems programming languages such as Rust
+        // guarantee that all pointer types have a single word-sized
+        // platform-dependent representation.
+        //
+        // IEEE Std 1003.1-2024 - dlsym - Under APPLICATION USAGE:
+        // > Note that conversion from a void * pointer to a function pointer
+        // > as in:
+        // >
+        // > fptr = (int (*)(int))dlsym(handle, "my_function");
+        // >
+        // > is not defined by the ISO C standard. This standard requires this
+        // > conversion to work correctly on conforming implementations.
         string_append_fmt(s, "(void*)%s", mangle_address(address));
         break;
     }
