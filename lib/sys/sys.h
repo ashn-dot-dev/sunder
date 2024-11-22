@@ -39,29 +39,29 @@ typedef   signed long      ssize;
 typedef float              f32;
 typedef double             f64;
 
-#define __sunder_true  ((bool)1)
-#define __sunder_false ((bool)0)
+static bool const __sunder_true  = (bool)1;
+static bool const __sunder_false = (bool)0;
 
-#define __sunder_u8_MIN    ((u8)0)
-#define __sunder_u8_MAX    ((u8)UCHAR_MAX)
-#define __sunder_s8_MIN    ((s8)SCHAR_MIN)
-#define __sunder_s8_MAX    ((s8)SCHAR_MAX)
-#define __sunder_u16_MIN   ((u16)0)
-#define __sunder_u16_MAX   ((u16)USHRT_MAX)
-#define __sunder_s16_MIN   ((s16)SHRT_MIN)
-#define __sunder_s16_MAX   ((s16)SHRT_MAX)
-#define __sunder_u32_MIN   ((u32)0)
-#define __sunder_u32_MAX   ((u32)UINT_MAX)
-#define __sunder_s32_MIN   ((s32)INT_MIN)
-#define __sunder_s32_MAX   ((s32)INT_MAX)
-#define __sunder_u64_MIN   ((u64)0)
-#define __sunder_u64_MAX   ((u64)ULLONG_MAX)
-#define __sunder_s64_MIN   ((s64)LLONG_MIN)
-#define __sunder_s64_MAX   ((s64)LLONG_MAX)
-#define __sunder_usize_MIN ((usize)0)
-#define __sunder_usize_MAX ((usize)ULONG_MAX)
-#define __sunder_ssize_MIN ((ssize)LONG_MIN)
-#define __sunder_ssize_MAX ((ssize)LONG_MAX)
+static u8    const __sunder_u8_MIN    = (u8)0;
+static u8    const __sunder_u8_MAX    = (u8)UCHAR_MAX;
+static s8    const __sunder_s8_MIN    = (s8)SCHAR_MIN;
+static s8    const __sunder_s8_MAX    = (s8)SCHAR_MAX;
+static u16   const __sunder_u16_MIN   = (u16)0;
+static u16   const __sunder_u16_MAX   = (u16)USHRT_MAX;
+static s16   const __sunder_s16_MIN   = (s16)SHRT_MIN;
+static s16   const __sunder_s16_MAX   = (s16)SHRT_MAX;
+static u32   const __sunder_u32_MIN   = (u32)0;
+static u32   const __sunder_u32_MAX   = (u32)UINT_MAX;
+static s32   const __sunder_s32_MIN   = (s32)INT_MIN;
+static s32   const __sunder_s32_MAX   = (s32)INT_MAX;
+static u64   const __sunder_u64_MIN   = (u64)0;
+static u64   const __sunder_u64_MAX   = (u64)ULLONG_MAX;
+static s64   const __sunder_s64_MIN   = (s64)LLONG_MIN;
+static s64   const __sunder_s64_MAX   = (s64)LLONG_MAX;
+static usize const __sunder_usize_MIN = (usize)0;
+static usize const __sunder_usize_MAX = (usize)ULONG_MAX;
+static ssize const __sunder_ssize_MIN = (ssize)LONG_MIN;
+static ssize const __sunder_ssize_MAX = (ssize)LONG_MAX;
 // clang-format on
 
 static inline _Noreturn void
@@ -690,7 +690,7 @@ sys_f64_to_str(byte* buf, usize buf_size, f64 f, ssize digits)
     return __sunder_true;
 }
 
-#define IEEE754_MATH_DEFINITIONS(function)                                     \
+#define __SUNDER_IEEE754_MATH_DEFINITIONS(function)                            \
     f32 sys_f32_##function(f32 f)                                              \
     {                                                                          \
         return function##f(f);                                                 \
@@ -700,7 +700,7 @@ sys_f64_to_str(byte* buf, usize buf_size, f64 f, ssize digits)
         return function(f);                                                    \
     }
 
-#define IEEE754_MATH_DEFINITIONS2(function)                                    \
+#define __SUNDER_IEEE754_MATH_DEFINITIONS2(function)                           \
     f32 sys_f32_##function(f32 f1, f32 f2)                                     \
     {                                                                          \
         return function##f(f1, f2);                                            \
@@ -758,33 +758,33 @@ sys_f64_ln(f64 f)
     return log(f);
 }
 
-IEEE754_MATH_DEFINITIONS(log2)
-IEEE754_MATH_DEFINITIONS(log10)
+__SUNDER_IEEE754_MATH_DEFINITIONS(log2)
+__SUNDER_IEEE754_MATH_DEFINITIONS(log10)
 
-IEEE754_MATH_DEFINITIONS(sqrt)
-IEEE754_MATH_DEFINITIONS(cbrt)
-IEEE754_MATH_DEFINITIONS2(hypot)
-IEEE754_MATH_DEFINITIONS2(pow)
+__SUNDER_IEEE754_MATH_DEFINITIONS(sqrt)
+__SUNDER_IEEE754_MATH_DEFINITIONS(cbrt)
+__SUNDER_IEEE754_MATH_DEFINITIONS2(hypot)
+__SUNDER_IEEE754_MATH_DEFINITIONS2(pow)
 
-IEEE754_MATH_DEFINITIONS(sin)
-IEEE754_MATH_DEFINITIONS(cos)
-IEEE754_MATH_DEFINITIONS(tan)
-IEEE754_MATH_DEFINITIONS(asin)
-IEEE754_MATH_DEFINITIONS(acos)
-IEEE754_MATH_DEFINITIONS(atan)
-IEEE754_MATH_DEFINITIONS2(atan2)
+__SUNDER_IEEE754_MATH_DEFINITIONS(sin)
+__SUNDER_IEEE754_MATH_DEFINITIONS(cos)
+__SUNDER_IEEE754_MATH_DEFINITIONS(tan)
+__SUNDER_IEEE754_MATH_DEFINITIONS(asin)
+__SUNDER_IEEE754_MATH_DEFINITIONS(acos)
+__SUNDER_IEEE754_MATH_DEFINITIONS(atan)
+__SUNDER_IEEE754_MATH_DEFINITIONS2(atan2)
 
-IEEE754_MATH_DEFINITIONS(sinh)
-IEEE754_MATH_DEFINITIONS(cosh)
-IEEE754_MATH_DEFINITIONS(tanh)
-IEEE754_MATH_DEFINITIONS(asinh)
-IEEE754_MATH_DEFINITIONS(acosh)
-IEEE754_MATH_DEFINITIONS(atanh)
+__SUNDER_IEEE754_MATH_DEFINITIONS(sinh)
+__SUNDER_IEEE754_MATH_DEFINITIONS(cosh)
+__SUNDER_IEEE754_MATH_DEFINITIONS(tanh)
+__SUNDER_IEEE754_MATH_DEFINITIONS(asinh)
+__SUNDER_IEEE754_MATH_DEFINITIONS(acosh)
+__SUNDER_IEEE754_MATH_DEFINITIONS(atanh)
 
-IEEE754_MATH_DEFINITIONS(ceil)
-IEEE754_MATH_DEFINITIONS(floor)
-IEEE754_MATH_DEFINITIONS(trunc)
-IEEE754_MATH_DEFINITIONS(round)
+__SUNDER_IEEE754_MATH_DEFINITIONS(ceil)
+__SUNDER_IEEE754_MATH_DEFINITIONS(floor)
+__SUNDER_IEEE754_MATH_DEFINITIONS(trunc)
+__SUNDER_IEEE754_MATH_DEFINITIONS(round)
 
 bool
 sys_f32_is_finite(f32 f)
