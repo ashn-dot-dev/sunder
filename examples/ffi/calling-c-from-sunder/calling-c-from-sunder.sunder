@@ -4,9 +4,11 @@ import "std";
 extern var x: sint;
 extern var y: sint; # const
 extern func puts(str: *char) sint;
+extern func yell(str: *char) sint;
 
 func main() void {
-    puts(startof("HELLO\0"));
+    puts(startof("hello"));
+    yell(startof("HELLO"));
 
     x = x + 1;
     var sum = x + y;

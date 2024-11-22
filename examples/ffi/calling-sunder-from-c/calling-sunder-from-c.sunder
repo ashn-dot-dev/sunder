@@ -1,10 +1,18 @@
-namespace mylib;
+namespace examplelib;
 import "std";
 
 var x = 100s32;
 let y = 200s32;
 
-func println(start: *byte, count: usize) void {
+func puts(start: *byte, count: usize) void {
     var str = (:[]byte){start, count};
     std::print_line(std::out(), str);
+}
+
+func yell(start: *byte, count: usize) void {
+    var str = (:[]byte){start, count};
+    std::print_format_line(
+        std::out(),
+        "{}!",
+        (:[]std::formatter)[std::formatter::init[[[]byte]](&str)]);
 }

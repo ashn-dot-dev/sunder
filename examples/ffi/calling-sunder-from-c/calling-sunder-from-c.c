@@ -1,16 +1,20 @@
 #include <stdio.h>
 #include <string.h>
 
-extern int mylib_x;
-extern int const mylib_y;
-extern void mylib_println(char* start, size_t count);
+extern int examplelib_x;
+extern int const examplelib_y;
+extern void examplelib_puts(char const* start, size_t count);
+extern void examplelib_yell(char const* start, size_t count);
 
 int
 main(void)
 {
-    char* str = "HELLO";
-    mylib_println(str, strlen(str));
+    char const* lower = "hello";
+    examplelib_puts(lower, strlen(lower));
 
-    mylib_x += 1;
-    printf("x + y = %d\n", mylib_x + mylib_y);
+    char const* upper = "HELLO";
+    examplelib_yell(upper, strlen(upper));
+
+    examplelib_x += 1;
+    printf("x + y = %d\n", examplelib_x + examplelib_y);
 }
