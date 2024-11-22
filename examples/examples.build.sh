@@ -3,8 +3,8 @@ set -e
 
 export SUNDER_HOME="$(realpath ..)"
 export SUNDER_SEARCH_PATH="${SUNDER_HOME}/lib"
-export SUNDER_CC="$(${SUNDER_HOME}/bin/sunder-compile -e | grep SUNDER_CC | cut -d= -f2)"
-export SUNDER_CFLAGS="$(${SUNDER_HOME}/bin/sunder-compile -e | grep SUNDER_CFLAGS | cut -d= -f2)"
+export SUNDER_CC="$(${SUNDER_HOME}/bin/sunder-compile -e | grep SUNDER_CC | sed -n 's/^SUNDER_CC=//gp')"
+export SUNDER_CFLAGS="$(${SUNDER_HOME}/bin/sunder-compile -e | grep SUNDER_CFLAGS | sed -n 's/^SUNDER_CFLAGS=//gp')"
 
 run() {
     echo "$@"
