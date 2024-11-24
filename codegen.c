@@ -1002,23 +1002,6 @@ codegen_static_function(struct symbol const* symbol, bool prototype)
         }
     }
 
-    if (!prototype) {
-        // Disable -fsanitize=function checking for function definitions in
-        // generated C. Sunder allows implicit casting of a function with
-        // parameter types and/or a return type of type `*T` to a function type
-        // where those same parameter types and/or return type are of type
-        // `*any`.
-        //
-        // Enabling -fsanitize=function, either explicitly or implicitly
-        // through -fsanitize=undefined, will trigger reporting of undefined
-        // behavior that (1) is fundamentally built into the Sunder language
-        // (there are no plans to change the language behavior to be strictly
-        // conforming to the C standard and abstract machine), and (2) should
-        // be well behaved on POSIX platforms (see similar comments under
-        // `strgen_value` discussing this same topic).
-        append("__attribute__((no_sanitize(\"function\"))) ");
-    }
-
     append(
         "%s%c%s(%s)",
         mangle_type(function->type->data.function.return_type),
@@ -1161,22 +1144,22 @@ strgen_value(struct value const* value)
         // disallowed in strictly conforming ISO C.
         //
         // Note that this cast to a void pointer does *not* make the generated
-        // code strictly conforming. Rather, the cast, in conjunction with the
-        // `no_sanitize("function")` attribute on generated function
-        // definitions, is intended to silence compile-time and run-time
-        // reporting of this specific non-strictly conforming behavior.
+        // code strictly conforming. Rather, the cast is intended to silence
+        // compile-time reporting of this specific undefined behavior.
         //
         // Sunder views pointer values as "just an address", matching the
         // original representation of pointers as word-sized integers within
         // the Sunder abstract machine and generated NASM-flavored x64 assembly
-        // used when Sunder was exclusively targeting the x64 Linux platform.
-        // This definition of pointer types and values does *not* match the
-        // definition of pointer types and values used by the ISO C standard,
-        // but is expected to work on existing Unix-like platforms due to the
-        // historical representation of pointers as word-sized integers. In
-        // particular, it is expected that this form of function<->function
-        // casting *should* be well behaved, as function<->pointer casts are
-        // used in dlsym, and modern systems programming languages such as Rust
+        // emitted when Sunder was exclusively targeting the x64 Linux
+        // platform. This definition of pointer types and values does *not*
+        // match the definition of pointer types and values used by the ISO C
+        // standard, but is expected to work on existing Unix-like platforms
+        // due to the historical representation of pointers as word-sized
+        // integers.
+        //
+        // It is expected that the form of function<->function casting here
+        // *should* be well behaved, as function<->pointer casts are used in
+        // dlsym, and modern systems programming languages such as Rust
         // guarantee that all pointer types have a single word-sized
         // platform-dependent representation.
         //
@@ -1188,6 +1171,21 @@ strgen_value(struct value const* value)
         // >
         // > is not defined by the ISO C standard. This standard requires this
         // > conversion to work correctly on conforming implementations.
+        //
+        // Is is also expected that the representation of pointers as
+        // word-sized integers also implies that two functions containing
+        // pointer parameters or a pointer return type, which differ only in
+        // the base type of those pointer parameters and/or pointer return
+        // type, are ABI compatible, e.g. the function types:
+        //
+        //     func f(*s32, *s64; *f32, *f64, *s, *t, *[]byte) *bool
+        //
+        // and
+        //
+        //      func(*any, *any, *any, *any, *any, *any, *any) *any
+        //
+        // will be called with the same arguments and return value location in
+        // the same registers and/or offsets within the called stack frame.
         string_append_fmt(s, "(void*)%s", mangle_address(address));
         break;
     }

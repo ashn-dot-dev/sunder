@@ -1,0 +1,102 @@
+# Non-comprehensive test verifying that functions with pointer parameters
+# and/or a pointer return type may be implicitly cast to a function where
+# corresponding parameters and/or the pointer return type are replaced with
+# the type `*any` and still be called in an ABI-compatible manner.
+
+import "std";
+import "sys";
+
+struct s {}
+struct t { var var_a: *t; var var_b: ssize; var var_c: bool; }
+
+let b = true;
+let w = 123s32;
+let x = 456s64;
+let y = 135.0f32;
+let z = 246.0f64;
+let p: s = uninit;
+let q: t = uninit;
+let r = "text";
+
+func f(
+    w: *s32,
+    x: *s64,
+    y: *f32,
+    z: *f64,
+    p: *s,
+    q: *t,
+    r: *[]byte
+) *bool {
+    std::print_line(std::err(), "inside f");
+    assert std::str::eq((:[]byte){(:*byte)w, sizeof(typeof(::w))}, (:[]byte){(:*byte)&::w, sizeof(typeof(::w))});
+    assert std::str::eq((:[]byte){(:*byte)x, sizeof(typeof(::x))}, (:[]byte){(:*byte)&::x, sizeof(typeof(::x))});
+    assert std::str::eq((:[]byte){(:*byte)y, sizeof(typeof(::y))}, (:[]byte){(:*byte)&::y, sizeof(typeof(::y))});
+    assert std::str::eq((:[]byte){(:*byte)z, sizeof(typeof(::z))}, (:[]byte){(:*byte)&::z, sizeof(typeof(::z))});
+    assert std::str::eq((:[]byte){(:*byte)p, sizeof(typeof(::p))}, (:[]byte){(:*byte)&::p, sizeof(typeof(::p))});
+    assert std::str::eq((:[]byte){(:*byte)q, sizeof(typeof(::q))}, (:[]byte){(:*byte)&::q, sizeof(typeof(::q))});
+    assert std::str::eq((:[]byte){(:*byte)r, sizeof(typeof(::r))}, (:[]byte){(:*byte)&::r, sizeof(typeof(::r))});
+    return &b;
+}
+
+func g(
+    w: *any,
+    x: *any,
+    y: *any,
+    z: *any,
+    p: *any,
+    q: *any,
+    r: *any
+) *any {
+    std::print_line(std::err(), "inside g");
+    assert std::str::eq((:[]byte){(:*byte)w, sizeof(typeof(::w))}, (:[]byte){(:*byte)&::w, sizeof(typeof(::w))});
+    assert std::str::eq((:[]byte){(:*byte)x, sizeof(typeof(::x))}, (:[]byte){(:*byte)&::x, sizeof(typeof(::x))});
+    assert std::str::eq((:[]byte){(:*byte)y, sizeof(typeof(::y))}, (:[]byte){(:*byte)&::y, sizeof(typeof(::y))});
+    assert std::str::eq((:[]byte){(:*byte)z, sizeof(typeof(::z))}, (:[]byte){(:*byte)&::z, sizeof(typeof(::z))});
+    assert std::str::eq((:[]byte){(:*byte)p, sizeof(typeof(::p))}, (:[]byte){(:*byte)&::p, sizeof(typeof(::p))});
+    assert std::str::eq((:[]byte){(:*byte)q, sizeof(typeof(::q))}, (:[]byte){(:*byte)&::q, sizeof(typeof(::q))});
+    assert std::str::eq((:[]byte){(:*byte)r, sizeof(typeof(::r))}, (:[]byte){(:*byte)&::r, sizeof(typeof(::r))});
+    return &b;
+}
+
+func main() void {
+
+    std::print_line(std::err(), "starting f");
+    f(&w, &x, &y, &z, &p, &q, &r);
+    std::print_line(std::err(), "finished f");
+
+    std::print(std::err(), "\n");
+
+    std::print_line(std::err(), "starting g");
+    g(&w, &x, &y, &z, &p, &q, &r);
+    std::print_line(std::err(), "finished g");
+
+    std::print(std::err(), "\n");
+
+    let u: typeof(g) = f;
+    std::print_line(std::err(), "starting u");
+    u(&w, &x, &y, &z, &p, &q, &r);
+    std::print_line(std::err(), "finished u");
+
+    std::print(std::err(), "\n");
+
+    var v: typeof(g) = f;
+    std::print_line(std::err(), "starting v");
+    v(&w, &x, &y, &z, &p, &q, &r);
+    std::print_line(std::err(), "finished v");
+}
+################################################################################
+# starting f
+# inside f
+# finished f
+#
+# starting g
+# inside g
+# finished g
+#
+# starting u
+# inside f
+# finished u
+#
+# starting v
+# inside f
+# finished v
