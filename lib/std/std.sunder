@@ -5183,13 +5183,11 @@ extend []byte func compare(lhs: *[]byte, rhs: *[]byte) ssize {
 }
 
 extend []byte func hash(self: *[]byte) usize {
-    # Implementation of djb2 with an additional statement that zeroes the upper
-    # five bits of the hash before the multiplication in order to prevent
-    # overflow.
+    # Implementation of djb2.
     var hash = 5381u;
     for i in countof(*self) {
-        let MASK = 0b11111u << ((sizeof(usize) * byte::BITS) - 5);
-        hash = (hash & MASK) * 33 + (:usize)self.*[i];
+        var c = (:usize)self.*[i];
+        hash = hash *% 33 +% c;
     }
     return hash;
 }
