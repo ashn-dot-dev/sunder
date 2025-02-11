@@ -20,4 +20,3 @@ func main() void {
 
     std::slice[[u16]]::delete_with_allocator(allocator, slice);
 }
-
