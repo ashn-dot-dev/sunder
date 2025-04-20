@@ -2456,8 +2456,7 @@ complete_struct(
 
     size_t const members_count = sbuf_count(members);
 
-    // XXX: Evil const cast.
-    struct type* struct_type = (struct type*)symbol_xget_type(symbol);
+    struct type* struct_type = type_get_mutable(symbol_xget_type(symbol));
     struct symbol_table* const struct_symbols =
         symbol_xget_type(symbol)->symbols;
 
@@ -2670,8 +2669,7 @@ complete_union(
 
     size_t const members_count = sbuf_count(members);
 
-    // XXX: Evil const cast.
-    struct type* union_type = (struct type*)symbol_xget_type(symbol);
+    struct type* union_type = type_get_mutable(symbol_xget_type(symbol));
     struct symbol_table* const union_symbols =
         symbol_xget_type(symbol)->symbols;
 

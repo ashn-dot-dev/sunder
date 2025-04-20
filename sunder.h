@@ -1892,6 +1892,7 @@ type_new_extern(char const* name, struct symbol_table* symbols);
 // Create a new enum with no members.
 struct type*
 type_new_enum(char const* name, struct symbol_table* symbols);
+
 // Returns the index of the member variable `name` of the provided struct type.
 // Returns a non-negative integer index on success.
 // Returns a -1 on failure.
@@ -1922,6 +1923,15 @@ type_member_variable_index(struct type const* self, char const* name);
 // Returns NULL on failure.
 struct member_variable const*
 type_member_variable(struct type const* self, char const* name);
+
+// Returns the mutable version of this type. In the vast majority of cases,
+// types should be considered immutable after creation, and most functions and
+// data structures handling types do so using a `struct type const*` handle.
+// However, in select scenarios after initilization the type may require
+// modification. This function serves as an explicit const cast for such
+// scenarios.
+struct type*
+type_get_mutable(struct type const* self);
 
 struct type const*
 type_unique_function(
@@ -2075,6 +2085,14 @@ symbol_new_namespace(
     struct source_location location,
     char const* name,
     struct symbol_table* symbols);
+
+// Returns the mutable version of this symbol. In the vast majority of cases,
+// symbols should be considered immutable after creation, and most functions
+// and data structures handling symbols do so using a `struct symbol const*`
+// handle. However, in select scenarios the symbol may require modification.
+// This function serves as an explicit const cast for such scenarios.
+struct symbol*
+symbol_get_mutable(struct symbol const* self);
 
 // Returns NULL if this symbol does not have an address.
 struct address const*
