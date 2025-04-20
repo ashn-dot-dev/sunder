@@ -966,9 +966,6 @@ codegen_static_function(struct symbol const* symbol, bool prototype)
 
     struct string* params = string_new(NULL, 0);
     size_t params_written = 0;
-    // XXX: function->symbol_parameters is never set for extern functions, and
-    // the `if (prototype)` branching behavior here is used as a workaround
-    // since extern functions will only ever have their prototypes generated.
     if (prototype) {
         sbuf(struct type const* const) const parameter_types =
             function->type->data.function.parameter_types;
