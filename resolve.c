@@ -2074,11 +2074,11 @@ resolve_decl_function(struct resolver* resolver, struct cst_decl const* decl)
     struct incomplete_function* const incomplete =
         xalloc(NULL, sizeof(*incomplete));
     *incomplete = (struct incomplete_function){
-        decl,
-        function_symbol->name,
-        function,
-        symbol_table,
-        context()->template_instantiation_chain};
+        .decl = decl,
+        .name = function_symbol->name,
+        .function = function,
+        .symbol_table = symbol_table,
+        .chain = context()->template_instantiation_chain};
     freeze(incomplete);
     sbuf_push(resolver->incomplete_functions, incomplete);
 
