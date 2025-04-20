@@ -2559,7 +2559,7 @@ function_new(struct type const* type, struct address const* address);
 
 struct value {
     struct type const* type;
-    struct {
+    union {
         bool boolean;
         uint8_t byte;
         struct bigint* integer; /* integer and enum types */
