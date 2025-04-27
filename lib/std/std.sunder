@@ -3100,6 +3100,10 @@ struct hash_map[[K, V]] {
         var state: usize;
         # Index within the inserted elements vector.
         var index: usize;
+    } = uninit;
+
+    let _INSERTED: struct {
+        var index: usize;
         # The key associated with this element.
         #
         # The hash and eq functions of this key type are used for insertion and
@@ -3113,7 +3117,7 @@ struct hash_map[[K, V]] {
         var value: V;
     } = uninit;
 
-    var _inserted: std::vector[[usize]];
+    var _inserted: std::vector[[typeof(_INSERTED)]];
     var _elements: []typeof(_ELEMENT);
     var _n: usize; # Number of USE entries in the map.
     var _q: usize; # Number of non-NIL entries in the map.
@@ -3127,7 +3131,7 @@ struct hash_map[[K, V]] {
     # The provided allocator is used for backing storage.
     func init_with_allocator(allocator: std::allocator) hash_map[[K, V]] {
         return (:hash_map[[K, V]]){
-            ._inserted = std::vector[[usize]]::init_with_allocator(allocator),
+            ._inserted = std::vector[[typeof(_INSERTED)]]::init_with_allocator(allocator),
             ._elements = (:[]typeof(_ELEMENT))[],
             ._n = 0,
             ._q = 0,
@@ -3207,7 +3211,7 @@ struct hash_map[[K, V]] {
         if element == std::ptr[[typeof(_ELEMENT)]]::NULL {
             return std::optional[[*V]]::EMPTY;
         }
-        return std::optional[[*V]]::init_value(&element.*.value);
+        return std::optional[[*V]]::init_value(&self.*._inserted.data()[element.*.index].value);
     }
 
     # Returns a non-empty optional containing the key-value view associated
@@ -3220,8 +3224,8 @@ struct hash_map[[K, V]] {
             return std::optional[[key_value_view[[K, V]]]]::EMPTY;
         }
         return std::optional[[key_value_view[[K, V]]]]::init_value((:std::key_value_view[[K, V]]){
-            .key = &element.*.key,
-            .value = &element.*.value,
+            .key = &self.*._inserted.data()[element.*.index].key,
+            .value = &self.*._inserted.data()[element.*.index].value,
         });
     }
 
@@ -3236,7 +3240,7 @@ struct hash_map[[K, V]] {
 
         var index = key.hash() % countof(self.*._elements);
         for self.*._elements[index].state != hash_map[[K, V]]::_STATE_NIL {
-            if self.*._elements[index].state == hash_map[[K, V]]::_STATE_USE and std::eq[[K]](&key, &self.*._elements[index].key) {
+            if self.*._elements[index].state == hash_map[[K, V]]::_STATE_USE and std::eq[[K]](&key, &self.*._inserted.data()[self.*._elements[index].index].key) {
                 return &self.*._elements[index];
             }
             index = (index + 1) % countof(self.*._elements);
@@ -3282,18 +3286,18 @@ struct hash_map[[K, V]] {
             # existing element count, populate that map with this map's
             # key-value pairs, and then replace this map with the new map.
             var new = (:hash_map[[K, V]]){
-                ._inserted = std::vector[[usize]]::init_with_allocator(self.*.allocator()),
+                ._inserted = std::vector[[typeof(_INSERTED)]]::init_with_allocator(self.*.allocator()),
                 ._elements = std::slice[[typeof(_ELEMENT)]]::new_with_allocator(self.*.allocator(), countof(self.*._elements) * 2),
                 ._n = 0,
                 ._q = 0,
             };
             for i in self.*._inserted.count() {
-                if self.*._inserted.data()[i] == hash_map[[K, V]]::_INDEX_DEL {
+                if self.*._inserted.data()[i].index == hash_map[[K, V]]::_INDEX_DEL {
                     continue;
                 }
-                var index = self.*._inserted.data()[i];
+                var index = self.*._inserted.data()[i].index;
                 assert self.*._elements[index].state == hash_map[[K, V]]::_STATE_USE;
-                var existing = new.update(self.*._elements[index].key, self.*._elements[index].value);
+                var existing = new.update(self.*._inserted.data()[i].key, self.*._inserted.data()[i].value);
                 assert existing.is_empty();
             }
             std::slice[[typeof(_ELEMENT)]]::delete_with_allocator(self.*.allocator(), self.*._elements);
@@ -3306,11 +3310,11 @@ struct hash_map[[K, V]] {
             # The threshold of 2 * n was arbitrarily chosen.
             var cur = 0u;
             for idx in self.*._inserted.count() {
-                if self.*._inserted.data()[idx] == hash_map[[K, V]]::_INDEX_DEL {
+                if self.*._inserted.data()[idx].index == hash_map[[K, V]]::_INDEX_DEL {
                     continue;
 
                 }
-                self.*._elements[self.*._inserted.data()[idx]].index = cur;
+                self.*._elements[self.*._inserted.data()[idx].index].index = cur;
                 self.*._inserted.data()[cur] = self.*._inserted.data()[idx];
                 cur += 1;
             }
@@ -3323,10 +3327,8 @@ struct hash_map[[K, V]] {
                 self.*._elements[index] = (:typeof(_ELEMENT)){
                     .state = hash_map[[K, V]]::_STATE_USE,
                     .index = self.*._inserted.count(),
-                    .key = key,
-                    .value = value,
                 };
-                self.*._inserted.push(index);
+                self.*._inserted.push((:typeof(_INSERTED)){.index = index, .key = key, .value = value});
                 self.*._n += 1;
                 self.*._q += 1;
                 return std::optional[[std::key_value_pair[[K, V]]]]::EMPTY;
@@ -3336,29 +3338,25 @@ struct hash_map[[K, V]] {
                 self.*._elements[index] = (:typeof(_ELEMENT)){
                     .state = hash_map[[K, V]]::_STATE_USE,
                     .index = self.*._inserted.count(),
-                    .key = key,
-                    .value = value,
                 };
-                self.*._inserted.push(index);
+                self.*._inserted.push((:typeof(_INSERTED)){.index = index, .key = key, .value = value});
                 self.*._n += 1;
                 return std::optional[[std::key_value_pair[[K, V]]]]::EMPTY;
             }
 
             # _STATE_USE
-            if std::eq[[K]](&key, &self.*._elements[index].key) {
+            if std::eq[[K]](&key, &self.*._inserted.data()[self.*._elements[index].index].key) {
                 var existing = self.*._elements[index];
                 var kv = (:std::key_value_pair[[K, V]]){
-                    .key = existing.key,
-                    .value = existing.value,
+                    .key = self.*._inserted.data()[existing.index].key,
+                    .value = self.*._inserted.data()[existing.index].value,
                 };
-                self.*._inserted.data()[self.*._elements[index].index] = std::hash_map[[K, V]]::_INDEX_DEL;
+                self.*._inserted.data()[self.*._elements[index].index] = (:typeof(_INSERTED)){.index = std::hash_map[[K, V]]::_INDEX_DEL, .key = uninit, .value = uninit};
                 self.*._elements[index] = (:typeof(_ELEMENT)){
                     .state = hash_map[[K, V]]::_STATE_USE,
                     .index = self.*._inserted.count(),
-                    .key = key,
-                    .value = value,
                 };
-                self.*._inserted.push(index);
+                self.*._inserted.push((:typeof(_INSERTED)){.index = index, .key = key, .value = value});
                 return std::optional[[std::key_value_pair[[K, V]]]]::init_value(kv);
             }
 
@@ -3381,13 +3379,13 @@ struct hash_map[[K, V]] {
 
         var index = key.hash() % countof(self.*._elements);
         for self.*._elements[index].state != hash_map[[K, V]]::_STATE_NIL {
-            if self.*._elements[index].state == hash_map[[K, V]]::_STATE_USE and std::eq[[K]](&key, &self.*._elements[index].key) {
+            if self.*._elements[index].state == hash_map[[K, V]]::_STATE_USE and std::eq[[K]](&key, &self.*._inserted.data()[self.*._elements[index].index].key) {
                 var kv = (:std::key_value_pair[[K, V]]){
-                    .key = self.*._elements[index].key,
-                    .value = self.*._elements[index].value,
+                    .key = self.*._inserted.data()[self.*._elements[index].index].key,
+                    .value = self.*._inserted.data()[self.*._elements[index].index].value,
                 };
                 self.*._elements[index].state = hash_map[[K, V]]::_STATE_DEL;
-                self.*._inserted.data()[self.*._elements[index].index] = std::hash_map[[K, V]]::_INDEX_DEL;
+                self.*._inserted.data()[self.*._elements[index].index] = (:typeof(_INSERTED)){.index = std::hash_map[[K, V]]::_INDEX_DEL, .key = uninit, .value = uninit};
                 self.*._n -= 1;
                 return std::optional[[std::key_value_pair[[K, V]]]]::init_value(kv);
             }
@@ -3405,13 +3403,13 @@ struct hash_map[[K, V]] {
 # Iterate over the elements of a hash map.
 struct hash_map_iterator[[K, V]] {
     var _hash_map: *std::hash_map[[K, V]];
-    var _iterator: std::slice_iterator[[usize]];
+    var _iterator: std::slice_iterator[[typeof(std::hash_map[[K, V]]::_INSERTED)]];
     var _current: std::optional[[std::key_value_view[[K, V]]]];
 
     func init(map: *std::hash_map[[K, V]]) hash_map_iterator[[K, V]] {
         return (:hash_map_iterator[[K, V]]){
             ._hash_map = map,
-            ._iterator = std::slice_iterator[[usize]]::init(map.*._inserted.data()),
+            ._iterator = std::slice_iterator[[typeof(std::hash_map[[K, V]]::_INSERTED)]]::init(map.*._inserted.data()),
             ._current = std::optional[[std::key_value_view[[K, V]]]]::EMPTY,
         };
     }
@@ -3419,15 +3417,15 @@ struct hash_map_iterator[[K, V]] {
     func advance(self: *hash_map_iterator[[K, V]]) bool {
         for self.*._iterator.advance() {
             var current = self.*._iterator.current();
-            var index = *current;
+            var index = current.*.index;
             if index == hash_map[[K, V]]::_INDEX_DEL {
                 continue;
             }
 
             assert self.*._hash_map.*._elements[index].state == std::hash_map[[K, V]]::_STATE_USE;
             var current = (:std::key_value_view[[K, V]]){
-                .key = &self.*._hash_map.*._elements[index].key,
-                .value = &self.*._hash_map.*._elements[index].value,
+                .key = &current.*.key,
+                .value = &current.*.value,
             };
             self.*._current = std::optional[[std::key_value_view[[K, V]]]]::init_value(current);
             return true;

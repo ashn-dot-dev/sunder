@@ -1,0 +1,27 @@
+import "std";
+
+func main() void {
+    var m = std::hash_map[[[]byte, ssize]]::init();
+    m.insert("foo", 123);
+    m.insert("bar", 456);
+    m.insert("baz", 789);
+
+    var lookup = m.lookup("foo");
+    std::print_format_line(
+        std::out(),
+        "{}",
+        (:[]std::formatter)[
+            std::formatter::init[[ssize]](lookup.value())]);
+    var lookup = m.lookup("bar");
+    std::print_format_line(
+        std::out(),
+        "{}",
+        (:[]std::formatter)[
+            std::formatter::init[[ssize]](lookup.value())]);
+    var lookup = m.lookup("baz");
+    std::print_format_line(
+        std::out(),
+        "{}",
+        (:[]std::formatter)[
+            std::formatter::init[[ssize]](lookup.value())]);
+}
