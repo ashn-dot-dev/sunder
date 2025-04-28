@@ -1,0 +1,57 @@
+import "std";
+
+struct foo {
+    var text: []byte;
+    var number: ssize;
+
+    func init(text: []byte, number: ssize) foo {
+        return (:foo){.text = text, .number = number};
+    }
+
+    func fini(self: *foo) void {
+        std::print_format_line(
+            std::out(),
+            "{}-{}",
+            (:[]std::formatter)[
+                std::formatter::init[[typeof(self.*.text)]](&self.*.text),
+                std::formatter::init[[typeof(self.*.number)]](&self.*.number)]);
+    }
+
+    func hash(self: *foo) usize {
+        return self.*.text.hash();
+    }
+
+    func eq(lhs: *foo, rhs: *foo) bool {
+        return std::str::eq(lhs.*.text, rhs.*.text);
+    }
+}
+
+func main() void {
+    var set = std::hash_set[[foo]]::init();
+    set.insert(foo::init("a", 123));
+    set.insert(foo::init("b", 456));
+    set.insert(foo::init("c", 789));
+    set.insert(foo::init("b", 135)); # replaces and finalizes b-456
+    set.fini();
+
+    std::print(std::out(), "\n");
+
+    var set = std::hash_set[[foo]]::init();
+    set.update(foo::init("a", 123));
+    set.update(foo::init("b", 456));
+    set.update(foo::init("c", 789));
+    var existing = set.update(foo::init("b", 135)); # replaces, but does not finalize, b-456
+    set.fini();
+    var existing = existing.value();
+    existing.fini();
+}
+################################################################################
+# b-456
+# a-123
+# c-789
+# b-135
+#
+# a-123
+# c-789
+# b-135
+# b-456

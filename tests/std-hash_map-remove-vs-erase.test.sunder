@@ -25,36 +25,34 @@ func main() void {
     map.insert(foo::init("a"), foo::init("x"));
     map.insert(foo::init("b"), foo::init("y"));
     map.insert(foo::init("c"), foo::init("z"));
-    map.insert(foo::init("b"), foo::init("r")); # replaces and finalizes <b, y>
+    var removed = map.remove(foo::init("b")); # removes, but does not finalize, <b, y>
+    assert removed.is_value();
     map.fini();
+    var key = removed.value().key;
+    var value = removed.value().value;
+    key.fini(); # explicitly finalize b
+    value.fini(); # explicitly finalize y
 
     std::print(std::out(), "\n");
 
     var map = std::hash_map[[foo, foo]]::init();
-    map.update(foo::init("a"), foo::init("x"));
-    map.update(foo::init("b"), foo::init("y"));
-    map.update(foo::init("c"), foo::init("z"));
-    var existing = map.update(foo::init("b"), foo::init("r")); # replaces, but does not finalize, <b, y>
+    map.insert(foo::init("a"), foo::init("x"));
+    map.insert(foo::init("b"), foo::init("y"));
+    map.insert(foo::init("c"), foo::init("z"));
+    map.erase(foo::init("b")); # removes and finalizes <b, y>
     map.fini();
-    var existing = existing.value();
-    existing.key.fini();
-    existing.value.fini();
 }
 ################################################################################
-# b
-# y
 # a
 # x
 # c
 # z
 # b
-# r
+# y
 #
+# b
+# y
 # a
 # x
 # c
 # z
-# b
-# r
-# b
-# y

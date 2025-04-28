@@ -3113,7 +3113,10 @@ struct hash_map[[K, V]] {
         var value: V;
     } = uninit;
 
+    # Insertion order mapping into the elements slice, where the DEL index
+    # indicates an inserted entry that has since been removed.
     var _inserted: std::vector[[usize]];
+    # Key-value element slots mapping elements by key-hash with linear probing.
     var _elements: []typeof(_ELEMENT);
     var _n: usize; # Number of USE entries in the map.
     var _q: usize; # Number of non-NIL entries in the map.
@@ -3396,6 +3399,30 @@ struct hash_map[[K, V]] {
         return std::optional[[std::key_value_pair[[K, V]]]]::EMPTY;
     }
 
+    # Remove the key-value pair associated with the provided key if such a
+    # key-value pair exists in the map. Finalize resources associated with the
+    # key-value pair if found.
+    #
+    # Ownership of `key` is *not* transferred with this function call.
+    func erase(self: *hash_map[[K, V]], key: K) void {
+        var removed = self.*.remove(key);
+        when defined(K::fini) or defined(V::fini) {
+            if removed.is_empty() {
+                return;
+            }
+            var pair = removed.value();
+            when defined(K::fini) {
+                pair.key.fini();
+            }
+            when defined(V::fini) {
+                pair.value.fini();
+            }
+        }
+        else {
+            removed; # prevent unused variable warning
+        }
+    }
+
     # Returns an iterator over the key-value pairs of the hash map.
     func iterator(self: *std::hash_map[[K, V]]) std::hash_map_iterator[[K, V]] {
         return std::hash_map_iterator[[K, V]]::init(self);
@@ -3643,6 +3670,14 @@ struct hash_set[[T]] {
             return std::optional[[T]]::EMPTY;
         }
         return std::optional[[T]]::init_value(existing.value().key);
+    }
+
+    # Remove the provided element if such an element exists in the set.
+    # Finalize resources associated with the element if found.
+    #
+    # Ownership of `element` is *not* transferred with this function call.
+    func erase(self: *hash_set[[T]], element: T) void {
+        self.*._hash_map.erase(element);
     }
 
     # Returns an iterator over the elements of the hash set.
