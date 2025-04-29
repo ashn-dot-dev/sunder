@@ -3088,17 +3088,14 @@ struct key_value_view[[K, V]] {
 # A type `K` may be used as the key template type if `K` impements a `hash`
 # function with the signature `func hash(self: *K) usize`.
 struct hash_map[[K, V]] {
-    let _STATE_NIL: usize = 0;
-    let _STATE_USE: usize = 1;
-    let _STATE_DEL: usize = 2;
-    let _INDEX_DEL: usize = usize::MAX;
+    let _INDEX_MAX = usize::MAX - 2; # Largest valid index for an element.
+    let _INDEX_NIL = usize::MAX - 1; # Index indicating element not in-use.
+    let _INDEX_DEL = usize::MAX - 0; # Index indicating element was removed.
 
     let _ELEMENT: struct {
-        # NIL state indicates that this slot does not map to an element.
-        # USE state indicates that this slot maps to an active element.
-        # DEL state indicates that this slot maps to a removed element.
-        var state: usize;
         # Index within the inserted elements vector.
+        # NIL state indicates this slot does not contain to an in-use element.
+        # DEL state indicates this slot maps to a removed (tombstone) element.
         var index: usize;
         # The key associated with this element.
         #
@@ -3113,8 +3110,15 @@ struct hash_map[[K, V]] {
         var value: V;
     } = uninit;
 
-    # Insertion order mapping into the elements slice, where the DEL index
-    # indicates an inserted entry that has since been removed.
+    # Initial state of newly created-and-initialized element slots.
+    let _ELEMENT_INIT = (:typeof(_ELEMENT)){
+        .index = _INDEX_NIL,
+        .key = uninit,
+        .value = uninit,
+    };
+
+    # Insertion order mapping into the elements slice, where DEL indicates an
+    # inserted entry that has since been removed.
     var _inserted: std::vector[[usize]];
     # Key-value element slots mapping elements by key-hash with linear probing.
     var _elements: []typeof(_ELEMENT);
@@ -3238,8 +3242,8 @@ struct hash_map[[K, V]] {
         }
 
         var index = key.hash() % countof(self.*._elements);
-        for self.*._elements[index].state != hash_map[[K, V]]::_STATE_NIL {
-            if self.*._elements[index].state == hash_map[[K, V]]::_STATE_USE and std::eq[[K]](&key, &self.*._elements[index].key) {
+        for self.*._elements[index].index != hash_map[[K, V]]::_INDEX_NIL {
+            if self.*._elements[index].index <= hash_map[[K, V]]::_INDEX_MAX and std::eq[[K]](&key, &self.*._elements[index].key) {
                 return &self.*._elements[index];
             }
             index = (index + 1) % countof(self.*._elements);
@@ -3276,9 +3280,8 @@ struct hash_map[[K, V]] {
             # Initial insert. An initial slice count of 16 was chosen
             # semi-arbitrarily. The initial slice count must be two or greater
             # in order to prevent the lookup loop from spinning forever.
-            let ZEROED: typeof(_ELEMENT) = uninit;
             self.*._elements = std::slice[[typeof(_ELEMENT)]]::new_with_allocator(self.*.allocator(), 16);
-            std::slice[[typeof(_ELEMENT)]]::fill(self.*._elements, ZEROED);
+            std::slice[[typeof(_ELEMENT)]]::fill(self.*._elements, _ELEMENT_INIT);
         }
         elif 2 * (self.*._q + 1) > countof(self.*._elements) {
             # Insert at 50% occupancy. Create a new hash map with double the
@@ -3290,12 +3293,12 @@ struct hash_map[[K, V]] {
                 ._n = 0,
                 ._q = 0,
             };
+            std::slice[[typeof(_ELEMENT)]]::fill(new._elements, _ELEMENT_INIT);
             for i in self.*._inserted.count() {
                 if self.*._inserted.data()[i] == hash_map[[K, V]]::_INDEX_DEL {
                     continue;
                 }
                 var index = self.*._inserted.data()[i];
-                assert self.*._elements[index].state == hash_map[[K, V]]::_STATE_USE;
                 var existing = new.update(self.*._elements[index].key, self.*._elements[index].value);
                 assert existing.is_empty();
             }
@@ -3322,9 +3325,8 @@ struct hash_map[[K, V]] {
 
         var index = key.hash() % countof(self.*._elements);
         for true {
-            if self.*._elements[index].state == hash_map[[K, V]]::_STATE_NIL {
+            if self.*._elements[index].index == hash_map[[K, V]]::_INDEX_NIL {
                 self.*._elements[index] = (:typeof(_ELEMENT)){
-                    .state = hash_map[[K, V]]::_STATE_USE,
                     .index = self.*._inserted.count(),
                     .key = key,
                     .value = value,
@@ -3335,9 +3337,8 @@ struct hash_map[[K, V]] {
                 return std::optional[[std::key_value_pair[[K, V]]]]::EMPTY;
             }
 
-            if self.*._elements[index].state == hash_map[[K, V]]::_STATE_DEL {
+            if self.*._elements[index].index == hash_map[[K, V]]::_INDEX_DEL {
                 self.*._elements[index] = (:typeof(_ELEMENT)){
-                    .state = hash_map[[K, V]]::_STATE_USE,
                     .index = self.*._inserted.count(),
                     .key = key,
                     .value = value,
@@ -3347,7 +3348,7 @@ struct hash_map[[K, V]] {
                 return std::optional[[std::key_value_pair[[K, V]]]]::EMPTY;
             }
 
-            # _STATE_USE
+            # Slot in-use.
             if std::eq[[K]](&key, &self.*._elements[index].key) {
                 var existing = self.*._elements[index];
                 var kv = (:std::key_value_pair[[K, V]]){
@@ -3356,7 +3357,6 @@ struct hash_map[[K, V]] {
                 };
                 self.*._inserted.data()[self.*._elements[index].index] = std::hash_map[[K, V]]::_INDEX_DEL;
                 self.*._elements[index] = (:typeof(_ELEMENT)){
-                    .state = hash_map[[K, V]]::_STATE_USE,
                     .index = self.*._inserted.count(),
                     .key = key,
                     .value = value,
@@ -3383,14 +3383,14 @@ struct hash_map[[K, V]] {
         }
 
         var index = key.hash() % countof(self.*._elements);
-        for self.*._elements[index].state != hash_map[[K, V]]::_STATE_NIL {
-            if self.*._elements[index].state == hash_map[[K, V]]::_STATE_USE and std::eq[[K]](&key, &self.*._elements[index].key) {
+        for self.*._elements[index].index != hash_map[[K, V]]::_INDEX_NIL {
+            if self.*._elements[index].index <= hash_map[[K, V]]::_INDEX_MAX and std::eq[[K]](&key, &self.*._elements[index].key) {
                 var kv = (:std::key_value_pair[[K, V]]){
                     .key = self.*._elements[index].key,
                     .value = self.*._elements[index].value,
                 };
-                self.*._elements[index].state = hash_map[[K, V]]::_STATE_DEL;
                 self.*._inserted.data()[self.*._elements[index].index] = std::hash_map[[K, V]]::_INDEX_DEL;
+                self.*._elements[index].index = hash_map[[K, V]]::_INDEX_DEL;
                 self.*._n -= 1;
                 return std::optional[[std::key_value_pair[[K, V]]]]::init_value(kv);
             }
@@ -3451,7 +3451,6 @@ struct hash_map_iterator[[K, V]] {
                 continue;
             }
 
-            assert self.*._hash_map.*._elements[index].state == std::hash_map[[K, V]]::_STATE_USE;
             var current = (:std::key_value_view[[K, V]]){
                 .key = &self.*._hash_map.*._elements[index].key,
                 .value = &self.*._hash_map.*._elements[index].value,
