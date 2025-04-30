@@ -3083,10 +3083,13 @@ struct key_value_view[[K, V]] {
 }
 
 # Managed type mapping keys of type `K` to values of type `V` with O(1) average
-# time complexity for lookup, insert, and remove operations.
+# time complexity for lookup, insert, and remove operations. Iteration over the
+# map traverses key-value pairs in insertion order.
 #
-# A type `K` may be used as the key template type if `K` impements a `hash`
-# function with the signature `func hash(self: *K) usize`.
+# A type `K` may be used as the key template type if `K` implements:
+# 1. The `hash` member function, `func hash(self: *K) usize`.
+# 2. Either the `eq` member function, `func eq(lhs: *K, rhs: *K) bool`, or the
+#    `compare` member function, `func compare(lhs: *K, rhs: *K) ssize`.
 struct hash_map[[K, V]] {
     let _INDEX_MAX = usize::MAX - 2; # Largest valid index for an element.
     let _INDEX_NIL = usize::MAX - 1; # Index indicating element not in-use.
@@ -3473,10 +3476,13 @@ struct hash_map_iterator[[K, V]] {
 }
 
 # Managed type containing a collection of unique elements with O(1) average
-# time complexity for insert and remove operations.
+# time complexity for lookup, insert, and remove operations. Iteration over the
+# set traverses elements in insertion order.
 #
-# A type `T` may be used as the set template type if `T` impements a `hash`
-# function with the signature `func hash(self: *T) usize`.
+# A type `T` may be used as the set template type if `T` implements:
+# 1. The `hash` member function, `func hash(self: *T) usize`.
+# 2. Either the `eq` member function, `func eq(lhs: *T, rhs: *T) bool`, or the
+#    `compare` member function, `func compare(lhs: *T, rhs: *T) ssize`.
 struct hash_set[[T]] {
     var _hash_map: std::hash_map[[T, void]];
 
