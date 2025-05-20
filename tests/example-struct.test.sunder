@@ -64,7 +64,8 @@ let bar_a: bar = (:bar){
     .s = 0x5566
 };
 
-# Contains member variables, member constants, and member functions.
+# Contains member variables, member constants, member functions, and type
+# aliases.
 struct baz {
     var value_a: u8;
     var value_b: u8;
@@ -76,6 +77,9 @@ struct baz {
     let CONSTANT_D = 0xE1u8;
     let CONSTANT_E = CONSTANT_D + 1;
     let CONSTANT_F = baz::CONSTANT_E + 1;
+
+    type TYPE_A = ssize;
+    type TYPE_B = foo;
 
     func init(value_a: u8, value_b: u8) baz {
         return (:baz){
@@ -183,6 +187,11 @@ func main() void {
     sys::dump[[u8]](baz::CONSTANT_C);
     sys::dump[[u16]](baz::sum(&baz_c));
     sys::dump[[u16]](baz_c.sum());
+
+    # Check that type aliases can be used where a type is expected.
+    var baz_type_a_: baz::TYPE_A = uninit;
+    type T = typeof(baz_a);
+    var baz_type_b_: T::TYPE_B = uninit;
 
     # Check that struct member initializer lists can contain a final comma
     # before the closing brace.

@@ -195,6 +195,8 @@ static struct cst_member const*
 parse_member_constant(struct parser* parser);
 static struct cst_member const*
 parse_member_function(struct parser* parser);
+static struct cst_member const*
+parse_member_alias(struct parser* parser);
 
 static struct cst_member_initializer const* const*
 parse_member_initializer_list(struct parser* parser);
@@ -1939,9 +1941,13 @@ parse_member(struct parser* parser)
         return parse_member_function(parser);
     }
 
+    if (check_current(parser, TOKEN_TYPE)) {
+        return parse_member_alias(parser);
+    }
+
     fatal(
         parser->current_token.location,
-        "expected member variable, member constant, or member function, found `%s`",
+        "expected member variable, member constant, member function, or type alias, found `%s`",
         token_to_new_cstr(parser->current_token));
     return NULL;
 }
@@ -1986,6 +1992,19 @@ parse_member_function(struct parser* parser)
     struct cst_decl const* const decl = parse_decl_function(parser);
 
     struct cst_member* const product = cst_member_new_function(decl);
+
+    freeze(product);
+    return product;
+}
+
+static struct cst_member const*
+parse_member_alias(struct parser* parser)
+{
+    assert(parser != NULL);
+
+    struct cst_decl const* const decl = parse_decl_alias(parser);
+
+    struct cst_member* const product = cst_member_new_alias(decl);
 
     freeze(product);
     return product;

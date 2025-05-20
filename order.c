@@ -255,6 +255,10 @@ order_decl(struct orderer* orderer, struct cst_decl const* decl)
                 order_decl(orderer, member->data.function.decl);
                 continue;
             }
+            case CST_MEMBER_ALIAS: {
+                order_decl(orderer, member->data.alias.decl);
+                continue;
+            }
             }
         }
         return;
@@ -296,6 +300,10 @@ order_decl(struct orderer* orderer, struct cst_decl const* decl)
             }
             case CST_MEMBER_FUNCTION: {
                 order_decl(orderer, member->data.function.decl);
+                continue;
+            }
+            case CST_MEMBER_ALIAS: {
+                order_decl(orderer, member->data.alias.decl);
                 continue;
             }
             }

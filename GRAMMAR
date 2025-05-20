@@ -217,12 +217,15 @@
 <member> ::= <member-variable>
            | <member-constant>
            | <member-function>
+           | <member-type-alias>
 
 <member-variable> ::= "var" <identifier> ":" <type> ";"
 
 <member-constant> ::= <decl-constant>
 
 <member-function> ::=  <decl-function>
+
+<member-type-alias> ::= <decl-type-alias>
 
 <member-initializer-list> ::= (<member-initializer> ("," <member-initializer>)* ","?)?
 

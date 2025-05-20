@@ -34,23 +34,25 @@ union self_referential {
     var pp_self: **self_referential;
 }
 
-union with_member_constants_and_member_functions {
+union with_member_constants_and_member_functions_and_type_alias {
     var x: u32;
     var y: u64;
 
     let X = 0xAAAAAAAAu32;
     let Y = 0xBBBBBBBBBBBBBBBBu64;
 
-    func init_x(x: u32) with_member_constants_and_member_functions {
-        return (:with_member_constants_and_member_functions){.x = x};
+    type T = ssize;
+
+    func init_x(x: u32) with_member_constants_and_member_functions_and_type_alias {
+        return (:with_member_constants_and_member_functions_and_type_alias){.x = x};
     }
 
-    func init_y(y: u64) with_member_constants_and_member_functions {
-        return (:with_member_constants_and_member_functions){.y = y};
+    func init_y(y: u64) with_member_constants_and_member_functions_and_type_alias {
+        return (:with_member_constants_and_member_functions_and_type_alias){.y = y};
     }
 
-    func dump(self: *with_member_constants_and_member_functions) void {
-        sys::dump[[with_member_constants_and_member_functions]](*self);
+    func dump(self: *with_member_constants_and_member_functions_and_type_alias) void {
+        sys::dump[[with_member_constants_and_member_functions_and_type_alias]](*self);
     }
 }
 
@@ -100,10 +102,13 @@ func main() void {
     var foo: self_referential = uninit;
     foo.p_self = &foo;
 
-    var x = with_member_constants_and_member_functions::init_x(with_member_constants_and_member_functions::X);
-    var y = with_member_constants_and_member_functions::init_y(with_member_constants_and_member_functions::Y);
+    var x = with_member_constants_and_member_functions_and_type_alias::init_x(with_member_constants_and_member_functions_and_type_alias::X);
+    var y = with_member_constants_and_member_functions_and_type_alias::init_y(with_member_constants_and_member_functions_and_type_alias::Y);
     x.dump();
     y.dump();
+
+    # Check that type aliases can be used where a type is expected.
+    var _: with_member_constants_and_member_functions_and_type_alias::T = 123s;
 }
 ################################################################################
 #

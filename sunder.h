@@ -1586,6 +1586,7 @@ struct cst_member {
         CST_MEMBER_VARIABLE,
         CST_MEMBER_CONSTANT,
         CST_MEMBER_FUNCTION,
+        CST_MEMBER_ALIAS,
     } kind;
     struct {
         struct {
@@ -1600,6 +1601,10 @@ struct cst_member {
             // CST_DECL_FUNCTION
             struct cst_decl const* decl;
         } function;
+        struct {
+            // CST_DECL_ALIAS
+            struct cst_decl const* decl;
+        } alias;
     } data;
 };
 struct cst_member*
@@ -1611,6 +1616,8 @@ struct cst_member*
 cst_member_new_constant(struct cst_decl const* decl);
 struct cst_member*
 cst_member_new_function(struct cst_decl const* decl);
+struct cst_member*
+cst_member_new_alias(struct cst_decl const* decl);
 
 struct cst_member_initializer {
     struct source_location location;

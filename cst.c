@@ -849,6 +849,21 @@ cst_member_new_function(struct cst_decl const* decl)
     return self;
 }
 
+struct cst_member*
+cst_member_new_alias(struct cst_decl const* decl)
+{
+    assert(decl != NULL);
+    assert(decl->kind == CST_DECL_ALIAS);
+
+    struct cst_member* const self = xalloc(NULL, sizeof(*self));
+    memset(self, 0x00, sizeof(*self));
+    self->location = decl->location;
+    self->name = decl->name;
+    self->kind = CST_MEMBER_ALIAS;
+    self->data.alias.decl = decl;
+    return self;
+}
+
 struct cst_member_initializer*
 cst_member_initializer_new(
     struct source_location location,

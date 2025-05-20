@@ -2645,6 +2645,10 @@ complete_struct(
             resolve_decl_function(resolver, member->data.function.decl);
             continue;
         }
+        case CST_MEMBER_ALIAS: {
+            resolve_decl_alias(resolver, member->data.alias.decl);
+            continue;
+        }
         }
 
         UNREACHABLE();
@@ -2808,6 +2812,10 @@ complete_union(
         }
         case CST_MEMBER_FUNCTION: {
             resolve_decl_function(resolver, member->data.function.decl);
+            continue;
+        }
+        case CST_MEMBER_ALIAS: {
+            resolve_decl_alias(resolver, member->data.alias.decl);
             continue;
         }
         }
