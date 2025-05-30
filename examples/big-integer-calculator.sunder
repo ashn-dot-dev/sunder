@@ -316,18 +316,18 @@ struct parser {
     }
 }
 
-struct expression_itable {
-    var del: func(*any) void;
-    var format: func(*any, std::writer, []byte) std::result[[void, std::error]];
-    var evaluate: func(*any) std::big_integer;
-}
-
 struct expression {
-    var itable: *expression_itable;
+    type interface = struct {
+        var del: func(*any) void;
+        var format: func(*any, std::writer, []byte) std::result[[void, std::error]];
+        var evaluate: func(*any) std::big_integer;
+    };
+
+    var itable: *interface;
     var object: *any;
 
     func init[[T]](object: *T) expression {
-        let itable = (:expression_itable){
+        let itable = (:interface){
             .del = T::del,
             .format = T::format,
             .evaluate = T::evaluate,
