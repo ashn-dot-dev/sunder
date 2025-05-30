@@ -17,7 +17,7 @@ func main() void {
     map.insert(123.456, "qux");
 
     assert map.count() == 4;
-    assert map.contains(0.0);
+    assert map.contains(&0.0f64);
     # assert map.contains(NAN); # no way to test this since NaN != NaN
-    assert map.contains(123.456);
+    assert map.contains(&123.456f64);
 }

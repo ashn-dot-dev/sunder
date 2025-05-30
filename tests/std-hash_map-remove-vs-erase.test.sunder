@@ -25,7 +25,7 @@ func main() void {
     map.insert(foo::init("a"), foo::init("x"));
     map.insert(foo::init("b"), foo::init("y"));
     map.insert(foo::init("c"), foo::init("z"));
-    var removed = map.remove(foo::init("b")); # removes, but does not finalize, <b, y>
+    var removed = map.remove(&foo::init("b")); # removes, but does not finalize, <b, y>
     assert removed.is_value();
     map.fini();
     var key = removed.value().key;
@@ -39,7 +39,7 @@ func main() void {
     map.insert(foo::init("a"), foo::init("x"));
     map.insert(foo::init("b"), foo::init("y"));
     map.insert(foo::init("c"), foo::init("z"));
-    map.erase(foo::init("b")); # removes and finalizes <b, y>
+    map.erase(&foo::init("b")); # removes and finalizes <b, y>
     map.fini();
 }
 ################################################################################

@@ -6,8 +6,8 @@ func main() void {
 
     var count = map.count();
     std::print_format_line(std::out(), "Count {}", (:[]std::formatter)[std::formatter::init[[usize]](&count)]);
-    var lookup_foo = map.lookup("foo");
-    var lookup_bar = map.lookup("bar");
+    var lookup_foo = map.lookup(&"foo");
+    var lookup_bar = map.lookup(&"bar");
     assert map.count() == 0;
     assert not lookup_foo.is_value();
     assert not lookup_bar.is_value();
@@ -17,8 +17,8 @@ func main() void {
     map.insert("foo", 123);
     var count = map.count();
     std::print_format_line(std::out(), "Count {}", (:[]std::formatter)[std::formatter::init[[usize]](&count)]);
-    var lookup_foo = map.lookup("foo");
-    var lookup_bar = map.lookup("bar");
+    var lookup_foo = map.lookup(&"foo");
+    var lookup_bar = map.lookup(&"bar");
     assert lookup_foo.is_value();
     assert not lookup_bar.is_value();
     var value = lookup_foo.value();
@@ -32,8 +32,8 @@ func main() void {
     map.insert("foo", 456);
     var count = map.count();
     std::print_format_line(std::out(), "Count {}", (:[]std::formatter)[std::formatter::init[[usize]](&count)]);
-    var lookup_foo = map.lookup("foo");
-    var lookup_bar = map.lookup("bar");
+    var lookup_foo = map.lookup(&"foo");
+    var lookup_bar = map.lookup(&"bar");
     assert lookup_foo.is_value();
     assert not lookup_bar.is_value();
     var value_foo = lookup_foo.value();
@@ -47,8 +47,8 @@ func main() void {
     map.insert("bar", 789);
     var count = map.count();
     std::print_format_line(std::out(), "Count {}", (:[]std::formatter)[std::formatter::init[[usize]](&count)]);
-    var lookup_foo = map.lookup("foo");
-    var lookup_bar = map.lookup("bar");
+    var lookup_foo = map.lookup(&"foo");
+    var lookup_bar = map.lookup(&"bar");
     assert lookup_foo.is_value();
     assert lookup_bar.is_value();
     var value_foo = lookup_foo.value();
@@ -62,11 +62,11 @@ func main() void {
 
     std::print(std::out(), "\n");
 
-    var removed = map.remove("foo");
+    var removed = map.remove(&"foo");
     var count = map.count();
     std::print_format_line(std::out(), "Count {}", (:[]std::formatter)[std::formatter::init[[usize]](&count)]);
-    var lookup_foo = map.lookup("foo");
-    var lookup_bar = map.lookup("bar");
+    var lookup_foo = map.lookup(&"foo");
+    var lookup_bar = map.lookup(&"bar");
     assert not lookup_foo.is_value();
     assert lookup_bar.is_value();
     var value_bar = lookup_bar.value();
@@ -84,7 +84,7 @@ func main() void {
 
     std::print(std::out(), "\n");
 
-    var lookup_bar = map.lookup_view("bar");
+    var lookup_bar = map.lookup_view(&"bar");
     var view = lookup_bar.value();
     std::print_format_line(
         std::out(),
@@ -103,14 +103,14 @@ func main() void {
         map.insert((:ssize)x, x);
     }
     for x in 0x123456:0x123456+100000 {
-        if not map.contains((:ssize)x) {
+        if not map.contains(&(:ssize)x) {
             std::panic("unreachable");
         }
     }
     var count = map.count();
     std::print_format_line(std::out(), "Count {}", (:[]std::formatter)[std::formatter::init[[usize]](&count)]);
     for x in 0x123456:0x123456+100000 {
-        map.remove((:ssize)x);
+        map.remove(&(:ssize)x);
     }
     var count = map.count();
     std::print_format_line(std::out(), "Count {}", (:[]std::formatter)[std::formatter::init[[usize]](&count)]);
@@ -127,23 +127,23 @@ func main() void {
     map_b.assign(&map_a);
     assert map_a.count() == 3;
     assert map_b.count() == 3;
-    assert map_a.contains(123);
-    assert map_b.contains(123);
-    assert map_a.contains(456);
-    assert map_b.contains(456);
-    assert map_a.contains(789);
-    assert map_b.contains(789);
+    assert map_a.contains(&123s);
+    assert map_b.contains(&123s);
+    assert map_a.contains(&456s);
+    assert map_b.contains(&456s);
+    assert map_a.contains(&789s);
+    assert map_b.contains(&789s);
 
     var map_c = std::hash_map[[ssize, usize]]::init_assign(&map_a);
     defer map_c.fini();
     assert map_a.count() == 3;
     assert map_c.count() == 3;
-    assert map_a.contains(123);
-    assert map_c.contains(123);
-    assert map_a.contains(456);
-    assert map_c.contains(456);
-    assert map_a.contains(789);
-    assert map_c.contains(789);
+    assert map_a.contains(&123s);
+    assert map_c.contains(&123s);
+    assert map_a.contains(&456s);
+    assert map_c.contains(&456s);
+    assert map_a.contains(&789s);
+    assert map_c.contains(&789s);
 
     # Test inserting and removing the same element a bunch of times to ensure
     # that insertion order indices and tombstones are properly managed.
@@ -151,7 +151,7 @@ func main() void {
     defer map.fini();
     map.insert(123, 666);
     for i in 1000000 {
-        map.remove(123);
+        map.remove(&123s);
         map.insert(123, i);
     }
 

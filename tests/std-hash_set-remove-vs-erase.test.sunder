@@ -31,7 +31,7 @@ func main() void {
     set.insert(foo::init("a", 123));
     set.insert(foo::init("b", 456));
     set.insert(foo::init("c", 789));
-    var removed = set.remove(foo::init("b", 456)); # removes, but does not finalize, b-456
+    var removed = set.remove(&foo::init("b", 456)); # removes, but does not finalize, b-456
     assert removed.is_value();
     set.fini();
     var removed = removed.value();
@@ -43,7 +43,7 @@ func main() void {
     set.update(foo::init("a", 123));
     set.update(foo::init("b", 456));
     set.update(foo::init("c", 789));
-    set.erase(foo::init("b", 456)); # removes and finalizes b-456
+    set.erase(&foo::init("b", 456)); # removes and finalizes b-456
     set.fini();
 }
 ################################################################################
