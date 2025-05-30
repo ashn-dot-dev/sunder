@@ -1673,10 +1673,48 @@ expr_new_unary(
 {
     assert(type != NULL);
     assert(rhs != NULL);
+    assert(op != UOP_ADDRESSOF_LVALUE && "use expr_new_unary_addressof_lvalue");
+    assert(op != UOP_ADDRESSOF_RVALUE && "use expr_new_unary_addressof_rvalue");
 
     struct expr* const self = expr_new(location, type, EXPR_UNARY);
     self->data.unary.op = op;
     self->data.unary.rhs = rhs;
+    return self;
+}
+
+struct expr*
+expr_new_unary_addressof_lvalue(
+    struct source_location location,
+    struct type const* type,
+    struct expr const* rhs)
+{
+    assert(type != NULL);
+    assert(type->kind == TYPE_POINTER);
+    assert(rhs != NULL);
+    assert(rhs->type->kind == type->data.pointer.base->kind);
+
+    struct expr* const self = expr_new(location, type, EXPR_UNARY);
+    self->data.unary.op = UOP_ADDRESSOF_LVALUE;
+    self->data.unary.rhs = rhs;
+    return self;
+}
+
+struct expr*
+expr_new_unary_addressof_rvalue(
+    struct source_location location,
+    struct type const* type,
+    struct expr const* rhs,
+    struct address const* address)
+{
+    assert(type != NULL);
+    assert(type->kind == TYPE_POINTER);
+    assert(rhs != NULL);
+    assert(rhs->type->kind == type->data.pointer.base->kind);
+
+    struct expr* const self = expr_new(location, type, EXPR_UNARY);
+    self->data.unary.op = UOP_ADDRESSOF_RVALUE;
+    self->data.unary.rhs = rhs;
+    self->data.unary.address = address;
     return self;
 }
 

@@ -1,0 +1,21 @@
+var w = 123u;
+var x = &w; # Can take address of a global variable.
+
+let y = 123s;
+let z = &y; # Can take address of a global constant.
+
+func main() void {
+    var a = 123u;
+    var b = &a; # Can take address of a local variable.
+
+    let c = 123s;
+    let d = &c; # Can take address of a local constant.
+
+    var p = &(123s + 456s); # Can take address of a local rvalue.
+
+    assert w == x.*;
+    assert y == z.*;
+    assert a == b.*;
+    assert c == d.*;
+    assert p.* == 579s;
+}

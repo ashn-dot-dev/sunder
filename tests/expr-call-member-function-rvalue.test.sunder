@@ -1,0 +1,15 @@
+import "sys";
+
+struct foo {
+    var x: u16;
+
+    func fn(self: *foo) void {
+        sys::dump[[u16]](self.*.x);
+    }
+}
+
+func main() void {
+    (:foo){.x = 0xAABB}.fn();
+}
+################################################################################
+# BB AA

@@ -4759,13 +4759,26 @@ resolve_expr_call(struct resolver* resolver, struct cst_expr const* expr)
         sbuf(struct cst_type const* const) const template_arguments =
             dot->data.access_member.member->template_arguments;
 
-        struct expr const* const instance = resolve_expr(resolver, lhs);
+        struct address const* selfaddr = NULL;
+        struct expr const* instance = resolve_expr(resolver, lhs);
         if (!expr_is_lvalue(instance)) {
-            fatal(
-                location,
-                "attempted to call member function `%s` on non-lvalue instance of type `%s`",
-                name,
-                instance->type->name);
+            // Construct an rvalue addressof expression so that the instance
+            // expression is given local storage.
+            struct token pseudo_addressof_op = (struct token){
+                .start = token_kind_to_cstr(TOKEN_AMPERSAND),
+                .count = strlen(token_kind_to_cstr(TOKEN_AMPERSAND)),
+                .location = instance->location,
+                .kind = TOKEN_AMPERSAND,
+            };
+            struct cst_expr* pseudo_addressof_cst =
+                cst_expr_new_unary(pseudo_addressof_op, lhs);
+            freeze(pseudo_addressof_cst);
+            struct expr const* pseudo_addressof_ast =
+                resolve_expr(resolver, pseudo_addressof_cst);
+            assert(pseudo_addressof_ast->kind == EXPR_UNARY);
+            assert(pseudo_addressof_ast->data.unary.op == UOP_ADDRESSOF_RVALUE);
+            selfaddr = pseudo_addressof_ast->data.unary.address;
+            instance = pseudo_addressof_ast->data.unary.rhs;
         }
 
         if (instance->type->kind == TYPE_STRUCT) {
@@ -4841,9 +4854,11 @@ resolve_expr_call(struct resolver* resolver, struct cst_expr const* expr)
 
         sbuf(struct expr const*) arguments = NULL;
         // Add the implicit pointer to self as the first argument.
-        assert(expr_is_lvalue(instance));
-        struct expr* const selfptr = expr_new_unary(
-            expr->location, selfptr_type, UOP_ADDRESSOF, instance);
+        struct expr* const selfptr = expr_is_lvalue(instance)
+            ? expr_new_unary_addressof_lvalue(
+                  expr->location, selfptr_type, instance)
+            : expr_new_unary_addressof_rvalue(
+                  expr->location, selfptr_type, instance, selfaddr);
         freeze(selfptr);
         sbuf_push(arguments, selfptr);
         for (size_t i = 0; i < arg_count; ++i) {
@@ -5519,6 +5534,62 @@ resolve_expr_unary_dereference(
 }
 
 static struct expr const*
+resolve_expr_unary_addressof_lvalue(
+    struct resolver* resolver, struct token op, struct expr const* rhs)
+{
+    assert(resolver != NULL);
+    assert(op.kind == TOKEN_AMPERSAND);
+    assert(rhs != NULL);
+    (void)resolver;
+
+    struct expr* const resolved = expr_new_unary_addressof_lvalue(
+        op.location, type_unique_pointer(rhs->type), rhs);
+
+    freeze(resolved);
+    return resolved;
+}
+
+static struct expr const*
+resolve_expr_unary_addressof_rvalue(
+    struct resolver* resolver, struct token op, struct expr const* rhs)
+{
+    assert(resolver != NULL);
+    assert(op.kind == TOKEN_AMPERSAND);
+    assert(rhs != NULL);
+
+    if (resolver_is_global(resolver)) {
+        fatal(rhs->location, "cannot take the address of a non-local rvalue");
+    }
+
+    // Arbitrarily use `rvalue$` for the local storage name. The actual name
+    // does not matter as long as it is not accessible directly by the user, as
+    // the expression only requires a named storage location to write the
+    // rvalue result into before producing the address of that storage location
+    // as the expression result.
+    static char const* const NAME = "rvalue$";
+
+    struct address const* const address =
+        resolver_reserve_storage_local(resolver, NAME);
+
+    struct object* const object = object_new(rhs->type, address, NULL);
+    freeze(object);
+
+    struct symbol* const symbol =
+        symbol_new_variable(op.location, address->data.local.name, object);
+    symbol->uses = 1; // The symbol is always used as part of the expression.
+    freeze(symbol);
+
+    symbol_table_insert(
+        resolver->current_symbol_table, symbol->name, symbol, false);
+
+    struct expr* const resolved = expr_new_unary_addressof_rvalue(
+        op.location, type_unique_pointer(rhs->type), rhs, address);
+
+    freeze(resolved);
+    return resolved;
+}
+
+static struct expr const*
 resolve_expr_unary_addressof(
     struct resolver* resolver, struct token op, struct expr const* rhs)
 {
@@ -5527,15 +5598,9 @@ resolve_expr_unary_addressof(
     assert(rhs != NULL);
     (void)resolver;
 
-    if (!expr_is_lvalue(rhs)) {
-        fatal(rhs->location, "cannot take the address of a non-lvalue");
-    }
-
-    struct expr* const resolved = expr_new_unary(
-        op.location, type_unique_pointer(rhs->type), UOP_ADDRESSOF, rhs);
-
-    freeze(resolved);
-    return resolved;
+    return expr_is_lvalue(rhs)
+        ? resolve_expr_unary_addressof_lvalue(resolver, op, rhs)
+        : resolve_expr_unary_addressof_rvalue(resolver, op, rhs);
 }
 
 static struct expr const*

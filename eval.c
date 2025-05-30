@@ -1093,8 +1093,13 @@ eval_rvalue_unary(struct expr const* expr)
             expr->location,
             "dereference operator not supported in compile-time expressions");
     }
-    case UOP_ADDRESSOF: {
+    case UOP_ADDRESSOF_LVALUE: {
         return eval_lvalue(expr->data.unary.rhs);
+    }
+    case UOP_ADDRESSOF_RVALUE: {
+        fatal(
+            expr->location,
+            "addressof rvalue not supported in compile-time expressions");
     }
     case UOP_STARTOF: {
         assert(expr->type->kind == TYPE_POINTER);
@@ -1741,8 +1746,9 @@ eval_lvalue_unary(struct expr const* expr)
     case UOP_NEG: /* fallthrough */
     case UOP_NEG_WRAPPING: /* fallthrough */
     case UOP_BITNOT: /* fallthrough */
-    case UOP_ADDRESSOF: /* fallthrough */
-    case UOP_STARTOF:
+    case UOP_ADDRESSOF_LVALUE: /* fallthrough */
+    case UOP_ADDRESSOF_RVALUE: /* fallthrough */
+    case UOP_STARTOF: /* fallthrough */
     case UOP_COUNTOF:
         UNREACHABLE();
     }

@@ -2395,13 +2395,17 @@ struct expr {
                 UOP_NEG_WRAPPING,
                 UOP_BITNOT,
                 UOP_DEREFERENCE,
-                UOP_ADDRESSOF,
+                UOP_ADDRESSOF_LVALUE,
+                UOP_ADDRESSOF_RVALUE,
                 UOP_STARTOF,
                 UOP_COUNTOF,
             } op;
             // Called the "right hand side" even though the expression is
             // actually on the left hand side of the .* operator.
             struct expr const* rhs;
+            // Storage location used for UOP_ADDRESSOF_RVALUE expressions.
+            // Non-NULL for UOP_ADDRESSOF_RVALUE expressions. NULL otherwise.
+            struct address const* address;
         } unary;
         struct {
             enum bop_kind {
@@ -2501,6 +2505,17 @@ expr_new_unary(
     struct type const* type,
     enum uop_kind op,
     struct expr const* rhs);
+struct expr*
+expr_new_unary_addressof_lvalue(
+    struct source_location location,
+    struct type const* type,
+    struct expr const* rhs);
+struct expr*
+expr_new_unary_addressof_rvalue(
+    struct source_location location,
+    struct type const* type,
+    struct expr const* rhs,
+    struct address const* address);
 struct expr*
 expr_new_binary(
     struct source_location location,
