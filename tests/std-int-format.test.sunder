@@ -98,7 +98,54 @@ func format_test9() void {
     std::print_format_line(std::out(), "{}", args[0:countof(args)]);
 }
 
+# Test formatting with the "+" specifier.
 func format_test10() void {
+    var a = +128u8;
+    std::print_format_line(
+        std::out(),
+        "{+} {+#b} {+#x}",
+        (:[]std::formatter)[
+            std::formatter::init[[typeof(a)]](&a),
+            std::formatter::init[[typeof(a)]](&a),
+            std::formatter::init[[typeof(a)]](&a)]);
+
+    var a = std::umax::MAX;
+    std::print_format_line(
+        std::out(),
+        "{+} {+#b} {+#x}",
+        (:[]std::formatter)[
+            std::formatter::init[[typeof(a)]](&a),
+            std::formatter::init[[typeof(a)]](&a),
+            std::formatter::init[[typeof(a)]](&a)]);
+
+    var a = +127s8;
+    var b = -128s8;
+    std::print_format_line(
+        std::out(),
+        "{+} {+#b} {+#x} {+} {+#b} {+#x}",
+        (:[]std::formatter)[
+            std::formatter::init[[typeof(a)]](&a),
+            std::formatter::init[[typeof(a)]](&a),
+            std::formatter::init[[typeof(a)]](&a),
+            std::formatter::init[[typeof(b)]](&b),
+            std::formatter::init[[typeof(b)]](&b),
+            std::formatter::init[[typeof(b)]](&b)]);
+
+    var a = std::smax::MAX;
+    var b = std::smax::MIN;
+    std::print_format_line(
+        std::out(),
+        "{+} {+#b} {+#x} {+} {+#b} {+#x}",
+        (:[]std::formatter)[
+            std::formatter::init[[typeof(a)]](&a),
+            std::formatter::init[[typeof(a)]](&a),
+            std::formatter::init[[typeof(a)]](&a),
+            std::formatter::init[[typeof(b)]](&b),
+            std::formatter::init[[typeof(b)]](&b),
+            std::formatter::init[[typeof(b)]](&b)]);
+}
+
+func format_test_panic() void {
     var a: u32 = 0xDEADBEEF;
     var a_fmtr: std::formatter = std::formatter::init[[u32]](&a);
 
@@ -128,6 +175,8 @@ func main() void {
     format_test9();
     std::print(std::out(), "\n");
     format_test10();
+    std::print(std::out(), "\n");
+    format_test_panic();
 }
 ################################################################################
 # 3735928559
@@ -158,5 +207,10 @@ func main() void {
 #
 # -128
 # -9223372036854775808
+#
+# +128 +0b10000000 +0x80
+# +18446744073709551615 +0b1111111111111111111111111111111111111111111111111111111111111111 +0xffffffffffffffff
+# +127 +0b1111111 +0x7f -128 -0b10000000 -0x80
+# +9223372036854775807 +0b111111111111111111111111111111111111111111111111111111111111111 +0x7fffffffffffffff -9223372036854775808 -0b1000000000000000000000000000000000000000000000000000000000000000 -0x8000000000000000
 #
 # panic: invalid format specifier "#l"

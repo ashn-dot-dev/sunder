@@ -2141,7 +2141,9 @@ struct big_integer {
     }
 
     # Accepted format language:
-    #   [#][radix]
+    #   [+][#][radix]
+    #
+    # Use of "+" indicates that a "+" or "-" sign should always be shown.
     #
     # Use of "#" indicates that the alternate form of the integer should be
     # formatted. Integers formatted in decimal are unchanged. Integers
@@ -2177,6 +2179,12 @@ struct big_integer {
         ];
 
         var fmt_idx = 0u;
+
+        var is_show_sign = false;
+        if fmt_idx < countof(fmt) and fmt[fmt_idx] == '+' {
+            is_show_sign = true;
+            fmt_idx += 1;
+        }
 
         var is_digits_prefix = false;
         if fmt_idx < countof(fmt) and fmt[fmt_idx] == '#' {
@@ -2270,6 +2278,9 @@ struct big_integer {
         }
         if self.*._sign == -1 {
             output.insert(0u, '-');
+        }
+        elif is_show_sign {
+            output.insert(0u, '+');
         }
         return std::write_all(writer, output.data());
     }
@@ -4510,7 +4521,9 @@ extend integer func _eq[[T]](lhs: T, rhs: T) bool {
 }
 
 # Accepted format language:
-#   [#][radix]
+#   [+][#][radix]
+#
+# Use of "+" indicates that a "+" sign should always be shown.
 #
 # Use of "#" indicates that the alternate form of the integer should be
 # formatted. Integers formatted in decimal are unchanged. Integers formatted in
@@ -4535,6 +4548,12 @@ extend integer func _format_umax(int: std::umax, writer: std::writer, fmt: []byt
     ];
 
     var fmt_idx = 0u;
+
+    var is_show_sign = false;
+    if fmt_idx < countof(fmt) and fmt[fmt_idx] == '+' {
+        is_show_sign = true;
+        fmt_idx += 1;
+    }
 
     var is_digits_prefix = false;
     if fmt_idx < countof(fmt) and fmt[fmt_idx] == '#' {
@@ -4579,14 +4598,14 @@ extend integer func _format_umax(int: std::umax, writer: std::writer, fmt: []byt
         return std::result[[void, std::error]]::init_error(std::error::INVALID_ARGUMENT);
     }
 
-    let OUTPUT_COUNT = countof("0b") + sizeof(usize) * 8;
+    let OUTPUT_COUNT = countof("+") + countof("0b") + sizeof(usize) * 8;
     var output = (:[OUTPUT_COUNT]byte)[0...];
     var output_index = countof(output) - 1;
 
     if int == 0 {
         # Write a single zero digit.
         output[output_index] = '0';
-        output_index -= 1;
+        output_index -%= 1;
     }
     for int != 0 {
         var div = int / (:std::umax)radix;
@@ -4594,7 +4613,7 @@ extend integer func _format_umax(int: std::umax, writer: std::writer, fmt: []byt
 
         var digit = digits_table[(:usize)rem];
         output[output_index] = digit;
-        output_index -= 1;
+        output_index -%= 1;
 
         int = div;
     }
@@ -4602,15 +4621,22 @@ extend integer func _format_umax(int: std::umax, writer: std::writer, fmt: []byt
     if is_digits_prefix and countof(digits_prefix) != 0 {
         for i in countof(digits_prefix) {
             output[output_index] = digits_prefix[countof(digits_prefix) - i - 1];
-            output_index -= 1;
+            output_index -%= 1;
         }
     }
 
-    return std::write_all(writer, output[output_index+1:countof(output)]);
+    if is_show_sign {
+        output[output_index] = '+';
+        output_index -%= 1;
+    }
+
+    return std::write_all(writer, output[(output_index +% 1):countof(output)]);
 }
 
 # Accepted format language:
-#   [#][radix]
+#   [+][#][radix]
+#
+# Use of "+" indicates that a "+" or "-" sign should always be shown.
 #
 # Use of "#" indicates that the alternate form of the integer should be
 # formatted. Integers formatted in decimal are unchanged. Integers formatted in
@@ -4625,10 +4651,23 @@ extend integer func _format_umax(int: std::umax, writer: std::writer, fmt: []byt
 #   "x" => hexadecimal (lower)
 #   "X" => hexadecimal (upper)
 extend integer func _format_smax(int: std::smax, writer: std::writer, fmt: []byte) std::result[[void, std::error]] {
+    var fmt_idx = 0u;
+
+    var sign = "";
     if int < 0 {
-        var result = std::write_all(writer, "-");
-        if result.is_error() {
-            return result;
+        sign = "-";
+        if fmt_idx < countof(fmt) and fmt[fmt_idx] == '+' {
+            fmt_idx += 1;
+        }
+    }
+    elif fmt_idx < countof(fmt) and fmt[fmt_idx] == '+' {
+        sign = "+";
+        fmt_idx += 1;
+        if fmt_idx < countof(fmt) and fmt[fmt_idx] == '+' {
+            # Check to make sure that removing the "+" from the format string
+            # does not leave another "+" (i.e. the case of "++") to be consumed
+            # by `integer::_format_umax`.
+            return std::result[[void, std::error]]::init_error(std::error::INVALID_ARGUMENT);
         }
     }
 
@@ -4641,7 +4680,13 @@ extend integer func _format_smax(int: std::smax, writer: std::writer, fmt: []byt
         magnitude = (:std::umax)((:std::smax)-1s *% int);
     }
 
-    return integer::_format_umax(magnitude, writer, fmt);
+    if countof(sign) != 0 {
+        var result = std::write_all(writer, sign);
+        if result.is_error() {
+            return result;
+        }
+    }
+    return integer::_format_umax(magnitude, writer, fmt[fmt_idx:countof(fmt)]);
 }
 
 extend byte let MIN: byte = 0x00;
