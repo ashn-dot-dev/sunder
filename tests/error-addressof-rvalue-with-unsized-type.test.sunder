@@ -1,0 +1,7 @@
+func main() void {
+    &123;
+}
+################################################################################
+# [error-addressof-rvalue-with-unsized-type.test.sunder:2] error: cannot take the address of rvalue with unsized type `integer`
+#     &123;
+#     ^

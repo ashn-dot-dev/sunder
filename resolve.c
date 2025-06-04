@@ -4762,6 +4762,13 @@ resolve_expr_call(struct resolver* resolver, struct cst_expr const* expr)
         struct address const* selfaddr = NULL;
         struct expr const* instance = resolve_expr(resolver, lhs);
         if (!expr_is_lvalue(instance)) {
+            if (instance->type->size == SIZEOF_UNSIZED) {
+                fatal(
+                    location,
+                    "cannot take the address of rvalue with unsized type `%s`",
+                    instance->type->name);
+            }
+
             // Construct an rvalue addressof expression so that the instance
             // expression is given local storage.
             struct token pseudo_addressof_op = (struct token){
@@ -5559,6 +5566,13 @@ resolve_expr_unary_addressof_rvalue(
 
     if (resolver_is_global(resolver)) {
         fatal(rhs->location, "cannot take the address of a non-local rvalue");
+    }
+
+    if (rhs->type->size == SIZEOF_UNSIZED) {
+        fatal(
+            op.location,
+            "cannot take the address of rvalue with unsized type `%s`",
+            rhs->type->name);
     }
 
     // Arbitrarily use `rvalue$` for the local storage name. The actual name

@@ -1692,6 +1692,7 @@ expr_new_unary_addressof_lvalue(
     assert(type->kind == TYPE_POINTER);
     assert(rhs != NULL);
     assert(rhs->type->kind == type->data.pointer.base->kind);
+    assert(rhs->type->size != SIZEOF_UNSIZED);
 
     struct expr* const self = expr_new(location, type, EXPR_UNARY);
     self->data.unary.op = UOP_ADDRESSOF_LVALUE;
@@ -1710,6 +1711,7 @@ expr_new_unary_addressof_rvalue(
     assert(type->kind == TYPE_POINTER);
     assert(rhs != NULL);
     assert(rhs->type->kind == type->data.pointer.base->kind);
+    assert(rhs->type->size != SIZEOF_UNSIZED);
 
     struct expr* const self = expr_new(location, type, EXPR_UNARY);
     self->data.unary.op = UOP_ADDRESSOF_RVALUE;
