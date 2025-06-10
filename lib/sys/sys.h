@@ -6,7 +6,6 @@
 #include <dirent.h> /* opendir, closedir, readdir */
 #include <errno.h> /* errno, perror */
 #include <fcntl.h> /* open */
-#include <float.h> /* DBL_DECIMAL_DIG, FLT_DECIMAL_DIG */
 #include <limits.h> /* CHAR_BIT, *_MIN, *_MAX */
 #include <math.h> /* INFINITY, NAN, isfinite, isinf, isnan, math functions */
 #include <stdbool.h> /* bool */
@@ -64,6 +63,9 @@ static ssize const __sunder_ssize_MIN = (ssize)LONG_MIN;
 static ssize const __sunder_ssize_MAX = (ssize)LONG_MAX;
 // clang-format on
 
+#define __SUNDER_IEEE754_FLT_DECIMAL_DIG 9
+#define __SUNDER_IEEE754_DBL_DECIMAL_DIG 17
+
 static inline _Noreturn void
 __sunder_fatal(char* message)
 {
@@ -95,125 +97,257 @@ __sunder_fatal_out_of_range(void)
     __sunder_fatal("fatal: operation produces out-of-range result");
 }
 
-#define __SUNDER_INTEGER_ADD_DEFINITION(T)                                     \
-    static T __sunder_add_##T(T lhs, T rhs)                                    \
-    {                                                                          \
-        T result;                                                              \
-        if (__builtin_add_overflow(lhs, rhs, &result)) {                       \
-            __sunder_fatal_out_of_range();                                     \
-        }                                                                      \
-        return result;                                                         \
-    }
+#ifdef __GNUC__
+#    define __SUNDER_UINTEGER_ADD_DEFINITION(T)                                \
+        static T __sunder_add_##T(T lhs, T rhs)                                \
+        {                                                                      \
+            T result;                                                          \
+            if (__builtin_add_overflow(lhs, rhs, &result)) {                   \
+                __sunder_fatal_out_of_range();                                 \
+            }                                                                  \
+            return result;                                                     \
+        }
+#    define __SUNDER_SINTEGER_ADD_DEFINITION(T)                                \
+        __SUNDER_UINTEGER_ADD_DEFINITION(T)
+#else
+#    define __SUNDER_UINTEGER_ADD_DEFINITION(T)                                \
+        static T __sunder_add_##T(T lhs, T rhs)                                \
+        {                                                                      \
+            if (lhs > __sunder_##T##_MAX - rhs) {                              \
+                __sunder_fatal_out_of_range();                                 \
+            }                                                                  \
+            return lhs + rhs;                                                  \
+        }
+#    define __SUNDER_SINTEGER_ADD_DEFINITION(T)                                \
+        static T __sunder_add_##T(T lhs, T rhs)                                \
+        {                                                                      \
+            if (lhs > 0 && rhs > __sunder_##T##_MAX - lhs) {                   \
+                __sunder_fatal_out_of_range();                                 \
+            }                                                                  \
+            if (lhs < 0 && rhs < __sunder_##T##_MIN - lhs) {                   \
+                __sunder_fatal_out_of_range();                                 \
+            }                                                                  \
+            return lhs + rhs;                                                  \
+        }
+#endif
 
-__SUNDER_INTEGER_ADD_DEFINITION(u8)
-__SUNDER_INTEGER_ADD_DEFINITION(s8)
-__SUNDER_INTEGER_ADD_DEFINITION(u16)
-__SUNDER_INTEGER_ADD_DEFINITION(s16)
-__SUNDER_INTEGER_ADD_DEFINITION(u32)
-__SUNDER_INTEGER_ADD_DEFINITION(s32)
-__SUNDER_INTEGER_ADD_DEFINITION(u64)
-__SUNDER_INTEGER_ADD_DEFINITION(s64)
-__SUNDER_INTEGER_ADD_DEFINITION(usize)
-__SUNDER_INTEGER_ADD_DEFINITION(ssize)
+__SUNDER_UINTEGER_ADD_DEFINITION(u8)
+__SUNDER_SINTEGER_ADD_DEFINITION(s8)
+__SUNDER_UINTEGER_ADD_DEFINITION(u16)
+__SUNDER_SINTEGER_ADD_DEFINITION(s16)
+__SUNDER_UINTEGER_ADD_DEFINITION(u32)
+__SUNDER_SINTEGER_ADD_DEFINITION(s32)
+__SUNDER_UINTEGER_ADD_DEFINITION(u64)
+__SUNDER_SINTEGER_ADD_DEFINITION(s64)
+__SUNDER_UINTEGER_ADD_DEFINITION(usize)
+__SUNDER_SINTEGER_ADD_DEFINITION(ssize)
 
-#define __SUNDER_INTEGER_ADD_WRAPPING_DEFINITION(T)                            \
-    static T __sunder_add_wrapping_##T(T lhs, T rhs)                           \
-    {                                                                          \
-        T result;                                                              \
-        __builtin_add_overflow(lhs, rhs, &result);                             \
-        return result;                                                         \
-    }
+#ifdef __GNUC__
+#    define __SUNDER_UINTEGER_ADD_WRAPPING_DEFINITION(T)                       \
+        static T __sunder_add_wrapping_##T(T lhs, T rhs)                       \
+        {                                                                      \
+            T result;                                                          \
+            __builtin_add_overflow(lhs, rhs, &result);                         \
+            return result;                                                     \
+        }
+#    define __SUNDER_SINTEGER_ADD_WRAPPING_DEFINITION(T, UT)                   \
+        __SUNDER_UINTEGER_ADD_WRAPPING_DEFINITION(T)
+#else
+#    define __SUNDER_UINTEGER_ADD_WRAPPING_DEFINITION(T)                       \
+        static T __sunder_add_wrapping_##T(T lhs, T rhs)                       \
+        {                                                                      \
+            return lhs + rhs;                                                  \
+        }
+#    define __SUNDER_SINTEGER_ADD_WRAPPING_DEFINITION(T, UT)                   \
+        static T __sunder_add_wrapping_##T(T lhs, T rhs)                       \
+        {                                                                      \
+            return (T)((UT)lhs + (UT)rhs);                                     \
+        }
+#endif
 
-__SUNDER_INTEGER_ADD_WRAPPING_DEFINITION(u8)
-__SUNDER_INTEGER_ADD_WRAPPING_DEFINITION(s8)
-__SUNDER_INTEGER_ADD_WRAPPING_DEFINITION(u16)
-__SUNDER_INTEGER_ADD_WRAPPING_DEFINITION(s16)
-__SUNDER_INTEGER_ADD_WRAPPING_DEFINITION(u32)
-__SUNDER_INTEGER_ADD_WRAPPING_DEFINITION(s32)
-__SUNDER_INTEGER_ADD_WRAPPING_DEFINITION(u64)
-__SUNDER_INTEGER_ADD_WRAPPING_DEFINITION(s64)
-__SUNDER_INTEGER_ADD_WRAPPING_DEFINITION(usize)
-__SUNDER_INTEGER_ADD_WRAPPING_DEFINITION(ssize)
+__SUNDER_UINTEGER_ADD_WRAPPING_DEFINITION(u8)
+__SUNDER_SINTEGER_ADD_WRAPPING_DEFINITION(s8, u8)
+__SUNDER_UINTEGER_ADD_WRAPPING_DEFINITION(u16)
+__SUNDER_SINTEGER_ADD_WRAPPING_DEFINITION(s16, u16)
+__SUNDER_UINTEGER_ADD_WRAPPING_DEFINITION(u32)
+__SUNDER_SINTEGER_ADD_WRAPPING_DEFINITION(s32, u32)
+__SUNDER_UINTEGER_ADD_WRAPPING_DEFINITION(u64)
+__SUNDER_SINTEGER_ADD_WRAPPING_DEFINITION(s64, u64)
+__SUNDER_UINTEGER_ADD_WRAPPING_DEFINITION(usize)
+__SUNDER_SINTEGER_ADD_WRAPPING_DEFINITION(ssize, usize)
 
-#define __SUNDER_INTEGER_SUB_DEFINITION(T)                                     \
-    static T __sunder_sub_##T(T lhs, T rhs)                                    \
-    {                                                                          \
-        T result;                                                              \
-        if (__builtin_sub_overflow(lhs, rhs, &result)) {                       \
-            __sunder_fatal_out_of_range();                                     \
-        }                                                                      \
-        return result;                                                         \
-    }
+#ifdef __GNUC__
+#    define __SUNDER_UINTEGER_SUB_DEFINITION(T)                                \
+        static T __sunder_sub_##T(T lhs, T rhs)                                \
+        {                                                                      \
+            T result;                                                          \
+            if (__builtin_sub_overflow(lhs, rhs, &result)) {                   \
+                __sunder_fatal_out_of_range();                                 \
+            }                                                                  \
+            return result;                                                     \
+        }
+#    define __SUNDER_SINTEGER_SUB_DEFINITION(T)                                \
+        __SUNDER_UINTEGER_SUB_DEFINITION(T)
+#else
+#    define __SUNDER_UINTEGER_SUB_DEFINITION(T)                                \
+        static T __sunder_sub_##T(T lhs, T rhs)                                \
+        {                                                                      \
+            if (lhs < rhs) {                                                   \
+                __sunder_fatal_out_of_range();                                 \
+            }                                                                  \
+            return lhs - rhs;                                                  \
+        }
+#    define __SUNDER_SINTEGER_SUB_DEFINITION(T)                                \
+        static T __sunder_sub_##T(T lhs, T rhs)                                \
+        {                                                                      \
+            if (lhs < 0 && rhs > __sunder_##T##_MAX + lhs) {                   \
+                __sunder_fatal_out_of_range();                                 \
+            }                                                                  \
+            if (lhs > 0 && rhs < __sunder_##T##_MIN + lhs) {                   \
+                __sunder_fatal_out_of_range();                                 \
+            }                                                                  \
+            return lhs - rhs;                                                  \
+        }
+#endif
 
-__SUNDER_INTEGER_SUB_DEFINITION(u8)
-__SUNDER_INTEGER_SUB_DEFINITION(s8)
-__SUNDER_INTEGER_SUB_DEFINITION(u16)
-__SUNDER_INTEGER_SUB_DEFINITION(s16)
-__SUNDER_INTEGER_SUB_DEFINITION(u32)
-__SUNDER_INTEGER_SUB_DEFINITION(s32)
-__SUNDER_INTEGER_SUB_DEFINITION(u64)
-__SUNDER_INTEGER_SUB_DEFINITION(s64)
-__SUNDER_INTEGER_SUB_DEFINITION(usize)
-__SUNDER_INTEGER_SUB_DEFINITION(ssize)
+__SUNDER_UINTEGER_SUB_DEFINITION(u8)
+__SUNDER_SINTEGER_SUB_DEFINITION(s8)
+__SUNDER_UINTEGER_SUB_DEFINITION(u16)
+__SUNDER_SINTEGER_SUB_DEFINITION(s16)
+__SUNDER_UINTEGER_SUB_DEFINITION(u32)
+__SUNDER_SINTEGER_SUB_DEFINITION(s32)
+__SUNDER_UINTEGER_SUB_DEFINITION(u64)
+__SUNDER_SINTEGER_SUB_DEFINITION(s64)
+__SUNDER_UINTEGER_SUB_DEFINITION(usize)
+__SUNDER_SINTEGER_SUB_DEFINITION(ssize)
 
-#define __SUNDER_INTEGER_SUB_WRAPPING_DEFINITION(T)                            \
-    static T __sunder_sub_wrapping_##T(T lhs, T rhs)                           \
-    {                                                                          \
-        T result;                                                              \
-        __builtin_sub_overflow(lhs, rhs, &result);                             \
-        return result;                                                         \
-    }
+#ifdef __GNUC__
+#    define __SUNDER_UINTEGER_SUB_WRAPPING_DEFINITION(T)                       \
+        static T __sunder_sub_wrapping_##T(T lhs, T rhs)                       \
+        {                                                                      \
+            T result;                                                          \
+            __builtin_sub_overflow(lhs, rhs, &result);                         \
+            return result;                                                     \
+        }
+#    define __SUNDER_SINTEGER_SUB_WRAPPING_DEFINITION(T, UT)                   \
+        __SUNDER_UINTEGER_SUB_WRAPPING_DEFINITION(T)
+#else
+#    define __SUNDER_UINTEGER_SUB_WRAPPING_DEFINITION(T)                       \
+        static T __sunder_sub_wrapping_##T(T lhs, T rhs)                       \
+        {                                                                      \
+            return lhs - rhs;                                                  \
+        }
+#    define __SUNDER_SINTEGER_SUB_WRAPPING_DEFINITION(T, UT)                   \
+        static T __sunder_sub_wrapping_##T(T lhs, T rhs)                       \
+        {                                                                      \
+            return (T)((UT)lhs - (UT)rhs);                                     \
+        }
+#endif
 
-__SUNDER_INTEGER_SUB_WRAPPING_DEFINITION(u8)
-__SUNDER_INTEGER_SUB_WRAPPING_DEFINITION(s8)
-__SUNDER_INTEGER_SUB_WRAPPING_DEFINITION(u16)
-__SUNDER_INTEGER_SUB_WRAPPING_DEFINITION(s16)
-__SUNDER_INTEGER_SUB_WRAPPING_DEFINITION(u32)
-__SUNDER_INTEGER_SUB_WRAPPING_DEFINITION(s32)
-__SUNDER_INTEGER_SUB_WRAPPING_DEFINITION(u64)
-__SUNDER_INTEGER_SUB_WRAPPING_DEFINITION(s64)
-__SUNDER_INTEGER_SUB_WRAPPING_DEFINITION(usize)
-__SUNDER_INTEGER_SUB_WRAPPING_DEFINITION(ssize)
+__SUNDER_UINTEGER_SUB_WRAPPING_DEFINITION(u8)
+__SUNDER_SINTEGER_SUB_WRAPPING_DEFINITION(s8, u8)
+__SUNDER_UINTEGER_SUB_WRAPPING_DEFINITION(u16)
+__SUNDER_SINTEGER_SUB_WRAPPING_DEFINITION(s16, u16)
+__SUNDER_UINTEGER_SUB_WRAPPING_DEFINITION(u32)
+__SUNDER_SINTEGER_SUB_WRAPPING_DEFINITION(s32, u32)
+__SUNDER_UINTEGER_SUB_WRAPPING_DEFINITION(u64)
+__SUNDER_SINTEGER_SUB_WRAPPING_DEFINITION(s64, u64)
+__SUNDER_UINTEGER_SUB_WRAPPING_DEFINITION(usize)
+__SUNDER_SINTEGER_SUB_WRAPPING_DEFINITION(ssize, usize)
 
-#define __SUNDER_INTEGER_MUL_DEFINITION(T)                                     \
-    static T __sunder_mul_##T(T lhs, T rhs)                                    \
-    {                                                                          \
-        T result;                                                              \
-        if (__builtin_mul_overflow(lhs, rhs, &result)) {                       \
-            __sunder_fatal_out_of_range();                                     \
-        }                                                                      \
-        return result;                                                         \
-    }
+#ifdef __GNUC__
+#    define __SUNDER_UINTEGER_MUL_DEFINITION(T)                                \
+        static T __sunder_mul_##T(T lhs, T rhs)                                \
+        {                                                                      \
+            T result;                                                          \
+            if (__builtin_mul_overflow(lhs, rhs, &result)) {                   \
+                __sunder_fatal_out_of_range();                                 \
+            }                                                                  \
+            return result;                                                     \
+        }
+#    define __SUNDER_SINTEGER_MUL_DEFINITION(T)                                \
+        __SUNDER_UINTEGER_MUL_DEFINITION(T)
+#else
+#    define __SUNDER_UINTEGER_MUL_DEFINITION(T)                                \
+        static T __sunder_mul_##T(T lhs, T rhs)                                \
+        {                                                                      \
+            if (lhs != 0 && rhs > __sunder_##T##_MAX / lhs) {                  \
+                __sunder_fatal_out_of_range();                                 \
+            }                                                                  \
+            return lhs * rhs;                                                  \
+        }
+#    define __SUNDER_SINTEGER_MUL_DEFINITION(T)                                \
+        static T __sunder_mul_##T(T lhs, T rhs)                                \
+        {                                                                      \
+            if (lhs == -1 && rhs == __sunder_##T##_MIN) {                      \
+                __sunder_fatal_out_of_range();                                 \
+            }                                                                  \
+            if (rhs == -1 && lhs == __sunder_##T##_MIN) {                      \
+                __sunder_fatal_out_of_range();                                 \
+            }                                                                  \
+                                                                               \
+            if (lhs != 0 && lhs != -1) {                                       \
+                if (lhs > 0 && rhs > __sunder_##T##_MAX / lhs) {               \
+                    __sunder_fatal_out_of_range();                             \
+                }                                                              \
+                if (lhs > 0 && rhs < __sunder_##T##_MIN / lhs) {               \
+                    __sunder_fatal_out_of_range();                             \
+                }                                                              \
+                if (lhs < 0 && rhs < __sunder_##T##_MAX / lhs) {               \
+                    __sunder_fatal_out_of_range();                             \
+                }                                                              \
+                if (lhs < 0 && rhs > __sunder_##T##_MIN / lhs) {               \
+                    __sunder_fatal_out_of_range();                             \
+                }                                                              \
+            }                                                                  \
+            return lhs * rhs;                                                  \
+        }
+#endif
 
-__SUNDER_INTEGER_MUL_DEFINITION(u8)
-__SUNDER_INTEGER_MUL_DEFINITION(s8)
-__SUNDER_INTEGER_MUL_DEFINITION(u16)
-__SUNDER_INTEGER_MUL_DEFINITION(s16)
-__SUNDER_INTEGER_MUL_DEFINITION(u32)
-__SUNDER_INTEGER_MUL_DEFINITION(s32)
-__SUNDER_INTEGER_MUL_DEFINITION(u64)
-__SUNDER_INTEGER_MUL_DEFINITION(s64)
-__SUNDER_INTEGER_MUL_DEFINITION(usize)
-__SUNDER_INTEGER_MUL_DEFINITION(ssize)
+__SUNDER_UINTEGER_MUL_DEFINITION(u8)
+__SUNDER_SINTEGER_MUL_DEFINITION(s8)
+__SUNDER_UINTEGER_MUL_DEFINITION(u16)
+__SUNDER_SINTEGER_MUL_DEFINITION(s16)
+__SUNDER_UINTEGER_MUL_DEFINITION(u32)
+__SUNDER_SINTEGER_MUL_DEFINITION(s32)
+__SUNDER_UINTEGER_MUL_DEFINITION(u64)
+__SUNDER_SINTEGER_MUL_DEFINITION(s64)
+__SUNDER_UINTEGER_MUL_DEFINITION(usize)
+__SUNDER_SINTEGER_MUL_DEFINITION(ssize)
 
-#define __SUNDER_INTEGER_MUL_WRAPPING_DEFINITION(T)                            \
-    static T __sunder_mul_wrapping_##T(T lhs, T rhs)                           \
-    {                                                                          \
-        T result;                                                              \
-        __builtin_mul_overflow(lhs, rhs, &result);                             \
-        return result;                                                         \
-    }
+#ifdef __GNUC__
+#    define __SUNDER_UINTEGER_MUL_WRAPPING_DEFINITION(T)                       \
+        static T __sunder_mul_wrapping_##T(T lhs, T rhs)                       \
+        {                                                                      \
+            T result;                                                          \
+            __builtin_mul_overflow(lhs, rhs, &result);                         \
+            return result;                                                     \
+        }
+#    define __SUNDER_SINTEGER_MUL_WRAPPING_DEFINITION(T, UT)                   \
+        __SUNDER_UINTEGER_MUL_WRAPPING_DEFINITION(T)
+#else
+#    define __SUNDER_UINTEGER_MUL_WRAPPING_DEFINITION(T)                       \
+        static T __sunder_mul_wrapping_##T(T lhs, T rhs)                       \
+        {                                                                      \
+            return lhs * rhs;                                                  \
+        }
+#    define __SUNDER_SINTEGER_MUL_WRAPPING_DEFINITION(T, UT)                   \
+        static T __sunder_mul_wrapping_##T(T lhs, T rhs)                       \
+        {                                                                      \
+            return (T)((UT)lhs * (UT)rhs);                                     \
+        }
+#endif
 
-__SUNDER_INTEGER_MUL_WRAPPING_DEFINITION(u8)
-__SUNDER_INTEGER_MUL_WRAPPING_DEFINITION(s8)
-__SUNDER_INTEGER_MUL_WRAPPING_DEFINITION(u16)
-__SUNDER_INTEGER_MUL_WRAPPING_DEFINITION(s16)
-__SUNDER_INTEGER_MUL_WRAPPING_DEFINITION(u32)
-__SUNDER_INTEGER_MUL_WRAPPING_DEFINITION(s32)
-__SUNDER_INTEGER_MUL_WRAPPING_DEFINITION(u64)
-__SUNDER_INTEGER_MUL_WRAPPING_DEFINITION(s64)
-__SUNDER_INTEGER_MUL_WRAPPING_DEFINITION(usize)
-__SUNDER_INTEGER_MUL_WRAPPING_DEFINITION(ssize)
+__SUNDER_UINTEGER_MUL_WRAPPING_DEFINITION(u8)
+__SUNDER_SINTEGER_MUL_WRAPPING_DEFINITION(s8, u8)
+__SUNDER_UINTEGER_MUL_WRAPPING_DEFINITION(u16)
+__SUNDER_SINTEGER_MUL_WRAPPING_DEFINITION(s16, u16)
+__SUNDER_UINTEGER_MUL_WRAPPING_DEFINITION(u32)
+__SUNDER_SINTEGER_MUL_WRAPPING_DEFINITION(s32, u32)
+__SUNDER_UINTEGER_MUL_WRAPPING_DEFINITION(u64)
+__SUNDER_SINTEGER_MUL_WRAPPING_DEFINITION(s64, u64)
+__SUNDER_UINTEGER_MUL_WRAPPING_DEFINITION(usize)
+__SUNDER_SINTEGER_MUL_WRAPPING_DEFINITION(ssize, usize)
 
 #define __SUNDER_UINTEGER_DIV_DEFINITION(T)                                    \
     static T __sunder_div_##T(T lhs, T rhs)                                    \
@@ -648,7 +782,7 @@ sys_f32_to_str(byte* buf, usize buf_size, f32 f, ssize digits)
     }
 
     assert(INT_MIN <= digits && digits <= INT_MAX);
-    int d = digits < 0 ? FLT_DECIMAL_DIG : (int)digits;
+    int d = digits < 0 ? __SUNDER_IEEE754_FLT_DECIMAL_DIG : (int)digits;
     int written = snprintf(buf, buf_size, "%.*f", d, (double)f);
     if (written < 0 && (usize)written >= buf_size) {
         return __sunder_false;
@@ -676,7 +810,7 @@ sys_f64_to_str(byte* buf, usize buf_size, f64 f, ssize digits)
     }
 
     assert(INT_MIN <= digits && digits <= INT_MAX);
-    int d = digits < 0 ? DBL_DECIMAL_DIG : (int)digits;
+    int d = digits < 0 ? __SUNDER_IEEE754_DBL_DECIMAL_DIG : (int)digits;
     int written = snprintf(buf, buf_size, "%.*f", d, f);
     if (written < 0 && (usize)written >= buf_size) {
         return __sunder_false;

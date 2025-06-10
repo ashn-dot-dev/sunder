@@ -591,6 +591,7 @@ mangle_address(struct address const* address)
     }
 
     UNREACHABLE();
+    return NULL;
 }
 
 static char const*
@@ -1086,15 +1087,15 @@ strgen_value(struct value const* value)
     case TYPE_F32: {
         double const ieee754 = (double)value->data.f32;
         if (isnan(ieee754)) {
-            string_append_cstr(s, "(float)NAN");
+            string_append_cstr(s, "/* NAN */(0.0f / 0.0f)");
             break;
         }
         if (isinf(ieee754) && ieee754 < 0) {
-            string_append_cstr(s, "(float)-INFINITY");
+            string_append_cstr(s, "/* -INFINITY */(-1.0f / 0.0f)");
             break;
         }
         if (isinf(ieee754) && ieee754 > 0) {
-            string_append_cstr(s, "(float)+INFINITY");
+            string_append_cstr(s, "/* +INFINITY */(+1.0f / 0.0f)");
             break;
         }
         string_append_fmt(s, "%.*ff", IEEE754_FLT_DECIMAL_DIG, ieee754);
@@ -1103,15 +1104,15 @@ strgen_value(struct value const* value)
     case TYPE_F64: {
         double const ieee754 = value->data.f64;
         if (isnan(ieee754)) {
-            string_append_cstr(s, "(double)NAN");
+            string_append_cstr(s, "/* NAN */(0.0 / 0.0)");
             break;
         }
         if (isinf(ieee754) && ieee754 < 0) {
-            string_append_cstr(s, "(double)-INFINITY");
+            string_append_cstr(s, "/* -INFINITY */(-1.0 / 0.0)");
             break;
         }
         if (isinf(ieee754) && ieee754 > 0) {
-            string_append_cstr(s, "(double)+INFINITY");
+            string_append_cstr(s, "/* +INFINITY */(+1.0f / 0.0f)");
             break;
         }
         string_append_fmt(s, "%.*f", IEEE754_DBL_DECIMAL_DIG, ieee754);
@@ -2608,6 +2609,7 @@ strgen_rvalue_access_index(struct expr const* expr)
     }
 
     UNREACHABLE();
+    return NULL;
 }
 
 static char const*
@@ -2625,6 +2627,7 @@ strgen_rvalue_access_slice(struct expr const* expr)
     }
 
     UNREACHABLE();
+    return NULL;
 }
 
 static char const*
@@ -2835,6 +2838,7 @@ strgen_rvalue_unary(struct expr const* expr)
     }
 
     UNREACHABLE();
+    return NULL;
 }
 
 static char const*
@@ -3015,6 +3019,7 @@ strgen_rvalue_unary_countof(struct expr const* expr)
     }
 
     UNREACHABLE();
+    return NULL;
 }
 
 static char const*
@@ -3090,6 +3095,7 @@ strgen_rvalue_binary(struct expr const* expr)
     }
 
     UNREACHABLE();
+    return NULL;
 }
 
 static char const*
@@ -3655,6 +3661,7 @@ strgen_lvalue_access_index(struct expr const* expr)
     }
 
     UNREACHABLE();
+    return NULL;
 }
 
 static char const*
@@ -3701,6 +3708,7 @@ strgen_lvalue_unary(struct expr const* expr)
     }
 
     UNREACHABLE();
+    return NULL;
 }
 
 static void

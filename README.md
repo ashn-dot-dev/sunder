@@ -7,7 +7,7 @@ following dependencies:
 
 + POSIX-compatible `make`
 + [GNU Core Utilities](https://www.gnu.org/software/coreutils/)
-+ [Clang](https://clang.llvm.org/) or [GCC](https://gcc.gnu.org/)
++ GNU C compiler ([Clang](https://clang.llvm.org/), [GCC](https://gcc.gnu.org/), and [TCC](https://bellard.org/tcc/) are currently supported)
 + [Emscripten](https://emscripten.org/) (WebAssembly code-generation only)
 + [Clang Format](https://clang.llvm.org/docs/ClangFormat.html) (development only)
 
