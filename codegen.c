@@ -260,7 +260,10 @@ mangle(char const* cstr)
         }
 
         // some::symbol
+        //     ^^
+        //
         // some_symbol
+        //     ^
         if (cstr_starts_with(cur, "::")) {
             string_append_cstr(s, "_");
             cur += 2;
@@ -268,7 +271,10 @@ mangle(char const* cstr)
         }
 
         // type[[foo, bar]]
+        //     ^^
+        //
         // type_TEMPLATE_BGN_foo_COMMA_bar_TEMPLATE_END
+        //     ^^^^^^^^^^^^^^
         if (cstr_starts_with(cur, "[[")) {
             string_append_cstr(s, "_TEMPLATE_BGN_");
             cur += 2;
@@ -276,7 +282,10 @@ mangle(char const* cstr)
         }
 
         // type[[foo, bar]]
+        //               ^^
+        //
         // type_TEMPLATE_BGN_foo_COMMA_bar_TEMPLATE_END
+        //                                ^^^^^^^^^^^^^
         if (cstr_starts_with(cur, "]]")) {
             string_append_cstr(s, "_TEMPLATE_END");
             cur += 2;
@@ -284,7 +293,10 @@ mangle(char const* cstr)
         }
 
         // type[[foo, bar]]
+        //          ^
+        //
         // type_TEMPLATE_BGN_foo_COMMA_bar_TEMPLATE_END
+        //                      ^^^^^^^
         if (cstr_starts_with(cur, ",")) {
             string_append_cstr(s, "_COMMA_");
             cur += 1;
@@ -292,7 +304,10 @@ mangle(char const* cstr)
         }
 
         // []type
-        // ...slice_of_type...
+        // ^^
+        //
+        // slice_of_type
+        // ^^^^^^^^^
         if (cstr_starts_with(cur, "[]")) {
             string_append_cstr(s, "slice_of_");
             cur += 2;
@@ -300,7 +315,10 @@ mangle(char const* cstr)
         }
 
         // [N]type
-        // ...array_N_of_type...
+        // ^
+        //
+        // array_N_of_type
+        // ^^^^^^
         if (cstr_starts_with(cur, "[")) {
             string_append_cstr(s, "array_");
             cur += 1;
@@ -308,7 +326,10 @@ mangle(char const* cstr)
         }
 
         // [N]type
-        // ...array_N_of_type...
+        //   ^
+        //
+        // array_N_of_type
+        //        ^^^^
         if (cstr_starts_with(cur, "]")) {
             string_append_cstr(s, "_of_");
             cur += 1;
@@ -316,7 +337,10 @@ mangle(char const* cstr)
         }
 
         // *type
-        // ...pointer_to_type...
+        // ^
+        //
+        // pointer_to_type
+        // ^^^^^^^^^^^
         if (cstr_starts_with(cur, "*")) {
             string_append_cstr(s, "pointer_to_");
             cur += 1;
@@ -324,7 +348,10 @@ mangle(char const* cstr)
         }
 
         // struct { var <member>; }
+        //        ^
+        //
         // struct_LBRACE_VAR_<member>_RBRACE
+        //       ^^^^^^^
         if (cstr_starts_with(cur, "{")) {
             string_append_cstr(s, "_LBRACE");
             cur += 1;
@@ -332,7 +359,10 @@ mangle(char const* cstr)
         }
 
         // struct { var <member>; }
+        //                        ^
+        //
         // struct_LBRACE_VAR_<member>_RBRACE
+        //                           ^^^^^^^
         if (cstr_starts_with(cur, "}")) {
             string_append_cstr(s, "_RBRACE");
             cur += 1;
@@ -340,7 +370,10 @@ mangle(char const* cstr)
         }
 
         // struct { var <member-name>: <member-type>; }
+        //          ^^^
+        //
         // struct_LBRACE_VAR_<member-name>_TYPE_<member-type>_RBRACE
+        //              ^^^^^
         if (cstr_starts_with(cur, "var ")) {
             string_append_cstr(s, "_VAR_");
             cur += 4;
@@ -348,7 +381,10 @@ mangle(char const* cstr)
         }
 
         // struct { var <member-name>: <member-type>; }
+        //                           ^
+        //
         // struct_LBRACE_VAR_<member-name>_TYPE_<member-type>_RBRACE
+        //                                ^^^^^^
         if (cstr_starts_with(cur, ":")) {
             string_append_cstr(s, "_TYPE_");
             cur += 1;
@@ -356,6 +392,8 @@ mangle(char const* cstr)
         }
 
         // struct { var <member-name>: <member-type>; }
+        //                                          ^
+        //
         // struct_LBRACE_VAR_<member-name>_TYPE_<member-type>_RBRACE
         if (cstr_starts_with(cur, ";")) {
             cur += 1;
