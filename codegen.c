@@ -423,6 +423,7 @@ mangle_name(char const* name)
 
     char const* const reserved[] = {
         // Preprocessor Keywords
+        /* if */ /* Sunder keyword */
         /* elif */ /* Sunder keyword */
         /* else */ /* Sunder keyword */
         "endif",
@@ -513,6 +514,39 @@ mangle_name(char const* name)
 
         // C Runtime
         "main",
+
+        // GNU C Extension Keywords
+        "__FUNCTION__",
+        "__PRETTY_FUNCTION__",
+        "__alignof",
+        "__alignof__",
+        "__asm",
+        "__asm__",
+        "__attribute",
+        "__attribute__",
+        "__builtin_offsetof",
+        "__builtin_va_arg",
+        "__complex",
+        "__complex__",
+        "__const",
+        "__extension__",
+        "__func__",
+        "__imag",
+        "__imag__",
+        "__inline",
+        "__inline__",
+        "__label__",
+        "__null",
+        "__real",
+        "__real__",
+        "__restrict",
+        "__restrict__",
+        "__signed",
+        "__signed__",
+        "__thread",
+        "__typeof",
+        "__volatile",
+        "__volatile__",
     };
 
     for (size_t i = 0; i < ARRAY_COUNT(reserved); ++i) {
