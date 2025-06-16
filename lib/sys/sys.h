@@ -66,7 +66,13 @@ static ssize const __sunder_ssize_MAX = (ssize)LONG_MAX;
 #define __SUNDER_IEEE754_FLT_DECIMAL_DIG 9
 #define __SUNDER_IEEE754_DBL_DECIMAL_DIG 17
 
-static inline _Noreturn void
+#ifdef __GNUC__
+#    define __SUNDER_INLINE __attribute__((always_inline))
+#else
+#    define __SUNDER_INLINE inline
+#endif
+
+static __SUNDER_INLINE _Noreturn void
 __sunder_fatal(char* message)
 {
     fprintf(stderr, "%s\n", message);
@@ -99,7 +105,7 @@ __sunder_fatal_out_of_range(void)
 
 #ifdef __GNUC__
 #    define __SUNDER_UINTEGER_ADD_DEFINITION(T)                                \
-        static T __sunder_add_##T(T lhs, T rhs)                                \
+        static __SUNDER_INLINE T __sunder_add_##T(T lhs, T rhs)                \
         {                                                                      \
             T result;                                                          \
             if (__builtin_add_overflow(lhs, rhs, &result)) {                   \
@@ -144,7 +150,7 @@ __SUNDER_SINTEGER_ADD_DEFINITION(ssize)
 
 #ifdef __GNUC__
 #    define __SUNDER_UINTEGER_ADD_WRAPPING_DEFINITION(T)                       \
-        static T __sunder_add_wrapping_##T(T lhs, T rhs)                       \
+        static __SUNDER_INLINE T __sunder_add_wrapping_##T(T lhs, T rhs)       \
         {                                                                      \
             T result;                                                          \
             __builtin_add_overflow(lhs, rhs, &result);                         \
@@ -178,7 +184,7 @@ __SUNDER_SINTEGER_ADD_WRAPPING_DEFINITION(ssize, usize)
 
 #ifdef __GNUC__
 #    define __SUNDER_UINTEGER_SUB_DEFINITION(T)                                \
-        static T __sunder_sub_##T(T lhs, T rhs)                                \
+        static __SUNDER_INLINE T __sunder_sub_##T(T lhs, T rhs)                \
         {                                                                      \
             T result;                                                          \
             if (__builtin_sub_overflow(lhs, rhs, &result)) {                   \
@@ -223,7 +229,7 @@ __SUNDER_SINTEGER_SUB_DEFINITION(ssize)
 
 #ifdef __GNUC__
 #    define __SUNDER_UINTEGER_SUB_WRAPPING_DEFINITION(T)                       \
-        static T __sunder_sub_wrapping_##T(T lhs, T rhs)                       \
+        static __SUNDER_INLINE T __sunder_sub_wrapping_##T(T lhs, T rhs)       \
         {                                                                      \
             T result;                                                          \
             __builtin_sub_overflow(lhs, rhs, &result);                         \
@@ -257,7 +263,7 @@ __SUNDER_SINTEGER_SUB_WRAPPING_DEFINITION(ssize, usize)
 
 #ifdef __GNUC__
 #    define __SUNDER_UINTEGER_MUL_DEFINITION(T)                                \
-        static T __sunder_mul_##T(T lhs, T rhs)                                \
+        static __SUNDER_INLINE T __sunder_mul_##T(T lhs, T rhs)                \
         {                                                                      \
             T result;                                                          \
             if (__builtin_mul_overflow(lhs, rhs, &result)) {                   \
@@ -317,7 +323,7 @@ __SUNDER_SINTEGER_MUL_DEFINITION(ssize)
 
 #ifdef __GNUC__
 #    define __SUNDER_UINTEGER_MUL_WRAPPING_DEFINITION(T)                       \
-        static T __sunder_mul_wrapping_##T(T lhs, T rhs)                       \
+        static __SUNDER_INLINE T __sunder_mul_wrapping_##T(T lhs, T rhs)       \
         {                                                                      \
             T result;                                                          \
             __builtin_mul_overflow(lhs, rhs, &result);                         \
@@ -350,7 +356,7 @@ __SUNDER_UINTEGER_MUL_WRAPPING_DEFINITION(usize)
 __SUNDER_SINTEGER_MUL_WRAPPING_DEFINITION(ssize, usize)
 
 #define __SUNDER_UINTEGER_DIV_DEFINITION(T)                                    \
-    static T __sunder_div_##T(T lhs, T rhs)                                    \
+    static __SUNDER_INLINE T __sunder_div_##T(T lhs, T rhs)                    \
     {                                                                          \
         if (rhs == 0) {                                                        \
             __sunder_fatal_divide_by_zero();                                   \
@@ -359,7 +365,7 @@ __SUNDER_SINTEGER_MUL_WRAPPING_DEFINITION(ssize, usize)
     }
 
 #define __SUNDER_SINTEGER_DIV_DEFINITION(T)                                    \
-    static T __sunder_div_##T(T lhs, T rhs)                                    \
+    static __SUNDER_INLINE T __sunder_div_##T(T lhs, T rhs)                    \
     {                                                                          \
         if (rhs == 0) {                                                        \
             __sunder_fatal_divide_by_zero();                                   \
@@ -371,7 +377,7 @@ __SUNDER_SINTEGER_MUL_WRAPPING_DEFINITION(ssize, usize)
     }
 
 #define __SUNDER_IEEE754_DIV_DEFINITION(T)                                     \
-    static T __sunder_div_##T(T lhs, T rhs)                                    \
+    static __SUNDER_INLINE T __sunder_div_##T(T lhs, T rhs)                    \
     {                                                                          \
         return lhs / rhs;                                                      \
     }
@@ -390,7 +396,7 @@ __SUNDER_IEEE754_DIV_DEFINITION(f32)
 __SUNDER_IEEE754_DIV_DEFINITION(f64)
 
 #define __SUNDER_INTEGER_REM_DEFINITION(T)                                     \
-    static T __sunder_rem_##T(T lhs, T rhs)                                    \
+    static __SUNDER_INLINE T __sunder_rem_##T(T lhs, T rhs)                    \
     {                                                                          \
         if (rhs == 0) {                                                        \
             __sunder_fatal_divide_by_zero();                                   \
