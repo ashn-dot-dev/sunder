@@ -1,0 +1,25 @@
+struct foo {
+    func bar() void { }
+}
+
+func foo_bar() void { }
+
+union abc {
+    func xyz() void { }
+}
+
+func abc_xyz() void { }
+
+var main___bytes_array_fd777ef061bcbf04 = 0s;
+
+func main() void {
+    # The assert message associated with the following assert statement
+    # generates these static symbols:
+    #   main___bytes_array_fd777ef061bcbf04
+    #   main___bytes_slice_fd777ef061bcbf04
+    assert false;
+}
+################################################################################
+# error: symbols `foo::bar` (defined at error-duplicate-static-addresses.test.sunder:2) and `foo_bar` (defined at error-duplicate-static-addresses.test.sunder:5) resolve to the same static address `foo_bar`
+# error: symbols `abc::xyz` (defined at error-duplicate-static-addresses.test.sunder:8) and `abc_xyz` (defined at error-duplicate-static-addresses.test.sunder:11) resolve to the same static address `abc_xyz`
+# info: compilation of generated C code will fail due to conflicting Sunder addresses used as C identifiers

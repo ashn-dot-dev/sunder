@@ -3919,6 +3919,70 @@ codegen(
         goto cleanup;
     }
 
+    // Check for duplicate static addresses amongst separate symbols.
+    struct static_symbol_mapping {
+        struct symbol const* symbol;
+        char const* mangled_address;
+    };
+    sbuf(struct static_symbol_mapping) static_symbol_mappings = NULL;
+    for (size_t i = 0; i < sbuf_count(context()->static_symbols); ++i) {
+        struct symbol const* const symbol = context()->static_symbols[i];
+        assert(symbol_xget_address(symbol)->kind == ADDRESS_STATIC);
+        struct static_symbol_mapping const mapping = {
+            .symbol = symbol,
+            .mangled_address = mangle_address(symbol_xget_address(symbol)),
+        };
+        sbuf_push(static_symbol_mappings, mapping);
+    }
+    sbuf_freeze(static_symbol_mappings);
+    for (size_t i = 0; i < sbuf_count(static_symbol_mappings); ++i) {
+        struct static_symbol_mapping const m_i = static_symbol_mappings[i];
+        char const* const mangled_address_i = m_i.mangled_address;
+        for (size_t j = i + 1; j < sbuf_count(static_symbol_mappings); ++j) {
+            struct static_symbol_mapping m_j = static_symbol_mappings[j];
+            char const* const mangled_address_j = m_j.mangled_address;
+            assert(mangled_address_i != NULL);
+            assert(mangled_address_j != NULL);
+            if (0 != strcmp(mangled_address_i, mangled_address_j)) {
+                continue; // No mangled static address conflict.
+            }
+
+            struct symbol const* const symbol_i = m_i.symbol;
+            struct symbol const* const symbol_j = m_j.symbol;
+            struct source_location const location_i = symbol_i->location;
+            struct source_location const location_j = symbol_j->location;
+            char const* defined_at_i = "defined internally";
+            char const* defined_at_j = "defined internally";
+            if (location_i.path != NO_PATH && location_i.line != NO_LINE) {
+                defined_at_i = intern_fmt(
+                    "defined at %s:%zu",
+                    symbol_i->location.path,
+                    symbol_i->location.line);
+            }
+            if (location_j.path != NO_PATH && location_j.line != NO_LINE) {
+                defined_at_j = intern_fmt(
+                    "defined at %s:%zu",
+                    symbol_j->location.path,
+                    symbol_j->location.line);
+            }
+            error(
+                NO_LOCATION,
+                "symbols `%s` (%s) and `%s` (%s) resolve to the same static address `%s`",
+                symbol_xget_address(m_i.symbol)->data.static_.name,
+                defined_at_i,
+                symbol_xget_address(m_j.symbol)->data.static_.name,
+                defined_at_j,
+                m_i.mangled_address);
+            err = true;
+        }
+    }
+    if (err) {
+        info(
+            NO_LOCATION,
+            "compilation of generated C code will fail due to conflicting Sunder addresses used as C identifiers");
+        goto cleanup;
+    }
+
     appendln("#include \"sys.h\"");
     appendch('\n');
     // Generate forward type declarations.
