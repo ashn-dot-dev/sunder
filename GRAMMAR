@@ -18,7 +18,7 @@
 
 <decl-enum> ::= "enum" <identifier> "{" (<identifier> ("=" <expr>)? ";")* <member-function>* "}"
 
-<decl-extend> ::= "extend" <type> <decl>
+<decl-extend> ::= "extend" <type> (<decl-constant> | <decl-function>)
 
 <decl-type-alias> ::= "type" <identifier> "=" <type> ";"
 
