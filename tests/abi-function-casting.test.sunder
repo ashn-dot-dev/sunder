@@ -59,19 +59,21 @@ func g(
 }
 
 func main() void {
-
+    # Nominal call of f via the function symbol.
     std::print_line(std::err(), "starting f");
     f(&w, &x, &y, &z, &p, &q, &r);
     std::print_line(std::err(), "finished f");
 
     std::print(std::err(), "\n");
 
+    # Nominal call of g via the function symbol.
     std::print_line(std::err(), "starting g");
     g(&w, &x, &y, &z, &p, &q, &r);
     std::print_line(std::err(), "finished g");
 
     std::print(std::err(), "\n");
 
+    # Call of f though a constant function cast to the type of g.
     let u: typeof(g) = f;
     std::print_line(std::err(), "starting u");
     u(&w, &x, &y, &z, &p, &q, &r);
@@ -79,6 +81,7 @@ func main() void {
 
     std::print(std::err(), "\n");
 
+    # Call of f though a variable function cast to the type of g.
     var v: typeof(g) = f;
     std::print_line(std::err(), "starting v");
     v(&w, &x, &y, &z, &p, &q, &r);
