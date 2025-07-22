@@ -10,20 +10,19 @@ func main() void {
     map.insert(150y, "value 4");
     map.insert(200y, "value 5");
 
-    var iterator = std::hash_map_iterator[[byte, []byte]]::init(&map);
-    for iterator.advance() {
-        var key_as_u8 = (:u8)*iterator.current().*.key;
+    var iter = map.iterator();
+    for iter.advance() {
         std::print_format_line(
             std::out(),
-            "{} : \"{e}\"",
+            "{}: \"{e}\"",
             (:[]std::formatter)[
-                std::formatter::init[[u8]](&key_as_u8),
-                std::formatter::init[[[]byte]](iterator.current().*.value)]);
+                std::formatter::init[[u8]](&(:u8)*iter.current().*.key),
+                std::formatter::init[[[]byte]](iter.current().*.value)]);
     }
 }
 ################################################################################
-# 0 : "value 1"
-# 255 : "value 2"
-# 100 : "value 3"
-# 150 : "value 4"
-# 200 : "value 5"
+# 0: "value 1"
+# 255: "value 2"
+# 100: "value 3"
+# 150: "value 4"
+# 200: "value 5"

@@ -20,4 +20,19 @@ func main() void {
     assert map.contains(&0.0f32);
     # assert map.contains(NAN); # no way to test this since NaN != NaN
     assert map.contains(&123.456f32);
+
+    var iter = map.iterator();
+    for iter.advance() {
+        std::print_format_line(
+            std::out(),
+            "{.3}: \"{e}\"",
+            (:[]std::formatter)[
+                std::formatter::init[[f32]](iter.current().*.key),
+                std::formatter::init[[[]byte]](iter.current().*.value)]);
+    }
 }
+################################################################################
+# 0.000: "bar"
+# NaN: "baz"
+# NaN: "qux"
+# 123.456: "qux"

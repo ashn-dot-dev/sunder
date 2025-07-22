@@ -15,18 +15,18 @@ func main() void {
     var result = std::big_integer::init_from_str("0xFFFFFFFFFFFFFFFF", 0);
     map.insert(result.value(), "value 5");
 
-    var iterator = std::hash_map_iterator[[std::big_integer, []byte]]::init(&map);
-    for iterator.advance() {
+    var iter = map.iterator();
+    for iter.advance() {
         std::print_format_line(
             std::out(),
-            "{} : \"{e}\"",
+            "{+#X}: \"{e}\"",
             (:[]std::formatter)[
-                std::formatter::init[[std::big_integer]](iterator.current().*.key),
-                std::formatter::init[[[]byte]](iterator.current().*.value)]);
+                std::formatter::init[[std::big_integer]](iter.current().*.key),
+                std::formatter::init[[[]byte]](iter.current().*.value)]);
     }
 }
 ################################################################################
-# 0 : "value 1"
-# 13758425323549998831 : "value 2"
-# -13758425323549998831 : "value 4"
-# 18446744073709551615 : "value 5"
+# +0x0: "value 1"
+# +0xBEEFBEEFBEEFBEEF: "value 2"
+# -0xBEEFBEEFBEEFBEEF: "value 4"
+# +0xFFFFFFFFFFFFFFFF: "value 5"
