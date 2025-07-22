@@ -1,4 +1,11 @@
 # Sunder source file used to develop the C backend.
+#
+# This file was originally used to port Sunder language features from the NASM
+# backend to the C backend. The language features exercised here consist of a
+# mishmash of the commonly used parts of Sunder as well as some miscellaneous
+# edge cases that were uncovered during the porting process. This file is kept
+# here both for historical reasons, and because it is nice to have some of
+# these edge cases continue to be exercised as the C backend grows and evolves.
 
 struct struct_with_no_members {
     func init() struct_with_no_members {
