@@ -10,13 +10,7 @@ union abc {
 
 func abc_xyz() void { }
 
-var main___bytes_array_fd777ef061bcbf04 = 0s;
-
 func main() void {
-    # The assert message associated with the following assert statement
-    # generates these static symbols:
-    #   main___bytes_array_fd777ef061bcbf04
-    #   main___bytes_slice_fd777ef061bcbf04
     assert false;
 }
 ################################################################################

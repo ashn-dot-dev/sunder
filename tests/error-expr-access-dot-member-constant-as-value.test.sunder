@@ -13,3 +13,4 @@ func main() void {
 # [error-expr-access-dot-member-constant-as-value.test.sunder:10] error: attempted to take the value of member constant `c` on type `foo`
 #     f.c;
 #      ^
+# info: use the `::` operator (e.g. `expression::c`) to access member constant `c`

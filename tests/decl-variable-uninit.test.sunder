@@ -29,7 +29,6 @@ func main() void {
     var e: *byte = uninit;
     var f: []byte = uninit;
     var g: s = uninit;
-
     sys::dump[[u8]](a);
     sys::dump[[u16]](b);
     sys::dump[[u32]](c);

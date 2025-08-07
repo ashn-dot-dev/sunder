@@ -14,9 +14,6 @@ let f: []byte = uninit;
 let g: s = uninit;
 
 func main() void {
-    let y: u32 = uninit;
-    let z: s = uninit;
-
     sys::dump[[u8]](a);
     sys::dump[[u16]](b);
     sys::dump[[u32]](c);
@@ -25,8 +22,20 @@ func main() void {
     sys::dump[[[]byte]](f);
     sys::dump[[s]](g);
 
-    sys::dump[[u32]](y);
-    sys::dump[[s]](z);
+    var a: u8 = uninit;
+    var b: u16 = uninit;
+    var c: u32 = uninit;
+    var d: u64 = uninit;
+    var e: *byte = uninit;
+    var f: []byte = uninit;
+    var g: s = uninit;
+    sys::dump[[u8]](a);
+    sys::dump[[u16]](b);
+    sys::dump[[u32]](c);
+    sys::dump[[u64]](d);
+    sys::dump[[*byte]](e);
+    sys::dump[[[]byte]](f);
+    sys::dump[[s]](g);
 }
 ################################################################################
 # 00
@@ -36,5 +45,10 @@ func main() void {
 # 00 00 00 00 00 00 00 00
 # 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
 # 00 00 00 00 00 00 00 00
+# 00
+# 00 00
 # 00 00 00 00
+# 00 00 00 00 00 00 00 00
+# 00 00 00 00 00 00 00 00
+# 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
 # 00 00 00 00 00 00 00 00

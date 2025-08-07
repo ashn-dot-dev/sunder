@@ -5083,19 +5083,31 @@ resolve_expr_access_member(
         type_member_symbol(lhs->type, member_name);
 
     if (member_symbol != NULL && member_symbol->kind == SYMBOL_CONSTANT) {
-        fatal(
+        error(
             expr->location,
             "attempted to take the value of member constant `%s` on type `%s`",
             member_symbol->name,
             lhs->type->name);
+        info(
+            NO_LOCATION,
+            "use the `::` operator (e.g. `expression::%s`) to access member constant `%s`",
+            member_symbol->name,
+            member_symbol->name);
+        exit(EXIT_FAILURE);
     }
 
     if (member_symbol != NULL && member_symbol->kind == SYMBOL_FUNCTION) {
-        fatal(
+        error(
             expr->location,
             "attempted to take the value of member function `%s` on type `%s`",
             member_symbol->name,
             lhs->type->name);
+        info(
+            NO_LOCATION,
+            "use the `::` operator (e.g. `expression::%s`) to access member function `%s`",
+            member_symbol->name,
+            member_symbol->name);
+        exit(EXIT_FAILURE);
     }
 
     if (member_symbol != NULL && member_symbol->kind == SYMBOL_TEMPLATE) {
