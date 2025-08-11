@@ -631,6 +631,13 @@ parse_decl_enum(struct parser* parser)
     struct source_location const location =
         expect_current(parser, TOKEN_ENUM).location;
     struct cst_identifier const identifier = parse_identifier(parser);
+
+    struct cst_type const* type = NULL;
+    if (check_current(parser, TOKEN_COLON)) {
+        expect_current(parser, TOKEN_COLON);
+        type = parse_type(parser);
+    }
+
     expect_current(parser, TOKEN_LBRACE);
 
     sbuf(struct cst_enum_value const*) values = NULL;
@@ -649,7 +656,7 @@ parse_decl_enum(struct parser* parser)
     expect_current(parser, TOKEN_RBRACE);
 
     struct cst_decl* const product =
-        cst_decl_new_enum(location, identifier, values, member_functions);
+        cst_decl_new_enum(location, identifier, type, values, member_functions);
 
     freeze(product);
     return product;
@@ -2265,15 +2272,24 @@ parse_type_enum(struct parser* parser)
 
     struct source_location const location =
         expect_current(parser, TOKEN_ENUM).location;
+
+    struct cst_type const* type = NULL;
+    if (check_current(parser, TOKEN_COLON)) {
+        expect_current(parser, TOKEN_COLON);
+        type = parse_type(parser);
+    }
+
     expect_current(parser, TOKEN_LBRACE);
+
     sbuf(struct cst_enum_value const*) values = NULL;
     while (!check_current(parser, TOKEN_RBRACE)) {
         sbuf_push(values, parse_enum_value(parser));
     }
     sbuf_freeze(values);
+
     expect_current(parser, TOKEN_RBRACE);
 
-    struct cst_type* const product = cst_type_new_enum(location, values);
+    struct cst_type* const product = cst_type_new_enum(location, type, values);
 
     freeze(product);
     return product;

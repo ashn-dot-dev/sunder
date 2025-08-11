@@ -311,6 +311,10 @@ order_decl(struct orderer* orderer, struct cst_decl const* decl)
         return;
     }
     case CST_DECL_ENUM: {
+        if (decl->data.enum_.type != NULL) {
+            order_type(orderer, decl->data.enum_.type);
+        }
+
         sbuf(struct cst_enum_value const* const) const values =
             decl->data.enum_.values;
         for (size_t i = 0; i < sbuf_count(values); ++i) {

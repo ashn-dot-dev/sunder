@@ -1,0 +1,7 @@
+type foo = enum: u16 { A; B; };
+type bar = enum: u16 { C; D; };
+let baz: foo = bar::C;
+################################################################################
+# [error-invalid-assignment-between-anonymous-enums-of-same-underlying-type-explicit-underlying-type.test.sunder:3] error: incompatible type `enum at error-invalid-assignment-between-anonymous-enums-of-same-underlying-type-explicit-underlying-type.test.sunder:2 { C; D; }` (expected `enum at error-invalid-assignment-between-anonymous-enums-of-same-underlying-type-explicit-underlying-type.test.sunder:1 { A; B; }`)
+# let baz: foo = bar::C;
+#                ^

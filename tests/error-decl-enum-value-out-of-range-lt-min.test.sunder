@@ -1,7 +1,5 @@
-enum foo {
-    BAR = -0xAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA;
-}
+enum foo { BAR = -0xAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA; }
 ################################################################################
-# [error-decl-enum-value-out-of-range-lt-min.test.sunder:2] error: out-of-range enum value for underlying type `s32` (-226854911280625642308916404954512140970 < -2147483648)
-#     BAR = -0xAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA;
-#     ^
+# [error-decl-enum-value-out-of-range-lt-min.test.sunder:1] error: out-of-range enum value for underlying type `s32` (-226854911280625642308916404954512140970 < -2147483648)
+# enum foo { BAR = -0xAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA; }
+#            ^

@@ -187,6 +187,7 @@ struct cst_decl*
 cst_decl_new_enum(
     struct source_location location,
     struct cst_identifier identifier,
+    struct cst_type const* type,
     struct cst_enum_value const* const* values,
     struct cst_member const* const* member_functions)
 {
@@ -196,6 +197,7 @@ cst_decl_new_enum(
     self->location = location;
     self->name = identifier.name;
     self->data.enum_.identifier = identifier;
+    self->data.enum_.type = type;
     self->data.enum_.values = values;
     self->data.enum_.member_functions = member_functions;
     return self;
@@ -983,9 +985,12 @@ cst_type_new_union(
 
 struct cst_type*
 cst_type_new_enum(
-    struct source_location location, struct cst_enum_value const* const* values)
+    struct source_location location,
+    struct cst_type const* type,
+    struct cst_enum_value const* const* values)
 {
     struct cst_type* const self = cst_type_new(location, CST_TYPE_ENUM);
+    self->data.enum_.type = type;
     self->data.enum_.values = values;
     return self;
 }

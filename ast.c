@@ -477,7 +477,10 @@ type_new_extern(char const* name, struct symbol_table* symbols)
 }
 
 struct type*
-type_new_enum(char const* name, struct symbol_table* symbols)
+type_new_enum(
+    char const* name,
+    struct symbol_table* symbols,
+    struct type const* underlying_type)
 {
     // ISO/IEC 9899:1999 - 6.7.2.2 Enumeration specifiers:
     //
@@ -519,13 +522,25 @@ type_new_enum(char const* name, struct symbol_table* symbols)
     // underlying type for an enumeration. Chibicc specifies an enum size and
     // alignment of four[1], and cproc requires an enum to be compatible with
     // either int or unsigned int[2]. The x86-64 SystemV ABI also specifies a
-    // default unrderlying type of int.
+    // default underlying type of int. If no type is explicitly specified, then
+    // use int as the underlying type.
     //
     // [1]: https://github.com/rui314/chibicc/blob/90d1f7f199cc55b13c7fdb5839d1409806633fdb/type.c#L126-L128
     // [2]: https://git.sr.ht/~mcf/cproc/tree/0985a7893a4b5de63a67ebab445892d9fffe275b/item/decl.c#L213
 
-    struct type* const self = type_new(name, 4, 4, symbols, TYPE_ENUM);
-    self->data.enum_.underlying_type = context()->builtin.s32;
+    if (underlying_type == NULL) {
+        struct type* const self = type_new(name, 4, 4, symbols, TYPE_ENUM);
+        self->data.enum_.underlying_type = context()->builtin.s32;
+        return self;
+    }
+
+    struct type* const self = type_new(
+        name,
+        underlying_type->size,
+        underlying_type->align,
+        symbols,
+        TYPE_ENUM);
+    self->data.enum_.underlying_type = underlying_type;
     return self;
 }
 

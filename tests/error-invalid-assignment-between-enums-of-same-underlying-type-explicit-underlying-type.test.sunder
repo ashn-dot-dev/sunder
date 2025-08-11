@@ -1,0 +1,7 @@
+enum foo: u16 { A; B; }
+enum bar: u16 { C; D; }
+let baz: foo = bar::C;
+################################################################################
+# [error-invalid-assignment-between-enums-of-same-underlying-type-explicit-underlying-type.test.sunder:3] error: incompatible type `bar` (expected `foo`)
+# let baz: foo = bar::C;
+#                ^

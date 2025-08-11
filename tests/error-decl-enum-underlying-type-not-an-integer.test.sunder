@@ -1,0 +1,5 @@
+enum foo: []byte { }
+################################################################################
+# [error-decl-enum-underlying-type-not-an-integer.test.sunder:1] error: expected integer type for underlying enum type (received `[]byte`)
+# enum foo: []byte { }
+#           ^

@@ -1147,6 +1147,7 @@ struct cst_decl {
         } union_;
         struct {
             struct cst_identifier identifier;
+            struct cst_type const* type; // optional
             sbuf(struct cst_enum_value const* const) values;
             sbuf(struct cst_member const* const)
                 member_functions; // CST_MEMBER_FUNCTION
@@ -1210,6 +1211,7 @@ struct cst_decl*
 cst_decl_new_enum(
     struct source_location location,
     struct cst_identifier identifier,
+    struct cst_type const* type,
     struct cst_enum_value const* const* values,
     struct cst_member const* const* member_functions);
 struct cst_decl*
@@ -1677,6 +1679,7 @@ struct cst_type {
             sbuf(struct cst_member const* const) members;
         } union_;
         struct {
+            struct cst_type const* type; // optional
             sbuf(struct cst_enum_value const* const) values;
         } enum_;
         struct {
@@ -1711,6 +1714,7 @@ cst_type_new_union(
 struct cst_type*
 cst_type_new_enum(
     struct source_location location,
+    struct cst_type const* type,
     struct cst_enum_value const* const* values);
 struct cst_type*
 cst_type_new_typeof(
@@ -1896,9 +1900,14 @@ type_new_union(char const* name, struct symbol_table* symbols);
 // Create an external type (unsized).
 struct type*
 type_new_extern(char const* name, struct symbol_table* symbols);
-// Create a new enum with no members.
+// Create a new enum with no members. The parameter `underlying_type` may be
+// NULL, in which case an integer type sharing a size and alignment of a C enum
+// with no enum type specifier is used as the underlying type.
 struct type*
-type_new_enum(char const* name, struct symbol_table* symbols);
+type_new_enum(
+    char const* name,
+    struct symbol_table* symbols,
+    struct type const* underlying_type);
 
 // Returns the index of the member variable `name` of the provided struct type.
 // Returns a non-negative integer index on success.

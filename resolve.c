@@ -220,11 +220,12 @@ complete_union(
     struct resolver* resolver,
     struct symbol const* symbol,
     struct cst_member const* const* members);
-struct symbol const*
+static struct symbol const*
 complete_enum(
     struct resolver* resolver,
     struct source_location location,
     char const* name,
+    struct cst_type const* underlying_type,
     struct cst_enum_value const* const* values,
     struct cst_member const* const* member_functions);
 static void
@@ -2230,6 +2231,7 @@ resolve_decl_enum(struct resolver* resolver, struct cst_decl const* decl)
         resolver,
         decl->location,
         decl->name,
+        decl->data.enum_.type,
         decl->data.enum_.values,
         decl->data.enum_.member_functions);
 }
@@ -2829,11 +2831,12 @@ complete_union(
     resolver->current_symbol_table = save_symbol_table;
 }
 
-struct symbol const*
+static struct symbol const*
 complete_enum(
     struct resolver* resolver,
     struct source_location location,
     char const* name,
+    struct cst_type const* underlying_type,
     struct cst_enum_value const* const* values,
     struct cst_member const* const* member_functions)
 {
@@ -2842,12 +2845,24 @@ complete_enum(
 
     bool const is_anonymous = cstr_starts_with(name, "enum ");
 
+    struct type const* underlying_type_ = NULL;
+    if (underlying_type != NULL) {
+        underlying_type_ = resolve_type(resolver, underlying_type);
+    }
+    if (underlying_type_ != NULL && !type_is_integer(underlying_type_)) {
+        fatal(
+            underlying_type->location,
+            "expected integer type for underlying enum type (received `%s`)",
+            underlying_type_->name);
+    }
+
     struct symbol_table* const enum_symbols =
         symbol_table_new(resolver->current_symbol_table);
     sbuf_push(context()->chilling_symbol_tables, enum_symbols);
     struct type* const type = type_new_enum(
         qualified_name(resolver->current_symbol_name_prefix, name),
-        enum_symbols);
+        enum_symbols,
+        underlying_type_);
     freeze(type);
 
     struct type const* const save_current_type = type;
@@ -6379,7 +6394,9 @@ resolve_type_enum(struct resolver* resolver, struct cst_type const* type)
     assert(type != NULL);
     assert(type->kind == CST_TYPE_ENUM);
 
-    struct cst_enum_value const* const* values = type->data.enum_.values;
+    struct cst_type const* const underlying_type = type->data.enum_.type;
+
+    struct cst_enum_value const* const* const values = type->data.enum_.values;
     size_t const values_count = sbuf_count(values);
 
     struct string* const name_string = string_new_fmt(
@@ -6395,8 +6412,8 @@ resolve_type_enum(struct resolver* resolver, struct cst_type const* type)
         intern(string_start(name_string), string_count(name_string));
     string_del(name_string);
 
-    return symbol_xget_type(
-        complete_enum(resolver, type->location, name, values, NULL));
+    return symbol_xget_type(complete_enum(
+        resolver, type->location, name, underlying_type, values, NULL));
 }
 
 static struct type const*

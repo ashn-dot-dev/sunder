@@ -118,6 +118,14 @@ struct tagged {
     }
 }
 
+# Enums with explicitly sized underlying types.
+enum underlying_type_u32: u32 { A; B; C = u32::MAX; }
+enum underlying_type_s64: s64 { A; B; C = s64::MAX; }
+enum underlying_type_forward: forward { A = (:forward)underlying_type_s64::A; B = (:forward)underlying_type_u32::B; }
+type underlying_type_u32_anonymous = enum: u32 { A_U32; B_U32; C_U32 = u32::MAX; };
+type underlying_type_forward_anonymous = enum: forward { A_FORWARD; B_FORWARD; };
+type forward = s8;
+
 func main() void {
     sys::dump[[empty]](empty_uninit);
     sys::dump[[empty]](empty_cast_variable);
@@ -230,6 +238,18 @@ func main() void {
     sys::dump[[typeof(this.data.this)]](this.data.this);
     std::print_line(std::err(), that.data.that);
 
+    std::print(std::err(), "\n");
+
+    sys::dump[[underlying_type_u32]](underlying_type_u32::A);
+    sys::dump[[underlying_type_u32]](underlying_type_u32::B);
+    sys::dump[[underlying_type_u32]](underlying_type_u32::C);
+    sys::dump[[underlying_type_s64]](underlying_type_s64::A);
+    sys::dump[[underlying_type_s64]](underlying_type_s64::B);
+    sys::dump[[underlying_type_s64]](underlying_type_s64::C);
+    sys::dump[[underlying_type_u32_anonymous]](A_U32);
+    sys::dump[[underlying_type_u32_anonymous]](B_U32);
+    sys::dump[[underlying_type_u32_anonymous]](C_U32);
+
     # Enums can be compared for equality, but not ordered (without a cast).
     assert foo::A == foo::A;
     assert foo::A != foo::B;
@@ -302,3 +322,13 @@ func main() void {
 #
 # EF BE AD DE 00 00 00 00
 # DEADBEEF
+#
+# 00 00 00 00
+# 01 00 00 00
+# FF FF FF FF
+# 00 00 00 00 00 00 00 00
+# 01 00 00 00 00 00 00 00
+# FF FF FF FF FF FF FF 7F
+# 00 00 00 00
+# 01 00 00 00
+# FF FF FF FF

@@ -1,0 +1,5 @@
+type foo = enum: s8 { BAR = +0xFF; };
+################################################################################
+# [error-anonymous-enum-value-out-of-range-gt-max-explicit-underlying-type.test.sunder:1] error: out-of-range enum value for underlying type `s8` (255 > 127)
+# type foo = enum: s8 { BAR = +0xFF; };
+#                       ^
