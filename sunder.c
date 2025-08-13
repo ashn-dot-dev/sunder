@@ -200,6 +200,7 @@ context_init(void)
     s_context.interned.f32 = intern_cstr("f32");
     s_context.interned.f64 = intern_cstr("f64");
     s_context.interned.real = intern_cstr("real");
+    s_context.interned.underlying_type = intern_cstr("underlying_type");
 
     s_context.env.SUNDER_HOME = getenv("SUNDER_HOME");
     s_context.env.SUNDER_HOME = s_context.env.SUNDER_HOME != NULL

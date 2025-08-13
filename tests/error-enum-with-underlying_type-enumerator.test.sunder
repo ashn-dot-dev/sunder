@@ -1,0 +1,5 @@
+enum foo { underlying_type; }
+################################################################################
+# [error-enum-with-underlying_type-enumerator.test.sunder:1] error: enum value declared with reserved name `underlying_type`
+# enum foo { underlying_type; }
+#            ^

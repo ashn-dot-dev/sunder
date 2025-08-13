@@ -126,6 +126,15 @@ type underlying_type_u32_anonymous = enum: u32 { A_U32; B_U32; C_U32 = u32::MAX;
 type underlying_type_forward_anonymous = enum: forward { A_FORWARD; B_FORWARD; };
 type forward = s8;
 
+# Ensure that explicitly-sized and non-explicitly sized enums have the
+# `underlying_type` symbol defined.
+var some_foo: s32 = (:foo::underlying_type)foo::A; # default type should be s32
+var some_u32: u32 = (:underlying_type_u32::underlying_type)underlying_type_u32::A;
+var some_s64: s64 = (:underlying_type_s64::underlying_type)underlying_type_s64::A;
+enum some_enum: u32 { A = 123; B = 456; }
+var some_x = (:some_enum::underlying_type)some_enum::A;
+var some_y: some_enum::underlying_type = uninit;
+
 func main() void {
     sys::dump[[empty]](empty_uninit);
     sys::dump[[empty]](empty_cast_variable);

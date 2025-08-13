@@ -2875,6 +2875,12 @@ complete_enum(
 
     // Check for duplicate enumerator definitions.
     for (size_t i = 0; i < values_count; ++i) {
+        if (values[i]->identifier.name == context()->interned.underlying_type) {
+            fatal(
+                values[i]->location,
+                "enum value declared with reserved name `%s`",
+                context()->interned.underlying_type);
+        }
         for (size_t j = i + 1; j < values_count; ++j) {
             if (values[i]->identifier.name == values[j]->identifier.name) {
                 fatal(
@@ -2944,6 +2950,16 @@ complete_enum(
         }
     }
 
+    // Add `underlying_type` to the symbol table.
+    struct symbol* const underlying_type_symbol =
+        symbol_new_type(location, type->data.enum_.underlying_type);
+    freeze(underlying_type_symbol);
+    symbol_table_insert(
+        enum_symbols,
+        context()->interned.underlying_type,
+        underlying_type_symbol,
+        false);
+
     // Add enumerator constants to the symbol table.
     for (size_t i = 0; i < values_count; ++i) {
         struct address const* const address = resolver_reserve_storage_static(
@@ -2990,6 +3006,7 @@ complete_enum(
         sbuf_push(type->data.enum_.value_symbols, value_symbol);
         register_static_symbol(value_symbol);
     }
+
     sbuf_freeze(type->data.enum_.value_symbols);
 
     // Add the symbol to the current symbol table after all enumerators have
