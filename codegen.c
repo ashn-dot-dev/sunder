@@ -2529,17 +2529,29 @@ strgen_rvalue_cast(struct expr const* expr)
     assert(expr != NULL);
     assert(expr->kind == EXPR_CAST);
 
+    char const* rvalue = strgen_rvalue(expr->data.cast.expr);
+    if (expr->data.cast.expr->type->kind == TYPE_BYTE) {
+        // The representation of the Sunder `byte` type is defined to match the
+        // target platform C `char` type, which may or may not be signed. If
+        // the C `char` type is signed, then Sunder `byte` values may undergo
+        // sign extension if those values would be represented as a negative
+        // signed 8-bit integer. Normalize byte values to unsigned 8-bit
+        // integers so that casting to a larger-width integer type does not
+        // sign extend the most significant bits of the result with ones.
+        char const* const u8 = mangle_type(context()->builtin.u8);
+        rvalue = strgen_fmt("(%s)%s", u8, rvalue);
+    }
+
     if (type_is_integer(expr->type)
         && type_is_ieee754(expr->data.cast.expr->type)) {
         return strgen_fmt(
             MANGLE_PREFIX "cast_%s_to_%s(%s)",
             mangle_type(expr->data.cast.expr->type),
             mangle_type(expr->type),
-            strgen_rvalue(expr->data.cast.expr));
+            rvalue);
     }
 
-    return strgen_fmt(
-        "(%s)%s", mangle_type(expr->type), strgen_rvalue(expr->data.cast.expr));
+    return strgen_fmt("(%s)%s", mangle_type(expr->type), rvalue);
 }
 
 static char const*

@@ -118,6 +118,22 @@ func main() void {
     sys::dump[[s16]](-16657s16 & 0s16);
     sys::dump[[s16]](0x0123s16 & -1s16);
     sys::dump[[s16]](0x0123s16 & 0s16);
+
+    std::print(std::err(), "\n");
+
+    # Cast a byte literal to u16 before bitwise AND.
+    var bits = 0xFF80 & (:u16)0x80y;
+    sys::dump[[u16]](bits);
+
+    # Cast a byte variable to u16 before bitwise AND.
+    var data = 0x80y;
+    var bits = 0xFF80 & (:u16)data;
+    sys::dump[[u16]](bits);
+
+    # Cast a byte constant to u16 before bitwise AND.
+    let data = 0x80y;
+    var bits = 0xFF80 & (:u16)data;
+    sys::dump[[u16]](bits);
 }
 ################################################################################
 # 01
@@ -173,3 +189,7 @@ func main() void {
 # 00 00
 # 23 01
 # 00 00
+#
+# 80 00
+# 80 00
+# 80 00

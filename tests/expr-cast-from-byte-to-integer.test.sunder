@@ -1,0 +1,152 @@
+import "std";
+import "sys";
+
+func main() void {
+    sys::dump[[u8]]((:u8)0x1Ay);
+    sys::dump[[u8]]((:u8)0x7Fy);
+    sys::dump[[u8]]((:u8)0x80y);
+    sys::dump[[u8]]((:u8)0xFFy);
+
+    var value = 0x1Ay;
+    sys::dump[[u8]]((:u8)value);
+    var value = 0x7Fy;
+    sys::dump[[u8]]((:u8)value);
+    var value = 0x80y;
+    sys::dump[[u8]]((:u8)value);
+    var value = 0xFFy;
+    sys::dump[[u8]]((:u8)value);
+
+    std::print(std::err(), "\n");
+
+    sys::dump[[s8]]((:s8)0x1Ay);
+    sys::dump[[s8]]((:s8)0x7Fy);
+    sys::dump[[s8]]((:s8)0x80y);
+    sys::dump[[s8]]((:s8)0xFFy);
+
+    var value = 0x1Ay;
+    sys::dump[[s8]]((:s8)value);
+    var value = 0x7Fy;
+    sys::dump[[s8]]((:s8)value);
+    var value = 0x80y;
+    sys::dump[[s8]]((:s8)value);
+    var value = 0xFFy;
+    sys::dump[[s8]]((:s8)value);
+
+    std::print(std::err(), "\n");
+
+    sys::dump[[u16]]((:u16)0x1Ay);
+    sys::dump[[u16]]((:u16)0x7Fy);
+    sys::dump[[u16]]((:u16)0x80y);
+    sys::dump[[u16]]((:u16)0xFFy);
+
+    var value = 0x1Ay;
+    sys::dump[[u16]]((:u16)value);
+    var value = 0x7Fy;
+    sys::dump[[u16]]((:u16)value);
+    var value = 0x80y;
+    sys::dump[[u16]]((:u16)value);
+    var value = 0xFFy;
+    sys::dump[[u16]]((:u16)value);
+
+    std::print(std::err(), "\n");
+
+    sys::dump[[s16]]((:s16)0x1Ay);
+    sys::dump[[s16]]((:s16)0x7Fy);
+    sys::dump[[s16]]((:s16)0x80y);
+    sys::dump[[s16]]((:s16)0xFFy);
+
+    var value = 0x1Ay;
+    sys::dump[[s16]]((:s16)value);
+    var value = 0x7Fy;
+    sys::dump[[s16]]((:s16)value);
+    var value = 0x80y;
+    sys::dump[[s16]]((:s16)value);
+    var value = 0xFFy;
+    sys::dump[[s16]]((:s16)value);
+
+    std::print(std::err(), "\n");
+
+    sys::dump[[u64]]((:u64)0x1Ay);
+    sys::dump[[u64]]((:u64)0x7Fy);
+    sys::dump[[u64]]((:u64)0x80y);
+    sys::dump[[u64]]((:u64)0xFFy);
+
+    var value = 0x1Ay;
+    sys::dump[[u64]]((:u64)value);
+    var value = 0x7Fy;
+    sys::dump[[u64]]((:u64)value);
+    var value = 0x80y;
+    sys::dump[[u64]]((:u64)value);
+    var value = 0xFFy;
+    sys::dump[[u64]]((:u64)value);
+
+    std::print(std::err(), "\n");
+
+    sys::dump[[s64]]((:s64)0x1Ay);
+    sys::dump[[s64]]((:s64)0x7Fy);
+    sys::dump[[s64]]((:s64)0x80y);
+    sys::dump[[s64]]((:s64)0xFFy);
+
+    var value = 0x1Ay;
+    sys::dump[[s64]]((:s64)value);
+    var value = 0x7Fy;
+    sys::dump[[s64]]((:s64)value);
+    var value = 0x80y;
+    sys::dump[[s64]]((:s64)value);
+    var value = 0xFFy;
+    sys::dump[[s64]]((:s64)value);
+}
+################################################################################
+# 1A
+# 7F
+# 80
+# FF
+# 1A
+# 7F
+# 80
+# FF
+#
+# 1A
+# 7F
+# 80
+# FF
+# 1A
+# 7F
+# 80
+# FF
+#
+# 1A 00
+# 7F 00
+# 80 00
+# FF 00
+# 1A 00
+# 7F 00
+# 80 00
+# FF 00
+#
+# 1A 00
+# 7F 00
+# 80 00
+# FF 00
+# 1A 00
+# 7F 00
+# 80 00
+# FF 00
+#
+# 1A 00 00 00 00 00 00 00
+# 7F 00 00 00 00 00 00 00
+# 80 00 00 00 00 00 00 00
+# FF 00 00 00 00 00 00 00
+# 1A 00 00 00 00 00 00 00
+# 7F 00 00 00 00 00 00 00
+# 80 00 00 00 00 00 00 00
+# FF 00 00 00 00 00 00 00
+#
+# 1A 00 00 00 00 00 00 00
+# 7F 00 00 00 00 00 00 00
+# 80 00 00 00 00 00 00 00
+# FF 00 00 00 00 00 00 00
+# 1A 00 00 00 00 00 00 00
+# 7F 00 00 00 00 00 00 00
+# 80 00 00 00 00 00 00 00
+# FF 00 00 00 00 00 00 00
