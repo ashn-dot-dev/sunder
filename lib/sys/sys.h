@@ -514,11 +514,15 @@ sys_closedir(void* dir)
     return closedir(dir);
 }
 
-struct sys_dirent;
-static struct sys_dirent*
-sys_readdir(void* dir)
+static char*
+sys_advancedir(void* dir)
 {
-    return (struct sys_dirent*)readdir(dir);
+    errno = 0;
+    struct dirent* dirent = readdir(dir);
+    if (dirent == NULL) {
+        return NULL; // errno != 0 implies an error
+    }
+    return dirent->d_name;
 }
 
 static ssize

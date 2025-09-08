@@ -37,14 +37,6 @@ let SEEK_END: sint = 0x2;
 
 let PATH_MAX: usize = 4096;
 
-struct dirent {
-    var d_ino: ino_t;
-    var d_off: off_t;
-    var d_reclen: ushort;
-    var d_type: uchar;
-    var d_name: [256]char;
-}
-
 extern type DIR;
 
 let ERRORS = (:[][]byte)[

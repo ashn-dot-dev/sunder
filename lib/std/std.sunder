@@ -3892,18 +3892,17 @@ struct directory {
 
     # Advance the current directory entry.
     func advance(self: *directory) bool {
-        sys::set_errno(0);
-        var dirent = sys::readdir(self.*._sys_dir);
-        if dirent == std::ptr[[sys::dirent]]::NULL and sys::get_errno() != 0 {
+        var name = sys::advancedir(self.*._sys_dir);
+        if name == std::NULL and sys::get_errno() != 0 {
             var result = std::result[[[]byte, std::error]]::init_error((:std::error)sys::error((:ssize)sys::get_errno()));
             self.*._current = std::optional[[std::result[[[]byte, std::error]]]]::init_value(result);
             return true;
         }
-        if dirent == std::ptr[[sys::dirent]]::NULL {
+        if name == std::NULL {
             self.*._current = std::optional[[std::result[[[]byte, std::error]]]]::EMPTY;
             return false;
         }
-        var result = std::result[[[]byte, std::error]]::init_value(std::cstr::data((:*byte)&dirent.*.d_name[0]));
+        var result = std::result[[[]byte, std::error]]::init_value(std::cstr::data(name));
         self.*._current = std::optional[[std::result[[[]byte, std::error]]]]::init_value(result);
         return true;
     }

@@ -26,7 +26,7 @@ extern func rmdir(pathname: *byte) ssize;
 extern func unlink(pathname: *byte) ssize;
 extern func opendir(path: *char) *DIR;
 extern func closedir(dir: *DIR) sint;
-extern func readdir(dir: *DIR) *dirent;
+extern func advancedir(dir: *DIR) *char;
 
 extern var argc: usize;
 extern var argv: **byte;
