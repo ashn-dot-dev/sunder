@@ -585,11 +585,8 @@ get_symbol_ex(
     assert(resolver != NULL);
     assert(target != NULL);
 
-    assert(sbuf_count(target->elements) != 0);
-    struct cst_symbol_element const* const element = target->elements[0];
-    char const* const name = element->identifier.name;
-
     struct symbol_table const* symbol_table = NULL;
+    struct type const* start_type = NULL;
     switch (target->start) {
     case CST_SYMBOL_START_NONE: {
         symbol_table = resolver->current_symbol_table;
@@ -600,20 +597,33 @@ get_symbol_ex(
         break;
     }
     case CST_SYMBOL_START_TYPEOF: {
-        struct type const* const type =
-            resolve_type_typeof(resolver, target->type);
-        symbol_table = type->symbols;
+        start_type = resolve_type_typeof(resolver, target->type);
+        symbol_table = start_type->symbols;
         break;
     }
     }
     assert(symbol_table != NULL);
 
+    assert(sbuf_count(target->elements) != 0);
+    struct cst_symbol_element const* const element = target->elements[0];
+    char const* const name = element->identifier.name;
     struct symbol const* lhs = symbol_table_lookup(symbol_table, name);
     if (lhs == NULL) {
         if (!error_is_fatal) {
             return NULL;
         }
-        fatal(target->location, "use of undeclared identifier `%s`", name);
+        // Special case for symbols starting with `typeof`. The "...within `T`"
+        // message should be printed as this first symbol element is accessing
+        // the symbol within a type.
+        if (target->start == CST_SYMBOL_START_TYPEOF) {
+            assert(start_type != NULL);
+            fatal(
+                element->location,
+                "use of undeclared identifier `%s` within `%s`",
+                name,
+                start_type->name);
+        }
+        fatal(element->location, "use of undeclared identifier `%s`", name);
     }
     if (sbuf_count(element->template_arguments) != 0) {
         lhs = xget_template_instance(

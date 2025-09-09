@@ -1,0 +1,6 @@
+let A = typeof(B)::Z;
+let B: s32 = uninit;
+################################################################################
+# [error-symbol-start-typeof-with-symbol-element-lookup-failure.test.sunder:1] error: use of undeclared identifier `Z` within `s32`
+# let A = typeof(B)::Z;
+#                    ^
