@@ -765,7 +765,7 @@ cst_symbol_new(
     struct cst_symbol_element const* const* elements)
 {
     assert(sbuf_count(elements) > 0);
-    assert(start == CST_SYMBOL_START_TYPE || type == NULL);
+    assert(start == CST_SYMBOL_START_TYPEOF || type == NULL);
 
     struct cst_symbol* const self = xalloc(NULL, sizeof(*self));
     memset(self, 0x00, sizeof(*self));

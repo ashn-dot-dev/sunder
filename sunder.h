@@ -1544,13 +1544,13 @@ enum cst_symbol_start {
     // lookup should start from the corresponding type's symbol table.
     //
     //  typeof(foo)::bar::baz
-    CST_SYMBOL_START_TYPE,
+    CST_SYMBOL_START_TYPEOF,
 };
 
 struct cst_symbol {
     struct source_location location;
     enum cst_symbol_start start;
-    struct cst_type const* type; // Optional (CST_SYMBOL_START_TYPE)
+    struct cst_type const* type; // Optional (CST_SYMBOL_START_TYPEOF)
     // Individual symbol elements separated by "::".
     sbuf(struct cst_symbol_element const* const) elements;
 };

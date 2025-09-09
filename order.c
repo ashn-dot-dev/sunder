@@ -586,6 +586,11 @@ order_symbol(struct orderer* orderer, struct cst_symbol const* symbol)
     assert(orderer != NULL);
     assert(sbuf_count(symbol->elements) > 0);
 
+    if (symbol->start == CST_SYMBOL_START_TYPEOF) {
+        order_type(orderer, symbol->type);
+        return;
+    }
+
     // Always attempt to order all symbol template arguments, regardless of
     // whether the symbol belongs to the current module or not, since symbol
     // template arguments may refer to symbols that *are* in this module.
@@ -622,11 +627,6 @@ order_symbol(struct orderer* orderer, struct cst_symbol const* symbol)
         // Perform ordering based on the non-prefix portion of the symbol.
         order_identifier(
             orderer, &symbol->elements[namespace_count]->identifier);
-        return;
-    }
-
-    if (symbol->start == CST_SYMBOL_START_TYPE) {
-        order_type(orderer, symbol->type);
         return;
     }
 

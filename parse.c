@@ -1764,7 +1764,7 @@ parse_symbol(struct parser* parser)
     }
 
     if (check_current(parser, TOKEN_TYPEOF)) {
-        enum cst_symbol_start const start = CST_SYMBOL_START_TYPE;
+        enum cst_symbol_start const start = CST_SYMBOL_START_TYPEOF;
         struct cst_type const* const type = parse_type(parser);
         struct source_location const location = type->location;
 

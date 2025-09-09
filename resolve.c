@@ -599,7 +599,7 @@ get_symbol_ex(
         symbol_table = resolver->module->symbols;
         break;
     }
-    case CST_SYMBOL_START_TYPE: {
+    case CST_SYMBOL_START_TYPEOF: {
         struct type const* const type =
             resolve_type_typeof(resolver, target->type);
         symbol_table = type->symbols;

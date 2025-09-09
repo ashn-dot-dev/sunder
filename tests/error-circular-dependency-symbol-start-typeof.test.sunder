@@ -1,0 +1,10 @@
+let A = typeof(B)::X;
+let B: S = uninit;
+struct S { let X = sizeof(typeof(A)); }
+################################################################################
+# [error-circular-dependency-symbol-start-typeof.test.sunder:1] error: circular dependency created by declaration of `A`
+# let A = typeof(B)::X;
+# ^
+# info: declaration of `A` (line 1) depends on `B` (line 2)
+# info: declaration of `B` (line 2) depends on `S` (line 3)
+# info: declaration of `S` (line 3) depends on `A` (line 1)
