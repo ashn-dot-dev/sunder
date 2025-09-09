@@ -79,7 +79,7 @@ usage(void)
    "  -k        Keep intermediate files.",
    "  -L DIR    Add DIR to the linker path.",
    "  -l OPT    Pass OPT directly to the linker.",
-   "  -o OUT    Write output file to OUT (default a.out).",
+   "  -o OUT    Write the output file to OUT (default a.out).",
    "  -h        Display usage information and exit.",
     };
     // clang-format on
