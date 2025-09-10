@@ -29,7 +29,7 @@ func main() void {
             "{}: {}",
             (:[]std::formatter)[
                 std::formatter::init[[[]byte]](&program),
-                std::formatter::init[[[]byte]](&result.error().*.data)]);
+                std::formatter::init[[std::error]](&result.error())]);
         std::exit(std::EXIT_FAILURE);
     }
 
@@ -44,7 +44,7 @@ func main() void {
                 "{}: {}",
                 (:[]std::formatter)[
                     std::formatter::init[[[]byte]](&program),
-                    std::formatter::init[[[]byte]](&current.error().*.data)]);
+                    std::formatter::init[[std::error]](&current.error())]);
         }
 
         var name = current.value();

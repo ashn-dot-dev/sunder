@@ -13,13 +13,12 @@ func main() void {
 
     var parser = std::argument_parser::init((:[][]byte)[]);
     for parser.advance() {
-        var program = parser.program();
         if path.is_value() {
             std::print_format_line(
                 std::err(),
                 "{}: multiple files specified",
                 (:[]std::formatter)[
-                    std::formatter::init[[[]byte]](&program)]);
+                    std::formatter::init[[[]byte]](&parser.program())]);
             std::exit(std::EXIT_FAILURE);
         }
         path = std::optional[[[]byte]]::init_value(parser.argument_value());
@@ -75,7 +74,7 @@ func main() void {
 
     var source_index = 0u;
     for source_index < source_size {
-        var cur: byte = source[source_index];
+        var cur = source[source_index];
 
         if cur == '>' {
             cells_index += 1;
@@ -104,8 +103,7 @@ func main() void {
         }
         if cur == ',' {
             var b = 0y;
-            var input = std::input();
-            var result = input.read((:[]byte){&b, 1});
+            var result = std::input().read((:[]byte){&b, 1});
             if result.value() != 0 { # Only update on non-EOF.
                cells[cells_index] = (:u8)b;
             }
@@ -136,7 +134,7 @@ func read_source(path: std::optional[[[]byte]]) []byte {
                 "{}: {}",
                 (:[]std::formatter)[
                     std::formatter::init[[[]byte]](&"<stdin>"),
-                    std::formatter::init[[[]byte]](&result.error().*.data)]);
+                    std::formatter::init[[std::error]](&result.error())]);
             std::exit(std::EXIT_FAILURE);
         }
         return result.value();
@@ -150,7 +148,7 @@ func read_source(path: std::optional[[[]byte]]) []byte {
             "{}: {}",
             (:[]std::formatter)[
                 std::formatter::init[[[]byte]](&path),
-                std::formatter::init[[[]byte]](&result.error().*.data)]);
+                std::formatter::init[[std::error]](&result.error())]);
         std::exit(std::EXIT_FAILURE);
     }
 
@@ -164,7 +162,7 @@ func read_source(path: std::optional[[[]byte]]) []byte {
             "{}: {}",
             (:[]std::formatter)[
                 std::formatter::init[[[]byte]](&path),
-                std::formatter::init[[[]byte]](&result.error().*.data)]);
+                std::formatter::init[[std::error]](&result.error())]);
         std::exit(std::EXIT_FAILURE);
     }
     return result.value();

@@ -9,7 +9,7 @@ func cat(filename: []byte) void {
             "{}: {}",
             (:[]std::formatter)[
                 std::formatter::init[[[]byte]](&filename),
-                std::formatter::init[[[]byte]](&result.error().*.data)]);
+                std::formatter::init[[std::error]](&result.error())]);
         std::exit(std::EXIT_FAILURE);
     }
 
@@ -25,7 +25,7 @@ func cat(filename: []byte) void {
                 "{}: {}",
                 (:[]std::formatter)[
                     std::formatter::init[[[]byte]](&filename),
-                    std::formatter::init[[[]byte]](&result.error().*.data)]);
+                    std::formatter::init[[std::error]](&result.error())]);
             std::exit(std::EXIT_FAILURE);
         }
 
