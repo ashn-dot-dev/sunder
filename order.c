@@ -180,7 +180,7 @@ order_tldecl(struct orderer* orderer, struct tldecl* tldecl)
 static void
 order_decl(struct orderer* orderer, struct cst_decl const* decl)
 {
-    assert(order != NULL);
+    assert(orderer != NULL);
     assert(decl != NULL);
 
     switch (decl->kind) {
