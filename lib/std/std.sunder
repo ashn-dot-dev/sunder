@@ -901,7 +901,7 @@ struct str { # namespace
         return found.is_value();
     }
 
-    # Returns a non-empty optional containing the index of the first occurance
+    # Returns a non-empty optional containing the index of the first occurrence
     # of `target` within `str` if `target` is contained within `str`.
     func find(str: []byte, target: []byte) std::optional[[usize]] {
         if countof(str) < countof(target) {
@@ -927,7 +927,7 @@ struct str { # namespace
         return std::optional[[usize]]::EMPTY;
     }
 
-    # Returns a non-empty optional containing the index of the last occurance
+    # Returns a non-empty optional containing the index of the last occurrence
     # of `target` within `str` if `target` is contained within `str`.
     func rfind(str: []byte, target: []byte) std::optional[[usize]] {
         if countof(str) < countof(target) {
@@ -2772,7 +2772,7 @@ struct string {
         return self;
     }
 
-    # Finalize resources assocaited with the string.
+    # Finalize resources associated with the string.
     func fini(self: *string) void {
         if self.*._capacity != 0 {
             std::slice[[byte]]::delete_with_allocator(self.*._allocator, (:[]byte){self.*._start, self.*._capacity});
@@ -3807,7 +3807,7 @@ struct file {
     # Seek from the end of the file.
     let SEEK_END: usize = (:usize)sys::SEEK_END;
 
-    # Set the file position indicatior of an open file to `offset` bytes
+    # Set the file position indicator of an open file to `offset` bytes
     # relative to the position indicated by `from`.
     func seek(self: *file, offset: ssize, from: usize) std::result[[void, std::error]] {
         var sysret = sys::lseek(self.*._fd, (:sys::off_t)offset, (:sys::sint)from);
