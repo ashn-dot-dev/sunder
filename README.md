@@ -17,15 +17,6 @@ Supported platforms include:
 + ARM64 macOS
 + WebAssembly (via Emscripten)
 
-The top-level Dockerfile defines a Debian image with dependencies for native
-x86-64 Linux development pre-installed. You can build and run the Docker image
-with:
-
-```sh
-$ docker buildx build --platform=linux/amd64 --tag sunder .             # Build the image (do this once)
-$ docker run --rm --interactive --tty --volume "$(pwd)":/sunder sunder  # Run the image (do this every time)
-```
-
 ## Building
 ### Quick Version
 To build the compiler, run `make`.
@@ -124,19 +115,19 @@ $ lldb hello
 (lldb) target create "hello"
 Current executable set to '/home/ashn/sources/sunder/hello' (x86_64).
 (lldb) b std_print_line
-Breakpoint 1: where = hello`std_print_line + 58 at hello.tmp.c:13191:9, address = 0x0000000000020b06
+Breakpoint 1: where = hello`std_print_line + 58 at hello.tmp.c:13168:9, address = 0x0000000000020324
 (lldb) run
-Process 133770 launched: '/home/ashn/sources/sunder/hello' (x86_64)
-Process 133770 stopped
+Process 69857 launched: '/home/ashn/sources/sunder/hello' (x86_64)
+Process 69857 stopped
 * thread #1, name = 'hello', stop reason = breakpoint 1.1
-    frame #0: 0x0000555555574b06 hello`std_print_line(__sunder_argument_0_writer=std_writer @ 0x00007fffffffe4d0, __sunder_argument_1_str=(start = "Hello, world!", count = 13)) at hello.tmp.c:13191:9
-   13188        std_print_line(std_writer __sunder_argument_0_writer, __sunder_slice_of_byte __sunder_argument_1_str)
-   13189        {
-   13190            // var return: void
--> 13191            int __sunder_return = /* zero-sized local */0;
-   13192            // var result: std::result[[void, *std::error_info]]
-   13193            std_result_TEMPLATE_BGN_void_COMMA_pointer_to_std_error_info_TEMPLATE_END __sunder_local_0_result = {/* uninit */0};
-   13194            /// [std/std.sunder:1602] STATEMENT STMT_ASSIGN
+    frame #0: 0x0000555555574324 hello`std_print_line(__sunder_argument_0_writer=std_writer @ 0x00007fffffffe0b0, __sunder_argument_1_str=(start = "Hello, world!", count = 13)) at hello.tmp.c:13168:9
+   13165        std_print_line(std_writer __sunder_argument_0_writer, __sunder_slice_of_byte __sunder_argument_1_str)
+   13166        {
+   13167            // var return: void
+-> 13168            int __sunder_return = /* zero-sized local */0;
+   13169            // var result: std::result[[void, *std::error_info]]
+   13170            std_result_TEMPLATE_BGN_void_COMMA_pointer_to_std_error_info_TEMPLATE_END __sunder_local_0_result = {/* uninit */0};
+   13171            /// [std/std.sunder:1602] STATEMENT STMT_ASSIGN
 (lldb)
 ```
 

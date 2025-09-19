@@ -10,7 +10,7 @@
 <decl-constant> ::= "let" <identifier> (":" <type>)? "=" <expr> ";"
                   | "let" <identifier> ":" <type> "=" "uninit" ";"
 
-<decl-function> ::= "func" <identifier> <template-parameter-list>? "(" <parameter-list> ")" <type> <block>
+<decl-function> ::= "func" <identifier> <template-parameter-list>? "(" <function-parameter-list> ")" <type> <block>
 
 <decl-struct> ::= "struct" <identifier> <template-parameter-list>? "{" <member-list> "}"
 
@@ -24,7 +24,7 @@
 
 <decl-extern-variable> ::= "extern" "var" <identifier> ":" <type> ";"
 
-<decl-extern-function> ::= "extern" "func" <identifier> "(" <parameter-list> ")" <type> ";"
+<decl-extern-function> ::= "extern" "func" <identifier> "(" <function-parameter-list> ")" <type> ";"
 
 <decl-extern-type> ::= "extern" "type" <identifier> ";"
 
@@ -58,11 +58,11 @@
               | <decl-type-alias>
 
 <stmt-defer> ::= "defer" <block>
-               | "defer" <expr>
+               | "defer" <expr> ";"
 
 <stmt-if> ::= "if" <expr> <block> ("elif" <expr> <block>)* ("else" <block>)?
 
-<stmt-if> ::= "when" <expr> <block> ("elwhen" <expr> <block>)* ("else" <block>)?
+<stmt-when> ::= "when" <expr> <block> ("elwhen" <expr> <block>)* ("else" <block>)?
 
 <stmt-for-range> ::= "for" <identifier> (":" <type>)? "in" (<expr> ":")? <expr> <block>
 
@@ -206,9 +206,9 @@
 
 <template-parameter-list> ::= "[" "[" <identifier> ("," <identifier>)* "]" "]"
 
-<template-argument-list> ::= <type>+
+<template-argument-list> ::= "[" "[" <type> ("," <type>)* "]" "]"
 
-<function-parameter-list> ::= ( <function-parameter> ("," <function-parameter>)* )?
+<function-parameter-list> ::= (<function-parameter> ("," <function-parameter>)*)?
 
 <function-parameter> ::= <identifier> ":" <type>
 
@@ -247,7 +247,7 @@
 
 <type-enum> ::= "enum"  (":" <type>)? "{" (<identifier> ("=" <expr>)? ";")* "}"
 
-<type-function> ::= func "(" ( <type> ("," <type> )* )? ")" <type>
+<type-function> ::= "func" "(" (<type> ("," <type>)*)? ")" <type>
 
 <type-pointer> ::= "*" <type>
 
