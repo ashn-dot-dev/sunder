@@ -453,27 +453,6 @@ cstr_ends_with(char const* cstr, char const* target)
     return safe_memcmp(start, target, target_count) == 0;
 }
 
-bool
-cstr_eq_ignore_case(char const* lhs, char const* rhs)
-{
-    assert(lhs != NULL);
-    assert(rhs != NULL);
-
-    size_t const lhs_count = strlen(lhs);
-    size_t const rhs_count = strlen(lhs);
-    if (lhs_count != rhs_count) {
-        return false;
-    }
-
-    for (size_t i = 0; i < lhs_count; ++i) {
-        if (safe_tolower(lhs[i]) != safe_tolower(rhs[i])) {
-            return false;
-        }
-    }
-
-    return true;
-}
-
 char const*
 cstr_replace(char const* cstr, char const* target, char const* replacement)
 {
