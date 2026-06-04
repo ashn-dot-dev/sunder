@@ -1184,7 +1184,7 @@ strgen_value(struct value const* value)
             break;
         }
         if (isinf(ieee754) && ieee754 > 0) {
-            string_append_cstr(s, "/* +INFINITY */(+1.0f / 0.0f)");
+            string_append_cstr(s, "/* +INFINITY */(+1.0 / 0.0)");
             break;
         }
         string_append_fmt(s, "%.*f", IEEE754_DBL_DECIMAL_DIG, ieee754);
