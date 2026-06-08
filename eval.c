@@ -1698,7 +1698,7 @@ eval_lvalue_access_index(struct expr const* expr)
         fatal(
             expr->data.access_index.idx->location,
             "index out-of-bounds (array count is %ju, received %s)",
-            lhs->type->data.array.count,
+            expr->data.access_index.lhs->type->data.array.count,
             bigint_to_new_cstr(idx->data.integer));
     }
 
