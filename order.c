@@ -609,6 +609,12 @@ order_symbol(struct orderer* orderer, struct cst_symbol const* symbol)
             orderer->module->cst->namespace;
         size_t const namespace_count =
             namespace != NULL ? sbuf_count(namespace->identifiers) : 0;
+        if (sbuf_count(symbol->elements) <= namespace_count) {
+            // The checked symbol would not fully match the symbol path in the
+            // current module namespace. Assume that the symbol refers to a
+            // construct defined under a parent namespace in some other module.
+            return;
+        }
         for (size_t i = 0; i < namespace_count; ++i) {
             char const* const element_name =
                 symbol->elements[i]->identifier.name;
