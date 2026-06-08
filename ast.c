@@ -2230,7 +2230,9 @@ value_clone(struct value const* self)
         for (size_t i = 0; i < sbuf_count(elements); ++i) {
             sbuf_push(cloned_elements, value_clone(elements[i]));
         }
-        return value_new_array(self->type, cloned_elements, ellipsis);
+        struct value* const cloned_ellipsis =
+            ellipsis != NULL ? value_clone(ellipsis) : NULL;
+        return value_new_array(self->type, cloned_elements, cloned_ellipsis);
     }
     case TYPE_SLICE: {
         return value_new_slice(
