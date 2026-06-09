@@ -903,7 +903,7 @@ eval_rvalue_access_slice(struct expr const* expr)
     }
 
     if (lhs->type->kind == TYPE_ARRAY) {
-        if (begin_uz >= lhs->type->data.array.count) {
+        if (begin_uz > lhs->type->data.array.count) {
             fatal(
                 expr->data.access_slice.begin->location,
                 "index out-of-bounds (array count is %ju, received %zu)",
