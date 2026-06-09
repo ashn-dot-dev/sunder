@@ -2108,6 +2108,12 @@ symbol_new_namespace(
 struct symbol*
 symbol_get_mutable(struct symbol const* self);
 
+// Get the type of the symbol `self`.
+// Returns NULL if this symbol does not have an address.
+struct type const*
+symbol_get_type(struct symbol const* self);
+
+// Get the address of the symbol `self`.
 // Returns NULL if this symbol does not have an address.
 struct address const*
 symbol_get_address(struct symbol const* self);

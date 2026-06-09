@@ -3686,12 +3686,21 @@ resolve_stmt_switch(struct resolver* resolver, struct cst_stmt const* stmt)
             for (size_t j = 0; j < sbuf_count(symbols); ++j) {
                 struct symbol const* const symbol =
                     xget_symbol(resolver, symbols[j]);
-                if (symbol_xget_type(symbol) != type) {
+                struct type const* const symbol_type = symbol_get_type(symbol);
+                if (symbol_type == NULL) {
+                    fatal(
+                        symbols[j]->location,
+                        "expected case symbol with enum type `%s` (received %s `%s`)",
+                        type->name,
+                        symbol_kind_to_cstr(symbol->kind),
+                        symbol->name);
+                }
+                if (symbol_type != type) {
                     fatal(
                         symbols[j]->location,
                         "expected case symbol with enum type `%s` (received symbol of type `%s`)",
                         type->name,
-                        symbol_xget_type(symbol)->name);
+                        symbol_type->name);
                 }
                 bool is_enum_value_symbol = false;
                 for (size_t k = 0; k < sbuf_count(value_symbols); ++k) {
