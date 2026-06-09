@@ -283,7 +283,9 @@ skip_comment(struct lexer* self)
     while (*self->current != '\0' && *self->current != '\n') {
         self->current += 1;
     }
-    self->current += STR_LITERAL_COUNT("\n");
+    if (*self->current == '\n') {
+        self->current += STR_LITERAL_COUNT("\n");
+    }
     self->current_line += 1;
 }
 
