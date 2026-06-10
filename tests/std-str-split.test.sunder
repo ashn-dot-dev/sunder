@@ -29,6 +29,7 @@ func main() void {
     test_split("A B C", " ");
     test_split("A  B  C", " ");
     test_split("foo bar baz", "a");
+    test_split("foo bar baz", "");
 
     test_split("<>A<>B<>C", "<>");
     test_split("A<>B<>C<>", "<>");
@@ -43,6 +44,8 @@ func main() void {
 # split: "A", "", "B", "", "C"
 # input: "foo bar baz", delimiter: "a"
 # split: "foo b", "r b", "z"
+# input: "foo bar baz", delimiter: ""
+# split: "f", "o", "o", " ", "b", "a", "r", " ", "b", "a", "z"
 # input: "<>A<>B<>C", delimiter: "<>"
 # split: "", "A", "B", "C"
 # input: "A<>B<>C<>", delimiter: "<>"

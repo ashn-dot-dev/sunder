@@ -1023,8 +1023,16 @@ struct str { # namespace
     #       # Do something with each split field...
     #   }
     func split_with_allocator(allocator: std::allocator, str: []byte, delimiter: []byte) [][]byte {
-        var slice = std::slice[[[]byte]]::new_with_allocator(allocator, 0);
 
+        if countof(delimiter) == 0 {
+            var slice = std::slice[[[]byte]]::new_with_allocator(allocator, countof(str));
+            for i in countof(str) {
+                slice[i] = (:[]byte){&str[i], 1};
+            }
+            return slice;
+        }
+
+        var slice = std::slice[[[]byte]]::new_with_allocator(allocator, 0);
         var start = 0u;
         var cur = 0u;
         for cur < countof(str) {
