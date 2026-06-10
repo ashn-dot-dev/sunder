@@ -1170,7 +1170,7 @@ eval_rvalue_binary(struct expr const* expr)
 
         bool const is_signed = type_is_sinteger(expr->type);
 
-        size_t const bit_count = (size_t)rhs->type->size * 8u;
+        size_t const bit_count = (size_t)expr->type->size * 8u;
         struct bitarr* const res_bits = bitarr_new(bit_count);
         if (bigint_to_bitarr(res_bits, lhs->data.integer)) {
             UNREACHABLE();
@@ -1199,7 +1199,7 @@ eval_rvalue_binary(struct expr const* expr)
         bool const is_signed = type_is_sinteger(expr->type);
         bool const is_negative = bigint_cmp(lhs->data.integer, BIGINT_ZERO) < 0;
 
-        size_t const bit_count = (size_t)rhs->type->size * 8u;
+        size_t const bit_count = (size_t)expr->type->size * 8u;
         struct bitarr* const res_bits = bitarr_new(bit_count);
         if (bigint_to_bitarr(res_bits, lhs->data.integer)) {
             UNREACHABLE();
