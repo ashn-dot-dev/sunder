@@ -1,0 +1,48 @@
+import "std";
+
+struct K {
+    var id: u32;
+
+    func hash(_: *K) usize {
+        return 0; # same hash for every instance of K
+    }
+
+    func compare(lhs: *K, rhs: *K) ssize {
+        if lhs.*.id < rhs.*.id { return -1; }
+        if lhs.*.id > rhs.*.id { return +1; }
+        return 0;
+    }
+
+    func format(self: *K, writer: std::writer, fmt: []byte) std::result[[void, std::error]] {
+        if countof(fmt) != 0 {
+            return std::result[[void, std::error]]::init_error(std::error::INVALID_ARGUMENT);
+        }
+
+        return std::write_format(writer, "{}", (:[]std::formatter)[std::formatter::init[[u32]](&self.*.id)]);
+    }
+
+}
+
+func main() void {
+    var m = std::hash_map[[K, []byte]]::init();
+    defer m.fini();
+
+    m.insert((:K){.id = 123}, "foo");
+    m.insert((:K){.id = 456}, "bar");
+    m.insert((:K){.id = 789}, "baz");
+    m.remove(&(:K){.id = 456});
+    m.insert((:K){.id = 789}, "qux");
+
+    var iter = m.iterator();
+    for iter.advance() {
+        std::print_format_line(
+            std::out(),
+            "key={}, value={}",
+            (:[]std::formatter)[
+                std::formatter::init[[K]](iter.current().*.key),
+                std::formatter::init[[[]byte]](iter.current().*.value)]);
+    }
+}
+################################################################################
+# key=123, value=foo
+# key=789, value=qux

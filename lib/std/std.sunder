@@ -3338,28 +3338,33 @@ struct hash_map[[K, V]] {
         }
 
         var index = key.hash() % countof(self.*._elements);
+        var first = std::optional[[usize]]::EMPTY;
         for true {
+            defer { index = (index + 1) % countof(self.*._elements); }
+
             if self.*._elements[index].index == hash_map[[K, V]]::_INDEX_NIL {
-                self.*._elements[index] = (:_element){
+                var slot = index;
+                if not first.is_empty() {
+                    slot = first.value();
+                }
+                self.*._elements[slot] = (:_element){
                     .index = self.*._inserted.count(),
                     .key = key,
                     .value = value,
                 };
-                self.*._inserted.push(index);
+                self.*._inserted.push(slot);
                 self.*._n += 1;
-                self.*._q += 1;
+                if slot == index {
+                    self.*._q += 1;
+                }
                 return std::optional[[std::key_value_pair[[K, V]]]]::EMPTY;
             }
 
             if self.*._elements[index].index == hash_map[[K, V]]::_INDEX_DEL {
-                self.*._elements[index] = (:_element){
-                    .index = self.*._inserted.count(),
-                    .key = key,
-                    .value = value,
-                };
-                self.*._inserted.push(index);
-                self.*._n += 1;
-                return std::optional[[std::key_value_pair[[K, V]]]]::EMPTY;
+                if first.is_empty() {
+                    first = std::optional[[usize]]::init_value(index);
+                }
+                continue;
             }
 
             # Slot in-use.
@@ -3378,8 +3383,6 @@ struct hash_map[[K, V]] {
                 self.*._inserted.push(index);
                 return std::optional[[std::key_value_pair[[K, V]]]]::init_value(kv);
             }
-
-            index = (index + 1) % countof(self.*._elements);
         }
 
         std::unreachable(fileof(), lineof());
