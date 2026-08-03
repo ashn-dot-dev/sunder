@@ -794,7 +794,7 @@ sys_f32_to_str(byte* buf, usize buf_size, f32 f, ssize digits)
     assert(INT_MIN <= digits && digits <= INT_MAX);
     int d = digits < 0 ? __SUNDER_IEEE754_FLT_DECIMAL_DIG : (int)digits;
     int written = snprintf(buf, buf_size, "%.*f", d, (double)f);
-    if (written < 0 && (usize)written >= buf_size) {
+    if (written < 0 || (usize)written >= buf_size) {
         return __sunder_false;
     }
     if (written > 0 && digits < 0) {
@@ -822,7 +822,7 @@ sys_f64_to_str(byte* buf, usize buf_size, f64 f, ssize digits)
     assert(INT_MIN <= digits && digits <= INT_MAX);
     int d = digits < 0 ? __SUNDER_IEEE754_DBL_DECIMAL_DIG : (int)digits;
     int written = snprintf(buf, buf_size, "%.*f", d, f);
-    if (written < 0 && (usize)written >= buf_size) {
+    if (written < 0 || (usize)written >= buf_size) {
         return __sunder_false;
     }
     if (written > 0 && digits < 0) {
