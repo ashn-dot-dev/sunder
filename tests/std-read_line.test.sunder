@@ -17,11 +17,11 @@ func test(str: []byte) void {
 }
 
 func main() void {
+    test("");
     test("LINE 1\n");
     test("LINE 1");
     test("LINE 1\nLINE 2\n");
     test("LINE 1\nLINE 2");
-    test("");
     test("LINE 1\nLINE 2\nLINE 3\n");
 }
 ################################################################################

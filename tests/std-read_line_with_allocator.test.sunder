@@ -21,11 +21,11 @@ func main() void {
     defer allocator.fini();
     var allocator = std::allocator::init[[typeof(allocator)]](&allocator);
 
+    test(allocator, "");
     test(allocator, "LINE 1\n");
     test(allocator, "LINE 1");
     test(allocator, "LINE 1\nLINE 2\n");
     test(allocator, "LINE 1\nLINE 2");
-    test(allocator, "");
     test(allocator, "LINE 1\nLINE 2\nLINE 3\n");
 }
 ################################################################################

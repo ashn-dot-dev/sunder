@@ -1,18 +1,30 @@
 import "std";
 
 func main() void {
+    var str_reader = std::str_reader::init("");
+    var reader = std::reader::init[[std::str_reader]](&str_reader);
+    var allocator = std::global_allocator();
+
+    var read_result = std::read_all_with_allocator(allocator, reader);
+    var bytes = read_result.value();
+    defer std::slice[[byte]]::delete(bytes);
+
+    std::print(std::out(), bytes); # should not print anything
+
+    ########
+
     var open_result = std::file::open("data.txt", std::file::OPEN_READ);
     var file: std::file = open_result.value();
-
+    defer file.close();
     var reader = std::reader::init[[std::file]](&file);
     var allocator = std::global_allocator();
 
     var read_result = std::read_all_with_allocator(allocator, reader);
     var bytes = read_result.value();
+    defer std::slice[[byte]]::delete_with_allocator(allocator, bytes);
+
     std::print(std::out(), bytes);
 
-    std::slice[[byte]]::delete_with_allocator(allocator, bytes);
-    file.close();
 }
 ################################################################################
 # TEST DATA FILE LINE 1

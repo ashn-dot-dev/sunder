@@ -1266,12 +1266,12 @@ func read_all(reader: std::reader) std::result[[[]byte, std::error]] {
 # the read data, allocated using the provided allocator.
 func read_all_with_allocator(allocator: std::allocator, reader: std::reader) std::result[[[]byte, std::error]] {
     var vec = std::vector[[byte]]::init_with_allocator(allocator);
+    defer vec.fini();
 
     var buf = (:[4096]byte)[0...];
     for true {
         var result = reader.read(buf[0:countof(buf)]);
         if result.is_error() {
-            vec.fini();
             return std::result[[[]byte, std::error]]::init_error(result.error());
         }
 
@@ -1282,7 +1282,6 @@ func read_all_with_allocator(allocator: std::allocator, reader: std::reader) std
 
         var cur_count = vec.count();
         var new_count = vec.count() + read_size;
-
         if new_count > vec.capacity() {
             vec.reserve(usize::max(new_count, vec.capacity() * 2));
         }
@@ -1291,11 +1290,8 @@ func read_all_with_allocator(allocator: std::allocator, reader: std::reader) std
         std::slice[[byte]]::copy(vec.data()[cur_count:new_count], buf[0:read_size]);
     }
 
-    var bytes = (:[]byte){vec.start(), vec.count()};
-    var slice = (:[]byte){vec.start(), vec.capacity()};
-    if countof(bytes) != countof(slice) {
-        bytes = std::slice[[byte]]::resize_with_allocator(allocator, slice, countof(bytes));
-    }
+    var bytes = std::slice[[byte]]::new_with_allocator(allocator, vec.count());
+    std::slice[[byte]]::copy(bytes, vec.data());
     return std::result[[[]byte, std::error]]::init_value(bytes);
 }
 
@@ -1374,21 +1370,20 @@ func read_line(reader: std::reader) std::result[[std::optional[[[]byte]], std::e
 #       # when reading from standard input.
 #   }
 func read_line_with_allocator(allocator: std::allocator, reader: std::reader) std::result[[std::optional[[[]byte]], std::error]] {
-    var bytes = std::slice[[byte]]::new_with_allocator(allocator, 0);
+    var vec = std::vector[[byte]]::init_with_allocator(allocator);
+    defer vec.fini();
 
     var c: byte = uninit;
     for true {
         var result = reader.read((:[]byte){&c, 1});
         if result.is_error() {
-            std::slice[[byte]]::delete_with_allocator(allocator, bytes);
             return std::result[[std::optional[[[]byte]], std::error]]::init_error(result.error());
         }
 
         var read_size = result.value();
         if read_size == 0 {
-            if countof(bytes) == 0 {
+            if vec.count() == 0 {
                 # End-of-input encountered while reading an empty line.
-                std::slice[[byte]]::delete_with_allocator(allocator, bytes);
                 return std::result[[std::optional[[[]byte]], std::error]]::init_value(std::optional[[[]byte]]::EMPTY);
             }
             # End-of-input encountered while reading a non-empty line.
@@ -1400,12 +1395,11 @@ func read_line_with_allocator(allocator: std::allocator, reader: std::reader) st
             break;
         }
 
-        var cur_count = countof(bytes);
-        var new_count = cur_count + read_size;
-        bytes = std::slice[[byte]]::resize_with_allocator(allocator, bytes, new_count);
-        std::slice[[byte]]::copy(bytes[cur_count:new_count], (:[]byte){&c, 1});
+        vec.push(c);
     }
 
+    var bytes = std::slice[[byte]]::new_with_allocator(allocator, vec.count());
+    std::slice[[byte]]::copy(bytes, vec.data());
     return std::result[[std::optional[[[]byte]], std::error]]::init_value(std::optional[[[]byte]]::init_value(bytes));
 }
 
