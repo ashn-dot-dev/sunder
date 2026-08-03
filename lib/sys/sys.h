@@ -721,7 +721,7 @@ sys_str_to_f32(f32* out, byte* start, usize count)
 
     float f;
     int scanned = sscanf(buf, "%f", &f);
-    if (scanned == EOF) {
+    if (scanned == 0 || scanned == EOF) {
         return __sunder_false;
     }
 
@@ -770,7 +770,7 @@ sys_str_to_f64(f64* out, byte* start, usize count)
 
     double f;
     int scanned = sscanf(buf, "%lf", &f);
-    if (scanned == EOF) {
+    if (scanned == 0 || scanned == EOF) {
         return __sunder_false;
     }
 
