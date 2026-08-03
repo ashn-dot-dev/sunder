@@ -2875,7 +2875,7 @@ complete_enum(
         underlying_type_);
     freeze(type);
 
-    struct type const* const save_current_type = type;
+    struct type const* const save_current_type = resolver->current_type;
     resolver->current_type = type;
 
     struct symbol* const symbol = symbol_new_type(location, type);
