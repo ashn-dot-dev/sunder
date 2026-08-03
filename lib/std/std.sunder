@@ -5063,7 +5063,7 @@ extend f32 func hash(self: *f32) usize {
         return 0;
     }
 
-    return (:usize)*self;
+    return (:usize)(*(:*u32)self);
 }
 
 extend f32 func eq(lhs: *f32, rhs: *f32) bool {
@@ -5162,7 +5162,7 @@ extend f64 func hash(self: *f64) usize {
         return 0;
     }
 
-    return (:usize)*self;
+    return (:usize)(*(:*u64)self);
 }
 
 extend f64 func eq(lhs: *f64, rhs: *f64) bool {
