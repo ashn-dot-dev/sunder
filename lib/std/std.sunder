@@ -1985,7 +1985,7 @@ struct big_integer {
         if (end - cur) > countof("+") and str[cur] == '+' {
             cur += 1;
         }
-        if (end - cur) > countof("-") and str[cur] == '-' {
+        elif (end - cur) > countof("-") and str[cur] == '-' {
             sign = -1;
             cur += 1;
         }
