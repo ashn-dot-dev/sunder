@@ -426,7 +426,9 @@ eval_rvalue_cast(struct expr const* expr)
     assert(from->type->kind != TYPE_ARRAY);
     assert(from->type->kind != TYPE_SLICE);
     assert(from->type->kind != TYPE_STRUCT);
-    if (from->type->kind == expr->type->kind) {
+    bool const is_distinct_enum_to_enum = from->type->kind == TYPE_ENUM
+        && expr->type->kind == TYPE_ENUM && from->type != expr->type;
+    if (from->type->kind == expr->type->kind && !is_distinct_enum_to_enum) {
         // Setting the type of `from` to the type of the `expr` to cover cases
         // such as function-to-function conversions where the type kind is the
         // same, but the actual type is different.
