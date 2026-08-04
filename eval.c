@@ -1738,12 +1738,15 @@ eval_lvalue_access_member_variable(struct expr const* expr)
     assert(expr != NULL);
     assert(expr->kind == EXPR_ACCESS_MEMBER_VARIABLE);
 
+    struct member_variable const* const member_variable =
+        expr->data.access_member_variable.member_variable;
+
     struct value* const value =
         eval_lvalue(expr->data.access_member_variable.lhs);
     assert(value->type->kind == TYPE_POINTER);
     assert(value->data.pointer.kind == ADDRESS_STATIC);
-    value->data.pointer.data.static_.offset +=
-        expr->data.access_member_variable.member_variable->offset;
+    value->type = type_unique_pointer(member_variable->type);
+    value->data.pointer.data.static_.offset += member_variable->offset;
     return value;
 }
 
