@@ -333,9 +333,6 @@ context_init(void)
     s_context.builtin.slice_of_byte = type_unique_slice(byte);
 }
 
-/* util.c */
-extern sbuf(char*) interned;
-
 void
 context_fini(void)
 {
