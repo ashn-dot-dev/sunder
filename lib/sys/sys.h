@@ -720,8 +720,9 @@ sys_str_to_f32(f32* out, byte* start, usize count)
     buf[count] = '\0';
 
     float f;
-    int scanned = sscanf(buf, "%f", &f);
-    if (scanned == 0 || scanned == EOF) {
+    int consumed = 0;
+    int scanned = sscanf(buf, "%f%n", &f, &consumed);
+    if (scanned == 0 || scanned == EOF || (usize)consumed != count) {
         return __sunder_false;
     }
 
@@ -769,8 +770,9 @@ sys_str_to_f64(f64* out, byte* start, usize count)
     buf[count] = '\0';
 
     double f;
-    int scanned = sscanf(buf, "%lf", &f);
-    if (scanned == 0 || scanned == EOF) {
+    int consumed = 0;
+    int scanned = sscanf(buf, "%lf%n", &f, &consumed);
+    if (scanned == 0 || scanned == EOF || (usize)consumed != count) {
         return __sunder_false;
     }
 
