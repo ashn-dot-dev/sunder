@@ -6063,7 +6063,6 @@ resolve_expr_binary_arithmetic(
     bool const is_rem = bop == BOP_REM;
     bool const allow_rem = type_is_uinteger(type) || type_is_sinteger(type);
     if (is_rem && !allow_rem) {
-        assert(type->size != SIZEOF_UNSIZED);
         fatal(
             op.location,
             "invalid arguments of type `%s` in binary `%s` expression",
