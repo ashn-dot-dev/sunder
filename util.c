@@ -669,7 +669,7 @@ struct bitarr {
 static inline size_t
 bitarr__word_count_(size_t count)
 {
-    return (count / BITARR__WORD_SIZE_) + (count % BITARR__WORD_SIZE_ != 0);
+    return (count / BITARR__WORD_BITS_) + (count % BITARR__WORD_BITS_ != 0);
 }
 
 static inline size_t
@@ -727,9 +727,9 @@ bitarr_set(struct bitarr* self, size_t n, int value)
         fatal(NO_LOCATION, "[%s] Index out of bounds (%zu)", __func__, n);
     }
 
-    BITARR__WORD_TYPE_* const pword = &self->words[n / BITARR__WORD_SIZE_];
+    BITARR__WORD_TYPE_* const pword = &self->words[n / BITARR__WORD_BITS_];
     BITARR__WORD_TYPE_ const mask = (BITARR__WORD_TYPE_)1u
-        << (n % BITARR__WORD_SIZE_);
+        << (n % BITARR__WORD_BITS_);
     *pword = (BITARR__WORD_TYPE_)(value ? *pword | mask : *pword & ~mask);
 }
 
@@ -742,9 +742,9 @@ bitarr_get(struct bitarr const* self, size_t n)
         fatal(NO_LOCATION, "[%s] Index out of bounds (%zu)", __func__, n);
     }
 
-    BITARR__WORD_TYPE_ const word = self->words[n / BITARR__WORD_SIZE_];
+    BITARR__WORD_TYPE_ const word = self->words[n / BITARR__WORD_BITS_];
     BITARR__WORD_TYPE_ const mask = (BITARR__WORD_TYPE_)1u
-        << (n % BITARR__WORD_SIZE_);
+        << (n % BITARR__WORD_BITS_);
 
     return (word & mask) != 0;
 }
