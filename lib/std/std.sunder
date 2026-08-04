@@ -1863,7 +1863,7 @@ func sort_with_comparator[[T]](slice: []T, comparator: func(*T, *T) ssize) void 
             slice[i] = slice0[i0];
             i0 += 1;
         }
-        elif comparator(&slice0[i0], &slice1[i1]) < 0 {
+        elif comparator(&slice0[i0], &slice1[i1]) <= 0 {
             slice[i] = slice0[i0];
             i0 += 1;
         }
