@@ -831,6 +831,9 @@ bitarr_shiftl(struct bitarr* res, struct bitarr const* lhs, size_t nbits)
             res->count,
             lhs->count);
     }
+    if (res->count == 0) {
+        return;
+    }
 
     size_t const count = bitarr_count(res);
     bitarr_assign(res, lhs);
@@ -856,6 +859,9 @@ bitarr_shiftr(
             __func__,
             res->count,
             lhs->count);
+    }
+    if (res->count == 0) {
+        return;
     }
 
     size_t const count = bitarr_count(res);
