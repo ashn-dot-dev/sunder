@@ -920,7 +920,7 @@ eval_rvalue_access_slice(struct expr const* expr)
         if (begin_uz > end_uz) {
             fatal(
                 expr->data.access_slice.begin->location,
-                "index out-of-bounds (slice begin index %ju is greater than end index %ju)",
+                "index out-of-bounds (slice begin index %zu is greater than end index %zu)",
                 begin_uz,
                 end_uz);
         }
