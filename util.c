@@ -951,6 +951,9 @@ bitarr_to_bigint(
     assert(bitarr != NULL);
 
     bigint_assign(res, BIGINT_ZERO);
+    if (bitarr->count == 0) {
+        return;
+    }
 
     size_t const bit_count = bitarr_count(bitarr);
     struct bitarr* const mag_bits = bitarr_new(bit_count);
