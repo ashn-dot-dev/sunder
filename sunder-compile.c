@@ -194,5 +194,10 @@ argparse(int argc, char** argv)
 static void
 fini(void)
 {
+    sbuf_fini(a_paths);
+    sbuf_fini(c_paths);
+    sbuf_fini(o_paths);
+    sbuf_fini(opt_L);
     sbuf_fini(opt_l);
+    sbuf_fini(paths);
 }
