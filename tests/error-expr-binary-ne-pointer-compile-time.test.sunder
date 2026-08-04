@@ -1,0 +1,10 @@
+import "std";
+
+func main() void {
+    let x: ssize = 123;
+    let _ = &x != &x;
+}
+################################################################################
+# [error-expr-binary-ne-pointer-compile-time.test.sunder:5] error: invalid compile-time evaluation of types `*ssize` and `*ssize` in binary expression
+#     let _ = &x != &x;
+#                ^

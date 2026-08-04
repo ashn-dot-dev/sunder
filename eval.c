@@ -1158,6 +1158,15 @@ eval_rvalue_binary(struct expr const* expr)
     struct value* const lhs = eval_rvalue(expr->data.binary.lhs);
     struct value* const rhs = eval_rvalue(expr->data.binary.rhs);
     struct value* res = NULL;
+
+    if (lhs->type->kind == TYPE_POINTER && rhs->type->kind == TYPE_POINTER) {
+        fatal(
+            expr->location,
+            "invalid compile-time evaluation of types `%s` and `%s` in binary expression",
+            lhs->type->name,
+            rhs->type->name);
+    }
+
     switch (expr->data.binary.op) {
     case BOP_OR: {
         assert(lhs->type->kind == TYPE_BOOL);
