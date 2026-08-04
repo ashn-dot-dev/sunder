@@ -660,10 +660,6 @@ NORETURN void
 unreachable(char const* file, int line);
 #define UNREACHABLE() unreachable(__FILE__, __LINE__)
 
-// Round up to the nearest multiple of 8.
-uintmax_t
-ceil8umax(uintmax_t x);
-
 // Spawn a subprocess and wait for it to complete.
 // Returns the exit status of the spawned process.
 // Returns -1 if the subprocess did not properly exit.

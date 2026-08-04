@@ -2311,15 +2311,6 @@ unreachable(char const* file, int line)
     exit(EXIT_FAILURE);
 }
 
-uintmax_t
-ceil8umax(uintmax_t x)
-{
-    while (x % 8u != 0u) {
-        x += 1u;
-    }
-    return x;
-}
-
 int
 spawnvpw(char const* const* argv)
 {
