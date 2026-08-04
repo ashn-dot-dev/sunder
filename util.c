@@ -2329,9 +2329,9 @@ spawnvpw(char const* const* argv)
 
     if (pid == 0) {
         // The POSIX 2017 rational section for the exec family of functions
-        // notes that the neither the argv vector's elements nor the characters
+        // notes that neither the argv vector's elements nor the characters
         // within those elements are modified. The parameter declaration `char
-        // *const argv[]` was chosen to allow for for historical compatibility.
+        // *const argv[]` was chosen to allow for historical compatibility.
         char* const* argv_ = (char* const*)argv;
         if (execvp(argv[0], argv_) == -1) {
             fatal(
@@ -2343,7 +2343,10 @@ spawnvpw(char const* const* argv)
     }
 
     int status = 0;
-    waitpid(pid, &status, 0);
+    if (waitpid(pid, &status, 0) == -1) {
+        fatal(
+            NO_LOCATION, "failed to waitpid with error '%s'", strerror(errno));
+    }
     if (!WIFEXITED(status)) {
         return -1;
     }
