@@ -2278,8 +2278,6 @@ stmt_new_defer(
 struct stmt*
 stmt_new_if(struct conditional const* conditionals);
 struct stmt*
-stmt_new_when(struct conditional conditional);
-struct stmt*
 stmt_new_for_range(
     struct source_location location,
     struct symbol const* loop_variable,
