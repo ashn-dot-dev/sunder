@@ -784,12 +784,21 @@ bool
 sys_f32_to_str(byte* buf, usize buf_size, f32 f, ssize digits)
 {
     if (isnan(f)) {
+        if (buf_size < sizeof("NaN")) {
+            return __sunder_false;
+        }
         return sprintf(buf, "NaN");
     }
     if (isinf(f) && f < 0) {
+        if (buf_size < sizeof("-infinity")) {
+            return __sunder_false;
+        }
         return sprintf(buf, "-infinity");
     }
     if (isinf(f) && f > 0) {
+        if (buf_size < sizeof("infinity")) {
+            return __sunder_false;
+        }
         return sprintf(buf, "infinity");
     }
 
@@ -812,12 +821,21 @@ bool
 sys_f64_to_str(byte* buf, usize buf_size, f64 f, ssize digits)
 {
     if (isnan(f)) {
+        if (buf_size < sizeof("NaN")) {
+            return __sunder_false;
+        }
         return sprintf(buf, "NaN");
     }
     if (isinf(f) && f < 0) {
+        if (buf_size < sizeof("-infinity")) {
+            return __sunder_false;
+        }
         return sprintf(buf, "-infinity");
     }
     if (isinf(f) && f > 0) {
+        if (buf_size < sizeof("infinity")) {
+            return __sunder_false;
+        }
         return sprintf(buf, "infinity");
     }
 
