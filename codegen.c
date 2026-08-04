@@ -3824,7 +3824,6 @@ codegen(
 
     debug = opt_g;
     struct string* const src_path = string_new_fmt("%s.tmp.c", opt_o);
-    struct string* const obj_path = string_new_fmt("%s.tmp.o", opt_o);
 
     char const* const SUNDER_HOME = getenv("SUNDER_HOME");
     if (SUNDER_HOME == NULL) {
@@ -4063,12 +4062,8 @@ cleanup:
     if (!opt_k) {
         (void)remove(string_start(src_path));
     }
-    if (!opt_k && !opt_c) {
-        (void)remove(string_start(obj_path));
-    }
     sbuf_fini(backend_argv);
     string_del(src_path);
-    string_del(obj_path);
     if (err) {
         exit(EXIT_FAILURE);
     }
