@@ -4601,7 +4601,7 @@ extend integer func _format_umax(int: std::umax, writer: std::writer, fmt: []byt
         return std::result[[void, std::error]]::init_error(std::error::INVALID_ARGUMENT);
     }
 
-    let OUTPUT_COUNT = countof("+") + countof("0b") + sizeof(usize) * 8;
+    let OUTPUT_COUNT = countof("+") + countof("0b") + sizeof(umax) * 8;
     var output = (:[OUTPUT_COUNT]byte)[0...];
     var output_index = countof(output) - 1;
 
