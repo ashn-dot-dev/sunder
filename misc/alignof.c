@@ -51,24 +51,6 @@ main(void)
 //
 // max_align_t: 16
 
-// ARM64 Linux
-// ===========
-//     uint8_t: 1
-//    uint16_t: 2
-//    uint32_t: 4
-//    uint64_t: 8
-//   uintptr_t: 4
-//      size_t: 4
-//
-//       float: 4
-//      double: 8
-// long double: 8
-//
-//  uint8_t[5]: 1
-// uint64_t[2]: 8
-//
-// max_align_t: 8
-
 // ARM64 macOS
 // ===========
 //     uint8_t: 1
