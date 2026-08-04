@@ -676,7 +676,7 @@ cst_expr_new_access_dereference(
 
     struct cst_expr* const self =
         cst_expr_new(location, CST_EXPR_ACCESS_DEREFERENCE);
-    self->data.access_member.lhs = lhs;
+    self->data.access_dereference.lhs = lhs;
     return self;
 }
 

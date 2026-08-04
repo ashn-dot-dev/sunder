@@ -1179,7 +1179,7 @@ eval_rvalue_binary(struct expr const* expr)
         size_t shift_count = 0u;
         if (bigint_to_uz(&shift_count, rhs->data.integer)) {
             fatal(
-                expr->data.access_index.idx->location,
+                expr->data.binary.rhs->location,
                 "shift count out-of-range (received %s)",
                 bigint_to_new_cstr(rhs->data.integer));
         }
@@ -1208,7 +1208,7 @@ eval_rvalue_binary(struct expr const* expr)
         size_t shift_count = 0u;
         if (bigint_to_uz(&shift_count, rhs->data.integer)) {
             fatal(
-                expr->data.access_index.idx->location,
+                expr->data.binary.rhs->location,
                 "shift count out-of-range (received %s)",
                 bigint_to_new_cstr(rhs->data.integer));
         }

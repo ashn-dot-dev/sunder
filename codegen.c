@@ -1751,7 +1751,7 @@ codegen_stmt_continue(struct stmt const* stmt)
     assert(stmt != NULL);
     assert(stmt->kind == STMT_CONTINUE);
 
-    codegen_defers(stmt->data.break_.defer_begin, stmt->data.break_.defer_end);
+    codegen_defers(stmt->data.continue_.defer_begin, stmt->data.continue_.defer_end);
     appendli("continue;");
 }
 

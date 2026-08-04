@@ -1688,7 +1688,7 @@ expr_new_alignof(struct source_location location, struct type const* rhs)
 
     struct expr* const self =
         expr_new(location, context()->builtin.usize, EXPR_ALIGNOF);
-    self->data.sizeof_.rhs = rhs;
+    self->data.alignof_.rhs = rhs;
     return self;
 }
 
