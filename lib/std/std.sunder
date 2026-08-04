@@ -3932,7 +3932,7 @@ struct directory {
         var path_cstr = (:[sys::PATH_MAX]byte)[0...];
         std::slice[[byte]]::copy(path_cstr[0:countof(path)], path);
 
-        var sysret = sys::mkdir(&path_cstr[0], 0o666);
+        var sysret = sys::mkdir(&path_cstr[0], 0o777);
         if sysret < 0 {
             return std::result[[void, std::error]]::init_error((:std::error)sys::error(-sysret));
         }
