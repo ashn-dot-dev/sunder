@@ -2237,7 +2237,6 @@ struct big_integer {
         }
 
         var magnitude = big_integer::init_assign(self);
-        big_integer::assign(&magnitude, self);
         big_integer::abs(&magnitude, &magnitude);
         defer magnitude.fini();
 
