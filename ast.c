@@ -2537,7 +2537,7 @@ value_lt(struct value const* lhs, struct value const* rhs)
         UNREACHABLE();
     }
     case TYPE_VOID: {
-        return true;
+        UNREACHABLE();
     }
     case TYPE_BOOL: {
         return lhs->data.boolean < rhs->data.boolean;
@@ -2598,7 +2598,7 @@ value_gt(struct value const* lhs, struct value const* rhs)
         UNREACHABLE();
     }
     case TYPE_VOID: {
-        return true;
+        UNREACHABLE();
     }
     case TYPE_BOOL: {
         return lhs->data.boolean > rhs->data.boolean;
