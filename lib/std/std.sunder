@@ -2195,7 +2195,6 @@ struct big_integer {
         }
 
         var radix: std::big_integer = uninit;
-        defer radix.fini();
         var digits_prefix = "";
         var digits_table = DIGITS_TABLE_LOWER[0:DIGITS_TABLE_COUNT];
 
@@ -2231,6 +2230,7 @@ struct big_integer {
             # Default to decimal formatting.
             radix = std::big_integer::init_from_int[[usize]](10);
         }
+        defer radix.fini();
 
         if fmt_idx != countof(fmt) {
             return std::result[[void, std::error]]::init_error(std::error::INVALID_ARGUMENT);
