@@ -285,8 +285,8 @@ skip_comment(struct lexer* self)
     }
     if (*self->current == '\n') {
         self->current += STR_LITERAL_COUNT("\n");
+        self->current_line += 1;
     }
-    self->current_line += 1;
 }
 
 static void
