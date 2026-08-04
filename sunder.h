@@ -666,6 +666,7 @@ ceil8umax(uintmax_t x);
 
 // Spawn a subprocess and wait for it to complete.
 // Returns the exit status of the spawned process.
+// Returns -1 if the subprocess did not properly exit.
 int
 spawnvpw(char const* const* argv);
 

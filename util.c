@@ -2339,5 +2339,8 @@ spawnvpw(char const* const* argv)
 
     int status = 0;
     waitpid(pid, &status, 0);
+    if (!WIFEXITED(status)) {
+        return -1;
+    }
     return WEXITSTATUS(status);
 }
