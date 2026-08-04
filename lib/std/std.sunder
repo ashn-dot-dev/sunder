@@ -2776,7 +2776,7 @@ struct string {
     # Finalize resources associated with the string.
     func fini(self: *string) void {
         if self.*._capacity != 0 {
-            std::slice[[byte]]::delete_with_allocator(self.*._allocator, (:[]byte){self.*._start, self.*._capacity});
+            std::slice[[byte]]::delete_with_allocator(self.*._allocator, (:[]byte){self.*._start, self.*._capacity + 1});
         }
     }
 
