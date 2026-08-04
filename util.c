@@ -456,6 +456,10 @@ cstr_ends_with(char const* cstr, char const* target)
 char const*
 cstr_replace(char const* cstr, char const* target, char const* replacement)
 {
+    if (0 == strcmp(target, "")) {
+        fatal(NO_LOCATION, "invalid use of cstr_replace() with an empty target");
+    }
+
     struct string* const s = string_new("", 0);
     for (char const* cur = cstr; *cur != '\0';) {
         if (cstr_starts_with(cur, target)) {
