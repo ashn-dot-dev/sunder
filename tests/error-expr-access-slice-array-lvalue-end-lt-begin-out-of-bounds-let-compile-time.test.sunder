@@ -1,0 +1,10 @@
+import "std";
+
+func main() void {
+    let a = (:[3]ssize)[1, 3, 5];
+    let _ = a[2:1];
+}
+################################################################################
+# [error-expr-access-slice-array-lvalue-end-lt-begin-out-of-bounds-let-compile-time.test.sunder:5] error: index out-of-bounds (slice begin index 2 is greater than end index 1)
+#     let _ = a[2:1];
+#               ^

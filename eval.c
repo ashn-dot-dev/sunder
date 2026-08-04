@@ -917,6 +917,13 @@ eval_rvalue_access_slice(struct expr const* expr)
                 lhs->type->data.array.count,
                 end_uz);
         }
+        if (begin_uz > end_uz) {
+            fatal(
+                expr->data.access_slice.begin->location,
+                "index out-of-bounds (slice begin index %ju is greater than end index %ju)",
+                begin_uz,
+                end_uz);
+        }
 
         struct value* const pointer = eval_lvalue(expr->data.access_slice.lhs);
         assert(pointer->type->kind == TYPE_POINTER);
