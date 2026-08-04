@@ -447,7 +447,7 @@ cstr_ends_with(char const* cstr, char const* target)
     size_t const target_count = strlen(target);
 
     if (cstr_count < target_count) {
-        return 0;
+        return false;
     }
     char const* const start = cstr + (cstr_count - target_count);
     return safe_memcmp(start, target, target_count) == 0;
