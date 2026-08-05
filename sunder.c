@@ -272,10 +272,23 @@ context_init(void)
     INIT_BIGINT_CONSTANT(u64_max, "+0xFFFFFFFFFFFFFFFF")
     INIT_BIGINT_CONSTANT(s64_min, "-9223372036854775808")
     INIT_BIGINT_CONSTANT(s64_max, "+9223372036854775807")
-    s_context.usize_min = s_context.u64_min;
-    s_context.usize_max = s_context.u64_max;
-    s_context.ssize_min = s_context.s64_min;
-    s_context.ssize_max = s_context.s64_max;
+    switch (s_context.arch) {
+    case ARCH_AMD64: /* fallthrough */
+    case ARCH_ARM64: {
+        s_context.usize_min = s_context.u64_min;
+        s_context.usize_max = s_context.u64_max;
+        s_context.ssize_min = s_context.s64_min;
+        s_context.ssize_max = s_context.s64_max;
+        break;
+    }
+    case ARCH_WASM32: {
+        s_context.usize_min = s_context.u32_min;
+        s_context.usize_max = s_context.u32_max;
+        s_context.ssize_min = s_context.s32_min;
+        s_context.ssize_max = s_context.s32_max;
+        break;
+    }
+    }
     INIT_BIGINT_CONSTANT(f32_integer_min, STRINGIFY(IEEE754_FLT_INTEGER_MIN))
     INIT_BIGINT_CONSTANT(f32_integer_max, STRINGIFY(IEEE754_FLT_INTEGER_MAX))
     INIT_BIGINT_CONSTANT(f64_integer_min, STRINGIFY(IEEE754_DBL_INTEGER_MIN))
