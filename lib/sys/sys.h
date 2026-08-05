@@ -502,7 +502,7 @@ sys_exit(signed int error_code)
     _exit(error_code);
 }
 
-void*
+static void*
 sys_opendir(char* path)
 {
     return opendir(path);
@@ -680,7 +680,7 @@ sys_dump_bytes(void* addr, usize size)
     free(buf);
 }
 
-bool
+static bool
 sys_str_to_f32(f32* out, byte* start, usize count)
 {
     if (count == strlen("infinity") && 0 == memcmp(start, "infinity", count)) {
@@ -730,7 +730,7 @@ sys_str_to_f32(f32* out, byte* start, usize count)
     return __sunder_true;
 }
 
-bool
+static bool
 sys_str_to_f64(f64* out, byte* start, usize count)
 {
     if (count == strlen("infinity") && 0 == memcmp(start, "infinity", count)) {
@@ -780,7 +780,7 @@ sys_str_to_f64(f64* out, byte* start, usize count)
     return __sunder_true;
 }
 
-bool
+static bool
 sys_f32_to_str(byte* buf, usize buf_size, f32 f, ssize digits)
 {
     if (isnan(f)) {
@@ -817,7 +817,7 @@ sys_f32_to_str(byte* buf, usize buf_size, f32 f, ssize digits)
     return __sunder_true;
 }
 
-bool
+static bool
 sys_f64_to_str(byte* buf, usize buf_size, f64 f, ssize digits)
 {
     if (isnan(f)) {
@@ -855,68 +855,68 @@ sys_f64_to_str(byte* buf, usize buf_size, f64 f, ssize digits)
 }
 
 #define __SUNDER_IEEE754_MATH_DEFINITIONS(function)                            \
-    f32 sys_f32_##function(f32 f)                                              \
+    static f32 sys_f32_##function(f32 f)                                       \
     {                                                                          \
         return function##f(f);                                                 \
     }                                                                          \
-    f64 sys_f64_##function(f64 f)                                              \
+    static f64 sys_f64_##function(f64 f)                                       \
     {                                                                          \
         return function(f);                                                    \
     }
 
 #define __SUNDER_IEEE754_MATH_DEFINITIONS2(function)                           \
-    f32 sys_f32_##function(f32 f1, f32 f2)                                     \
+    static f32 sys_f32_##function(f32 f1, f32 f2)                              \
     {                                                                          \
         return function##f(f1, f2);                                            \
     }                                                                          \
-    f64 sys_f64_##function(f64 f1, f64 f2)                                     \
+    static f64 sys_f64_##function(f64 f1, f64 f2)                              \
     {                                                                          \
         return function(f1, f2);                                               \
     }
 
-f32
+static f32
 sys_f32_abs(f32 f)
 {
     return fabsf(f);
 }
 
-f64
+static f64
 sys_f64_abs(f64 f)
 {
     return fabs(f);
 }
 
-f32
+static f32
 sys_f32_min(f32 f1, f32 f2)
 {
     return fminf(f1, f2);
 }
 
-f64
+static f64
 sys_f64_min(f64 f1, f64 f2)
 {
     return fmin(f1, f2);
 }
 
-f32
+static f32
 sys_f32_max(f32 f1, f32 f2)
 {
     return fmaxf(f1, f2);
 }
 
-f64
+static f64
 sys_f64_max(f64 f1, f64 f2)
 {
     return fmax(f1, f2);
 }
 
-f32
+static f32
 sys_f32_ln(f32 f)
 {
     return logf(f);
 }
 
-f64
+static f64
 sys_f64_ln(f64 f)
 {
     return log(f);
@@ -950,49 +950,49 @@ __SUNDER_IEEE754_MATH_DEFINITIONS(floor)
 __SUNDER_IEEE754_MATH_DEFINITIONS(trunc)
 __SUNDER_IEEE754_MATH_DEFINITIONS(round)
 
-bool
+static bool
 sys_f32_is_finite(f32 f)
 {
     return isfinite(f);
 }
 
-bool
+static bool
 sys_f64_is_finite(f64 f)
 {
     return isfinite(f);
 }
 
-bool
+static bool
 sys_f32_is_normal(f32 f)
 {
     return isnormal(f);
 }
 
-bool
+static bool
 sys_f64_is_normal(f64 f)
 {
     return isnormal(f);
 }
 
-bool
+static bool
 sys_f32_is_inf(f32 f)
 {
     return isinf(f);
 }
 
-bool
+static bool
 sys_f64_is_inf(f64 f)
 {
     return isinf(f);
 }
 
-bool
+static bool
 sys_f32_is_nan(f32 f)
 {
     return isnan(f);
 }
 
-bool
+static bool
 sys_f64_is_nan(f64 f)
 {
     return isnan(f);
