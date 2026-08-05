@@ -395,7 +395,7 @@ __SUNDER_SINTEGER_DIV_DEFINITION(ssize)
 __SUNDER_IEEE754_DIV_DEFINITION(f32)
 __SUNDER_IEEE754_DIV_DEFINITION(f64)
 
-#define __SUNDER_INTEGER_REM_DEFINITION(T)                                     \
+#define __SUNDER_UINTEGER_REM_DEFINITION(T)                                    \
     static __SUNDER_INLINE T __sunder_rem_##T(T lhs, T rhs)                    \
     {                                                                          \
         if (rhs == 0) {                                                        \
@@ -404,16 +404,28 @@ __SUNDER_IEEE754_DIV_DEFINITION(f64)
         return lhs % rhs;                                                      \
     }
 
-__SUNDER_INTEGER_REM_DEFINITION(u8)
-__SUNDER_INTEGER_REM_DEFINITION(s8)
-__SUNDER_INTEGER_REM_DEFINITION(u16)
-__SUNDER_INTEGER_REM_DEFINITION(s16)
-__SUNDER_INTEGER_REM_DEFINITION(u32)
-__SUNDER_INTEGER_REM_DEFINITION(s32)
-__SUNDER_INTEGER_REM_DEFINITION(u64)
-__SUNDER_INTEGER_REM_DEFINITION(s64)
-__SUNDER_INTEGER_REM_DEFINITION(usize)
-__SUNDER_INTEGER_REM_DEFINITION(ssize)
+#define __SUNDER_SINTEGER_REM_DEFINITION(T)                                    \
+    static __SUNDER_INLINE T __sunder_rem_##T(T lhs, T rhs)                    \
+    {                                                                          \
+        if (rhs == 0) {                                                        \
+            __sunder_fatal_divide_by_zero();                                   \
+        }                                                                      \
+        if ((lhs == __sunder_##T##_MIN) && (rhs == -1)) {                      \
+            __sunder_fatal_out_of_range();                                     \
+        }                                                                      \
+        return lhs % rhs;                                                      \
+    }
+
+__SUNDER_UINTEGER_REM_DEFINITION(u8)
+__SUNDER_SINTEGER_REM_DEFINITION(s8)
+__SUNDER_UINTEGER_REM_DEFINITION(u16)
+__SUNDER_SINTEGER_REM_DEFINITION(s16)
+__SUNDER_UINTEGER_REM_DEFINITION(u32)
+__SUNDER_SINTEGER_REM_DEFINITION(s32)
+__SUNDER_UINTEGER_REM_DEFINITION(u64)
+__SUNDER_SINTEGER_REM_DEFINITION(s64)
+__SUNDER_UINTEGER_REM_DEFINITION(usize)
+__SUNDER_SINTEGER_REM_DEFINITION(ssize)
 
 #define __SUNDER_CAST_IEEE754_TO_INTEGER_DEFINITION(F, I)                      \
     static I __sunder_cast_##F##_to_##I(F f)                                   \

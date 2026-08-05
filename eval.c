@@ -1442,6 +1442,14 @@ eval_rvalue_binary(struct expr const* expr)
         }
         struct bigint* const r = bigint_new(BIGINT_ZERO);
         bigint_divrem(r, NULL, lhs->data.integer, rhs->data.integer);
+        if (integer_is_out_of_range(expr->type, r)) {
+            fatal(
+                expr->location,
+                "operation produces out-of-range result (%s / %s == %s)",
+                bigint_to_new_cstr(lhs->data.integer),
+                bigint_to_new_cstr(rhs->data.integer),
+                bigint_to_new_cstr(r));
+        }
         res = value_new_integer(expr->type, r);
         break;
     }
@@ -1455,8 +1463,17 @@ eval_rvalue_binary(struct expr const* expr)
                 bigint_to_new_cstr(lhs->data.integer),
                 bigint_to_new_cstr(rhs->data.integer));
         }
+        struct bigint* const q = bigint_new(BIGINT_ZERO);
         struct bigint* const r = bigint_new(BIGINT_ZERO);
-        bigint_divrem(NULL, r, lhs->data.integer, rhs->data.integer);
+        bigint_divrem(q, r, lhs->data.integer, rhs->data.integer);
+        if (integer_is_out_of_range(expr->type, q)) {
+            fatal(
+                expr->location,
+                "operation produces out-of-range result (%s %% %s)",
+                bigint_to_new_cstr(lhs->data.integer),
+                bigint_to_new_cstr(rhs->data.integer));
+        }
+        bigint_del(q);
         res = value_new_integer(expr->type, r);
         break;
     }
