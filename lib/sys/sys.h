@@ -206,10 +206,10 @@ __SUNDER_SINTEGER_ADD_WRAPPING_DEFINITION(ssize, usize)
 #    define __SUNDER_SINTEGER_SUB_DEFINITION(T)                                \
         static T __sunder_sub_##T(T lhs, T rhs)                                \
         {                                                                      \
-            if (lhs < 0 && rhs > __sunder_##T##_MAX + lhs) {                   \
+            if (rhs < 0 && lhs > __sunder_##T##_MAX + rhs) {                   \
                 __sunder_fatal_out_of_range();                                 \
             }                                                                  \
-            if (lhs > 0 && rhs < __sunder_##T##_MIN + lhs) {                   \
+            if (rhs > 0 && lhs < __sunder_##T##_MIN + rhs) {                   \
                 __sunder_fatal_out_of_range();                                 \
             }                                                                  \
             return lhs - rhs;                                                  \
