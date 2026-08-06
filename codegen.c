@@ -2109,7 +2109,8 @@ codegen_stmt_assign(struct stmt const* stmt)
             MANGLE_PREFIX "rhs",
             mangle_type(stmt->data.assign.lhs->type),
             mangle_type(stmt->data.assign.lhs->type),
-            mangle_type(stmt->data.assign.rhs->type),
+            mangle_type(
+                type_get_same_sized_uinteger(stmt->data.assign.lhs->type)),
             MANGLE_PREFIX "lhs",
             MANGLE_PREFIX "rhs",
 
@@ -3281,7 +3282,7 @@ strgen_rvalue_binary_shl(struct expr const* expr)
         MANGLE_PREFIX "rhs",
         mangle_type(expr->data.binary.lhs->type),
         mangle_type(expr->data.binary.lhs->type),
-        mangle_type(expr->data.binary.rhs->type),
+        mangle_type(type_get_same_sized_uinteger(expr->data.binary.lhs->type)),
         MANGLE_PREFIX "lhs",
         MANGLE_PREFIX "rhs",
         mangle_type(expr->data.binary.lhs->type));

@@ -653,6 +653,42 @@ type_get_mutable(struct type const* self)
 }
 
 struct type const*
+type_get_same_sized_uinteger(struct type const* self)
+{
+    assert(self != NULL);
+    assert(type_is_integer(self));
+
+    switch (self->kind) {
+    case TYPE_U8: /* fallthrough */
+    case TYPE_S8: {
+        return context()->builtin.u8;
+    }
+    case TYPE_U16: /* fallthrough */
+    case TYPE_S16: {
+        return context()->builtin.u16;
+    }
+    case TYPE_U32: /* fallthrough */
+    case TYPE_S32: {
+        return context()->builtin.u32;
+    }
+    case TYPE_U64: /* fallthrough */
+    case TYPE_S64: {
+        return context()->builtin.u64;
+    }
+    case TYPE_USIZE: /* fallthrough */
+    case TYPE_SSIZE: {
+        return context()->builtin.usize;
+    }
+    default: {
+        UNREACHABLE();
+    }
+    }
+
+    UNREACHABLE();
+    return NULL;
+}
+
+struct type const*
 type_unique_function(
     struct type const* const* parameter_types, struct type const* return_type)
 {

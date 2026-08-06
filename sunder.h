@@ -1944,6 +1944,10 @@ type_member_variable(struct type const* self, char const* name);
 struct type*
 type_get_mutable(struct type const* self);
 
+// Returns the unsigned integer type with the same size as the type `self`.
+struct type const*
+type_get_same_sized_uinteger(struct type const* self);
+
 struct type const*
 type_unique_function(
     struct type const* const* parameter_types, struct type const* return_type);
