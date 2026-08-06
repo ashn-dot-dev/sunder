@@ -1873,17 +1873,33 @@ codegen_stmt_assign(struct stmt const* stmt)
     switch (stmt->data.assign.op) {
     case AOP_ASSIGN: {
         appendli(
-            "*(%s) = %s;",
+            "{%s* %s = %s; %s %s = %s; *%s = %s;}",
+            mangle_type(stmt->data.assign.lhs->type),
+            MANGLE_PREFIX "lhs",
             strgen_lvalue(stmt->data.assign.lhs),
-            strgen_rvalue(stmt->data.assign.rhs));
+
+            mangle_type(stmt->data.assign.rhs->type),
+            MANGLE_PREFIX "rhs",
+            strgen_rvalue(stmt->data.assign.rhs),
+
+            MANGLE_PREFIX "lhs",
+            MANGLE_PREFIX "rhs");
         return;
     }
     case AOP_ADD_ASSIGN: {
         if (type_is_ieee754(stmt->data.assign.lhs->type)) {
             appendli(
-                "*(%s) += %s;",
+                "{%s* %s = %s; %s %s = %s; *%s += %s;}",
+                mangle_type(stmt->data.assign.lhs->type),
+                MANGLE_PREFIX "lhs",
                 strgen_lvalue(stmt->data.assign.lhs),
-                strgen_rvalue(stmt->data.assign.rhs));
+
+                mangle_type(stmt->data.assign.rhs->type),
+                MANGLE_PREFIX "rhs",
+                strgen_rvalue(stmt->data.assign.rhs),
+
+                MANGLE_PREFIX "lhs",
+                MANGLE_PREFIX "rhs");
             return;
         }
 
@@ -1907,9 +1923,17 @@ codegen_stmt_assign(struct stmt const* stmt)
     case AOP_SUB_ASSIGN: {
         if (type_is_ieee754(stmt->data.assign.lhs->type)) {
             appendli(
-                "*(%s) -= %s;",
+                "{%s* %s = %s; %s %s = %s; *%s -= %s;}",
+                mangle_type(stmt->data.assign.lhs->type),
+                MANGLE_PREFIX "lhs",
                 strgen_lvalue(stmt->data.assign.lhs),
-                strgen_rvalue(stmt->data.assign.rhs));
+
+                mangle_type(stmt->data.assign.rhs->type),
+                MANGLE_PREFIX "rhs",
+                strgen_rvalue(stmt->data.assign.rhs),
+
+                MANGLE_PREFIX "lhs",
+                MANGLE_PREFIX "rhs");
             return;
         }
 
@@ -1933,9 +1957,17 @@ codegen_stmt_assign(struct stmt const* stmt)
     case AOP_MUL_ASSIGN: {
         if (type_is_ieee754(stmt->data.assign.lhs->type)) {
             appendli(
-                "*(%s) *= %s;",
+                "{%s* %s = %s; %s %s = %s; *%s *= %s;}",
+                mangle_type(stmt->data.assign.lhs->type),
+                MANGLE_PREFIX "lhs",
                 strgen_lvalue(stmt->data.assign.lhs),
-                strgen_rvalue(stmt->data.assign.rhs));
+
+                mangle_type(stmt->data.assign.rhs->type),
+                MANGLE_PREFIX "rhs",
+                strgen_rvalue(stmt->data.assign.rhs),
+
+                MANGLE_PREFIX "lhs",
+                MANGLE_PREFIX "rhs");
             return;
         }
 
@@ -1959,9 +1991,17 @@ codegen_stmt_assign(struct stmt const* stmt)
     case AOP_DIV_ASSIGN: {
         if (type_is_ieee754(stmt->data.assign.lhs->type)) {
             appendli(
-                "*(%s) /= %s;",
+                "{%s* %s = %s; %s %s = %s; *%s /= %s;}",
+                mangle_type(stmt->data.assign.lhs->type),
+                MANGLE_PREFIX "lhs",
                 strgen_lvalue(stmt->data.assign.lhs),
-                strgen_rvalue(stmt->data.assign.rhs));
+
+                mangle_type(stmt->data.assign.rhs->type),
+                MANGLE_PREFIX "rhs",
+                strgen_rvalue(stmt->data.assign.rhs),
+
+                MANGLE_PREFIX "lhs",
+                MANGLE_PREFIX "rhs");
             return;
         }
 

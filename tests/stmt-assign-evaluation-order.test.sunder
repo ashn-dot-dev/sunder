@@ -1,0 +1,56 @@
+import "std";
+
+func lhs() usize {
+    std::print(std::out(), "L");
+    return 0u;
+}
+
+func rhs() u64 {
+    std::print_line(std::out(), "R");
+    return 2u64;
+}
+
+func rhs_f64() f64 {
+    std::print_line(std::out(), "R");
+    return 2.0f64;
+}
+
+func rhs_usize() usize {
+    std::print_line(std::out(), "R");
+    return 1u;
+}
+
+func main() void {
+    var a = (:[2]u64)[0u64...];
+    var b = (:[2]f64)[0.0f64...];
+
+    a[lhs()] = rhs();
+    b[lhs()] += rhs_f64();
+    b[lhs()] -= rhs_f64();
+    b[lhs()] *= rhs_f64();
+    b[lhs()] /= rhs_f64();
+    a[lhs()] %= rhs();
+    a[lhs()] +%= rhs();
+    a[lhs()] -%= rhs();
+    a[lhs()] *%= rhs();
+    a[lhs()] <<= rhs_usize();
+    a[lhs()] >>= rhs_usize();
+    a[lhs()] |= rhs();
+    a[lhs()] ^= rhs();
+    a[lhs()] &= rhs();
+}
+################################################################################
+# LR
+# LR
+# LR
+# LR
+# LR
+# LR
+# LR
+# LR
+# LR
+# LR
+# LR
+# LR
+# LR
+# LR
