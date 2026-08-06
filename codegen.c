@@ -3777,7 +3777,21 @@ strgen_lvalue_unary(struct expr const* expr)
     switch (expr->data.unary.op) {
     case UOP_DEREFERENCE: {
         assert(expr->data.unary.rhs->type->kind == TYPE_POINTER);
-        return strgen_rvalue(expr->data.unary.rhs);
+
+        if (expr->type->size == 0) {
+            return strgen_rvalue(expr->data.unary.rhs);
+        }
+
+        return strgen_fmt(
+            "({%s %s = %s; if (%s == 0){%s();}; %s;})",
+            mangle_type(expr->data.unary.rhs->type),
+            MANGLE_PREFIX "ptr",
+            strgen_rvalue(expr->data.unary.rhs),
+
+            MANGLE_PREFIX "ptr",
+            MANGLE_PREFIX "fatal_null_pointer_dereference",
+
+            MANGLE_PREFIX "ptr");
     }
     case UOP_NOT: /* fallthrough */
     case UOP_POS: /* fallthrough */
