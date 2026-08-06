@@ -1,0 +1,39 @@
+import "std";
+
+func main() void {
+    var general_allocator = std::general_allocator::init();
+    defer general_allocator.fini();
+
+    var alignments = (:[]usize)[8, 16, 32, 64, 128, 256, 512];
+    for i in countof(alignments) {
+        var align = alignments[i];
+        std::print_format_line(
+            std::out(),
+            "checking align={}",
+            (:[]std::formatter)[std::formatter::init[[usize]](&align)]);
+
+        let attempts = 1000u; # arbitrary number of attempts to catch a failure
+        for _ in attempts {
+            var result = general_allocator.allocate(align, 1);
+            var addr = (:usize)result.value();
+            assert addr % align == 0;
+        }
+
+        std::print_line(std::out(), "...success");
+    }
+}
+################################################################################
+# checking align=8
+# ...success
+# checking align=16
+# ...success
+# checking align=32
+# ...success
+# checking align=64
+# ...success
+# checking align=128
+# ...success
+# checking align=256
+# ...success
+# checking align=512
+# ...success
