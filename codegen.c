@@ -1170,7 +1170,8 @@ strgen_value(struct value const* value)
             string_append_cstr(s, "/* +INFINITY */(+1.0f / 0.0f)");
             break;
         }
-        string_append_fmt(s, "%.*ff", IEEE754_FLT_DECIMAL_DIG, ieee754);
+        string_append_fmt(
+            s, "/* %.*g */%af", IEEE754_FLT_DECIMAL_DIG, ieee754, ieee754);
         break;
     }
     case TYPE_F64: {
@@ -1187,7 +1188,8 @@ strgen_value(struct value const* value)
             string_append_cstr(s, "/* +INFINITY */(+1.0 / 0.0)");
             break;
         }
-        string_append_fmt(s, "%.*f", IEEE754_DBL_DECIMAL_DIG, ieee754);
+        string_append_fmt(
+            s, "/* %.*g */%a", IEEE754_DBL_DECIMAL_DIG, ieee754, ieee754);
         break;
     }
     case TYPE_REAL: {
