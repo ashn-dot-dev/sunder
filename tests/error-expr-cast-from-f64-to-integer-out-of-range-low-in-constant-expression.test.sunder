@@ -1,0 +1,5 @@
+let x = (:s64)-9223372036854777856.0f64;
+################################################################################
+# [error-expr-cast-from-f64-to-integer-out-of-range-low-in-constant-expression.test.sunder:1] error: operation produces out-of-range result
+# let x = (:s64)-9223372036854777856.0f64;
+#         ^

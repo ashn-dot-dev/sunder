@@ -666,20 +666,19 @@ eval_rvalue_cast(struct expr const* expr)
 
         assert(expr->type->data.integer.min != NULL);
         assert(expr->type->data.integer.max != NULL);
+        double const truncated = trunc(from_as_double);
         if (type_is_uinteger(expr->type)) {
-            uintmax_t min_as_umax = 0;
             uintmax_t max_as_umax = 0;
-            if (bigint_to_umax(&min_as_umax, expr->type->data.integer.min)) {
-                UNREACHABLE();
-            }
             if (bigint_to_umax(&max_as_umax, expr->type->data.integer.max)) {
                 UNREACHABLE();
             }
-            uintmax_t from_as_umax = (uintmax_t)from_as_double;
-            if (from_as_umax < min_as_umax || max_as_umax < from_as_umax) {
+            // Using max_plus_one to avoid integer overflow.
+            double const max_plus_one = 2.0 * (double)(max_as_umax / 2 + 1);
+            if (truncated < 0.0 || max_plus_one <= truncated) {
                 fatal(expr->location, "operation produces out-of-range result");
             }
 
+            uintmax_t const from_as_umax = (uintmax_t)truncated;
             struct bigint* const integer = bigint_new_umax(from_as_umax);
             struct value* const result = value_new_integer(expr->type, integer);
             value_del(from);
@@ -694,11 +693,14 @@ eval_rvalue_cast(struct expr const* expr)
             if (bigint_to_smax(&max_as_smax, expr->type->data.integer.max)) {
                 UNREACHABLE();
             }
-            intmax_t from_as_smax = (intmax_t)from_as_double;
-            if (from_as_smax < min_as_smax || max_as_smax < from_as_smax) {
+            double const min = (double)min_as_smax;
+            // Using max_plus_one to avoid integer overflow.
+            double const max_plus_one = 2.0 * (double)(max_as_smax / 2 + 1);
+            if (truncated < min || max_plus_one <= truncated) {
                 fatal(expr->location, "operation produces out-of-range result");
             }
 
+            intmax_t const from_as_smax = (intmax_t)truncated;
             struct bigint* const integer = bigint_new_smax(from_as_smax);
             struct value* const result = value_new_integer(expr->type, integer);
             value_del(from);

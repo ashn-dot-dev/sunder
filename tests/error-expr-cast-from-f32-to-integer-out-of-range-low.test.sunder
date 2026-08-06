@@ -1,0 +1,6 @@
+func main() void {
+    let a = -2147483904.0f32;
+    (:s32)a;
+}
+################################################################################
+# fatal: operation produces out-of-range result

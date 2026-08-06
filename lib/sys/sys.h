@@ -430,8 +430,11 @@ __SUNDER_SINTEGER_REM_DEFINITION(ssize)
 #define __SUNDER_CAST_IEEE754_TO_INTEGER_DEFINITION(F, I)                      \
     static I __sunder_cast_##F##_to_##I(F f)                                   \
     {                                                                          \
-        if (!isfinite(f) || f < (F)__sunder_##I##_MIN                          \
-            || (F)__sunder_##I##_MAX < f) {                                    \
+        double truncated = trunc((double)f);                                   \
+        double min = (double)__sunder_##I##_MIN;                               \
+        /* Using max_plus_one to avoid integer overflow. */                    \
+        double max_plus_one = 2.0 * (double)(__sunder_##I##_MAX / 2 + 1);      \
+        if (!isfinite(f) || truncated < min || max_plus_one <= truncated) {    \
             __sunder_fatal_out_of_range();                                     \
         }                                                                      \
         return (I)f;                                                           \

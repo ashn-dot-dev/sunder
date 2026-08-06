@@ -55,7 +55,7 @@ SUNDER_COMPILE_OBJS = \
 	eval.o \
 	codegen.o
 bin/sunder-compile: $(SUNDER_COMPILE_OBJS)
-	$(CC) -o $@ $(CFLAGS) $(SUNDER_COMPILE_OBJS)
+	$(CC) -o $@ $(CFLAGS) $(SUNDER_COMPILE_OBJS) -lm
 
 check: build
 	SUNDER_HOME="$(realpath .)" \
