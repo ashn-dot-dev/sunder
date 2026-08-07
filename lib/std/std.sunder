@@ -4661,6 +4661,10 @@ extend integer func _format_smax(int: std::smax, writer: std::writer, fmt: []byt
         sign = "-";
         if fmt_idx < countof(fmt) and fmt[fmt_idx] == '+' {
             fmt_idx += 1;
+            if fmt_idx < countof(fmt) and fmt[fmt_idx] == '+' {
+                # Avoid double writing the + character.
+                return std::result[[void, std::error]]::init_error(std::error::INVALID_ARGUMENT);
+            }
         }
     }
     elif fmt_idx < countof(fmt) and fmt[fmt_idx] == '+' {

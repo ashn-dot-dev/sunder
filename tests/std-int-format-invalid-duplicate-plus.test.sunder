@@ -1,0 +1,14 @@
+import "std";
+
+func main() void {
+    # A "+" flag that is duplicated within a format specifier is invalid for
+    # negative integers, matching the existing behavior for non-negative
+    # integers.
+    var int: s32 = -5;
+    std::print_format_line(
+        std::out(),
+        "{++d}",
+        (:[]std::formatter)[std::formatter::init[[s32]](&int)]);
+}
+################################################################################
+# panic: invalid format specifier "++d"
