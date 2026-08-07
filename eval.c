@@ -633,14 +633,23 @@ eval_rvalue_cast(struct expr const* expr)
             }
         }
 
-        intmax_t smax = 0;
-        if (bigint_to_smax(&smax, integer)) {
-            UNREACHABLE();
+        struct value* result = NULL;
+        if (bigint_cmp(integer, BIGINT_ZERO) < 0) {
+            intmax_t smax = 0;
+            if (bigint_to_smax(&smax, integer)) {
+                UNREACHABLE();
+            }
+            result = expr->type->kind == TYPE_F64 ? value_new_f64((double)smax)
+                                                  : value_new_f32((float)smax);
         }
-
-        struct value* const result = expr->type->kind == TYPE_F64
-            ? value_new_f64((double)smax)
-            : value_new_f32((float)smax);
+        else {
+            uintmax_t umax = 0;
+            if (bigint_to_umax(&umax, integer)) {
+                UNREACHABLE();
+            }
+            result = expr->type->kind == TYPE_F64 ? value_new_f64((double)umax)
+                                                  : value_new_f32((float)umax);
+        }
         value_del(from);
         return result;
     }
